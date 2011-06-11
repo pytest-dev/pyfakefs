@@ -1,0 +1,14 @@
+Pyfakefs
+========
+Pyfakefs is a fake implementation of Python file system modules for automated
+developer testing.
+
+Pyfakefs was originally developed at Google.
+
+To submit changes to Pyfakefs, follow the instructions at:
+http://code.google.com/p/pyfakefs
+
+Requirements
+------------
+Python 2.4 and up, though fake_filesystem_test.py and, consequently,
+all_tests.py require python 2.6 and up.
