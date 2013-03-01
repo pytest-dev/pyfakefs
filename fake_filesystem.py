@@ -1,4 +1,4 @@
- #!/usr/bin/python2.4
+#!/usr/bin/python2.4
 #
 # Copyright 2009 Google Inc. All Rights Reserved.
 #
@@ -94,7 +94,7 @@ import warnings
 
 __pychecker__ = 'no-reimportself'
 
-__version__ = '1.0'
+__version__ = '1.1'
 
 PERM_READ = 0400      # Read permission bit.
 PERM_WRITE = 0200     # Write permission bit.
