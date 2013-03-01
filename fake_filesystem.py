@@ -94,6 +94,8 @@ import warnings
 
 __pychecker__ = 'no-reimportself'
 
+__version__ = '1.0'
+
 PERM_READ = 0400      # Read permission bit.
 PERM_WRITE = 0200     # Write permission bit.
 PERM_EXE = 0100       # Write permission bit.
