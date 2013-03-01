@@ -1,4 +1,4 @@
-#!/usr/bin/python2.4
+ #!/usr/bin/python2.4
 #
 # Copyright 2009 Google Inc. All Rights Reserved.
 #
@@ -160,7 +160,7 @@ class FakeFile(object):
     self.name = name
     self.st_mode = st_mode
     self.contents = contents
-    self.st_ctime = time.time()
+    self.st_ctime = int(time.time())
     self.st_atime = self.st_ctime
     self.st_mtime = self.st_ctime
     if contents:
@@ -1164,11 +1164,14 @@ class FakeOsModule(object):
 
     Raises:
       OSError: if bad file descriptor or incompatible mode is given.
+      TypeError: if file descriptor is not an integer.
       ValueError: if invalid mode is given.
     """
+    if not isinstance(file_des, (int, long)):
+      raise TypeError('an integer is required')
     if (file_des >= len(self.filesystem.open_files) or
         self.filesystem.open_files[file_des] is None):
-      raise OSError(errno.EBADF, 'Bad file descriptor', None)
+      raise OSError(errno.EBADF, 'Bad file descriptor', file_des)
     file_obj = self.filesystem.open_files[file_des]
 
     if mode:
@@ -1213,6 +1216,55 @@ class FakeOsModule(object):
       return fake_file.fileno()
     else:
       raise NotImplementedError('FakeOsModule.open')
+
+  def close(self, file_des):
+    """Closes a file descriptor.
+
+    Args:
+      file_des: An integer file descriptor for the file object requested.
+
+    Raises:
+      OSError: bad file descriptor.
+      TypeError: if file descriptor is not an integer.
+    """
+    fh = self.fdopen(file_des)
+    fh.close()
+
+  def read(self, file_des, num_bytes):
+    """Reads number of bytes from a file descriptor, returns bytes read.
+
+    Args:
+      file_des: An integer file descriptor for the file object requested.
+      num_bytes: Number of bytes to read from file.
+
+    Returns:
+      Bytes read from file.
+
+    Raises:
+      OSError: bad file descriptor.
+      TypeError: if file descriptor is not an integer.
+    """
+    fh = self.fdopen(file_des)
+    return fh.read(num_bytes)
+
+  def write(self, file_des, contents):
+    """Writes string to file descriptor, returns number of bytes written.
+
+    Args:
+      file_des: An integer file descriptor for the file object requested.
+      contents: String of bytes to write to file.
+
+    Returns:
+      Number of bytes written.
+
+    Raises:
+      OSError: bad file descriptor.
+      TypeError: if file descriptor is not an integer.
+    """
+    fh = self.fdopen(file_des)
+    fh.write(contents)
+    fh.flush()
+    return len(contents)
 
   def fstat(self, file_des):
     """Returns the os.stat-like tuple for the FakeFile object of file_des.
@@ -1311,6 +1363,7 @@ class FakeOsModule(object):
     Raises:
       OSError:  if the target is not a directory
     """
+    target_directory = self.filesystem.ResolvePath(target_directory)
     directory = self._ConfirmDir(target_directory)
     return sorted(directory.contents)
 
@@ -1498,6 +1551,7 @@ class FakeOsModule(object):
       self.remove(old_file)
     new_object = self.filesystem.GetObject(new_file)
     new_object.SetMTime(old_object_mtime)
+    self.chown(new_file, old_object.st_uid, old_object.st_gid)
 
   def rmdir(self, target_directory):
     """Remove a leaf Fake directory.
@@ -1550,22 +1604,22 @@ class FakeOsModule(object):
       OSError: if the directory name is invalid,
       or as per FakeFilesystem.AddObject.
     """
-    dir_name = self.path.normpath(dir_name)
-    if self.filesystem.Exists(dir_name):
-      raise OSError(errno.EEXIST, 'Fake object already exists',
-                    dir_name)
+    if dir_name.endswith(self.sep):
+      dir_name = dir_name[:-1]
+    if self.filesystem.Exists(self.path.normpath(dir_name)):
+      raise OSError(errno.EEXIST, 'Fake object already exists', dir_name)
 
     head, tail = self.path.split(dir_name)
     if head:
-      if not self.filesystem.Exists(head):
-        raise OSError(errno.ENOENT, 'No such fake directory', head)
-    if not tail or tail == '.':
-      raise OSError(errno.ENOENT, 'Cannot create Fake directory named %r' %
-                    tail)
+      base_dir = norm_head = self.path.normpath(head)
+      if head.endswith(self.sep + '..'):
+        base_dir, unused_dotdot, _ = head.partition(self.sep + '..')
+      if not self.filesystem.Exists(base_dir):
+        raise OSError(errno.ENOENT, 'No such fake directory', base_dir)
+      head = norm_head
 
-    self.filesystem.AddObject(head,
-                              FakeDirectory(tail,
-                                            mode & ~self.filesystem.umask))
+    self.filesystem.AddObject(
+        head, FakeDirectory(tail, mode & ~self.filesystem.umask))
 
   def makedirs(self, dir_name, mode=PERM_DEF):
     """Create a leaf Fake directory + create any non-existent parent dirs.
@@ -1616,7 +1670,7 @@ class FakeOsModule(object):
       raise
     file_object.st_mode = ((file_object.st_mode & ~PERM_ALL) |
                            (mode & PERM_ALL))
-    file_object.st_ctime = time.time()
+    file_object.st_ctime = int(time.time())
 
   def utime(self, path, times):
     """Change the access and modified times of a file.
@@ -1640,8 +1694,8 @@ class FakeOsModule(object):
                       path)
       raise
     if times is None:
-      file_object.st_atime = time.time()
-      file_object.st_mtime = time.time()
+      file_object.st_atime = int(time.time())
+      file_object.st_mtime = int(time.time())
     else:
       if len(times) != 2:
         raise TypeError('utime() arg 2 must be a tuple (atime, mtime)')
@@ -1668,8 +1722,10 @@ class FakeOsModule(object):
                       'No such file or directory in fake filesystem',
                       path)
       raise
-    file_object.st_uid = uid
-    file_object.st_gid = gid
+    if uid != -1:
+      file_object.st_uid = uid
+    if gid != -1:
+      file_object.st_gid = gid
 
   def mknod(self, filename, mode=None, device=None):
     """Create a filesystem node named 'filename'.
@@ -1789,7 +1845,7 @@ class FakeFileOpen(object):
                       'Permission denied',
                       file_path)
       if need_write:
-        file_object.st_ctime = time.time()
+        file_object.st_ctime = int(time.time())
         if truncate:
           file_object.SetContents('')
     else:

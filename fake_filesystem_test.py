@@ -545,6 +545,15 @@ class FakeOsModuleTest(TestCase):
     files.sort()
     self.assertEqual(files, self.os.listdir(directory))
 
+  def testListdirOnSymlink(self):
+    directory = 'xyzzy'
+    files = ['foo', 'bar', 'baz']
+    for f in files:
+      self.filesystem.CreateFile('%s/%s' % (directory, f))
+    self.filesystem.CreateLink('symlink', 'xyzzy')
+    files.sort()
+    self.assertEqual(files, self.os.listdir('symlink'))
+
   def testListdirError(self):
     file_path = 'foo/bar/baz'
     self.filesystem.CreateFile(file_path)
@@ -572,6 +581,9 @@ class FakeOsModuleTest(TestCase):
     # docstring.
     self.assertTrue(self.os.fdopen(0) is fake_file1)
 
+    self.assertRaises(TypeError, self.os.fdopen, None)
+    self.assertRaises(TypeError, self.os.fdopen, 'a string')
+
   def testOutOfRangeFdopen(self):
     # We haven't created any files, so even 0 is out of range.
     self.assertRaises(OSError, self.os.fdopen, 0)
@@ -592,7 +604,9 @@ class FakeOsModuleTest(TestCase):
     self.assertEqual(1, fake_file2.fileno())
     self.assertEqual(2, fake_file3.fileno())
 
-    fake_file2.close()
+    fileno2 = fake_file2.fileno()
+    self.os.close(fileno2)
+    self.assertRaises(OSError, self.os.close, fileno2)
     self.assertEqual(0, fake_file1.fileno())
     self.assertEqual(2, fake_file3.fileno())
 
@@ -633,6 +647,32 @@ class FakeOsModuleTest(TestCase):
     file_path = 'file1'
     fake_flag = 0b100000000000000000000000
     self.assertRaises(NotImplementedError, self.os.open, file_path, fake_flag)
+
+  def testLowLevelWriteRead(self):
+    file_path = 'file1'
+    self.filesystem.CreateFile(file_path, contents='orig contents')
+    new_contents = '1234567890abcdef'
+    fake_open = fake_filesystem.FakeFileOpen(self.filesystem)
+
+    fh = fake_open(file_path, 'w')
+    fileno = fh.fileno()
+
+    self.assertEqual(len(new_contents), self.os.write(fileno, new_contents))
+    self.assertEqual(new_contents,
+                     self.filesystem.GetObject(file_path).contents)
+    self.os.close(fileno)
+
+    fh = fake_open(file_path, 'r')
+    fileno = fh.fileno()
+    self.assertEqual('', self.os.read(fileno, 0))
+    self.assertEqual(new_contents[0:2], self.os.read(fileno, 2))
+    self.assertEqual(new_contents[2:10], self.os.read(fileno, 8))
+    self.assertEqual(new_contents[10:], self.os.read(fileno, 100))
+    self.assertEqual('', self.os.read(fileno, 10))
+    self.os.close(fileno)
+
+    self.assertRaises(OSError, self.os.write, fileno, new_contents)
+    self.assertRaises(OSError, self.os.read, fileno, 10)
 
   def testFstat(self):
     directory = 'xyzzy'
@@ -834,18 +874,23 @@ class FakeOsModuleTest(TestCase):
     self.assertEquals('payload',
                       self.filesystem.GetObject(after_file).contents)
 
-  def testRenamePreservesMtime(self):
+  def testRenamePreservesStat(self):
     """Test if rename preserves mtime."""
     directory = 'xyzzy'
     old_file_path = '%s/plugh_old' % directory
     new_file_path = '%s/plugh_new' % directory
     old_file = self.filesystem.CreateFile(old_file_path)
     old_file.SetMTime(old_file.st_mtime - 3600)
+    self.os.chown(old_file_path, 200, 200)
+    self.os.chmod(old_file_path, 0222)
     new_file = self.filesystem.CreateFile(new_file_path)
     self.assertNotEqual(new_file.st_mtime, old_file.st_mtime)
     self.os.rename(old_file_path, new_file_path)
     new_file = self.filesystem.GetObject(new_file_path)
     self.assertEqual(new_file.st_mtime, old_file.st_mtime)
+    self.assertEqual(new_file.st_mode, old_file.st_mode)
+    self.assertEqual(new_file.st_uid, old_file.st_uid)
+    self.assertEqual(new_file.st_gid, old_file.st_gid)
 
   def testRmdir(self):
     """Can remove a directory."""
@@ -981,9 +1026,27 @@ class FakeOsModuleTest(TestCase):
     self.assertTrue(self.filesystem.Exists(file_path))
     self.assertRaises(Exception, self.os.mkdir, file_path)
 
-  def TBD_testMkdirRaisesWithSlashDot(self):
+  def testMkdirRaisesWithSlashDot(self):
     """mkdir raises exception if mkdir foo/. (trailing /.)."""
+    self.assertRaises(Exception, self.os.mkdir, '/.')
     directory = '/xyzzy/.'
+    self.assertRaises(Exception, self.os.mkdir, directory)
+    self.filesystem.CreateDirectory('/xyzzy')
+    self.assertRaises(Exception, self.os.mkdir, directory)
+
+  def testMkdirRaisesWithDoubleDots(self):
+    """mkdir raises exception if mkdir foo/foo2/../foo3."""
+    self.assertRaises(Exception, self.os.mkdir, '/..')
+    directory = '/xyzzy/dir1/dir2/../../dir3'
+    self.assertRaises(Exception, self.os.mkdir, directory)
+    self.filesystem.CreateDirectory('/xyzzy')
+    self.assertRaises(Exception, self.os.mkdir, directory)
+    self.filesystem.CreateDirectory('/xyzzy/dir1')
+    self.assertRaises(Exception, self.os.mkdir, directory)
+    self.filesystem.CreateDirectory('/xyzzy/dir1/dir2')
+    self.os.mkdir(directory)
+    self.assertTrue(self.filesystem.Exists(directory))
+    directory = '/xyzzy/dir1/..'
     self.assertRaises(Exception, self.os.mkdir, directory)
 
   def testMakedirs(self):
@@ -1132,6 +1195,23 @@ class FakeOsModuleTest(TestCase):
     self.assertEqual(220, st.st_atime)
     self.assertEqual(240, st.st_mtime)
 
+  def testUtimeSetsCurrentTimeIfArgsIsNoneWithFloats(self):
+    # set up
+    # time.time can report back floats, but it should be converted to ints
+    # since atime/ctime/mtime are all defined as seconds since epoch.
+    time.time = _GetDummyTime(200.0123, 20)
+    path = '/some_file'
+    self._CreateTestFile(path)
+    st = self.os.stat(path)
+    # 200 is the current time established above (if converted to int).
+    self.assertEqual(200, st.st_atime)
+    self.assertEqual(200, st.st_mtime)
+    # actual tests
+    self.os.utime(path, None)
+    st = self.os.stat(path)
+    self.assertEqual(220, st.st_atime)
+    self.assertEqual(240, st.st_mtime)
+
   def testUtimeSetsSpecifiedTime(self):
     # set up
     path = '/some_file'
@@ -1195,6 +1275,11 @@ class FakeOsModuleTest(TestCase):
     self.assertEqual(st[stat.ST_GID], 100)
     # we can make sure it changed
     self.os.chown(file_path, 200, 200)
+    st = self.os.stat(file_path)
+    self.assertEqual(st[stat.ST_UID], 200)
+    self.assertEqual(st[stat.ST_GID], 200)
+    # setting a value to -1 leaves it unchanged
+    self.os.chown(file_path, -1, -1)
     st = self.os.stat(file_path)
     self.assertEqual(st[stat.ST_UID], 200)
     self.assertEqual(st[stat.ST_GID], 200)
