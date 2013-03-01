@@ -21,7 +21,7 @@ CLASSIFIERS = [
     'Development Status :: 5 - Production/Stable',
     'Environment :: Console',
     'Intended Audience :: Developers',
-    'License :: OSI Approved :: Apache License',
+    'License :: OSI Approved :: Apache License License',
     'Programming Language :: Python',
     'Programming Language :: Python :: 2.4',
     'Programming Language :: Python :: 2.6',
