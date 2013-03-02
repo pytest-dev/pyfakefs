@@ -69,7 +69,9 @@ class FakeFilesystemVsRealTest(unittest.TestCase):
     # so that missing features in the fake don't fall through to the base
     # operations and magically succeed.
     tsname = 'fakefs.%s' % time.time()
-    self.real_base = os.path.join(tempfile.gettempdir(), tsname)
+    # Fully expand the base_path - required on OS X.
+    self.real_base = os.path.realpath(
+        os.path.join(tempfile.gettempdir(), tsname))
     os.mkdir(self.real_base)
     self.fake_base = self._FAKE_FS_BASE
 
@@ -444,10 +446,12 @@ class FakeFilesystemVsRealTest(unittest.TestCase):
     self.assertAllBehaviorsMatch('a/link/file')
 
   def testSymLinkToParent(self):
-    self._CreateTestFile('d', 'a')
-    self._CreateTestFile('d', 'a/b')
-    self._CreateTestFile('l', 'a/b/c', '..')
-    self.assertAllBehaviorsMatch('a/b/c')
+    # Soft links on HFS+ / OS X behave differently.
+    if os.uname()[0] != 'Darwin':
+      self._CreateTestFile('d', 'a')
+      self._CreateTestFile('d', 'a/b')
+      self._CreateTestFile('l', 'a/b/c', '..')
+      self.assertAllBehaviorsMatch('a/b/c')
 
   def testPathThroughSymLinkToParent(self):
     self._CreateTestFile('d', 'a')
