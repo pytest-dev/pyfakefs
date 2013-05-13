@@ -94,7 +94,7 @@ import warnings
 
 __pychecker__ = 'no-reimportself'
 
-__version__ = '1.2'
+__version__ = '1.1'
 
 PERM_READ = 0400      # Read permission bit.
 PERM_WRITE = 0200     # Write permission bit.
@@ -1302,7 +1302,7 @@ class FakeOsModule(object):
     try:
       directory = self.filesystem.GetObject(target_directory)
     except IOError, (errno_code, msg):
-      raise OSError(errno_code, msg, target_directory)
+      raise OSError(errno_code, msg)
     if not directory.st_mode & stat.S_IFDIR:
       raise OSError(errno.ENOTDIR,
                     'Fake os module: not a directory',
@@ -1524,8 +1524,6 @@ class FakeOsModule(object):
       OSError:  if old_file does not exist.
       IOError:  if dirname(new_file) does not exist
     """
-    old_file = self.filesystem.NormalizePath(old_file)
-    new_file = self.filesystem.NormalizePath(new_file)
     if not self.filesystem.Exists(old_file):
       raise OSError(errno.ENOENT,
                     'Fake os object: can not rename nonexistent file '
@@ -1563,11 +1561,8 @@ class FakeOsModule(object):
 
     Raises:
       OSError: if target_directory does not exist or is not a directory,
-      or as per FakeFilesystem.RemoveObject. Cannot remove '.'.
+      or as per FakeFilesystem.RemoveObject.
     """
-    if target_directory == '.':
-      raise OSError(errno.EINVAL, 'Invalid argument: \'.\'')
-    target_directory = self.filesystem.NormalizePath(target_directory)
     if self._ConfirmDir(target_directory):
       if self.listdir(target_directory):
         raise OSError(errno.ENOTEMPTY, 'Fake Directory not empty',
@@ -1606,27 +1601,22 @@ class FakeOsModule(object):
         0777.  The umask is applied to this mode.
 
     Raises:
-      OSError: if the directory name is invalid or parent directory is read only
+      OSError: if the directory name is invalid,
       or as per FakeFilesystem.AddObject.
     """
     if dir_name.endswith(self.sep):
       dir_name = dir_name[:-1]
+    if self.filesystem.Exists(self.path.normpath(dir_name)):
+      raise OSError(errno.EEXIST, 'Fake object already exists', dir_name)
 
-    parent_dir, _ = self.path.split(dir_name)
-    if parent_dir:
-      base_dir = self.path.normpath(parent_dir)
-      if parent_dir.endswith(self.sep + '..'):
-        base_dir, unused_dotdot, _ = parent_dir.partition(self.sep + '..')
+    head, tail = self.path.split(dir_name)
+    if head:
+      base_dir = norm_head = self.path.normpath(head)
+      if head.endswith(self.sep + '..'):
+        base_dir, unused_dotdot, _ = head.partition(self.sep + '..')
       if not self.filesystem.Exists(base_dir):
         raise OSError(errno.ENOENT, 'No such fake directory', base_dir)
-
-    dir_name = self.filesystem.NormalizePath(dir_name)
-    if self.filesystem.Exists(dir_name):
-      raise OSError(errno.EEXIST, 'Fake object already exists', dir_name)
-    head, tail = self.path.split(dir_name)
-    directory_object = self.filesystem.GetObject(head)
-    if not directory_object.st_mode & PERM_WRITE:
-      raise OSError(errno.EACCES, 'Permission Denied', dir_name)
+      head = norm_head
 
     self.filesystem.AddObject(
         head, FakeDirectory(tail, mode & ~self.filesystem.umask))
@@ -1641,24 +1631,8 @@ class FakeOsModule(object):
         applied to this mode.
 
     Raises:
-      OSError: if the directory already exists or as per
-      FakeFilesystem.CreateDirectory
+      As per FakeFilesystem.CreateDirectory
     """
-    dir_name = self.filesystem.NormalizePath(dir_name)
-    path_components = self.filesystem.GetPathComponents(dir_name)
-
-    # Raise a permission denied error if the first existing directory is not
-    # writeable.
-    current_dir = self.filesystem.root
-    for component in path_components:
-      if component not in current_dir.contents:
-        if not current_dir.st_mode & PERM_WRITE:
-          raise OSError(errno.EACCES, 'Permission Denied', dir_name)
-        else:
-          break
-      else:
-        current_dir = current_dir.contents[component]
-
     self.filesystem.CreateDirectory(dir_name, mode & ~self.filesystem.umask)
 
   def access(self, path, mode):
