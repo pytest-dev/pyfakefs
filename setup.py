@@ -30,12 +30,13 @@ CLASSIFIERS = [
     'Topic :: Software Development :: Libraries',
     'Topic :: Software Development :: Libraries :: Python Modules',
     'Topic :: Software Development :: Testing',
+    'Topic :: System :: Filesystems',
 ]
 
 AUTHOR = 'Google'
 AUTHOR_EMAIL = 'google-pyfakefs@google.com'
 KEYWORDS = ("testing test file os shutil glob mocking unittest "
-            "fakes").split(' ')
+            "fakes filesystem unit").split(' ')
 
 params = dict(
     name=NAME,
