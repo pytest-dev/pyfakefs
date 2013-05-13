@@ -750,11 +750,15 @@ class FakeOsModuleTest(TestCase):
 
   def testRemoveDir(self):
     directory = 'xyzzy'
-    dir_path = '%s/plugh' % directory
+    dir_path = '/%s/plugh' % directory
     self.filesystem.CreateDirectory(dir_path)
     self.assertTrue(self.filesystem.Exists(dir_path))
     self.assertRaises(OSError, self.os.remove, dir_path)
     self.assertTrue(self.filesystem.Exists(dir_path))
+    self.os.chdir(directory)
+    self.assertRaises(OSError, self.os.remove, 'plugh')
+    self.assertTrue(self.filesystem.Exists(dir_path))
+    self.assertRaises(OSError, self.os.remove, '/plugh')
 
   def testRemoveFile(self):
     directory = 'zzy'
@@ -804,6 +808,18 @@ class FakeOsModuleTest(TestCase):
     self.assertTrue(self.filesystem.Exists(new_file_path))
     self.assertEquals('test contents',
                       self.filesystem.GetObject(new_file_path).contents)
+
+  def testRenameDirectory(self):
+    """Can rename a directory to an unused name."""
+    for old_path, new_path in [('wxyyw', 'xyzzy'), ('/abccb', 'cdeed')]:
+      self.filesystem.CreateFile('%s/plugh' % old_path, contents='test')
+      self.assertTrue(self.filesystem.Exists(old_path))
+      self.assertFalse(self.filesystem.Exists(new_path))
+      self.os.rename(old_path, new_path)
+      self.assertFalse(self.filesystem.Exists(old_path))
+      self.assertTrue(self.filesystem.Exists(new_path))
+      self.assertEquals(
+          'test', self.filesystem.GetObject('%s/plugh' % new_path).contents)
 
   def testRenameToExistentFile(self):
     """Can rename a file to a used name."""
@@ -895,10 +911,20 @@ class FakeOsModuleTest(TestCase):
   def testRmdir(self):
     """Can remove a directory."""
     directory = 'xyzzy'
+    sub_dir = '/xyzzy/abccd'
+    other_dir = '/xyzzy/cdeed'
     self.filesystem.CreateDirectory(directory)
     self.assertTrue(self.filesystem.Exists(directory))
     self.os.rmdir(directory)
     self.assertFalse(self.filesystem.Exists(directory))
+    self.filesystem.CreateDirectory(sub_dir)
+    self.filesystem.CreateDirectory(other_dir)
+    self.os.chdir(sub_dir)
+    self.os.rmdir('../cdeed')
+    self.assertFalse(self.filesystem.Exists(other_dir))
+    self.os.chdir('..')
+    self.os.rmdir('abccd')
+    self.assertFalse(self.filesystem.Exists(sub_dir))
 
   def testRmdirRaisesIfNotEmpty(self):
     """Raises an exception if the target directory is not empty."""
@@ -915,6 +941,7 @@ class FakeOsModuleTest(TestCase):
     self.filesystem.CreateFile(file_path)
     self.assertTrue(self.filesystem.Exists(file_path))
     self.assertRaises(OSError, self.os.rmdir, file_path)
+    self.assertRaises(OSError, self.os.rmdir, '.')
 
   def testRmdirRaisesIfNotExist(self):
     """Raises an exception if the target does not exist."""
@@ -989,7 +1016,13 @@ class FakeOsModuleTest(TestCase):
     directory = 'xyzzy'
     self.assertFalse(self.filesystem.Exists(directory))
     self.os.mkdir(directory)
-    self.assertTrue(self.filesystem.Exists(directory))
+    self.assertTrue(self.filesystem.Exists('/%s' % directory))
+    self.os.chdir(directory)
+    self.os.mkdir(directory)
+    self.assertTrue(self.filesystem.Exists('/%s/%s' % (directory, directory)))
+    self.os.chdir(directory)
+    self.os.mkdir('../abccb')
+    self.assertTrue(self.filesystem.Exists('/%s/abccb' % directory))
 
   def testMkdirWithTrailingSlash(self):
     """mkdir can create a directory named with a trailing slash."""
@@ -1049,6 +1082,17 @@ class FakeOsModuleTest(TestCase):
     directory = '/xyzzy/dir1/..'
     self.assertRaises(Exception, self.os.mkdir, directory)
 
+  def testMkdirRaisesIfParentIsReadOnly(self):
+    """mkdir raises exception if parent is read only."""
+    directory = '/a'
+    self.os.mkdir(directory)
+
+    # Change directory permissions to be read only.
+    self.os.chmod(directory, 0400)
+
+    directory = '/a/b'
+    self.assertRaises(Exception, self.os.mkdir, directory)
+
   def testMakedirs(self):
     """makedirs can create a directory even in parent does not exist."""
     parent = 'xyzzy'
@@ -1063,6 +1107,17 @@ class FakeOsModuleTest(TestCase):
     directory = '%s/plugh' % file_path
     self.filesystem.CreateFile(file_path)
     self.assertTrue(self.filesystem.Exists(file_path))
+    self.assertRaises(Exception, self.os.makedirs, directory)
+
+  def testMakedirsRaisesIfAccessDenied(self):
+    """makedirs raises exception if access denied."""
+    directory = '/a'
+    self.os.mkdir(directory)
+
+    # Change directory permissions to be read only.
+    self.os.chmod(directory, 0400)
+
+    directory = '/a/b'
     self.assertRaises(Exception, self.os.makedirs, directory)
 
   def _CreateTestFile(self, path):
