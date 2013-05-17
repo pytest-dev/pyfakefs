@@ -165,6 +165,10 @@ class NormalizePathTest(unittest.TestCase):
     path = '/foo/..'
     self.assertEqual('/', self.filesystem.NormalizePath(path))
 
+  def testDotPathIsNormalized(self):
+    path = '.'
+    self.assertEqual('/', self.filesystem.NormalizePath(path))
+
 
 class GetPathComponentsTest(unittest.TestCase):
   def setUp(self):
@@ -1766,6 +1770,21 @@ class FakePathModuleTest(unittest.TestCase):
     self.assertEqual(self.path.join(basedir, file_components[1]),
                      self.path.abspath(file_components[1]))
 
+  def testRelpath(self):
+    path_foo = '/path/to/foo'
+    path_bar = '/path/to/bar'
+    path_other = '/some/where/else'
+    self.assertRaises(ValueError, self.path.relpath, None)
+    self.assertRaises(ValueError, self.path.relpath, '')
+    self.assertEqual(path_foo[1:],
+                     self.path.relpath(path_foo))
+    self.assertEqual('../foo',
+                     self.path.relpath(path_foo, path_bar))
+    self.assertEqual('../../..%s' % path_other,
+                     self.path.relpath(path_other, path_bar))
+    self.assertEqual('.',
+                     self.path.relpath(path_bar, path_bar))
+
   def testRealpathVsAbspath(self):
     self.filesystem.CreateFile('/george/washington/bridge')
     self.filesystem.CreateLink('/first/president', '/george/washington')
@@ -1799,6 +1818,11 @@ class FakePathModuleTest(unittest.TestCase):
   def testJoin(self):
     components = ['foo', 'bar', 'baz']
     self.assertEqual(os.path.join(*components), self.path.join(*components))
+
+  def testExpandUser(self):
+    self.assertEqual(self.path.expanduser('~'), self.os.environ['HOME'])
+    user = os.path.basename(self.os.environ['HOME'])
+    self.assertEqual(self.path.expanduser('~' + user), self.os.environ['HOME'])
 
   def testGetsizePathNonexistent(self):
     file_path = 'foo/bar/baz'
