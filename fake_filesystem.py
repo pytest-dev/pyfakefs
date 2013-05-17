@@ -89,6 +89,7 @@ import errno
 import heapq
 import os
 import stat
+import sys
 import time
 import warnings
 
@@ -130,6 +131,14 @@ class FakeLargeFileIoException(Error):
     Error.__init__(self,
                    'Read and write operations not supported for '
                    'fake large file: %s' % file_path)
+
+
+def CopyModule(old):
+  """Recompiles and creates new module object."""
+  saved = sys.modules.pop(old.__name__, None)
+  new = __import__(old.__name__)
+  sys.modules[old.__name__] = saved
+  return new
 
 
 class FakeFile(object):
@@ -925,6 +934,7 @@ class FakePathModule(object):
   FakePathModule should *only* be instantiated by FakeOsModule.  See the
   FakeOsModule docstring for details.
   """
+  _OS_PATH_COPY = CopyModule(os.path)
 
   def __init__(self, filesystem, os_module=None):
     """Init.
@@ -934,43 +944,12 @@ class FakePathModule(object):
       os_module: (deprecated) FakeOsModule to assign to self.os
     """
     self.filesystem = filesystem
-    self._os_path = os.path
+    self._os_path = self._OS_PATH_COPY
     if os_module is None:
       warnings.warn(FAKE_PATH_MODULE_DEPRECATION, DeprecationWarning,
                     stacklevel=2)
-    self.os = os_module
+    self._os_path.os = self.os = os_module
     self.sep = self.filesystem.path_separator
-
-  def abspath(self, path):
-    """Determines a canonical absolute path for the argument file object.
-
-    Args:
-      path: Relative or absolute path to canonicalize.
-
-    Returns:
-      (str) A normalized, absolute path to the argument file.
-    """
-    path = self.normpath(path)
-    if path.startswith(self.sep):
-      return path
-    return self.normpath(self.join(self.filesystem.cwd, path))
-
-  def normpath(self, path):
-    return self.filesystem.CollapsePath(path)
-
-  def realpath(self, path):
-    """Returns canonical absolute path, eliminating symbolic links."""
-    if path is None:
-      # The real os.path.realpath(None) raises an AttributeError.
-      raise AttributeError('Invalid path: "%s"' % path)
-    # The real os.path.realpath('') returns the current working directory.
-    return self.filesystem.ResolvePath(path or self.filesystem.cwd)
-
-  def split(self, path):
-    return self.filesystem.SplitPath(path)
-
-  def join(self, *paths):
-    return self.filesystem.JoinPaths(*paths)
 
   def exists(self, path):
     """Determines whether the file object exists within the fake filesystem.
@@ -1039,12 +1018,6 @@ class FakePathModule(object):
     else:
       return path.startswith(self.filesystem.path_separator)
 
-  def basename(self, path):
-    return self.split(path)[1]
-
-  def dirname(self, path):
-    return self.split(path)[0]
-
   def isdir(self, path):
     """Determines if path identifies a directory."""
     return self._istype(path, stat.S_IFDIR)
@@ -1083,33 +1056,6 @@ class FakePathModule(object):
     except IOError, e:
       raise OSError(errno.ENOENT, str(e))
     return file_obj.st_mtime
-
-  def walk(self, top, func, arg):
-    """Walks the directory tree starting at top.
-
-    As with the standard os.path.walk(), func() may alter the contents of fnames
-    in-place.
-
-    Args:
-      top:  root of the directory tree at which to begin the walk
-      func:  function to which to apply (arg, dirname, fnames) at each step in
-        the walk
-      arg:  argument to apply as first argument of func; may be used to collect
-        information about each step in the walk
-    """
-    try:
-      names = self.os.listdir(top)
-    except OSError, unused_error:
-      return
-    func(arg, top, names)
-    for name in names:
-      name = self.join(top, name)
-      try:
-        st = self.os.lstat(name)
-      except OSError, unused_error:
-        continue
-      if stat.S_ISDIR(st.st_mode):
-        self.walk(name, func, arg)
 
   def __getattr__(self, name):
     """Forwards any non-faked calls to os.path."""
@@ -1349,6 +1295,10 @@ class FakeOsModule(object):
   def getcwd(self):
     """Return current working directory."""
     return self.filesystem.cwd
+
+  def getcwdu(self):
+    """Return current working directory."""
+    return unicode(self.filesystem.cwd)
 
   def listdir(self, target_directory):
     """Returns a sorted list of filenames in target_directory.

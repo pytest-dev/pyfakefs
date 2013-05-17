@@ -269,22 +269,16 @@ class FakeFilesystemVsRealTest(unittest.TestCase):
 
   def assertAllBehaviorsMatch(self, path):
     os_method_names = ['readlink']
-    os_method_names_returning_paths = ['getcwd']
+    os_method_names_returning_paths = ['getcwd',
+                                       'getcwdu',
+                                      ]
     os_path_method_names = ['isabs',
                             'isdir',
                             'isfile',
                             'islink',
                             'exists',
                             'lexists',
-                            'basename',
-                            'split',
-                            'join',
                            ]
-    os_path_method_names_returning_paths = ['abspath',
-                                            'dirname',
-                                            'normpath',
-                                            'realpath',
-                                           ]
     wrapped_methods = [['access', self._AccessReal, self._AccessFake],
                        ['stat.size', self._StatSizeReal, self._StatSizeFake],
                        ['lstat.size', self._LstatSizeReal, self._LstatSizeFake]
@@ -302,11 +296,6 @@ class FakeFilesystemVsRealTest(unittest.TestCase):
         differences.append(diff)
     for method_name in os_path_method_names:
       diff = self.DiffOsPathMethodBehavior(method_name, path)
-      if diff:
-        differences.append(diff)
-    for method_name in os_path_method_names_returning_paths:
-      diff = self.DiffOsPathMethodBehavior(method_name, path,
-                                           method_returns_path=True)
       if diff:
         differences.append(diff)
     for m in wrapped_methods:
