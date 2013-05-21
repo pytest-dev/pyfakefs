@@ -42,7 +42,7 @@ File objects can't be overwritten:
 True
 >>> try:
 ...   filesystem.CreateFile(pathname)
-... except IOError, e:
+... except IOError as e:
 ...   assert e.errno == errno.EEXIST, 'unexpected errno: %d' % e.errno
 ...   assert e.strerror == 'File already exists in fake filesystem'
 
@@ -84,7 +84,6 @@ True
 True
 """
 
-import cStringIO
 import errno
 import heapq
 import os
@@ -92,17 +91,21 @@ import stat
 import sys
 import time
 import warnings
+try:
+  import cStringIO as io  # pylint: disable-msg=C6204
+except ImportError:
+  import io  # pylint: disable-msg=C6204
 
 __pychecker__ = 'no-reimportself'
 
-__version__ = '1.2'
+__version__ = '2.0'
 
-PERM_READ = 0400      # Read permission bit.
-PERM_WRITE = 0200     # Write permission bit.
-PERM_EXE = 0100       # Write permission bit.
-PERM_DEF = 0777       # Default permission bits.
-PERM_DEF_FILE = 0666  # Default permission bits (regular file)
-PERM_ALL = 07777      # All permission bits.
+PERM_READ = 0o400      # Read permission bit.
+PERM_WRITE = 0o200     # Write permission bit.
+PERM_EXE = 0o100       # Write permission bit.
+PERM_DEF = 0o777       # Default permission bits.
+PERM_DEF_FILE = 0o666  # Default permission bits (regular file)
+PERM_ALL = 0o7777      # All permission bits.
 
 _OPEN_MODE_MAP = {
     # mode name:(file must exist, need read, need write,
@@ -277,7 +280,7 @@ class FakeDirectory(FakeFile):
 
     Args:
       name:  name of the file/directory, without parent path information
-      perm_bits: permission bits. defaults to 0777.
+      perm_bits: permission bits. defaults to 0o777.
     """
     FakeFile.__init__(self, name, stat.S_IFDIR | perm_bits, {})
 
@@ -335,7 +338,7 @@ class FakeFilesystem(object):
     self.root = FakeDirectory(self.path_separator)
     self.cwd = self.root.name
     # We can't query the current value without changing it:
-    self.umask = os.umask(022)
+    self.umask = os.umask(0o22)
     os.umask(self.umask)
     # A list of open file objects. Their position in the list is their
     # file descriptor number
@@ -1053,7 +1056,7 @@ class FakePathModule(object):
     """Returns the mtime of the file."""
     try:
       file_obj = self.filesystem.GetObject(path)
-    except IOError, e:
+    except IOError as e:
       raise OSError(errno.ENOENT, str(e))
     return file_obj.st_mtime
 
@@ -1113,7 +1116,7 @@ class FakeOsModule(object):
       TypeError: if file descriptor is not an integer.
       ValueError: if invalid mode is given.
     """
-    if not isinstance(file_des, (int, long)):
+    if not isinstance(file_des, int):
       raise TypeError('an integer is required')
     if (file_des >= len(self.filesystem.open_files) or
         self.filesystem.open_files[file_des] is None):
@@ -1247,8 +1250,8 @@ class FakeOsModule(object):
     """
     try:
       directory = self.filesystem.GetObject(target_directory)
-    except IOError, (errno_code, msg):
-      raise OSError(errno_code, msg, target_directory)
+    except IOError as e:
+      raise OSError(e.errno, e.strerror, target_directory)
     if not directory.st_mode & stat.S_IFDIR:
       raise OSError(errno.ENOTDIR,
                     'Fake os module: not a directory',
@@ -1297,7 +1300,9 @@ class FakeOsModule(object):
     return self.filesystem.cwd
 
   def getcwdu(self):
-    """Return current working directory."""
+    """Return current working directory. Deprecated in Python 3."""
+    if sys.version_info >= (3, 0):
+      raise AttributeError('no attribute getcwdu')
     return unicode(self.filesystem.cwd)
 
   def listdir(self, target_directory):
@@ -1361,7 +1366,7 @@ class FakeOsModule(object):
     top = self.path.normpath(top)
     try:
       top_contents = self._ClassifyDirectoryContents(top)
-    except OSError, e:
+    except OSError as e:
       top_contents = None
       if onerror is not None:
         onerror(e)
@@ -1422,7 +1427,7 @@ class FakeOsModule(object):
                                stats.st_size, stats.st_atime,
                                stats.st_mtime, stats.st_ctime))
       return st_obj
-    except IOError, io_error:
+    except IOError as io_error:
       raise OSError(io_error.errno, io_error.strerror, entry_path)
 
   def lstat(self, entry_path):
@@ -1445,7 +1450,7 @@ class FakeOsModule(object):
                                stats.st_size, stats.st_atime,
                                stats.st_mtime, stats.st_ctime))
       return st_obj
-    except IOError, io_error:
+    except IOError as io_error:
       raise OSError(io_error.errno, io_error.strerror, entry_path)
 
   def remove(self, path):
@@ -1454,7 +1459,7 @@ class FakeOsModule(object):
       raise OSError(errno.EISDIR, "Is a directory: '%s'" % path)
     try:
       self.filesystem.RemoveObject(path)
-    except IOError, e:
+    except IOError as e:
       raise OSError(e.errno, e.strerror, e.filename)
 
   # As per the documentation unlink = remove.
@@ -1524,7 +1529,7 @@ class FakeOsModule(object):
                       target_directory)
       try:
         self.filesystem.RemoveObject(target_directory)
-      except IOError, e:
+      except IOError as e:
         raise OSError(e.errno, e.strerror, e.filename)
 
   def removedirs(self, target_directory):
@@ -1553,7 +1558,7 @@ class FakeOsModule(object):
       dir_name: (str) Name of directory to create.  Relative paths are assumed
         to be relative to '/'.
       mode: (int) Mode to create directory with.  This argument defaults to
-        0777.  The umask is applied to this mode.
+        0o777.  The umask is applied to this mode.
 
     Raises:
       OSError: if the directory name is invalid or parent directory is read only
@@ -1587,7 +1592,7 @@ class FakeOsModule(object):
     Args:
       dir_name: (str) Name of directory to create.
       mode: (int) Mode to create directory (and any necessary parent
-        directories) with. This argument defaults to 0777.  The umask is
+        directories) with. This argument defaults to 0o777.  The umask is
         applied to this mode.
 
     Raises:
@@ -1623,7 +1628,7 @@ class FakeOsModule(object):
     """
     try:
       st = self.stat(path)
-    except OSError, os_error:
+    except OSError as os_error:
       if os_error.errno == errno.ENOENT:
         return False
       raise
@@ -1638,7 +1643,7 @@ class FakeOsModule(object):
     """
     try:
       file_object = self.filesystem.GetObject(path)
-    except IOError, io_error:
+    except IOError as io_error:
       if io_error.errno == errno.ENOENT:
         raise OSError(errno.ENOENT,
                       'No such file or directory in fake filesystem',
@@ -1663,7 +1668,7 @@ class FakeOsModule(object):
     """
     try:
       file_object = self.filesystem.GetObject(path)
-    except IOError, io_error:
+    except IOError as io_error:
       if io_error.errno == errno.ENOENT:
         raise OSError(errno.ENOENT,
                       'No such file or directory in fake filesystem',
@@ -1692,7 +1697,7 @@ class FakeOsModule(object):
     """
     try:
       file_object = self.filesystem.GetObject(path)
-    except IOError, io_error:
+    except IOError as io_error:
       if io_error.errno == errno.ENOENT:
         raise OSError(errno.ENOENT,
                       'No such file or directory in fake filesystem',
@@ -1712,7 +1717,7 @@ class FakeOsModule(object):
     Args:
       filename: (str) Name of the file to create
       mode: (int) permissions to use and type of file to be created.
-        Default permissions are 0666.  Only the stat.S_IFREG file type
+        Default permissions are 0o666.  Only the stat.S_IFREG file type
         is supported by the fake implementation.  The umask is applied
         to this mode.
       device: not supported in fake implementation
@@ -1852,7 +1857,7 @@ class FakeFileOpen(object):
         self._update = update
         if file_object.contents:
           if update:
-            self._io = cStringIO.StringIO()
+            self._io = io.StringIO()
             self._io.write(file_object.contents)
             if not append:
               self._io.seek(0)
@@ -1863,9 +1868,9 @@ class FakeFileOpen(object):
               else:
                 self._read_seek = self._io.tell()
           else:
-            self._io = cStringIO.StringIO(file_object.contents)
+            self._io = io.StringIO(file_object.contents)
         else:
-          self._io = cStringIO.StringIO()
+          self._io = io.StringIO()
           self._read_whence = 0
           self._read_seek = 0
         if delete_on_close:

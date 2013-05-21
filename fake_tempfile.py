@@ -24,10 +24,14 @@ import errno
 import logging
 import os
 import stat
-import StringIO
 import tempfile
 
 import fake_filesystem
+
+try:
+  import StringIO as io  # pylint: disable-msg=C6204
+except ImportError:
+  import io  # pylint: disable-msg=C6204
 
 
 class FakeTempfileModule(object):
@@ -72,7 +76,7 @@ class FakeTempfileModule(object):
       # pylint: disable-msg=W0212
       filename = os.path.join(dir, '%s%s%s' % (
           prefix,
-          self._tempfile._RandomNameSequence().next(),
+          next(self._tempfile._RandomNameSequence()),
           suffix))
     return filename
 
@@ -109,7 +113,7 @@ class FakeTempfileModule(object):
     # pylint: disable-msg=C6002
     # TODO: prefix, suffix, bufsize, dir, mode unused?
     # cannot be cStringIO due to .name requirement below
-    retval = StringIO.StringIO()
+    retval = io.StringIO()
     retval.name = '<fdopen>'  # as seen on 2.4.3
     return retval
 
@@ -185,7 +189,7 @@ class FakeTempfileModule(object):
     # TODO: optional boolean text is unused?
     # default dir affected by "global"
     filename = self._TempEntryname(suffix, prefix, dir)
-    self._filesystem.CreateFile(filename, st_mode=stat.S_IFREG|0600)
+    self._filesystem.CreateFile(filename, st_mode=stat.S_IFREG|0o600)
 
     self._mktemp_retvals.append(filename)
     return (9999, filename)  # 9999 is greater than ulimit -n (8192)
@@ -212,7 +216,7 @@ class FakeTempfileModule(object):
       string, directory name
     """
     dirname = self._TempEntryname(suffix, prefix, dir)
-    self._filesystem.CreateDirectory(dirname, perm_bits=0700)
+    self._filesystem.CreateDirectory(dirname, perm_bits=0o700)
 
     self._mktemp_retvals.append(dirname)
     return dirname
@@ -244,7 +248,7 @@ class FakeTempfileModule(object):
       parent_dir = os.path.dirname(entryname)
       try:
         self._filesystem.GetObject(parent_dir)
-      except IOError, err:
+      except IOError as err:
         assert 'No such file or directory' in str(err)
         # python -c 'import tempfile; tempfile.mkstemp(dir="/no/such/dr")'
         # OSError: [Errno 2] No such file or directory: '/no/such/dr/tmpFBuqjO'

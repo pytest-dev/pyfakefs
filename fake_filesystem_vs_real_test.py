@@ -19,6 +19,7 @@
 import os
 import os.path
 import shutil
+import sys
 import tempfile
 import time
 import unittest
@@ -76,8 +77,8 @@ class FakeFilesystemVsRealTest(unittest.TestCase):
     self.fake_base = self._FAKE_FS_BASE
 
     # Make sure we can write to the physical testing temp directory.
-    self.assert_(self.real_base.startswith('/'))
-    self.assert_(os.access(self.real_base, os.W_OK))
+    self.assertTrue(self.real_base.startswith('/'))
+    self.assertTrue(os.access(self.real_base, os.W_OK))
 
     self.fake_filesystem = fake_filesystem.FakeFilesystem()
     self.fake_filesystem.CreateDirectory(self.fake_base)
@@ -99,7 +100,7 @@ class FakeFilesystemVsRealTest(unittest.TestCase):
         if info[0] == 'd':
           try:
             os.rmdir(real_path)
-          except OSError, e:
+          except OSError as e:
             if 'Directory not empty' in e:
               self.fail('Real path %s not empty: %s : %s' % (
                   real_path, e, os.listdir(real_path)))
@@ -151,11 +152,13 @@ class FakeFilesystemVsRealTest(unittest.TestCase):
     # Catching Exception below gives a lint warning, but it's what we need.
     try:
       real_value = real_method(path)
-    except Exception, real_err:  # pylint: disable-msg=W0703
+    except Exception as e:  # pylint: disable-msg=W0703
+      real_err = e
       errs += 1
     try:
       fake_value = fake_method(path)
-    except Exception, fake_err:  # pylint: disable-msg=W0703
+    except Exception as e:  # pylint: disable-msg=W0703
+      fake_err = e
       errs += 1
     # We only compare on the error class because the acutal error contents
     # is almost always different because of the file paths.
@@ -269,9 +272,9 @@ class FakeFilesystemVsRealTest(unittest.TestCase):
 
   def assertAllBehaviorsMatch(self, path):
     os_method_names = ['readlink']
-    os_method_names_returning_paths = ['getcwd',
-                                       'getcwdu',
-                                      ]
+    os_method_names_returning_paths = ['getcwd']
+    if sys.version_info < (3, 0):
+      os_method_names_returning_paths.append('getcwdu')
     os_path_method_names = ['isabs',
                             'isdir',
                             'isfile',
@@ -309,10 +312,10 @@ class FakeFilesystemVsRealTest(unittest.TestCase):
   # Helpers for checks which are not straight method calls.
 
   def _AccessReal(self, path):
-    return os.access(path, 0777777)
+    return os.access(path, 0o777777)
 
   def _AccessFake(self, path):
-    return self.fake_os.access(path, 0777777)
+    return self.fake_os.access(path, 0o777777)
 
   def _StatSizeReal(self, path):
     real_path, unused_fake_path = self._Paths(path)
