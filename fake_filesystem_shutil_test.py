@@ -44,13 +44,13 @@ class FakeShutilModuleTest(unittest.TestCase):
     src_file = 'xyzzy'
     dst_file = 'xyzzy_copy'
     src_obj = self.filesystem.CreateFile(src_file)
-    src_obj.st_mode = ((src_obj.st_mode & ~07777) | 0750)
+    src_obj.st_mode = ((src_obj.st_mode & ~0o7777) | 0o750)
     self.assertTrue(self.filesystem.Exists(src_file))
     self.assertFalse(self.filesystem.Exists(dst_file))
     self.shutil.copy(src_file, dst_file)
     self.assertTrue(self.filesystem.Exists(dst_file))
     dst_obj = self.filesystem.GetObject(dst_file)
-    self.assertEquals(src_obj.st_mode, dst_obj.st_mode)
+    self.assertEqual(src_obj.st_mode, dst_obj.st_mode)
 
   def testCopyDirectory(self):
     src_file = 'xyzzy'
@@ -58,21 +58,21 @@ class FakeShutilModuleTest(unittest.TestCase):
     dst_file = os.path.join(parent_directory, src_file)
     src_obj = self.filesystem.CreateFile(src_file)
     self.filesystem.CreateDirectory(parent_directory)
-    src_obj.st_mode = ((src_obj.st_mode & ~07777) | 0750)
+    src_obj.st_mode = ((src_obj.st_mode & ~0o7777) | 0o750)
     self.assertTrue(self.filesystem.Exists(src_file))
     self.assertTrue(self.filesystem.Exists(parent_directory))
     self.assertFalse(self.filesystem.Exists(dst_file))
     self.shutil.copy(src_file, parent_directory)
     self.assertTrue(self.filesystem.Exists(dst_file))
     dst_obj = self.filesystem.GetObject(dst_file)
-    self.assertEquals(src_obj.st_mode, dst_obj.st_mode)
+    self.assertEqual(src_obj.st_mode, dst_obj.st_mode)
 
   def testCopystat(self):
     src_file = 'xyzzy'
     dst_file = 'xyzzy_copy'
     src_obj = self.filesystem.CreateFile(src_file)
     dst_obj = self.filesystem.CreateFile(dst_file)
-    src_obj.st_mode = ((src_obj.st_mode & ~07777) | 0750)
+    src_obj.st_mode = ((src_obj.st_mode & ~0o7777) | 0o750)
     src_obj.st_uid = 123
     src_obj.st_gid = 123
     src_obj.st_atime = time.time()
@@ -80,17 +80,17 @@ class FakeShutilModuleTest(unittest.TestCase):
     self.assertTrue(self.filesystem.Exists(src_file))
     self.assertTrue(self.filesystem.Exists(dst_file))
     self.shutil.copystat(src_file, dst_file)
-    self.assertEquals(src_obj.st_mode, dst_obj.st_mode)
-    self.assertEquals(src_obj.st_uid, dst_obj.st_uid)
-    self.assertEquals(src_obj.st_gid, dst_obj.st_gid)
-    self.assertEquals(src_obj.st_atime, dst_obj.st_atime)
-    self.assertEquals(src_obj.st_mtime, dst_obj.st_mtime)
+    self.assertEqual(src_obj.st_mode, dst_obj.st_mode)
+    self.assertEqual(src_obj.st_uid, dst_obj.st_uid)
+    self.assertEqual(src_obj.st_gid, dst_obj.st_gid)
+    self.assertEqual(src_obj.st_atime, dst_obj.st_atime)
+    self.assertEqual(src_obj.st_mtime, dst_obj.st_mtime)
 
   def testCopy2(self):
     src_file = 'xyzzy'
     dst_file = 'xyzzy_copy'
     src_obj = self.filesystem.CreateFile(src_file)
-    src_obj.st_mode = ((src_obj.st_mode & ~07777) | 0750)
+    src_obj.st_mode = ((src_obj.st_mode & ~0o7777) | 0o750)
     src_obj.st_uid = 123
     src_obj.st_gid = 123
     src_obj.st_atime = time.time()
@@ -100,11 +100,11 @@ class FakeShutilModuleTest(unittest.TestCase):
     self.shutil.copy2(src_file, dst_file)
     self.assertTrue(self.filesystem.Exists(dst_file))
     dst_obj = self.filesystem.GetObject(dst_file)
-    self.assertEquals(src_obj.st_mode, dst_obj.st_mode)
-    self.assertEquals(src_obj.st_uid, dst_obj.st_uid)
-    self.assertEquals(src_obj.st_gid, dst_obj.st_gid)
-    self.assertEquals(src_obj.st_atime, dst_obj.st_atime)
-    self.assertEquals(src_obj.st_mtime, dst_obj.st_mtime)
+    self.assertEqual(src_obj.st_mode, dst_obj.st_mode)
+    self.assertEqual(src_obj.st_uid, dst_obj.st_uid)
+    self.assertEqual(src_obj.st_gid, dst_obj.st_gid)
+    self.assertEqual(src_obj.st_atime, dst_obj.st_atime)
+    self.assertEqual(src_obj.st_mtime, dst_obj.st_mtime)
 
   def testCopy2Directory(self):
     src_file = 'xyzzy'
@@ -112,7 +112,7 @@ class FakeShutilModuleTest(unittest.TestCase):
     dst_file = os.path.join(parent_directory, src_file)
     src_obj = self.filesystem.CreateFile(src_file)
     self.filesystem.CreateDirectory(parent_directory)
-    src_obj.st_mode = ((src_obj.st_mode & ~07777) | 0750)
+    src_obj.st_mode = ((src_obj.st_mode & ~0o7777) | 0o750)
     src_obj.st_uid = 123
     src_obj.st_gid = 123
     src_obj.st_atime = time.time()
@@ -123,11 +123,11 @@ class FakeShutilModuleTest(unittest.TestCase):
     self.shutil.copy2(src_file, parent_directory)
     self.assertTrue(self.filesystem.Exists(dst_file))
     dst_obj = self.filesystem.GetObject(dst_file)
-    self.assertEquals(src_obj.st_mode, dst_obj.st_mode)
-    self.assertEquals(src_obj.st_uid, dst_obj.st_uid)
-    self.assertEquals(src_obj.st_gid, dst_obj.st_gid)
-    self.assertEquals(src_obj.st_atime, dst_obj.st_atime)
-    self.assertEquals(src_obj.st_mtime, dst_obj.st_mtime)
+    self.assertEqual(src_obj.st_mode, dst_obj.st_mode)
+    self.assertEqual(src_obj.st_uid, dst_obj.st_uid)
+    self.assertEqual(src_obj.st_gid, dst_obj.st_gid)
+    self.assertEqual(src_obj.st_atime, dst_obj.st_atime)
+    self.assertEqual(src_obj.st_mtime, dst_obj.st_mtime)
 
   def testCopytree(self):
     src_directory = 'xyzzy'
@@ -209,7 +209,7 @@ class CopyFileTest(unittest.TestCase):
     self.assertFalse(self.filesystem.Exists(dst_file))
     self.shutil.copyfile(src_file, dst_file)
     self.assertTrue(self.filesystem.Exists(dst_file))
-    self.assertEquals(contents, self.filesystem.GetObject(dst_file).contents)
+    self.assertEqual(contents, self.filesystem.GetObject(dst_file).contents)
 
   def testRaisesIfSourceAndDestAreTheSameFile(self):
     src_file = 'xyzzy'
@@ -241,8 +241,8 @@ class CopyFileTest(unittest.TestCase):
     self.assertTrue(self.filesystem.Exists(dst_file))
     self.shutil.copyfile(src_file, dst_file)
     self.assertTrue(self.filesystem.Exists(dst_file))
-    self.assertEquals(src_contents,
-                      self.filesystem.GetObject(dst_file).contents)
+    self.assertEqual(src_contents,
+                     self.filesystem.GetObject(dst_file).contents)
 
   def testRaisesIfDestExistsAndIsNotWritable(self):
     src_file = 'xyzzy'
@@ -251,7 +251,7 @@ class CopyFileTest(unittest.TestCase):
     dst_contents = 'contents of dest file'
     self.filesystem.CreateFile(src_file, contents=src_contents)
     self.filesystem.CreateFile(dst_file,
-                               st_mode=stat.S_IFREG | 0400,
+                               st_mode=stat.S_IFREG | 0o400,
                                contents=dst_contents)
     self.assertTrue(self.filesystem.Exists(src_file))
     self.assertTrue(self.filesystem.Exists(dst_file))
@@ -263,7 +263,7 @@ class CopyFileTest(unittest.TestCase):
     dst_file = os.path.join(dst_dir, src_file)
     src_contents = 'contents of source file'
     self.filesystem.CreateFile(src_file, contents=src_contents)
-    self.filesystem.CreateDirectory(dst_dir, perm_bits=0555)
+    self.filesystem.CreateDirectory(dst_dir, perm_bits=0o555)
     self.assertTrue(self.filesystem.Exists(src_file))
     self.assertTrue(self.filesystem.Exists(dst_dir))
     self.assertRaises(IOError, self.shutil.copyfile, src_file, dst_file)
@@ -279,7 +279,7 @@ class CopyFileTest(unittest.TestCase):
     dst_file = 'xyzzy_copy'
     src_contents = 'contents of source file'
     self.filesystem.CreateFile(src_file,
-                               st_mode=stat.S_IFREG | 0000,
+                               st_mode=stat.S_IFREG | 0o000,
                                contents=src_contents)
     self.assertTrue(self.filesystem.Exists(src_file))
     self.assertRaises(IOError, self.shutil.copyfile, src_file, dst_file)

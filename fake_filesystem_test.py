@@ -20,6 +20,7 @@ import errno
 import os
 import re
 import stat
+import sys
 import time
 import unittest
 
@@ -36,8 +37,8 @@ def _GetDummyTime(start_time, increment):
 
 class TestCase(unittest.TestCase):
 
-  def assertModeEquals(self, expected, actual):
-    return self.assertEquals(stat.S_IMODE(expected), stat.S_IMODE(actual))
+  def assertModeEqual(self, expected, actual):
+    return self.assertEqual(stat.S_IMODE(expected), stat.S_IMODE(actual))
 
 
 class FakeDirectoryUnitTest(unittest.TestCase):
@@ -97,7 +98,7 @@ class FakeDirectoryUnitTest(unittest.TestCase):
     self.assertEqual('dummy_file\0\0\0', self.fake_file.contents)
 
   def testSetMTime(self):
-    self.assertEquals(10, self.fake_file.st_mtime)
+    self.assertEqual(10, self.fake_file.st_mtime)
     self.fake_file.SetMTime(13)
     self.assertEqual(13, self.fake_file.st_mtime)
     self.fake_file.SetMTime(131)
@@ -434,8 +435,8 @@ class FakeFilesystemUnitTest(unittest.TestCase):
     self.filesystem.CreateFile('dir/target', contents=target_contents)
     self.filesystem.CreateLink(link_name, target_path)
     obj = self.filesystem.ResolveObject(link_name)
-    self.assertEquals('target', obj.name)
-    self.assertEquals(target_contents, obj.contents)
+    self.assertEqual('target', obj.name)
+    self.assertEqual(target_contents, obj.contents)
 
   def testLresolveObject(self):
     target_path = 'dir/target'
@@ -445,8 +446,8 @@ class FakeFilesystemUnitTest(unittest.TestCase):
     self.filesystem.CreateFile('dir/target', contents=target_contents)
     self.filesystem.CreateLink(link_name, target_path)
     obj = self.filesystem.LResolveObject(link_name)
-    self.assertEquals(link_name, obj.name)
-    self.assertEquals(target_path, obj.contents)
+    self.assertEqual(link_name, obj.name)
+    self.assertEqual(target_path, obj.contents)
 
   def testDirectoryAccessOnFile(self):
     self.filesystem.CreateFile('not_a_dir')
@@ -485,10 +486,10 @@ class FakeOsModuleTest(TestCase):
     """
     try:
       callable_obj(*args, **kwargs)
-    except expected_exception, err:
-      if isinstance(expected_regexp, basestring):
+    except expected_exception as err:
+      if isinstance(expected_regexp, str):
         expected_regexp = re.compile(expected_regexp)
-      self.assert_(
+      self.assertTrue(
           expected_regexp.search(str(err)),
           '"%s" does not match "%s"' % (expected_regexp.pattern, str(err)))
     else:
@@ -625,7 +626,7 @@ class FakeOsModuleTest(TestCase):
     fake_open = fake_filesystem.FakeFileOpen(self.filesystem)
     file_path1 = 'some_file1'
     self.filesystem.CreateFile(file_path1, contents='contents here1',
-                               st_mode=((stat.S_IFREG | 0666) ^ stat.S_IWRITE))
+                               st_mode=((stat.S_IFREG | 0o666) ^ stat.S_IWRITE))
 
     fake_file1 = fake_open(file_path1, 'r')
     self.assertEqual(0, fake_file1.fileno())
@@ -642,10 +643,10 @@ class FakeOsModuleTest(TestCase):
 
   def testLowLevelOpenCreateMode(self):
     file_path = 'file1'
-    fileno = self.os.open(file_path, self.os.O_CREAT, 0700)
+    fileno = self.os.open(file_path, self.os.O_CREAT, 0o700)
     self.assertEqual(0, fileno)
     self.assertTrue(self.os.path.exists(file_path))
-    self.assertModeEquals(0700, self.os.stat(file_path).st_mode)
+    self.assertModeEqual(0o700, self.os.stat(file_path).st_mode)
 
   def testLowLevelOpenCreateModeUnsupported(self):
     file_path = 'file1'
@@ -720,7 +721,7 @@ class FakeOsModuleTest(TestCase):
       # Use try-catch to check exception attributes.
       self.os.stat(file_path)
       self.fail('Exception is expected.')  # COV_NF_LINE
-    except OSError, os_error:
+    except OSError as os_error:
       self.assertEqual(errno.ENOENT, os_error.errno)
       self.assertEqual(file_path, os_error.filename)
 
@@ -810,8 +811,8 @@ class FakeOsModuleTest(TestCase):
     self.os.rename(old_file_path, new_file_path)
     self.assertFalse(self.filesystem.Exists(old_file_path))
     self.assertTrue(self.filesystem.Exists(new_file_path))
-    self.assertEquals('test contents',
-                      self.filesystem.GetObject(new_file_path).contents)
+    self.assertEqual('test contents',
+                     self.filesystem.GetObject(new_file_path).contents)
 
   def testRenameDirectory(self):
     """Can rename a directory to an unused name."""
@@ -822,7 +823,7 @@ class FakeOsModuleTest(TestCase):
       self.os.rename(old_path, new_path)
       self.assertFalse(self.filesystem.Exists(old_path))
       self.assertTrue(self.filesystem.Exists(new_path))
-      self.assertEquals(
+      self.assertEqual(
           'test', self.filesystem.GetObject('%s/plugh' % new_path).contents)
 
   def testRenameToExistentFile(self):
@@ -837,8 +838,8 @@ class FakeOsModuleTest(TestCase):
     self.os.rename(old_file_path, new_file_path)
     self.assertFalse(self.filesystem.Exists(old_file_path))
     self.assertTrue(self.filesystem.Exists(new_file_path))
-    self.assertEquals('test contents 1',
-                      self.filesystem.GetObject(new_file_path).contents)
+    self.assertEqual('test contents 1',
+                     self.filesystem.GetObject(new_file_path).contents)
 
   def testRenameToNonexistentDir(self):
     """Can rename a file to a name in a nonexistent dir."""
@@ -851,8 +852,8 @@ class FakeOsModuleTest(TestCase):
     self.assertRaises(IOError, self.os.rename, old_file_path, new_file_path)
     self.assertTrue(self.filesystem.Exists(old_file_path))
     self.assertFalse(self.filesystem.Exists(new_file_path))
-    self.assertEquals('test contents',
-                      self.filesystem.GetObject(old_file_path).contents)
+    self.assertEqual('test contents',
+                     self.filesystem.GetObject(old_file_path).contents)
 
   def testRenameNonexistentFileShouldRaiseError(self):
     """Can't rename a file that doesn't exist."""
@@ -891,8 +892,8 @@ class FakeOsModuleTest(TestCase):
     self.assertFalse(self.filesystem.Exists(before_file))
     self.assertTrue(self.filesystem.Exists(after_dir))
     self.assertTrue(self.filesystem.Exists(after_file))
-    self.assertEquals('payload',
-                      self.filesystem.GetObject(after_file).contents)
+    self.assertEqual('payload',
+                     self.filesystem.GetObject(after_file).contents)
 
   def testRenamePreservesStat(self):
     """Test if rename preserves mtime."""
@@ -902,7 +903,7 @@ class FakeOsModuleTest(TestCase):
     old_file = self.filesystem.CreateFile(old_file_path)
     old_file.SetMTime(old_file.st_mtime - 3600)
     self.os.chown(old_file_path, 200, 200)
-    self.os.chmod(old_file_path, 0222)
+    self.os.chmod(old_file_path, 0o222)
     new_file = self.filesystem.CreateFile(new_file_path)
     self.assertNotEqual(new_file.st_mtime, old_file.st_mtime)
     self.os.rename(old_file_path, new_file_path)
@@ -1092,7 +1093,7 @@ class FakeOsModuleTest(TestCase):
     self.os.mkdir(directory)
 
     # Change directory permissions to be read only.
-    self.os.chmod(directory, 0400)
+    self.os.chmod(directory, 0o400)
 
     directory = '/a/b'
     self.assertRaises(Exception, self.os.mkdir, directory)
@@ -1119,7 +1120,7 @@ class FakeOsModuleTest(TestCase):
     self.os.mkdir(directory)
 
     # Change directory permissions to be read only.
-    self.os.chmod(directory, 0400)
+    self.os.chmod(directory, 0o400)
 
     directory = '/a/b'
     self.assertRaises(Exception, self.os.makedirs, directory)
@@ -1128,7 +1129,7 @@ class FakeOsModuleTest(TestCase):
     self.filesystem.CreateFile(path)
     self.assertTrue(self.filesystem.Exists(path))
     st = self.os.stat(path)
-    self.assertEquals(0666, stat.S_IMODE(st.st_mode))
+    self.assertEqual(0o666, stat.S_IMODE(st.st_mode))
     self.assertTrue(st.st_mode & stat.S_IFREG)
     self.assertFalse(st.st_mode & stat.S_IFDIR)
 
@@ -1136,7 +1137,7 @@ class FakeOsModuleTest(TestCase):
     self.filesystem.CreateDirectory(path)
     self.assertTrue(self.filesystem.Exists(path))
     st = self.os.stat(path)
-    self.assertEquals(0777, stat.S_IMODE(st.st_mode))
+    self.assertEqual(0o777, stat.S_IMODE(st.st_mode))
     self.assertFalse(st.st_mode & stat.S_IFREG)
     self.assertTrue(st.st_mode & stat.S_IFDIR)
 
@@ -1144,8 +1145,8 @@ class FakeOsModuleTest(TestCase):
     # set up
     path = '/some_file'
     self._CreateTestFile(path)
-    self.os.chmod(path, 0700)
-    self.assertModeEquals(0700, self.os.stat(path).st_mode)
+    self.os.chmod(path, 0o700)
+    self.assertModeEqual(0o700, self.os.stat(path).st_mode)
     # actual tests
     self.assertTrue(self.os.access(path, self.os.F_OK))
     self.assertTrue(self.os.access(path, self.os.R_OK))
@@ -1157,8 +1158,8 @@ class FakeOsModuleTest(TestCase):
     # set up
     path = '/some_file'
     self._CreateTestFile(path)
-    self.os.chmod(path, 0600)
-    self.assertModeEquals(0600, self.os.stat(path).st_mode)
+    self.os.chmod(path, 0o600)
+    self.assertModeEqual(0o600, self.os.stat(path).st_mode)
     # actual tests
     self.assertTrue(self.os.access(path, self.os.F_OK))
     self.assertTrue(self.os.access(path, self.os.R_OK))
@@ -1171,8 +1172,8 @@ class FakeOsModuleTest(TestCase):
     # set up
     path = '/some_file'
     self._CreateTestFile(path)
-    self.os.chmod(path, 0400)
-    self.assertModeEquals(0400, self.os.stat(path).st_mode)
+    self.os.chmod(path, 0o400)
+    self.assertModeEqual(0o400, self.os.stat(path).st_mode)
     # actual tests
     self.assertTrue(self.os.access(path, self.os.F_OK))
     self.assertTrue(self.os.access(path, self.os.R_OK))
@@ -1198,9 +1199,9 @@ class FakeOsModuleTest(TestCase):
     path = '/some_file'
     self._CreateTestFile(path)
     # actual tests
-    self.os.chmod(path, 06543)
+    self.os.chmod(path, 0o6543)
     st = self.os.stat(path)
-    self.assertModeEquals(06543, st.st_mode)
+    self.assertModeEqual(0o6543, st.st_mode)
     self.assertTrue(st.st_mode & stat.S_IFREG)
     self.assertFalse(st.st_mode & stat.S_IFDIR)
 
@@ -1209,9 +1210,9 @@ class FakeOsModuleTest(TestCase):
     path = '/some_dir'
     self._CreateTestDirectory(path)
     # actual tests
-    self.os.chmod(path, 01234)
+    self.os.chmod(path, 0o1234)
     st = self.os.stat(path)
-    self.assertModeEquals(01234, st.st_mode)
+    self.assertModeEqual(0o1234, st.st_mode)
     self.assertFalse(st.st_mode & stat.S_IFREG)
     self.assertTrue(st.st_mode & stat.S_IFDIR)
 
@@ -1222,9 +1223,9 @@ class FakeOsModuleTest(TestCase):
     # actual tests
     try:
       # Use try-catch to check exception attributes.
-      self.os.chmod(path, 0777)
+      self.os.chmod(path, 0o777)
       self.fail('Exception is expected.')  # COV_NF_LINE
-    except OSError, os_error:
+    except OSError as os_error:
       self.assertEqual(errno.ENOENT, os_error.errno)
       self.assertEqual(path, os_error.filename)
 
@@ -1236,7 +1237,7 @@ class FakeOsModuleTest(TestCase):
     st = self.os.stat(file_path)
     self.assertEqual(200, st.st_ctime)
     # tests
-    self.os.chmod(file_path, 0765)
+    self.os.chmod(file_path, 0o765)
     st = self.os.stat(file_path)
     self.assertEqual(220, st.st_ctime)
 
@@ -1289,8 +1290,8 @@ class FakeOsModuleTest(TestCase):
     # actual tests
     self.os.utime(path, (1.0, 2.0))
     st = self.os.stat(path)
-    self.assertEquals(1.0, st.st_atime)
-    self.assertEquals(2.0, st.st_mtime)
+    self.assertEqual(1.0, st.st_atime)
+    self.assertEqual(2.0, st.st_mtime)
 
   def testUtimeNonExistent(self):
     # set up
@@ -1301,7 +1302,7 @@ class FakeOsModuleTest(TestCase):
       # Use try-catch to check exception attributes.
       self.os.utime(path, (1, 2))
       self.fail('Exception is expected.')  # COV_NF_LINE
-    except OSError, os_error:
+    except OSError as os_error:
       self.assertEqual(errno.ENOENT, os_error.errno)
       self.assertEqual(path, os_error.filename)
 
@@ -1364,7 +1365,7 @@ class FakeOsModuleTest(TestCase):
     test_directories.sort()
     test_files.sort()
     generator = self.os.walk(root_directory)
-    root, dirs, files = generator.next()
+    root, dirs, files = next(generator)
     dirs.sort()
     files.sort()
     self.assertEqual(root_directory, root)
@@ -1410,16 +1411,16 @@ class FakeOsModuleTest(TestCase):
   def testWalkRaisesIfNonExistent(self):
     """Raises an exception when attempting to walk non-existent directory."""
     directory = '/foo/bar'
-    self.assertEquals(False, self.filesystem.Exists(directory))
+    self.assertEqual(False, self.filesystem.Exists(directory))
     generator = self.os.walk(directory)
-    self.assertRaises(StopIteration, generator.next)
+    self.assertRaises(StopIteration, next, generator)
 
   def testWalkRaisesIfNotDirectory(self):
     """Raises an exception when attempting to walk a non-directory."""
     filename = '/foo/bar'
     self.filesystem.CreateFile(filename)
     generator = self.os.walk(filename)
-    self.assertRaises(StopIteration, generator.next)
+    self.assertRaises(StopIteration, next, generator)
 
   def testMkNodeCanCreateAFile(self):
     filename = 'foo'
@@ -1493,24 +1494,24 @@ class FakeOsModuleTest(TestCase):
     """Calls onerror with correct errno when walking non-existent directory."""
     self.ResetErrno()
     directory = '/foo/bar'
-    self.assertEquals(False, self.filesystem.Exists(directory))
+    self.assertEqual(False, self.filesystem.Exists(directory))
     # Calling os.walk on a non-existent directory should trigger a call to the
     # onerror method.  We do not actually care what, if anything, is returned.
     for unused_entry in self.os.walk(directory, onerror=self.StoreErrno):
       pass
-    self.assertEquals(errno.ENOENT, self.GetErrno())
+    self.assertEqual(errno.ENOENT, self.GetErrno())
 
   def testWalkCallsOnErrorIfNotDirectory(self):
     """Calls onerror with correct errno when walking non-directory."""
     self.ResetErrno()
     filename = '/foo/bar'
     self.filesystem.CreateFile(filename)
-    self.assertEquals(True, self.filesystem.Exists(filename))
+    self.assertEqual(True, self.filesystem.Exists(filename))
     # Calling os.walk on a file should trigger a call to the onerror method.
     # We do not actually care what, if anything, is returned.
     for unused_entry in self.os.walk(filename, onerror=self.StoreErrno):
       pass
-    self.assertEquals(errno.ENOTDIR, self.GetErrno())
+    self.assertEqual(errno.ENOTDIR, self.GetErrno())
 
   def testWalkSkipsRemovedDirectories(self):
     """Caller can modify list of directories to visit while walking."""
@@ -1524,7 +1525,7 @@ class FakeOsModuleTest(TestCase):
     self.filesystem.CreateFile('%s/%s/4.txt' % (root, no_visit))
 
     generator = self.os.walk('/foo')
-    root_contents = generator.next()
+    root_contents = next(generator)
     root_contents[1].remove(no_visit)
 
     visited_visit_directory = False
@@ -1546,48 +1547,48 @@ class FakeOsModuleTest(TestCase):
     self.assertTrue(self.os.path.exists(file_path))
 
   def testUMask(self):
-    umask = os.umask(022)
+    umask = os.umask(0o22)
     os.umask(umask)
-    self.assertEquals(umask, self.os.umask(022))
+    self.assertEqual(umask, self.os.umask(0o22))
 
   def testMkdirUmaskApplied(self):
     """mkdir creates a directory with umask applied."""
-    self.os.umask(022)
+    self.os.umask(0o22)
     self.os.mkdir('dir1')
-    self.assertModeEquals(0755, self.os.stat('dir1').st_mode)
-    self.os.umask(067)
+    self.assertModeEqual(0o755, self.os.stat('dir1').st_mode)
+    self.os.umask(0o67)
     self.os.mkdir('dir2')
-    self.assertModeEquals(0710, self.os.stat('dir2').st_mode)
+    self.assertModeEqual(0o710, self.os.stat('dir2').st_mode)
 
   def testMakedirsUmaskApplied(self):
     """makedirs creates a directories with umask applied."""
-    self.os.umask(022)
+    self.os.umask(0o22)
     self.os.makedirs('/p1/dir1')
-    self.assertModeEquals(0755, self.os.stat('/p1').st_mode)
-    self.assertModeEquals(0755, self.os.stat('/p1/dir1').st_mode)
-    self.os.umask(067)
+    self.assertModeEqual(0o755, self.os.stat('/p1').st_mode)
+    self.assertModeEqual(0o755, self.os.stat('/p1/dir1').st_mode)
+    self.os.umask(0o67)
     self.os.makedirs('/p2/dir2')
-    self.assertModeEquals(0710, self.os.stat('/p2').st_mode)
-    self.assertModeEquals(0710, self.os.stat('/p2/dir2').st_mode)
+    self.assertModeEqual(0o710, self.os.stat('/p2').st_mode)
+    self.assertModeEqual(0o710, self.os.stat('/p2/dir2').st_mode)
 
   def testMknodeUmaskApplied(self):
     """mkdir creates a device with umask applied."""
-    self.os.umask(022)
+    self.os.umask(0o22)
     self.os.mknod('nod1')
-    self.assertModeEquals(0644, self.os.stat('nod1').st_mode)
-    self.os.umask(027)
+    self.assertModeEqual(0o644, self.os.stat('nod1').st_mode)
+    self.os.umask(0o27)
     self.os.mknod('nod2')
-    self.assertModeEquals(0640, self.os.stat('nod2').st_mode)
+    self.assertModeEqual(0o640, self.os.stat('nod2').st_mode)
 
   def testOpenUmaskApplied(self):
     """open creates a file with umask applied."""
     fake_open = fake_filesystem.FakeFileOpen(self.filesystem)
-    self.os.umask(022)
+    self.os.umask(0o22)
     fake_open('file1', 'w').close()
-    self.assertModeEquals(0644, self.os.stat('file1').st_mode)
-    self.os.umask(027)
+    self.assertModeEqual(0o644, self.os.stat('file1').st_mode)
+    self.os.umask(0o27)
     fake_open('file2', 'w').close()
-    self.assertModeEquals(0640, self.os.stat('file2').st_mode)
+    self.assertModeEqual(0o640, self.os.stat('file2').st_mode)
 
 
 class StatPropagationTest(unittest.TestCase):
@@ -1821,8 +1822,7 @@ class FakePathModuleTest(unittest.TestCase):
 
   def testExpandUser(self):
     self.assertEqual(self.path.expanduser('~'), self.os.environ['HOME'])
-    user = os.path.basename(self.os.environ['HOME'])
-    self.assertEqual(self.path.expanduser('~' + user), self.os.environ['HOME'])
+    self.assertIn('/root', self.path.expanduser('~root'))
 
   def testGetsizePathNonexistent(self):
     file_path = 'foo/bar/baz'
@@ -1843,14 +1843,16 @@ class FakePathModuleTest(unittest.TestCase):
     dir_path = 'foo/bar'
     self.filesystem.CreateDirectory(dir_path)
     size = self.path.getsize(dir_path)
-    self.failIf(int(size) < 0, 'expected non-negative size; actual: %s' % size)
+    self.assertFalse(int(size) < 0,
+                     'expected non-negative size; actual: %s' % size)
 
   def testGetsizeDirNonZeroSize(self):
     # For directories, only require that the size is non-negative.
     dir_path = 'foo/bar'
     self.filesystem.CreateFile(os.path.join(dir_path, 'baz'))
     size = self.path.getsize(dir_path)
-    self.failIf(int(size) < 0, 'expected non-negative size; actual: %s' % size)
+    self.assertFalse(int(size) < 0,
+                     'expected non-negative size; actual: %s' % size)
 
   def testIsdir(self):
     self.filesystem.CreateFile('foo/bar')
@@ -1879,9 +1881,9 @@ class FakePathModuleTest(unittest.TestCase):
     test_file = self.filesystem.CreateFile('foo/bar1.txt')
     # The root directory ('', effectively '/') is created at time 10,
     # the parent directory ('foo') at time 11, and the file at time 12.
-    self.assertEquals(12, test_file.st_mtime)
+    self.assertEqual(12, test_file.st_mtime)
     test_file.SetMTime(24)
-    self.assertEquals(24, self.path.getmtime('foo/bar1.txt'))
+    self.assertEqual(24, self.path.getmtime('foo/bar1.txt'))
 
   def testGetMtimeRaisesOSError(self):
     self.assertFalse(self.path.exists('it_dont_exist'))
@@ -1904,6 +1906,9 @@ class FakePathModuleTest(unittest.TestCase):
     self.assertFalse(self.path.islink('it_dont_exist'))
 
   def testWalk(self):
+    # os.path.walk deprecrated in Python 3
+    if sys.version_info >= (3, 0):
+      return
     self.filesystem.CreateFile('/foo/bar/baz')
     self.filesystem.CreateFile('/foo/bar/xyzzy/plugh')
     visited_nodes = []
@@ -1919,6 +1924,9 @@ class FakePathModuleTest(unittest.TestCase):
     self.assertEqual(expected, visited_nodes)
 
   def testWalkFromNonexistentTopDoesNotThrow(self):
+    # os.path.walk deprecrated in Python 3
+    if sys.version_info >= (3, 0):
+      return
     visited_nodes = []
 
     def RecordVisitedNodes(visited, dirname, fnames):
@@ -2025,7 +2033,7 @@ class FakeFileOpenTest(TestCase):
     self.os.mkdir(file_dir)
     fake_file = self.file(file_path, 'w')
     for line in contents:
-      print >>fake_file, line
+      fake_file.write(line + '\n')
     fake_file.close()
     result = [line.rstrip() for line in self.file(file_path)]
     self.assertEqual(contents, result)
@@ -2041,7 +2049,7 @@ class FakeFileOpenTest(TestCase):
     self.os.mkdir(file_dir)
     fake_file = self.file(file_path, 'a')
     for line in contents:
-      print >>fake_file, line
+      fake_file.write(line + '\n')
     fake_file.close()
     result = [line.rstrip() for line in self.file(file_path)]
     self.assertEqual(contents, result)
@@ -2055,7 +2063,7 @@ class FakeFileOpenTest(TestCase):
         ]
     fake_file = self.file(file_path, 'w')
     for line in new_contents:
-      print >>fake_file, line
+      fake_file.write(line + '\n')
     fake_file.close()
     result = [line.rstrip() for line in self.file(file_path)]
     self.assertEqual(new_contents, result)
@@ -2069,7 +2077,7 @@ class FakeFileOpenTest(TestCase):
     self.filesystem.CreateFile(file_path, contents=contents[0])
     fake_file = self.file(file_path, 'a')
     for line in contents[1:]:
-      print >>fake_file, line
+      fake_file.write(line + '\n')
     fake_file.close()
     result = [line.rstrip() for line in self.file(file_path)]
     self.assertEqual(contents, result)
@@ -2080,7 +2088,7 @@ class FakeFileOpenTest(TestCase):
     self.filesystem.CreateFile(file_path, contents='old contents')
     self.assertTrue(self.filesystem.Exists(file_path))
     fake_file = self.file(file_path, 'r')
-    self.assertEquals('old contents', fake_file.read())
+    self.assertEqual('old contents', fake_file.read())
     fake_file.close()
     # actual tests
     fake_file = self.file(file_path, 'w+')
@@ -2095,12 +2103,12 @@ class FakeFileOpenTest(TestCase):
     self.filesystem.CreateFile(file_path, contents='old contents')
     self.assertTrue(self.filesystem.Exists(file_path))
     fake_file = self.file(file_path, 'r')
-    self.assertEquals('old contents', fake_file.read())
+    self.assertEqual('old contents', fake_file.read())
     fake_file.close()
     # actual tests
     fake_file = self.file(file_path, 'w+')
     fake_file.seek(0)
-    self.assertEquals('', fake_file.read())
+    self.assertEqual('', fake_file.read())
     fake_file.close()
 
   def testOpenWithAppendFlag(self):
@@ -2134,7 +2142,7 @@ class FakeFileOpenTest(TestCase):
     self.filesystem.CreateFile(file_path, contents='old contents')
     self.assertTrue(self.filesystem.Exists(file_path))
     fake_file = self.file(file_path, 'r')
-    self.assertEquals('old contents', fake_file.read())
+    self.assertEqual('old contents', fake_file.read())
     fake_file.close()
     # actual tests
     fake_file = self.file(file_path, 'a+')
@@ -2152,7 +2160,7 @@ class FakeFileOpenTest(TestCase):
     self.filesystem.CreateFile(file_path, contents='old contents')
     self.assertTrue(self.filesystem.Exists(file_path))
     fake_file = self.file(file_path, 'r')
-    self.assertEquals('old contents', fake_file.read())
+    self.assertEqual('old contents', fake_file.read())
     fake_file.close()
     # actual tests
     fake_file = self.file(file_path, 'a+')
@@ -2160,13 +2168,13 @@ class FakeFileOpenTest(TestCase):
     fake_file.write('new contents')
     fake_file.seek(0)
     for line in fake_file:
-      self.assertEquals('old contentsnew contents', line)
+      self.assertEqual('old contentsnew contents', line)
     fake_file.close()
 
   def testReadEmptyFileWithAplus(self):
     file_path = 'aplus_file'
     fake_file = self.file(file_path, 'a+')
-    self.assertEquals('', fake_file.read())
+    self.assertEqual('', fake_file.read())
     fake_file.close()
 
   def testReadWithRplus(self):
@@ -2175,15 +2183,15 @@ class FakeFileOpenTest(TestCase):
     self.filesystem.CreateFile(file_path, contents='old contents here')
     self.assertTrue(self.filesystem.Exists(file_path))
     fake_file = self.file(file_path, 'r')
-    self.assertEquals('old contents here', fake_file.read())
+    self.assertEqual('old contents here', fake_file.read())
     fake_file.close()
     # actual tests
     fake_file = self.file(file_path, 'r+')
-    self.assertEquals('old contents here', fake_file.read())
+    self.assertEqual('old contents here', fake_file.read())
     fake_file.seek(0)
     fake_file.write('new contents')
     fake_file.seek(0)
-    self.assertEquals('new contents here', fake_file.read())
+    self.assertEqual('new contents here', fake_file.read())
     fake_file.close()
 
   def testOpenStCtime(self):
@@ -2215,14 +2223,14 @@ class FakeFileOpenTest(TestCase):
     self.filesystem.CreateFile(file_path)
     self.os.chmod(file_path, perm_bits)
     st = self.os.stat(file_path)
-    self.assertModeEquals(perm_bits, st.st_mode)
+    self.assertModeEqual(perm_bits, st.st_mode)
     self.assertTrue(st.st_mode & stat.S_IFREG)
     self.assertFalse(st.st_mode & stat.S_IFDIR)
 
   def testOpenFlags700(self):
     # set up
     file_path = 'target_file'
-    self._CreateWithPermission(file_path, 0700)
+    self._CreateWithPermission(file_path, 0o700)
     # actual tests
     self.file(file_path, 'r').close()
     self.file(file_path, 'w').close()
@@ -2232,7 +2240,7 @@ class FakeFileOpenTest(TestCase):
   def testOpenFlags400(self):
     # set up
     file_path = 'target_file'
-    self._CreateWithPermission(file_path, 0400)
+    self._CreateWithPermission(file_path, 0o400)
     # actual tests
     self.file(file_path, 'r').close()
     self.assertRaises(IOError, self.file, file_path, 'w')
@@ -2241,7 +2249,7 @@ class FakeFileOpenTest(TestCase):
   def testOpenFlags200(self):
     # set up
     file_path = 'target_file'
-    self._CreateWithPermission(file_path, 0200)
+    self._CreateWithPermission(file_path, 0o200)
     # actual tests
     self.assertRaises(IOError, self.file, file_path, 'r')
     self.file(file_path, 'w').close()
@@ -2250,7 +2258,7 @@ class FakeFileOpenTest(TestCase):
   def testOpenFlags100(self):
     # set up
     file_path = 'target_file'
-    self._CreateWithPermission(file_path, 0100)
+    self._CreateWithPermission(file_path, 0o100)
     # actual tests 4
     self.assertRaises(IOError, self.file, file_path, 'r')
     self.assertRaises(IOError, self.file, file_path, 'w')
@@ -2374,19 +2382,19 @@ class OpenWithIgnoredFlagsTest(unittest.TestCase):
 
   def testReadBinary(self):
     fake_file = self.OpenFakeFile('rb')
-    self.assertEquals(self.file_contents, fake_file.read())
+    self.assertEqual(self.file_contents, fake_file.read())
 
   def testReadText(self):
     fake_file = self.OpenFakeFile('rt')
-    self.assertEquals(self.file_contents, fake_file.read())
+    self.assertEqual(self.file_contents, fake_file.read())
 
   def testReadUniversalNewlines(self):
     fake_file = self.OpenFakeFile('rU')
-    self.assertEquals(self.file_contents, fake_file.read())
+    self.assertEqual(self.file_contents, fake_file.read())
 
   def testUniversalNewlines(self):
     fake_file = self.OpenFakeFile('U')
-    self.assertEquals(self.file_contents, fake_file.read())
+    self.assertEqual(self.file_contents, fake_file.read())
 
   def OpenFileAndSeek(self, flags):
     fake_file = self.file(self.file_path, flags=flags)
@@ -2400,27 +2408,27 @@ class OpenWithIgnoredFlagsTest(unittest.TestCase):
 
   def testWriteBinary(self):
     fake_file = self.OpenFileAndSeek('wb')
-    self.assertEquals(0, fake_file.tell())
+    self.assertEqual(0, fake_file.tell())
     fake_file = self.WriteAndReopenFile(fake_file)
-    self.assertEquals(self.file_contents, fake_file.read())
+    self.assertEqual(self.file_contents, fake_file.read())
 
   def testWriteText(self):
     fake_file = self.OpenFileAndSeek('wt')
-    self.assertEquals(0, fake_file.tell())
+    self.assertEqual(0, fake_file.tell())
     fake_file = self.WriteAndReopenFile(fake_file)
-    self.assertEquals(self.file_contents, fake_file.read())
+    self.assertEqual(self.file_contents, fake_file.read())
 
   def testWriteAndReadBinary(self):
     fake_file = self.OpenFileAndSeek('w+b')
-    self.assertEquals(0, fake_file.tell())
+    self.assertEqual(0, fake_file.tell())
     fake_file = self.WriteAndReopenFile(fake_file)
-    self.assertEquals(self.file_contents, fake_file.read())
+    self.assertEqual(self.file_contents, fake_file.read())
 
   def testWriteAndReadTextBinary(self):
     fake_file = self.OpenFileAndSeek('w+t')
-    self.assertEquals(0, fake_file.tell())
+    self.assertEqual(0, fake_file.tell())
     fake_file = self.WriteAndReopenFile(fake_file)
-    self.assertEquals(self.file_contents, fake_file.read())
+    self.assertEqual(self.file_contents, fake_file.read())
 
 
 class OpenWithInvalidFlagsTest(FakeFileOpenTest):
@@ -2553,7 +2561,7 @@ class ResolvePathTest(FakeFileOpenTest):
     self.filesystem.CreateLink('/foo/link', 'baz')
     self.__WriteToFile('/foo/baz')
     fh = self.open('/foo/bar', 'r')
-    self.assertEquals('x', fh.read())
+    self.assertEqual('x', fh.read())
 
   def testWriteLinkToLink(self):
     final_target = '/foo/baz'
@@ -2567,8 +2575,8 @@ class ResolvePathTest(FakeFileOpenTest):
     self.os.makedirs('/a/link1/c/link2')
 
     self.filesystem.CreateLink('/a/b', 'link1')
-    self.assertEquals('/a/link1', self.filesystem.ResolvePath('/a/b'))
-    self.assertEquals('/a/link1/c', self.filesystem.ResolvePath('/a/b/c'))
+    self.assertEqual('/a/link1', self.filesystem.ResolvePath('/a/b'))
+    self.assertEqual('/a/link1/c', self.filesystem.ResolvePath('/a/b/c'))
 
     self.filesystem.CreateLink('/a/link1/c/d', 'link2')
     self.assertTrue(self.filesystem.Exists('/a/link1/c/d'))
@@ -2593,44 +2601,44 @@ class CollapsePathPipeSeparatorTest(PathManipulationTests):
   """Tests CollapsePath (mimics os.path.normpath) using | as path separator."""
 
   def testEmptyPathBecomesDotPath(self):
-    self.assertEquals('.', self.filesystem.CollapsePath(''))
+    self.assertEqual('.', self.filesystem.CollapsePath(''))
 
   def testDotPathUnchanged(self):
-    self.assertEquals('.', self.filesystem.CollapsePath('.'))
+    self.assertEqual('.', self.filesystem.CollapsePath('.'))
 
   def testSlashesAreNotCollapsed(self):
     """Tests that '/' is not treated specially if the path separator is '|'.
 
     In particular, multiple slashes should not be collapsed.
     """
-    self.assertEquals('/', self.filesystem.CollapsePath('/'))
-    self.assertEquals('/////', self.filesystem.CollapsePath('/////'))
+    self.assertEqual('/', self.filesystem.CollapsePath('/'))
+    self.assertEqual('/////', self.filesystem.CollapsePath('/////'))
 
   def testRootPath(self):
-    self.assertEquals('|', self.filesystem.CollapsePath('|'))
+    self.assertEqual('|', self.filesystem.CollapsePath('|'))
 
   def testMultipleSeparatorsCollapsedIntoRootPath(self):
-    self.assertEquals('|', self.filesystem.CollapsePath('|||||'))
+    self.assertEqual('|', self.filesystem.CollapsePath('|||||'))
 
   def testAllDotPathsRemovedButOne(self):
-    self.assertEquals('.', self.filesystem.CollapsePath('.|.|.|.'))
+    self.assertEqual('.', self.filesystem.CollapsePath('.|.|.|.'))
 
   def testAllDotPathsRemovedIfAnotherPathComponentExists(self):
-    self.assertEquals('|', self.filesystem.CollapsePath('|.|.|.|'))
-    self.assertEquals('foo|bar', self.filesystem.CollapsePath('foo|.|.|.|bar'))
+    self.assertEqual('|', self.filesystem.CollapsePath('|.|.|.|'))
+    self.assertEqual('foo|bar', self.filesystem.CollapsePath('foo|.|.|.|bar'))
 
   def testIgnoresUpLevelReferencesStartingFromRoot(self):
-    self.assertEquals('|', self.filesystem.CollapsePath('|..|..|..|'))
-    self.assertEquals('|', self.filesystem.CollapsePath('||..|.|..||'))
-    self.assertEquals(
+    self.assertEqual('|', self.filesystem.CollapsePath('|..|..|..|'))
+    self.assertEqual('|', self.filesystem.CollapsePath('||..|.|..||'))
+    self.assertEqual(
         '|', self.filesystem.CollapsePath('|..|..|foo|bar|..|..|'))
 
   def testConservesUpLevelReferencesStartingFromCurrentDirectory(self):
-    self.assertEquals(
+    self.assertEqual(
         '..|..', self.filesystem.CollapsePath('..|foo|bar|..|..|..'))
 
   def testCombineDotAndUpLevelReferencesInAbsolutePath(self):
-    self.assertEquals(
+    self.assertEqual(
         '|yes', self.filesystem.CollapsePath('|||||.|..|||yes|no|..|.|||'))
 
 
@@ -2638,67 +2646,67 @@ class SplitPathTest(PathManipulationTests):
   """Tests SplitPath (which mimics os.path.split) using | as path separator."""
 
   def testEmptyPath(self):
-    self.assertEquals(('', ''), self.filesystem.SplitPath(''))
+    self.assertEqual(('', ''), self.filesystem.SplitPath(''))
 
   def testNoSeparators(self):
-    self.assertEquals(('', 'ab'), self.filesystem.SplitPath('ab'))
+    self.assertEqual(('', 'ab'), self.filesystem.SplitPath('ab'))
 
   def testSlashesDoNotSplit(self):
     """Tests that '/' is not treated specially if the path separator is '|'."""
-    self.assertEquals(('', 'a/b'), self.filesystem.SplitPath('a/b'))
+    self.assertEqual(('', 'a/b'), self.filesystem.SplitPath('a/b'))
 
   def testEliminateTrailingSeparatorsFromHead(self):
-    self.assertEquals(('a', 'b'), self.filesystem.SplitPath('a|b'))
-    self.assertEquals(('a', 'b'), self.filesystem.SplitPath('a|||b'))
-    self.assertEquals(('|a', 'b'), self.filesystem.SplitPath('|a||b'))
-    self.assertEquals(('a|b', 'c'), self.filesystem.SplitPath('a|b|c'))
-    self.assertEquals(('|a|b', 'c'), self.filesystem.SplitPath('|a|b|c'))
+    self.assertEqual(('a', 'b'), self.filesystem.SplitPath('a|b'))
+    self.assertEqual(('a', 'b'), self.filesystem.SplitPath('a|||b'))
+    self.assertEqual(('|a', 'b'), self.filesystem.SplitPath('|a||b'))
+    self.assertEqual(('a|b', 'c'), self.filesystem.SplitPath('a|b|c'))
+    self.assertEqual(('|a|b', 'c'), self.filesystem.SplitPath('|a|b|c'))
 
   def testRootSeparatorIsNotStripped(self):
-    self.assertEquals(('|', ''), self.filesystem.SplitPath('|||'))
-    self.assertEquals(('|', 'a'), self.filesystem.SplitPath('|a'))
-    self.assertEquals(('|', 'a'), self.filesystem.SplitPath('|||a'))
+    self.assertEqual(('|', ''), self.filesystem.SplitPath('|||'))
+    self.assertEqual(('|', 'a'), self.filesystem.SplitPath('|a'))
+    self.assertEqual(('|', 'a'), self.filesystem.SplitPath('|||a'))
 
   def testEmptyTailIfPathEndsInSeparator(self):
-    self.assertEquals(('a|b', ''), self.filesystem.SplitPath('a|b|'))
+    self.assertEqual(('a|b', ''), self.filesystem.SplitPath('a|b|'))
 
   def testEmptyPathComponentsArePreservedInHead(self):
-    self.assertEquals(('|a||b', 'c'), self.filesystem.SplitPath('|a||b||c'))
+    self.assertEqual(('|a||b', 'c'), self.filesystem.SplitPath('|a||b||c'))
 
 
 class JoinPathTest(PathManipulationTests):
   """Tests JoinPath (which mimics os.path.join) using | as path separator."""
 
   def testOneEmptyComponent(self):
-    self.assertEquals('', self.filesystem.JoinPaths(''))
+    self.assertEqual('', self.filesystem.JoinPaths(''))
 
   def testMultipleEmptyComponents(self):
-    self.assertEquals('', self.filesystem.JoinPaths('', '', ''))
+    self.assertEqual('', self.filesystem.JoinPaths('', '', ''))
 
   def testSeparatorsNotStrippedFromSingleComponent(self):
-    self.assertEquals('||a||', self.filesystem.JoinPaths('||a||'))
+    self.assertEqual('||a||', self.filesystem.JoinPaths('||a||'))
 
   def testOneSeparatorAddedBetweenComponents(self):
-    self.assertEquals('a|b|c|d', self.filesystem.JoinPaths('a', 'b', 'c', 'd'))
+    self.assertEqual('a|b|c|d', self.filesystem.JoinPaths('a', 'b', 'c', 'd'))
 
   def testNoSeparatorAddedForComponentsEndingInSeparator(self):
-    self.assertEquals('a|b|c', self.filesystem.JoinPaths('a|', 'b|', 'c'))
-    self.assertEquals('a|||b|||c',
-                      self.filesystem.JoinPaths('a|||', 'b|||', 'c'))
+    self.assertEqual('a|b|c', self.filesystem.JoinPaths('a|', 'b|', 'c'))
+    self.assertEqual('a|||b|||c',
+                     self.filesystem.JoinPaths('a|||', 'b|||', 'c'))
 
   def testComponentsPrecedingAbsoluteComponentAreIgnored(self):
-    self.assertEquals('|c|d', self.filesystem.JoinPaths('a', '|b', '|c', 'd'))
+    self.assertEqual('|c|d', self.filesystem.JoinPaths('a', '|b', '|c', 'd'))
 
   def testOneSeparatorAddedForTrailingEmptyComponents(self):
-    self.assertEquals('a|', self.filesystem.JoinPaths('a', ''))
-    self.assertEquals('a|', self.filesystem.JoinPaths('a', '', ''))
+    self.assertEqual('a|', self.filesystem.JoinPaths('a', ''))
+    self.assertEqual('a|', self.filesystem.JoinPaths('a', '', ''))
 
   def testNoSeparatorAddedForLeadingEmptyComponents(self):
-    self.assertEquals('a', self.filesystem.JoinPaths('', 'a'))
+    self.assertEqual('a', self.filesystem.JoinPaths('', 'a'))
 
   def testInternalEmptyComponentsIgnored(self):
-    self.assertEquals('a|b', self.filesystem.JoinPaths('a', '', 'b'))
-    self.assertEquals('a|b|', self.filesystem.JoinPaths('a|', '', 'b|'))
+    self.assertEqual('a|b', self.filesystem.JoinPaths('a', '', 'b'))
+    self.assertEqual('a|b|', self.filesystem.JoinPaths('a|', '', 'b|'))
 
 
 class PathSeparatorTest(unittest.TestCase):

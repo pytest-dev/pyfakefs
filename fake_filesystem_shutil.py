@@ -47,9 +47,9 @@ import stat
 
 __pychecker__ = 'no-reimportself'
 
-_PERM_WRITE = 0200  # Write permission bit.
-_PERM_READ = 0400   # Read permission bit.
-_PERM_ALL = 07777   # All permission bits.
+_PERM_WRITE = 0o200  # Write permission bit.
+_PERM_READ = 0o400   # Read permission bit.
+_PERM_ALL = 0o7777   # All permission bits.
 
 
 class FakeShutilModule(object):
@@ -177,8 +177,8 @@ class FakeShutilModule(object):
     self.filesystem.CreateDirectory(dst)
     try:
       directory = self.filesystem.GetObject(src)
-    except IOError, (errno_code, msg):
-      raise OSError(errno_code, msg)
+    except IOError as e:
+      raise OSError(e.errno, e.message)
     if not stat.S_ISDIR(directory.st_mode):
       raise OSError(errno.ENOTDIR,
                     'Fake os module: %r not a directory' % src)

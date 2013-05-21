@@ -37,34 +37,38 @@ class FakeGlobUnitTest(unittest.TestCase):
     self.filesystem.CreateFile('[Temp]')
 
   def testGlobEmpty(self):
-    self.assertEquals(self.glob.glob(''), [])
+    self.assertEqual(self.glob.glob(''), [])
 
   def testGlobStar(self):
-    self.assertEquals(['/xyzzy/subdir', '/xyzzy/subdir2', '/xyzzy/subfile'],
-                      self.glob.glob('/xyzzy/*'))
+    self.assertEqual(['/xyzzy/subdir', '/xyzzy/subdir2', '/xyzzy/subfile'],
+                     self.glob.glob('/xyzzy/*'))
+
+  def testGlobExact(self):
+    self.assertEqual(['/xyzzy'], self.glob.glob('/xyzzy'))
+    self.assertEqual(['/xyzzy/subfile'], self.glob.glob('/xyzzy/subfile'))
 
   def testGlobQuestion(self):
-    self.assertEquals(['/xyzzy/subdir', '/xyzzy/subdir2', '/xyzzy/subfile'],
-                      self.glob.glob('/x?zz?/*'))
+    self.assertEqual(['/xyzzy/subdir', '/xyzzy/subdir2', '/xyzzy/subfile'],
+                     self.glob.glob('/x?zz?/*'))
 
   def testGlobNoMagic(self):
-    self.assertEquals(['/xyzzy'], self.glob.glob('/xyzzy'))
-    self.assertEquals(['/xyzzy/subdir'], self.glob.glob('/xyzzy/subdir'))
+    self.assertEqual(['/xyzzy'], self.glob.glob('/xyzzy'))
+    self.assertEqual(['/xyzzy/subdir'], self.glob.glob('/xyzzy/subdir'))
 
   def testNonExistentPath(self):
-    self.assertEquals([], self.glob.glob('nonexistent'))
+    self.assertEqual([], self.glob.glob('nonexistent'))
 
   def testDocTest(self):
     self.assertFalse(doctest.testmod(fake_filesystem_glob)[0])
 
   def testMagicDir(self):
-    self.assertEquals(['/[Temp]'], self.glob.glob('/*emp*'))
+    self.assertEqual(['/[Temp]'], self.glob.glob('/*emp*'))
 
   def testRootGlob(self):
-    self.assertEquals(['[Temp]', 'xyzzy'], self.glob.glob('*'))
+    self.assertEqual(['[Temp]', 'xyzzy'], self.glob.glob('*'))
 
   def testGlob1(self):
-    self.assertEquals(['[Temp]'], self.glob.glob1('/', '*Tem*'))
+    self.assertEqual(['[Temp]'], self.glob.glob1('/', '*Tem*'))
 
   def testHasMagic(self):
     self.assertTrue(self.glob.has_magic('['))

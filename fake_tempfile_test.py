@@ -17,8 +17,11 @@
 """Tests for the fake_tempfile module."""
 
 import stat
-import StringIO
 import unittest
+try:
+  import StringIO as io  # pylint: disable-msg=C6204
+except ImportError:
+  import io  # pylint: disable-msg=C6204
 
 import fake_filesystem
 import fake_tempfile
@@ -68,42 +71,42 @@ class FakeTempfileModuleTest(unittest.TestCase):
     filename_a = self.tempfile._TempFilename()
     # expect /tmp/tmp######
     self.assertTrue(filename_a.startswith('/tmp/tmp'))
-    self.assertEquals(14, len(filename_a))
+    self.assertEqual(14, len(filename_a))
 
     # see that random part changes
     filename_b = self.tempfile._TempFilename()
     self.assertTrue(filename_b.startswith('/tmp/tmp'))
-    self.assertEquals(14, len(filename_b))
-    self.assertNotEquals(filename_a, filename_b)
+    self.assertEqual(14, len(filename_b))
+    self.assertNotEqual(filename_a, filename_b)
 
   def testTempFilenameSuffix(self):
     """test tempfile._TempFilename(suffix=)."""
     filename = self.tempfile._TempFilename(suffix='.suffix')
     self.assertTrue(filename.startswith('/tmp/tmp'))
     self.assertTrue(filename.endswith('.suffix'))
-    self.assertEquals(21, len(filename))
+    self.assertEqual(21, len(filename))
 
   def testTempFilenamePrefix(self):
     """test tempfile._TempFilename(prefix=)."""
     filename = self.tempfile._TempFilename(prefix='prefix.')
     self.assertTrue(filename.startswith('/tmp/prefix.'))
-    self.assertEquals(18, len(filename))
+    self.assertEqual(18, len(filename))
 
   def testTempFilenameDir(self):
     """test tempfile._TempFilename(dir=)."""
     filename = self.tempfile._TempFilename(dir='/dir')
     self.assertTrue(filename.startswith('/dir/tmp'))
-    self.assertEquals(14, len(filename))
+    self.assertEqual(14, len(filename))
 
   def testTemporaryFile(self):
     obj = self.tempfile.TemporaryFile()
-    self.assertEquals('<fdopen>', obj.name)
-    self.assertTrue(isinstance(obj, StringIO.StringIO))
+    self.assertEqual('<fdopen>', obj.name)
+    self.assertTrue(isinstance(obj, io.StringIO))
 
   def testNamedTemporaryFile(self):
     obj = self.tempfile.NamedTemporaryFile()
     created_filenames = self.tempfile.FakeReturnedMktempValues()
-    self.assertEquals(created_filenames[0], obj.name)
+    self.assertEqual(created_filenames[0], obj.name)
     self.assertTrue(self.filesystem.GetObject(obj.name))
     obj.close()
     self.assertRaises(IOError, self.filesystem.GetObject, obj.name)
@@ -114,18 +117,18 @@ class FakeTempfileModuleTest(unittest.TestCase):
     obj.close()
 
     file_obj = self.filesystem.GetObject(obj.name)
-    self.assertEquals('foo', file_obj.contents)
+    self.assertEqual('foo', file_obj.contents)
 
   def testMkstemp(self):
     temporary = self.tempfile.mkstemp()
-    self.assertEquals(2, len(temporary))
+    self.assertEqual(2, len(temporary))
     self.assertTrue(temporary[1].startswith('/tmp/tmp'))
     created_filenames = self.tempfile.FakeReturnedMktempValues()
-    self.assertEquals(9999, temporary[0])
-    self.assertEquals(temporary[1], created_filenames[0])
+    self.assertEqual(9999, temporary[0])
+    self.assertEqual(temporary[1], created_filenames[0])
     self.assertTrue(self.filesystem.Exists(temporary[1]))
-    self.assertEquals(self.filesystem.GetObject(temporary[1]).st_mode,
-                      stat.S_IFREG|0600)
+    self.assertEqual(self.filesystem.GetObject(temporary[1]).st_mode,
+                     stat.S_IFREG|0o600)
 
   def testMkstempDir(self):
     """test tempfile.mkstemp(dir=)."""
@@ -134,14 +137,14 @@ class FakeTempfileModuleTest(unittest.TestCase):
     # expect pass: /dir exists
     self.filesystem.CreateDirectory('/dir')
     temporary = self.tempfile.mkstemp(dir='/dir')
-    self.assertEquals(2, len(temporary))
-    self.assertEquals(9999, temporary[0])
+    self.assertEqual(2, len(temporary))
+    self.assertEqual(9999, temporary[0])
     self.assertTrue(temporary[1].startswith('/dir/tmp'))
     created_filenames = self.tempfile.FakeReturnedMktempValues()
-    self.assertEquals(temporary[1], created_filenames[0])
+    self.assertEqual(temporary[1], created_filenames[0])
     self.assertTrue(self.filesystem.Exists(temporary[1]))
-    self.assertEquals(self.filesystem.GetObject(temporary[1]).st_mode,
-                      stat.S_IFREG|0600)
+    self.assertEqual(self.filesystem.GetObject(temporary[1]).st_mode,
+                     stat.S_IFREG|0o600)
     # pylint: disable-msg=C6002
     # TODO: add a test that /dir is actually writable.
 
@@ -149,24 +152,24 @@ class FakeTempfileModuleTest(unittest.TestCase):
     dirname = self.tempfile.mkdtemp()
     self.assertTrue(dirname)
     created_filenames = self.tempfile.FakeReturnedMktempValues()
-    self.assertEquals(dirname, created_filenames[0])
+    self.assertEqual(dirname, created_filenames[0])
     self.assertTrue(self.filesystem.Exists(dirname))
-    self.assertEquals(self.filesystem.GetObject(dirname).st_mode,
-                      stat.S_IFDIR|0700)
+    self.assertEqual(self.filesystem.GetObject(dirname).st_mode,
+                     stat.S_IFDIR|0o700)
 
   def testGettempdir(self):
-    self.assertEquals(None, self.tempfile.tempdir)
-    self.assertEquals('/tmp', self.tempfile.gettempdir())
-    self.assertEquals('/tmp', self.tempfile.tempdir)
+    self.assertEqual(None, self.tempfile.tempdir)
+    self.assertEqual('/tmp', self.tempfile.gettempdir())
+    self.assertEqual('/tmp', self.tempfile.tempdir)
 
   def testGettempprefix(self):
     """test tempfile.gettempprefix() and the tempfile.template setter."""
-    self.assertEquals('tmp', self.tempfile.gettempprefix())
+    self.assertEqual('tmp', self.tempfile.gettempprefix())
     # set and verify
     self.tempfile.template = 'strung'
-    self.assertEquals('strung', self.tempfile.gettempprefix())
-    self.assertEquals('tempfile.template= is a NOP in python2.4',
-                      self.fake_logging.message())
+    self.assertEqual('strung', self.tempfile.gettempprefix())
+    self.assertEqual('tempfile.template= is a NOP in python2.4',
+                     self.fake_logging.message())
 
   def testMktemp(self):
     self.assertRaises(NotImplementedError, self.tempfile.mktemp)
