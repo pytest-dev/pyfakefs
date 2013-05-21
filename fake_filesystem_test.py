@@ -1822,7 +1822,7 @@ class FakePathModuleTest(unittest.TestCase):
 
   def testExpandUser(self):
     self.assertEqual(self.path.expanduser('~'), self.os.environ['HOME'])
-    self.assertIn('/root', self.path.expanduser('~root'))
+    self.assertEqual('/root', self.path.expanduser('~root'))
 
   def testGetsizePathNonexistent(self):
     file_path = 'foo/bar/baz'
