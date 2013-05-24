@@ -385,6 +385,26 @@ class FakeFilesystem(object):
     self.open_files[file_obj.filedes] = None
     heapq.heappush(self.free_fd_heap, file_obj.filedes)
 
+  def GetOpenFile(self, file_des):
+    """Returns an open file.
+
+    Args:
+      file_des:  file descriptor of the open file.
+
+    Raises:
+      OSError: an invalid file descriptor.
+      TypeError: filedes is not an integer.
+
+    Returns:
+      Open file object.
+    """
+    if not isinstance(file_des, int):
+      raise TypeError('an integer is required')
+    if (file_des >= len(self.open_files) or
+        self.open_files[file_des] is None):
+      raise OSError(errno.EBADF, 'Bad file descriptor', file_des)
+    return self.open_files[file_des]
+
   def CollapsePath(self, path):
     """Mimics os.path.normpath using the specified path_separator.
 
@@ -483,7 +503,7 @@ class FakeFilesystem(object):
     for this FakeFilesystem.
 
     Args:
-      paths:  (str) Zero or more paths to join.
+      *paths:  (str) Zero or more paths to join.
 
     Returns:
       (str) The paths joined by the path separator, starting with the last
@@ -1094,13 +1114,30 @@ class FakeOsModule(object):
       warnings.warn(FAKE_PATH_MODULE_DEPRECATION, DeprecationWarning,
                     stacklevel=2)
       self.path = os_path_module
+    if sys.version_info < (3, 0):
+      self.fdopen = self._fdopen_ver2
+    else:
+      self.fdopen = self._fdopen
 
-  def fdopen(self, file_des, mode=None, bufsize=None):
+  def _fdopen(self, *args, **kwargs):
+    """Redirector to open() builtin function.
+
+    Args:
+      *args: pass through args
+      **kwargs: pass through kwargs
+
+    Returns:
+      File object corresponding to file_des.
+
+    Raises:
+      TypeError: if file descriptor is not an integer.
+    """
+    if not isinstance(args[0], int):
+      raise TypeError('an integer is required')
+    return FakeFileOpen(self.filesystem)(*args, **kwargs)
+
+  def _fdopen_ver2(self, file_des, mode='r', bufsize=None):
     """Returns an open file object connected to the file descriptor file_des.
-
-    WARNING:  This implementation currently returns the original
-      FakeFileWrapper, rather than creating a new one, which differs from the
-      standard fdopen() spec. If you need this behavior, please implement it.
 
     Args:
       file_des: An integer file descriptor for the file object requested.
@@ -1114,30 +1151,14 @@ class FakeOsModule(object):
     Raises:
       OSError: if bad file descriptor or incompatible mode is given.
       TypeError: if file descriptor is not an integer.
-      ValueError: if invalid mode is given.
     """
     if not isinstance(file_des, int):
       raise TypeError('an integer is required')
-    if (file_des >= len(self.filesystem.open_files) or
-        self.filesystem.open_files[file_des] is None):
-      raise OSError(errno.EBADF, 'Bad file descriptor', file_des)
-    file_obj = self.filesystem.open_files[file_des]
 
-    if mode:
-      orig_mode = mode  # Save original mode for error messages.
-      # Normalize mode. Ignore 't', 'b', and 'U'.
-      mode = mode.replace('t', '').replace('b', '')
-      mode = mode.replace('rU', 'r').replace('U', 'r')
-
-      if mode not in _OPEN_MODE_MAP:
-        raise ValueError('Invalid mode: %r' % orig_mode)
-      must_exist, need_read, need_write, truncate, append = _OPEN_MODE_MAP[mode]
-      st_mode = file_obj.GetObject().st_mode
-      if ((need_read and not st_mode & PERM_READ) or
-          (need_write and not st_mode & PERM_WRITE)):
-        raise OSError(errno.EINVAL, 'Invalid argument', None)
-
-    return file_obj
+    try:
+      return FakeFileOpen(self.filesystem).Call(file_des, mode=mode)
+    except IOError as e:
+      raise OSError(e)
 
   def open(self, file_path, flags, mode=None):
     """Returns the file descriptor for a FakeFile.
@@ -1176,7 +1197,7 @@ class FakeOsModule(object):
       OSError: bad file descriptor.
       TypeError: if file descriptor is not an integer.
     """
-    fh = self.fdopen(file_des)
+    fh = self.filesystem.GetOpenFile(file_des)
     fh.close()
 
   def read(self, file_des, num_bytes):
@@ -1193,7 +1214,7 @@ class FakeOsModule(object):
       OSError: bad file descriptor.
       TypeError: if file descriptor is not an integer.
     """
-    fh = self.fdopen(file_des)
+    fh = self.filesystem.GetOpenFile(file_des)
     return fh.read(num_bytes)
 
   def write(self, file_des, contents):
@@ -1210,7 +1231,7 @@ class FakeOsModule(object):
       OSError: bad file descriptor.
       TypeError: if file descriptor is not an integer.
     """
-    fh = self.fdopen(file_des)
+    fh = self.filesystem.GetOpenFile(file_des)
     fh.write(contents)
     fh.flush()
     return len(contents)
@@ -1228,7 +1249,7 @@ class FakeOsModule(object):
       OSError: if the filesystem object doesn't exist.
     """
     # stat should return the tuple representing return value of os.stat
-    stats = self.fdopen(file_des).GetObject()
+    stats = self.filesystem.GetOpenFile(file_des).GetObject()
     st_obj = os.stat_result((stats.st_mode, stats.st_ino, stats.st_dev,
                              stats.st_nlink, stats.st_uid, stats.st_gid,
                              stats.st_size, stats.st_atime,
@@ -1791,14 +1812,35 @@ class FakeFileOpen(object):
     self.filesystem = filesystem
     self._delete_on_close = delete_on_close
 
-  def __call__(self, file_path, flags='r', bufsize=-1):
+  def __call__(self, *args, **kwargs):
+    """Redirects calls to file() or open() to appropriate method."""
+    if sys.version_info < (3, 0):
+      return self._call_ver2(*args, **kwargs)
+    else:
+      return self.Call(*args, **kwargs)
+
+  def _call_ver2(self, file_path, mode='r', buffering=-1, flags=None):
+    """Limits args of open() or file() for Python 2.x versions."""
+    # Backwards compatibility, mode arg used to be named flags
+    mode = flags or mode
+    return self.Call(file_path, mode, buffering)
+
+  def Call(self, file_, mode='r', buffering=-1, encoding=None,
+           errors=None, newline=None, closefd=True, opener=None):
     """Returns a StringIO object with the contents of the target file object.
 
     Args:
-      file_path:  path to target file
-      flags: additional file flags. All r/w/a r+/w+/a+ flags are supported.
-        't', 'b', and 'U' are ignored, e.g., 'wb' is treated as 'w'.
-      bufsize: ignored. (Used for signature compliance with __builtin__.open)
+      file_: path to target file or a file descriptor
+      mode: additional file modes. All r/w/a r+/w+/a+ modes are supported.
+        't', and 'U' are ignored, e.g., 'wU' is treated as 'w'. 'b' sets
+        binary mode, no end of line translations in StringIO.
+      buffering: ignored. (Used for signature compliance with __builtin__.open)
+      encoding: ignored, strings have no encoding
+      errors: ignored, this relates to encoding
+      newline: controls universal newlines, passed to StringIO object
+      closefd: if a file descriptor rather than file name is passed, and set
+        to false, then the file descriptor is kept open when file is closed
+      opener: not supported
 
     Returns:
       a StringIO object containing the contents of the target file
@@ -1807,40 +1849,48 @@ class FakeFileOpen(object):
       IOError: if the target object is a directory, the path is invalid or
         permission is denied.
     """
-    orig_flags = flags  # Save original flags for error messages.
-    # Normalize flags. Ignore 't', 'b', and 'U'.
-    flags = flags.replace('t', '').replace('b', '')
-    flags = flags.replace('rU', 'r').replace('U', 'r')
+    orig_modes = mode  # Save original mdoes for error messages.
+    # Binary mode for non 3.x or set by mode
+    binary = sys.version_info < (3, 0) or 'b' in mode
+    # Normalize modes. Ignore 't' and 'U'.
+    mode = mode.replace('t', '').replace('b', '')
+    mode = mode.replace('rU', 'r').replace('U', 'r')
 
-    if flags not in _OPEN_MODE_MAP:
-      raise IOError('Invalid mode: %r' % orig_flags)
+    if mode not in _OPEN_MODE_MAP:
+      raise IOError('Invalid mode: %r' % orig_modes)
 
-    must_exist, need_read, need_write, truncate, append = _OPEN_MODE_MAP[flags]
+    must_exist, need_read, need_write, truncate, append = _OPEN_MODE_MAP[mode]
 
-    real_path = self.filesystem.ResolvePath(file_path)
-    if self.filesystem.Exists(file_path):
-      file_object = self.filesystem.GetObjectFromNormalizedPath(real_path)
+    file_object = None
+    filedes = None
+    # opening a file descriptor
+    if isinstance(file_, int):
+      filedes = file_
+      file_object = self.filesystem.GetOpenFile(filedes).GetObject()
+      file_path = file_object.name
+    else:
+      file_path = file_
+      real_path = self.filesystem.ResolvePath(file_path)
+      if self.filesystem.Exists(file_path):
+        file_object = self.filesystem.GetObjectFromNormalizedPath(real_path)
+      closefd = True
+
+    if file_object:
       if ((need_read and not file_object.st_mode & PERM_READ) or
           (need_write and not file_object.st_mode & PERM_WRITE)):
-        raise IOError(errno.EACCES,
-                      'Permission denied',
-                      file_path)
+        raise IOError(errno.EACCES, 'Permission denied', file_path)
       if need_write:
         file_object.st_ctime = int(time.time())
         if truncate:
           file_object.SetContents('')
     else:
       if must_exist:
-        raise IOError(errno.ENOENT,
-                      'No such file or directory',
-                      file_path)
+        raise IOError(errno.ENOENT, 'No such file or directory', file_path)
       file_object = self.filesystem.CreateFile(
           real_path, create_missing_dirs=False, apply_umask=True)
 
     if file_object.st_mode & stat.S_IFDIR:
-      raise IOError(errno.EISDIR,
-                    'Fake file object: is a directory',
-                    file_path)
+      raise IOError(errno.EISDIR, 'Fake file object: is a directory', file_path)
 
     class FakeFileWrapper(object):
       """Wrapper for a StringIO object for use by a FakeFile object.
@@ -1850,14 +1900,17 @@ class FakeFileOpen(object):
       """
 
       def __init__(self, file_object, update=False, read=False, append=False,
-                   delete_on_close=False, filesystem=None):
+                   delete_on_close=False, filesystem=None, newline=None,
+                   binary=True, closefd=True):
         self._file_object = file_object
         self._append = append
         self._read = read
         self._update = update
+        self._closefd = closefd
+        newline_arg = {} if binary else {'newline': newline}
         if file_object.contents:
           if update:
-            self._io = io.StringIO()
+            self._io = io.StringIO(**newline_arg)
             self._io.write(file_object.contents)
             if not append:
               self._io.seek(0)
@@ -1868,9 +1921,9 @@ class FakeFileOpen(object):
               else:
                 self._read_seek = self._io.tell()
           else:
-            self._io = io.StringIO(file_object.contents)
+            self._io = io.StringIO(file_object.contents, **newline_arg)
         else:
-          self._io = io.StringIO()
+          self._io = io.StringIO(**newline_arg)
           self._read_whence = 0
           self._read_seek = 0
         if delete_on_close:
@@ -1885,8 +1938,7 @@ class FakeFileOpen(object):
         """To support usage of this fake file with the 'with' statement."""
         return self
 
-      # pylint: disable-msg=W0622
-      def __exit__(self, type, value, traceback):
+      def __exit__(self, type, value, traceback):  # pylint: disable-msg=W0622
         """To support usage of this fake file with the 'with' statement."""
         self.close()
 
@@ -1902,7 +1954,8 @@ class FakeFileOpen(object):
         """File close."""
         if self._update:
           self._file_object.SetContents(self._io.getvalue())
-        self._filesystem.CloseOpenFile(self)
+        if self._closefd:
+          self._filesystem.CloseOpenFile(self)
         if self._delete_on_close:
           self._filesystem.RemoveObject(self.name)
 
@@ -1968,8 +2021,8 @@ class FakeFileOpen(object):
           while we're in append mode goes through this.
 
           Args:
-            args: pass through args
-            kwargs: pass through kwargs
+            *args: pass through args
+            **kwargs: pass through kwargs
           Returns:
             Wrapped StringIO object method
           """
@@ -2000,8 +2053,8 @@ class FakeFileOpen(object):
           the read pointer as well.
 
           Args:
-            args: pass through args
-            kwargs: pass through kwargs
+            *args: pass through args
+            **kwargs: pass through kwargs
           Returns:
             Wrapped StringIO object method
           """
@@ -2040,8 +2093,14 @@ class FakeFileOpen(object):
                                read=need_read,
                                append=append,
                                delete_on_close=self._delete_on_close,
-                               filesystem=self.filesystem)
-    fakefile.filedes = self.filesystem.AddOpenFile(fakefile)
+                               filesystem=self.filesystem,
+                               newline=newline,
+                               binary=binary,
+                               closefd=closefd)
+    if filedes is not None:
+      fakefile.filedes = filedes
+    else:
+      fakefile.filedes = self.filesystem.AddOpenFile(fakefile)
     return fakefile
 
 
