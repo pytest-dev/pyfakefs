@@ -481,8 +481,8 @@ class FakeOsModuleTest(TestCase):
       expected_regexp: Regexp (re pattern object or string) expected to be
         found in error message.
       callable_obj: Function to be called.
-      args: Extra args.
-      kwargs: Extra kwargs.
+      *args: Extra args.
+      **kwargs: Extra kwargs.
     """
     try:
       callable_obj(*args, **kwargs)
@@ -581,10 +581,7 @@ class FakeOsModuleTest(TestCase):
     fake_file1 = fake_open(file_path1, 'r')
     self.assertEqual(0, fake_file1.fileno())
 
-    # XXX: This is different from os.fdopen() in that it does
-    # not return a new object; see the FakeOsModule.fdopen()
-    # docstring.
-    self.assertTrue(self.os.fdopen(0) is fake_file1)
+    self.assertFalse(self.os.fdopen(0) is fake_file1)
 
     self.assertRaises(TypeError, self.os.fdopen, None)
     self.assertRaises(TypeError, self.os.fdopen, 'a string')
@@ -615,11 +612,8 @@ class FakeOsModuleTest(TestCase):
     self.assertEqual(0, fake_file1.fileno())
     self.assertEqual(2, fake_file3.fileno())
 
-    # XXX: This is different from os.fdopen() in that it does
-    # not return a new object; see the FakeOsModule.fdopen()
-    # docstring.
-    self.assertTrue(self.os.fdopen(0) is fake_file1)
-    self.assertTrue(self.os.fdopen(2) is fake_file3)
+    self.assertFalse(self.os.fdopen(0) is fake_file1)
+    self.assertFalse(self.os.fdopen(2) is fake_file3)
     self.assertRaises(OSError, self.os.fdopen, 1)
 
   def testFdopenMode(self):
@@ -632,7 +626,8 @@ class FakeOsModuleTest(TestCase):
     self.assertEqual(0, fake_file1.fileno())
     self.os.fdopen(0)
     self.os.fdopen(0, mode='r')
-    self.assertRaises(OSError, self.os.fdopen, 0, 'w')
+    exception = OSError if sys.version_info < (3, 0) else IOError
+    self.assertRaises(exception, self.os.fdopen, 0, 'w')
 
   def testLowLevelOpenCreate(self):
     file_path = 'file1'
@@ -792,7 +787,6 @@ class FakeOsModuleTest(TestCase):
     self.assertFalse(self.filesystem.Exists(link))
 
   def testUnlink(self):
-    #self.assertTrue(self.os.unlink is self.os.remove)  # mysteriously breaks?
     self.assertTrue(self.os.unlink == self.os.remove)
 
   def testUnlinkRaisesIfNotExist(self):
@@ -1312,7 +1306,7 @@ class FakeOsModuleTest(TestCase):
     self._CreateTestDirectory(path)
     # actual tests
     self.assertRaisesWithRegexpMatch(
-        TypeError, 'utime\(\) arg 2 must be a tuple \(atime, mtime\)',
+        TypeError, r'utime\(\) arg 2 must be a tuple \(atime, mtime\)',
         self.os.utime, path, (1, 2, 3))
 
   def testUtimeTupleArgContainsIncorrectType(self):
@@ -1936,7 +1930,7 @@ class FakePathModuleTest(unittest.TestCase):
     self.assertEqual([], visited_nodes)
 
 
-class FakeFileOpenTest(TestCase):
+class FakeFileOpenTestBase(TestCase):
   def setUp(self):
     self.filesystem = fake_filesystem.FakeFilesystem()
     self.file = fake_filesystem.FakeFileOpen(self.filesystem)
@@ -1948,6 +1942,8 @@ class FakeFileOpenTest(TestCase):
   def tearDown(self):
     time.time = self.orig_time
 
+
+class FakeFileOpenTest(FakeFileOpenTestBase):
   def testOpenNoParentDir(self):
     """Expect raise when open'ing a file in a missing directory."""
     file_path = 'foo/bar.txt'
@@ -1994,6 +1990,38 @@ class FakeFileOpenTest(TestCase):
     file_path = 'foo/bar.txt'
     self.filesystem.CreateFile(file_path, contents=''.join(contents))
     self.assertEqual(contents, self.file(file_path).readlines())
+
+  def testOpenValidArgs(self):
+    contents = [
+        "Bang bang Maxwell's silver hammer\n",
+        'Came down on her head',
+        ]
+    file_path = 'abbey_road/maxwell'
+    self.filesystem.CreateFile(file_path, contents=''.join(contents))
+    self.assertEqual(
+        contents, self.open(file_path, mode='r', buffering=1).readlines())
+    if sys.version_info >= (3, 0):
+      self.assertEqual(
+          contents, self.open(file_path, mode='r', buffering=1,
+                              encoding='utf-8', errors='strict', newline='\n',
+                              closefd=False, opener=False).readlines())
+
+  def testOpenNewlineArg(self):
+    if sys.version_info < (3, 0):
+      return
+    file_path = 'some_file'
+    file_contents = 'two\r\nlines'
+    self.filesystem.CreateFile(file_path, contents=file_contents)
+    fake_file = self.open(file_path, mode='r', newline=None)
+    self.assertEqual(['two\n', 'lines'], fake_file.readlines())
+    fake_file = self.open(file_path, mode='r', newline='')
+    self.assertEqual(['two\r\n', 'lines'], fake_file.readlines())
+    fake_file = self.open(file_path, mode='r', newline='\r')
+    self.assertEqual(['two\r', '\r', 'lines'], fake_file.readlines())
+    fake_file = self.open(file_path, mode='r', newline='\n')
+    self.assertEqual(['two\r\n', 'lines'], fake_file.readlines())
+    fake_file = self.open(file_path, mode='r', newline='\r\n')
+    self.assertEqual(['two\r\r\n', 'lines'], fake_file.readlines())
 
   def testOpenValidFileWithCwd(self):
     contents = [
@@ -2364,6 +2392,30 @@ class FakeFileOpenTest(TestCase):
     self.assertEqual(3, fake_file1a.fileno())
 
 
+class OpenWithFileDescriptorTest(FakeFileOpenTestBase):
+
+  def testOpenWithFileDescriptor(self):
+    if sys.version_info < (3, 0):
+      return
+    file_path = 'this/file'
+    self.filesystem.CreateFile(file_path)
+    fd = self.os.open(file_path, os.O_CREAT)
+    self.assertEqual(fd, self.open(fd, 'r').fileno())
+
+  def testClosefdWithFileDescriptor(self):
+    if sys.version_info < (3, 0):
+      return
+    file_path = 'this/file'
+    self.filesystem.CreateFile(file_path)
+    fd = self.os.open(file_path, os.O_CREAT)
+    fh = self.open(fd, 'r', closefd=False)
+    fh.close()
+    self.assertIsNotNone(self.filesystem.open_files[fd])
+    fh = self.open(fd, 'r', closefd=True)
+    fh.close()
+    self.assertIsNone(self.filesystem.open_files[fd])
+
+
 class OpenWithIgnoredFlagsTest(unittest.TestCase):
 
   def setUp(self):
@@ -2371,14 +2423,17 @@ class OpenWithIgnoredFlagsTest(unittest.TestCase):
     self.file = fake_filesystem.FakeFileOpen(self.filesystem)
     self.os = fake_filesystem.FakeOsModule(self.filesystem)
     self.file_path = 'some_file'
-    self.file_contents = 'two\r\nlines'
+    self.read_contents = self.file_contents = 'two\r\nlines'
+    # For python 3.x, text file newlines are converted to \n
+    if sys.version_info >= (3, 0):
+      self.read_contents = 'two\nlines'
     self.filesystem.CreateFile(self.file_path, contents=self.file_contents)
     # It's resonable to assume the file exists at this point
 
   # Shouldn't need a tearDown()
 
-  def OpenFakeFile(self, flags):
-    return self.file(self.file_path, flags=flags)
+  def OpenFakeFile(self, mode):
+    return self.file(self.file_path, mode=mode)
 
   def testReadBinary(self):
     fake_file = self.OpenFakeFile('rb')
@@ -2386,52 +2441,52 @@ class OpenWithIgnoredFlagsTest(unittest.TestCase):
 
   def testReadText(self):
     fake_file = self.OpenFakeFile('rt')
-    self.assertEqual(self.file_contents, fake_file.read())
+    self.assertEqual(self.read_contents, fake_file.read())
 
   def testReadUniversalNewlines(self):
     fake_file = self.OpenFakeFile('rU')
-    self.assertEqual(self.file_contents, fake_file.read())
+    self.assertEqual(self.read_contents, fake_file.read())
 
   def testUniversalNewlines(self):
     fake_file = self.OpenFakeFile('U')
-    self.assertEqual(self.file_contents, fake_file.read())
+    self.assertEqual(self.read_contents, fake_file.read())
 
-  def OpenFileAndSeek(self, flags):
-    fake_file = self.file(self.file_path, flags=flags)
+  def OpenFileAndSeek(self, mode):
+    fake_file = self.file(self.file_path, mode=mode)
     fake_file.seek(0, 2)
     return fake_file
 
-  def WriteAndReopenFile(self, fake_file):
+  def WriteAndReopenFile(self, fake_file, mode='r'):
     fake_file.write(self.file_contents)
     fake_file.close()
-    return self.file(self.file_path, flags='r')
+    return self.file(self.file_path, mode=mode)
 
   def testWriteBinary(self):
     fake_file = self.OpenFileAndSeek('wb')
     self.assertEqual(0, fake_file.tell())
-    fake_file = self.WriteAndReopenFile(fake_file)
+    fake_file = self.WriteAndReopenFile(fake_file, mode='rb')
     self.assertEqual(self.file_contents, fake_file.read())
 
   def testWriteText(self):
     fake_file = self.OpenFileAndSeek('wt')
     self.assertEqual(0, fake_file.tell())
     fake_file = self.WriteAndReopenFile(fake_file)
-    self.assertEqual(self.file_contents, fake_file.read())
+    self.assertEqual(self.read_contents, fake_file.read())
 
   def testWriteAndReadBinary(self):
     fake_file = self.OpenFileAndSeek('w+b')
     self.assertEqual(0, fake_file.tell())
-    fake_file = self.WriteAndReopenFile(fake_file)
+    fake_file = self.WriteAndReopenFile(fake_file, mode='rb')
     self.assertEqual(self.file_contents, fake_file.read())
 
   def testWriteAndReadTextBinary(self):
-    fake_file = self.OpenFileAndSeek('w+t')
+    fake_file = self.OpenFileAndSeek('w+bt')
     self.assertEqual(0, fake_file.tell())
-    fake_file = self.WriteAndReopenFile(fake_file)
+    fake_file = self.WriteAndReopenFile(fake_file, mode='rb')
     self.assertEqual(self.file_contents, fake_file.read())
 
 
-class OpenWithInvalidFlagsTest(FakeFileOpenTest):
+class OpenWithInvalidFlagsTest(FakeFileOpenTestBase):
 
   def testCapitalR(self):
     self.assertRaises(IOError, self.file, 'some_file', 'R')
@@ -2449,7 +2504,7 @@ class OpenWithInvalidFlagsTest(FakeFileOpenTest):
     self.assertRaises(IOError, self.file, 'some_file', 'rw')
 
 
-class ResolvePathTest(FakeFileOpenTest):
+class ResolvePathTest(FakeFileOpenTestBase):
 
   def __WriteToFile(self, file_name):
     fh = self.open(file_name, 'w')
