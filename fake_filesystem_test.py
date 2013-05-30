@@ -2391,6 +2391,27 @@ class FakeFileOpenTest(FakeFileOpenTestBase):
     self.assertEqual(2, fake_file3.fileno())
     self.assertEqual(3, fake_file1a.fileno())
 
+  def testIntertwinedReadWrite(self):
+    file_path = 'some_file'
+    self.filesystem.CreateFile(file_path)
+    with self.open(file_path, 'a') as writer:
+      with self.open(file_path, 'r') as reader:
+        writes = ['hello', 'world\n', 'somewhere\nover', 'the\n', 'rainbow']
+        reads = []
+        # when writes are flushes, they are piped to the reader
+        for write in writes:
+          writer.write(write)
+          writer.flush()
+          reads.append(reader.read())
+        self.assertEqual(writes, reads)
+        writes = ['nothing', 'to\nsee', 'here']
+        reads = []
+        # when writes are not flushed, the reader doesn't read anything new
+        for write in writes:
+          writer.write(write)
+          reads.append(reader.read())
+        self.assertEqual(['' for i in writes], reads)
+
 
 class OpenWithFileDescriptorTest(FakeFileOpenTestBase):
 

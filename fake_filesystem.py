@@ -98,7 +98,7 @@ except ImportError:
 
 __pychecker__ = 'no-reimportself'
 
-__version__ = '2.0'
+__version__ = '2.1'
 
 PERM_READ = 0o400      # Read permission bit.
 PERM_WRITE = 0o200     # Write permission bit.
@@ -172,6 +172,7 @@ class FakeFile(object):
     self.name = name
     self.st_mode = st_mode
     self.contents = contents
+    self.epoch = 0
     self.st_ctime = int(time.time())
     self.st_atime = self.st_ctime
     self.st_mtime = self.st_ctime
@@ -220,6 +221,7 @@ class FakeFile(object):
     """
     self.contents = contents
     self.st_size = len(contents)
+    self.epoch += 1
 
   def SetSize(self, st_size):
     """Resizes file content, padding with nulls if new size exceeds the old.
@@ -243,6 +245,7 @@ class FakeFile(object):
     else:
       self.contents = '%s%s' % (self.contents, '\0' * (st_size - current_size))
     self.st_size = len(self.contents)
+    self.epoch += 1
 
   def SetATime(self, st_atime):
     """Set the self.st_atime attribute.
@@ -1907,6 +1910,7 @@ class FakeFileOpen(object):
         self._read = read
         self._update = update
         self._closefd = closefd
+        self._file_epoch = file_object.epoch
         newline_arg = {} if binary else {'newline': newline}
         if file_object.contents:
           if update:
@@ -1962,6 +1966,7 @@ class FakeFileOpen(object):
       def flush(self):
         """Flush file contents to 'disk'."""
         self._file_object.SetContents(self._io.getvalue())
+        self._file_epoch = self._file_object.epoch
 
       def seek(self, offset, whence=0):
         """Move read/write pointer in 'file'."""
@@ -1986,6 +1991,17 @@ class FakeFileOpen(object):
           self._read_whence = 0
           self._io.seek(write_seek)
         return self._read_seek
+
+      def _UpdateStringIO(self):
+        """Updates the StringIO with changes to the file object contents."""
+        if self._file_epoch == self._file_object.epoch:
+          return
+        whence = self._io.tell()
+        self._io.seek(0)
+        self._io.truncate()
+        self._io.write(self._file_object.contents)
+        self._io.seek(whence)
+        self._file_epoch = self._file_object.epoch
 
       def _ReadWrappers(self, name):
         """Wrap a StringIO attribute in a read wrapper.
@@ -2074,8 +2090,10 @@ class FakeFileOpen(object):
         if self._file_object.IsLargeFile():
           raise FakeLargeFileIoException(file_path)
 
+        if name.startswith('read'):
+          self._UpdateStringIO()
         if self._append:
-          if name in ['read', 'readline', 'readlines']:
+          if name.startswith('read'):
             return self._ReadWrappers(name)
           else:
             return self._OtherWrapper(name)
