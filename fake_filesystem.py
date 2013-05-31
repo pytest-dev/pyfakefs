@@ -574,7 +574,10 @@ class FakeFilesystem(object):
       raise TypeError
     if not file_path:
       return False
-    file_path = self.ResolvePath(file_path)
+    try:
+      file_path = self.ResolvePath(file_path)
+    except IOError:
+      return False
     if file_path == self.root.name:
       return True
     path_components = self.GetPathComponents(file_path)
@@ -617,12 +620,19 @@ class FakeFilesystem(object):
 
     Raises:
       TypeError: if file_path is None
-      IOError: if file_path is ''
+      IOError: if file_path is '' or a part of the path doesn't exist
     """
 
     def _ComponentsToPath(component_folders):
       return '%s%s' % (self.path_separator,
                        self.path_separator.join(component_folders))
+
+    def _ValidRelativePath(file_path):
+      while file_path and '/..' in file_path:
+        file_path = file_path[:file_path.rfind('/..')]
+        if not self.Exists(self.NormalizePath(file_path)):
+          return False
+      return True
 
     def _FollowLink(link_path_components, link):
       """Follow a link w.r.t. a path resolved so far.
@@ -663,8 +673,9 @@ class FakeFilesystem(object):
     if file_path is None:
       # file.open(None) raises TypeError, so mimic that.
       raise TypeError('Expected file system path string, received None')
-    if not file_path:
-      # file.open('') raises IOError, so mimic that.
+    if not file_path or not _ValidRelativePath(file_path):
+      # file.open('') raises IOError, so mimic that, and validate that all
+      # parts of a relative path exist.
       raise IOError(errno.ENOENT,
                     'No such file or directory: \'%s\'' % file_path)
     file_path = self.NormalizePath(file_path)
