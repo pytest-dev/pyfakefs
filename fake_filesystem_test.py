@@ -235,6 +235,21 @@ class FakeFilesystemUnitTest(unittest.TestCase):
     self.filesystem.AddObject(self.root_name, self.fake_file)
     self.assertTrue(self.filesystem.Exists(self.fake_file.name))
 
+  def testExistsRelativePath(self):
+    self.filesystem.CreateFile('/a/b/file_one')
+    self.filesystem.CreateFile('/a/c/file_two')
+    self.assertTrue(self.filesystem.Exists('a/b/../c/file_two'))
+    self.assertTrue(self.filesystem.Exists('/a/c/../b/file_one'))
+    self.assertTrue(self.filesystem.Exists('/a/c/../../a/b/file_one'))
+    self.assertFalse(self.filesystem.Exists('a/b/../z/d'))
+    self.assertFalse(self.filesystem.Exists('a/b/../z/../c/file_two'))
+    self.filesystem.cwd = '/a/c'
+    self.assertTrue(self.filesystem.Exists('../b/file_one'))
+    self.assertTrue(self.filesystem.Exists('../../a/b/file_one'))
+    self.assertTrue(self.filesystem.Exists('../../a/b/../../a/c/file_two'))
+    self.assertFalse(self.filesystem.Exists('../z/file_one'))
+    self.assertFalse(self.filesystem.Exists('../z/../c/file_two'))
+
   def testGetObjectFromRoot(self):
     self.filesystem.AddObject(self.root_name, self.fake_file)
     self.assertEqual(self.fake_file, self.filesystem.GetObject('foobar'))
@@ -2665,7 +2680,7 @@ class ResolvePathTest(FakeFileOpenTestBase):
 
   def testTooManyLinks(self):
     self.filesystem.CreateLink('/a/loop', 'loop')
-    self.assertRaises(IOError, self.filesystem.Exists, '/a/loop')
+    self.assertFalse(self.filesystem.Exists('/a/loop'))
 
 
 class PathManipulationTests(unittest.TestCase):

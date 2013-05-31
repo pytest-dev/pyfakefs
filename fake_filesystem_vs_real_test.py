@@ -404,6 +404,7 @@ class FakeFilesystemVsRealTest(unittest.TestCase):
 
   def testBrokenSymLink(self):
     self._CreateTestFile('l', 'broken_link', 'broken')
+    self._CreateTestFile('l', 'loop', '/a/loop')
     self.assertAllBehaviorsMatch('broken_link')
 
   def testFileInAFolder(self):
@@ -490,7 +491,7 @@ class FakeFilesystemVsRealTest(unittest.TestCase):
     self._CreateTestFile('f', 'a/sibling_of_b/target', 'contents')
     self.assertAllBehaviorsMatch('a/b/../broken/target')
 
-  def TBD_testBadRelativePath(self):
+  def testBadRelativePath(self):
     self._CreateTestFile('d', 'a')
     self._CreateTestFile('f', 'a/target', 'contents')
     self._CreateTestFile('d', 'a/b')
