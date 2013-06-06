@@ -119,7 +119,7 @@ class FakeFilesystemVsRealTest(unittest.TestCase):
     except AttributeError:
       return None
 
-  def _CompareBehaviors(self, method_name, path, real_method, fake_method,
+  def _CompareBehaviors(self, method_name, path, real, fake,
                         method_returns_path=False):
     """Invoke an os method in both real and fake contexts and compare results.
 
@@ -129,17 +129,19 @@ class FakeFilesystemVsRealTest(unittest.TestCase):
 
     Args:
       method_name: Name of method being tested, for use in error messages.
-      path: potential path to a file in the real and fake file systems
-      real_method: method from the built-in system library which takes a path
-        as an arg and returns some value.
-      fake_method: method from the fake_filesystem library which takes a path
-        as an arg and returns some value.
+      path: potential path to a file in the real and fake file systems, passing
+        an empty tuple indicates that no arguments to pass to method.
+      real: built-in system library or method from the built-in system library
+        which takes a path as an arg and returns some value.
+      fake: fake_filsystem object or method from a fake_filesystem class
+        which takes a path as an arg and returns some value.
       method_returns_path: True if the method returns a path, and thus we must
         compensate for expected difference between real and fake.
 
     Returns:
       A description of the difference in behavior, or None.
     """
+    # pylint: disable-msg=C6403
 
     def _ErrorClass(e):
       return (e and e.__class__.__name__) or 'None'
@@ -149,14 +151,24 @@ class FakeFilesystemVsRealTest(unittest.TestCase):
     fake_value = None
     real_err = None
     fake_err = None
+    method_call = '%s' % method_name
+    method_call += '()' if path == () else '(%s)' % path
     # Catching Exception below gives a lint warning, but it's what we need.
     try:
-      real_value = real_method(path)
+      args = [] if path == () else [path]
+      real_method = real
+      if not callable(real):
+        real_method = getattr(real, method_name)
+      real_value = str(real_method(*args))
     except Exception as e:  # pylint: disable-msg=W0703
       real_err = e
       errs += 1
     try:
-      fake_value = fake_method(path)
+      fake_method = fake
+      if not callable(fake):
+        fake_method = getattr(fake, method_name)
+      args = [] if path == () else [path]
+      fake_value = str(fake_method(*args))
     except Exception as e:  # pylint: disable-msg=W0703
       fake_err = e
       errs += 1
@@ -164,13 +176,13 @@ class FakeFilesystemVsRealTest(unittest.TestCase):
     # is almost always different because of the file paths.
     if _ErrorClass(real_err) != _ErrorClass(fake_err):
       if real_err is None:
-        return '%s(%s): real version returned %s, fake raised %s' % (
-            method_name, path, real_value, _ErrorClass(fake_err))
+        return '%s: real version returned %s, fake raised %s' % (
+            method_call, real_value, _ErrorClass(fake_err))
       if fake_err is None:
-        return '%s(%s): real version raised %s, fake returned %s' % (
-            method_name, path, _ErrorClass(real_err), fake_value)
-      return '%s(%s): real version raised %s, fake raised %s' % (
-          method_name, path, _ErrorClass(real_err), _ErrorClass(fake_err))
+        return '%s: real version raised %s, fake returned %s' % (
+            method_call, _ErrorClass(real_err), fake_value)
+      return '%s: real version raised %s, fake raised %s' % (
+          method_call, _ErrorClass(real_err), _ErrorClass(fake_err))
     real_errno = self._GetErrno(real_err)
     fake_errno = self._GetErrno(fake_err)
     if real_errno != fake_errno:
@@ -185,8 +197,8 @@ class FakeFilesystemVsRealTest(unittest.TestCase):
         real_value = real_value[len(self.real_base):]
         fake_value = fake_value[len(self.fake_base):]
     if real_value != fake_value:
-      return '%s(%s): real return %s, fake returned %s' % (
-          method_name, path, real_value, fake_value)
+      return '%s: real return %s, fake returned %s' % (
+          method_call, real_value, fake_value)
     return None
 
   def assertOsMethodBehaviorMatches(self, method_name, path,
@@ -206,18 +218,31 @@ class FakeFilesystemVsRealTest(unittest.TestCase):
     Returns:
       A description of the difference in behavior, or None.
     """
-
-    def _BindToModule(method):
-      """Bind a method to the fake os module."""
-
-      def _Call(path):
-        return method(self.fake_os, path)
-      return _Call
-
-    real_method = os.__dict__[method_name]
-    fake_method = _BindToModule(self.fake_os.__class__.__dict__[method_name])
-    return self._CompareBehaviors(method_name, path, real_method, fake_method,
+    return self._CompareBehaviors(method_name, path, os, self.fake_os,
                                   method_returns_path)
+
+  def DiffOpenMethodBehavior(self, method_name, path, mode, data,
+                             method_returns_data=True):
+    """Invoke an open method in both real and fkae contexts and compare.
+
+    Args:
+      method_name: Name of method being tested.
+      path: potential path to a file in the real and fake file systems.
+      mode: how to open the file.
+      data: any data to pass to the method.
+      method_returns_data: True if a method returns some sort of data.
+
+    For a given method name (from builtin open) and a path, compare the
+    behavior of the system provided module against the fake_filesytem module.
+    We expect results and/or Exceptions raised to be identical.
+
+    Returns:
+      A description of the difference in behavior, or None.
+    """
+    with open(path, mode) as real_fh:
+      with self.fake_open(path, mode) as fake_fh:
+        return self._CompareBehaviors(method_name, data, real_fh, fake_fh,
+                                      method_returns_data)
 
   def DiffOsPathMethodBehavior(self, method_name, path,
                                method_returns_path=False):
@@ -236,18 +261,7 @@ class FakeFilesystemVsRealTest(unittest.TestCase):
     Returns:
       A description of the difference in behavior, or None.
     """
-
-    def _BindToModule(method):
-      """Bind a method to the fake os.path module."""
-
-      def _Call(path):
-        return method(self.fake_os.path, path)
-      return _Call
-
-    real_method = os.path.__dict__[method_name]
-    fake_method = _BindToModule(
-        self.fake_os.path.__class__.__dict__[method_name])
-    return self._CompareBehaviors(method_name, path, real_method, fake_method,
+    return self._CompareBehaviors(method_name, path, os.path, self.fake_os.path,
                                   method_returns_path)
 
   def assertOsPathMethodBehaviorMatches(self, method_name, path,
@@ -270,11 +284,11 @@ class FakeFilesystemVsRealTest(unittest.TestCase):
     if diff:
       self.fail(diff)
 
-  def assertAllBehaviorsMatch(self, path):
+  def assertAllOsBehaviorsMatch(self, path):
     os_method_names = ['readlink']
-    os_method_names_returning_paths = ['getcwd']
+    os_method_names_no_args = ['getcwd']
     if sys.version_info < (3, 0):
-      os_method_names_returning_paths.append('getcwdu')
+      os_method_names_no_args.append('getcwdu')
     os_path_method_names = ['isabs',
                             'isdir',
                             'isfile',
@@ -292,8 +306,8 @@ class FakeFilesystemVsRealTest(unittest.TestCase):
       diff = self.assertOsMethodBehaviorMatches(method_name, path)
       if diff:
         differences.append(diff)
-    for method_name in os_method_names_returning_paths:
-      diff = self.assertOsMethodBehaviorMatches(method_name, path,
+    for method_name in os_method_names_no_args:
+      diff = self.assertOsMethodBehaviorMatches(method_name, (),
                                                 method_returns_path=True)
       if diff:
         differences.append(diff)
@@ -303,6 +317,23 @@ class FakeFilesystemVsRealTest(unittest.TestCase):
         differences.append(diff)
     for m in wrapped_methods:
       diff = self._CompareBehaviors(m[0], path, m[1], m[2])
+      if diff:
+        differences.append(diff)
+    if differences:
+      self.fail('Behaviors do not match for %s:\n  %s' %
+                (path, '\n  '.join(differences)))
+
+  def assertFileHandleBehaviorsMatch(self, path, mode, data):
+    write_method_names = ['write', 'writelines']
+    read_method_names = ['read', 'readlines']
+    other_method_names = ['truncate', 'flush', 'close']
+    differences = []
+    for method_name in write_method_names:
+      diff = self.DiffOpenMethodBehavior(method_name, path, mode, data)
+      if diff:
+        differences.append(diff)
+    for method_name in read_method_names + other_method_names:
+      diff = self.DiffOpenMethodBehavior(method_name, path, mode, ())
       if diff:
         differences.append(diff)
     if differences:
@@ -363,62 +394,62 @@ class FakeFilesystemVsRealTest(unittest.TestCase):
     self.assertOsPathMethodBehaviorMatches('isabs', 'a')
 
   def testNonePath(self):
-    self.assertAllBehaviorsMatch(None)
+    self.assertAllOsBehaviorsMatch(None)
 
   def testEmptyPath(self):
-    self.assertAllBehaviorsMatch('')
+    self.assertAllOsBehaviorsMatch('')
 
   def testRootPath(self):
-    self.assertAllBehaviorsMatch('/')
+    self.assertAllOsBehaviorsMatch('/')
 
   def testNonExistantFile(self):
-    self.assertAllBehaviorsMatch('foo')
+    self.assertAllOsBehaviorsMatch('foo')
 
   def testEmptyFile(self):
     self._CreateTestFile('f', 'aFile')
-    self.assertAllBehaviorsMatch('aFile')
+    self.assertAllOsBehaviorsMatch('aFile')
 
   def testFileWithContents(self):
     self._CreateTestFile('f', 'aFile', 'some contents')
-    self.assertAllBehaviorsMatch('aFile')
+    self.assertAllOsBehaviorsMatch('aFile')
 
   def testSymLinkToEmptyFile(self):
     self._CreateTestFile('f', 'aFile')
     self._CreateTestFile('l', 'link_to_empty', 'aFile')
-    self.assertAllBehaviorsMatch('link_to_empty')
+    self.assertAllOsBehaviorsMatch('link_to_empty')
 
   def TBD_testHardLinkToEmptyFile(self):
     self._CreateTestFile('f', 'aFile')
     self._CreateTestFile('h', 'link_to_empty', 'aFile')
-    self.assertAllBehaviorsMatch('link_to_empty')
+    self.assertAllOsBehaviorsMatch('link_to_empty')
 
   def testSymLinkToRealFile(self):
     self._CreateTestFile('f', 'aFile', 'some contents')
     self._CreateTestFile('l', 'link_to_file', 'aFile')
-    self.assertAllBehaviorsMatch('link_to_file')
+    self.assertAllOsBehaviorsMatch('link_to_file')
 
   def TBD_testHardLinkToRealFile(self):
     self._CreateTestFile('f', 'aFile', 'some contents')
     self._CreateTestFile('h', 'link_to_file', 'aFile')
-    self.assertAllBehaviorsMatch('link_to_file')
+    self.assertAllOsBehaviorsMatch('link_to_file')
 
   def testBrokenSymLink(self):
     self._CreateTestFile('l', 'broken_link', 'broken')
     self._CreateTestFile('l', 'loop', '/a/loop')
-    self.assertAllBehaviorsMatch('broken_link')
+    self.assertAllOsBehaviorsMatch('broken_link')
 
   def testFileInAFolder(self):
     self._CreateTestFile('d', 'a')
     self._CreateTestFile('d', 'a/b')
     self._CreateTestFile('f', 'a/b/file', 'contents')
-    self.assertAllBehaviorsMatch('a/b/file')
+    self.assertAllOsBehaviorsMatch('a/b/file')
 
   def testAbsoluteSymLinkToFolder(self):
     self._CreateTestFile('d', 'a')
     self._CreateTestFile('d', 'a/b')
     self._CreateTestFile('f', 'a/b/file', 'contents')
     self._CreateTestFile('l', 'a/link', '/a/b')
-    self.assertAllBehaviorsMatch('a/link/file')
+    self.assertAllOsBehaviorsMatch('a/link/file')
 
   def testLinkToFolderAfterChdir(self):
     self._CreateTestFile('d', 'a')
@@ -429,14 +460,14 @@ class FakeFilesystemVsRealTest(unittest.TestCase):
     real_dir, fake_dir = self._Paths('a/b')
     os.chdir(real_dir)
     self.fake_os.chdir(fake_dir)
-    self.assertAllBehaviorsMatch('file')
+    self.assertAllOsBehaviorsMatch('file')
 
   def testRelativeSymLinkToFolder(self):
     self._CreateTestFile('d', 'a')
     self._CreateTestFile('d', 'a/b')
     self._CreateTestFile('f', 'a/b/file', 'contents')
     self._CreateTestFile('l', 'a/link', 'b')
-    self.assertAllBehaviorsMatch('a/link/file')
+    self.assertAllOsBehaviorsMatch('a/link/file')
 
   def testSymLinkToParent(self):
     # Soft links on HFS+ / OS X behave differently.
@@ -444,14 +475,14 @@ class FakeFilesystemVsRealTest(unittest.TestCase):
       self._CreateTestFile('d', 'a')
       self._CreateTestFile('d', 'a/b')
       self._CreateTestFile('l', 'a/b/c', '..')
-      self.assertAllBehaviorsMatch('a/b/c')
+      self.assertAllOsBehaviorsMatch('a/b/c')
 
   def testPathThroughSymLinkToParent(self):
     self._CreateTestFile('d', 'a')
     self._CreateTestFile('f', 'a/target', 'contents')
     self._CreateTestFile('d', 'a/b')
     self._CreateTestFile('l', 'a/b/c', '..')
-    self.assertAllBehaviorsMatch('a/b/c/target')
+    self.assertAllOsBehaviorsMatch('a/b/c/target')
 
   def testSymLinkToSiblingDirectory(self):
     self._CreateTestFile('d', 'a')
@@ -459,7 +490,7 @@ class FakeFilesystemVsRealTest(unittest.TestCase):
     self._CreateTestFile('d', 'a/sibling_of_b')
     self._CreateTestFile('f', 'a/sibling_of_b/target', 'contents')
     self._CreateTestFile('l', 'a/b/c', '../sibling_of_b')
-    self.assertAllBehaviorsMatch('a/b/c/target')
+    self.assertAllOsBehaviorsMatch('a/b/c/target')
 
   def testSymLinkToSiblingDirectoryNonExistantFile(self):
     self._CreateTestFile('d', 'a')
@@ -467,7 +498,7 @@ class FakeFilesystemVsRealTest(unittest.TestCase):
     self._CreateTestFile('d', 'a/sibling_of_b')
     self._CreateTestFile('f', 'a/sibling_of_b/target', 'contents')
     self._CreateTestFile('l', 'a/b/c', '../sibling_of_b')
-    self.assertAllBehaviorsMatch('a/b/c/file_does_not_exist')
+    self.assertAllOsBehaviorsMatch('a/b/c/file_does_not_exist')
 
   def testBrokenSymLinkToSiblingDirectory(self):
     self._CreateTestFile('d', 'a')
@@ -475,21 +506,21 @@ class FakeFilesystemVsRealTest(unittest.TestCase):
     self._CreateTestFile('d', 'a/sibling_of_b')
     self._CreateTestFile('f', 'a/sibling_of_b/target', 'contents')
     self._CreateTestFile('l', 'a/b/c', '../broken_sibling_of_b')
-    self.assertAllBehaviorsMatch('a/b/c/target')
+    self.assertAllOsBehaviorsMatch('a/b/c/target')
 
   def testRelativePath(self):
     self._CreateTestFile('d', 'a')
     self._CreateTestFile('d', 'a/b')
     self._CreateTestFile('d', 'a/sibling_of_b')
     self._CreateTestFile('f', 'a/sibling_of_b/target', 'contents')
-    self.assertAllBehaviorsMatch('a/b/../sibling_of_b/target')
+    self.assertAllOsBehaviorsMatch('a/b/../sibling_of_b/target')
 
   def testBrokenRelativePath(self):
     self._CreateTestFile('d', 'a')
     self._CreateTestFile('d', 'a/b')
     self._CreateTestFile('d', 'a/sibling_of_b')
     self._CreateTestFile('f', 'a/sibling_of_b/target', 'contents')
-    self.assertAllBehaviorsMatch('a/b/../broken/target')
+    self.assertAllOsBehaviorsMatch('a/b/../broken/target')
 
   def testBadRelativePath(self):
     self._CreateTestFile('d', 'a')
@@ -497,10 +528,22 @@ class FakeFilesystemVsRealTest(unittest.TestCase):
     self._CreateTestFile('d', 'a/b')
     self._CreateTestFile('d', 'a/sibling_of_b')
     self._CreateTestFile('f', 'a/sibling_of_b/target', 'contents')
-    self.assertAllBehaviorsMatch('a/b/../broken/../target')
+    self.assertAllOsBehaviorsMatch('a/b/../broken/../target')
 
   def testGetmtimeNonexistantPath(self):
     self.assertOsPathMethodBehaviorMatches('getmtime', 'no/such/path')
+
+  def testBuiltinOpenModes(self):
+    self._CreateTestFile('f', 'read', 'some contents')
+    self._CreateTestFile('f', 'write', 'some contents')
+    self._CreateTestFile('f', 'append', 'some contents')
+    self.assertFileHandleBehaviorsMatch('read', 'r', 'other contents')
+    self.assertFileHandleBehaviorsMatch('write', 'w', 'other contents')
+    self.assertFileHandleBehaviorsMatch('append', 'a', 'other contents')
+    self._CreateTestFile('f', 'readplus', 'some contents')
+    self._CreateTestFile('f', 'writeplus', 'some contents')
+    self.assertFileHandleBehaviorsMatch('readplus', 'r+', 'other contents')
+    self.assertFileHandleBehaviorsMatch('writeplus', 'w+', 'other contents')
 
 
 def main(unused_argv):

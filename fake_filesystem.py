@@ -1912,6 +1912,10 @@ class FakeFileOpen(object):
       If the wrapper has any data written to it, it will propagate to
       the FakeFile object on close() or flush().
       """
+      if sys.version_info < (3, 0):
+        _OPERATION_ERROR = IOError
+      else:
+        _OPERATION_ERROR = io.UnsupportedOperation
 
       def __init__(self, file_object, update=False, read=False, append=False,
                    delete_on_close=False, filesystem=None, newline=None,
@@ -1976,8 +1980,9 @@ class FakeFileOpen(object):
 
       def flush(self):
         """Flush file contents to 'disk'."""
-        self._file_object.SetContents(self._io.getvalue())
-        self._file_epoch = self._file_object.epoch
+        if self._update:
+          self._file_object.SetContents(self._io.getvalue())
+          self._file_epoch = self._file_object.epoch
 
       def seek(self, offset, whence=0):
         """Move read/write pointer in 'file'."""
@@ -2017,11 +2022,8 @@ class FakeFileOpen(object):
       def _ReadWrappers(self, name):
         """Wrap a StringIO attribute in a read wrapper.
 
-        We return 1 of 2 wrappers to read calls.  Either a read_error which
-        throws an IOError if you try to read from a file that was opened with
-        only write access, or a read_wrapper which tracks our own read pointer
-        since the StringIO object has no concept of a different read and write
-        pointer.
+        Returns a read_wrapper which tracks our own read pointer since the
+        StringIO object has no concept of a different read and write pointer.
 
         Args:
           name: the name StringIO attribute to wrap.  Should be a read call.
@@ -2030,15 +2032,6 @@ class FakeFileOpen(object):
           either a read_error or read_wrapper function.
         """
         io_attr = getattr(self._io, name)
-        if not self._read:
-
-          def read_error(*args, **kwargs):
-            """Throw an IOError unless the argument is zero."""
-            if name in ['read', 'readline'] and args and args[0] == 0:
-              return ''
-            raise IOError(errno.EPERM, 'Operation not permitted')
-
-          return read_error
 
         def read_wrapper(*args, **kwargs):
           """Wrap all read calls to the StringIO Object.
@@ -2101,6 +2094,21 @@ class FakeFileOpen(object):
         if self._file_object.IsLargeFile():
           raise FakeLargeFileIoException(file_path)
 
+        # errors on called method vs. open mode
+        if not self._read and name.startswith('read'):
+          def read_error(*args, **kwargs):
+            """Throw an error unless the argument is zero."""
+            if args and args[0] == 0:
+              return ''
+            raise self._OPERATION_ERROR('File is not open for reading.')
+          return read_error
+        if not self._update and (name.startswith('write')
+                                 or name == 'truncate'):
+          def write_error(*args, **kwargs):
+            """Throw an error."""
+            raise self._OPERATION_ERROR('File is not open for writing.')
+          return write_error
+
         if name.startswith('read'):
           self._UpdateStringIO()
         if self._append:
@@ -2111,6 +2119,8 @@ class FakeFileOpen(object):
         return getattr(self._io, name)
 
       def __iter__(self):
+        if not self._read:
+          raise self._OPERATION_ERROR('File is not open for reading')
         return self._io.__iter__()
 
     # if you print obj.name, the argument to open() must be printed. Not the

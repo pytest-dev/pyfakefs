@@ -2418,6 +2418,7 @@ class FakeFileOpenTest(FakeFileOpenTestBase):
           writer.write(write)
           writer.flush()
           reads.append(reader.read())
+          reader.flush()
         self.assertEqual(writes, reads)
         writes = ['nothing', 'to\nsee', 'here']
         reads = []
@@ -2426,6 +2427,27 @@ class FakeFileOpenTest(FakeFileOpenTestBase):
           writer.write(write)
           reads.append(reader.read())
         self.assertEqual(['' for i in writes], reads)
+
+  def testOpenIoErrors(self):
+    file_path = 'some_file'
+    self.filesystem.CreateFile(file_path)
+
+    with self.open(file_path, 'a') as fh:
+      self.assertRaises(IOError, fh.read)
+      self.assertRaises(IOError, fh.readlines)
+    with self.open(file_path, 'w') as fh:
+      self.assertRaises(IOError, fh.read)
+      self.assertRaises(IOError, fh.readlines)
+    with self.open(file_path, 'r') as fh:
+      self.assertRaises(IOError, fh.truncate)
+      self.assertRaises(IOError, fh.write, 'contents')
+      self.assertRaises(IOError, fh.writelines, ['con', 'tents'])
+
+    def _IteratorOpen(file_path, mode):
+      for _ in self.open(file_path, mode):
+        pass
+    self.assertRaises(IOError, _IteratorOpen, file_path, 'w')
+    self.assertRaises(IOError, _IteratorOpen, file_path, 'a')
 
 
 class OpenWithFileDescriptorTest(FakeFileOpenTestBase):
