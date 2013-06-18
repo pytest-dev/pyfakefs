@@ -120,11 +120,12 @@ class FakeTempfileModuleTest(unittest.TestCase):
     self.assertEqual('foo', file_obj.contents)
 
   def testMkstemp(self):
+    next_fd = len(self.filesystem.open_files)
     temporary = self.tempfile.mkstemp()
     self.assertEqual(2, len(temporary))
     self.assertTrue(temporary[1].startswith('/tmp/tmp'))
     created_filenames = self.tempfile.FakeReturnedMktempValues()
-    self.assertEqual(9999, temporary[0])
+    self.assertEqual(next_fd, temporary[0])
     self.assertEqual(temporary[1], created_filenames[0])
     self.assertTrue(self.filesystem.Exists(temporary[1]))
     self.assertEqual(self.filesystem.GetObject(temporary[1]).st_mode,
@@ -136,9 +137,10 @@ class FakeTempfileModuleTest(unittest.TestCase):
     self.assertRaises(OSError, self.tempfile.mkstemp, dir='/dir')
     # expect pass: /dir exists
     self.filesystem.CreateDirectory('/dir')
+    next_fd = len(self.filesystem.open_files)
     temporary = self.tempfile.mkstemp(dir='/dir')
     self.assertEqual(2, len(temporary))
-    self.assertEqual(9999, temporary[0])
+    self.assertEqual(next_fd, temporary[0])
     self.assertTrue(temporary[1].startswith('/dir/tmp'))
     created_filenames = self.tempfile.FakeReturnedMktempValues()
     self.assertEqual(temporary[1], created_filenames[0])
