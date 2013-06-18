@@ -180,7 +180,7 @@ class FakeTempfileModule(object):
           default False = open file in binary mode.
     Returns:
       2-tuple containing
-      [0] = int, 9999 fixed value, NOT a real file descriptor
+      [0] = int, file descriptor number for the file object
       [1] = string, absolute pathname of a file
     Raises:
       OSError: when dir= is specified but does not exist
@@ -189,10 +189,11 @@ class FakeTempfileModule(object):
     # TODO: optional boolean text is unused?
     # default dir affected by "global"
     filename = self._TempEntryname(suffix, prefix, dir)
-    self._filesystem.CreateFile(filename, st_mode=stat.S_IFREG|0o600)
+    fh = self._filesystem.CreateFile(filename, st_mode=stat.S_IFREG|0o600)
+    fd = self._filesystem.AddOpenFile(fh)
 
     self._mktemp_retvals.append(filename)
-    return (9999, filename)  # 9999 is greater than ulimit -n (8192)
+    return (fd, filename)
 
   # pylint: disable-msg=C6409
   def mkdtemp(self, suffix='', prefix=None, dir=None):
