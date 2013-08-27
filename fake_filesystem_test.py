@@ -2426,7 +2426,7 @@ class FakeFileOpenTest(FakeFileOpenTestBase):
         for write in writes:
           writer.write(write)
           reads.append(reader.read())
-        self.assertEqual(['' for i in writes], reads)
+        self.assertEqual(['' for _ in writes], reads)
 
   def testOpenIoErrors(self):
     file_path = 'some_file'
@@ -2474,6 +2474,50 @@ class OpenWithFileDescriptorTest(FakeFileOpenTestBase):
     self.assertIsNone(self.filesystem.open_files[fd])
 
 
+class OpenWithBinaryFlagsTest(unittest.TestCase):
+
+  def setUp(self):
+    self.filesystem = fake_filesystem.FakeFilesystem()
+    self.file = fake_filesystem.FakeFileOpen(self.filesystem)
+    self.os = fake_filesystem.FakeOsModule(self.filesystem)
+    self.file_path = 'some_file'
+    self.file_contents = b'binary contents'
+    self.filesystem.CreateFile(self.file_path, contents=self.file_contents)
+
+  def OpenFakeFile(self, mode):
+    return self.file(self.file_path, mode=mode)
+
+  def OpenFileAndSeek(self, mode):
+    fake_file = self.file(self.file_path, mode=mode)
+    fake_file.seek(0, 2)
+    return fake_file
+
+  def WriteAndReopenFile(self, fake_file, mode='rb'):
+    fake_file.write(self.file_contents)
+    fake_file.close()
+    return self.file(self.file_path, mode=mode)
+
+  def testReadBinary(self):
+    fake_file = self.OpenFakeFile('rb')
+    self.assertEqual(self.file_contents, fake_file.read())
+
+  def testWriteBinary(self):
+    fake_file = self.OpenFileAndSeek('wb')
+    self.assertEqual(0, fake_file.tell())
+    fake_file = self.WriteAndReopenFile(fake_file, mode='rb')
+    self.assertEqual(self.file_contents, fake_file.read())
+    # reopen the file in text mode
+    fake_file = self.OpenFakeFile('wb')
+    fake_file = self.WriteAndReopenFile(fake_file, mode='r')
+    self.assertEqual(self.file_contents.decode('ascii'), fake_file.read())
+
+  def testWriteAndReadBinary(self):
+    fake_file = self.OpenFileAndSeek('w+b')
+    self.assertEqual(0, fake_file.tell())
+    fake_file = self.WriteAndReopenFile(fake_file, mode='rb')
+    self.assertEqual(self.file_contents, fake_file.read())
+
+
 class OpenWithIgnoredFlagsTest(unittest.TestCase):
 
   def setUp(self):
@@ -2488,14 +2532,18 @@ class OpenWithIgnoredFlagsTest(unittest.TestCase):
     self.filesystem.CreateFile(self.file_path, contents=self.file_contents)
     # It's resonable to assume the file exists at this point
 
-  # Shouldn't need a tearDown()
-
   def OpenFakeFile(self, mode):
     return self.file(self.file_path, mode=mode)
 
-  def testReadBinary(self):
-    fake_file = self.OpenFakeFile('rb')
-    self.assertEqual(self.file_contents, fake_file.read())
+  def OpenFileAndSeek(self, mode):
+    fake_file = self.file(self.file_path, mode=mode)
+    fake_file.seek(0, 2)
+    return fake_file
+
+  def WriteAndReopenFile(self, fake_file, mode='r'):
+    fake_file.write(self.file_contents)
+    fake_file.close()
+    return self.file(self.file_path, mode=mode)
 
   def testReadText(self):
     fake_file = self.OpenFakeFile('rt')
@@ -2509,39 +2557,20 @@ class OpenWithIgnoredFlagsTest(unittest.TestCase):
     fake_file = self.OpenFakeFile('U')
     self.assertEqual(self.read_contents, fake_file.read())
 
-  def OpenFileAndSeek(self, mode):
-    fake_file = self.file(self.file_path, mode=mode)
-    fake_file.seek(0, 2)
-    return fake_file
-
-  def WriteAndReopenFile(self, fake_file, mode='r'):
-    fake_file.write(self.file_contents)
-    fake_file.close()
-    return self.file(self.file_path, mode=mode)
-
-  def testWriteBinary(self):
-    fake_file = self.OpenFileAndSeek('wb')
-    self.assertEqual(0, fake_file.tell())
-    fake_file = self.WriteAndReopenFile(fake_file, mode='rb')
-    self.assertEqual(self.file_contents, fake_file.read())
-
   def testWriteText(self):
     fake_file = self.OpenFileAndSeek('wt')
     self.assertEqual(0, fake_file.tell())
     fake_file = self.WriteAndReopenFile(fake_file)
     self.assertEqual(self.read_contents, fake_file.read())
 
-  def testWriteAndReadBinary(self):
-    fake_file = self.OpenFileAndSeek('w+b')
-    self.assertEqual(0, fake_file.tell())
-    fake_file = self.WriteAndReopenFile(fake_file, mode='rb')
-    self.assertEqual(self.file_contents, fake_file.read())
-
   def testWriteAndReadTextBinary(self):
     fake_file = self.OpenFileAndSeek('w+bt')
     self.assertEqual(0, fake_file.tell())
-    fake_file = self.WriteAndReopenFile(fake_file, mode='rb')
-    self.assertEqual(self.file_contents, fake_file.read())
+    if sys.version_info >= (3, 0):
+      self.assertRaises(TypeError, fake_file.write, self.file_contents)
+    else:
+      fake_file = self.WriteAndReopenFile(fake_file, mode='rb')
+      self.assertEqual(self.file_contents, fake_file.read())
 
 
 class OpenWithInvalidFlagsTest(FakeFileOpenTestBase):

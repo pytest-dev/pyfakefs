@@ -1,5 +1,3 @@
-#!/usr/bin/python2.4
-#
 # Copyright 2009 Google Inc. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -219,6 +217,9 @@ class FakeFile(object):
     Args:
       contents: string, new content of file.
     """
+    # convert a byte array to a string
+    if sys.version_info >= (3, 0) and isinstance(contents, bytes):
+      contents = ''.join(chr(i) for i in contents)
     self.contents = contents
     self.st_size = len(contents)
     self.epoch += 1
@@ -1926,11 +1927,18 @@ class FakeFileOpen(object):
         self._update = update
         self._closefd = closefd
         self._file_epoch = file_object.epoch
+        contents = file_object.contents
         newline_arg = {} if binary else {'newline': newline}
-        if file_object.contents:
+        io_class = io.StringIO
+        # For Python 3, files opened as binary only read/write byte contents.
+        if sys.version_info >= (3, 0) and binary:
+          io_class = io.BytesIO
+          if contents and isinstance(contents, str):
+            contents = bytes(contents, 'ascii')
+        if contents:
           if update:
-            self._io = io.StringIO(**newline_arg)
-            self._io.write(file_object.contents)
+            self._io = io_class(**newline_arg)
+            self._io.write(contents)
             if not append:
               self._io.seek(0)
             else:
@@ -1940,9 +1948,9 @@ class FakeFileOpen(object):
               else:
                 self._read_seek = self._io.tell()
           else:
-            self._io = io.StringIO(file_object.contents, **newline_arg)
+            self._io = io_class(contents, **newline_arg)
         else:
-          self._io = io.StringIO(**newline_arg)
+          self._io = io_class(**newline_arg)
           self._read_whence = 0
           self._read_seek = 0
         if delete_on_close:
