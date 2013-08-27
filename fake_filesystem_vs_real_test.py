@@ -51,6 +51,14 @@ class FakeFilesystemVsRealTest(unittest.TestCase):
       fh = self.fake_open(fake_path, 'w')
       fh.write(contents or '')
       fh.close()
+    # b for binary file
+    if file_type == 'b':
+      fh = open(real_path, 'wb')
+      fh.write(contents or '')
+      fh.close()
+      fh = self.fake_open(fake_path, 'wb')
+      fh.write(contents or '')
+      fh.close()
     # l for symlink, h for hard link
     if file_type in ('l', 'h'):
       real_target, fake_target = (contents, contents)
@@ -146,7 +154,6 @@ class FakeFilesystemVsRealTest(unittest.TestCase):
     def _ErrorClass(e):
       return (e and e.__class__.__name__) or 'None'
 
-    errs = 0
     real_value = None
     fake_value = None
     real_err = None
@@ -162,7 +169,6 @@ class FakeFilesystemVsRealTest(unittest.TestCase):
       real_value = str(real_method(*args))
     except Exception as e:  # pylint: disable-msg=W0703
       real_err = e
-      errs += 1
     try:
       fake_method = fake
       if not callable(fake):
@@ -171,7 +177,6 @@ class FakeFilesystemVsRealTest(unittest.TestCase):
       fake_value = str(fake_method(*args))
     except Exception as e:  # pylint: disable-msg=W0703
       fake_err = e
-      errs += 1
     # We only compare on the error class because the acutal error contents
     # is almost always different because of the file paths.
     if _ErrorClass(real_err) != _ErrorClass(fake_err):
@@ -413,6 +418,10 @@ class FakeFilesystemVsRealTest(unittest.TestCase):
     self._CreateTestFile('f', 'aFile', 'some contents')
     self.assertAllOsBehaviorsMatch('aFile')
 
+  def testFileWithBinaryContents(self):
+    self._CreateTestFile('b', 'aFile', b'some contents')
+    self.assertAllOsBehaviorsMatch('aFile')
+
   def testSymLinkToEmptyFile(self):
     self._CreateTestFile('f', 'aFile')
     self._CreateTestFile('l', 'link_to_empty', 'aFile')
@@ -544,6 +553,15 @@ class FakeFilesystemVsRealTest(unittest.TestCase):
     self._CreateTestFile('f', 'writeplus', 'some contents')
     self.assertFileHandleBehaviorsMatch('readplus', 'r+', 'other contents')
     self.assertFileHandleBehaviorsMatch('writeplus', 'w+', 'other contents')
+    self._CreateTestFile('b', 'binaryread', b'some contents')
+    self._CreateTestFile('b', 'binarywrite', b'some contents')
+    self._CreateTestFile('b', 'binaryappend', b'some contents')
+    self.assertFileHandleBehaviorsMatch('binaryread', 'rb', b'other contents')
+    self.assertFileHandleBehaviorsMatch('binarywrite', 'wb', b'other contents')
+    self.assertFileHandleBehaviorsMatch('binaryappend', 'ab', b'other contents')
+    self.assertFileHandleBehaviorsMatch('read', 'rb', 'other contents')
+    self.assertFileHandleBehaviorsMatch('write', 'wb', 'other contents')
+    self.assertFileHandleBehaviorsMatch('append', 'ab', 'other contents')
 
 
 def main(unused_argv):
