@@ -105,7 +105,7 @@ class FakeDirectoryUnitTest(unittest.TestCase):
     self.assertEqual(131, self.fake_file.st_mtime)
 
   def testFileInode(self):
-    filesystem = fake_filesystem.FakeFilesystem()
+    filesystem = fake_filesystem.FakeFilesystem(path_separator='/')
     fake_os = fake_filesystem.FakeOsModule(filesystem)
     file_path = 'some_file1'
     filesystem.CreateFile(file_path, contents='contents here1', inode=42)
@@ -116,7 +116,7 @@ class FakeDirectoryUnitTest(unittest.TestCase):
     self.assertEqual(43, fake_os.stat(file_path)[stat.ST_INO])
 
   def testDirectoryInode(self):
-    filesystem = fake_filesystem.FakeFilesystem()
+    filesystem = fake_filesystem.FakeFilesystem(path_separator='/')
     fake_os = fake_filesystem.FakeOsModule(filesystem)
     dirpath = 'testdir'
     filesystem.CreateDirectory(dirpath, inode=42)
@@ -143,8 +143,8 @@ class SetLargeFileSizeTest(FakeDirectoryUnitTest):
 
 class NormalizePathTest(unittest.TestCase):
   def setUp(self):
-    self.filesystem = fake_filesystem.FakeFilesystem()
-    self.root_name = os.path.sep
+    self.filesystem = fake_filesystem.FakeFilesystem(path_separator='/')
+    self.root_name = '/'
 
   def testEmptyPathShouldGetNormalizedToRootPath(self):
     self.assertEqual(self.root_name, self.filesystem.NormalizePath(''))
@@ -173,8 +173,8 @@ class NormalizePathTest(unittest.TestCase):
 
 class GetPathComponentsTest(unittest.TestCase):
   def setUp(self):
-    self.filesystem = fake_filesystem.FakeFilesystem()
-    self.root_name = os.path.sep
+    self.filesystem = fake_filesystem.FakeFilesystem(path_separator='/')
+    self.root_name = '/'
 
   def testRootPathShouldReturnEmptyList(self):
     self.assertEqual([], self.filesystem.GetPathComponents(self.root_name))
@@ -199,14 +199,14 @@ class GetPathComponentsTest(unittest.TestCase):
 
 class FakeFilesystemUnitTest(unittest.TestCase):
   def setUp(self):
-    self.filesystem = fake_filesystem.FakeFilesystem()
-    self.root_name = os.path.sep
+    self.filesystem = fake_filesystem.FakeFilesystem(path_separator='/')
+    self.root_name = '/'
     self.fake_file = fake_filesystem.FakeFile('foobar')
     self.fake_child = fake_filesystem.FakeDirectory('foobaz')
     self.fake_grandchild = fake_filesystem.FakeDirectory('quux')
 
   def testNewFilesystem(self):
-    self.assertEqual(os.path.sep, self.filesystem.path_separator)
+    self.assertEqual('/', self.filesystem.path_separator)
     self.assertTrue(stat.S_IFDIR & self.filesystem.root.st_mode)
     self.assertEqual(self.root_name, self.filesystem.root.name)
     self.assertEqual({}, self.filesystem.root.contents)
@@ -289,7 +289,8 @@ class FakeFilesystemUnitTest(unittest.TestCase):
   def testExistsFileAddedToChild(self):
     self.filesystem.AddObject(self.root_name, self.fake_child)
     self.filesystem.AddObject(self.fake_child.name, self.fake_file)
-    path = os.path.join(self.fake_child.name, self.fake_file.name)
+    path = self.filesystem.JoinPaths(self.fake_child.name,
+                                     self.fake_file.name)
     self.assertTrue(self.filesystem.Exists(path))
 
   def testGetObjectFromChild(self):
@@ -297,49 +298,53 @@ class FakeFilesystemUnitTest(unittest.TestCase):
     self.filesystem.AddObject(self.fake_child.name, self.fake_file)
     self.assertEqual(self.fake_file,
                      self.filesystem.GetObject(
-                         os.path.join(self.fake_child.name,
-                                      self.fake_file.name)))
+                         self.filesystem.JoinPaths(self.fake_child.name,
+                                                   self.fake_file.name)))
 
   def testGetNonexistentObjectFromChildError(self):
     self.filesystem.AddObject(self.root_name, self.fake_child)
     self.filesystem.AddObject(self.fake_child.name, self.fake_file)
     self.assertRaises(IOError, self.filesystem.GetObject,
-                      os.path.join(self.fake_child.name,
-                                   'some_bogus_filename'))
+                      self.filesystem.JoinPaths(self.fake_child.name,
+                                                'some_bogus_filename'))
 
   def testRemoveObjectFromChild(self):
     self.filesystem.AddObject(self.root_name, self.fake_child)
     self.filesystem.AddObject(self.fake_child.name, self.fake_file)
-    target_path = os.path.join(self.fake_child.name, self.fake_file.name)
+    target_path = self.filesystem.JoinPaths(self.fake_child.name,
+                                            self.fake_file.name)
     self.filesystem.RemoveObject(target_path)
     self.assertRaises(IOError, self.filesystem.GetObject, target_path)
 
   def testRemoveObjectFromChildError(self):
     self.filesystem.AddObject(self.root_name, self.fake_child)
     self.assertRaises(IOError, self.filesystem.RemoveObject,
-                      os.path.join(self.fake_child.name,
-                                   'some_bogus_filename'))
+                      self.filesystem.JoinPaths(self.fake_child.name,
+                                                'some_bogus_filename'))
 
   def testRemoveObjectFromNonDirectoryError(self):
     self.filesystem.AddObject(self.root_name, self.fake_file)
     self.assertRaises(
         IOError, self.filesystem.RemoveObject,
-        os.path.join('%s' % self.fake_file.name,
-                     'file_does_not_matter_since_parent_not_a_directory'))
+        self.filesystem.JoinPaths(
+            '%s' % self.fake_file.name,
+            'file_does_not_matter_since_parent_not_a_directory'))
 
   def testExistsFileRemovedFromChild(self):
     self.filesystem.AddObject(self.root_name, self.fake_child)
     self.filesystem.AddObject(self.fake_child.name, self.fake_file)
-    path = os.path.join(self.fake_child.name, self.fake_file.name)
+    path = self.filesystem.JoinPaths(self.fake_child.name,
+                                     self.fake_file.name)
     self.filesystem.RemoveObject(path)
     self.assertFalse(self.filesystem.Exists(path))
 
   def testOperateOnGrandchildDirectory(self):
     self.filesystem.AddObject(self.root_name, self.fake_child)
     self.filesystem.AddObject(self.fake_child.name, self.fake_grandchild)
-    grandchild_directory = os.path.join(self.fake_child.name,
-                                        self.fake_grandchild.name)
-    grandchild_file = os.path.join(grandchild_directory, self.fake_file.name)
+    grandchild_directory = self.filesystem.JoinPaths(self.fake_child.name,
+                                                     self.fake_grandchild.name)
+    grandchild_file = self.filesystem.JoinPaths(grandchild_directory,
+                                                self.fake_file.name)
     self.assertRaises(IOError, self.filesystem.GetObject, grandchild_file)
     self.filesystem.AddObject(grandchild_directory, self.fake_file)
     self.assertEqual(self.fake_file,
@@ -477,7 +482,7 @@ class FakeFilesystemUnitTest(unittest.TestCase):
 class FakeOsModuleTest(TestCase):
 
   def setUp(self):
-    self.filesystem = fake_filesystem.FakeFilesystem()
+    self.filesystem = fake_filesystem.FakeFilesystem(path_separator='/')
     self.os = fake_filesystem.FakeOsModule(self.filesystem)
     self.rwx = self.os.R_OK | self.os.W_OK | self.os.X_OK
     self.rw = self.os.R_OK | self.os.W_OK
@@ -1603,7 +1608,7 @@ class FakeOsModuleTest(TestCase):
 class StatPropagationTest(unittest.TestCase):
 
   def setUp(self):
-    self.filesystem = fake_filesystem.FakeFilesystem()
+    self.filesystem = fake_filesystem.FakeFilesystem(path_separator='/')
     self.os = fake_filesystem.FakeOsModule(self.filesystem)
     self.open = fake_filesystem.FakeFileOpen(self.filesystem)
 
@@ -1713,7 +1718,7 @@ class OsPathInjectionRegressionTest(unittest.TestCase):
   """
 
   def setUp(self):
-    self.filesystem = fake_filesystem.FakeFilesystem()
+    self.filesystem = fake_filesystem.FakeFilesystem(path_separator='/')
     self.os_path = os.path
     # The bug was that when os.path gets faked, the FakePathModule doesn't get
     # called in self.os.walk().  FakePathModule now insists that it is created
@@ -1748,7 +1753,7 @@ class FakePathModuleTest(unittest.TestCase):
   def setUp(self):
     self.orig_time = time.time
     time.time = _GetDummyTime(10, 1)
-    self.filesystem = fake_filesystem.FakeFilesystem()
+    self.filesystem = fake_filesystem.FakeFilesystem(path_separator='/')
     self.os = fake_filesystem.FakeOsModule(self.filesystem)
     self.path = self.os.path
 
@@ -1796,15 +1801,16 @@ class FakePathModuleTest(unittest.TestCase):
                      self.path.relpath(path_bar, path_bar))
 
   def testRealpathVsAbspath(self):
-    self.filesystem.CreateFile('/george/washington/bridge')
-    self.filesystem.CreateLink('/first/president', '/george/washington')
-    self.assertEqual('/first/president/bridge',
-                     self.os.path.abspath('/first/president/bridge'))
-    self.assertEqual('/george/washington/bridge',
-                     self.os.path.realpath('/first/president/bridge'))
-    self.os.chdir('/first/president')
-    self.assertEqual('/george/washington/bridge',
-                     self.os.path.realpath('bridge'))
+    if sys.platform != 'win32':
+      self.filesystem.CreateFile('/george/washington/bridge')
+      self.filesystem.CreateLink('/first/president', '/george/washington')
+      self.assertEqual('/first/president/bridge',
+                       self.os.path.abspath('/first/president/bridge'))
+      self.assertEqual('/george/washington/bridge',
+                       self.os.path.realpath('/first/president/bridge'))
+      self.os.chdir('/first/president')
+      self.assertEqual('/george/washington/bridge',
+                       self.os.path.realpath('bridge'))
 
   def testExists(self):
     file_path = 'foo/bar/baz'
@@ -1827,11 +1833,16 @@ class FakePathModuleTest(unittest.TestCase):
 
   def testJoin(self):
     components = ['foo', 'bar', 'baz']
-    self.assertEqual(os.path.join(*components), self.path.join(*components))
+    self.assertEqual('foo/bar/baz', self.path.join(*components))
 
   def testExpandUser(self):
-    self.assertEqual(self.path.expanduser('~'), self.os.environ['HOME'])
-    self.assertEqual('/root', self.path.expanduser('~root'))
+    if sys.platform == 'win32':
+      self.assertEqual(self.path.expanduser('~'),
+                       self.os.environ['USERPROFILE'])
+    else:
+      self.assertEqual(self.path.expanduser('~'),
+                       self.os.environ['HOME'])
+      self.assertEqual('/root', self.path.expanduser('~root'))
 
   def testGetsizePathNonexistent(self):
     file_path = 'foo/bar/baz'
@@ -1858,7 +1869,7 @@ class FakePathModuleTest(unittest.TestCase):
   def testGetsizeDirNonZeroSize(self):
     # For directories, only require that the size is non-negative.
     dir_path = 'foo/bar'
-    self.filesystem.CreateFile(os.path.join(dir_path, 'baz'))
+    self.filesystem.CreateFile(self.filesystem.JoinPaths(dir_path, 'baz'))
     size = self.path.getsize(dir_path)
     self.assertFalse(int(size) < 0,
                      'expected non-negative size; actual: %s' % size)
@@ -1915,8 +1926,8 @@ class FakePathModuleTest(unittest.TestCase):
     self.assertFalse(self.path.islink('it_dont_exist'))
 
   def testWalk(self):
-    # os.path.walk deprecrated in Python 3
-    if sys.version_info >= (3, 0):
+    # os.path.walk deprecrated in Python 3, cannot be properly tested in win32
+    if sys.version_info >= (3, 0) or sys.platform == 'win32':
       return
     self.filesystem.CreateFile('/foo/bar/baz')
     self.filesystem.CreateFile('/foo/bar/xyzzy/plugh')
@@ -1947,7 +1958,7 @@ class FakePathModuleTest(unittest.TestCase):
 
 class FakeFileOpenTestBase(TestCase):
   def setUp(self):
-    self.filesystem = fake_filesystem.FakeFilesystem()
+    self.filesystem = fake_filesystem.FakeFilesystem(path_separator='/')
     self.file = fake_filesystem.FakeFileOpen(self.filesystem)
     self.open = self.file
     self.os = fake_filesystem.FakeOsModule(self.filesystem)
@@ -2477,7 +2488,7 @@ class OpenWithFileDescriptorTest(FakeFileOpenTestBase):
 class OpenWithBinaryFlagsTest(unittest.TestCase):
 
   def setUp(self):
-    self.filesystem = fake_filesystem.FakeFilesystem()
+    self.filesystem = fake_filesystem.FakeFilesystem(path_separator='/')
     self.file = fake_filesystem.FakeFileOpen(self.filesystem)
     self.os = fake_filesystem.FakeOsModule(self.filesystem)
     self.file_path = 'some_file'
@@ -2521,7 +2532,7 @@ class OpenWithBinaryFlagsTest(unittest.TestCase):
 class OpenWithIgnoredFlagsTest(unittest.TestCase):
 
   def setUp(self):
-    self.filesystem = fake_filesystem.FakeFilesystem()
+    self.filesystem = fake_filesystem.FakeFilesystem(path_separator='/')
     self.file = fake_filesystem.FakeFileOpen(self.filesystem)
     self.os = fake_filesystem.FakeOsModule(self.filesystem)
     self.file_path = 'some_file'

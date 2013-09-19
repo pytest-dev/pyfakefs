@@ -96,7 +96,7 @@ except ImportError:
 
 __pychecker__ = 'no-reimportself'
 
-__version__ = '2.3'
+__version__ = '2.4'
 
 PERM_READ = 0o400      # Read permission bit.
 PERM_WRITE = 0o200     # Write permission bit.
@@ -1094,6 +1094,36 @@ class FakePathModule(object):
     except IOError as e:
       raise OSError(errno.ENOENT, str(e))
     return file_obj.st_mtime
+
+  def abspath(self, path):
+    """Return the absolute version of a path."""
+    if not self.isabs(path):
+      if sys.version_info < (3, 0) and isinstance(path, unicode):
+        cwd = self.os.getcwdu()
+      else:
+        cwd = self.os.getcwd()
+      path = self.join(cwd, path)
+    return self.normpath(path)
+
+  def join(self, *p):
+    """Returns the completed path with a separator of the parts."""
+    return self.filesystem.JoinPaths(*p)
+
+  def normpath(self, path):
+    """Normalize path, eliminating double slashes, etc."""
+    path = self._os_path.normpath(path)
+    return path.replace(self._os_path.sep, self.filesystem.path_separator)
+
+  if sys.platform == 'win32':
+
+    def relpath(self, path, start=None):
+      """ntpath.relpath() needs the cwd passed in the start argument."""
+      if start is None:
+        start = self.filesystem.cwd
+      path = self._os_path.relpath(path, start)
+      return path.replace(self._os_path.sep, self.filesystem.path_separator)
+
+    realpath = abspath
 
   def __getattr__(self, name):
     """Forwards any non-faked calls to os.path."""
