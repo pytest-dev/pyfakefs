@@ -28,6 +28,7 @@ CLASSIFIERS = [
     'Programming Language :: Python :: 3',
     'Operating System :: POSIX',
     'Operating System :: MacOS',
+    'Operating System :: Microsoft :: Windows',
     'Topic :: Software Development :: Libraries',
     'Topic :: Software Development :: Libraries :: Python Modules',
     'Topic :: Software Development :: Testing',
