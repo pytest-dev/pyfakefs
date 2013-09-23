@@ -26,11 +26,11 @@ Usage:
 >>> filesystem = fake_filesystem.FakeFilesystem()
 >>> glob_module = fake_filesystem_glob.FakeGlobModule(filesystem)
 
->>> file = filesystem.CreateFile('/src/new-file')
->>> glob_module.glob('/src/*')
-['/src/new-file']
->>> glob_module.glob('/src/???-file')
-['/src/new-file']
+>>> file = filesystem.CreateFile('new-file')
+>>> glob_module.glob('*')
+['new-file']
+>>> glob_module.glob('???-file')
+['new-file']
 """
 
 import fnmatch
@@ -70,7 +70,7 @@ class FakeGlobModule(object):
       else:
         return []
 
-    dirname, basename = os.path.split(pathname)
+    dirname, basename = self._path_module.split(pathname)
 
     if not dirname:
       return self.glob1(self._path_module.curdir, basename)
@@ -83,7 +83,7 @@ class FakeGlobModule(object):
       result = []
       for dirname in path_list:
         if basename or self._path_module.isdir(dirname):
-          name = os.path.join(dirname, basename)
+          name = self._path_module.join(dirname, basename)
           if self._path_module.exists(name):
             result.append(name)
     else:
@@ -91,12 +91,13 @@ class FakeGlobModule(object):
       for dirname in path_list:
         sublist = self.glob1(dirname, basename)
         for name in sublist:
-          result.append(os.path.join(dirname, name))
+          result.append(self._path_module.join(dirname, name))
 
     return result
 
   def glob1(self, dirname, pattern):  # pylint: disable-msg=C6409
-    if not dirname: dirname = self._path_module.curdir
+    if not dirname:
+      dirname = self._path_module.curdir
     try:
       names = self._os_module.listdir(dirname)
     except os.error:

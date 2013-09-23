@@ -127,6 +127,11 @@ class Error(Exception):
   pass
 
 
+if sys.platform.startswith('win'):
+  # On Windows, raise WindowsError instead of OSError
+  OSError = WindowsError  # pylint: disable-msg=E0602,W0622
+
+
 class FakeLargeFileIoException(Error):
   def __init__(self, file_path):
     Error.__init__(self,
@@ -1111,10 +1116,9 @@ class FakePathModule(object):
 
   def normpath(self, path):
     """Normalize path, eliminating double slashes, etc."""
-    path = self._os_path.normpath(path)
-    return path.replace(self._os_path.sep, self.filesystem.path_separator)
+    return self.filesystem.CollapsePath(path)
 
-  if sys.platform == 'win32':
+  if sys.platform.startswith('win'):
 
     def relpath(self, path, start=None):
       """ntpath.relpath() needs the cwd passed in the start argument."""
