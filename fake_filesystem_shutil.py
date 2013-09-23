@@ -83,7 +83,7 @@ class FakeShutilModule(object):
     """
     if self.filesystem.Exists(dst):
       if stat.S_ISDIR(self.filesystem.GetObject(dst).st_mode):
-        dst = os.path.join(dst, os.path.basename(src))
+        dst = self.filesystem.JoinPaths(dst, os.path.basename(src))
     self.copyfile(src, dst)
     src_object = self.filesystem.GetObject(src)
     dst_object = self.filesystem.GetObject(dst)
@@ -158,7 +158,7 @@ class FakeShutilModule(object):
     """
     if self.filesystem.Exists(dst):
       if stat.S_ISDIR(self.filesystem.GetObject(dst).st_mode):
-        dst = os.path.join(dst, os.path.basename(src))
+        dst = self.filesystem.JoinPaths(dst, os.path.basename(src))
     self.copyfile(src, dst)
     self.copystat(src, dst)
 
@@ -183,8 +183,8 @@ class FakeShutilModule(object):
       raise OSError(errno.ENOTDIR,
                     'Fake os module: %r not a directory' % src)
     for name in directory.contents:
-      srcname = os.path.join(src, name)
-      dstname = os.path.join(dst, name)
+      srcname = self.filesystem.JoinPaths(src, name)
+      dstname = self.filesystem.JoinPaths(dst, name)
       src_mode = self.filesystem.GetObject(srcname).st_mode
       if stat.S_ISDIR(src_mode):
         self.copytree(srcname, dstname, symlinks)

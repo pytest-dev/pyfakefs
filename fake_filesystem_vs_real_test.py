@@ -27,8 +27,15 @@ import unittest
 import fake_filesystem
 
 
+def Sep(path):
+  """Converts slashes in the path to the architecture's path seperator."""
+  if isinstance(path, str):
+    return path.replace('/', os.sep)
+  return path
+
+
 class FakeFilesystemVsRealTest(unittest.TestCase):
-  _FAKE_FS_BASE = '/fakefs'
+  _FAKE_FS_BASE = Sep('/fakefs')
 
   def _Paths(self, path):
     """For a given path, return paths in the real and fake filesystems."""
@@ -39,6 +46,7 @@ class FakeFilesystemVsRealTest(unittest.TestCase):
 
   def _CreateTestFile(self, file_type, path, contents=None):
     """Create a dir, file, or link in both the real fs and the fake."""
+    path = Sep(path)
     self._created_files.append([file_type, path, contents])
     real_path, fake_path = self._Paths(path)
     if file_type == 'd':
@@ -64,7 +72,7 @@ class FakeFilesystemVsRealTest(unittest.TestCase):
       real_target, fake_target = (contents, contents)
       # If it begins with '/', make it relative to the base.  You can't go
       # creating files in / for the real file system.
-      if contents.startswith('/'):
+      if contents.startswith(os.sep):
         real_target, fake_target = self._Paths(contents[1:])
       if file_type == 'l':
         os.symlink(real_target, real_path)
@@ -81,11 +89,13 @@ class FakeFilesystemVsRealTest(unittest.TestCase):
     # Fully expand the base_path - required on OS X.
     self.real_base = os.path.realpath(
         os.path.join(tempfile.gettempdir(), tsname))
+    os.chdir(tempfile.gettempdir())
+    if os.path.isdir(self.real_base):
+      shutil.rmtree(self.real_base)
     os.mkdir(self.real_base)
     self.fake_base = self._FAKE_FS_BASE
 
     # Make sure we can write to the physical testing temp directory.
-    self.assertTrue(self.real_base.startswith('/'))
     self.assertTrue(os.access(self.real_base, os.W_OK))
 
     self.fake_filesystem = fake_filesystem.FakeFilesystem()
@@ -100,6 +110,7 @@ class FakeFilesystemVsRealTest(unittest.TestCase):
   def tearDown(self):
     # We have to remove all the files from the real FS. Doing the same for the
     # fake FS is optional, but doing it is an extra sanity check.
+    os.chdir(tempfile.gettempdir())
     try:
       rev_files = self._created_files[:]
       rev_files.reverse()
@@ -223,6 +234,7 @@ class FakeFilesystemVsRealTest(unittest.TestCase):
     Returns:
       A description of the difference in behavior, or None.
     """
+    path = Sep(path)
     return self._CompareBehaviors(method_name, path, os, self.fake_os,
                                   method_returns_path)
 
@@ -285,22 +297,25 @@ class FakeFilesystemVsRealTest(unittest.TestCase):
     Raises:
       AssertionError if there is any difference in behavior.
     """
+    path = Sep(path)
     diff = self.DiffOsPathMethodBehavior(method_name, path, method_returns_path)
     if diff:
       self.fail(diff)
 
   def assertAllOsBehaviorsMatch(self, path):
-    os_method_names = ['readlink']
+    path = Sep(path)
+    os_method_names = [] if sys.platform.startswith('win') else ['readlink']
     os_method_names_no_args = ['getcwd']
     if sys.version_info < (3, 0):
       os_method_names_no_args.append('getcwdu')
     os_path_method_names = ['isabs',
                             'isdir',
                             'isfile',
-                            'islink',
-                            'exists',
-                            'lexists',
+                            'exists'
                            ]
+    if not sys.platform.startswith('win'):
+      os_path_method_names.append('islink')
+      os_path_method_names.append('lexists')
     wrapped_methods = [['access', self._AccessReal, self._AccessFake],
                        ['stat.size', self._StatSizeReal, self._StatSizeFake],
                        ['lstat.size', self._LstatSizeReal, self._LstatSizeFake]
@@ -329,6 +344,7 @@ class FakeFilesystemVsRealTest(unittest.TestCase):
                 (path, '\n  '.join(differences)))
 
   def assertFileHandleBehaviorsMatch(self, path, mode, data):
+    path = Sep(path)
     write_method_names = ['write', 'writelines']
     read_method_names = ['read', 'readlines']
     other_method_names = ['truncate', 'flush', 'close']
@@ -348,10 +364,10 @@ class FakeFilesystemVsRealTest(unittest.TestCase):
   # Helpers for checks which are not straight method calls.
 
   def _AccessReal(self, path):
-    return os.access(path, 0o777777)
+    return os.access(path, os.R_OK)
 
   def _AccessFake(self, path):
-    return self.fake_os.access(path, 0o777777)
+    return self.fake_os.access(path, os.R_OK)
 
   def _StatSizeReal(self, path):
     real_path, unused_fake_path = self._Paths(path)
@@ -374,7 +390,7 @@ class FakeFilesystemVsRealTest(unittest.TestCase):
     size = os.lstat(real_path).st_size
     # Account for the difference in the lengths of the absolute paths.
     if os.path.islink(real_path):
-      if os.readlink(real_path).startswith('/'):
+      if os.readlink(real_path).startswith(os.sep):
         size -= len(self.real_base)
     return size
 
@@ -386,7 +402,7 @@ class FakeFilesystemVsRealTest(unittest.TestCase):
     size = self.fake_os.lstat(fake_path).st_size
     # Account for the difference in the lengths of the absolute paths.
     if self.fake_os.path.islink(fake_path):
-      if self.fake_os.readlink(fake_path).startswith('/'):
+      if self.fake_os.readlink(fake_path).startswith(os.sep):
         size -= len(self.fake_base)
     return size
 
@@ -422,26 +438,31 @@ class FakeFilesystemVsRealTest(unittest.TestCase):
     self._CreateTestFile('b', 'aFile', b'some contents')
     self.assertAllOsBehaviorsMatch('aFile')
 
+  @unittest.skipIf(sys.platform.startswith('win'), 'no symlink in Windows')
   def testSymLinkToEmptyFile(self):
     self._CreateTestFile('f', 'aFile')
     self._CreateTestFile('l', 'link_to_empty', 'aFile')
     self.assertAllOsBehaviorsMatch('link_to_empty')
 
+  @unittest.skipIf(sys.platform.startswith('win'), 'no symlink in Windows')
   def TBD_testHardLinkToEmptyFile(self):
     self._CreateTestFile('f', 'aFile')
     self._CreateTestFile('h', 'link_to_empty', 'aFile')
     self.assertAllOsBehaviorsMatch('link_to_empty')
 
+  @unittest.skipIf(sys.platform.startswith('win'), 'no symlink in Windows')
   def testSymLinkToRealFile(self):
     self._CreateTestFile('f', 'aFile', 'some contents')
     self._CreateTestFile('l', 'link_to_file', 'aFile')
     self.assertAllOsBehaviorsMatch('link_to_file')
 
+  @unittest.skipIf(sys.platform.startswith('win'), 'no symlink in Windows')
   def TBD_testHardLinkToRealFile(self):
     self._CreateTestFile('f', 'aFile', 'some contents')
     self._CreateTestFile('h', 'link_to_file', 'aFile')
     self.assertAllOsBehaviorsMatch('link_to_file')
 
+  @unittest.skipIf(sys.platform.startswith('win'), 'no symlink in Windows')
   def testBrokenSymLink(self):
     self._CreateTestFile('l', 'broken_link', 'broken')
     self._CreateTestFile('l', 'loop', '/a/loop')
@@ -453,6 +474,7 @@ class FakeFilesystemVsRealTest(unittest.TestCase):
     self._CreateTestFile('f', 'a/b/file', 'contents')
     self.assertAllOsBehaviorsMatch('a/b/file')
 
+  @unittest.skipIf(sys.platform.startswith('win'), 'no symlink in Windows')
   def testAbsoluteSymLinkToFolder(self):
     self._CreateTestFile('d', 'a')
     self._CreateTestFile('d', 'a/b')
@@ -460,6 +482,7 @@ class FakeFilesystemVsRealTest(unittest.TestCase):
     self._CreateTestFile('l', 'a/link', '/a/b')
     self.assertAllOsBehaviorsMatch('a/link/file')
 
+  @unittest.skipIf(sys.platform.startswith('win'), 'no symlink in Windows')
   def testLinkToFolderAfterChdir(self):
     self._CreateTestFile('d', 'a')
     self._CreateTestFile('d', 'a/b')
@@ -471,6 +494,7 @@ class FakeFilesystemVsRealTest(unittest.TestCase):
     self.fake_os.chdir(fake_dir)
     self.assertAllOsBehaviorsMatch('file')
 
+  @unittest.skipIf(sys.platform.startswith('win'), 'no symlink in Windows')
   def testRelativeSymLinkToFolder(self):
     self._CreateTestFile('d', 'a')
     self._CreateTestFile('d', 'a/b')
@@ -478,6 +502,7 @@ class FakeFilesystemVsRealTest(unittest.TestCase):
     self._CreateTestFile('l', 'a/link', 'b')
     self.assertAllOsBehaviorsMatch('a/link/file')
 
+  @unittest.skipIf(sys.platform.startswith('win'), 'no symlink in Windows')
   def testSymLinkToParent(self):
     # Soft links on HFS+ / OS X behave differently.
     if os.uname()[0] != 'Darwin':
@@ -486,6 +511,7 @@ class FakeFilesystemVsRealTest(unittest.TestCase):
       self._CreateTestFile('l', 'a/b/c', '..')
       self.assertAllOsBehaviorsMatch('a/b/c')
 
+  @unittest.skipIf(sys.platform.startswith('win'), 'no symlink in Windows')
   def testPathThroughSymLinkToParent(self):
     self._CreateTestFile('d', 'a')
     self._CreateTestFile('f', 'a/target', 'contents')
@@ -493,6 +519,7 @@ class FakeFilesystemVsRealTest(unittest.TestCase):
     self._CreateTestFile('l', 'a/b/c', '..')
     self.assertAllOsBehaviorsMatch('a/b/c/target')
 
+  @unittest.skipIf(sys.platform.startswith('win'), 'no symlink in Windows')
   def testSymLinkToSiblingDirectory(self):
     self._CreateTestFile('d', 'a')
     self._CreateTestFile('d', 'a/b')
@@ -501,6 +528,7 @@ class FakeFilesystemVsRealTest(unittest.TestCase):
     self._CreateTestFile('l', 'a/b/c', '../sibling_of_b')
     self.assertAllOsBehaviorsMatch('a/b/c/target')
 
+  @unittest.skipIf(sys.platform.startswith('win'), 'no symlink in Windows')
   def testSymLinkToSiblingDirectoryNonExistantFile(self):
     self._CreateTestFile('d', 'a')
     self._CreateTestFile('d', 'a/b')
@@ -509,6 +537,7 @@ class FakeFilesystemVsRealTest(unittest.TestCase):
     self._CreateTestFile('l', 'a/b/c', '../sibling_of_b')
     self.assertAllOsBehaviorsMatch('a/b/c/file_does_not_exist')
 
+  @unittest.skipIf(sys.platform.startswith('win'), 'no symlink in Windows')
   def testBrokenSymLinkToSiblingDirectory(self):
     self._CreateTestFile('d', 'a')
     self._CreateTestFile('d', 'a/b')

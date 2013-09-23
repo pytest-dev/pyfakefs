@@ -165,6 +165,8 @@ class NormalizePathTest(unittest.TestCase):
   def testDottedPathIsNormalized(self):
     path = '/foo/..'
     self.assertEqual('/', self.filesystem.NormalizePath(path))
+    path = 'foo/../bar'
+    self.assertEqual('/bar', self.filesystem.NormalizePath(path))
 
   def testDotPathIsNormalized(self):
     path = '.'
@@ -1513,7 +1515,7 @@ class FakeOsModuleTest(TestCase):
     # onerror method.  We do not actually care what, if anything, is returned.
     for unused_entry in self.os.walk(directory, onerror=self.StoreErrno):
       pass
-    self.assertEqual(errno.ENOENT, self.GetErrno())
+    self.assertTrue(self.GetErrno() in (errno.ENOTDIR, errno.ENOENT))
 
   def testWalkCallsOnErrorIfNotDirectory(self):
     """Calls onerror with correct errno when walking non-directory."""
@@ -1525,7 +1527,7 @@ class FakeOsModuleTest(TestCase):
     # We do not actually care what, if anything, is returned.
     for unused_entry in self.os.walk(filename, onerror=self.StoreErrno):
       pass
-    self.assertEqual(errno.ENOTDIR, self.GetErrno())
+    self.assertTrue(self.GetErrno() in (errno.ENOTDIR, errno.EACCES))
 
   def testWalkSkipsRemovedDirectories(self):
     """Caller can modify list of directories to visit while walking."""
@@ -1800,17 +1802,18 @@ class FakePathModuleTest(unittest.TestCase):
     self.assertEqual('.',
                      self.path.relpath(path_bar, path_bar))
 
+  @unittest.skipIf(sys.platform.startswith('win'),
+                   'realpath does not follow symlinks in win32')
   def testRealpathVsAbspath(self):
-    if sys.platform != 'win32':
-      self.filesystem.CreateFile('/george/washington/bridge')
-      self.filesystem.CreateLink('/first/president', '/george/washington')
-      self.assertEqual('/first/president/bridge',
-                       self.os.path.abspath('/first/president/bridge'))
-      self.assertEqual('/george/washington/bridge',
-                       self.os.path.realpath('/first/president/bridge'))
-      self.os.chdir('/first/president')
-      self.assertEqual('/george/washington/bridge',
-                       self.os.path.realpath('bridge'))
+    self.filesystem.CreateFile('/george/washington/bridge')
+    self.filesystem.CreateLink('/first/president', '/george/washington')
+    self.assertEqual('/first/president/bridge',
+                     self.os.path.abspath('/first/president/bridge'))
+    self.assertEqual('/george/washington/bridge',
+                     self.os.path.realpath('/first/president/bridge'))
+    self.os.chdir('/first/president')
+    self.assertEqual('/george/washington/bridge',
+                     self.os.path.realpath('bridge'))
 
   def testExists(self):
     file_path = 'foo/bar/baz'
@@ -1836,9 +1839,9 @@ class FakePathModuleTest(unittest.TestCase):
     self.assertEqual('foo/bar/baz', self.path.join(*components))
 
   def testExpandUser(self):
-    if sys.platform == 'win32':
+    if sys.platform.startswith('win'):
       self.assertEqual(self.path.expanduser('~'),
-                       self.os.environ['USERPROFILE'])
+                       self.os.environ['USERPROFILE'].replace('\\', '/'))
     else:
       self.assertEqual(self.path.expanduser('~'),
                        self.os.environ['HOME'])
@@ -1925,10 +1928,10 @@ class FakePathModuleTest(unittest.TestCase):
 
     self.assertFalse(self.path.islink('it_dont_exist'))
 
+  @unittest.skipIf(sys.version_info >= (3, 0) or sys.platform.startswith('win'),
+                   'os.path.walk deprecrated in Python 3, cannot be properly '
+                   'tested in win32')
   def testWalk(self):
-    # os.path.walk deprecrated in Python 3, cannot be properly tested in win32
-    if sys.version_info >= (3, 0) or sys.platform == 'win32':
-      return
     self.filesystem.CreateFile('/foo/bar/baz')
     self.filesystem.CreateFile('/foo/bar/xyzzy/plugh')
     visited_nodes = []
@@ -1943,10 +1946,10 @@ class FakePathModuleTest(unittest.TestCase):
                 ('/foo/bar/xyzzy', 'plugh')]
     self.assertEqual(expected, visited_nodes)
 
+  @unittest.skipIf(sys.version_info >= (3, 0) or sys.platform.startswith('win'),
+                   'os.path.walk deprecrated in Python 3, cannot be properly '
+                   'tested in win32')
   def testWalkFromNonexistentTopDoesNotThrow(self):
-    # os.path.walk deprecrated in Python 3
-    if sys.version_info >= (3, 0):
-      return
     visited_nodes = []
 
     def RecordVisitedNodes(visited, dirname, fnames):
@@ -2032,9 +2035,8 @@ class FakeFileOpenTest(FakeFileOpenTestBase):
                               encoding='utf-8', errors='strict', newline='\n',
                               closefd=False, opener=False).readlines())
 
+  @unittest.skipIf(sys.version_info < (3, 0), 'only tested on 3.0 or greater')
   def testOpenNewlineArg(self):
-    if sys.version_info < (3, 0):
-      return
     file_path = 'some_file'
     file_contents = 'two\r\nlines'
     self.filesystem.CreateFile(file_path, contents=file_contents)
@@ -2463,17 +2465,15 @@ class FakeFileOpenTest(FakeFileOpenTestBase):
 
 class OpenWithFileDescriptorTest(FakeFileOpenTestBase):
 
+  @unittest.skipIf(sys.version_info < (3, 0), 'only tested on 3.0 or greater')
   def testOpenWithFileDescriptor(self):
-    if sys.version_info < (3, 0):
-      return
     file_path = 'this/file'
     self.filesystem.CreateFile(file_path)
     fd = self.os.open(file_path, os.O_CREAT)
     self.assertEqual(fd, self.open(fd, 'r').fileno())
 
+  @unittest.skipIf(sys.version_info < (3, 0), 'only tested on 3.0 or greater')
   def testClosefdWithFileDescriptor(self):
-    if sys.version_info < (3, 0):
-      return
     file_path = 'this/file'
     self.filesystem.CreateFile(file_path)
     fd = self.os.open(file_path, os.O_CREAT)
@@ -2793,6 +2793,12 @@ class CollapsePathPipeSeparatorTest(PathManipulationTests):
   def testCombineDotAndUpLevelReferencesInAbsolutePath(self):
     self.assertEqual(
         '|yes', self.filesystem.CollapsePath('|||||.|..|||yes|no|..|.|||'))
+
+  def testDotsInPathCollapsesToLastPath(self):
+    self.assertEqual(
+        'bar', self.filesystem.CollapsePath('foo|..|bar'))
+    self.assertEqual(
+        'bar', self.filesystem.CollapsePath('foo|..|yes|..|no|..|bar'))
 
 
 class SplitPathTest(PathManipulationTests):

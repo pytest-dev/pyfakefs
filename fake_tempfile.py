@@ -53,7 +53,7 @@ class FakeTempfileModule(object):
     self._mktemp_retvals = []
 
   # pylint: disable-msg=W0622
-  def _TempFilename(self, suffix='', prefix=None, dir='/tmp'):
+  def _TempFilename(self, suffix='', prefix=None, dir=None):
     """Create a temporary filename that does not exist.
 
     This is a re-implementation of how tempfile creates random filenames,
@@ -69,12 +69,14 @@ class FakeTempfileModule(object):
     Returns:
       string, temp filename that does not exist
     """
+    if dir is None:
+      dir = self._filesystem.JoinPaths(self._filesystem.root.name, 'tmp')
     filename = None
     if prefix is None:
       prefix = self._temp_prefix
     while not filename or self._filesystem.Exists(filename):
       # pylint: disable-msg=W0212
-      filename = os.path.join(dir, '%s%s%s' % (
+      filename = self._filesystem.JoinPaths(dir, '%s%s%s' % (
           prefix,
           next(self._tempfile._RandomNameSequence()),
           suffix))

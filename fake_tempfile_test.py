@@ -56,7 +56,7 @@ class FakeTempfileModuleTest(unittest.TestCase):
   """Test the 'tempfile' module mock."""
 
   def setUp(self):
-    self.filesystem = fake_filesystem.FakeFilesystem()
+    self.filesystem = fake_filesystem.FakeFilesystem(path_separator='/')
     self.tempfile = fake_tempfile.FakeTempfileModule(self.filesystem)
     self.orig_logging = fake_tempfile.logging
     self.fake_logging = FakeLogging(self)

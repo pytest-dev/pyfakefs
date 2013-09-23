@@ -17,7 +17,6 @@
 """Test for fake_filesystem_glob."""
 
 import doctest
-import os
 import unittest
 
 import fake_filesystem
@@ -27,13 +26,13 @@ import fake_filesystem_glob
 class FakeGlobUnitTest(unittest.TestCase):
 
   def setUp(self):
-    self.filesystem = fake_filesystem.FakeFilesystem()
+    self.filesystem = fake_filesystem.FakeFilesystem(path_separator='/')
     self.glob = fake_filesystem_glob.FakeGlobModule(self.filesystem)
     directory = './xyzzy'
     self.filesystem.CreateDirectory(directory)
-    self.filesystem.CreateDirectory(os.path.join(directory, 'subdir'))
-    self.filesystem.CreateDirectory(os.path.join(directory, 'subdir2'))
-    self.filesystem.CreateFile(os.path.join(directory, 'subfile'))
+    self.filesystem.CreateDirectory('%s/subdir' % directory)
+    self.filesystem.CreateDirectory('%s/subdir2' % directory)
+    self.filesystem.CreateFile('%s/subfile' % directory)
     self.filesystem.CreateFile('[Temp]')
 
   def testGlobEmpty(self):
