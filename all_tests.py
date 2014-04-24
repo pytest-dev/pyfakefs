@@ -36,6 +36,8 @@ class AllTests(unittest.TestSuite):
         loader.loadTestsFromModule(fake_filesystem_shutil_test),
         loader.loadTestsFromModule(fake_tempfile_test),
         loader.loadTestsFromModule(fake_filesystem_vs_real_test),
+        loader.loadTestsFromModule(fake_filesystem_unittest_test),
+        loader.loadTestsFromModule(example_test),
     ])
     return self
 
