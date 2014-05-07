@@ -36,7 +36,7 @@ class TestPyfakefsUnittest(fake_filesystem_unittest.TestCase): # pylint: disable
 
     def tearDown(self):
         '''Tear down the fake file system'''
-        self.teardownPyfakefs()
+        self.tearDownPyfakefs()
         
     def test_file(self):
         '''Test that the fake `file()` function is bound'''

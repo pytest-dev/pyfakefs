@@ -2183,7 +2183,7 @@ class FakeFileOpen(object):
     else:
       fakefile.filedes = self.filesystem.AddOpenFile(fakefile)
     return fakefile
-
+ 
 
 def _RunDoctest():
   # pylint: disable-msg=C6204

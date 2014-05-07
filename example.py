@@ -19,6 +19,24 @@
 Example module that is tested in :py:class`pyfakefs.example_test.TestExample`.
 This demonstrates the usage of the
 :py:class`pyfakefs.fake_filesystem_unittest.TestCase` base class.
+
+The modules related to file handling are bound to the respective fake modules:
+
+>>> os     #doctest: +ELLIPSIS 
+<pyfakefs.fake_filesystem.FakeOsModule object...>
+>>> os.path     #doctest: +ELLIPSIS
+<pyfakefs.fake_filesystem.FakePathModule object...>
+>>> glob     #doctest: +ELLIPSIS
+<pyfakefs.fake_filesystem_glob.FakeGlobModule object...>
+>>> shutil     #doctest: +ELLIPSIS
+<pyfakefs.fake_filesystem_shutil.FakeShutilModule object...>
+
+The `file()` and `open()` built-ins are bound to the fake `open()`:
+
+>>> file     #doctest: +ELLIPSIS
+<pyfakefs.fake_filesystem.FakeFileOpen object...>
+>>> open     #doctest: +ELLIPSIS
+<pyfakefs.fake_filesystem.FakeFileOpen object...>
 """
 
 import os
@@ -27,25 +45,78 @@ import shutil
 
 def create_file(path):
     '''Create the specified file and add some content to it.  Use the `open()`
-    built in function.'''
+    built in function.
+    
+    For example, the following file operations occur in the fake file system.
+    In the real file system, we would not even have permission to write `/test`:
+    
+    >>> os.path.isdir('/test')
+    False
+    >>> os.mkdir('/test')
+    >>> os.path.isdir('/test')
+    True
+    >>> os.path.exists('/test/file.txt')
+    False
+    >>> create_file('/test/file.txt')
+    >>> os.path.exists('/test/file.txt')
+    True
+    >>> with open('/test/file.txt') as f:
+    ...     f.readlines()
+    ["This is test file '/test/file.txt'.\\n", 'It was created using the open() function.\\n']
+    '''
     with open(path, 'w') as f:
-        f.write("This is test file '{}'.".format(path))
+        f.write("This is test file '{}'.\n".format(path))
         f.write("It was created using the open() function.\n")
-        
+
 def delete_file(path):
-    '''Delete the specified file.'''
+    '''Delete the specified file.
+    
+    For example:
+        
+    >>> os.mkdir('/test')
+    >>> os.path.exists('/test/file.txt')
+    False
+    >>> create_file('/test/file.txt')
+    >>> os.path.exists('/test/file.txt')
+    True
+    >>> delete_file('/test/file.txt')
+    >>> os.path.exists('/test/file.txt')
+    False
+    '''
     os.remove(path)
     
-def file_exists(path):
-    '''Return True if the specified file exists.'''
+def path_exists(path):
+    '''Return True if the specified file exists.
+    
+    For example:
+        
+    >>> path_exists('/test')
+    False
+    >>> os.mkdir('/test')
+    >>> path_exists('/test')
+    True
+    >>>
+    >>> path_exists('/test/file.txt')
+    False
+    >>> create_file('/test/file.txt')
+    >>> path_exists('/test/file.txt')
+    True
+    '''
     return os.path.exists(path)
 
-def get_globs(glob_path):
-    '''Return the list of paths matching the specified glob expression.'''
+def get_glob(glob_path):
+    '''Return the list of paths matching the specified glob expression.
+    
+    For example:
+    
+    >>> os.mkdir('/test')
+    >>> create_file('/test/file1.txt')
+    >>> create_file('/test/file2.txt')
+    >>> get_glob('/test/file*.txt')
+    ['/test/file1.txt', '/test/file2.txt']
+    '''
     return glob.glob(glob_path)
 
 def rm_tree(path):
     '''Delete the specified file hierarchy.'''
     shutil.rmtree(path)
-    
-     
