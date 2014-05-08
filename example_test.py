@@ -22,28 +22,17 @@ Test the :py:class`pyfakefs.example` module to demonstrate the usage of the
 
 import os
 import unittest
-import pyfakefs.fake_filesystem_unittest
+import fake_filesystem_unittest
 # The module under test is pyfakefs.example
-import pyfakefs.example
+import example
 
-
-#def load_tests(loader, tests, ignore):
-#    '''Load the pyfakefs/example.py doctest tests into unittest.'''
-#    stubber = pyfakefs.fake_filesystem_unittest.Stubber()
-#    globs = stubber.replaceGlobs(vars(pyfakefs.example))
-#    tests.addTests(doctest.DocTestSuite(pyfakefs.example,
-#                                        globs=globs,
-#                                        setUp=stubber.setUp,
-#                                        tearDown=stubber.tearDown))
-#    return tests
 
 def load_tests(loader, tests, ignore):
     '''Load the pyfakefs/example.py doctest tests into unittest.'''
-    return pyfakefs.fake_filesystem_unittest.load_doctests(loader, tests, ignore,
-                                                           pyfakefs.example)
+    return fake_filesystem_unittest.load_doctests(loader, tests, ignore, example)
 
 
-class TestExample(pyfakefs.fake_filesystem_unittest.TestCase): # pylint: disable=R0904
+class TestExample(fake_filesystem_unittest.TestCase): # pylint: disable=R0904
     '''Test the pyfakefs.example module.'''
 
     def setUp(self):
@@ -71,7 +60,7 @@ class TestExample(pyfakefs.fake_filesystem_unittest.TestCase): # pylint: disable
         self.assertTrue(os.path.isdir('/test'))
         
         self.assertFalse(os.path.exists('/test/file.txt'))
-        pyfakefs.example.create_file('/test/file.txt')
+        example.create_file('/test/file.txt')
         self.assertTrue(os.path.exists('/test/file.txt'))
         
     def test_delete_file(self):
@@ -87,7 +76,7 @@ class TestExample(pyfakefs.fake_filesystem_unittest.TestCase): # pylint: disable
                            contents='First line\n'
                                     'Second Line\n')
         self.assertTrue(os.path.exists('/test/full.txt'))
-        pyfakefs.example.delete_file('/test/full.txt')
+        example.delete_file('/test/full.txt')
         self.assertFalse(os.path.exists('/test/full.txt'))
 
     def test_file_exists(self):
@@ -99,9 +88,9 @@ class TestExample(pyfakefs.fake_filesystem_unittest.TestCase): # pylint: disable
         
         You could also use `open()` or `file()` if you wanted.
         '''
-        self.assertFalse(pyfakefs.example.path_exists('/test/empty.txt'))          
+        self.assertFalse(example.path_exists('/test/empty.txt'))          
         self.fs.CreateFile('/test/empty.txt')
-        self.assertTrue(pyfakefs.example.path_exists('/test/empty.txt'))              
+        self.assertTrue(example.path_exists('/test/empty.txt'))              
         
     def test_get_globs(self):
         '''Test example.get_glob()
@@ -117,9 +106,9 @@ class TestExample(pyfakefs.fake_filesystem_unittest.TestCase): # pylint: disable
         os.makedirs('/test/dir1/dir2b')
         self.assertTrue(os.path.isdir('/test/dir1/dir2b'))
         
-        self.assertItemsEqual(pyfakefs.example.get_glob('/test/dir1/nonexistent*'),
+        self.assertItemsEqual(example.get_glob('/test/dir1/nonexistent*'),
                               [])
-        self.assertItemsEqual(pyfakefs.example.get_glob('/test/dir1/dir*'),
+        self.assertItemsEqual(example.get_glob('/test/dir1/dir*'),
                               ['/test/dir1/dir2a', '/test/dir1/dir2b'])
 
     def test_rm_tree(self):
@@ -135,7 +124,7 @@ class TestExample(pyfakefs.fake_filesystem_unittest.TestCase): # pylint: disable
         self.assertTrue(os.path.isdir('/test/dir1/dir2b'))
         self.assertTrue(os.path.isdir('/test/dir1/dir2a'))
        
-        pyfakefs.example.rm_tree('/test/dir1')
+        example.rm_tree('/test/dir1')
         self.assertFalse(os.path.exists('/test/dir1'))
 
 if __name__ == "__main__":

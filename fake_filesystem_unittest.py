@@ -49,7 +49,7 @@ import fake_filesystem_glob
 import fake_filesystem_shutil
 import fake_tempfile
 
-import mox.stubout
+import mox
 import __builtin__
 
 def load_doctests(loader, tests, ignore, module):

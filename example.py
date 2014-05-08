@@ -23,20 +23,20 @@ This demonstrates the usage of the
 The modules related to file handling are bound to the respective fake modules:
 
 >>> os     #doctest: +ELLIPSIS 
-<pyfakefs.fake_filesystem.FakeOsModule object...>
+<fake_filesystem.FakeOsModule object...>
 >>> os.path     #doctest: +ELLIPSIS
-<pyfakefs.fake_filesystem.FakePathModule object...>
+<fake_filesystem.FakePathModule object...>
 >>> glob     #doctest: +ELLIPSIS
-<pyfakefs.fake_filesystem_glob.FakeGlobModule object...>
+<fake_filesystem_glob.FakeGlobModule object...>
 >>> shutil     #doctest: +ELLIPSIS
-<pyfakefs.fake_filesystem_shutil.FakeShutilModule object...>
+<fake_filesystem_shutil.FakeShutilModule object...>
 
 The `file()` and `open()` built-ins are bound to the fake `open()`:
 
 >>> file     #doctest: +ELLIPSIS
-<pyfakefs.fake_filesystem.FakeFileOpen object...>
+<fake_filesystem.FakeFileOpen object...>
 >>> open     #doctest: +ELLIPSIS
-<pyfakefs.fake_filesystem.FakeFileOpen object...>
+<fake_filesystem.FakeFileOpen object...>
 """
 
 import os
