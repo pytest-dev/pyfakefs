@@ -9,7 +9,8 @@ NAME = 'pyfakefs'
 MODULES = ['fake_filesystem',
            'fake_filesystem_glob',
            'fake_filesystem_shutil',
-           'fake_tempfile']
+           'fake_tempfile',
+           'fake_filesystem_unittest']
 DESCRIPTION = 'Fakes file system modules for automated developer testing.'
 
 URL = "https://code.google.com/p/pyfakefs"
