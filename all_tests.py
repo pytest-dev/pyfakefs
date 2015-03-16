@@ -23,6 +23,8 @@ import fake_filesystem_shutil_test
 import fake_filesystem_test
 import fake_filesystem_vs_real_test
 import fake_tempfile_test
+import fake_filesystem_unittest_test
+import example_test
 
 
 class AllTests(unittest.TestSuite):
@@ -36,6 +38,8 @@ class AllTests(unittest.TestSuite):
         loader.loadTestsFromModule(fake_filesystem_shutil_test),
         loader.loadTestsFromModule(fake_tempfile_test),
         loader.loadTestsFromModule(fake_filesystem_vs_real_test),
+        loader.loadTestsFromModule(fake_filesystem_unittest_test),
+        loader.loadTestsFromModule(example_test),
     ])
     return self
 

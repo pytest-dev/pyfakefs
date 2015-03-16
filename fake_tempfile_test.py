@@ -16,6 +16,8 @@
 
 """Tests for the fake_tempfile module."""
 
+#pylint: disable-all
+
 import stat
 import unittest
 try:

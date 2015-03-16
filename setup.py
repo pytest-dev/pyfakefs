@@ -63,4 +63,4 @@ else:
     params['tests_require'] = ['unittest2']
     params['test_suite'] = 'unittest2.collector'
 
-setup(**params)
+setup(**params) # pylint: disable = W0142

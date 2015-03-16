@@ -19,6 +19,7 @@
 Fake implementation of the python2.4.1 tempfile built-in module that works with
 a FakeFilesystem object.
 """
+#pylint: disable-all
 
 import errno
 import logging
