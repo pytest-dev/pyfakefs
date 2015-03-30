@@ -1,5 +1,3 @@
-#!/usr/bin/python2.7.1
-#
 # Copyright 2014 Altera Corporation. All Rights Reserved.
 # Author: John McGehee
 #
@@ -226,6 +224,3 @@ class Stubber(object):
         '''
         self._isStale = True
         self.stubs.SmartUnsetAll()
-
-if __name__ == '__main__':
-    unittest.main()

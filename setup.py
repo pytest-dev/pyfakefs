@@ -15,7 +15,7 @@ DESCRIPTION = 'Fakes file system modules for automated developer testing.'
 
 URL = "https://code.google.com/p/pyfakefs"
 
-readme = os.path.join(os.path.dirname(__file__), 'README')
+readme = os.path.join(os.path.dirname(__file__), 'README.md')
 LONG_DESCRIPTION = open(readme).read()
 
 CLASSIFIERS = [
