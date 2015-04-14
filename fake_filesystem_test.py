@@ -929,6 +929,16 @@ class FakeOsModuleTest(TestCase):
     self.assertEqual(new_file.st_uid, old_file.st_uid)
     self.assertEqual(new_file.st_gid, old_file.st_gid)
 
+  def testRenameSameFilenames(self):
+    """Test renaming when old and new names are the same."""
+    directory = 'xyzzy'
+    file_contents = 'Spam eggs'
+    file_path = '%s/eggs' % directory
+    self.filesystem.CreateFile(file_path, contents=file_contents)
+    self.os.rename(file_path, file_path)
+    self.assertEqual(file_contents,
+                     self.filesystem.GetObject(file_path).contents)
+
   def testRmdir(self):
     """Can remove a directory."""
     directory = 'xyzzy'
