@@ -930,7 +930,7 @@ class FakeOsModuleTest(TestCase):
     self.assertEqual(new_file.st_gid, old_file.st_gid)
 
   def testRenameSameFilenames(self):
-    """Test renaming when old and new names are the same (regression test)."""
+    """Test renaming when old and new names are the same."""
     directory = 'xyzzy'
     file_contents = 'Spam eggs'
     file_path = '%s/eggs' % directory
