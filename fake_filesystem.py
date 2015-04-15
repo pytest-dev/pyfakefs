@@ -1557,7 +1557,10 @@ class FakeOsModule(object):
                     'with name',
                     old_file)
     if self.filesystem.Exists(new_file):
-      self.remove(new_file)
+      if old_file == new_file:
+        return None  # Nothing to do here.
+      else:
+        self.remove(new_file)
     old_dir, old_name = self.path.split(old_file)
     new_dir, new_name = self.path.split(new_file)
     if not self.filesystem.Exists(new_dir):
