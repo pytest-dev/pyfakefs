@@ -26,4 +26,4 @@ python:
 #  - "pypy"
 # command to install dependencies
 
-script: all_tests.py
+script: ls; ./all_tests.py
