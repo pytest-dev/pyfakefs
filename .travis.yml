@@ -25,5 +25,7 @@ python:
 #  # maintainers to fix their pypy-dev package.
 #  - "pypy"
 # command to install dependencies
+install:
+  - pip install mox
 
 script: ls; ./all_tests.py
