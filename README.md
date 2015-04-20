@@ -13,7 +13,7 @@ for a concrete example of how to apply pyfakefs.
 ### Prerequisites
 pyfakefs works with Python 2.6 and above.  See Travis-CI for
 [pyfakefs continuous integration test results](https://travis-ci.org/jmcgeheeiv/pyfakefs)
-for each version.
+for each Python version.
 
 ### PyPi
 pyfakefs project is hosted on PyPi and can be installed:
