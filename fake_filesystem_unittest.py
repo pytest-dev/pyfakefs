@@ -1,5 +1,3 @@
-#!/usr/bin/python2.7.1
-#
 # Copyright 2014 Altera Corporation. All Rights Reserved.
 # Author: John McGehee
 #
@@ -240,11 +238,4 @@ class Stubber(object):
         class.
         '''
         self._isStale = True
-<<<<<<< HEAD
-        self.stubs.SmartUnsetAll()
-
-if __name__ == '__main__':
-    unittest.main()
-=======
         self._stopAllPatches()
->>>>>>> d0d4814... Replace dependency on 'mox' with standard library module 'mock'.

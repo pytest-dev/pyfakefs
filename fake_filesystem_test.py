@@ -1,4 +1,4 @@
-#!/usr/bin/python2.6
+#! /usr/bin/env python
 #
 # Copyright 2009 Google Inc. All Rights Reserved.
 #

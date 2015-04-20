@@ -1,5 +1,3 @@
-#!/usr/bin/python2.7.1
-#
 # Copyright 2014 Altera Corporation. All Rights Reserved.
 # Author: John McGehee
 #
