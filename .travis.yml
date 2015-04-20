@@ -21,11 +21,9 @@ python:
   - "3.2"
   - "3.3"
   - "3.4"
-#  # does not have headers provided, please ask https://launchpad.net/~pypy/+archive/ppa
-#  # maintainers to fix their pypy-dev package.
-#  - "pypy"
-# command to install dependencies
-#install:
-#  - pip install mox
 
-script: ls; ./all_tests.py
+install:
+  - if [[ $TRAVIS_PYTHON_VERSION == 2.6 ]]; then pip install importlib unittest2; fi
+  - pip install -r requirements.txt
+
+script: ./all_tests.py
