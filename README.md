@@ -8,11 +8,16 @@ work with pyfakefs.
 See the [usage tutorial](http://github.com/jmcgeheeiv/pyfakefs/wiki/Tutorial)
 for a concrete example of how to apply pyfakefs.
 
+## Continuous Integration
+pyfakefs is tested with Python 2.6 and above.  See [Travis-CI](http://travis-ci.org) for
+[pyfakefs continuous integration test results](https://travis-ci.org/jmcgeheeiv/pyfakefs)
+for each Python version.
+
 ## Installation
 
-### Prerequisites
-pyfakefs works with Python 2.6 and above.  The mox package is required.  This code
-is tested with Python 2.7.1 and 2.7.5.
+### Compatibility
+pyfakefs works with Python 2.6 and above.  pyfakefs has no dependencies beyond the Python
+standard library.
 
 ### PyPi
 pyfakefs project is hosted on PyPi and can be installed:

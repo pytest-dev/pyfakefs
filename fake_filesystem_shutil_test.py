@@ -18,7 +18,11 @@
 
 import stat
 import time
-import unittest
+import sys
+if sys.version_info < (2, 7):
+    import unittest2 as unittest
+else:
+    import unittest
 
 import fake_filesystem
 import fake_filesystem_shutil

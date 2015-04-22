@@ -22,7 +22,10 @@ import re
 import stat
 import sys
 import time
-import unittest
+if sys.version_info < (2, 7):
+    import unittest2 as unittest
+else:
+    import unittest
 
 import fake_filesystem
 
@@ -481,7 +484,7 @@ class FakeFilesystemUnitTest(unittest.TestCase):
                       'not_a_dir/foo/bar')
 
 
-class FakeOsModuleTest(TestCase):
+class FakeOsModuleTest(unittest.TestCase):
 
   def setUp(self):
     self.filesystem = fake_filesystem.FakeFilesystem(path_separator='/')
@@ -1993,7 +1996,7 @@ class FakePathModuleTest(unittest.TestCase):
     self.assertEqual([], visited_nodes)
 
 
-class FakeFileOpenTestBase(TestCase):
+class FakeFileOpenTestBase(unittest.TestCase):
   def setUp(self):
     self.filesystem = fake_filesystem.FakeFilesystem(path_separator='/')
     self.file = fake_filesystem.FakeFileOpen(self.filesystem)
@@ -2911,4 +2914,4 @@ class PathSeparatorTest(unittest.TestCase):
 
 
 if __name__ == '__main__':
-  unittest.main()
+  main()

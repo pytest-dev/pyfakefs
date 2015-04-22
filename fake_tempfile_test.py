@@ -19,7 +19,12 @@
 #pylint: disable-all
 
 import stat
-import unittest
+import sys
+if sys.version_info < (2, 7):
+    import unittest2 as unittest
+else:
+    import unittest
+
 try:
   import StringIO as io  # pylint: disable-msg=C6204
 except ImportError:
