@@ -126,9 +126,10 @@ FAKE_PATH_MODULE_DEPRECATION = ('Do not instantiate a FakePathModule directly; '
 class Error(Exception):
   pass
 
+is_windows = sys.platform.startswith('win') or sys.platform == 'cygwin'
 
-if sys.platform.startswith('win'):
-  # On Windows, raise WindowsError instead of OSError
+if is_windows and 'WindowsError' in globals():
+  # On Windows, raise WindowsError instead of OSError if available
   OSError = WindowsError  # pylint: disable-msg=E0602,W0622
 
 
@@ -1118,7 +1119,7 @@ class FakePathModule(object):
     """Normalize path, eliminating double slashes, etc."""
     return self.filesystem.CollapsePath(path)
 
-  if sys.platform.startswith('win'):
+  if is_windows:
 
     def relpath(self, path, start=None):
       """ntpath.relpath() needs the cwd passed in the start argument."""

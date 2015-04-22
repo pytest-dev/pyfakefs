@@ -28,6 +28,7 @@ else:
     import unittest
 
 import fake_filesystem
+from fake_filesystem import is_windows
 
 
 def _GetDummyTime(start_time, increment):
@@ -1815,7 +1816,7 @@ class FakePathModuleTest(unittest.TestCase):
     self.assertEqual('.',
                      self.path.relpath(path_bar, path_bar))
 
-  @unittest.skipIf(sys.platform.startswith('win'),
+  @unittest.skipIf(is_windows,
                    'realpath does not follow symlinks in win32')
   def testRealpathVsAbspath(self):
     self.filesystem.CreateFile('/george/washington/bridge')
@@ -1852,7 +1853,7 @@ class FakePathModuleTest(unittest.TestCase):
     self.assertEqual('foo/bar/baz', self.path.join(*components))
 
   def testExpandUser(self):
-    if sys.platform.startswith('win'):
+    if is_windows:
       self.assertEqual(self.path.expanduser('~'),
                        self.os.environ['USERPROFILE'].replace('\\', '/'))
     else:
@@ -1941,7 +1942,7 @@ class FakePathModuleTest(unittest.TestCase):
 
     self.assertFalse(self.path.islink('it_dont_exist'))
 
-  @unittest.skipIf(sys.version_info >= (3, 0) or sys.platform.startswith('win'),
+  @unittest.skipIf(sys.version_info >= (3, 0) or is_windows,
                    'os.path.walk deprecrated in Python 3, cannot be properly '
                    'tested in win32')
   def testWalk(self):
@@ -1959,7 +1960,7 @@ class FakePathModuleTest(unittest.TestCase):
                 ('/foo/bar/xyzzy', 'plugh')]
     self.assertEqual(expected, visited_nodes)
 
-  @unittest.skipIf(sys.version_info >= (3, 0) or sys.platform.startswith('win'),
+  @unittest.skipIf(sys.version_info >= (3, 0) or is_windows,
                    'os.path.walk deprecrated in Python 3, cannot be properly '
                    'tested in win32')
   def testWalkFromNonexistentTopDoesNotThrow(self):
