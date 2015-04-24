@@ -793,6 +793,33 @@ class FakeOsModuleTest(TestCase):
     self.os.remove(file_path)
     self.assertFalse(self.filesystem.Exists(file_path))
 
+  def testRemoveFileNoDirectory(self):
+    directory = 'zzy'
+    file_name = 'plugh'
+    file_path = '%s/%s' % (directory, file_name)
+    self.filesystem.CreateFile(file_path)
+    self.assertTrue(self.filesystem.Exists(file_path))
+    self.os.chdir(directory)
+    self.os.remove(file_name)
+    self.assertFalse(self.filesystem.Exists(file_path))
+
+  def testRemoveFileRelativePath(self):
+    original_dir = self.os.getcwd()
+    directory = 'zzy'
+    subdirectory = self.os.path.join(directory, directory)
+    file_name = 'plugh'
+    file_path = '%s/%s' % (directory, file_name)
+    file_path_relative = self.os.path.join('..', file_name)
+    self.filesystem.CreateFile(file_path)
+    self.assertTrue(self.filesystem.Exists(file_path))
+    self.filesystem.CreateDirectory(subdirectory)
+    self.assertTrue(self.filesystem.Exists(subdirectory))
+    self.os.chdir(subdirectory)
+    self.os.remove(file_path_relative)
+    self.assertFalse(self.filesystem.Exists(file_path_relative))
+    self.os.chdir(original_dir)
+    self.assertFalse(self.filesystem.Exists(file_path))
+
   def testRemoveDirRaisesError(self):
     directory = 'zzy'
     self.filesystem.CreateDirectory(directory)
