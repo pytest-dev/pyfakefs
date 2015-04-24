@@ -1526,6 +1526,7 @@ class FakeOsModule(object):
 
   def remove(self, path):
     """Removes the FakeFile object representing the specified file."""
+    path = self.filesystem.NormalizePath(path)
     if self.path.isdir(path) and not self.path.islink(path):
       raise OSError(errno.EISDIR, "Is a directory: '%s'" % path)
     try:
