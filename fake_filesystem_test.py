@@ -44,7 +44,7 @@ class TestCase(unittest.TestCase):
     return self.assertEqual(stat.S_IMODE(expected), stat.S_IMODE(actual))
 
 
-class FakeDirectoryUnitTest(unittest.TestCase):
+class FakeDirectoryUnitTest(TestCase):
   def setUp(self):
     self.orig_time = time.time
     time.time = _GetDummyTime(10, 1)
@@ -144,7 +144,7 @@ class SetLargeFileSizeTest(FakeDirectoryUnitTest):
     self.assertEqual(1000000000, self.fake_file.st_size)
 
 
-class NormalizePathTest(unittest.TestCase):
+class NormalizePathTest(TestCase):
   def setUp(self):
     self.filesystem = fake_filesystem.FakeFilesystem(path_separator='/')
     self.root_name = '/'
@@ -176,7 +176,7 @@ class NormalizePathTest(unittest.TestCase):
     self.assertEqual('/', self.filesystem.NormalizePath(path))
 
 
-class GetPathComponentsTest(unittest.TestCase):
+class GetPathComponentsTest(TestCase):
   def setUp(self):
     self.filesystem = fake_filesystem.FakeFilesystem(path_separator='/')
     self.root_name = '/'
@@ -202,7 +202,7 @@ class GetPathComponentsTest(unittest.TestCase):
                      self.filesystem.GetPathComponents('/foo/bar'))
 
 
-class FakeFilesystemUnitTest(unittest.TestCase):
+class FakeFilesystemUnitTest(TestCase):
   def setUp(self):
     self.filesystem = fake_filesystem.FakeFilesystem(path_separator='/')
     self.root_name = '/'
@@ -484,7 +484,7 @@ class FakeFilesystemUnitTest(unittest.TestCase):
                       'not_a_dir/foo/bar')
 
 
-class FakeOsModuleTest(unittest.TestCase):
+class FakeOsModuleTest(TestCase):
 
   def setUp(self):
     self.filesystem = fake_filesystem.FakeFilesystem(path_separator='/')
@@ -1620,7 +1620,7 @@ class FakeOsModuleTest(unittest.TestCase):
     self.assertModeEqual(0o640, self.os.stat('file2').st_mode)
 
 
-class StatPropagationTest(unittest.TestCase):
+class StatPropagationTest(TestCase):
 
   def setUp(self):
     self.filesystem = fake_filesystem.FakeFilesystem(path_separator='/')
@@ -1724,7 +1724,7 @@ class StatPropagationTest(unittest.TestCase):
     fh.close()
 
 
-class OsPathInjectionRegressionTest(unittest.TestCase):
+class OsPathInjectionRegressionTest(TestCase):
   """Test faking os.path before calling os.walk.
 
   Found when investigating a problem with
@@ -1764,7 +1764,7 @@ class OsPathInjectionRegressionTest(unittest.TestCase):
     self.assertEqual(expected, [step for step in self.os.walk('/')])
 
 
-class FakePathModuleTest(unittest.TestCase):
+class FakePathModuleTest(TestCase):
   def setUp(self):
     self.orig_time = time.time
     time.time = _GetDummyTime(10, 1)
@@ -1972,7 +1972,7 @@ class FakePathModuleTest(unittest.TestCase):
     self.assertEqual([], visited_nodes)
 
 
-class FakeFileOpenTestBase(unittest.TestCase):
+class FakeFileOpenTestBase(TestCase):
   def setUp(self):
     self.filesystem = fake_filesystem.FakeFilesystem(path_separator='/')
     self.file = fake_filesystem.FakeFileOpen(self.filesystem)
@@ -2498,7 +2498,7 @@ class OpenWithFileDescriptorTest(FakeFileOpenTestBase):
     self.assertIsNone(self.filesystem.open_files[fd])
 
 
-class OpenWithBinaryFlagsTest(unittest.TestCase):
+class OpenWithBinaryFlagsTest(TestCase):
 
   def setUp(self):
     self.filesystem = fake_filesystem.FakeFilesystem(path_separator='/')
@@ -2542,7 +2542,7 @@ class OpenWithBinaryFlagsTest(unittest.TestCase):
     self.assertEqual(self.file_contents, fake_file.read())
 
 
-class OpenWithIgnoredFlagsTest(unittest.TestCase):
+class OpenWithIgnoredFlagsTest(TestCase):
 
   def setUp(self):
     self.filesystem = fake_filesystem.FakeFilesystem(path_separator='/')
@@ -2758,7 +2758,7 @@ class ResolvePathTest(FakeFileOpenTestBase):
     self.assertFalse(self.filesystem.Exists('/a/loop'))
 
 
-class PathManipulationTests(unittest.TestCase):
+class PathManipulationTests(TestCase):
   def setUp(self):
     self.filesystem = fake_filesystem.FakeFilesystem(path_separator='|')
 
@@ -2881,7 +2881,7 @@ class JoinPathTest(PathManipulationTests):
     self.assertEqual('a|b|', self.filesystem.JoinPaths('a|', '', 'b|'))
 
 
-class PathSeparatorTest(unittest.TestCase):
+class PathSeparatorTest(TestCase):
   def testOsPathSepMatchesFakeFilesystemSeparator(self):
     filesystem = fake_filesystem.FakeFilesystem(path_separator='!')
     fake_os = fake_filesystem.FakeOsModule(filesystem)
