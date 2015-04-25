@@ -54,27 +54,27 @@ import mock
 
 def load_doctests(loader, tests, ignore, module):
     '''Load the doctest tests for the specified module into unittest.'''
-    stubber = Stubber()
-    globs = stubber.replaceGlobs(vars(module))
+    _patcher = _Patcher()
+    globs = _patcher.replaceGlobs(vars(module))
     tests.addTests(doctest.DocTestSuite(module,
                                         globs=globs,
-                                        setUp=stubber.setUp,
-                                        tearDown=stubber.tearDown))
+                                        setUp=_patcher.setUp,
+                                        tearDown=_patcher.tearDown))
     return tests
 
 
 class TestCase(unittest.TestCase):
     def __init__(self, methodName='runTest'):
         super(TestCase, self).__init__(methodName)
-        self.stubber = Stubber()
+        self._stubber = _Patcher()
         
     @property
     def fs(self):
-        return self.stubber.fs
+        return self._stubber.fs
     
     @property
     def patches(self):
-        return self.stubber.patches
+        return self._stubber.patches
         
     def setUpPyfakefs(self):
         '''Bind the file-related modules to the :py:class:`pyfakefs` fake file
@@ -84,17 +84,18 @@ class TestCase(unittest.TestCase):
         Invoke this at the beginning of the `setUp()` method in your unit test
         class.
         '''
-        self.stubber.setUp()
+        self._stubber.setUp()
+        self.addCleanup(self._stubber.tearDown)
+
     
     def tearDownPyfakefs(self):
-        '''Clear the fake file system bindings created by `setUp()`.
-        
-        Invoke this at the end of the `tearDown()` method in your unit test
-        class.
+        ''':meth:`pyfakefs.fake_filesystem_unittest.setUpPyfakefs` registers the
+        tear down procedure using :meth:unittest.TestCase.addCleanup`.  Thus this
+        method is deprecated, and remains just for backward compatibility.
         '''
-        self.stubber.tearDown()
+        pass
 
-class Stubber(object):
+class _Patcher(object):
     '''
     Instantiate a stub creator to bind and un-bind the file-related modules to
     the :py:module:`pyfakefs` fake modules.
@@ -112,16 +113,16 @@ class Stubber(object):
         
     def __init__(self):
         # Attributes set by _findModules()
-        self._osModules = None
-        self._globModules = None
-        self._pathModules = None
-        self._shutilModules = None
-        self._tempfileModules = None
+        self._osModuleNames = None
+        self._globModuleNames = None
+        self._pathModuleNames = None
+        self._shutilModuleNames = None
+        self._tempfileModuleNames = None
         self._findModules()
         assert None not in vars(self).values(), \
                 "_findModules() missed the initialization of an instance variable"
         
-        # Attributes set by refresh()
+        # Attributes set by _refresh()
         self.fs = None
         self.fake_os = None
         self.fake_glob = None
@@ -129,40 +130,40 @@ class Stubber(object):
         self.fake_shutil = None
         self.fake_tempfile_ = None
         self.fake_open = None
-        # _isStale is set by tearDown(), reset by refresh()
+        # _isStale is set by tearDown(), reset by _refresh()
         self._isStale = True
-        self.refresh()
+        self._refresh()
         assert None not in vars(self).values(), \
-                "refresh() missed the initialization of an instance variable"
-        assert self._isStale == False, "refresh() did not reset _isStale"
+                "_refresh() missed the initialization of an instance variable"
+        assert self._isStale == False, "_refresh() did not reset _isStale"
         
     def _findModules(self):
         '''Find and cache all modules that import file system modules.
         Later, `setUp()` will stub these with the fake file system
         modules.
         '''
-        self._osModules = set()
-        self._globModules = set()
-        self._pathModules = set()
-        self._shutilModules = set()
-        self._tempfileModules = set()
+        self._osModuleNames = set()
+        self._globModuleNames = set()
+        self._pathModuleNames = set()
+        self._shutilModuleNames = set()
+        self._tempfileModuleNames = set()
         for name, module in set(sys.modules.items()):
             if module in self.SKIPMODULES or name in self.SKIPNAMES or (not inspect.ismodule(module)):
                 continue
             if 'os' in module.__dict__ and inspect.ismodule(module.__dict__['os']):
-                self._osModules.add(name + '.os')
+                self._osModuleNames.add(name + '.os')
             if 'glob' in module.__dict__:
-                self._globModules.add(name + '.glob')
+                self._globModuleNames.add(name + '.glob')
             if 'path' in module.__dict__:
-                self._pathModules.add(name + '.path')
+                self._pathModuleNames.add(name + '.path')
             if 'shutil' in module.__dict__:
-                self._shutilModules.add(name + '.shutil')
+                self._shutilModuleNames.add(name + '.shutil')
             if 'tempfile' in module.__dict__:
-                self._tempfileModules.add(name + '.tempfile')
+                self._tempfileModuleNames.add(name + '.tempfile')
             
-    def refresh(self):
+    def _refresh(self):
         '''Renew the fake file system and set the _isStale flag to `False`.'''
-        self._stopAllPatches()
+        mock.patch.stopall()
         
         self.fs = fake_filesystem.FakeFilesystem()
         self.fake_os = fake_filesystem.FakeOsModule(self.fs)
@@ -174,16 +175,12 @@ class Stubber(object):
 
         self._isStale = False
 
-    def _stopAllPatches(self):
-        '''Stop (undo) all active patches.'''
-        mock.patch.stopall()
-
     def setUp(self, doctester=None):
-        '''Bind the file-related modules to the :py:class:`pyfakefs` fake
+        '''Bind the file-related modules to the :py:module:`pyfakefs` fake
         modules real ones.  Also bind the fake `file()` and `open()` functions.
         '''
         if self._isStale:
-            self.refresh()
+            self._refresh()
         
         if doctester is not None:
             doctester.globs = self.replaceGlobs(doctester.globs)
@@ -204,21 +201,21 @@ class Stubber(object):
         startPatch(self, '__builtin__.file', self.fake_open)
         startPatch(self, '__builtin__.open', self.fake_open)
 
-        for module in self._osModules:
+        for module in self._osModuleNames:
             startPatch(self, module, self.fake_os)
-        for module in self._globModules:
+        for module in self._globModuleNames:
             startPatch(self, module, self.fake_glob)
-        for module in self._pathModules:
+        for module in self._pathModuleNames:
             startPatch(self, module, self.fake_path)
-        for module in self._shutilModules:
+        for module in self._shutilModuleNames:
             startPatch(self, module, self.fake_shutil)
-        for module in self._tempfileModules:
+        for module in self._tempfileModuleNames:
             startPatch(self, module, self.fake_tempfile_)
-    
+                    
     def replaceGlobs(self, globs_):
         globs = globs_.copy()
         if self._isStale:
-            self.refresh()
+            self._refresh()
         if 'os' in globs:
             globs['os'] = fake_filesystem.FakeOsModule(self.fs)
         if 'glob' in globs:
@@ -234,10 +231,6 @@ class Stubber(object):
         return globs
     
     def tearDown(self, doctester=None):
-        '''Clear the fake filesystem bindings created by `setUp()`.
-        
-        Invoke this at the end of the `tearDown()` method in your unit test
-        class.
-        '''
+        '''Clear the fake filesystem bindings created by `setUp()`.'''
         self._isStale = True
-        self._stopAllPatches()
+        mock.patch.stopall()

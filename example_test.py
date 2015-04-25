@@ -54,7 +54,8 @@ class TestExample(fake_filesystem_unittest.TestCase): # pylint: disable=R0904
         self.setUpPyfakefs()
 
     def tearDown(self):
-        self.tearDownPyfakefs()
+        # No longer need self.tearDownPyfakefs()
+        pass
         
     def test_create_file(self):
         '''Test example.create_file()'''
