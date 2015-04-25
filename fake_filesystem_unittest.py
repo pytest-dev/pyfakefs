@@ -224,7 +224,8 @@ class Stubber(object):
         if 'glob' in globs:
             globs['glob'] = fake_filesystem_glob.FakeGlobModule(self.fs)
         if 'path' in globs:
-            fake_os = globs.get('os', fake_filesystem.FakeOsModule(self.fs))
+            fake_os = globs['os'] if 'os' in globs \
+                else fake_filesystem.FakeOsModule(self.fs)
             globs['path'] = fake_os.path
         if 'shutil' in globs:
             globs['shutil'] = fake_filesystem_shutil.FakeShutilModule(self.fs)
