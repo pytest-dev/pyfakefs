@@ -167,7 +167,7 @@ class Stubber(object):
         self.fs = fake_filesystem.FakeFilesystem()
         self.fake_os = fake_filesystem.FakeOsModule(self.fs)
         self.fake_glob = fake_filesystem_glob.FakeGlobModule(self.fs)
-        self.fake_path = fake_filesystem.FakePathModule(self.fs)
+        self.fake_path = self.fake_os.path
         self.fake_shutil = fake_filesystem_shutil.FakeShutilModule(self.fs)
         self.fake_tempfile_ = fake_tempfile.FakeTempfileModule(self.fs)
         self.fake_open = fake_filesystem.FakeFileOpen(self.fs)
@@ -224,7 +224,9 @@ class Stubber(object):
         if 'glob' in globs:
             globs['glob'] = fake_filesystem_glob.FakeGlobModule(self.fs)
         if 'path' in globs:
-            globs['path'] =  fake_filesystem.FakePathModule(self.fs)
+            fake_os = globs['os'] if 'os' in globs \
+                else fake_filesystem.FakeOsModule(self.fs)
+            globs['path'] = fake_os.path
         if 'shutil' in globs:
             globs['shutil'] = fake_filesystem_shutil.FakeShutilModule(self.fs)
         if 'tempfile' in globs:
