@@ -96,7 +96,7 @@ except ImportError:
 
 __pychecker__ = 'no-reimportself'
 
-__version__ = '2.4'
+__version__ = '2.5'
 
 PERM_READ = 0o400      # Read permission bit.
 PERM_WRITE = 0o200     # Write permission bit.
