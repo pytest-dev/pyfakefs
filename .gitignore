@@ -1,4 +1,7 @@
 *.pyc
 *.egg-info/
+
+# Eclipse
+.settings
 .project
 .pydevproject
