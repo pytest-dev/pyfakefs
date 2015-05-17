@@ -11,6 +11,7 @@ MODULES = ['fake_filesystem',
            'fake_filesystem_shutil',
            'fake_tempfile',
            'fake_filesystem_unittest']
+REQUIRES = ['mock']
 DESCRIPTION = 'Fakes file system modules for automated developer testing.'
 
 URL = "https://code.google.com/p/pyfakefs"
@@ -45,6 +46,7 @@ params = dict(
     name=NAME,
     version=__version__,
     py_modules=MODULES,
+    install_requires=REQUIRES,
 
     # metadata for upload to PyPI
     author=AUTHOR,
