@@ -98,10 +98,7 @@ class TestPyfakefsUnittest(fake_filesystem_unittest.TestCase): # pylint: disable
             tf.write(b'Temporary file contents\n')
             name = tf.name
             self.assertTrue(self.fs.Exists(tf.name))
-    
-    def test_pytest(self):
-        '''Compatibility with the :py:module:`pytest` module.'''
-        pass
+        
                       
 if __name__ == "__main__":
     unittest.main()

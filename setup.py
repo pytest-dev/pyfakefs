@@ -56,7 +56,8 @@ CLASSIFIERS = [
     'Topic :: System :: Filesystems',
 ]
 
-AUTHOR = 'Google and John McGehee'
+
+AUTHOR = 'John McGehee'  # Current maintainer.  Google was the original author.
 AUTHOR_EMAIL = 'github@johnnado,com'
 KEYWORDS = ("testing test file os shutil glob mocking unittest "
             "fakes filesystem unit").split(' ')

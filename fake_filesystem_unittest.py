@@ -42,6 +42,7 @@ retrofitted to use `pyfakefs` by simply changing their base class from
 import sys
 import unittest
 import doctest
+import inspect
 import fake_filesystem
 import fake_filesystem_glob
 import fake_filesystem_shutil
@@ -91,7 +92,7 @@ class TestCase(unittest.TestCase):
     
     def tearDownPyfakefs(self):
         ''':meth:`pyfakefs.fake_filesystem_unittest.setUpPyfakefs` registers the
-        tear down procedure using :meth:`unittest.TestCase.addCleanup`.  Thus this
+        tear down procedure using :py:meth:`unittest.TestCase.addCleanup`.  Thus this
         method is deprecated, and remains just for backward compatibility.
         '''
         pass
@@ -109,8 +110,10 @@ class Patcher(object):
     '''
     assert None in SKIPMODULES, "sys.modules contains 'None' values; must skip them."
     
+    # To add py.test support per issue https://github.com/jmcgeheeiv/pyfakefs/issues/43,
+    # it appears that adding  'py', 'pytest', '_pytest' to SKIPNAMES will help
     SKIPNAMES = set(['os', 'glob', 'path', 'shutil', 'tempfile'])
-        
+    
     def __init__(self):
         # Attributes set by _findModules()
         self._osModules = None
@@ -149,7 +152,9 @@ class Patcher(object):
         self._shutilModules = set()
         self._tempfileModules = set()
         for name, module in set(sys.modules.items()):
-            if module in self.SKIPMODULES or name in self.SKIPNAMES:
+            if (module in self.SKIPMODULES or
+                (not inspect.ismodule(module)) or
+                name.split('.')[0] in self.SKIPNAMES):
                 continue
             if 'os' in module.__dict__:
                 self._osModules.add(module)
@@ -161,7 +166,7 @@ class Patcher(object):
                 self._shutilModules.add(module)
             if 'tempfile' in module.__dict__:
                 self._tempfileModules.add(module)
-
+    
     def _refresh(self):
         '''Renew the fake file system and set the _isStale flag to `False`.'''
         if self._stubs is not None:
@@ -189,7 +194,7 @@ class Patcher(object):
             doctester.globs = self.replaceGlobs(doctester.globs)
             
         if sys.version_info < (3,):
-            # No file() in Python3
+            # file() was eliminated in Python3
             self._stubs.SmartSet(builtins, 'file', self.fake_open)
         self._stubs.SmartSet(builtins, 'open', self.fake_open)
         
@@ -213,7 +218,9 @@ class Patcher(object):
         if 'glob' in globs:
             globs['glob'] = fake_filesystem_glob.FakeGlobModule(self.fs)
         if 'path' in globs:
-            globs['path'] =  fake_filesystem.FakePathModule(self.fs)
+            fake_os = globs['os'] if 'os' in globs \
+                else fake_filesystem.FakeOsModule(self.fs)
+            globs['path'] = fake_os.path
         if 'shutil' in globs:
             globs['shutil'] = fake_filesystem_shutil.FakeShutilModule(self.fs)
         if 'tempfile' in globs:
