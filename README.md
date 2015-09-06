@@ -9,6 +9,8 @@ See the [usage tutorial](http://github.com/jmcgeheeiv/pyfakefs/wiki/Tutorial)
 for a concrete example of how to apply pyfakefs.
 
 ## Continuous Integration
+[![Build Status](https://travis-ci.org/jmcgeheeiv/pyfakefs.svg)](https://travis-ci.org/jmcgeheeiv/pyfakefs)
+
 pyfakefs is tested with Python 2.6 and above.  See [Travis-CI](http://travis-ci.org) for
 [pyfakefs continuous integration test results](https://travis-ci.org/jmcgeheeiv/pyfakefs)
 for each Python version.
