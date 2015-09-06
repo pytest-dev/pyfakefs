@@ -28,10 +28,10 @@ MODULES = ['fake_filesystem',
            'fake_filesystem_shutil',
            'fake_tempfile',
            'fake_filesystem_unittest']
-REQUIRES = ['mock']
-DESCRIPTION = 'Fakes file system modules for automated developer testing.'
+REQUIRES = ['mox3']
+DESCRIPTION = 'Fake file system for testing file operations without touching the real file system.'
 
-URL = "https://code.google.com/p/pyfakefs"
+URL = "https://github.com/jmcgeheeiv/pyfakefs"
 
 readme = os.path.join(os.path.dirname(__file__), 'README.md')
 LONG_DESCRIPTION = open(readme).read()
@@ -44,7 +44,9 @@ CLASSIFIERS = [
     'Programming Language :: Python',
     'Programming Language :: Python :: 2.6',
     'Programming Language :: Python :: 2.7',
-    'Programming Language :: Python :: 3',
+    'Programming Language :: Python :: 3.2',
+    'Programming Language :: Python :: 3.3',
+    'Programming Language :: Python :: 3.4',
     'Operating System :: POSIX',
     'Operating System :: MacOS',
     'Operating System :: Microsoft :: Windows',
@@ -54,8 +56,8 @@ CLASSIFIERS = [
     'Topic :: System :: Filesystems',
 ]
 
-AUTHOR = 'Google'
-AUTHOR_EMAIL = 'google-pyfakefs@google.com'
+AUTHOR = 'Google and John McGehee'
+AUTHOR_EMAIL = 'github@johnnado,com'
 KEYWORDS = ("testing test file os shutil glob mocking unittest "
             "fakes filesystem unit").split(' ')
 
