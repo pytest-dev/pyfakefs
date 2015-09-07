@@ -19,15 +19,10 @@ See [Travis-CI](http://travis-ci.org) for
 ## Installation
 
 ### Compatibility
-pyfakefs works with Python 2.6 and above.  pyfakefs has no dependencies beyond the Python
-standard library.
+pyfakefs works with Python 2.6 and above.  pyfakefs requires [mox3](https://pypi.python.org/pypi/mox3).
 
 ### PyPi
-pyfakefs project is hosted on PyPi and can be installed:
-
-```bash
-pip install pyfakefs
-```
+The pyfakefs on PyPi is obsolete--many improvements have been made after the PyPi version.  Use the version here.
 
 ## History
 pyfakefs.py was initially developed at Google by Mike Bland as a modest fake
