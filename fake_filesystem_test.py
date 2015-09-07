@@ -1387,21 +1387,28 @@ class FakeOsModuleTest(TestCase):
     file_path = 'some_file'
     self.filesystem.CreateFile(file_path)
     # first set it make sure it's set
-    self.os.chown(file_path, 100, 100)
+    self.os.chown(file_path, 100, 101)
     st = self.os.stat(file_path)
     self.assertEqual(st[stat.ST_UID], 100)
-    self.assertEqual(st[stat.ST_GID], 100)
+    self.assertEqual(st[stat.ST_GID], 101)
     # we can make sure it changed
-    self.os.chown(file_path, 200, 200)
+    self.os.chown(file_path, 200, 201)
     st = self.os.stat(file_path)
     self.assertEqual(st[stat.ST_UID], 200)
-    self.assertEqual(st[stat.ST_GID], 200)
+    self.assertEqual(st[stat.ST_GID], 201)
     # setting a value to -1 leaves it unchanged
     self.os.chown(file_path, -1, -1)
     st = self.os.stat(file_path)
     self.assertEqual(st[stat.ST_UID], 200)
-    self.assertEqual(st[stat.ST_GID], 200)
+    self.assertEqual(st[stat.ST_GID], 201)
 
+  def testChownBadArguments(self):
+    '''os.chown() with bad args (Issue #30)'''
+    file_path = 'some_file'
+    self.filesystem.CreateFile(file_path)
+    self.assertRaises(TypeError, self.os.chown, file_path, 'username', -1)
+    self.assertRaises(TypeError, self.os.chown, file_path, -1, 'groupname')
+      
   def testChownNonexistingFileShouldRaiseOsError(self):
     file_path = 'some_file'
     self.assertFalse(self.filesystem.Exists(file_path))

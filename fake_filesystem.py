@@ -1770,6 +1770,9 @@ class FakeOsModule(object):
       path: (str) Path to the file or directory.
       uid: (int) Numeric uid to set the file or directory to.
       gid: (int) Numeric gid to set the file or directory to.
+      
+    `None` is also allowed for `uid` and `gid`.  This permits `os.rename` to
+    use `os.chown` even when the source file `uid` and `gid` are `None` (unset).
     """
     try:
       file_object = self.filesystem.GetObject(path)
@@ -1778,7 +1781,9 @@ class FakeOsModule(object):
         raise OSError(errno.ENOENT,
                       'No such file or directory in fake filesystem',
                       path)
-      raise
+    if not ((isinstance(uid, int) or uid is None) and
+            (isinstance(gid, int) or gid is None)):
+        raise TypeError("An integer is required")
     if uid != -1:
       file_object.st_uid = uid
     if gid != -1:
