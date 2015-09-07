@@ -1743,7 +1743,7 @@ class FakeOsModule(object):
           number of elements in the tuple is not equal to 2.
     """
     try:
-      file_object = self.filesystem.GetObject(path)
+      file_object = self.filesystem.ResolveObject(path)
     except IOError as io_error:
       if io_error.errno == errno.ENOENT:
         raise OSError(errno.ENOENT,
@@ -1758,7 +1758,7 @@ class FakeOsModule(object):
         raise TypeError('utime() arg 2 must be a tuple (atime, mtime)')
       for t in times:
         if not isinstance(t, (int, float)):
-          raise TypeError('an integer is required')
+          raise TypeError('atime and mtime must be numbers')
 
       file_object.st_atime = times[0]
       file_object.st_mtime = times[1]

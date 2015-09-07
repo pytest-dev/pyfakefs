@@ -1379,7 +1379,7 @@ class FakeOsModuleTest(TestCase):
     self._CreateTestDirectory(path)
     # actual tests
     self.assertRaisesWithRegexpMatch(
-        TypeError, 'an integer is required',
+        TypeError, 'atime and mtime must be numbers',
         self.os.utime, path, (1, 'str'))
 
   def testChownExistingFile(self):
@@ -2784,6 +2784,22 @@ class ResolvePathTest(FakeFileOpenTestBase):
     self.assertFalse(self.filesystem.Exists(final_target))
     self.__WriteToFile('/a/b/c/d/e')
     self.assertTrue(self.filesystem.Exists(final_target))
+
+  def testUtimeLink(self):
+    '''os.utime() and os.stat() via symbolic link (issue #49)'''
+    self.filesystem.CreateDirectory('/foo/baz')
+    self.__WriteToFile('/foo/baz/bip')
+    link_name = '/foo/bar'
+    self.filesystem.CreateLink(link_name, '/foo/baz/bip')
+
+    self.os.utime(link_name, (1, 2))
+    st = self.os.stat(link_name)
+    self.assertEqual(1, st.st_atime)
+    self.assertEqual(2, st.st_mtime)
+    self.os.utime(link_name, (3, 4))
+    st = self.os.stat(link_name)
+    self.assertEqual(3, st.st_atime)
+    self.assertEqual(4, st.st_mtime)
 
   def testTooManyLinks(self):
     self.filesystem.CreateLink('/a/loop', 'loop')
