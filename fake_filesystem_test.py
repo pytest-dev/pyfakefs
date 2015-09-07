@@ -1,5 +1,5 @@
 #! /usr/bin/env python
-#
+# -*- coding: utf-8 -*-
 # Copyright 2009 Google Inc. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -2053,6 +2053,26 @@ class FakeFileOpenTest(FakeFileOpenTestBase):
       self.assertTrue(self.filesystem.Exists(file_path))
     # After the 'with' statement, the close() method should have been called.
     self.assertFalse(self.filesystem.Exists(file_path))
+
+  def testUnicodeContents(self):
+    self.file = fake_filesystem.FakeFileOpen(self.filesystem)
+    file_path = 'foo'
+    text_fractions =  '⅓ ⅔ ⅕ ⅖'
+    with self.file(file_path, 'w') as f:
+      f.write(text_fractions)
+    with self.file(file_path) as f:
+      contents = f.read()
+    self.assertEqual(contents, text_fractions)
+
+  def testByteContents(self):
+    self.file = fake_filesystem.FakeFileOpen(self.filesystem)
+    file_path = 'foo'
+    byte_fractions = b'\xe2\x85\x93 \xe2\x85\x94 \xe2\x85\x95 \xe2\x85\x96'
+    with self.file(file_path, 'w') as f:
+      f.write(byte_fractions)
+    with self.file(file_path) as f:
+      contents = f.read()
+    self.assertEqual(contents, byte_fractions)
 
   def testOpenValidFile(self):
     contents = [
