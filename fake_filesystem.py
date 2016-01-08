@@ -89,6 +89,8 @@ import stat
 import sys
 import time
 import warnings
+import binascii
+
 try:
   import cStringIO as io  # pylint: disable-msg=C6204
 except ImportError:
@@ -147,6 +149,21 @@ def CopyModule(old):
   new = __import__(old.__name__)
   sys.modules[old.__name__] = saved
   return new
+
+
+class Hexlified(object):
+  """Wraps binary data in non-binary string"""
+  def __init__(self, contents):
+    self.contents = binascii.hexlify(contents).decode('utf-8')
+
+  def __len__(self):
+    return len(self.contents)//2
+
+  def recover(self, binary):
+    if binary:
+      return binascii.unhexlify(self.contents)
+    else:
+      return binascii.unhexlify(self.contents).decode(sys.getdefaultencoding())
 
 
 class FakeFile(object):
@@ -224,11 +241,12 @@ class FakeFile(object):
     Args:
       contents: string, new content of file.
     """
-    # convert a byte array to a string
+    # Wrap byte arrays into a safe format
     if sys.version_info >= (3, 0) and isinstance(contents, bytes):
-      contents = ''.join(chr(i) for i in contents)
-    self.contents = contents
+      contents = Hexlified(contents)
+      
     self.st_size = len(contents)
+    self.contents = contents
     self.epoch += 1
 
   def SetSize(self, st_size):
@@ -1975,6 +1993,8 @@ class FakeFileOpen(object):
         contents = file_object.contents
         newline_arg = {} if binary else {'newline': newline}
         io_class = io.StringIO
+        if contents and isinstance(contents, Hexlified):
+          contents = contents.recover(binary)
         # For Python 3, files opened as binary only read/write byte contents.
         if sys.version_info >= (3, 0) and binary:
           io_class = io.BytesIO

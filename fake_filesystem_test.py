@@ -22,6 +22,7 @@ import re
 import stat
 import sys
 import time
+import binascii
 if sys.version_info < (2, 7):
     import unittest2 as unittest
 else:
@@ -2570,7 +2571,7 @@ class OpenWithBinaryFlagsTest(TestCase):
     self.file = fake_filesystem.FakeFileOpen(self.filesystem)
     self.os = fake_filesystem.FakeOsModule(self.filesystem)
     self.file_path = 'some_file'
-    self.file_contents = b'binary contents'
+    self.file_contents = b'real binary contents: \x1f\x8b'
     self.filesystem.CreateFile(self.file_path, contents=self.file_contents)
 
   def OpenFakeFile(self, mode):
@@ -2595,10 +2596,14 @@ class OpenWithBinaryFlagsTest(TestCase):
     self.assertEqual(0, fake_file.tell())
     fake_file = self.WriteAndReopenFile(fake_file, mode='rb')
     self.assertEqual(self.file_contents, fake_file.read())
-    # reopen the file in text mode
+    # Attempt to reopen the file in text mode
     fake_file = self.OpenFakeFile('wb')
-    fake_file = self.WriteAndReopenFile(fake_file, mode='r')
-    self.assertEqual(self.file_contents.decode('ascii'), fake_file.read())
+    if sys.version_info >= (3, 0):
+        self.assertRaises(UnicodeDecodeError, self.WriteAndReopenFile, fake_file, mode='r')
+    else:
+        fake_file = self.WriteAndReopenFile(fake_file, mode='r')
+        self.assertEqual(self.file_contents, fake_file.read())
+
 
   def testWriteAndReadBinary(self):
     fake_file = self.OpenFileAndSeek('w+b')
