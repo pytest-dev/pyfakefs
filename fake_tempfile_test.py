@@ -192,6 +192,15 @@ class FakeTempfileModuleTest(unittest.TestCase):
     self.assertRaises(NotImplementedError, getattr,
                       self.tempfile, 'template')
 
+  @unittest.skipIf(sys.version_info < (3,0), "TemporaryDirectory showed up in 3")
+  def testTemporaryDirectory(self):
+    with self.tempfile.TemporaryDirectory() as tmpdir:
+      self.assertTrue(tmpdir)
+      created_filenames = self.tempfile.FakeReturnedMktempValues()
+      self.assertEqual(tmpdir, created_filenames[0])
+      self.assertTrue(self.filesystem.Exists(tmpdir))
+      self.assertEqual(self.filesystem.GetObject(tmpdir).st_mode,
+                       stat.S_IFDIR|0o700)
 
 if __name__ == '__main__':
   unittest.main()
