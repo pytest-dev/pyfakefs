@@ -57,7 +57,7 @@ CLASSIFIERS = [
 ]
 
 
-AUTHOR = 'google'
+AUTHOR = 'Google'
 AUTHOR_EMAIL = 'google-pyfakefs@google.com'
 MAINTAINER = 'John McGehee'
 MAINTAINER_EMAIL = 'pyfakefs@johnnado.com'
@@ -76,7 +76,9 @@ params = dict(
     maintainer=MAINTAINER,
     maintainer_email=MAINTAINER_EMAIL,
     description=DESCRIPTION,
-    long_description=LONG_DESCRIPTION,
+    long_description='''Using pyfakefs, your tests operate on a fake file system in memory without
+touching the real disk. The software under test requires no modification to
+work with pyfakefs.''', # LONG_DESCRIPTION,
     keywords=KEYWORDS,
     url=URL,
     classifiers=CLASSIFIERS,
