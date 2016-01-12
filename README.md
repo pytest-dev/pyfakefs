@@ -50,7 +50,7 @@ See [Travis-CI](http://travis-ci.org) for
 pyfakefs works with Python 2.6 and above.  pyfakefs requires [mox3](https://pypi.python.org/pypi/mox3).
 
 ### PyPi
-The pyfakefs on PyPi is unmaintained--many improvements have been made after the PyPi version.  Use the version here.
+[pyfakefs is available on PyPi](https://pypi.python.org/pypi/pyfakefs/).
 
 ## History
 pyfakefs.py was initially developed at Google by Mike Bland as a modest fake
