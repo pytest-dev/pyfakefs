@@ -29,7 +29,7 @@ MODULES = ['fake_filesystem',
            'fake_tempfile',
            'fake_filesystem_unittest']
 REQUIRES = ['mox3']
-DESCRIPTION = 'Fake file system for testing file operations without touching the real file system.'
+DESCRIPTION = 'pyfakefs implements a fake file system that mocks the Python file system modules.'
 
 URL = "https://github.com/jmcgeheeiv/pyfakefs"
 
@@ -57,8 +57,10 @@ CLASSIFIERS = [
 ]
 
 
-AUTHOR = 'John McGehee'  # Current maintainer.  Google was the original author.
-AUTHOR_EMAIL = 'github@johnnado.com'
+AUTHOR = 'google'
+AUTHOR_EMAIL = 'google-pyfakefs@google.com'
+MAINTAINER = 'John McGehee'
+MAINTAINER_EMAIL = 'pyfakefs@johnnado.com'
 KEYWORDS = ("testing test file os shutil glob mocking unittest "
             "fakes filesystem unit").split(' ')
 
@@ -71,6 +73,8 @@ params = dict(
     # metadata for upload to PyPI
     author=AUTHOR,
     author_email=AUTHOR_EMAIL,
+    maintainer=MAINTAINER,
+    maintainer_email=MAINTAINER_EMAIL,
     description=DESCRIPTION,
     long_description=LONG_DESCRIPTION,
     keywords=KEYWORDS,
