@@ -47,6 +47,7 @@ CLASSIFIERS = [
     'Programming Language :: Python :: 3.2',
     'Programming Language :: Python :: 3.3',
     'Programming Language :: Python :: 3.4',
+    'Programming Language :: Python :: 3.5',
     'Operating System :: POSIX',
     'Operating System :: MacOS',
     'Operating System :: Microsoft :: Windows',
