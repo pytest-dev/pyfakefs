@@ -3,13 +3,13 @@
 # Copyright 2009 Google Inc. All Rights Reserved.
 # Copyright 2014 Altera Corporation. All Rights Reserved.
 # Copyright 2014-2015 John McGehee
-# 
+#
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
-# 
+#
 #     http://www.apache.org/licenses/LICENSE-2.0
-# 
+#
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -17,17 +17,12 @@
 # limitations under the License.
 
 
-from fake_filesystem import __version__
+from pyfakefs.fake_filesystem import __version__
 
 import os
 
 
 NAME = 'pyfakefs'
-MODULES = ['fake_filesystem',
-           'fake_filesystem_glob',
-           'fake_filesystem_shutil',
-           'fake_tempfile',
-           'fake_filesystem_unittest']
 REQUIRES = ['mox3']
 DESCRIPTION = 'pyfakefs implements a fake file system that mocks the Python file system modules.'
 
@@ -68,7 +63,6 @@ KEYWORDS = ("testing test file os shutil glob mocking unittest "
 params = dict(
     name=NAME,
     version=__version__,
-    py_modules=MODULES,
     install_requires=REQUIRES,
 
     # metadata for upload to PyPI
@@ -82,7 +76,10 @@ touching the real disk. The software under test requires no modification to
 work with pyfakefs.''', # LONG_DESCRIPTION,
     keywords=KEYWORDS,
     url=URL,
-    classifiers=CLASSIFIERS,
+    pac=CLASSIFIERS,
+    packages=[
+        'pyfakefs'
+    ]
 )
 
 try:

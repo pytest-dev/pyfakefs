@@ -27,7 +27,7 @@ if sys.version_info < (2, 7):
 else:
     import unittest
 
-import fake_filesystem
+from pyfakefs import fake_filesystem
 
 
 def _GetDummyTime(start_time, increment):
@@ -1408,7 +1408,7 @@ class FakeOsModuleTest(TestCase):
     self.filesystem.CreateFile(file_path)
     self.assertRaises(TypeError, self.os.chown, file_path, 'username', -1)
     self.assertRaises(TypeError, self.os.chown, file_path, -1, 'groupname')
-      
+
   def testChownNonexistingFileShouldRaiseOsError(self):
     file_path = 'some_file'
     self.assertFalse(self.filesystem.Exists(file_path))
@@ -1847,7 +1847,7 @@ class FakePathModuleTest(TestCase):
         # return '../path/to/foo' instead of 'path/to/foo'
         self.assertEqual('../path/to/foo', self.path.relpath(path_foo))
     else:
-        self.assertEqual('path/to/foo', self.path.relpath(path_foo))        
+        self.assertEqual('path/to/foo', self.path.relpath(path_foo))
     self.assertEqual('../foo',
                      self.path.relpath(path_foo, path_bar))
     self.assertEqual('../../..%s' % path_other,

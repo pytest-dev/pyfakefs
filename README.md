@@ -11,7 +11,7 @@ for a concrete example of how to apply pyfakefs.
 Usually you would use it this way:
 
 ```python
-import fake_filesystem as fake_fs
+import pyfakefs.fake_filesystem as fake_fs
 
 # Create a faked file system
 fs = fake_fs.FakeFilesystem()
@@ -28,7 +28,7 @@ try:
 except ImportError:
     from mock import patch  # Python 2
 
-import fake_filesystem_glob as fake_glob
+import pyfakefs.fake_filesystem_glob as fake_glob
 
 # Note that this fake module is based on the fake fs you just created
 glob = fake_glob.FakeGlobModule(fs)
@@ -38,7 +38,7 @@ with patch('mymodule.glob', glob):
 
 ## Continuous Integration
 
-pyfakefs is automatically tested with Python 2.6 and above, and it is currently 
+pyfakefs is automatically tested with Python 2.6 and above, and it is currently
 [![Build Status](https://travis-ci.org/jmcgeheeiv/pyfakefs.svg)](https://travis-ci.org/jmcgeheeiv/pyfakefs).
 
 See [Travis-CI](http://travis-ci.org) for

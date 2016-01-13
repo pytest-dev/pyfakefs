@@ -24,8 +24,8 @@ if sys.version_info < (2, 7):
 else:
     import unittest
 
-import fake_filesystem
-import fake_filesystem_shutil
+from pyfakefs import fake_filesystem
+from pyfakefs import fake_filesystem_shutil
 
 
 class FakeShutilModuleTest(unittest.TestCase):

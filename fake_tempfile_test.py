@@ -30,8 +30,8 @@ try:
 except ImportError:
   import io  # pylint: disable-msg=C6204
 
-import fake_filesystem
-import fake_tempfile
+from pyfakefs import fake_filesystem
+from pyfakefs import fake_tempfile
 
 
 class FakeLogging(object):
