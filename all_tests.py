@@ -45,4 +45,5 @@ class AllTests(unittest.TestSuite):
 
 if __name__ == '__main__':
   import sys
-  sys.exit(unittest.TextTestRunner(verbosity=2).run(AllTests().suite()))
+  result = unittest.TextTestRunner(verbosity=2).run(AllTests().suite())
+  sys.exit(int(not result.wasSuccessful()))
