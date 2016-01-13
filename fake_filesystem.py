@@ -149,6 +149,20 @@ def CopyModule(old):
   return new
 
 
+class Hexlified(object):
+  """Wraps binary data in non-binary string"""
+  def __init__(self, contents):
+    self.contents = binascii.hexlify(contents).decode('utf-8')
+
+  def __len__(self):
+    return len(self.contents)//2
+
+  def recover(self, binary):
+    if binary:
+      return binascii.unhexlify(bytearray(self.contents, 'utf-8'))
+    else:
+      return binascii.unhexlify(bytearray(self.contents, 'utf-8')).decode(sys.getdefaultencoding())
+
 class FakeFile(object):
   """Provides the appearance of a real file.
 

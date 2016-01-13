@@ -24,7 +24,7 @@ import logging
 import os
 import stat
 import tempfile
-import weakref as _weakref
+import warnings
 
 import fake_filesystem
 
@@ -336,16 +336,13 @@ class FakeTempfileModule(object):
     
     class FakeTemporaryDirectory(object):
       def __init__(self, filesystem, tempfile, suffix=None, prefix=None, dir=None):
+        self.closed = False
         self.filesystem = filesystem
         self.name = tempfile.mkdtemp(suffix, prefix, dir)
-        self._finalizer = _weakref.finalize(
-          self, self._cleanup, self.name,
-          warn_message="Implicitly cleaning up {!r}".format(self))
         
-      @classmethod
-      def _cleanup(cls, name, warn_message):
+      def cleanup(self, _warn=False):
         self.filesystem.RemoveObject(name)
-        _warnings.warn(warn_message, ResourceWarning)
+        warnings.warn(warn_message, ResourceWarning)
     
       def __repr__(self):
         return "<{} {!r}>".format(self.__class__.__name__, self.name)
@@ -356,8 +353,17 @@ class FakeTempfileModule(object):
       def __exit__(self, exc, value, tb):
         self.cleanup()
     
-      def cleanup(self):
-        if self._finalizer.detach():
+      def cleanup(self, warn=False):
+        if self.name and not self.closed:
           self.filesystem.RemoveObject(self.name)
+          self.closed = True
+          if warn:
+            warnings.warn("Implicitly cleaning up {!r}".format(self),
+                         ResourceWarning)
+          
+      def __del__(self):
+        # Issue a ResourceWarning if implicit cleanup needed
+        self.cleanup(warn=True)
+
 
     return FakeTemporaryDirectory(self._filesystem, self, suffix, prefix, dir)
