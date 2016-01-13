@@ -64,7 +64,7 @@ def create_file(path):
     ["This is test file '/test/file.txt'.\\n", 'It was created using the open() function.\\n']
     '''
     with open(path, 'w') as f:
-        f.write("This is test file '{}'.\n".format(path))
+        f.write("This is test file '{0}'.\n".format(path))
         f.write("It was created using the open() function.\n")
 
 def delete_file(path):

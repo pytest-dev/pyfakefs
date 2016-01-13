@@ -1842,8 +1842,12 @@ class FakePathModuleTest(TestCase):
     path_other = '/some/where/else'
     self.assertRaises(ValueError, self.path.relpath, None)
     self.assertRaises(ValueError, self.path.relpath, '')
-    self.assertEqual(path_foo[1:],
-                     self.path.relpath(path_foo))
+    if sys.version_info <= (2, 6):
+        # The real Python 2.6 os.path.relpath('/path/to/foo') actually does
+        # return '../path/to/foo' instead of 'path/to/foo'
+        self.assertEqual('../path/to/foo', self.path.relpath(path_foo))
+    else:
+        self.assertEqual('path/to/foo', self.path.relpath(path_foo))        
     self.assertEqual('../foo',
                      self.path.relpath(path_foo, path_bar))
     self.assertEqual('../../..%s' % path_other,
