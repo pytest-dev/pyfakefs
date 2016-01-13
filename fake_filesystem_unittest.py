@@ -40,7 +40,10 @@ retrofitted to use `pyfakefs` by simply changing their base class from
 """
 
 import sys
-import unittest
+if sys.version_info < (2, 7):
+    import unittest2 as unittest
+else:
+    import unittest
 import doctest
 import inspect
 import fake_filesystem
