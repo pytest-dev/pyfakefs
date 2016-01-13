@@ -73,13 +73,13 @@ class TestPyfakefsUnittest(fake_filesystem_unittest.TestCase): # pylint: disable
         
     def test_glob(self):
         '''Fake glob module is bound'''
-        self.assertCountEqual(glob.glob('/test/dir1/dir*'),
+        self.assertEqual(glob.glob('/test/dir1/dir*'),
                               [])
         self.fs.CreateDirectory('/test/dir1/dir2a')
-        self.assertCountEqual(glob.glob('/test/dir1/dir*'),
+        self.assertEqual(glob.glob('/test/dir1/dir*'),
                               ['/test/dir1/dir2a'])
         self.fs.CreateDirectory('/test/dir1/dir2b')
-        self.assertCountEqual(glob.glob('/test/dir1/dir*'),
+        self.assertEqual(glob.glob('/test/dir1/dir*'),
                               ['/test/dir1/dir2a', '/test/dir1/dir2b'])
 
     def test_shutil(self):
