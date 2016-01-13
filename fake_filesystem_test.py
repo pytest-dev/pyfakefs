@@ -2071,6 +2071,8 @@ class FakeFileOpenTest(FakeFileOpenTestBase):
       contents = f.read()
     self.assertEqual(contents, text_fractions)
 
+  @unittest.skipIf(sys.version_info >= (3, 0),
+                   'Does not work on Python3 per issue #63')
   def testByteContents(self):
     self.file = fake_filesystem.FakeFileOpen(self.filesystem)
     file_path = 'foo'
