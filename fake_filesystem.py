@@ -89,6 +89,8 @@ import stat
 import sys
 import time
 import warnings
+import binascii
+
 try:
   import cStringIO as io  # pylint: disable-msg=C6204
 except ImportError:
@@ -162,6 +164,7 @@ class Hexlified(object):
       return binascii.unhexlify(bytearray(self.contents, 'utf-8'))
     else:
       return binascii.unhexlify(bytearray(self.contents, 'utf-8')).decode(sys.getdefaultencoding())
+
 
 class FakeFile(object):
   """Provides the appearance of a real file.
@@ -238,11 +241,12 @@ class FakeFile(object):
     Args:
       contents: string, new content of file.
     """
-    # convert a byte array to a string
+    # Wrap byte arrays into a safe format
     if sys.version_info >= (3, 0) and isinstance(contents, bytes):
-      contents = ''.join(chr(i) for i in contents)
-    self.contents = contents
+      contents = Hexlified(contents)
+      
     self.st_size = len(contents)
+    self.contents = contents
     self.epoch += 1
 
   def SetSize(self, st_size):
@@ -1989,6 +1993,8 @@ class FakeFileOpen(object):
         contents = file_object.contents
         newline_arg = {} if binary else {'newline': newline}
         io_class = io.StringIO
+        if contents and isinstance(contents, Hexlified):
+          contents = contents.recover(binary)
         # For Python 3, files opened as binary only read/write byte contents.
         if sys.version_info >= (3, 0) and binary:
           io_class = io.BytesIO
