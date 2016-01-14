@@ -2194,7 +2194,7 @@ class FakeFileOpen(object):
       file_object = self.filesystem.CreateFile(
           real_path, create_missing_dirs=False, apply_umask=True)
 
-    if file_object.st_mode & stat.S_IFDIR:
+    if stat.S_ISDIR(file_object.st_mode):
       raise IOError(errno.EISDIR, 'Fake file object: is a directory', file_path)
 
     # if you print obj.name, the argument to open() must be printed. Not the
