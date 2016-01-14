@@ -59,7 +59,7 @@ in September 2006. Since then, it has been enhanced to extend its
 functionality and usefulness.  At Google alone, pyfakefs is used in over 2,000
 Python tests.
 
-pyfakefs was released to the public in 2011 as Google Code project
+Google released pyfakefs to the public in 2011 as Google Code project
 [pyfakefs](http://code.google.com/p/pyfakefs/).
 
 Fork
@@ -73,5 +73,6 @@ Fork
 added further corrections.
 
 After the [shutdown of Google Code was announced,](http://google-opensource.blogspot.com/2015/03/farewell-to-google-code.html)
-all three Google Code projects are merged together here on GitHub as pyfakefs.
+John McGehee merged all three Google Code projects together here on GitHub where an
+enthusiastic community actively maintains and extends pyfakefs.
 
