@@ -23,8 +23,8 @@ if sys.version_info < (2, 7):
 else:
     import unittest
 
-import fake_filesystem
-import fake_filesystem_glob
+from pyfakefs import fake_filesystem
+from pyfakefs import fake_filesystem_glob
 
 
 class FakeGlobUnitTest(unittest.TestCase):

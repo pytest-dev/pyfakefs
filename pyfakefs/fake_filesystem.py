@@ -25,7 +25,7 @@ Includes:
   FakeFileOpen:  Faked file() and open() function replacements.
 
 Usage:
->>> import fake_filesystem
+>>> from pyfakefs import fake_filesystem
 >>> filesystem = fake_filesystem.FakeFilesystem()
 >>> os_module = fake_filesystem.FakeOsModule(filesystem)
 >>> pathname = '/a/new/dir/new-file'
@@ -1788,7 +1788,7 @@ class FakeOsModule(object):
       path: (str) Path to the file or directory.
       uid: (int) Numeric uid to set the file or directory to.
       gid: (int) Numeric gid to set the file or directory to.
-      
+
     `None` is also allowed for `uid` and `gid`.  This permits `os.rename` to
     use `os.chown` even when the source file `uid` and `gid` are `None` (unset).
     """
@@ -2214,12 +2214,12 @@ class FakeFileOpen(object):
     else:
       fakefile.filedes = self.filesystem.AddOpenFile(fakefile)
     return fakefile
- 
+
 
 def _RunDoctest():
   # pylint: disable-msg=C6204
   import doctest
-  import fake_filesystem  # pylint: disable-msg=W0406
+  from pyfakefs import fake_filesystem  # pylint: disable-msg=W0406
   return doctest.testmod(fake_filesystem)
 
 

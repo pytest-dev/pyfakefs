@@ -26,7 +26,7 @@ import stat
 import tempfile
 import warnings
 
-import fake_filesystem
+from pyfakefs import fake_filesystem
 
 try:
   import StringIO as io  # pylint: disable-msg=C6204
