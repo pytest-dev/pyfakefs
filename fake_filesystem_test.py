@@ -2563,6 +2563,13 @@ class FakeFileOpenTest(FakeFileOpenTestBase):
     self.assertRaises(IOError, _IteratorOpen, file_path, 'w')
     self.assertRaises(IOError, _IteratorOpen, file_path, 'a')
 
+  def testCanReadFromBlockDevice(self):
+    device_path = 'device'
+    self.filesystem.CreateFile(device_path, stat.S_IFBLK 
+                               |fake_filesystem.PERM_ALL)
+    with self.open(device_path, 'r') as fh:
+      self.assertEqual('', fh.read())
+
 
 class OpenWithFileDescriptorTest(FakeFileOpenTestBase):
 
