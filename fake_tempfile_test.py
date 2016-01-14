@@ -64,6 +64,7 @@ class FakeTempfileModuleTest(unittest.TestCase):
 
   def setUp(self):
     self.filesystem = fake_filesystem.FakeFilesystem(path_separator='/')
+    self.os = fake_filesystem.FakeOsModule(self.filesystem)
     self.tempfile = fake_tempfile.FakeTempfileModule(self.filesystem)
     self.orig_logging = fake_tempfile.logging
     self.fake_logging = FakeLogging(self)
@@ -145,6 +146,8 @@ class FakeTempfileModuleTest(unittest.TestCase):
     self.assertTrue(self.filesystem.Exists(temporary[1]))
     self.assertEqual(self.filesystem.GetObject(temporary[1]).st_mode,
                      stat.S_IFREG|0o600)
+    fh = self.os.fdopen(temporary[0], 'w+b')
+    self.assertEqual(temporary[0], fh.fileno())
 
   def testMkstempDir(self):
     """test tempfile.mkstemp(dir=)."""

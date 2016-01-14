@@ -1872,6 +1872,233 @@ class FakeOsModule(object):
     """Forwards any unfaked calls to the standard os module."""
     return getattr(self._os_module, name)
 
+class FakeFileWrapper(object):
+  """Wrapper for a StringIO object for use by a FakeFile object.
+
+  If the wrapper has any data written to it, it will propagate to
+  the FakeFile object on close() or flush().
+  """
+  if sys.version_info < (3, 0):
+    _OPERATION_ERROR = IOError
+  else:
+    _OPERATION_ERROR = io.UnsupportedOperation
+
+  def __init__(self, file_object, file_path, update=False, read=False, append=False,
+               delete_on_close=False, filesystem=None, newline=None,
+               binary=True, closefd=True):
+    self._file_object = file_object
+    self._file_path = file_path
+    self._append = append
+    self._read = read
+    self._update = update
+    self._closefd = closefd
+    self._file_epoch = file_object.epoch
+    contents = file_object.contents
+    newline_arg = {} if binary else {'newline': newline}
+    io_class = io.StringIO
+    if contents and isinstance(contents, Hexlified):
+      contents = contents.recover(binary)
+    # For Python 3, files opened as binary only read/write byte contents.
+    if sys.version_info >= (3, 0) and binary:
+      io_class = io.BytesIO
+      if contents and isinstance(contents, str):
+        contents = bytes(contents, 'ascii')
+    if contents:
+      if update:
+        self._io = io_class(**newline_arg)
+        self._io.write(contents)
+        if not append:
+          self._io.seek(0)
+        else:
+          self._read_whence = 0
+          if read:
+            self._read_seek = 0
+          else:
+            self._read_seek = self._io.tell()
+      else:
+        self._io = io_class(contents, **newline_arg)
+    else:
+      self._io = io_class(**newline_arg)
+      self._read_whence = 0
+      self._read_seek = 0
+    if delete_on_close:
+      assert filesystem, 'delete_on_close=True requires filesystem='
+    self._filesystem = filesystem
+    self._delete_on_close = delete_on_close
+    # override, don't modify FakeFile.name, as FakeFilesystem expects
+    # it to be the file name only, no directories.
+    self.name = file_object.opened_as
+
+  def __enter__(self):
+    """To support usage of this fake file with the 'with' statement."""
+    return self
+
+  def __exit__(self, type, value, traceback):  # pylint: disable-msg=W0622
+    """To support usage of this fake file with the 'with' statement."""
+    self.close()
+
+  def GetObject(self):
+    """Returns FakeFile object that is wrapped by current class."""
+    return self._file_object
+
+  def fileno(self):
+    """Returns file descriptor of file object."""
+    return self.filedes
+
+  def close(self):
+    """File close."""
+    if self._update:
+      self._file_object.SetContents(self._io.getvalue())
+    if self._closefd:
+      self._filesystem.CloseOpenFile(self)
+    if self._delete_on_close:
+      self._filesystem.RemoveObject(self.name)
+
+  def flush(self):
+    """Flush file contents to 'disk'."""
+    if self._update:
+      self._file_object.SetContents(self._io.getvalue())
+      self._file_epoch = self._file_object.epoch
+
+  def seek(self, offset, whence=0):
+    """Move read/write pointer in 'file'."""
+    if not self._append:
+      self._io.seek(offset, whence)
+    else:
+      self._read_seek = offset
+      self._read_whence = whence
+
+  def tell(self):
+    """Return the file's current position.
+
+    Returns:
+      int, file's current position in bytes.
+    """
+    if not self._append:
+      return self._io.tell()
+    if self._read_whence:
+      write_seek = self._io.tell()
+      self._io.seek(self._read_seek, self._read_whence)
+      self._read_seek = self._io.tell()
+      self._read_whence = 0
+      self._io.seek(write_seek)
+    return self._read_seek
+
+  def _UpdateStringIO(self):
+    """Updates the StringIO with changes to the file object contents."""
+    if self._file_epoch == self._file_object.epoch:
+      return
+    whence = self._io.tell()
+    self._io.seek(0)
+    self._io.truncate()
+    self._io.write(self._file_object.contents)
+    self._io.seek(whence)
+    self._file_epoch = self._file_object.epoch
+
+  def _ReadWrappers(self, name):
+    """Wrap a StringIO attribute in a read wrapper.
+
+    Returns a read_wrapper which tracks our own read pointer since the
+    StringIO object has no concept of a different read and write pointer.
+
+    Args:
+      name: the name StringIO attribute to wrap.  Should be a read call.
+
+    Returns:
+      either a read_error or read_wrapper function.
+    """
+    io_attr = getattr(self._io, name)
+
+    def read_wrapper(*args, **kwargs):
+      """Wrap all read calls to the StringIO Object.
+
+      We do this to track the read pointer separate from the write
+      pointer.  Anything that wants to read from the StringIO object
+      while we're in append mode goes through this.
+
+      Args:
+        *args: pass through args
+        **kwargs: pass through kwargs
+      Returns:
+        Wrapped StringIO object method
+      """
+      self._io.seek(self._read_seek, self._read_whence)
+      ret_value = io_attr(*args, **kwargs)
+      self._read_seek = self._io.tell()
+      self._read_whence = 0
+      self._io.seek(0, 2)
+      return ret_value
+    return read_wrapper
+
+  def _OtherWrapper(self, name):
+    """Wrap a StringIO attribute in an other_wrapper.
+
+    Args:
+      name: the name of the StringIO attribute to wrap.
+
+    Returns:
+      other_wrapper which is described below.
+    """
+    io_attr = getattr(self._io, name)
+
+    def other_wrapper(*args, **kwargs):
+      """Wrap all other calls to the StringIO Object.
+
+      We do this to track changes to the write pointer.  Anything that
+      moves the write pointer in a file open for appending should move
+      the read pointer as well.
+
+      Args:
+        *args: pass through args
+        **kwargs: pass through kwargs
+      Returns:
+        Wrapped StringIO object method
+      """
+      write_seek = self._io.tell()
+      ret_value = io_attr(*args, **kwargs)
+      if write_seek != self._io.tell():
+        self._read_seek = self._io.tell()
+        self._read_whence = 0
+        self._file_object.st_size += (self._read_seek - write_seek)
+      return ret_value
+    return other_wrapper
+
+  def Size(self):
+    return self._file_object.st_size
+
+  def __getattr__(self, name):
+    if self._file_object.IsLargeFile():
+      raise FakeLargeFileIoException(self._file_path)
+
+    # errors on called method vs. open mode
+    if not self._read and name.startswith('read'):
+      def read_error(*args, **kwargs):
+        """Throw an error unless the argument is zero."""
+        if args and args[0] == 0:
+          return ''
+        raise self._OPERATION_ERROR('File is not open for reading.')
+      return read_error
+    if not self._update and (name.startswith('write')
+                             or name == 'truncate'):
+      def write_error(*args, **kwargs):
+        """Throw an error."""
+        raise self._OPERATION_ERROR('File is not open for writing.')
+      return write_error
+
+    if name.startswith('read'):
+      self._UpdateStringIO()
+    if self._append:
+      if name.startswith('read'):
+        return self._ReadWrappers(name)
+      else:
+        return self._OtherWrapper(name)
+    return getattr(self._io, name)
+
+  def __iter__(self):
+    if not self._read:
+      raise self._OPERATION_ERROR('File is not open for reading')
+    return self._io.__iter__()
+
 
 class FakeFileOpen(object):
   """Faked file() and open() function replacements.
@@ -1970,237 +2197,12 @@ class FakeFileOpen(object):
     if file_object.st_mode & stat.S_IFDIR:
       raise IOError(errno.EISDIR, 'Fake file object: is a directory', file_path)
 
-    class FakeFileWrapper(object):
-      """Wrapper for a StringIO object for use by a FakeFile object.
-
-      If the wrapper has any data written to it, it will propagate to
-      the FakeFile object on close() or flush().
-      """
-      if sys.version_info < (3, 0):
-        _OPERATION_ERROR = IOError
-      else:
-        _OPERATION_ERROR = io.UnsupportedOperation
-
-      def __init__(self, file_object, update=False, read=False, append=False,
-                   delete_on_close=False, filesystem=None, newline=None,
-                   binary=True, closefd=True):
-        self._file_object = file_object
-        self._append = append
-        self._read = read
-        self._update = update
-        self._closefd = closefd
-        self._file_epoch = file_object.epoch
-        contents = file_object.contents
-        newline_arg = {} if binary else {'newline': newline}
-        io_class = io.StringIO
-        if contents and isinstance(contents, Hexlified):
-          contents = contents.recover(binary)
-        # For Python 3, files opened as binary only read/write byte contents.
-        if sys.version_info >= (3, 0) and binary:
-          io_class = io.BytesIO
-          if contents and isinstance(contents, str):
-            contents = bytes(contents, 'ascii')
-        if contents:
-          if update:
-            self._io = io_class(**newline_arg)
-            self._io.write(contents)
-            if not append:
-              self._io.seek(0)
-            else:
-              self._read_whence = 0
-              if read:
-                self._read_seek = 0
-              else:
-                self._read_seek = self._io.tell()
-          else:
-            self._io = io_class(contents, **newline_arg)
-        else:
-          self._io = io_class(**newline_arg)
-          self._read_whence = 0
-          self._read_seek = 0
-        if delete_on_close:
-          assert filesystem, 'delete_on_close=True requires filesystem='
-        self._filesystem = filesystem
-        self._delete_on_close = delete_on_close
-        # override, don't modify FakeFile.name, as FakeFilesystem expects
-        # it to be the file name only, no directories.
-        self.name = file_object.opened_as
-
-      def __enter__(self):
-        """To support usage of this fake file with the 'with' statement."""
-        return self
-
-      def __exit__(self, type, value, traceback):  # pylint: disable-msg=W0622
-        """To support usage of this fake file with the 'with' statement."""
-        self.close()
-
-      def GetObject(self):
-        """Returns FakeFile object that is wrapped by current class."""
-        return self._file_object
-
-      def fileno(self):
-        """Returns file descriptor of file object."""
-        return self.filedes
-
-      def close(self):
-        """File close."""
-        if self._update:
-          self._file_object.SetContents(self._io.getvalue())
-        if self._closefd:
-          self._filesystem.CloseOpenFile(self)
-        if self._delete_on_close:
-          self._filesystem.RemoveObject(self.name)
-
-      def flush(self):
-        """Flush file contents to 'disk'."""
-        if self._update:
-          self._file_object.SetContents(self._io.getvalue())
-          self._file_epoch = self._file_object.epoch
-
-      def seek(self, offset, whence=0):
-        """Move read/write pointer in 'file'."""
-        if not self._append:
-          self._io.seek(offset, whence)
-        else:
-          self._read_seek = offset
-          self._read_whence = whence
-
-      def tell(self):
-        """Return the file's current position.
-
-        Returns:
-          int, file's current position in bytes.
-        """
-        if not self._append:
-          return self._io.tell()
-        if self._read_whence:
-          write_seek = self._io.tell()
-          self._io.seek(self._read_seek, self._read_whence)
-          self._read_seek = self._io.tell()
-          self._read_whence = 0
-          self._io.seek(write_seek)
-        return self._read_seek
-
-      def _UpdateStringIO(self):
-        """Updates the StringIO with changes to the file object contents."""
-        if self._file_epoch == self._file_object.epoch:
-          return
-        whence = self._io.tell()
-        self._io.seek(0)
-        self._io.truncate()
-        self._io.write(self._file_object.contents)
-        self._io.seek(whence)
-        self._file_epoch = self._file_object.epoch
-
-      def _ReadWrappers(self, name):
-        """Wrap a StringIO attribute in a read wrapper.
-
-        Returns a read_wrapper which tracks our own read pointer since the
-        StringIO object has no concept of a different read and write pointer.
-
-        Args:
-          name: the name StringIO attribute to wrap.  Should be a read call.
-
-        Returns:
-          either a read_error or read_wrapper function.
-        """
-        io_attr = getattr(self._io, name)
-
-        def read_wrapper(*args, **kwargs):
-          """Wrap all read calls to the StringIO Object.
-
-          We do this to track the read pointer separate from the write
-          pointer.  Anything that wants to read from the StringIO object
-          while we're in append mode goes through this.
-
-          Args:
-            *args: pass through args
-            **kwargs: pass through kwargs
-          Returns:
-            Wrapped StringIO object method
-          """
-          self._io.seek(self._read_seek, self._read_whence)
-          ret_value = io_attr(*args, **kwargs)
-          self._read_seek = self._io.tell()
-          self._read_whence = 0
-          self._io.seek(0, 2)
-          return ret_value
-        return read_wrapper
-
-      def _OtherWrapper(self, name):
-        """Wrap a StringIO attribute in an other_wrapper.
-
-        Args:
-          name: the name of the StringIO attribute to wrap.
-
-        Returns:
-          other_wrapper which is described below.
-        """
-        io_attr = getattr(self._io, name)
-
-        def other_wrapper(*args, **kwargs):
-          """Wrap all other calls to the StringIO Object.
-
-          We do this to track changes to the write pointer.  Anything that
-          moves the write pointer in a file open for appending should move
-          the read pointer as well.
-
-          Args:
-            *args: pass through args
-            **kwargs: pass through kwargs
-          Returns:
-            Wrapped StringIO object method
-          """
-          write_seek = self._io.tell()
-          ret_value = io_attr(*args, **kwargs)
-          if write_seek != self._io.tell():
-            self._read_seek = self._io.tell()
-            self._read_whence = 0
-            self._file_object.st_size += (self._read_seek - write_seek)
-          return ret_value
-        return other_wrapper
-
-      def Size(self):
-        return self._file_object.st_size
-
-      def __getattr__(self, name):
-        if self._file_object.IsLargeFile():
-          raise FakeLargeFileIoException(file_path)
-
-        # errors on called method vs. open mode
-        if not self._read and name.startswith('read'):
-          def read_error(*args, **kwargs):
-            """Throw an error unless the argument is zero."""
-            if args and args[0] == 0:
-              return ''
-            raise self._OPERATION_ERROR('File is not open for reading.')
-          return read_error
-        if not self._update and (name.startswith('write')
-                                 or name == 'truncate'):
-          def write_error(*args, **kwargs):
-            """Throw an error."""
-            raise self._OPERATION_ERROR('File is not open for writing.')
-          return write_error
-
-        if name.startswith('read'):
-          self._UpdateStringIO()
-        if self._append:
-          if name.startswith('read'):
-            return self._ReadWrappers(name)
-          else:
-            return self._OtherWrapper(name)
-        return getattr(self._io, name)
-
-      def __iter__(self):
-        if not self._read:
-          raise self._OPERATION_ERROR('File is not open for reading')
-        return self._io.__iter__()
-
     # if you print obj.name, the argument to open() must be printed. Not the
     # abspath, not the filename, but the actual argument.
     file_object.opened_as = file_path
 
     fakefile = FakeFileWrapper(file_object,
+                               file_path,
                                update=need_write,
                                read=need_read,
                                append=append,

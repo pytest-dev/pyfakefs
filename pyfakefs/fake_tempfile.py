@@ -192,8 +192,9 @@ class FakeTempfileModule(object):
     # default dir affected by "global"
     filename = self._TempEntryname(suffix, prefix, dir)
     fh = self._filesystem.CreateFile(filename, st_mode=stat.S_IFREG|0o600)
-    fd = self._filesystem.AddOpenFile(fh)
-
+    fh.opened_as = filename
+    fakefile = fake_filesystem.FakeFileWrapper(fh, filename)
+    fd = self._filesystem.AddOpenFile(fakefile)
     self._mktemp_retvals.append(filename)
     return (fd, filename)
 
