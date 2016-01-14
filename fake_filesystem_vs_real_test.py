@@ -30,7 +30,7 @@ if sys.version_info < (2, 7):
 else:
     import unittest
 
-import fake_filesystem
+from pyfakefs import fake_filesystem
 
 
 def Sep(path):
