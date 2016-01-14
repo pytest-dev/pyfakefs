@@ -2077,14 +2077,36 @@ class FakeFileOpenTest(FakeFileOpenTestBase):
     self.assertEqual(contents, text_fractions)
 
   @unittest.skipIf(sys.version_info >= (3, 0),
-                   'Does not work on Python3 per issue #63')
-  def testByteContents(self):
+                   'Python2-specific behavior')
+  def testByteContentsPy2(self):
     self.file = fake_filesystem.FakeFileOpen(self.filesystem)
     file_path = 'foo'
     byte_fractions = b'\xe2\x85\x93 \xe2\x85\x94 \xe2\x85\x95 \xe2\x85\x96'
     with self.file(file_path, 'w') as f:
       f.write(byte_fractions)
     with self.file(file_path) as f:
+      contents = f.read()
+    self.assertEqual(contents, byte_fractions)
+
+  @unittest.skipIf(sys.version_info < (3, 0),
+                   'Python3-specific behavior')
+  def testByteContentsPy3(self):
+    self.file = fake_filesystem.FakeFileOpen(self.filesystem)
+    file_path = 'foo'
+    byte_fractions = b'\xe2\x85\x93 \xe2\x85\x94 \xe2\x85\x95 \xe2\x85\x96'
+    with self.file(file_path, 'wb') as f:
+      f.write(byte_fractions)
+    with self.file(file_path) as f:
+      contents = f.read()
+    self.assertEqual(contents, byte_fractions.decode('utf-8'))
+
+  def testByteContents(self):
+    self.file = fake_filesystem.FakeFileOpen(self.filesystem)
+    file_path = 'foo'
+    byte_fractions = b'\xe2\x85\x93 \xe2\x85\x94 \xe2\x85\x95 \xe2\x85\x96'
+    with self.file(file_path, 'wb') as f:
+      f.write(byte_fractions)
+    with self.file(file_path, 'rb') as f:
       contents = f.read()
     self.assertEqual(contents, byte_fractions)
 
