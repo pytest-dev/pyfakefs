@@ -161,9 +161,9 @@ class Hexlified(object):
 
   def recover(self, binary):
     if binary:
-      return binascii.unhexlify(self.contents)
+      return binascii.unhexlify(bytearray(self.contents, 'utf-8'))
     else:
-      return binascii.unhexlify(self.contents).decode(sys.getdefaultencoding())
+      return binascii.unhexlify(bytearray(self.contents, 'utf-8')).decode(sys.getdefaultencoding())
 
 
 class FakeFile(object):
