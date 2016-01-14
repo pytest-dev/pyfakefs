@@ -99,6 +99,13 @@ class TestPyfakefsUnittest(fake_filesystem_unittest.TestCase): # pylint: disable
             name = tf.name
             self.assertTrue(self.fs.Exists(tf.name))
         
+    @unittest.skipIf(sys.version_info < (3,0), "TemporaryDirectory showed up in 3")
+    def test_tempdirectory(self):
+        '''Fake TemporaryDirectory class is bound'''
+        with tempfile.TemporaryDirectory() as td:
+            with open('%s/fake_file.txt' % td, 'w') as f:
+                self.assertTrue(self.fs.Exists(td))
+                
                       
 if __name__ == "__main__":
     unittest.main()
