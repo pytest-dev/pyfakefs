@@ -180,7 +180,7 @@ class FakeFile(object):
   """
 
   def __init__(self, name, st_mode=stat.S_IFREG | PERM_DEF_FILE,
-               contents=None):
+               contents=None, nsec_stat=False):
     """init.
 
     Args:
@@ -190,12 +190,16 @@ class FakeFile(object):
       contents:  the contents of the filesystem object; should be a string for
         regular files, and a list of other FakeFile or FakeDirectory objects
         for FakeDirectory objects
+      nsec_stat:  if True, file creation, access and modification times
+        will have floating-point precision; if False, integer precision is
+        enforced (rounding down)
     """
     self.name = name
     self.st_mode = st_mode
     self.contents = contents
+    self.nsec_stat = nsec_stat
     self.epoch = 0
-    self.st_ctime = int(time.time())
+    self.st_ctime = time.time() if self.nsec_stat else int(time.time())
     self.st_atime = self.st_ctime
     self.st_mtime = self.st_ctime
     if contents:
@@ -244,7 +248,9 @@ class FakeFile(object):
     # Wrap byte arrays into a safe format
     if sys.version_info >= (3, 0) and isinstance(contents, bytes):
       contents = Hexlified(contents)
-      
+
+    self.st_ctime = time.time() if self.nsec_stat else int(time.time())
+    self.st_mtime = self.st_ctime
     self.st_size = len(contents)
     self.contents = contents
     self.epoch += 1
@@ -357,11 +363,14 @@ class FakeDirectory(FakeFile):
 class FakeFilesystem(object):
   """Provides the appearance of a real directory tree for unit testing."""
 
-  def __init__(self, path_separator=os.path.sep):
+  def __init__(self, path_separator=os.path.sep, nsec_stat=False):
     """init.
 
     Args:
       path_separator:  optional substitute for os.path.sep
+      nsec_stat:  if True, file creation, access and modification times
+        will have floating-point precision; if False, integer precision is
+        enforced (rounding down).
 
       Example usage to emulate real file systems:
          filesystem = FakeFilesystem(alt_path_separator='/' if _is_windows else None)
@@ -371,6 +380,7 @@ class FakeFilesystem(object):
     if path_separator != os.sep:
       self.alternative_path_separator = None
     self.is_case_sensitive = not _is_windows and sys.platform != 'darwin'
+    self.nsec_stat = nsec_stat
     self.root = FakeDirectory(self.path_separator)
     self.cwd = self.root.name
     # We can't query the current value without changing it:
@@ -1013,7 +1023,7 @@ class FakeFilesystem(object):
       parent_directory = self.NormalizeCase(parent_directory)
     if apply_umask:
       st_mode &= ~self.umask
-    file_object = FakeFile(new_file, st_mode, contents)
+    file_object = FakeFile(new_file, st_mode, contents, self.nsec_stat)
     file_object.SetIno(inode)
     self.AddObject(parent_directory, file_object)
 
@@ -1818,7 +1828,8 @@ class FakeOsModule(object):
       raise
     file_object.st_mode = ((file_object.st_mode & ~PERM_ALL) |
                            (mode & PERM_ALL))
-    file_object.st_ctime = int(time.time())
+    file_object.st_ctime = (time.time() if self.filesystem.nsec_stat
+                            else int(time.time()))
 
   def utime(self, path, times):
     """Change the access and modified times of a file.
@@ -1842,8 +1853,10 @@ class FakeOsModule(object):
                       path)
       raise
     if times is None:
-      file_object.st_atime = int(time.time())
-      file_object.st_mtime = int(time.time())
+      file_object.st_atime = (time.time() if self.filesystem.nsec_stat
+                              else int(time.time()))
+      file_object.st_mtime = (time.time() if self.filesystem.nsec_stat
+                              else int(time.time()))
     else:
       if len(times) != 2:
         raise TypeError('utime() arg 2 must be a tuple (atime, mtime)')
@@ -1917,7 +1930,8 @@ class FakeOsModule(object):
           os.strerror(errno.EEXIST), filename))
     try:
       self.filesystem.AddObject(head, FakeFile(tail,
-                                               mode & ~self.filesystem.umask))
+                                               mode & ~self.filesystem.umask,
+                                               nsec_stat=self.filesystem.nsec_stat))
     except IOError:
       raise OSError(errno.ENOTDIR, 'Fake filesystem: %s: %s' % (
           os.strerror(errno.ENOTDIR), filename))
@@ -2290,7 +2304,6 @@ class FakeFileOpen(object):
           (need_write and not file_object.st_mode & PERM_WRITE)):
         raise IOError(errno.EACCES, 'Permission denied', file_path)
       if need_write:
-        file_object.st_ctime = int(time.time())
         if truncate:
           file_object.SetContents('')
     else:

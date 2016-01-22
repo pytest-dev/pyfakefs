@@ -1415,6 +1415,21 @@ class FakeOsModuleTest(TestCase):
     self.assertEqual(220, st.st_atime)
     self.assertEqual(240, st.st_mtime)
 
+  def testUtimeSetsCurrentTimeIfArgsIsNoneWithFloatsNSec(self):
+    self.filesystem = fake_filesystem.FakeFilesystem(path_separator='/', nsec_stat=True)
+    self.os = fake_filesystem.FakeOsModule(self.filesystem)
+
+    time.time = _GetDummyTime(200.0123, 20)
+    path = '/some_file'
+    self._CreateTestFile(path)
+    st = self.os.stat(path)
+    # 200.0123 not converted to int
+    self.assertEqual(200.0123, st.st_atime, st.st_mtime)
+    self.os.utime(path, None)
+    st = self.os.stat(path)
+    self.assertEqual(220.0123, st.st_atime)
+    self.assertEqual(240.0123, st.st_mtime)
+
   def testUtimeSetsSpecifiedTime(self):
     # set up
     path = '/some_file'
@@ -2499,24 +2514,41 @@ class FakeFileOpenTest(FakeFileOpenTestBase):
     self.assertFalse(self.filesystem.Exists(file_path))
     # tests
     fake_file = self.file(file_path, 'w')
+    st = self.os.stat(file_path)
+    self.assertEqual(100, st.st_ctime, st.st_mtime)
     fake_file.close()
     st = self.os.stat(file_path)
-    self.assertEqual(100, st.st_ctime)
+    self.assertEqual(110, st.st_ctime, st.st_mtime)
 
     fake_file = self.file(file_path, 'w')
+    st = self.os.stat(file_path)
+    # truncating the file cause an additional stat update
+    self.assertEqual(120, st.st_ctime, st.st_mtime)
     fake_file.close()
     st = self.os.stat(file_path)
-    self.assertEqual(110, st.st_ctime)
+    self.assertEqual(130, st.st_ctime, st.st_mtime)
 
     fake_file = self.file(file_path, 'w+')
+    st = self.os.stat(file_path)
+    self.assertEqual(140, st.st_ctime, st.st_mtime)
     fake_file.close()
     st = self.os.stat(file_path)
-    self.assertEqual(120, st.st_ctime)
+    self.assertEqual(150, st.st_ctime, st.st_mtime)
+
+    fake_file = self.file(file_path, 'a')
+    st = self.os.stat(file_path)
+    # not updating m_time or c_time here, since no truncating.
+    self.assertEqual(150, st.st_ctime, st.st_mtime)
+    fake_file.close()
+    st = self.os.stat(file_path)
+    self.assertEqual(160, st.st_ctime, st.st_mtime)
 
     fake_file = self.file(file_path, 'r')
+    st = self.os.stat(file_path)
+    self.assertEqual(160, st.st_ctime, st.st_mtime)
     fake_file.close()
     st = self.os.stat(file_path)
-    self.assertEqual(120, st.st_ctime)
+    self.assertEqual(160, st.st_ctime, st.st_mtime)
 
   def _CreateWithPermission(self, file_path, perm_bits):
     self.filesystem.CreateFile(file_path)
@@ -2707,7 +2739,7 @@ class FakeFileOpenTest(FakeFileOpenTestBase):
 
   def testCanReadFromBlockDevice(self):
     device_path = 'device'
-    self.filesystem.CreateFile(device_path, stat.S_IFBLK 
+    self.filesystem.CreateFile(device_path, stat.S_IFBLK
                                |fake_filesystem.PERM_ALL)
     with self.open(device_path, 'r') as fh:
       self.assertEqual('', fh.read())
