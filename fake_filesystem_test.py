@@ -2003,6 +2003,56 @@ class FakePathModuleTest(TestCase):
                 ('/foo/bar/xyzzy', 'plugh')]
     self.assertEqual(expected, visited_nodes)
 
+  def testWalkFollowsymlinkDisabled(self):
+    self.filesystem.CreateFile('/linkerStrinkter/sublink/')
+    self.filesystem.CreateFile('/foo/bar/baz')
+    self.filesystem.CreateFile('/foo/bar/xyzzy/plugh')
+    self.filesystem.CreateLink('/foo/linkedMeh', '/linkerStrinkter')
+
+    visited_nodes = []
+    for root, dirs, files in self.os.walk('/foo', followlinks=False):
+      for dir in dirs:
+       visited_nodes.append(self.os.path.join(root, dir))
+      for file in files:
+        visited_nodes.append(self.os.path.join(root, file))
+    expected = ['/foo/bar', '/foo/linkedMeh', '/foo/bar/xyzzy', '/foo/bar/baz', '/foo/bar/xyzzy/plugh']
+    self.assertEqual(expected, visited_nodes)
+
+    visited_nodes = []
+    for root, dirs, files in self.os.walk('/foo/created_link', followlinks=True):
+      for dir in dirs:
+       visited_nodes.append(self.os.path.join(root, dir))
+      for file in files:
+       visited_nodes.append(self.os.path.join(root, file))
+    expected = []
+    self.assertEqual(expected, visited_nodes)
+
+
+  def testWalkFollowsymlinkEnabled(self):
+    self.filesystem.CreateFile('/linked/subfile')
+    self.filesystem.CreateFile('/foo/bar/baz')
+    self.filesystem.CreateFile('/foo/bar/xyzzy/plugh')
+    self.filesystem.CreateLink('/foo/created_link', '/linked')
+
+    visited_nodes = []
+    for root, dirs, files in self.os.walk('/foo', followlinks=True):
+      for dir in dirs:
+       visited_nodes.append(self.os.path.join(root, dir))
+      for file in files:
+       visited_nodes.append(self.os.path.join(root, file))
+    expected = ['/foo/bar',  '/foo/created_link', '/foo/bar/xyzzy', '/foo/bar/baz', '/foo/bar/xyzzy/plugh',
+                '/foo/created_link/subfile']
+    self.assertEqual(expected, visited_nodes)
+
+    visited_nodes = []
+    for root, dirs, files in self.os.walk('/foo/created_link', followlinks=True):
+      for dir in dirs:
+       visited_nodes.append(self.os.path.join(root, dir))
+      for file in files:
+       visited_nodes.append(self.os.path.join(root, file))
+    expected = ['/foo/created_link/subfile']
+    self.assertEqual(expected, visited_nodes)
+
   @unittest.skipIf(sys.version_info >= (3, 0) or TestCase.is_windows,
                    'os.path.walk deprecrated in Python 3, cannot be properly '
                    'tested in win32')

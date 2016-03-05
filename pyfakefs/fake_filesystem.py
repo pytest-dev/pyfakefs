@@ -1437,7 +1437,7 @@ class FakeOsModule(object):
         files.append(entry)
     return (root, dirs, files)
 
-  def walk(self, top, topdown=True, onerror=None):
+  def walk(self, top, topdown=True, onerror=None, followlinks=False):
     """Performs an os.walk operation over the fake filesystem.
 
     Args:
@@ -1454,6 +1454,8 @@ class FakeOsModule(object):
       further details.
     """
     top = self.path.normpath(top)
+    if not followlinks and self.path.islink(top):
+      return
     try:
       top_contents = self._ClassifyDirectoryContents(top)
     except OSError as e:
@@ -1466,8 +1468,10 @@ class FakeOsModule(object):
         yield top_contents
 
       for directory in top_contents[1]:
+        if not followlinks and self.path.islink(directory):
+            continue
         for contents in self.walk(self.path.join(top, directory),
-                                  topdown=topdown, onerror=onerror):
+                                  topdown=topdown, onerror=onerror, followlinks=followlinks):
           yield contents
 
       if not topdown:
