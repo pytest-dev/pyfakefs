@@ -44,6 +44,7 @@ import errno
 import os
 import shutil
 import stat
+import sys
 
 __pychecker__ = 'no-reimportself'
 
@@ -69,10 +70,19 @@ class FakeShutilModule(object):
 
     Args:
       path: (str) Directory tree to remove.
-      ignore_errors: (bool) unimplemented
-      onerror: (func) unimplemented
+      ignore_errors: (bool) If true, exceptions will be silently ignored
+      onerror: (func) If set and ignore_errors is false, called on exceptions
+            Shall expect 3 parameters: function (this function), path (the path parameter),
+            and the exception information returned by sys.exc_info()
     """
-    self.filesystem.RemoveObject(path)
+    try:
+      self.filesystem.RemoveObject(path)
+    except (IOError, OSError):
+      if not ignore_errors:
+        if onerror:
+          onerror(FakeShutilModule.rmtree, path, sys.exc_info())
+        else:
+          raise
 
   def copy(self, src, dst):
     """Copy data and mode bits ("cp src dst").
