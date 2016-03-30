@@ -357,13 +357,18 @@ class FakeDirectory(FakeFile):
 class FakeFilesystem(object):
   """Provides the appearance of a real directory tree for unit testing."""
 
-  def __init__(self, path_separator=os.path.sep):
+  def __init__(self, path_separator=os.path.sep, alt_path_separator=None):
     """init.
 
     Args:
       path_separator:  optional substitute for os.path.sep
+      alt_path_separator:  optional alternative path separator (especially for '/' under Windows)
+
+      Example usage to emulate real file systems:
+         filesystem = FakeFilesystem(alt_path_separator='/' if _is_windows else None)
     """
     self.path_separator = path_separator
+    self.alt_path_separator = alt_path_separator
     self.root = FakeDirectory(self.path_separator)
     self.cwd = self.root.name
     # We can't query the current value without changing it:
@@ -434,6 +439,18 @@ class FakeFilesystem(object):
       raise OSError(errno.EBADF, 'Bad file descriptor', file_des)
     return self.open_files[file_des]
 
+  def NormalizePathSeparator(self, path):
+    """Replaces all appearances of additional path separator with path separator.
+    Does nothing if no additional separator is set.
+    Args:
+      path: the path to be normalized.
+    Returns:
+      The normalized path that will be used internally.
+    """
+    if self.alt_path_separator is None or not path:
+      return path
+    return path.replace(self.alt_path_separator, self.path_separator)
+
   def CollapsePath(self, path):
     """Mimics os.path.normpath using the specified path_separator.
 
@@ -442,8 +459,9 @@ class FakeFilesystem(object):
     NormalizePath, does not make it absolute.  Eliminates dot components
     (. and ..) and combines repeated path separators (//).  Initial ..
     components are left in place for relative paths.  If the result is an empty
-    path, '.' is returned instead.  Unlike the real os.path.normpath, this does
-    not replace '/' with '\\' on Windows.
+    path, '.' is returned instead.  Also replaces additional path separator with
+    path separator, e.g. behaves like the real os.path.normpath on Windows if
+    initialized with '\\' as path separator and  '/' as additional separator.
 
     Args:
       path:  (str) The path to normalize.
@@ -451,6 +469,7 @@ class FakeFilesystem(object):
     Returns:
       (str) A copy of path with empty components and dot components removed.
     """
+    path = self.NormalizePathSeparator(path)
     is_absolute_path = path.startswith(self.path_separator)
     path_components = path.split(self.path_separator)
     collapsed_path_components = []
@@ -485,6 +504,7 @@ class FakeFilesystem(object):
       The normalized path relative to the current working directory, or the root
         directory if path is empty.
     """
+    path = self.NormalizePathSeparator(path)
     if not path:
       path = self.path_separator
     elif not path.startswith(self.path_separator):
@@ -1137,6 +1157,13 @@ class FakePathModule(object):
   def normpath(self, path):
     """Normalize path, eliminating double slashes, etc."""
     return self.filesystem.CollapsePath(path)
+
+  def normcase(self, path):
+    """Converts to lower case under windows, replaces additional path separator"""
+    path = self.filesystem.NormalizePathSeparator(path)
+    if _is_windows:
+      path = path.lower()
+    return path
 
   if _is_windows:
 
