@@ -357,18 +357,19 @@ class FakeDirectory(FakeFile):
 class FakeFilesystem(object):
   """Provides the appearance of a real directory tree for unit testing."""
 
-  def __init__(self, path_separator=os.path.sep, alt_path_separator=None):
+  def __init__(self, path_separator=os.path.sep):
     """init.
 
     Args:
       path_separator:  optional substitute for os.path.sep
-      alt_path_separator:  optional alternative path separator (especially for '/' under Windows)
 
       Example usage to emulate real file systems:
          filesystem = FakeFilesystem(alt_path_separator='/' if _is_windows else None)
     """
     self.path_separator = path_separator
-    self.alt_path_separator = alt_path_separator
+    self.additional_path_separator = None
+    if _is_windows and path_separator == os.sep:
+      self.additional_path_separator = '/'
     self.root = FakeDirectory(self.path_separator)
     self.cwd = self.root.name
     # We can't query the current value without changing it:
@@ -447,9 +448,9 @@ class FakeFilesystem(object):
     Returns:
       The normalized path that will be used internally.
     """
-    if self.alt_path_separator is None or not path:
+    if self.additional_path_separator is None or not path:
       return path
-    return path.replace(self.alt_path_separator, self.path_separator)
+    return path.replace(self.additional_path_separator, self.path_separator)
 
   def CollapsePath(self, path):
     """Mimics os.path.normpath using the specified path_separator.
