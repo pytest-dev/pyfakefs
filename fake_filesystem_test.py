@@ -1184,6 +1184,46 @@ class FakeOsModuleTest(TestCase):
     directory = '/a/b'
     self.assertRaises(Exception, self.os.makedirs, directory)
 
+  # test fsync and fdatasync
+
+  def testFsyncRaisesOnNonInt(self):
+    self.assertRaises(TypeError, self.os.fsync, "zero")
+
+  def testFdatasyncRaisesOnNonInt(self):
+    self.assertRaises(TypeError, self.os.fdatasync, "zero")
+
+  def testFsyncRaisesOnInvalidFd(self):
+    # No open files yet, so even 0 is invalid
+    self.assertRaises(OSError, self.os.fsync, 0)
+
+  def testFdatasyncRaisesOnInvalidFd(self):
+    # No open files yet, so even 0 is invalid
+    self.assertRaises(OSError, self.os.fdatasync, 0)
+
+  def testFsyncPass(self):
+    # setup
+    fake_open = fake_filesystem.FakeFileOpen(self.filesystem)
+    test_file_path = 'test_file'
+    self.filesystem.CreateFile(test_file_path, contents='dummy file contents')
+    test_file = fake_open(test_file_path, 'r')
+    test_fd = test_file.fileno()
+    # Test that this doesn't raise anything
+    self.os.fsync(test_fd)
+    # And just for sanity, double-check that this still raises
+    self.assertRaises(OSError, self.os.fsync, test_fd+1)
+
+  def testFdatasyncPass(self):
+    # setup
+    fake_open = fake_filesystem.FakeFileOpen(self.filesystem)
+    test_file_path = 'test_file'
+    self.filesystem.CreateFile(test_file_path, contents='dummy file contents')
+    test_file = fake_open(test_file_path, 'r')
+    test_fd = test_file.fileno()
+    # Test that this doesn't raise anything
+    self.os.fdatasync(test_fd)
+    # And just for sanity, double-check that this still raises
+    self.assertRaises(OSError, self.os.fdatasync, test_fd+1)
+
   def _CreateTestFile(self, path):
     self.filesystem.CreateFile(path)
     self.assertTrue(self.filesystem.Exists(path))

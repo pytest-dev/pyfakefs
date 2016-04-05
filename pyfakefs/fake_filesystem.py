@@ -1872,6 +1872,38 @@ class FakeOsModule(object):
   # TODO: Link doesn't behave like os.link, this needs to be fixed properly.
   link = symlink
 
+  def fsync(self, file_des):
+    """Perform fsync for a fake file (in other words, do nothing).
+
+    Args:
+      file_des:  file descriptor of the open file.
+
+    Raises:
+      OSError: file_des is an invalid file descriptor.
+      TypeError: file_des is not an integer.
+
+    Returns:
+      None
+    """
+    # Throw an error if file_des isn't valid
+    self.filesystem.GetOpenFile(file_des)
+
+  def fdatasync(self, file_des):
+    """Perform fdatasync for a fake file (in other words, do nothing).
+
+    Args:
+      file_des:  file descriptor of the open file.
+
+    Raises:
+      OSError: file_des is an invalid file descriptor.
+      TypeError: file_des is not an integer.
+
+    Returns:
+      None
+    """
+    # Throw an error if file_des isn't valid
+    self.filesystem.GetOpenFile(file_des)
+
   def __getattr__(self, name):
     """Forwards any unfaked calls to the standard os module."""
     return getattr(self._os_module, name)
