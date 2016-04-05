@@ -530,6 +530,7 @@ class FakeFilesystem(object):
       (str) A duple (pathname, basename) for which pathname does not
           end with a slash, and basename does not contain a slash.
     """
+    path = self.NormalizePathSeparator(path)
     path_components = path.split(self.path_separator)
     if not path_components:
       return ('', '')
@@ -1176,6 +1177,9 @@ class FakePathModule(object):
       return path.replace(self._os_path.sep, self.filesystem.path_separator)
 
     realpath = abspath
+
+  def expanduser(self, path):
+    return self._os_path.expanduser(path).replace(self._os_path.sep, self.sep)
 
   def __getattr__(self, name):
     """Forwards any non-faked calls to os.path."""

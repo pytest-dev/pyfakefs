@@ -50,6 +50,7 @@ class FakeGlobModule(object):
     self._glob_module = glob
     self._os_module = fake_filesystem.FakeOsModule(filesystem)
     self._path_module = self._os_module.path
+    self._filesystem = filesystem
 
   def glob(self, pathname):  # pylint: disable-msg=C6409
     """Return a list of paths matching a pathname pattern.
@@ -68,6 +69,7 @@ class FakeGlobModule(object):
       else:
         return []
 
+    pathname = self._filesystem.NormalizePathSeparator(pathname)
     dirname, basename = self._path_module.split(pathname)
 
     if not dirname:
