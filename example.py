@@ -111,8 +111,12 @@ def get_glob(glob_path):
     >>> os.mkdir('/test')
     >>> create_file('/test/file1.txt')
     >>> create_file('/test/file2.txt')
-    >>> get_glob('/test/file*.txt')
-    ['/test/file1.txt', '/test/file2.txt']
+    >>> file_names = get_glob('/test/file*.txt')
+    >>> # Get the expected file names in the platform's native style 
+    >>> file_names == (['/test/file1.txt', '/test/file2.txt']   # UNIX-like
+    ...                    or
+    ...                [r'c:\test\file1.txt', r'c:\test\file2.txt']) # Windows
+    True
     '''
     return glob.glob(glob_path)
 
