@@ -22,7 +22,6 @@ import re
 import stat
 import sys
 import time
-import binascii
 if sys.version_info < (2, 7):
     import unittest2 as unittest
 else:
@@ -485,6 +484,51 @@ class FakeFilesystemUnitTest(TestCase):
     self.assertRaises(IOError, self.filesystem.LResolveObject, 'not_a_dir/foo')
     self.assertRaises(IOError, self.filesystem.LResolveObject,
                       'not_a_dir/foo/bar')
+
+
+class CaseInsensitiveFakeFilesystemTest(TestCase):
+  def setUp(self):
+    self.filesystem = fake_filesystem.FakeFilesystem(path_separator='/')
+    self.filesystem.is_case_sensitive = False
+    self.os = fake_filesystem.FakeOsModule(self.filesystem)
+    self.path = self.os.path
+
+  def testGetObject(self):
+    self.filesystem.CreateDirectory('/foo/bar')
+    self.filesystem.CreateFile('/foo/bar/baz')
+    self.assertTrue(self.filesystem.GetObject('/Foo/Bar/Baz'))
+
+  def testRemoveObject(self):
+    self.filesystem.CreateDirectory('/foo/bar')
+    self.filesystem.CreateFile('/foo/bar/baz')
+    self.filesystem.RemoveObject('/Foo/Bar/Baz')
+    self.assertFalse(self.filesystem.Exists('/foo/bar/baz'))
+
+  def testExists(self):
+    self.filesystem.CreateDirectory('/Foo/Bar')
+    self.assertTrue(self.filesystem.Exists('/Foo/Bar'))
+    self.assertTrue(self.filesystem.Exists('/foo/bar'))
+
+    self.filesystem.CreateFile('/foo/Bar/baz')
+    self.assertTrue(self.filesystem.Exists('/Foo/bar/BAZ'))
+    self.assertTrue(self.filesystem.Exists('/foo/bar/baz'))
+
+  def testIsdirIsfile(self):
+    self.filesystem.CreateFile('foo/bar')
+    self.assertTrue(self.path.isdir('Foo'))
+    self.assertFalse(self.path.isfile('Foo'))
+    self.assertTrue(self.path.isfile('Foo/Bar'))
+    self.assertFalse(self.path.isdir('Foo/Bar'))
+
+  def testGetsize(self):
+    file_path = 'foo/bar/baz'
+    self.filesystem.CreateFile(file_path, contents='1234567')
+    self.assertEqual(7, self.path.getsize('FOO/BAR/BAZ'))
+
+  def testGetMtime(self):
+    test_file = self.filesystem.CreateFile('foo/bar1.txt')
+    test_file.SetMTime(24)
+    self.assertEqual(24, self.path.getmtime('Foo/Bar1.TXT'))
 
 
 class FakeOsModuleTest(TestCase):
