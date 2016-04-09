@@ -98,7 +98,7 @@ except ImportError:
 
 __pychecker__ = 'no-reimportself'
 
-__version__ = '2.7'
+__version__ = '2.8'
 
 PERM_READ = 0o400      # Read permission bit.
 PERM_WRITE = 0o200     # Write permission bit.
@@ -1469,7 +1469,7 @@ class FakeOsModule(object):
         files.append(entry)
     return (root, dirs, files)
 
-  def walk(self, top, topdown=True, onerror=None):
+  def walk(self, top, topdown=True, onerror=None, followlinks=False):
     """Performs an os.walk operation over the fake filesystem.
 
     Args:
@@ -1486,6 +1486,8 @@ class FakeOsModule(object):
       further details.
     """
     top = self.path.normpath(top)
+    if not followlinks and self.path.islink(top):
+      return
     try:
       top_contents = self._ClassifyDirectoryContents(top)
     except OSError as e:
@@ -1498,8 +1500,10 @@ class FakeOsModule(object):
         yield top_contents
 
       for directory in top_contents[1]:
+        if not followlinks and self.path.islink(directory):
+            continue
         for contents in self.walk(self.path.join(top, directory),
-                                  topdown=topdown, onerror=onerror):
+                                  topdown=topdown, onerror=onerror, followlinks=followlinks):
           yield contents
 
       if not topdown:
@@ -1899,6 +1903,38 @@ class FakeOsModule(object):
   # pylint: disable-msg=C6002
   # TODO: Link doesn't behave like os.link, this needs to be fixed properly.
   link = symlink
+
+  def fsync(self, file_des):
+    """Perform fsync for a fake file (in other words, do nothing).
+
+    Args:
+      file_des:  file descriptor of the open file.
+
+    Raises:
+      OSError: file_des is an invalid file descriptor.
+      TypeError: file_des is not an integer.
+
+    Returns:
+      None
+    """
+    # Throw an error if file_des isn't valid
+    self.filesystem.GetOpenFile(file_des)
+
+  def fdatasync(self, file_des):
+    """Perform fdatasync for a fake file (in other words, do nothing).
+
+    Args:
+      file_des:  file descriptor of the open file.
+
+    Raises:
+      OSError: file_des is an invalid file descriptor.
+      TypeError: file_des is not an integer.
+
+    Returns:
+      None
+    """
+    # Throw an error if file_des isn't valid
+    self.filesystem.GetOpenFile(file_des)
 
   def __getattr__(self, name):
     """Forwards any unfaked calls to the standard os module."""

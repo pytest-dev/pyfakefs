@@ -1184,6 +1184,46 @@ class FakeOsModuleTest(TestCase):
     directory = '/a/b'
     self.assertRaises(Exception, self.os.makedirs, directory)
 
+  # test fsync and fdatasync
+
+  def testFsyncRaisesOnNonInt(self):
+    self.assertRaises(TypeError, self.os.fsync, "zero")
+
+  def testFdatasyncRaisesOnNonInt(self):
+    self.assertRaises(TypeError, self.os.fdatasync, "zero")
+
+  def testFsyncRaisesOnInvalidFd(self):
+    # No open files yet, so even 0 is invalid
+    self.assertRaises(OSError, self.os.fsync, 0)
+
+  def testFdatasyncRaisesOnInvalidFd(self):
+    # No open files yet, so even 0 is invalid
+    self.assertRaises(OSError, self.os.fdatasync, 0)
+
+  def testFsyncPass(self):
+    # setup
+    fake_open = fake_filesystem.FakeFileOpen(self.filesystem)
+    test_file_path = 'test_file'
+    self.filesystem.CreateFile(test_file_path, contents='dummy file contents')
+    test_file = fake_open(test_file_path, 'r')
+    test_fd = test_file.fileno()
+    # Test that this doesn't raise anything
+    self.os.fsync(test_fd)
+    # And just for sanity, double-check that this still raises
+    self.assertRaises(OSError, self.os.fsync, test_fd+1)
+
+  def testFdatasyncPass(self):
+    # setup
+    fake_open = fake_filesystem.FakeFileOpen(self.filesystem)
+    test_file_path = 'test_file'
+    self.filesystem.CreateFile(test_file_path, contents='dummy file contents')
+    test_file = fake_open(test_file_path, 'r')
+    test_fd = test_file.fileno()
+    # Test that this doesn't raise anything
+    self.os.fdatasync(test_fd)
+    # And just for sanity, double-check that this still raises
+    self.assertRaises(OSError, self.os.fdatasync, test_fd+1)
+
   def _CreateTestFile(self, path):
     self.filesystem.CreateFile(path)
     self.assertTrue(self.filesystem.Exists(path))
@@ -2001,6 +2041,56 @@ class FakePathModuleTest(TestCase):
                 ('/foo/bar', 'baz'),
                 ('/foo/bar', 'xyzzy'),
                 ('/foo/bar/xyzzy', 'plugh')]
+    self.assertEqual(expected, visited_nodes)
+
+  def testWalkFollowsymlinkDisabled(self):
+    self.filesystem.CreateFile('/linkerStrinkter/sublink/')
+    self.filesystem.CreateFile('/foo/bar/baz')
+    self.filesystem.CreateFile('/foo/bar/xyzzy/plugh')
+    self.filesystem.CreateLink('/foo/linkedMeh', '/linkerStrinkter')
+
+    visited_nodes = []
+    for root, dirs, files in self.os.walk('/foo', followlinks=False):
+      for dir in dirs:
+       visited_nodes.append(self.os.path.join(root, dir))
+      for file in files:
+        visited_nodes.append(self.os.path.join(root, file))
+    expected = ['/foo/bar', '/foo/linkedMeh', '/foo/bar/xyzzy', '/foo/bar/baz', '/foo/bar/xyzzy/plugh']
+    self.assertEqual(expected, visited_nodes)
+
+    visited_nodes = []
+    for root, dirs, files in self.os.walk('/foo/created_link', followlinks=True):
+      for dir in dirs:
+       visited_nodes.append(self.os.path.join(root, dir))
+      for file in files:
+       visited_nodes.append(self.os.path.join(root, file))
+    expected = []
+    self.assertEqual(expected, visited_nodes)
+
+
+  def testWalkFollowsymlinkEnabled(self):
+    self.filesystem.CreateFile('/linked/subfile')
+    self.filesystem.CreateFile('/foo/bar/baz')
+    self.filesystem.CreateFile('/foo/bar/xyzzy/plugh')
+    self.filesystem.CreateLink('/foo/created_link', '/linked')
+
+    visited_nodes = []
+    for root, dirs, files in self.os.walk('/foo', followlinks=True):
+      for dir in dirs:
+       visited_nodes.append(self.os.path.join(root, dir))
+      for file in files:
+       visited_nodes.append(self.os.path.join(root, file))
+    expected = ['/foo/bar',  '/foo/created_link', '/foo/bar/xyzzy', '/foo/bar/baz', '/foo/bar/xyzzy/plugh',
+                '/foo/created_link/subfile']
+    self.assertEqual(expected, visited_nodes)
+
+    visited_nodes = []
+    for root, dirs, files in self.os.walk('/foo/created_link', followlinks=True):
+      for dir in dirs:
+       visited_nodes.append(self.os.path.join(root, dir))
+      for file in files:
+       visited_nodes.append(self.os.path.join(root, file))
+    expected = ['/foo/created_link/subfile']
     self.assertEqual(expected, visited_nodes)
 
   @unittest.skipIf(sys.version_info >= (3, 0) or TestCase.is_windows,
