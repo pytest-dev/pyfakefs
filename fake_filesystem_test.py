@@ -2151,11 +2151,11 @@ class FakePathModuleTest(TestCase):
 
   def testGetattrForwardToRealOsPath(self):
     """Forwards any non-faked calls to os.path."""
-    self.assertTrue(hasattr(self.path, 'sep'), 'Faked os.path function')
-    if sys.version_info > (2, 6) and sys.version_info <= (3, 5):
+    self.assertTrue(hasattr(self.path, 'sep'), 'Get a faked os.path function')
+    if sys.version_info >= (2, 7) and sys.version_info <= (3, 5):
       # This private function exists only after 2.6
       self.assertTrue(hasattr(self.path, '_joinrealpath'),
-                     'Real os.path function not implemented in fake os.path')
+                     'Get a real os.path function not implemented in fake os.path')
     self.assertFalse(hasattr(self.path, 'nonexistent'))
 
 class FakeFileOpenTestBase(TestCase):
