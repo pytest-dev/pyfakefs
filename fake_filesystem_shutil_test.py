@@ -42,12 +42,14 @@ class FakeShutilModuleTest(unittest.TestCase):
     self.assertTrue(self.filesystem.Exists(directory))
     self.shutil.rmtree(directory)
     self.assertFalse(self.filesystem.Exists(directory))
-
+    self.assertFalse(self.filesystem.Exists('%s/subdir' % directory))
+    self.assertFalse(self.filesystem.Exists('%s/subfile' % directory))
+    
   def testRmtreeNonExistingDir(self):
     directory = 'nonexisting'
     self.assertRaises(IOError, self.shutil.rmtree, directory)
     try:
-      self.shutil.rmtree(directory, ignore_errors=True)
+        self.shutil.rmtree(directory, ignore_errors=True)
     except IOError:
         self.fail('rmtree raised despite ignore_errors was set')
 
@@ -58,14 +60,24 @@ class FakeShutilModuleTest(unittest.TestCase):
       NonLocal.errorPath = path
 
     directory = 'nonexisting'
+    NonLocal.errorHandled = False
+    NonLocal.errorPath = ''
     try:
-        NonLocal.errorHandled = False
-        NonLocal.errorPath = ''
-        self.shutil.rmtree(directory, onerror=error_handler)
-        self.assertTrue(NonLocal.errorHandled)
-        self.assertEqual(NonLocal.errorPath, directory)
+      self.shutil.rmtree(directory, onerror=error_handler)
     except IOError:
-        self.fail('rmtree raised exception despite onerror was defined')
+      self.fail('rmtree raised exception despite onerror defined')
+    self.assertTrue(NonLocal.errorHandled)
+    self.assertEqual(NonLocal.errorPath, directory)
+    
+    NonLocal.errorHandled = False
+    NonLocal.errorPath = ''
+    try:
+      self.shutil.rmtree(directory, ignore_errors=True, onerror=error_handler)
+    except IOError:
+      self.fail('rmtree raised exception despite ignore_errors True')
+    # ignore_errors is True, so the onerror() error handler was not executed
+    self.assertFalse(NonLocal.errorHandled)
+    self.assertEqual(NonLocal.errorPath, '')
 
   def testCopy(self):
     src_file = 'xyzzy'

@@ -66,23 +66,49 @@ class FakeShutilModule(object):
     self._shutil_module = shutil
 
   def rmtree(self, path, ignore_errors=False, onerror=None):
-    """Remove a directory and all its contents.
+    # Docstring from the real rmtree() documentation
+    """Delete an entire directory tree; path must point to a directory (but not
+    a symbolic link to a directory). If ignore_errors is true, errors resulting
+    from failed removals will be ignored; if false or omitted, such errors are
+    handled by calling a handler specified by onerror or, if that is omitted,
+    they raise an exception.
 
     Args:
       path: (str) Directory tree to remove.
-      ignore_errors: (bool) If true, exceptions will be silently ignored
-      onerror: (func) If set and ignore_errors is false, called on exceptions
-            Shall expect 3 parameters: function (this function), path (the path parameter),
-            and the exception information returned by sys.exc_info()
+      ignore_errors: (bool) If ignore_errors is true, errors resulting from
+                     failed removals will be ignored; if false or omitted, such
+                     errors are handled by calling a handler specified by
+                     onerror.
+      onerror: (func) If onerror is provided, it must be a callable that accepts
+               three parameters: function, path, and excinfo.
+
+               The first parameter, function, is the function which raised the
+               exception; it depends on the platform and implementation. The
+               second parameter, path, will be the path name passed to function.
+               The third parameter, excinfo, will be the exception information
+               returned by sys.exc_info(). Exceptions raised by onerror will not
+               be caught.
     """
+    if ignore_errors:
+        def onerror(*args):
+            pass
+    elif onerror is None:
+        def onerror(*args):
+            raise
     try:
-      self.filesystem.RemoveObject(path)
+        if not self.filesystem.Exists(path):
+            raise OSError("The specified path does not exist")
+        if stat.S_ISLNK(self.filesystem.GetObject(path).st_mode):
+            # symlinks to directories are forbidden.
+            raise OSError("Cannot call rmtree on a symbolic link")
+    except OSError:
+        onerror(os.path.islink, path, sys.exc_info())
+        # can't continue even if onerror hook returns
+        return
+    try:
+        self.filesystem.RemoveObject(path)
     except (IOError, OSError):
-      if not ignore_errors:
-        if onerror:
-          onerror(FakeShutilModule.rmtree, path, sys.exc_info())
-        else:
-          raise
+        onerror(FakeShutilModule.rmtree, path, sys.exc_info())
 
   def copy(self, src, dst):
     """Copy data and mode bits ("cp src dst").
