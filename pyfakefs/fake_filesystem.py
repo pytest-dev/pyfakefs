@@ -364,6 +364,7 @@ class FakeFilesystem(object):
       path_separator:  optional substitute for os.path.sep
     """
     self.path_separator = path_separator
+    self.is_case_sensitive = not _is_windows and sys.platform != 'darwin'
     self.root = FakeDirectory(self.path_separator)
     self.cwd = self.root.name
     # We can't query the current value without changing it:
@@ -472,6 +473,22 @@ class FakeFilesystem(object):
       collapsed_path = self.path_separator + collapsed_path
     return collapsed_path or '.'
 
+  def NormalizeCase(self, path):
+    if self.is_case_sensitive or not path:
+      return path
+    path_components = self.GetPathComponents(path)
+    normalized_components = []
+    current_dir = self.root
+    for component in path_components:
+      current_dir = self._DirectoryContent(current_dir, component)
+      if current_dir is None or current_dir.contents is None:
+        return path
+      normalized_components.append(current_dir.name)
+    normalized_path = self.path_separator.join(normalized_components)
+    if path.startswith(self.path_separator):
+      normalized_path = self.path_separator + normalized_path
+    return normalized_path
+
   def NormalizePath(self, path):
     """Absolutize and minimalize the given path.
 
@@ -566,7 +583,7 @@ class FakeFilesystem(object):
       for component in path_components:
         if component not in current_dir.contents:
           raise IOError
-        DoStuffWithComponent(curent_dir, component)
+        DoStuffWithComponent(current_dir, component)
         current_dir = current_dir.GetEntry(component)
 
     Args:
@@ -575,7 +592,7 @@ class FakeFilesystem(object):
     Returns:
       The list of names split from path
     """
-    if not path or path == self.root.name:
+    if not path or self._IsRootPath(path):
       return []
     path_components = path.split(self.path_separator)
     assert path_components
@@ -583,6 +600,19 @@ class FakeFilesystem(object):
       # This is an absolute path.
       path_components = path_components[1:]
     return path_components
+
+  def _IsRootPath(self, file_path):
+    return file_path == self.root.name or not self.is_case_sensitive and file_path.lower() == self.root.name.lower()
+
+  def _DirectoryContent(self, directory, component):
+    if component in directory.contents:
+      return directory.contents[component]
+    if not self.is_case_sensitive:
+      matching_content = [directory.contents[subdir] for subdir in directory.contents
+                          if subdir.lower() == component.lower()]
+      if matching_content:
+        return matching_content[0]
+    return None
 
   def Exists(self, file_path):
     """True if a path points to an existing file system object.
@@ -604,14 +634,14 @@ class FakeFilesystem(object):
       file_path = self.ResolvePath(file_path)
     except IOError:
       return False
-    if file_path == self.root.name:
+    if self._IsRootPath(file_path):
       return True
     path_components = self.GetPathComponents(file_path)
     current_dir = self.root
     for component in path_components:
-      if component not in current_dir.contents:
+      current_dir = self._DirectoryContent(current_dir, component)
+      if current_dir is None:
         return False
-      current_dir = current_dir.contents[component]
     return True
 
   def ResolvePath(self, file_path):
@@ -704,9 +734,9 @@ class FakeFilesystem(object):
       # parts of a relative path exist.
       raise IOError(errno.ENOENT,
                     'No such file or directory: \'%s\'' % file_path)
-    file_path = self.NormalizePath(file_path)
-    if file_path == self.root.name:
-      return file_path
+    file_path = self.NormalizePath(self.NormalizeCase(file_path))
+    if self._IsRootPath(file_path):
+      return self.root.name
 
     current_dir = self.root
     path_components = self.GetPathComponents(file_path)
@@ -759,7 +789,7 @@ class FakeFilesystem(object):
     Raises:
       IOError: if the object is not found
     """
-    if file_path == self.root.name:
+    if self._IsRootPath(file_path):
       return self.root
     path_components = self.GetPathComponents(file_path)
     target_object = self.root
@@ -788,7 +818,7 @@ class FakeFilesystem(object):
     Raises:
       IOError: if the object is not found
     """
-    file_path = self.NormalizePath(file_path)
+    file_path = self.NormalizePath(self.NormalizeCase(file_path))
     return self.GetObjectFromNormalizedPath(file_path)
 
   def ResolveObject(self, file_path):
@@ -820,7 +850,7 @@ class FakeFilesystem(object):
     Raises:
       IOError: if the object is not found
     """
-    if path == self.root.name:
+    if self._IsRootPath(path):
       # The root directory will never be a link
       return self.root
     parent_directory, child_name = self.SplitPath(path)
@@ -868,7 +898,8 @@ class FakeFilesystem(object):
         of the path refers to something other than a directory
       OSError: if the directory is in use (eg, if it is '/')
     """
-    if file_path == self.root.name:
+    file_path = self.NormalizeCase(file_path)
+    if self._IsRootPath(file_path):
       raise OSError(errno.EBUSY, 'Fake device or resource busy',
                     file_path)
     try:
@@ -954,6 +985,8 @@ class FakeFilesystem(object):
       if not create_missing_dirs:
         raise IOError(errno.ENOENT, 'No such fake directory', parent_directory)
       self.CreateDirectory(parent_directory)
+    else:
+      parent_directory = self.NormalizeCase(parent_directory)
     if apply_umask:
       st_mode &= ~self.umask
     file_object = FakeFile(new_file, st_mode, contents)
