@@ -2149,6 +2149,12 @@ class FakePathModuleTest(TestCase):
     self.path.walk('/foo', RecordVisitedNodes, visited_nodes)
     self.assertEqual([], visited_nodes)
 
+  def testGetattrForwardToRealOsPath(self):
+    """Forwards any non-faked calls to os.path."""
+    self.assertTrue(hasattr(self.path, 'sep'), 'Faked os.path function')
+    self.assertTrue(hasattr(self.path, '_joinrealpath'),
+                    'Real os.path function not implemented in fake os.path')
+    self.assertFalse(hasattr(self.path, 'nonexistent'))
 
 class FakeFileOpenTestBase(TestCase):
   def setUp(self):

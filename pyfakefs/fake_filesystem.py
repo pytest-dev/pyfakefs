@@ -1218,8 +1218,8 @@ class FakePathModule(object):
     return self._os_path.expanduser(path).replace(self._os_path.sep, self.sep)
 
   def __getattr__(self, name):
-    """Forwards any non-faked calls to os.path."""
-    return self._os_path.__dict__[name]
+    """Forwards any non-faked calls to the real os.path."""
+    return getattr(self._os_path, name)
 
 
 class FakeOsModule(object):
