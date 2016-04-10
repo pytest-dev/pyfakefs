@@ -51,7 +51,7 @@ class FakeShutilModuleTest(unittest.TestCase):
     try:
         self.shutil.rmtree(directory, ignore_errors=True)
     except IOError:
-        self.fail('rmtree raised despite ignore_errors was set')
+        self.fail('rmtree raised despite ignore_errors True')
 
   def testRmtreeNonExistingDirWithHandler(self):
     class NonLocal: pass

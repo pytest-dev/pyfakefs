@@ -101,7 +101,7 @@ class FakeShutilModule(object):
         if stat.S_ISLNK(self.filesystem.GetObject(path).st_mode):
             # symlinks to directories are forbidden.
             raise OSError("Cannot call rmtree on a symbolic link")
-    except OSError:
+    except Exception:
         onerror(os.path.islink, path, sys.exc_info())
         # can't continue even if onerror hook returns
         return
