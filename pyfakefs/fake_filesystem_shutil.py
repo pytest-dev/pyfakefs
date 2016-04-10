@@ -97,7 +97,7 @@ class FakeShutilModule(object):
             raise
     try:
         if not self.filesystem.Exists(path):
-            raise OSError("The specified path does not exist")
+            raise IOError("The specified path does not exist")
         if stat.S_ISLNK(self.filesystem.GetObject(path).st_mode):
             # symlinks to directories are forbidden.
             raise OSError("Cannot call rmtree on a symbolic link")
