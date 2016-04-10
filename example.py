@@ -104,7 +104,7 @@ def path_exists(path):
     return os.path.exists(path)
 
 def get_glob(glob_path):
-    '''Return the list of paths matching the specified glob expression.
+    r'''Return the list of paths matching the specified glob expression.
 
     For example:
 
@@ -112,10 +112,14 @@ def get_glob(glob_path):
     >>> create_file('/test/file1.txt')
     >>> create_file('/test/file2.txt')
     >>> file_names = get_glob('/test/file*.txt')
-    >>> # Get the expected file names in the platform's native style 
-    >>> file_names == (['/test/file1.txt', '/test/file2.txt']   # UNIX-like
-    ...                    or
-    ...                [r'\test\file1.txt', r'\test\file2.txt']) # Windows
+    >>>
+    >>> import sys
+    >>> if sys.platform.startswith('win'):
+    ...     # Windows style path
+    ...     file_names == [r'\test\file1.txt', r'\test\file2.txt']
+    ... else:
+    ...     # UNIX style path
+    ...     file_names == ['/test/file1.txt', '/test/file2.txt']
     True
     '''
     return glob.glob(glob_path)
