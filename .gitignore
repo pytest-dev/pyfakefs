@@ -5,3 +5,6 @@
 .settings
 .project
 .pydevproject
+
+# PyCharm
+.idea/

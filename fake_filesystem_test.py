@@ -3138,5 +3138,39 @@ class PathSeparatorTest(TestCase):
     self.assertEqual('!', fake_os.path.sep)
 
 
+class AlternativePathSeparatorTest(TestCase):
+  def setUp(self):
+    self.filesystem = fake_filesystem.FakeFilesystem(path_separator='!')
+    self.filesystem.alternative_path_separator = '?'
+
+  def testInitialValue(self):
+    filesystem = fake_filesystem.FakeFilesystem()
+    if self.is_windows:
+      self.assertEqual('/', filesystem.alternative_path_separator)
+    else:
+      self.assertIsNone(filesystem.alternative_path_separator)
+
+    filesystem = fake_filesystem.FakeFilesystem(path_separator='/')
+    self.assertIsNone(filesystem.alternative_path_separator)
+
+  def testAltSep(self):
+    fake_os = fake_filesystem.FakeOsModule(self.filesystem)
+    self.assertEqual('?', fake_os.altsep)
+    self.assertEqual('?', fake_os.path.altsep)
+
+  def testCollapsePathWithMixedSeparators(self):
+    self.assertEqual('!foo!bar', self.filesystem.CollapsePath('!foo??bar'))
+
+  def testNormalizePathWithMixedSeparators(self):
+    path = 'foo?..?bar'
+    self.assertEqual('!bar', self.filesystem.NormalizePath(path))
+
+  def testExistsWithMixedSeparators(self):
+    self.filesystem.CreateFile('?foo?bar?baz')
+    self.filesystem.CreateFile('!foo!bar!xyzzy!plugh')
+    self.assertTrue(self.filesystem.Exists('!foo!bar!baz'))
+    self.assertTrue(self.filesystem.Exists('?foo?bar?xyzzy?plugh'))
+
+
 if __name__ == '__main__':
-  main()
+  unittest.main()

@@ -73,14 +73,21 @@ class TestPyfakefsUnittest(fake_filesystem_unittest.TestCase): # pylint: disable
 
     def test_glob(self):
         '''Fake glob module is bound'''
+        is_windows = sys.platform.startswith('win')
         self.assertEqual(glob.glob('/test/dir1/dir*'),
                               [])
         self.fs.CreateDirectory('/test/dir1/dir2a')
-        self.assertEqual(glob.glob('/test/dir1/dir*'),
-                              ['/test/dir1/dir2a'])
+        matching_paths = glob.glob('/test/dir1/dir*')
+        if is_windows:
+            self.assertEqual(matching_paths, [r'\test\dir1\dir2a'])
+        else:
+            self.assertEqual(matching_paths, ['/test/dir1/dir2a'])
         self.fs.CreateDirectory('/test/dir1/dir2b')
-        self.assertEqual(glob.glob('/test/dir1/dir*'),
-                              ['/test/dir1/dir2a', '/test/dir1/dir2b'])
+        matching_paths = glob.glob('/test/dir1/dir*')
+        if is_windows:
+            self.assertEqual(matching_paths, [r'\test\dir1\dir2a', r'\test\dir1\dir2b'])
+        else:
+            self.assertEqual(matching_paths, ['/test/dir1/dir2a', '/test/dir1/dir2b'])
 
     def test_shutil(self):
         '''Fake shutil module is bound'''

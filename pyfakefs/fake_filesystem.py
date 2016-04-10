@@ -362,8 +362,14 @@ class FakeFilesystem(object):
 
     Args:
       path_separator:  optional substitute for os.path.sep
+
+      Example usage to emulate real file systems:
+         filesystem = FakeFilesystem(alt_path_separator='/' if _is_windows else None)
     """
     self.path_separator = path_separator
+    self.alternative_path_separator = os.path.altsep
+    if path_separator != os.sep:
+      self.alternative_path_separator = None
     self.is_case_sensitive = not _is_windows and sys.platform != 'darwin'
     self.root = FakeDirectory(self.path_separator)
     self.cwd = self.root.name
@@ -435,6 +441,18 @@ class FakeFilesystem(object):
       raise OSError(errno.EBADF, 'Bad file descriptor', file_des)
     return self.open_files[file_des]
 
+  def NormalizePathSeparator(self, path):
+    """Replace all appearances of alternative path separator with path separator.
+    Do nothing if no alternative separator is set.
+    Args:
+      path: the path to be normalized.
+    Returns:
+      The normalized path that will be used internally.
+    """
+    if self.alternative_path_separator is None or not path:
+      return path
+    return path.replace(self.alternative_path_separator, self.path_separator)
+
   def CollapsePath(self, path):
     """Mimics os.path.normpath using the specified path_separator.
 
@@ -443,8 +461,11 @@ class FakeFilesystem(object):
     NormalizePath, does not make it absolute.  Eliminates dot components
     (. and ..) and combines repeated path separators (//).  Initial ..
     components are left in place for relative paths.  If the result is an empty
-    path, '.' is returned instead.  Unlike the real os.path.normpath, this does
-    not replace '/' with '\\' on Windows.
+    path, '.' is returned instead.
+
+    This also replaces alternative path separator with path separator.  That is,
+    it behaves like the real os.path.normpath on Windows if initialized with
+    '\\' as path separator and  '/' as alternative separator.
 
     Args:
       path:  (str) The path to normalize.
@@ -452,6 +473,7 @@ class FakeFilesystem(object):
     Returns:
       (str) A copy of path with empty components and dot components removed.
     """
+    path = self.NormalizePathSeparator(path)
     is_absolute_path = path.startswith(self.path_separator)
     path_components = path.split(self.path_separator)
     collapsed_path_components = []
@@ -502,6 +524,7 @@ class FakeFilesystem(object):
       The normalized path relative to the current working directory, or the root
         directory if path is empty.
     """
+    path = self.NormalizePathSeparator(path)
     if not path:
       path = self.path_separator
     elif not path.startswith(self.path_separator):
@@ -526,6 +549,7 @@ class FakeFilesystem(object):
       (str) A duple (pathname, basename) for which pathname does not
           end with a slash, and basename does not contain a slash.
     """
+    path = self.NormalizePathSeparator(path)
     path_components = path.split(self.path_separator)
     if not path_components:
       return ('', '')
@@ -639,9 +663,9 @@ class FakeFilesystem(object):
     path_components = self.GetPathComponents(file_path)
     current_dir = self.root
     for component in path_components:
-      current_dir = self._DirectoryContent(current_dir, component)
-      if current_dir is None:
+      if component not in current_dir.contents:
         return False
+      current_dir = current_dir.contents[component]
     return True
 
   def ResolvePath(self, file_path):
@@ -789,7 +813,7 @@ class FakeFilesystem(object):
     Raises:
       IOError: if the object is not found
     """
-    if self._IsRootPath(file_path):
+    if file_path == self.root.name:
       return self.root
     path_components = self.GetPathComponents(file_path)
     target_object = self.root
@@ -850,7 +874,7 @@ class FakeFilesystem(object):
     Raises:
       IOError: if the object is not found
     """
-    if self._IsRootPath(path):
+    if path == self.root.name:
       # The root directory will never be a link
       return self.root
     parent_directory, child_name = self.SplitPath(path)
@@ -1046,6 +1070,7 @@ class FakePathModule(object):
                     stacklevel=2)
     self._os_path.os = self.os = os_module
     self.sep = self.filesystem.path_separator
+    self.altsep = self.filesystem.alternative_path_separator
 
   def exists(self, path):
     """Determines whether the file object exists within the fake filesystem.
@@ -1171,6 +1196,13 @@ class FakePathModule(object):
     """Normalize path, eliminating double slashes, etc."""
     return self.filesystem.CollapsePath(path)
 
+  def normcase(self, path):
+    """Converts to lower case under windows, replaces additional path separator"""
+    path = self.filesystem.NormalizePathSeparator(path)
+    if _is_windows:
+      path = path.lower()
+    return path
+
   if _is_windows:
 
     def relpath(self, path, start=None):
@@ -1181,6 +1213,9 @@ class FakePathModule(object):
       return path.replace(self._os_path.sep, self.filesystem.path_separator)
 
     realpath = abspath
+
+  def expanduser(self, path):
+    return self._os_path.expanduser(path).replace(self._os_path.sep, self.sep)
 
   def __getattr__(self, name):
     """Forwards any non-faked calls to os.path."""
@@ -1209,6 +1244,7 @@ class FakeOsModule(object):
     """
     self.filesystem = filesystem
     self.sep = filesystem.path_separator
+    self.altsep = filesystem.alternative_path_separator
     self._os_module = os
     if os_path_module is None:
       self.path = FakePathModule(self.filesystem, self)
