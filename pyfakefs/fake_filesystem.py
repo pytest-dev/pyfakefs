@@ -367,9 +367,9 @@ class FakeFilesystem(object):
          filesystem = FakeFilesystem(alt_path_separator='/' if _is_windows else None)
     """
     self.path_separator = path_separator
-    self.additional_path_separator = None
-    if _is_windows and path_separator == os.sep:
-      self.additional_path_separator = '/'
+    self.alternative_path_separator = os.path.altsep
+    if path_separator != os.sep:
+      self.alternative_path_separator = None
     self.root = FakeDirectory(self.path_separator)
     self.cwd = self.root.name
     # We can't query the current value without changing it:
@@ -448,9 +448,9 @@ class FakeFilesystem(object):
     Returns:
       The normalized path that will be used internally.
     """
-    if self.additional_path_separator is None or not path:
+    if self.alternative_path_separator is None or not path:
       return path
-    return path.replace(self.additional_path_separator, self.path_separator)
+    return path.replace(self.alternative_path_separator, self.path_separator)
 
   def CollapsePath(self, path):
     """Mimics os.path.normpath using the specified path_separator.
@@ -1035,6 +1035,7 @@ class FakePathModule(object):
                     stacklevel=2)
     self._os_path.os = self.os = os_module
     self.sep = self.filesystem.path_separator
+    self.altsep = self.filesystem.alternative_path_separator
 
   def exists(self, path):
     """Determines whether the file object exists within the fake filesystem.
@@ -1208,6 +1209,7 @@ class FakeOsModule(object):
     """
     self.filesystem = filesystem
     self.sep = filesystem.path_separator
+    self.altsep = filesystem.alternative_path_separator
     self._os_module = os
     if os_path_module is None:
       self.path = FakePathModule(self.filesystem, self)

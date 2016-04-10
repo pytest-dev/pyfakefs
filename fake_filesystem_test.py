@@ -3097,17 +3097,22 @@ class PathSeparatorTest(TestCase):
 class AdditionalPathSeparatorTest(TestCase):
   def setUp(self):
     self.filesystem = fake_filesystem.FakeFilesystem(path_separator='!')
-    self.filesystem.additional_path_separator = '?'
+    self.filesystem.alternative_path_separator = '?'
 
   def testInitialValue(self):
     filesystem = fake_filesystem.FakeFilesystem()
     if self.is_windows:
-      self.assertEqual('/', filesystem.additional_path_separator)
+      self.assertEqual('/', filesystem.alternative_path_separator)
     else:
-      self.assertIsNone(filesystem.additional_path_separator)
+      self.assertIsNone(filesystem.alternative_path_separator)
 
     filesystem = fake_filesystem.FakeFilesystem(path_separator='/')
-    self.assertIsNone(filesystem.additional_path_separator)
+    self.assertIsNone(filesystem.alternative_path_separator)
+
+  def testAltSep(self):
+    fake_os = fake_filesystem.FakeOsModule(self.filesystem)
+    self.assertEqual('?', fake_os.altsep)
+    self.assertEqual('?', fake_os.path.altsep)
 
   def testCollapsePathWithMixedSeparators(self):
     self.assertEqual('!foo!bar', self.filesystem.CollapsePath('!foo??bar'))
