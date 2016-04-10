@@ -115,7 +115,7 @@ def get_glob(glob_path):
     >>> # Get the expected file names in the platform's native style 
     >>> file_names == (['/test/file1.txt', '/test/file2.txt']   # UNIX-like
     ...                    or
-    ...                [r'c:\test\file1.txt', r'c:\test\file2.txt']) # Windows
+    ...                [r'\test\file1.txt', r'\test\file2.txt']) # Windows
     True
     '''
     return glob.glob(glob_path)
