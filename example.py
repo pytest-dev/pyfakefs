@@ -116,7 +116,7 @@ def get_glob(glob_path):
     >>> import sys
     >>> if sys.platform.startswith('win'):
     ...     # Windows style path
-    ...     file_names == [r'\test\file1.txt', r'\test\file2.txt']
+    ...     file_names == [r'\\test\\file1.txt', r'\\test\\file2.txt']
     ... else:
     ...     # UNIX style path
     ...     file_names == ['/test/file1.txt', '/test/file2.txt']
