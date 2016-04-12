@@ -1400,10 +1400,11 @@ class FakeOsModuleTest(TestCase):
 
   def testUtimeSetsCurrentTimeIfArgsIsNoneWithFloats(self):
     # set up
-    # time.time can report back floats, but it should be converted to ints
-    # since atime/ctime/mtime are all defined as seconds since epoch.
+    # we set os.stat_float_times() to False, so atime/ctime/mtime
+    # are converted as ints (seconds since epoch)
     time.time = _GetDummyTime(200.0123, 20)
     path = '/some_file'
+    fake_filesystem.FakeOsModule.stat_float_times(False)
     self._CreateTestFile(path)
     st = self.os.stat(path)
     # 200 is the current time established above (if converted to int).
@@ -1416,8 +1417,10 @@ class FakeOsModuleTest(TestCase):
     self.assertEqual(240, st.st_mtime)
 
   def testUtimeSetsCurrentTimeIfArgsIsNoneWithFloatsNSec(self):
-    self.filesystem = fake_filesystem.FakeFilesystem(path_separator='/', nsec_stat=True)
+    self.filesystem = fake_filesystem.FakeFilesystem(path_separator='/')
     self.os = fake_filesystem.FakeOsModule(self.filesystem)
+    self.os.stat_float_times(True)
+    self.assertTrue(self.os.stat_float_times())
 
     time.time = _GetDummyTime(200.0123, 20)
     path = '/some_file'

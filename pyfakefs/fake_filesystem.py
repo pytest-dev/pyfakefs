@@ -171,16 +171,18 @@ class FakeFile(object):
 
      Attributes currently faked out:
        st_mode: user-specified, otherwise S_IFREG
-       st_ctime: the time.time() timestamp when the file is created.
+       st_ctime: the time.time() timestamp of the file change time (updated
+         each time a file's attributes is modified).
+       st_atime: the time.time() timestamp when the file was last accessed.
+       st_mtime: the time.time() timestamp when the file was last modified.
        st_size: the size of the file
 
      Other attributes needed by os.stat are assigned default value of None
-      these include: st_ino, st_dev, st_nlink, st_uid, st_gid, st_atime,
-      st_mtime
+      these include: st_ino, st_dev, st_nlink, st_uid, st_gid
   """
 
   def __init__(self, name, st_mode=stat.S_IFREG | PERM_DEF_FILE,
-               contents=None, nsec_stat=False):
+               contents=None):
     """init.
 
     Args:
@@ -190,18 +192,14 @@ class FakeFile(object):
       contents:  the contents of the filesystem object; should be a string for
         regular files, and a list of other FakeFile or FakeDirectory objects
         for FakeDirectory objects
-      nsec_stat:  if True, file creation, access and modification times
-        will have floating-point precision; if False, integer precision is
-        enforced (rounding down)
     """
     self.name = name
     self.st_mode = st_mode
     self.contents = contents
-    self.nsec_stat = nsec_stat
     self.epoch = 0
-    self.st_ctime = time.time() if self.nsec_stat else int(time.time())
-    self.st_atime = self.st_ctime
-    self.st_mtime = self.st_ctime
+    self._st_ctime = time.time()    # times are accessed through properties
+    self._st_atime = self.st_ctime
+    self._st_mtime = self.st_ctime
     if contents:
       self.st_size = len(contents)
     else:
@@ -212,6 +210,33 @@ class FakeFile(object):
     self.st_nlink = None
     self.st_uid = None
     self.st_gid = None
+
+  @property
+  def st_ctime(self):
+      return (self._st_ctime if FakeOsModule.stat_float_times()
+              else int(self._st_ctime))
+
+  @property
+  def st_atime(self):
+      return (self._st_atime if FakeOsModule.stat_float_times()
+              else int(self._st_atime))
+
+  @property
+  def st_mtime(self):
+      return (self._st_mtime if FakeOsModule.stat_float_times()
+              else int(self._st_mtime))
+
+  @st_ctime.setter
+  def st_ctime(self, val):
+      self._st_ctime = val
+
+  @st_atime.setter
+  def st_atime(self, val):
+      self._st_atime = val
+
+  @st_mtime.setter
+  def st_mtime(self, val):
+      self._st_mtime = val
 
   def SetLargeFileSize(self, st_size):
     """Sets the self.st_size attribute and replaces self.content with None.
@@ -249,7 +274,7 @@ class FakeFile(object):
     if sys.version_info >= (3, 0) and isinstance(contents, bytes):
       contents = Hexlified(contents)
 
-    self.st_ctime = time.time() if self.nsec_stat else int(time.time())
+    self.st_ctime = time.time()
     self.st_mtime = self.st_ctime
     self.st_size = len(contents)
     self.contents = contents
@@ -363,14 +388,11 @@ class FakeDirectory(FakeFile):
 class FakeFilesystem(object):
   """Provides the appearance of a real directory tree for unit testing."""
 
-  def __init__(self, path_separator=os.path.sep, nsec_stat=False):
+  def __init__(self, path_separator=os.path.sep):
     """init.
 
     Args:
       path_separator:  optional substitute for os.path.sep
-      nsec_stat:  if True, file creation, access and modification times
-        will have floating-point precision; if False, integer precision is
-        enforced (rounding down).
 
       Example usage to emulate real file systems:
          filesystem = FakeFilesystem(alt_path_separator='/' if _is_windows else None)
@@ -380,7 +402,6 @@ class FakeFilesystem(object):
     if path_separator != os.sep:
       self.alternative_path_separator = None
     self.is_case_sensitive = not _is_windows and sys.platform != 'darwin'
-    self.nsec_stat = nsec_stat
     self.root = FakeDirectory(self.path_separator)
     self.cwd = self.root.name
     # We can't query the current value without changing it:
@@ -1023,7 +1044,7 @@ class FakeFilesystem(object):
       parent_directory = self.NormalizeCase(parent_directory)
     if apply_umask:
       st_mode &= ~self.umask
-    file_object = FakeFile(new_file, st_mode, contents, self.nsec_stat)
+    file_object = FakeFile(new_file, st_mode, contents)
     file_object.SetIno(inode)
     self.AddObject(parent_directory, file_object)
 
@@ -1245,6 +1266,8 @@ class FakeOsModule(object):
   my_os_module = fake_filesystem.FakeOsModule(filesystem)
   """
 
+  _stat_float_times = sys.version_info >= (2, 5)
+
   def __init__(self, filesystem, os_path_module=None):
     """Also exposes self.path (to fake os.path).
 
@@ -1383,6 +1406,21 @@ class FakeOsModule(object):
     fh.write(contents)
     fh.flush()
     return len(contents)
+
+  @classmethod
+  def stat_float_times(cls, newvalue=None):
+    """Determine whether a file's time stamps are reported as floats or ints.
+
+    Calling without arguments returns the current value. The value is shared
+    by all instances of FakeOsModule.
+
+    Args:
+      newvalue: if True, mtime, ctime, atime are reported as floats.
+        Else, as ints (rounding down).
+    """
+    if newvalue is not None:
+      cls._stat_float_times = bool(newvalue)
+    return cls._stat_float_times
 
   def fstat(self, file_des):
     """Returns the os.stat-like tuple for the FakeFile object of file_des.
@@ -1828,8 +1866,7 @@ class FakeOsModule(object):
       raise
     file_object.st_mode = ((file_object.st_mode & ~PERM_ALL) |
                            (mode & PERM_ALL))
-    file_object.st_ctime = (time.time() if self.filesystem.nsec_stat
-                            else int(time.time()))
+    file_object.st_ctime = time.time()
 
   def utime(self, path, times):
     """Change the access and modified times of a file.
@@ -1853,10 +1890,8 @@ class FakeOsModule(object):
                       path)
       raise
     if times is None:
-      file_object.st_atime = (time.time() if self.filesystem.nsec_stat
-                              else int(time.time()))
-      file_object.st_mtime = (time.time() if self.filesystem.nsec_stat
-                              else int(time.time()))
+      file_object.st_atime = time.time()
+      file_object.st_mtime = time.time()
     else:
       if len(times) != 2:
         raise TypeError('utime() arg 2 must be a tuple (atime, mtime)')
@@ -1930,8 +1965,7 @@ class FakeOsModule(object):
           os.strerror(errno.EEXIST), filename))
     try:
       self.filesystem.AddObject(head, FakeFile(tail,
-                                               mode & ~self.filesystem.umask,
-                                               nsec_stat=self.filesystem.nsec_stat))
+                                               mode & ~self.filesystem.umask))
     except IOError:
       raise OSError(errno.ENOTDIR, 'Fake filesystem: %s: %s' % (
           os.strerror(errno.ENOTDIR), filename))
