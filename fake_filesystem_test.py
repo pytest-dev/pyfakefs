@@ -2162,7 +2162,6 @@ class FakePathModuleTest(TestCase):
       else:
         private_path_function = '_joinrealpath'
     if private_path_function:
-      print private_path_function
       self.assertTrue(hasattr(self.path, private_path_function),
                      'Get a real os.path function not implemented in fake os.path')
     self.assertFalse(hasattr(self.path, 'nonexistent'))
