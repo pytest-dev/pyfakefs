@@ -2153,7 +2153,7 @@ class FakePathModuleTest(TestCase):
     """Forwards any non-faked calls to os.path."""
     self.assertTrue(hasattr(self.path, 'sep'), 'Get a faked os.path function')
     private_path_function = None
-    if (2, 7) <= sys.version_info <= (3, 5):
+    if (2, 7) <= sys.version_info < (3, 6):
       if self.is_windows:
         if sys.version_info >= (3, 0):
           private_path_function = '_get_bothseps'
