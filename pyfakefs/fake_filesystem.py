@@ -279,7 +279,7 @@ class FakeFile(object):
     """Return True if this file was initialized with size but no contents."""
     return self.contents is None
 
-  def SetContents(self, contents):
+  def SetContents(self, contents, update_time=True):
     """Sets the file contents and size.
 
     Args:
@@ -297,8 +297,9 @@ class FakeFile(object):
       self.SetSize(0)
     current_size = self.st_size or 0
     self.contents = contents
-    self.st_ctime = time.time()
-    self.st_mtime = self._st_ctime
+    if update_time:
+      self.st_ctime = time.time()
+      self.st_mtime = self._st_ctime
     self.st_size = len(self.contents)
     if self.filesystem and self.filesystem.total_size is not None:
       if self.filesystem.GetDiskUsage().free < self.st_size - current_size:
@@ -1121,7 +1122,7 @@ class FakeFilesystem(object):
         if st_size is not None:
           file_object.SetLargeFileSize(st_size)
         else:
-          file_object.SetContents(contents)
+          file_object.SetContents(contents, update_time=False)
       except IOError:
         self.RemoveObject(file_path)
         raise
