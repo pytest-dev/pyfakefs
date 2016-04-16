@@ -90,6 +90,7 @@ import sys
 import time
 import warnings
 import binascii
+from collections import namedtuple
 
 try:
   import cStringIO as io  # pylint: disable-msg=C6204
@@ -159,6 +160,9 @@ class Hexlified(object):
   def __len__(self):
     return len(self.contents)//2
 
+  def __getitem__(self, item):
+    return self.contents.__getitem__(item)
+
   def recover(self, binary):
     if binary:
       return binascii.unhexlify(bytearray(self.contents, 'utf-8'))
@@ -180,7 +184,7 @@ class FakeFile(object):
   """
 
   def __init__(self, name, st_mode=stat.S_IFREG | PERM_DEF_FILE,
-               contents=None):
+               contents=None, filesystem=None):
     """init.
 
     Args:
@@ -190,10 +194,12 @@ class FakeFile(object):
       contents:  the contents of the filesystem object; should be a string for
         regular files, and a list of other FakeFile or FakeDirectory objects
         for FakeDirectory objects
+      filesystem: if set, the fake filesystem where the file is created
     """
     self.name = name
     self.st_mode = st_mode
     self.contents = contents
+    self.filesystem = filesystem
     self.epoch = 0
     self.st_ctime = int(time.time())
     self.st_atime = self.st_ctime
@@ -208,6 +214,7 @@ class FakeFile(object):
     self.st_nlink = None
     self.st_uid = None
     self.st_gid = None
+    # shall be set on creating the file from the file system to get access to fs available space
 
   def SetLargeFileSize(self, st_size):
     """Sets the self.st_size attribute and replaces self.content with None.
@@ -219,7 +226,8 @@ class FakeFile(object):
       st_size: The desired file size
 
     Raises:
-      IOError: if the st_size is not a non-negative integer
+      IOError: if the st_size is not a non-negative integer,
+               or if st_size exceeds the available file system space
     """
     # the st_size should be an positive integer value
     if not isinstance(st_size, int) or st_size < 0:
@@ -227,7 +235,14 @@ class FakeFile(object):
                     'Fake file object: can not create non negative integer '
                     'size=%r fake file' % st_size,
                     self.name)
-
+    if self.st_size:
+      self.SetSize(0)
+    if self.filesystem and self.filesystem.total_size is not None:
+      if self.filesystem.GetDiskUsage().free < st_size:
+        raise IOError(errno.ENOSPC,
+                      'Fake file system: disk is full, failed to set file size to %r bytes' % st_size,
+                      self.name)
+      self.filesystem.ChangeDiskUsage(st_size)
     self.st_size = st_size
     self.contents = None
 
@@ -240,14 +255,31 @@ class FakeFile(object):
 
     Args:
       contents: string, new content of file.
+
+    Raises:
+      IOError: if the st_size is not a non-negative integer,
+               or if st_size exceeds the available file system space
     """
     # Wrap byte arrays into a safe format
     if sys.version_info >= (3, 0) and isinstance(contents, bytes):
       contents = Hexlified(contents)
-      
-    self.st_size = len(contents)
+
+    if self.contents:
+      self.SetSize(0)
+    current_size = self.st_size or 0
     self.contents = contents
+    self.st_size = len(self.contents)
+    if self.filesystem and self.filesystem.total_size is not None:
+      if self.filesystem.GetDiskUsage().free < self.st_size - current_size:
+        raise IOError(errno.ENOSPC,
+                      'Fake file system: disk is full, failed to set contents to %r bytes' % self.st_size,
+                      self.name)
+      self.filesystem.ChangeDiskUsage(self.st_size - current_size)
     self.epoch += 1
+
+  def GetSize(self):
+    """Returns the size in bytes of the file contents."""
+    return self.st_size
 
   def SetSize(self, st_size):
     """Resizes file content, padding with nulls if new size exceeds the old.
@@ -265,12 +297,19 @@ class FakeFile(object):
                     'size=%r fake file' % st_size,
                     self.name)
 
-    current_size = len(self.contents)
-    if st_size < current_size:
-      self.contents = self.contents[:st_size]
-    else:
-      self.contents = '%s%s' % (self.contents, '\0' * (st_size - current_size))
-    self.st_size = len(self.contents)
+    current_size = self.st_size or 0
+    if self.filesystem and self.filesystem.total_size is not None:
+      if self.filesystem.GetDiskUsage().free < st_size - current_size:
+        raise IOError(errno.ENOSPC,
+                      'Fake file system: disk is full, failed to set file size to %r bytes' % st_size,
+                      self.name)
+      self.filesystem.ChangeDiskUsage(st_size - current_size)
+    if self.contents:
+      if st_size < current_size:
+        self.contents = self.contents[:st_size]
+      else:
+        self.contents = '%s%s' % (self.contents, '\0' * (st_size - current_size))
+    self.st_size = st_size
     self.epoch += 1
 
   def SetATime(self, st_atime):
@@ -304,22 +343,23 @@ class FakeFile(object):
 class FakeDirectory(FakeFile):
   """Provides the appearance of a real dir."""
 
-  def __init__(self, name, perm_bits=PERM_DEF):
+  def __init__(self, name, perm_bits=PERM_DEF, filesystem=None):
     """init.
 
     Args:
       name:  name of the file/directory, without parent path information
       perm_bits: permission bits. defaults to 0o777.
+      filesystem: if set, the fake filesystem where the directory is created
     """
-    FakeFile.__init__(self, name, stat.S_IFDIR | perm_bits, {})
+    FakeFile.__init__(self, name, stat.S_IFDIR | perm_bits, {}, filesystem=filesystem)
 
-  def AddEntry(self, pathname):
+  def AddEntry(self, path_object):
     """Adds a child FakeFile to this directory.
 
     Args:
-      pathname:  FakeFile instance to add as a child of this directory
+      path_object:  FakeFile instance to add as a child of this directory
     """
-    self.contents[pathname.name] = pathname
+    self.contents[path_object.name] = path_object
 
   def GetEntry(self, pathname_name):
     """Retrieves the specified child file or directory.
@@ -342,7 +382,13 @@ class FakeDirectory(FakeFile):
     Raises:
       KeyError: if no child exists by the specified name
     """
+    if pathname_name in self.contents and self.filesystem:
+      self.filesystem.ChangeDiskUsage(-self.contents[pathname_name].GetSize())
     del self.contents[pathname_name]
+
+  def GetSize(self):
+    """Get the size of all files contained in this directory tree"""
+    return sum([item[1].GetSize() for item in self.contents.items()])
 
   def __str__(self):
     rc = super(FakeDirectory, self).__str__() + ':\n'
@@ -357,7 +403,7 @@ class FakeDirectory(FakeFile):
 class FakeFilesystem(object):
   """Provides the appearance of a real directory tree for unit testing."""
 
-  def __init__(self, path_separator=os.path.sep):
+  def __init__(self, path_separator=os.path.sep, total_size=None):
     """init.
 
     Args:
@@ -371,7 +417,7 @@ class FakeFilesystem(object):
     if path_separator != os.sep:
       self.alternative_path_separator = None
     self.is_case_sensitive = not _is_windows and sys.platform != 'darwin'
-    self.root = FakeDirectory(self.path_separator)
+    self.root = FakeDirectory(self.path_separator, filesystem=self)
     self.cwd = self.root.name
     # We can't query the current value without changing it:
     self.umask = os.umask(0o22)
@@ -381,6 +427,28 @@ class FakeFilesystem(object):
     self.open_files = []
     # A heap containing all free positions in self.open_files list
     self.free_fd_heap = []
+    self.total_size = total_size
+    self.used_size = 0
+
+  def GetDiskUsage(self):
+    """Returns the total, used and free disk space in bytes as named tuple
+       or placeholder holder values simulating unlimited space if not set.
+       Note: This matches the return value of shutil.disk_usage().
+    """
+    DiskUsage = namedtuple('DiskUsage', 'total, used, free')
+    if self.total_size is not None:
+      return DiskUsage(self.total_size, self.used_size, self.total_size - self.used_size)
+    return DiskUsage(1024*1024*1024, 0, 1024*1024*1024)
+
+  def ChangeDiskUsage(self, usage_change):
+    """Changes the used disk space by the given amount.
+
+    Args:
+      usage_change: number of bytes added to the used space
+                    if negative, the used space will be decreased
+    """
+    if self.used_size is not None:
+      self.used_size += usage_change
 
   def SetIno(self, path, st_ino):
     """Set the self.st_ino attribute of file at 'path'.
@@ -965,7 +1033,7 @@ class FakeFilesystem(object):
 
     for component in path_components:
       if component not in current_dir.contents:
-        new_dir = FakeDirectory(component, perm_bits)
+        new_dir = FakeDirectory(component, perm_bits, filesystem=self)
         current_dir.AddEntry(new_dir)
         current_dir = new_dir
       else:
@@ -1013,14 +1081,16 @@ class FakeFilesystem(object):
       parent_directory = self.NormalizeCase(parent_directory)
     if apply_umask:
       st_mode &= ~self.umask
-    file_object = FakeFile(new_file, st_mode, contents)
+    file_object = FakeFile(new_file, st_mode, filesystem=self)
     file_object.SetIno(inode)
     self.AddObject(parent_directory, file_object)
 
-    # set the size if st_size is given
-    if not contents and st_size is not None:
+    if contents is not None or st_size is not None:
       try:
-        file_object.SetLargeFileSize(st_size)
+        if st_size is not None:
+          file_object.SetLargeFileSize(st_size)
+        else:
+          file_object.SetContents(contents)
       except IOError:
         self.RemoveObject(file_path)
         raise
@@ -1917,7 +1987,8 @@ class FakeOsModule(object):
           os.strerror(errno.EEXIST), filename))
     try:
       self.filesystem.AddObject(head, FakeFile(tail,
-                                               mode & ~self.filesystem.umask))
+                                               mode & ~self.filesystem.umask,
+                                               filesystem=self))
     except IOError:
       raise OSError(errno.ENOTDIR, 'Fake filesystem: %s: %s' % (
           os.strerror(errno.ENOTDIR), filename))

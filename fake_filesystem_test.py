@@ -3189,5 +3189,65 @@ class AlternativePathSeparatorTest(TestCase):
     self.assertTrue(self.filesystem.Exists('?foo?bar?xyzzy?plugh'))
 
 
+class DiskSpaceTest(TestCase):
+  def setUp(self):
+    self.filesystem = fake_filesystem.FakeFilesystem(path_separator='/', total_size=1024)
+
+  def testFileSystemSizeAfterFileCreation(self):
+    self.filesystem.CreateFile('/foo/bar', contents=b'xyzzy')
+    self.filesystem.CreateFile('/foo/baz', st_size=20)
+    self.assertEqual((1024, 25, 999), self.filesystem.GetDiskUsage())
+
+  def testFileSystemSizeAfterFileDeletion(self):
+    self.filesystem.CreateFile('/foo/bar', contents=b'xyzzy')
+    self.filesystem.CreateFile('/foo/baz', st_size=20)
+    self.filesystem.RemoveObject('/foo/bar')
+    self.assertEqual((1024, 20, 1004), self.filesystem.GetDiskUsage())
+
+  def testFileSystemSizeAfterDirectoryRemoval(self):
+    self.filesystem.CreateFile('/foo/bar', st_size=10)
+    self.filesystem.CreateFile('/foo/baz', st_size=20)
+    self.filesystem.CreateFile('/foo1/bar', st_size=40)
+    self.filesystem.RemoveObject('/foo')
+    self.assertEqual((1024, 40, 984), self.filesystem.GetDiskUsage())
+
+  def testCreatingFileWithFittingContent(self):
+    try:
+      self.filesystem.CreateFile('/foo/bar', contents=b'a'*1024)
+    except IOError:
+      self.fail('File with contents fitting into disk space could not be written.')
+
+  def testCreatingFileWithContentTooLarge(self):
+      def create_large_file():
+        self.filesystem.CreateFile('/foo/bar', contents=b'a'*1025)
+
+      self.assertRaises(IOError, create_large_file)
+
+  def testCreatingFileWithFittingSize(self):
+    try:
+      self.filesystem.CreateFile('/foo/bar', st_size=1024)
+    except IOError:
+      self.fail('File with size fitting into disk space could not be written.')
+
+  def testCreatingFileWithSizeTooLarge(self):
+      def create_large_file():
+        self.filesystem.CreateFile('/foo/bar', st_size=1025)
+
+      self.assertRaises(IOError, create_large_file)
+
+  def testResizeFileWithFittingSize(self):
+    file_object = self.filesystem.CreateFile('/foo/bar', st_size=100)
+    try:
+      file_object.SetLargeFileSize(1024)
+      file_object.SetContents(b'a'*1024)
+    except IOError:
+      self.fail('Resizing file failed although disk space was sufficient.')
+
+  def testResizeFileWithSizeTooLarge(self):
+    file_object = self.filesystem.CreateFile('/foo/bar', st_size=100)
+    self.assertRaises(IOError, lambda: file_object.SetLargeFileSize(2000))
+    self.assertRaises(IOError, lambda: file_object.SetContents('a'*1500))
+
+
 if __name__ == '__main__':
   unittest.main()

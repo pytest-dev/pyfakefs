@@ -31,7 +31,7 @@ from pyfakefs import fake_filesystem_shutil
 class FakeShutilModuleTest(unittest.TestCase):
 
   def setUp(self):
-    self.filesystem = fake_filesystem.FakeFilesystem(path_separator='/')
+    self.filesystem = fake_filesystem.FakeFilesystem(path_separator='/', total_size=1000)
     self.shutil = fake_filesystem_shutil.FakeShutilModule(self.filesystem)
 
   def testRmtree(self):
@@ -227,6 +227,14 @@ class FakeShutilModuleTest(unittest.TestCase):
     self.assertTrue(self.filesystem.Exists('%s/subfile' % dst_directory))
     self.assertTrue(self.filesystem.Exists('%s/subdir' % dst_directory))
     self.assertFalse(self.filesystem.Exists(src_directory))
+
+  def testDiskUsage(self):
+    self.filesystem.CreateFile('foo/bar', st_size=400)
+    disk_usage = self.shutil.disk_usage('/')
+    self.assertEqual(1000, disk_usage.total)
+    self.assertEqual(400, disk_usage.used)
+    self.assertEqual(600, disk_usage.free)
+    self.assertEqual((1000, 400, 600), disk_usage)
 
 
 class CopyFileTest(unittest.TestCase):
