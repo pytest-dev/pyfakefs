@@ -198,8 +198,8 @@ class FakeFile(object):
     self.contents = contents
     self.epoch = 0
     self._st_ctime = time.time()    # times are accessed through properties
-    self._st_atime = self.st_ctime
-    self._st_mtime = self.st_ctime
+    self._st_atime = self._st_ctime
+    self._st_mtime = self._st_ctime
     if contents:
       self.st_size = len(contents)
     else:
@@ -275,7 +275,7 @@ class FakeFile(object):
       contents = Hexlified(contents)
 
     self.st_ctime = time.time()
-    self.st_mtime = self.st_ctime
+    self.st_mtime = self._st_ctime
     self.st_size = len(contents)
     self.contents = contents
     self.epoch += 1
@@ -1709,7 +1709,7 @@ class FakeOsModule(object):
       raise IOError(errno.ENOENT, 'No such fake directory', new_dir)
     old_dir_object = self.filesystem.ResolveObject(old_dir)
     old_object = old_dir_object.GetEntry(old_name)
-    old_object_mtime = old_object.st_mtime
+    old_object_mtime = old_object._st_mtime
     new_dir_object = self.filesystem.ResolveObject(new_dir)
     if old_object.st_mode & stat.S_IFDIR:
       old_object.name = new_name

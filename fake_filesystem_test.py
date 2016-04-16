@@ -1269,12 +1269,13 @@ class FakeOsModuleTest(TestCase):
     self.assertRaises(OSError, self.os.fdatasync, test_fd+1)
 
   def _CreateTestFile(self, path):
-    self.filesystem.CreateFile(path)
+    test_file = self.filesystem.CreateFile(path)
     self.assertTrue(self.filesystem.Exists(path))
     st = self.os.stat(path)
     self.assertEqual(0o666, stat.S_IMODE(st.st_mode))
     self.assertTrue(st.st_mode & stat.S_IFREG)
     self.assertFalse(st.st_mode & stat.S_IFDIR)
+    return test_file
 
   def _CreateTestDirectory(self, path):
     self.filesystem.CreateDirectory(path)
@@ -1402,36 +1403,61 @@ class FakeOsModuleTest(TestCase):
     # set up
     # we set os.stat_float_times() to False, so atime/ctime/mtime
     # are converted as ints (seconds since epoch)
-    time.time = _GetDummyTime(200.0123, 20)
+    time.time = _GetDummyTime(200.9123, 20)
     path = '/some_file'
     fake_filesystem.FakeOsModule.stat_float_times(False)
     self._CreateTestFile(path)
     st = self.os.stat(path)
     # 200 is the current time established above (if converted to int).
     self.assertEqual(200, st.st_atime)
+    self.assertTrue(isinstance(st.st_atime, int))
     self.assertEqual(200, st.st_mtime)
+    self.assertTrue(isinstance(st.st_mtime, int))
     # actual tests
     self.os.utime(path, None)
     st = self.os.stat(path)
     self.assertEqual(220, st.st_atime)
+    self.assertTrue(isinstance(st.st_atime, int))
     self.assertEqual(240, st.st_mtime)
+    self.assertTrue(isinstance(st.st_mtime, int))
 
   def testUtimeSetsCurrentTimeIfArgsIsNoneWithFloatsNSec(self):
     self.filesystem = fake_filesystem.FakeFilesystem(path_separator='/')
     self.os = fake_filesystem.FakeOsModule(self.filesystem)
-    self.os.stat_float_times(True)
-    self.assertTrue(self.os.stat_float_times())
+    self.assertTrue(not self.os.stat_float_times())
 
-    time.time = _GetDummyTime(200.0123, 20)
+    time.time = _GetDummyTime(200.9123, 20)
     path = '/some_file'
-    self._CreateTestFile(path)
+    test_file = self._CreateTestFile(path)
+
     st = self.os.stat(path)
-    # 200.0123 not converted to int
-    self.assertEqual(200.0123, st.st_atime, st.st_mtime)
+    self.assertEqual(200, st.st_ctime)
+    self.assertEqual(200, test_file.st_ctime)
+    self.assertTrue(isinstance(st.st_ctime, int))
+    self.assertTrue(isinstance(test_file.st_ctime, int))
+
+    self.os.stat_float_times(True) # first time float time
+    self.assertEqual(200, st.st_ctime) # st does not change
+    self.assertEqual(200.9123, test_file.st_ctime) # but the file does
+    self.assertTrue(isinstance(st.st_ctime, int))
+    self.assertTrue(isinstance(test_file.st_ctime, float))
+
+    self.os.stat_float_times(False) # reverting to int
+    self.assertEqual(200, test_file.st_ctime)
+    self.assertTrue(isinstance(test_file.st_ctime, int))
+
+    self.assertEqual(200, st.st_ctime)
+    self.assertTrue(isinstance(st.st_ctime, int))
+
+    self.os.stat_float_times(True)
+    st = self.os.stat(path)
+    # 200.9123 not converted to int
+    self.assertEqual(200.9123, test_file.st_atime, test_file.st_mtime)
+    self.assertEqual(200.9123, st.st_atime, st.st_mtime)
     self.os.utime(path, None)
     st = self.os.stat(path)
-    self.assertEqual(220.0123, st.st_atime)
-    self.assertEqual(240.0123, st.st_mtime)
+    self.assertEqual(220.9123, st.st_atime)
+    self.assertEqual(240.9123, st.st_mtime)
 
   def testUtimeSetsSpecifiedTime(self):
     # set up
