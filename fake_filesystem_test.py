@@ -3250,6 +3250,33 @@ class AlternativePathSeparatorTest(TestCase):
     self.assertTrue(self.filesystem.Exists('?foo?bar?xyzzy?plugh'))
 
 
+class DriveLetterSupportTest(TestCase):
+  def setUp(self):
+    self.filesystem = fake_filesystem.FakeFilesystem(path_separator='/')
+    self.filesystem.supports_drive_letter = True
+
+  def testInitialValue(self):
+    filesystem = fake_filesystem.FakeFilesystem()
+    if self.is_windows:
+      self.assertTrue(filesystem.supports_drive_letter)
+    else:
+      self.assertFalse(filesystem.supports_drive_letter)
+
+  def testCollapsePath(self):
+    self.assertEqual('c:/foo/bar', self.filesystem.CollapsePath('c://foo//bar'))
+
+  def testNormalizePath(self):
+    self.assertEqual('c:/foo/bar', self.filesystem.NormalizePath('c:/foo//bar'))
+    self.filesystem.cwd = 'c:/foo'
+    self.assertEqual('c:/foo/bar', self.filesystem.NormalizePath('bar'))
+
+  def testSplitPath(self):
+    self.assertEqual(('c:/foo', 'bar'), self.filesystem.SplitPath('c:/foo/bar'))
+
+  def testCharactersBeforeRootIgnoredInJoinPaths(self):
+    self.assertEqual('c:/d', self.filesystem.JoinPaths('b', 'c:', 'd'))
+
+
 class DiskSpaceTest(TestCase):
   def setUp(self):
     self.filesystem = fake_filesystem.FakeFilesystem(path_separator='/', total_size=1024)
