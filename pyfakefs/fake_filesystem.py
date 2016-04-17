@@ -279,8 +279,9 @@ class FakeFile(object):
     """Return True if this file was initialized with size but no contents."""
     return self.contents is None
 
-  def SetContents(self, contents, update_time=True):
+  def _SetInitialContents(self, contents):
     """Sets the file contents and size.
+       Called internally after initial file creation.
 
     Args:
       contents: string, new content of file.
@@ -297,9 +298,6 @@ class FakeFile(object):
       self.SetSize(0)
     current_size = self.st_size or 0
     self.contents = contents
-    if update_time:
-      self.st_ctime = time.time()
-      self.st_mtime = self._st_ctime
     self.st_size = len(self.contents)
     if self.filesystem and self.filesystem.total_size is not None:
       if self.filesystem.GetDiskUsage().free < self.st_size - current_size:
@@ -308,6 +306,20 @@ class FakeFile(object):
                       self.name)
       self.filesystem.ChangeDiskUsage(self.st_size - current_size)
     self.epoch += 1
+
+  def SetContents(self, contents):
+    """Sets the file contents and size and increases the modification time.
+
+    Args:
+      contents: string, new content of file.
+
+    Raises:
+      IOError: if the st_size is not a non-negative integer,
+               or if st_size exceeds the available file system space
+    """
+    self._SetInitialContents(contents)
+    self.st_ctime = time.time()
+    self.st_mtime = self._st_ctime
 
   def GetSize(self):
     """Returns the size in bytes of the file contents."""
@@ -467,7 +479,7 @@ class FakeFilesystem(object):
        or placeholder holder values simulating unlimited space if not set.
        Note: This matches the return value of shutil.disk_usage().
     """
-    DiskUsage = namedtuple('DiskUsage', 'total, used, free')
+    DiskUsage = namedtuple('usage', 'total, used, free')
     if self.total_size is not None:
       return DiskUsage(self.total_size, self.used_size, self.total_size - self.used_size)
     return DiskUsage(1024*1024*1024, 0, 1024*1024*1024)
@@ -1122,7 +1134,7 @@ class FakeFilesystem(object):
         if st_size is not None:
           file_object.SetLargeFileSize(st_size)
         else:
-          file_object.SetContents(contents, update_time=False)
+          file_object._SetInitialContents(contents)
       except IOError:
         self.RemoveObject(file_path)
         raise
