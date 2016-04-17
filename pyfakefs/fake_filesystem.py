@@ -402,6 +402,7 @@ class FakeFilesystem(object):
     if path_separator != os.sep:
       self.alternative_path_separator = None
     self.is_case_sensitive = not _is_windows and sys.platform != 'darwin'
+    self.supports_drive_letter = _is_windows
     self.root = FakeDirectory(self.path_separator)
     self.cwd = self.root.name
     # We can't query the current value without changing it:
@@ -558,7 +559,7 @@ class FakeFilesystem(object):
     path = self.NormalizePathSeparator(path)
     if not path:
       path = self.path_separator
-    elif not path.startswith(self.path_separator):
+    elif not self._StartsWithRootPath(path):
       # Prefix relative paths with cwd, if cwd is not root.
       path = self.path_separator.join(
           (self.cwd != self.root.name and self.cwd or '',
@@ -614,7 +615,7 @@ class FakeFilesystem(object):
       return paths[0]
     joined_path_segments = []
     for path_segment in paths:
-      if path_segment.startswith(self.path_separator):
+      if self._StartsWithRootPath(path_segment):
         # An absolute path
         joined_path_segments = [path_segment]
       else:
@@ -656,8 +657,15 @@ class FakeFilesystem(object):
       path_components = path_components[1:]
     return path_components
 
+  def _StartsWithRootPath(self, file_path):
+    return (file_path.startswith(self.root.name) or
+            not self.is_case_sensitive and file_path.lower().startswith(self.root.name.lower()) or
+            self.supports_drive_letter and len(file_path) >= 2 and file_path[0].isalpha and file_path[1] == ':')
+
   def _IsRootPath(self, file_path):
-    return file_path == self.root.name or not self.is_case_sensitive and file_path.lower() == self.root.name.lower()
+    return (file_path == self.root.name or
+            not self.is_case_sensitive and file_path.lower() == self.root.name.lower() or
+            self.supports_drive_letter and len(file_path) == 2 and file_path[0].isalpha and file_path[1] == ':')
 
   def _DirectoryContent(self, directory, component):
     if component in directory.contents:
