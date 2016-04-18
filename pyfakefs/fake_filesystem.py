@@ -259,7 +259,8 @@ class FakeFile(object):
                or if st_size exceeds the available file system space
     """
     # the st_size should be an positive integer value
-    if not isinstance(st_size, int) or st_size < 0:
+    int_types = (int, long) if sys.version_info < (3, 0) else int
+    if not isinstance(st_size, int_types) or st_size < 0:
       raise IOError(errno.ENOSPC,
                     'Fake file object: can not create non negative integer '
                     'size=%r fake file' % st_size,
@@ -292,13 +293,18 @@ class FakeFile(object):
     """
     # Wrap byte arrays into a safe format
     if sys.version_info >= (3, 0) and isinstance(contents, bytes):
+      st_size = len(contents)
       contents = Hexlified(contents)
+    elif sys.version_info < (3, 0) and isinstance(contents, str):
+      st_size = len(contents)
+    else:
+      st_size = len(contents.encode('utf=8'))
 
     if self.contents:
       self.SetSize(0)
     current_size = self.st_size or 0
     self.contents = contents
-    self.st_size = len(self.contents)
+    self.st_size = st_size
     if self.filesystem and self.filesystem.total_size is not None:
       if self.filesystem.GetDiskUsage().free < self.st_size - current_size:
         raise IOError(errno.ENOSPC,
@@ -483,7 +489,7 @@ class FakeFilesystem(object):
     DiskUsage = namedtuple('usage', 'total, used, free')
     if self.total_size is not None:
       return DiskUsage(self.total_size, self.used_size, self.total_size - self.used_size)
-    return DiskUsage(1024*1024*1024, 0, 1024*1024*1024)
+    return DiskUsage(1024*1024*1024*1024, 0, 1024*1024*1024*1024)
 
   def ChangeDiskUsage(self, usage_change):
     """Changes the used disk space by the given amount.
