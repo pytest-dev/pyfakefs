@@ -3293,15 +3293,19 @@ class DiskSpaceTest(TestCase):
     self.assertEqual((100, 5, 95), self.filesystem.GetDiskUsage())
 
   def testFileSystemSizeAfterAsciiStringFileCreation(self):
-    self.filesystem.CreateFile('/foo/bar', contents=u'complicated')
+    if sys.version_info < (3, 0):
+      contents = u'complicated'
+    else:
+      contents = 'complicated'
+    self.filesystem.CreateFile('/foo/bar', contents=contents)
     self.assertEqual((100, 11, 89), self.filesystem.GetDiskUsage())
 
   def testFileSystemSizeAfter2ByteUnicodeStringFileCreation(self):
-    self.filesystem.CreateFile('/foo/bar', contents=u'сложно')
+    self.filesystem.CreateFile('/foo/bar', contents='сложно')
     self.assertEqual((100, 12, 88), self.filesystem.GetDiskUsage())
 
   def testFileSystemSizeAfter3ByteUnicodeStringFileCreation(self):
-    self.filesystem.CreateFile('/foo/bar', contents=u'複雑')
+    self.filesystem.CreateFile('/foo/bar', contents='複雑')
     self.assertEqual((100, 6, 94), self.filesystem.GetDiskUsage())
 
   def testFileSystemSizeAfterFileDeletion(self):
