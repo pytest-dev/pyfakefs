@@ -3279,6 +3279,10 @@ class DriveLetterSupportTest(TestCase):
   def testResolvePath(self):
     self.assertEqual('c:/foo/bar', self.filesystem.ResolvePath('c:/foo/bar'))
 
+  def testGetPathComponents(self):
+    self.assertEqual(['c:', 'foo', 'bar'], self.filesystem.GetPathComponents('c:/foo/bar'))
+    self.assertEqual(['c:'], self.filesystem.GetPathComponents('c:'))
+
 
 class DiskSpaceTest(TestCase):
   def setUp(self):

@@ -735,7 +735,7 @@ class FakeFilesystem(object):
     Returns:
       The list of names split from path
     """
-    if not path or self._IsRootPath(path):
+    if not path or path == self.path_separator:
       return []
     path_components = path.split(self.path_separator)
     assert path_components
