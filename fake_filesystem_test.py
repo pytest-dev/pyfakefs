@@ -3276,6 +3276,9 @@ class DriveLetterSupportTest(TestCase):
   def testCharactersBeforeRootIgnoredInJoinPaths(self):
     self.assertEqual('c:/d', self.filesystem.JoinPaths('b', 'c:', 'd'))
 
+  def testResolvePath(self):
+    self.assertEqual('c:/foo/bar', self.filesystem.ResolvePath('c:/foo/bar'))
+
 
 class DiskSpaceTest(TestCase):
   def setUp(self):
