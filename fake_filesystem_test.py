@@ -3276,5 +3276,84 @@ class DriveLetterSupportTest(TestCase):
   def testCharactersBeforeRootIgnoredInJoinPaths(self):
     self.assertEqual('c:/d', self.filesystem.JoinPaths('b', 'c:', 'd'))
 
+
+class DiskSpaceTest(TestCase):
+  def setUp(self):
+    self.filesystem = fake_filesystem.FakeFilesystem(path_separator='/', total_size=100)
+
+  def testFileSystemSizeAfterLargeFileCreation(self):
+    filesystem = fake_filesystem.FakeFilesystem(path_separator='/', total_size=1024*1024*1024*100)
+    filesystem.CreateFile('/foo/baz', st_size=1024*1024*1024*10)
+    self.assertEqual((1024*1024*1024*100,
+                      1024*1024*1024*10,
+                      1024*1024*1024*90), filesystem.GetDiskUsage())
+
+  def testFileSystemSizeAfterBinaryFileCreation(self):
+    self.filesystem.CreateFile('/foo/bar', contents=b'xyzzy')
+    self.assertEqual((100, 5, 95), self.filesystem.GetDiskUsage())
+
+  def testFileSystemSizeAfterAsciiStringFileCreation(self):
+    self.filesystem.CreateFile('/foo/bar', contents='complicated')
+    self.assertEqual((100, 11, 89), self.filesystem.GetDiskUsage())
+
+  def testFileSystemSizeAfter2ByteUnicodeStringFileCreation(self):
+    self.filesystem.CreateFile('/foo/bar', contents='сложно')
+    self.assertEqual((100, 12, 88), self.filesystem.GetDiskUsage())
+
+  def testFileSystemSizeAfter3ByteUnicodeStringFileCreation(self):
+    self.filesystem.CreateFile('/foo/bar', contents='複雑')
+    self.assertEqual((100, 6, 94), self.filesystem.GetDiskUsage())
+
+  def testFileSystemSizeAfterFileDeletion(self):
+    self.filesystem.CreateFile('/foo/bar', contents=b'xyzzy')
+    self.filesystem.CreateFile('/foo/baz', st_size=20)
+    self.filesystem.RemoveObject('/foo/bar')
+    self.assertEqual((100, 20, 80), self.filesystem.GetDiskUsage())
+
+  def testFileSystemSizeAfterDirectoryRemoval(self):
+    self.filesystem.CreateFile('/foo/bar', st_size=10)
+    self.filesystem.CreateFile('/foo/baz', st_size=20)
+    self.filesystem.CreateFile('/foo1/bar', st_size=40)
+    self.filesystem.RemoveObject('/foo')
+    self.assertEqual((100, 40, 60), self.filesystem.GetDiskUsage())
+
+  def testCreatingFileWithFittingContent(self):
+    try:
+      self.filesystem.CreateFile('/foo/bar', contents=b'a'*100)
+    except IOError:
+      self.fail('File with contents fitting into disk space could not be written.')
+
+  def testCreatingFileWithContentTooLarge(self):
+      def create_large_file():
+        self.filesystem.CreateFile('/foo/bar', contents=b'a'*101)
+
+      self.assertRaises(IOError, create_large_file)
+
+  def testCreatingFileWithFittingSize(self):
+    try:
+      self.filesystem.CreateFile('/foo/bar', st_size=100)
+    except IOError:
+      self.fail('File with size fitting into disk space could not be written.')
+
+  def testCreatingFileWithSizeTooLarge(self):
+      def create_large_file():
+        self.filesystem.CreateFile('/foo/bar', st_size=101)
+
+      self.assertRaises(IOError, create_large_file)
+
+  def testResizeFileWithFittingSize(self):
+    file_object = self.filesystem.CreateFile('/foo/bar', st_size=50)
+    try:
+      file_object.SetLargeFileSize(100)
+      file_object.SetContents(b'a'*100)
+    except IOError:
+      self.fail('Resizing file failed although disk space was sufficient.')
+
+  def testResizeFileWithSizeTooLarge(self):
+    file_object = self.filesystem.CreateFile('/foo/bar', st_size=50)
+    self.assertRaises(IOError, lambda: file_object.SetLargeFileSize(200))
+    self.assertRaises(IOError, lambda: file_object.SetContents('a'*150))
+
+
 if __name__ == '__main__':
   unittest.main()

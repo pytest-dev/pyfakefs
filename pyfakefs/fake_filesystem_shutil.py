@@ -240,6 +240,15 @@ class FakeShutilModule(object):
       self.copy2(src, dst)
     self.filesystem.RemoveObject(src)
 
+  def disk_usage(self, path):
+    """Returns the total, used and free disk space in bytes as named tuple
+       or placeholder holder values simulating unlimited space if not set.
+
+    Args:
+      path: ignored (always the whole fake file system is considered)
+    """
+    return self.filesystem.GetDiskUsage()
+
   def __getattr__(self, name):
     """Forwards any non-faked calls to the standard shutil module."""
     return getattr(self._shutil_module, name)
