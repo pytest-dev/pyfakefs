@@ -830,8 +830,10 @@ class FakeFilesystem(object):
     """
 
     def _ComponentsToPath(component_folders):
-      return '%s%s' % (self.path_separator,
-                       self.path_separator.join(component_folders))
+      path = self.path_separator.join(component_folders)
+      if not self._StartsWithRootPath(path):
+        path = self.path_separator + path
+      return path
 
     def _ValidRelativePath(file_path):
       while file_path and '/..' in file_path:
