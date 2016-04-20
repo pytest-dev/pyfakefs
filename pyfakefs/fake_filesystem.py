@@ -685,6 +685,38 @@ class FakeFilesystem(object):
     # Root path.  Collapse all leading separators.
     return (self.path_separator, basename)
 
+  def _JoinPathsWithDrive(self, *all_paths):
+    """Taken from Python 3.5 code in natpath.py and slightly adapted"""
+    path = all_paths[0]
+    paths = all_paths[1:]
+    seps = [self.path_separator, self.alternative_path_separator]
+    result_drive, result_path = os.path.splitdrive(path)
+    for p in paths:
+      p_drive, p_path = os.path.splitdrive(p)
+      if p_path and p_path[0] in seps:
+        # Second path is absolute
+        if p_drive or not result_drive:
+            result_drive = p_drive
+        result_path = p_path
+        continue
+      elif p_drive and p_drive != result_drive:
+          if not self.is_case_sensitive and p_drive.lower() != result_drive.lower():
+              # Different drives => ignore the first path entirely
+              result_drive = p_drive
+              result_path = p_path
+              continue
+          # Same drive in different case
+          result_drive = p_drive
+      # Second path is relative to the first
+      if result_path and result_path[-1] not in seps:
+          result_path = result_path + self.path_separator
+      result_path = result_path + p_path
+    ## add separator between UNC and non-absolute path
+    if (result_path and result_path[0] not in seps and
+        result_drive and result_drive[-1:] != ':'):
+        return result_drive + self.path_separator + result_path
+    return result_drive + result_path
+
   def JoinPaths(self, *paths):
     """Mimics os.path.join using the specified path_separator.
 
@@ -700,6 +732,8 @@ class FakeFilesystem(object):
     """
     if len(paths) == 1:
       return paths[0]
+    if self.supports_drive_letter:
+      return self._JoinPathsWithDrive(*paths)
     joined_path_segments = []
     for path_segment in paths:
       if self._StartsWithRootPath(path_segment):
@@ -744,15 +778,23 @@ class FakeFilesystem(object):
       path_components = path_components[1:]
     return path_components
 
+  def _StartsWithDriveLetter(self, file_path):
+    return self.supports_drive_letter and len(file_path) >= 2 and file_path[0].isalpha and file_path[1] == ':'
+
   def _StartsWithRootPath(self, file_path):
     return (file_path.startswith(self.root.name) or
             not self.is_case_sensitive and file_path.lower().startswith(self.root.name.lower()) or
-            self.supports_drive_letter and len(file_path) >= 2 and file_path[0].isalpha and file_path[1] == ':')
+            self._StartsWithDriveLetter(file_path))
 
   def _IsRootPath(self, file_path):
     return (file_path == self.root.name or
             not self.is_case_sensitive and file_path.lower() == self.root.name.lower() or
-            self.supports_drive_letter and len(file_path) == 2 and file_path[0].isalpha and file_path[1] == ':')
+            len(file_path) == 2 and self._StartsWithDriveLetter(file_path))
+
+  def _EndsWithPathSeparator(self, file_path):
+    return file_path and (file_path.endswith(self.path_separator)
+                          or self.alternative_path_separator is not None
+                          and file_path.endswith(self.alternative_path_separator))
 
   def _DirectoryContent(self, directory, component):
     if component in directory.contents:
@@ -1310,12 +1352,19 @@ class FakePathModule(object):
 
   def abspath(self, path):
     """Return the absolute version of a path."""
-    if not self.isabs(path):
+    def getcwd():
       if sys.version_info < (3, 0) and isinstance(path, unicode):
-        cwd = self.os.getcwdu()
+        return self.os.getcwdu()
       else:
-        cwd = self.os.getcwd()
-      path = self.join(cwd, path)
+        return self.os.getcwd()
+
+    if not self.isabs(path):
+      path = self.join(getcwd(), path)
+    elif (self.filesystem.supports_drive_letter and
+        path.startswith(self.sep) or self.altsep is not None and path.startswith(self.altsep)):
+      cwd = getcwd()
+      if self.filesystem._StartsWithDriveLetter(cwd):
+        path = self.join(cwd[:2], path)
     return self.normpath(path)
 
   def join(self, *p):
@@ -1878,7 +1927,7 @@ class FakeOsModule(object):
       OSError: if the directory name is invalid or parent directory is read only
       or as per FakeFilesystem.AddObject.
     """
-    if dir_name.endswith(self.sep):
+    if self.filesystem._EndsWithPathSeparator(dir_name):
       dir_name = dir_name[:-1]
 
     parent_dir, _ = self.path.split(dir_name)
