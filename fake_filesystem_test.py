@@ -1965,6 +1965,13 @@ class FakePathModuleTest(TestCase):
     self.assertEqual(self.path.join(basedir, file_components[1]),
                      self.path.abspath(file_components[1]))
 
+  def testAbsPathWithDriveComponent(self):
+    self.filesystem.supports_drive_letter = True
+    self.filesystem.cwd = 'C:/foo'
+    self.assertEqual('C:/foo/bar', self.path.abspath('bar'))
+    self.assertEqual('C:/foo/bar', self.path.abspath('C:bar'))
+    self.assertEqual('C:/foo/bar', self.path.abspath('/foo/bar'))
+
   def testRelpath(self):
     path_foo = '/path/to/foo'
     path_bar = '/path/to/bar'
@@ -3274,7 +3281,7 @@ class DriveLetterSupportTest(TestCase):
     self.assertEqual(('c:/foo', 'bar'), self.filesystem.SplitPath('c:/foo/bar'))
 
   def testCharactersBeforeRootIgnoredInJoinPaths(self):
-    self.assertEqual('c:/d', self.filesystem.JoinPaths('b', 'c:', 'd'))
+    self.assertEqual('c:d', self.filesystem.JoinPaths('b', 'c:', 'd'))
 
   def testResolvePath(self):
     self.assertEqual('c:/foo/bar', self.filesystem.ResolvePath('c:/foo/bar'))
