@@ -1330,9 +1330,12 @@ class FakePathModule(object):
     return False
 
   def isabs(self, path):
-    if self.filesystem.supports_drive_letter:
-      path = self.splitdrive(path)[1]
-    return len(path) > 0 and path[0] in (self.sep, self.altsep)
+    if self.filesystem.path_separator == os.path.sep:
+      # Pass through to os.path.isabs, which on Windows has special
+      # handling for a leading drive letter.
+      return self._os_path.isabs(path)
+    else:
+      return path.startswith(self.filesystem.path_separator)
 
   def isdir(self, path):
     """Determines if path identifies a directory."""
