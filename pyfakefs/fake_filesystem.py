@@ -668,6 +668,7 @@ class FakeFilesystem(object):
       (str) A duple (pathname, basename) for which pathname does not
           end with a slash, and basename does not contain a slash.
     """
+    drive, path = self.SplitDrive(path)
     path = self.NormalizePathSeparator(path)
     path_components = path.split(self.path_separator)
     if not path_components:
@@ -681,47 +682,65 @@ class FakeFilesystem(object):
         # Strip all trailing separators.
         while not path_components[-1]:
           path_components.pop()
-        return (self.path_separator.join(path_components), basename)
+        return (drive + self.path_separator.join(path_components), basename)
     # Root path.  Collapse all leading separators.
-    return (self.path_separator, basename)
+    return (drive + self.path_separator, basename)
 
   def SplitDrive(self, path):
-    """Splits the path into the drive part and the rest of the path, if if drive letters are supported,
-       and a drive is presnt, otherwise returns an empty string and the original path.
+    """Splits the path into the drive part and the rest of the path, if drive letters are supported
+       and a drive is present, otherwise returns an empty string and the original path.
+       Taken from Windows specific implementation in Python 3.5 and slightly adapted.
     """
     if self.supports_drive_letter:
       if len(path) >= 2:
-          path = self.NormalizePathSeparator(path)
-          if path[1] == ':':
-              return path[:2], path[2:]
+        path = self.NormalizePathSeparator(path)
+        # UNC path handling is here since Python 2.7.8, back-ported from Python 3
+        if sys.version_info >= (2, 7, 8):
+          if (path[0:2] == self.path_separator*2) and (path[2:3] != self.path_separator):
+            # UNC path handling - splits off the mount point instead of the drive
+            sep_index = path.find(self.path_separator, 2)
+            if sep_index == -1:
+              return path[:0], path
+            sep_index2 = path.find(self.path_separator, sep_index + 1)
+            if sep_index2 == sep_index + 1:
+              return path[:0], path
+            if sep_index2 == -1:
+              sep_index2 = len(path)
+            return path[:sep_index2], path[sep_index2:]
+        if path[1] == ':':
+          return path[:2], path[2:]
     return path[:0], path
 
   def _JoinPathsWithDriveSupport(self, *all_paths):
     """Taken from Python 3.5 os.path.join() code in ntpath.py and slightly adapted"""
-    path = all_paths[0]
-    paths = all_paths[1:]
+    base_path = all_paths[0]
+    paths_to_add = all_paths[1:]
     seps = [self.path_separator, self.alternative_path_separator]
-    result_drive, result_path = self.SplitDrive(path)
-    for p in paths:
-      p_drive, p_path = self.SplitDrive(p)
-      if p_path and p_path[0] in seps:
+    result_drive, result_path = self.SplitDrive(base_path)
+    for path in paths_to_add:
+      drive_part, path_part = self.SplitDrive(path)
+      if path_part and path_part[0] in seps:
         # Second path is absolute
-        if p_drive or not result_drive:
-            result_drive = p_drive
-        result_path = p_path
+        if drive_part or not result_drive:
+            result_drive = drive_part
+        result_path = path_part
         continue
-      elif p_drive and p_drive != result_drive:
-          if not self.is_case_sensitive and p_drive.lower() != result_drive.lower():
-              # Different drives => ignore the first path entirely
-              result_drive = p_drive
-              result_path = p_path
-              continue
-          # Same drive in different case
-          result_drive = p_drive
+      elif drive_part and drive_part != result_drive:
+        if self.is_case_sensitive or drive_part.lower() != result_drive.lower():
+          # Different drives => ignore the first path entirely
+          result_drive = drive_part
+          result_path = path_part
+          continue
+        # Same drive in different case
+        result_drive = drive_part
       # Second path is relative to the first
       if result_path and result_path[-1] not in seps:
           result_path = result_path + self.path_separator
-      result_path = result_path + p_path
+      result_path = result_path + path_part
+    # add separator between UNC and non-absolute path
+    if (result_path and result_path[0] not in seps and
+        result_drive and result_drive[-1:] != ':'):
+        return result_drive + self.path_separator + result_path
     return result_drive + result_path
 
   def JoinPaths(self, *paths):
@@ -1311,12 +1330,9 @@ class FakePathModule(object):
     return False
 
   def isabs(self, path):
-    if self.filesystem.path_separator == os.path.sep:
-      # Pass through to os.path.isabs, which on Windows has special
-      # handling for a leading drive letter.
-      return self._os_path.isabs(path)
-    else:
-      return path.startswith(self.filesystem.path_separator)
+    if self.filesystem.supports_drive_letter:
+      path = self.splitdrive(path)[1]
+    return len(path) > 0 and path[0] in (self.sep, self.altsep)
 
   def isdir(self, path):
     """Determines if path identifies a directory."""
@@ -1378,7 +1394,7 @@ class FakePathModule(object):
     """Returns the completed path with a separator of the parts."""
     return self.filesystem.JoinPaths(*p)
 
-  def splitpath(self, path):
+  def splitdrive(self, path):
     """Splits the path into the drive part and the rest of the path, if supported."""
     return self.filesystem.SplitDrive(path)
 

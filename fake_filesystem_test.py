@@ -3296,6 +3296,14 @@ class DriveLetterSupportTest(TestCase):
     self.assertEqual(('c:', 'foo/bar'), self.filesystem.SplitDrive('c:foo/bar'))
     self.assertEqual(('', 'foo/bar'), self.filesystem.SplitDrive('foo/bar'))
 
+  @unittest.skipIf(sys.version_info < (2, 7, 8), 'UNC path support since Python 2.7.8')
+  def testSplitDriveWithUncPath(self):
+    self.assertEqual(('//foo/bar', '/baz'), self.filesystem.SplitDrive('//foo/bar/baz'))
+    self.assertEqual(('', '//foo'), self.filesystem.SplitDrive('//foo'))
+    self.assertEqual(('', '//foo//bar'), self.filesystem.SplitDrive('//foo//bar'))
+    self.assertEqual(('//foo/bar', '//'), self.filesystem.SplitDrive('//foo/bar//'))
+
+
 class DiskSpaceTest(TestCase):
   def setUp(self):
     self.filesystem = fake_filesystem.FakeFilesystem(path_separator='/', total_size=100)
