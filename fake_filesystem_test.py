@@ -1972,6 +1972,12 @@ class FakePathModuleTest(TestCase):
     self.assertEqual('C:/foo/bar', self.path.abspath('C:bar'))
     self.assertEqual('C:/foo/bar', self.path.abspath('/foo/bar'))
 
+  def testIsabsWithDriveComponent(self):
+    self.filesystem.supports_drive_letter = False
+    self.assertFalse(self.path.isabs('C:/foo'))
+    self.filesystem.supports_drive_letter = True
+    self.assertTrue(self.path.isabs('C:/foo'))
+
   def testRelpath(self):
     path_foo = '/path/to/foo'
     path_bar = '/path/to/bar'
@@ -3129,9 +3135,10 @@ class CollapsePathPipeSeparatorTest(PathManipulationTests):
 
   def testIgnoresUpLevelReferencesStartingFromRoot(self):
     self.assertEqual('|', self.filesystem.CollapsePath('|..|..|..|'))
-    self.assertEqual('|', self.filesystem.CollapsePath('||..|.|..||'))
     self.assertEqual(
         '|', self.filesystem.CollapsePath('|..|..|foo|bar|..|..|'))
+    self.filesystem.supports_drive_letter = False  # shall not be handled as UNC path
+    self.assertEqual('|', self.filesystem.CollapsePath('||..|.|..||'))
 
   def testConservesUpLevelReferencesStartingFromCurrentDirectory(self):
     self.assertEqual(
@@ -3271,6 +3278,10 @@ class DriveLetterSupportTest(TestCase):
 
   def testCollapsePath(self):
     self.assertEqual('c:/foo/bar', self.filesystem.CollapsePath('c://foo//bar'))
+
+  @unittest.skipIf(sys.version_info < (2, 7, 8), 'UNC path support since Python 2.7.8')
+  def testCollapseUncPath(self):
+    self.assertEqual('//foo/bar/baz', self.filesystem.CollapsePath('//foo/bar//baz//'))
 
   def testNormalizePath(self):
     self.assertEqual('c:/foo/bar', self.filesystem.NormalizePath('c:/foo//bar'))

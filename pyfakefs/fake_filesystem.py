@@ -593,6 +593,7 @@ class FakeFilesystem(object):
       (str) A copy of path with empty components and dot components removed.
     """
     path = self.NormalizePathSeparator(path)
+    drive, path = self.SplitDrive(path)
     is_absolute_path = path.startswith(self.path_separator)
     path_components = path.split(self.path_separator)
     collapsed_path_components = []
@@ -612,7 +613,7 @@ class FakeFilesystem(object):
     collapsed_path = self.path_separator.join(collapsed_path_components)
     if is_absolute_path:
       collapsed_path = self.path_separator + collapsed_path
-    return collapsed_path or '.'
+    return drive + collapsed_path or '.'
 
   def NormalizeCase(self, path):
     if self.is_case_sensitive or not path:
@@ -1330,12 +1331,12 @@ class FakePathModule(object):
     return False
 
   def isabs(self, path):
-    if self.filesystem.path_separator == os.path.sep:
-      # Pass through to os.path.isabs, which on Windows has special
-      # handling for a leading drive letter.
-      return self._os_path.isabs(path)
+    if self.filesystem.supports_drive_letter:
+      path = self.splitdrive(path)[1]
+    if _is_windows:
+      return len(path) > 0 and path[0] in (self.sep, self.altsep)
     else:
-      return path.startswith(self.filesystem.path_separator)
+      return path.startswith(self.sep) or self.altsep is not None and path.startswith(self.altsep)
 
   def isdir(self, path):
     """Determines if path identifies a directory."""
