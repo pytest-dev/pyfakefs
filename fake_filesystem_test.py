@@ -3318,6 +3318,7 @@ class DriveLetterSupportTest(TestCase):
 class DiskSpaceTest(TestCase):
   def setUp(self):
     self.filesystem = fake_filesystem.FakeFilesystem(path_separator='/', total_size=100)
+    self.os = fake_filesystem.FakeOsModule(self.filesystem)
 
   def testFileSystemSizeAfterLargeFileCreation(self):
     filesystem = fake_filesystem.FakeFilesystem(path_separator='/', total_size=1024*1024*1024*100)
@@ -3391,6 +3392,16 @@ class DiskSpaceTest(TestCase):
     file_object = self.filesystem.CreateFile('/foo/bar', st_size=50)
     self.assertRaises(IOError, lambda: file_object.SetLargeFileSize(200))
     self.assertRaises(IOError, lambda: file_object.SetContents('a'*150))
+
+  def testFileSystemSizeAfterDirectoryRename(self):
+    self.filesystem.CreateFile('/foo/bar', st_size=20)
+    self.os.rename('/foo', '/baz')
+    self.assertEqual(20, self.filesystem.GetDiskUsage().used)
+
+  def testFileSystemSizeAfterFileRename(self):
+    self.filesystem.CreateFile('/foo/bar', st_size=20)
+    self.os.rename('/foo/bar', '/foo/baz')
+    self.assertEqual(20, self.filesystem.GetDiskUsage().used)
 
 
 if __name__ == '__main__':

@@ -410,6 +410,8 @@ class FakeDirectory(FakeFile):
       path_object:  FakeFile instance to add as a child of this directory
     """
     self.contents[path_object.name] = path_object
+    if self.filesystem:
+      self.filesystem.ChangeDiskUsage(path_object.GetSize())
 
   def GetEntry(self, pathname_name):
     """Retrieves the specified child file or directory.
@@ -1895,10 +1897,12 @@ class FakeOsModule(object):
       new_dir_object.AddEntry(old_object)
       old_dir_object.RemoveEntry(old_name)
     else:
+      st_size = old_object.st_size if old_object.contents is None else None
       self.filesystem.CreateFile(new_file,
                                  st_mode=old_object.st_mode,
                                  contents=old_object.contents,
-                                 create_missing_dirs=False)
+                                 create_missing_dirs=False,
+                                 st_size=st_size)
       self.remove(old_file)
     new_object = self.filesystem.GetObject(new_file)
     new_object.SetMTime(old_object_mtime)
