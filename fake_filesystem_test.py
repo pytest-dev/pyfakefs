@@ -3290,6 +3290,7 @@ class DriveLetterSupportTest(TestCase):
 
   def testSplitPath(self):
     self.assertEqual(('c:/foo', 'bar'), self.filesystem.SplitPath('c:/foo/bar'))
+    self.assertEqual(('c:', 'foo'), self.filesystem.SplitPath('c:/foo'))
 
   def testCharactersBeforeRootIgnoredInJoinPaths(self):
     self.assertEqual('c:d', self.filesystem.JoinPaths('b', 'c:', 'd'))

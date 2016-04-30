@@ -687,7 +687,7 @@ class FakeFilesystem(object):
           path_components.pop()
         return (drive + self.path_separator.join(path_components), basename)
     # Root path.  Collapse all leading separators.
-    return (drive + self.path_separator, basename)
+    return (drive or self.path_separator, basename)
 
   def SplitDrive(self, path):
     """Splits the path into the drive part and the rest of the path, if drive letters are supported
