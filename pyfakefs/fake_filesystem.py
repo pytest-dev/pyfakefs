@@ -210,10 +210,10 @@ class FakeFile(object):
       self.st_size = len(contents)
     else:
       self.st_size = 0
+    self.st_nlink = 1
     # Non faked features, write setter methods for fakeing them
     self.st_ino = None
     self.st_dev = None
-    self.st_nlink = None
     self.st_uid = None
     self.st_gid = None
     # shall be set on creating the file from the file system to get access to fs available space
@@ -436,6 +436,11 @@ class FakeDirectory(FakeFile):
     """
     if pathname_name in self.contents and self.filesystem:
       self.filesystem.ChangeDiskUsage(-self.contents[pathname_name].GetSize())
+
+    entry = self.contents[pathname_name]
+    entry.st_nlink -= 1
+    assert entry.st_nlink >= 0
+
     del self.contents[pathname_name]
 
   def GetSize(self):
@@ -1244,6 +1249,49 @@ class FakeFilesystem(object):
     resolved_file_path = self.ResolvePath(file_path)
     return self.CreateFile(resolved_file_path, st_mode=stat.S_IFLNK | PERM_DEF,
                            contents=link_target)
+
+  def CreateHardLink(self, old_path, new_path):
+    """Create a hard link at new_path, pointing at old_path.
+
+    Args:
+      old_path: an existing link to the target file
+      new_path: the destination path to create a new link at
+
+    Returns:
+      the FakeFile object referred to by old_path
+
+    Raises:
+      OSError:  if something already exists at new_path
+      OSError:  if the parent directory doesn't exist
+    """
+    new_path_normalized = self.NormalizePath(new_path)
+    if self.Exists(new_path_normalized):
+      raise IOError(errno.EEXIST,
+                    'File already exists in fake filesystem',
+                    new_path)
+
+    new_parent_directory, new_basename = self.SplitPath(new_path_normalized)
+    if not new_parent_directory:
+      new_parent_directory = self.cwd
+
+    if not self.Exists(new_parent_directory):
+      raise OSError(errno.ENOENT, 'No such fake directory',
+                    new_parent_directory)
+
+    # Retrieve the target file
+    try:
+      old_file = self.GetObject(old_path)
+    except:
+      raise OSError(errno.ENOENT,
+                    'No such file or directory in fake filesystem',
+                    old_path)
+
+    old_file.st_nlink += 1
+
+    # abuse the name field to control the filename of the newly created link
+    old_file.name = new_basename
+    self.AddObject(new_parent_directory, old_file)
+    return old_file
 
   def __str__(self):
     return str(self.root)
@@ -2169,9 +2217,8 @@ class FakeOsModule(object):
     """
     self.filesystem.CreateLink(path, link_target)
 
-  # pylint: disable-msg=C6002
-  # TODO: Link doesn't behave like os.link, this needs to be fixed properly.
-  link = symlink
+  def link(self, oldpath, newpath):
+      self.filesystem.CreateHardLink(oldpath, newpath)
 
   def fsync(self, file_des):
     """Perform fsync for a fake file (in other words, do nothing).

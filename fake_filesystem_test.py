@@ -1740,6 +1740,88 @@ class FakeOsModuleTest(TestCase):
     self.assertTrue(self.os.path.lexists(file_path))
     self.assertTrue(self.os.path.exists(file_path))
 
+  # hard link related tests
+
+  def testLinkBogus(self):
+    # trying to create a link from a non-existent file should fail
+    self.assertRaises(OSError,
+                     self.os.link, '/nonexistent_source', '/link_dest')
+
+  def testLinkDelete(self):
+    fake_open = fake_filesystem.FakeFileOpen(self.filesystem)
+
+    file1_path = 'test_file1'
+    file2_path = 'test_file2'
+    contents1 = 'abcdef'
+    # Create file
+    self.filesystem.CreateFile(file1_path, contents=contents1)
+    # link to second file
+    self.os.link(file1_path, file2_path)
+    # delete first file
+    self.os.unlink(file1_path)
+    # assert that second file exists, and its contents are the same
+    self.assertTrue(self.os.path.exists(file2_path))
+    with fake_open(file2_path) as f:
+        self.assertEqual(f.read(), contents1)
+
+  def testLinkUpdate(self):
+    fake_open = fake_filesystem.FakeFileOpen(self.filesystem)
+
+    file1_path = 'test_file1'
+    file2_path = 'test_file2'
+    contents1 = 'abcdef'
+    contents2 = 'ghijkl'
+    # Create file and link
+    self.filesystem.CreateFile(file1_path, contents=contents1)
+    self.os.link(file1_path, file2_path)
+    # assert that the second file contains contents1
+    with fake_open(file2_path) as f:
+        self.assertEqual(f.read(), contents1)
+    # update the first file
+    with fake_open(file1_path, 'w') as f:
+        f.write(contents2)
+    # assert that second file contains contents2
+    with fake_open(file2_path) as f:
+        self.assertEqual(f.read(), contents2)
+
+  def testLinkNonExistentParent(self):
+    fake_open = fake_filesystem.FakeFileOpen(self.filesystem)
+
+    file1_path = 'test_file1'
+    breaking_link_path = 'nonexistent/test_file2'
+    contents1 = 'abcdef'
+    # Create file and link
+    self.filesystem.CreateFile(file1_path, contents=contents1)
+
+    # trying to create a link under a non-existent directory should fail
+    self.assertRaises(OSError,
+                     self.os.link, file1_path, breaking_link_path)
+
+  def testLinkCount1(self):
+    """Test that hard link counts are updated correctly."""
+    file1_path = 'test_file1'
+    file2_path = 'test_file2'
+    file3_path = 'test_file3'
+    self.filesystem.CreateFile(file1_path)
+    # initial link count should be one
+    self.assertEqual(self.os.stat(file1_path).st_nlink, 1)
+    self.os.link(file1_path, file2_path)
+    # the count should be incremented for each hard link created
+    self.assertEqual(self.os.stat(file1_path).st_nlink, 2)
+    self.assertEqual(self.os.stat(file2_path).st_nlink, 2)
+    # Check that the counts are all updated together
+    self.os.link(file2_path, file3_path)
+    self.assertEqual(self.os.stat(file1_path).st_nlink, 3)
+    self.assertEqual(self.os.stat(file2_path).st_nlink, 3)
+    self.assertEqual(self.os.stat(file3_path).st_nlink, 3)
+    # Counts should be decremented when links are removed
+    self.os.unlink(file3_path)
+    self.assertEqual(self.os.stat(file1_path).st_nlink, 2)
+    self.assertEqual(self.os.stat(file2_path).st_nlink, 2)
+    # check that it gets decremented correctly again
+    self.os.unlink(file1_path)
+    self.assertEqual(self.os.stat(file2_path).st_nlink, 1)
+
   def testUMask(self):
     umask = os.umask(0o22)
     os.umask(umask)
