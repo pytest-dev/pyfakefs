@@ -267,12 +267,8 @@ class FakeFile(object):
                     self.name)
     if self.st_size:
       self.SetSize(0)
-    if self.filesystem and self.filesystem.total_size is not None:
-      if self.filesystem.GetDiskUsage().free < st_size:
-        raise IOError(errno.ENOSPC,
-                      'Fake file system: disk is full, failed to set file size to %r bytes' % st_size,
-                      self.name)
-      self.filesystem.ChangeDiskUsage(st_size)
+    if self.filesystem:
+      self.filesystem.ChangeDiskUsage(st_size, self.name)
     self.st_size = st_size
     self.contents = None
 
@@ -305,12 +301,8 @@ class FakeFile(object):
     current_size = self.st_size or 0
     self.contents = contents
     self.st_size = st_size
-    if self.filesystem and self.filesystem.total_size is not None:
-      if self.filesystem.GetDiskUsage().free < self.st_size - current_size:
-        raise IOError(errno.ENOSPC,
-                      'Fake file system: disk is full, failed to set contents to %r bytes' % self.st_size,
-                      self.name)
-      self.filesystem.ChangeDiskUsage(self.st_size - current_size)
+    if self.filesystem:
+      self.filesystem.ChangeDiskUsage(self.st_size - current_size, self.name)
     self.epoch += 1
 
   def SetContents(self, contents):
@@ -339,6 +331,7 @@ class FakeFile(object):
 
     Raises:
       IOError: if the st_size arg is not a non-negative integer
+               or if st_size exceeds the available file system space
     """
 
     if not isinstance(st_size, int) or st_size < 0:
@@ -348,12 +341,8 @@ class FakeFile(object):
                     self.name)
 
     current_size = self.st_size or 0
-    if self.filesystem and self.filesystem.total_size is not None:
-      if self.filesystem.GetDiskUsage().free < st_size - current_size:
-        raise IOError(errno.ENOSPC,
-                      'Fake file system: disk is full, failed to set file size to %r bytes' % st_size,
-                      self.name)
-      self.filesystem.ChangeDiskUsage(st_size - current_size)
+    if self.filesystem:
+      self.filesystem.ChangeDiskUsage(st_size - current_size, self.name)
     if self.contents:
       if st_size < current_size:
         self.contents = self.contents[:st_size]
@@ -410,8 +399,8 @@ class FakeDirectory(FakeFile):
       path_object:  FakeFile instance to add as a child of this directory
     """
     self.contents[path_object.name] = path_object
-    if self.filesystem:
-      self.filesystem.ChangeDiskUsage(path_object.GetSize())
+    if self.filesystem and path_object.st_nlink == 1:
+      self.filesystem.ChangeDiskUsage(path_object.GetSize(), path_object.name)
 
   def GetEntry(self, pathname_name):
     """Retrieves the specified child file or directory.
@@ -434,10 +423,10 @@ class FakeDirectory(FakeFile):
     Raises:
       KeyError: if no child exists by the specified name
     """
-    if pathname_name in self.contents and self.filesystem:
-      self.filesystem.ChangeDiskUsage(-self.contents[pathname_name].GetSize())
-
     entry = self.contents[pathname_name]
+    if self.filesystem and entry.st_nlink == 1:
+      self.filesystem.ChangeDiskUsage(-entry.GetSize(), pathname_name)
+
     entry.st_nlink -= 1
     assert entry.st_nlink >= 0
 
@@ -498,14 +487,23 @@ class FakeFilesystem(object):
       return DiskUsage(self.total_size, self.used_size, self.total_size - self.used_size)
     return DiskUsage(1024*1024*1024*1024, 0, 1024*1024*1024*1024)
 
-  def ChangeDiskUsage(self, usage_change):
+  def ChangeDiskUsage(self, usage_change, file_path):
     """Changes the used disk space by the given amount.
 
     Args:
       usage_change: number of bytes added to the used space
                     if negative, the used space will be decreased
+
+      file_path: the path of the object needing the disk space
+
+    Raises:
+      IOError: if usage_change exceeds the free file system space
     """
-    if self.used_size is not None:
+    if self.total_size is not None:
+      if self.total_size - self.used_size < usage_change:
+        raise IOError(errno.ENOSPC,
+                      'Fake file system: disk is full, failed to add %r bytes' % usage_change,
+                      file_path)
       self.used_size += usage_change
 
   def SetIno(self, path, st_ino):
