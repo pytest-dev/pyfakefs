@@ -1285,8 +1285,6 @@ class FakeFilesystem(object):
                     'No such file or directory in fake filesystem',
                     old_path)
 
-    old_file.st_nlink += 1
-
     # abuse the name field to control the filename of the newly created link
     old_file.name = new_basename
     self.AddObject(new_parent_directory, old_file)
