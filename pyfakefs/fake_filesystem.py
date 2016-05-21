@@ -210,7 +210,7 @@ class FakeFile(object):
       self.st_size = len(contents)
     else:
       self.st_size = 0
-    self.st_nlink = 1
+    self.st_nlink = 0
     # Non faked features, write setter methods for fakeing them
     self.st_ino = None
     self.st_dev = None
@@ -399,6 +399,7 @@ class FakeDirectory(FakeFile):
       path_object:  FakeFile instance to add as a child of this directory
     """
     self.contents[path_object.name] = path_object
+    path_object.st_nlink += 1
     if self.filesystem and path_object.st_nlink == 1:
       self.filesystem.ChangeDiskUsage(path_object.GetSize(), path_object.name)
 
@@ -1284,8 +1285,6 @@ class FakeFilesystem(object):
                     'No such file or directory in fake filesystem',
                     old_path)
 
-    old_file.st_nlink += 1
-
     # abuse the name field to control the filename of the newly created link
     old_file.name = new_basename
     self.AddObject(new_parent_directory, old_file)
@@ -1935,24 +1934,12 @@ class FakeOsModule(object):
     if not self.filesystem.Exists(new_dir):
       raise IOError(errno.ENOENT, 'No such fake directory', new_dir)
     old_dir_object = self.filesystem.ResolveObject(old_dir)
-    old_object = old_dir_object.GetEntry(old_name)
-    old_object_mtime = old_object._st_mtime
     new_dir_object = self.filesystem.ResolveObject(new_dir)
-    if old_object.st_mode & stat.S_IFDIR:
-      old_object.name = new_name
-      new_dir_object.AddEntry(old_object)
-      old_dir_object.RemoveEntry(old_name)
-    else:
-      st_size = old_object.st_size if old_object.contents is None else None
-      self.filesystem.CreateFile(new_file,
-                                 st_mode=old_object.st_mode,
-                                 contents=old_object.contents,
-                                 create_missing_dirs=False,
-                                 st_size=st_size)
-      self.remove(old_file)
-    new_object = self.filesystem.GetObject(new_file)
-    new_object.SetMTime(old_object_mtime)
-    self.chown(new_file, old_object.st_uid, old_object.st_gid)
+
+    object_to_rename = old_dir_object.GetEntry(old_name)
+    old_dir_object.RemoveEntry(old_name)
+    object_to_rename.name = new_name
+    new_dir_object.AddEntry(object_to_rename)
 
   def rmdir(self, target_directory):
     """Remove a leaf Fake directory.

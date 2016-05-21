@@ -918,6 +918,7 @@ class FakeOsModuleTest(TestCase):
       self.assertTrue(self.filesystem.Exists(new_path))
       self.assertEqual(
           'test', self.filesystem.GetObject('%s/plugh' % new_path).contents)
+      self.assertEqual(1, self.filesystem.GetObject(new_path).st_nlink)
 
   def testRenameToExistentFile(self):
     """Can rename a file to a used name."""
