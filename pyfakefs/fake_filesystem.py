@@ -627,10 +627,10 @@ class FakeFilesystem(object):
     normalized_components = []
     current_dir = self.root
     for component in path_components:
-      current_dir = self._DirectoryContent(current_dir, component)
+      dir_name, current_dir = self._DirectoryContent(current_dir, component)
       if current_dir is None or current_dir.contents is None:
         return path
-      normalized_components.append(current_dir.name)
+      normalized_components.append(dir_name)
     normalized_path = self.path_separator.join(normalized_components)
     if path.startswith(self.path_separator):
       normalized_path = self.path_separator + normalized_path
@@ -830,13 +830,13 @@ class FakeFilesystem(object):
 
   def _DirectoryContent(self, directory, component):
     if component in directory.contents:
-      return directory.contents[component]
+      return component, directory.contents[component]
     if not self.is_case_sensitive:
-      matching_content = [directory.contents[subdir] for subdir in directory.contents
+      matching_content = [(subdir, directory.contents[subdir]) for subdir in directory.contents
                           if subdir.lower() == component.lower()]
       if matching_content:
         return matching_content[0]
-    return None
+    return None, None
 
   def Exists(self, file_path):
     """True if a path points to an existing file system object.

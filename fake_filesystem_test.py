@@ -1747,7 +1747,6 @@ class FakeOsModuleTest(TestCase):
     self.assertRaises(OSError,
                      self.os.link, '/nonexistent_source', '/link_dest')
 
-  # @unittest.skipIf(TestCase.is_windows, 'no hard link support in Windows')
   def testLinkDelete(self):
     fake_open = fake_filesystem.FakeFileOpen(self.filesystem)
 
@@ -1798,7 +1797,6 @@ class FakeOsModuleTest(TestCase):
     self.assertRaises(OSError,
                      self.os.link, file1_path, breaking_link_path)
 
-  @unittest.skipIf(TestCase.is_windows, 'no hard link support in Windows')
   def testLinkCount1(self):
     """Test that hard link counts are updated correctly."""
     file1_path = 'test_file1'
@@ -3488,7 +3486,6 @@ class DiskSpaceTest(TestCase):
     self.os.rename('/foo/bar', '/foo/baz')
     self.assertEqual(20, self.filesystem.GetDiskUsage().used)
 
-  @unittest.skipIf(TestCase.is_windows, 'no hard link support in Windows')
   def testThatHardLinkDoesNotChangeUsedSize(self):
     file1_path = 'test_file1'
     file2_path = 'test_file2'
