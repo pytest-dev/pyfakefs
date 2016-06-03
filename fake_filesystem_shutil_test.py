@@ -192,15 +192,38 @@ class FakeShutilModuleTest(unittest.TestCase):
                       src_file,
                       dst_directory)
 
-  def testMoveFile(self):
-    src_file = 'original_xyzzy'
-    dst_file = 'moved_xyzzy'
-    self.filesystem.CreateFile(src_file)
+  def testMoveFileInSameFilesystem(self):
+    src_file = '/original_xyzzy'
+    dst_file = '/moved_xyzzy'
+    src_object = self.filesystem.CreateFile(src_file)
+    src_ino = src_object.st_ino
+    src_dev = src_object.st_dev
+
     self.assertTrue(self.filesystem.Exists(src_file))
     self.assertFalse(self.filesystem.Exists(dst_file))
     self.shutil.move(src_file, dst_file)
     self.assertTrue(self.filesystem.Exists(dst_file))
     self.assertFalse(self.filesystem.Exists(src_file))
+
+    dst_object = self.filesystem.GetObject(dst_file)
+    self.assertEqual(src_ino, dst_object.st_ino)
+    self.assertEqual(src_dev, dst_object.st_dev)
+
+  def testMoveFileIntoOtherFilesystem(self):
+    self.filesystem.AddMountPoint('/mount')
+    src_file = '/original_xyzzy'
+    dst_file = '/mount/moved_xyzzy'
+    src_object = self.filesystem.CreateFile(src_file)
+    src_ino = src_object.st_ino
+    src_dev = src_object.st_dev
+
+    self.shutil.move(src_file, dst_file)
+    self.assertTrue(self.filesystem.Exists(dst_file))
+    self.assertFalse(self.filesystem.Exists(src_file))
+
+    dst_object = self.filesystem.GetObject(dst_file)
+    self.assertNotEqual(src_ino, dst_object.st_ino)
+    self.assertNotEqual(src_dev, dst_object.st_dev)
 
   def testMoveFileIntoDirectory(self):
     src_file = 'xyzzy'
@@ -229,12 +252,17 @@ class FakeShutilModuleTest(unittest.TestCase):
     self.assertFalse(self.filesystem.Exists(src_directory))
 
   def testDiskUsage(self):
-    self.filesystem.CreateFile('foo/bar', st_size=400)
+    self.filesystem.CreateFile('/foo/bar', st_size=400)
     disk_usage = self.shutil.disk_usage('/')
     self.assertEqual(1000, disk_usage.total)
     self.assertEqual(400, disk_usage.used)
     self.assertEqual(600, disk_usage.free)
     self.assertEqual((1000, 400, 600), disk_usage)
+
+    self.filesystem.AddMountPoint('/mount', total_size=500)
+    self.filesystem.CreateFile('/mount/foo/bar', st_size=400)
+    disk_usage = self.shutil.disk_usage('/mount/foo/')
+    self.assertEqual((500, 400, 100), disk_usage)
 
 
 class CopyFileTest(unittest.TestCase):

@@ -180,6 +180,8 @@ class FakeFile(object):
        st_atime: the time.time() timestamp when the file was last accessed.
        st_mtime: the time.time() timestamp when the file was last modified.
        st_size: the size of the file
+       st_ino: the inode number - a unique number identifying the file
+       st_dev: a unique number identifying the (fake) file system device the file belongs to
 
      Other attributes needed by os.stat are assigned default value of None
       these include: st_ino, st_dev, st_nlink, st_uid, st_gid
@@ -211,9 +213,10 @@ class FakeFile(object):
     else:
       self.st_size = 0
     self.st_nlink = 0
-    # Non faked features, write setter methods for fakeing them
     self.st_ino = None
     self.st_dev = None
+
+    # Non faked features, write setter methods for faking them
     self.st_uid = None
     self.st_gid = None
     # shall be set on creating the file from the file system to get access to fs available space
@@ -268,7 +271,7 @@ class FakeFile(object):
     if self.st_size:
       self.SetSize(0)
     if self.filesystem:
-      self.filesystem.ChangeDiskUsage(st_size, self.name)
+      self.filesystem.ChangeDiskUsage(st_size, self.name, self.st_dev)
     self.st_size = st_size
     self.contents = None
 
@@ -302,7 +305,7 @@ class FakeFile(object):
     self.contents = contents
     self.st_size = st_size
     if self.filesystem:
-      self.filesystem.ChangeDiskUsage(self.st_size - current_size, self.name)
+      self.filesystem.ChangeDiskUsage(self.st_size - current_size, self.name, self.st_dev)
     self.epoch += 1
 
   def SetContents(self, contents):
@@ -342,7 +345,7 @@ class FakeFile(object):
 
     current_size = self.st_size or 0
     if self.filesystem:
-      self.filesystem.ChangeDiskUsage(st_size - current_size, self.name)
+      self.filesystem.ChangeDiskUsage(st_size - current_size, self.name, self.st_dev)
     if self.contents:
       if st_size < current_size:
         self.contents = self.contents[:st_size]
@@ -400,8 +403,9 @@ class FakeDirectory(FakeFile):
     """
     self.contents[path_object.name] = path_object
     path_object.st_nlink += 1
+    path_object.st_dev = self.st_dev
     if self.filesystem and path_object.st_nlink == 1:
-      self.filesystem.ChangeDiskUsage(path_object.GetSize(), path_object.name)
+      self.filesystem.ChangeDiskUsage(path_object.GetSize(), path_object.name, self.st_dev)
 
   def GetEntry(self, pathname_name):
     """Retrieves the specified child file or directory.
@@ -426,7 +430,7 @@ class FakeDirectory(FakeFile):
     """
     entry = self.contents[pathname_name]
     if self.filesystem and entry.st_nlink == 1:
-      self.filesystem.ChangeDiskUsage(-entry.GetSize(), pathname_name)
+      self.filesystem.ChangeDiskUsage(-entry.GetSize(), pathname_name, entry.st_dev)
 
     entry.st_nlink -= 1
     assert entry.st_nlink >= 0
@@ -449,7 +453,6 @@ class FakeDirectory(FakeFile):
 
 class FakeFilesystem(object):
   """Provides the appearance of a real directory tree for unit testing."""
-
   def __init__(self, path_separator=os.path.sep, total_size=None):
     """init.
 
@@ -475,20 +478,97 @@ class FakeFilesystem(object):
     self.open_files = []
     # A heap containing all free positions in self.open_files list
     self.free_fd_heap = []
-    self.total_size = total_size
-    self.used_size = 0
+    # last used numbers for inodes (st_ino) and devices (st_dev)
+    self.last_ino = 0
+    self.last_dev = 0
+    self.mount_points = {}
+    self.AddMountPoint(self.root.name, total_size)
 
-  def GetDiskUsage(self):
+  def AddMountPoint(self, path, total_size=None):
+    """Adds a new mount point for a filesystem device.
+       The mount point gets a new unique device number.
+
+    Args:
+      path: The root path for the ew mount path.
+
+      total_size: the new total size of the added filesystem device in bytes
+                  Defaults to infinite size.
+
+    Raises:
+      OSError: if trying to mount an existing mount point again
+    """
+    path = self.NormalizePath(path)
+    if path in self.mount_points:
+      raise OSError(errno.EEXIST, 'Mount point cannot be added twice', path)
+    self.last_dev += 1
+    self.mount_points[path] = {
+      'idev': self.last_dev, 'total_size': total_size, 'used_size': 0
+    }
+    # special handling for root path: has been created before
+    root_dir = self.root if path == self.root.name else self.CreateDirectory(path)
+    root_dir.st_dev = self.last_dev
+    return root_dir
+
+  def _MountPointForPath(self, path):
+    path = self.NormalizePath(path)
+    if path in self.mount_points:
+      return self.mount_points[path]
+    mount_path = ''
+    for root_path in self.mount_points:
+      if path.startswith(root_path) and len(root_path) > len(mount_path):
+        mount_path = root_path
+    if mount_path:
+      return self.mount_points[mount_path]
+    return None
+
+  def _MountPointForDevice(self, idev):
+    for mount_point in self.mount_points.values():
+      if mount_point['idev'] == idev:
+        return mount_point
+    return None
+
+  def GetDiskUsage(self, path=None):
     """Returns the total, used and free disk space in bytes as named tuple
        or placeholder values simulating unlimited space if not set.
        Note: This matches the return value of shutil.disk_usage().
+
+    Args:
+      path: The disk space is returned for the file system device where path resides.
+            Defaults to the root path (e.g. '/' on Unix systems)
     """
     DiskUsage = namedtuple('usage', 'total, used, free')
-    if self.total_size is not None:
-      return DiskUsage(self.total_size, self.used_size, self.total_size - self.used_size)
+    if path is None:
+      mount_point = self.mount_points[self.root.name]
+    else:
+      mount_point = self._MountPointForPath(path)
+    if mount_point and mount_point['total_size'] is not None:
+      return DiskUsage(mount_point['total_size'], mount_point['used_size'],
+                                   mount_point['total_size'] - mount_point['used_size'])
     return DiskUsage(1024*1024*1024*1024, 0, 1024*1024*1024*1024)
 
-  def ChangeDiskUsage(self, usage_change, file_path):
+  def SetDiskUsage(self, total_size, path=None):
+    """Changes the total size of the file system, preserving the used space.
+       Example usage: set the size of an auto-mounted Windows drive.
+
+    Args:
+      total_size: the new total size of the filesystem in bytes
+
+      path: The disk space is changed for the file system device where path resides.
+            Defaults to the root path (e.g. '/' on Unix systems)
+
+    Raises:
+      IOError: if the new space is smaller than the used size.
+    """
+    if path is None:
+      path = self.root.name
+    mount_point = self._MountPointForPath(path)
+    if mount_point['total_size'] is not None and mount_point['used_size'] > total_size:
+        raise IOError(errno.ENOSPC,
+                      'Fake file system: cannot change size to %r bytes - used space is larger' % total_size,
+                      path)
+    mount_point['total_size'] = total_size
+
+  def ChangeDiskUsage(self, usage_change, file_path, st_dev):
     """Changes the used disk space by the given amount.
 
     Args:
@@ -497,15 +577,19 @@ class FakeFilesystem(object):
 
       file_path: the path of the object needing the disk space
 
+      st_dev: The device ID for the respective file system
+
     Raises:
       IOError: if usage_change exceeds the free file system space
     """
-    if self.total_size is not None:
-      if self.total_size - self.used_size < usage_change:
-        raise IOError(errno.ENOSPC,
-                      'Fake file system: disk is full, failed to add %r bytes' % usage_change,
-                      file_path)
-      self.used_size += usage_change
+    mount_point = self._MountPointForDevice(st_dev)
+    if mount_point:
+      if mount_point['total_size'] is not None:
+        if mount_point['total_size'] - mount_point['used_size'] < usage_change:
+          raise IOError(errno.ENOSPC,
+                        'Fake file system: disk is full, failed to add %r bytes' % usage_change,
+                        file_path)
+      mount_point['used_size'] += usage_change
 
   def SetIno(self, path, st_ino):
     """Set the self.st_ino attribute of file at 'path'.
@@ -1114,6 +1198,63 @@ class FakeFilesystem(object):
                     'Not a directory in the fake filesystem',
                     file_path)
 
+  def RenameObject(self, old_file, new_file):
+    """Renames a FakeFile object at old_file to new_file, preserving all properties.
+       Also replaces existing new_file object, if one existed (Unix only).
+
+    Args:
+      old_file:  path to filesystem object to rename
+      new_file:  path to where the filesystem object will live after this call
+
+    Raises:
+      OSError:  - if old_file does not exist
+                - if new_file is an existing directory
+                - if new_file is an existing file (Windows)
+                - if new_file is an existing file and could not be removed (Unix)
+                - if dirname(new_file) does not exist
+                - if the file would be moved to another filesystem (e.g. mount point)
+    """
+    old_file = self.NormalizePath(old_file)
+    new_file = self.NormalizePath(new_file)
+    if not self.Exists(old_file):
+      raise OSError(errno.ENOENT,
+                    'Fake filesystem object: can not rename nonexistent file',
+                    old_file)
+
+    if self.Exists(new_file):
+      if old_file == new_file:
+        return    # Nothing to do here.
+      new_obj = self.GetObject(new_file)
+      if stat.S_ISDIR(new_obj.st_mode):
+        raise OSError(errno.EEXIST,
+                      'Fake filesystem object: can not rename to existing directory',
+                      new_file)
+      elif _is_windows:
+        raise OSError(errno.EEXIST,
+                      'Fake filesystem object: can not rename to existing file',
+                      new_file)
+      else:
+        try:
+          self.RemoveObject(new_obj)
+        except IOError as e:
+          raise OSError(e.errno, e.strerror, e.filename)
+
+    old_dir, old_name = os.path.split(old_file)
+    new_dir, new_name = os.path.split(new_file)
+    if not self.Exists(new_dir):
+      raise OSError(errno.ENOENT, 'No such fake directory', new_dir)
+    old_dir_object = self.ResolveObject(old_dir)
+    new_dir_object = self.ResolveObject(new_dir)
+    if old_dir_object.st_dev != new_dir_object.st_dev:
+      raise OSError(errno.EXDEV,
+                    'Fake filesystem object: cannot rename across file systems',
+                    old_file)
+
+    object_to_rename = old_dir_object.GetEntry(old_name)
+    old_dir_object.RemoveEntry(old_name)
+    object_to_rename.name = new_name
+    new_dir_object.AddEntry(object_to_rename)
+
   def RemoveObject(self, file_path):
     """Remove an existing file or directory.
 
@@ -1142,7 +1283,7 @@ class FakeFilesystem(object):
                     'Not a directory in the fake filesystem',
                     file_path)
 
-  def CreateDirectory(self, directory_path, perm_bits=PERM_DEF, inode=None):
+  def CreateDirectory(self, directory_path, perm_bits=PERM_DEF):
     """Creates directory_path, and all the parent directories.
 
     Helper method to set up your test faster
@@ -1174,12 +1315,13 @@ class FakeFilesystem(object):
       else:
         current_dir = current_dir.contents[component]
 
-    current_dir.SetIno(inode)
+    self.last_ino += 1
+    current_dir.SetIno(self.last_ino)
     return current_dir
 
   def CreateFile(self, file_path, st_mode=stat.S_IFREG | PERM_DEF_FILE,
                  contents='', st_size=None, create_missing_dirs=True,
-                 apply_umask=False, inode=None):
+                 apply_umask=False):
     """Creates file_path, including all the parent directories along the way.
 
     Helper method to set up your test faster.
@@ -1191,7 +1333,6 @@ class FakeFilesystem(object):
       st_size: file size; only valid if contents=None
       create_missing_dirs: if True, auto create missing directories
       apply_umask: whether or not the current umask must be applied on st_mode
-      inode: inode of the file
 
     Returns:
       the newly created FakeFile object
@@ -1217,7 +1358,8 @@ class FakeFilesystem(object):
     if apply_umask:
       st_mode &= ~self.umask
     file_object = FakeFile(new_file, st_mode, filesystem=self)
-    file_object.SetIno(inode)
+    self.last_ino += 1
+    file_object.SetIno(self.last_ino)
     self.AddObject(parent_directory, file_object)
 
     if contents is not None or st_size is not None:
@@ -1473,6 +1615,35 @@ class FakePathModule(object):
 
   def expanduser(self, path):
     return self._os_path.expanduser(path).replace(self._os_path.sep, self.sep)
+
+  def ismount(self, path):
+    """Returns true if the given path is a mount point.
+
+    Args:
+      path:  path to filesystem object to be checked
+
+    Returns:
+      True if path is a mount point added to the fake file system.
+      Under Windows also returns True for drive and UNC roots (independent of their existence).
+    """
+    if not path:
+      return False
+    normed_path = self.filesystem.NormalizePath(path)
+    if self.filesystem.supports_drive_letter:
+      if self.filesystem.alternative_path_separator is not None:
+        path_seps = (self.filesystem.path_separator, self.filesystem.alternative_path_separator)
+      else:
+        path_seps = (self.filesystem.path_separator, )
+      drive, rest = self.filesystem.SplitDrive(normed_path)
+      if drive and drive[0] in path_seps:
+        return (not rest) or (rest in path_seps)
+      if rest in path_seps:
+        return True
+    for mount_point in self.filesystem.mount_points:
+      if (normed_path.rstrip(self.filesystem.path_separator) ==
+            mount_point.rstrip(self.filesystem.path_separator)):
+        return True
+    return False
 
   def __getattr__(self, name):
     """Forwards any non-faked calls to the real os.path."""
@@ -1904,42 +2075,22 @@ class FakeOsModule(object):
   unlink = remove
 
   def rename(self, old_file, new_file):
-    """Adds a FakeFile object at new_file containing contents of old_file.
-
-    Also removes the FakeFile object for old_file, and replaces existing
-    new_file object, if one existed.
+    """Renames a FakeFile object at old_file to new_file, preserving all properties.
+    Also replaces existing new_file object, if one existed (Unix only).
 
     Args:
       old_file:  path to filesystem object to rename
       new_file:  path to where the filesystem object will live after this call
 
     Raises:
-      OSError:  if old_file does not exist.
-      IOError:  if dirname(new_file) does not exist
+      OSError:  - if old_file does not exist
+                - new_file is an existing directory,
+                - if new_file is an existing file (Windows)
+                - if new_file is an existing file and could not be removed (Unix)
+                - if dirname(new_file) does not exist
+                - if the file would be moved to another filesystem (e.g. mount point)
     """
-    old_file = self.filesystem.NormalizePath(old_file)
-    new_file = self.filesystem.NormalizePath(new_file)
-    if not self.filesystem.Exists(old_file):
-      raise OSError(errno.ENOENT,
-                    'Fake os object: can not rename nonexistent file '
-                    'with name',
-                    old_file)
-    if self.filesystem.Exists(new_file):
-      if old_file == new_file:
-        return None  # Nothing to do here.
-      else:
-        self.remove(new_file)
-    old_dir, old_name = self.path.split(old_file)
-    new_dir, new_name = self.path.split(new_file)
-    if not self.filesystem.Exists(new_dir):
-      raise IOError(errno.ENOENT, 'No such fake directory', new_dir)
-    old_dir_object = self.filesystem.ResolveObject(old_dir)
-    new_dir_object = self.filesystem.ResolveObject(new_dir)
-
-    object_to_rename = old_dir_object.GetEntry(old_name)
-    old_dir_object.RemoveEntry(old_name)
-    object_to_rename.name = new_name
-    new_dir_object.AddEntry(object_to_rename)
+    self.filesystem.RenameObject(old_file, new_file)
 
   def rmdir(self, target_directory):
     """Remove a leaf Fake directory.
@@ -2182,7 +2333,7 @@ class FakeOsModule(object):
     try:
       self.filesystem.AddObject(head, FakeFile(tail,
                                                mode & ~self.filesystem.umask,
-                                               filesystem=self))
+                                               filesystem=self.filesystem))
     except IOError:
       raise OSError(errno.ENOTDIR, 'Fake filesystem: %s: %s' % (
           os.strerror(errno.ENOTDIR), filename))

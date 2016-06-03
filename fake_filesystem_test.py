@@ -113,8 +113,8 @@ class FakeDirectoryUnitTest(TestCase):
     filesystem = fake_filesystem.FakeFilesystem(path_separator='/')
     fake_os = fake_filesystem.FakeOsModule(filesystem)
     file_path = 'some_file1'
-    filesystem.CreateFile(file_path, contents='contents here1', inode=42)
-    self.assertEqual(42, fake_os.stat(file_path)[stat.ST_INO])
+    filesystem.CreateFile(file_path, contents='contents here1')
+    self.assertLess(0, fake_os.stat(file_path)[stat.ST_INO])
 
     file_obj = filesystem.GetObject(file_path)
     file_obj.SetIno(43)
@@ -124,8 +124,8 @@ class FakeDirectoryUnitTest(TestCase):
     filesystem = fake_filesystem.FakeFilesystem(path_separator='/')
     fake_os = fake_filesystem.FakeOsModule(filesystem)
     dirpath = 'testdir'
-    filesystem.CreateDirectory(dirpath, inode=42)
-    self.assertEqual(42, fake_os.stat(dirpath)[stat.ST_INO])
+    filesystem.CreateDirectory(dirpath)
+    self.assertLess(0, fake_os.stat(dirpath)[stat.ST_INO])
 
     dir_obj = filesystem.GetObject(dirpath)
     dir_obj.SetIno(43)
@@ -920,8 +920,25 @@ class FakeOsModuleTest(TestCase):
           'test', self.filesystem.GetObject('%s/plugh' % new_path).contents)
       self.assertEqual(1, self.filesystem.GetObject(new_path).st_nlink)
 
+  def testRenameToExistingDirectoryShouldRaise(self):
+    """Renaming to an existing directory raises OSError."""
+    old_path = '/foo/bar'
+    new_path = '/foo/baz'
+    self.filesystem.CreateDirectory(old_path)
+    self.filesystem.CreateDirectory(new_path)
+    self.assertRaises(OSError, self.os.rename, old_path, new_path)
+
+  def testRenameToAnotherDeviceShouldRaise(self):
+    """Renaming to another filesystem device raises OSError."""
+    self.filesystem.AddMountPoint('/mount')
+    old_path = '/foo/bar'
+    new_path = '/mount/bar'
+    self.filesystem.CreateFile(old_path)
+    self.filesystem.CreateFile(new_path)
+    self.assertRaises(OSError, self.os.rename, old_path, new_path)
+
   def testRenameToExistentFile(self):
-    """Can rename a file to a used name."""
+    """Can rename a file to a used name under Unix, but raises OSError under Windows."""
     directory = 'xyzzy'
     old_file_path = '%s/plugh_old' % directory
     new_file_path = '%s/plugh_new' % directory
@@ -929,11 +946,14 @@ class FakeOsModuleTest(TestCase):
     self.filesystem.CreateFile(new_file_path, contents='test contents 2')
     self.assertTrue(self.filesystem.Exists(old_file_path))
     self.assertTrue(self.filesystem.Exists(new_file_path))
-    self.os.rename(old_file_path, new_file_path)
-    self.assertFalse(self.filesystem.Exists(old_file_path))
-    self.assertTrue(self.filesystem.Exists(new_file_path))
-    self.assertEqual('test contents 1',
-                     self.filesystem.GetObject(new_file_path).contents)
+    if self.is_windows:
+      self.assertRaises(OSError, self.os.rename, old_file_path, new_file_path)
+    else:
+      self.os.rename(old_file_path, new_file_path)
+      self.assertFalse(self.filesystem.Exists(old_file_path))
+      self.assertTrue(self.filesystem.Exists(new_file_path))
+      self.assertEqual('test contents 1',
+                       self.filesystem.GetObject(new_file_path).contents)
 
   def testRenameToNonexistentDir(self):
     """Can rename a file to a name in a nonexistent dir."""
@@ -943,7 +963,7 @@ class FakeOsModuleTest(TestCase):
     self.filesystem.CreateFile(old_file_path, contents='test contents')
     self.assertTrue(self.filesystem.Exists(old_file_path))
     self.assertFalse(self.filesystem.Exists(new_file_path))
-    self.assertRaises(IOError, self.os.rename, old_file_path, new_file_path)
+    self.assertRaises(OSError, self.os.rename, old_file_path, new_file_path)
     self.assertTrue(self.filesystem.Exists(old_file_path))
     self.assertFalse(self.filesystem.Exists(new_file_path))
     self.assertEqual('test contents',
@@ -989,6 +1009,7 @@ class FakeOsModuleTest(TestCase):
     self.assertEqual('payload',
                      self.filesystem.GetObject(after_file).contents)
 
+  @unittest.skipIf(TestCase.is_windows, 'os.rename does not replace file under Windows')
   def testRenamePreservesStat(self):
     """Test if rename preserves mtime."""
     directory = 'xyzzy'
@@ -2208,6 +2229,42 @@ class FakePathModuleTest(TestCase):
     self.assertFalse(self.path.islink('foo/regular_file'))
 
     self.assertFalse(self.path.islink('it_dont_exist'))
+
+  def testIsmount(self):
+    self.assertFalse(self.path.ismount(''))
+    self.assertTrue(self.path.ismount('/'))
+    self.assertFalse(self.path.ismount('/mount/'))
+    self.filesystem.AddMountPoint('/mount')
+    self.assertTrue(self.path.ismount('/mount'))
+    self.assertTrue(self.path.ismount('/mount/'))
+
+  def testIsmountWithDriveLetters(self):
+    self.filesystem.supports_drive_letter = True
+    self.assertTrue(self.path.ismount('/'))
+    self.assertTrue(self.path.ismount('c:/'))
+    self.assertFalse(self.path.ismount('c:'))
+    self.assertTrue(self.path.ismount('z:/'))
+    self.filesystem.AddMountPoint('/mount')
+    self.assertTrue(self.path.ismount('/mount'))
+    self.assertTrue(self.path.ismount('/mount/'))
+
+  @unittest.skipIf(sys.version_info < (2, 7, 8), 'UNC path support since Python 2.7.8')
+  def testIsmountWithUncPaths(self):
+    self.filesystem.supports_drive_letter = True
+    self.assertTrue(self.path.ismount('//a/'))
+    self.assertTrue(self.path.ismount('//a/b'))
+    self.assertTrue(self.path.ismount('//a/b/'))
+    self.assertFalse(self.path.ismount('/a/b/'))
+    self.assertFalse(self.path.ismount('//a/b/c'))
+
+  def testIsmountWithAlternatePathSeparator(self):
+    self.filesystem.alternative_path_separator = '!'
+    self.filesystem.AddMountPoint('/mount')
+    self.assertTrue(self.path.ismount('!mount'))
+    self.assertTrue(self.path.ismount('!mount!'))
+    self.assertTrue(self.path.ismount('/mount!!'))
+    self.filesystem.supports_drive_letter = True
+    self.assertTrue(self.path.ismount('Z:!'))
 
   @unittest.skipIf(sys.version_info >= (3, 0) or TestCase.is_windows,
                    'os.path.walk deprecrated in Python 3, cannot be properly '
@@ -3500,6 +3557,79 @@ class DiskSpaceTest(TestCase):
     self.assertEqual(20, self.filesystem.GetDiskUsage().used)
     self.os.unlink(file2_path)
     self.assertEqual(0, self.filesystem.GetDiskUsage().used)
+
+  def testThatTheSizeOfCorrectMountPointIsUsed(self):
+    self.filesystem.AddMountPoint('/mount_limited', total_size=50)
+    self.filesystem.AddMountPoint('/mount_unlimited')
+
+    self.assertRaises(IOError, lambda: self.filesystem.CreateFile('/mount_limited/foo', st_size=60))
+    self.assertRaises(IOError, lambda: self.filesystem.CreateFile('/bar', st_size=110))
+    try:
+      self.filesystem.CreateFile('/foo', st_size=60)
+      self.filesystem.CreateFile('/mount_limited/foo', st_size=40)
+      self.filesystem.CreateFile('/mount_unlimited/foo', st_size=1000000)
+    except IOError:
+      self.fail('File with contents fitting into disk space could not be written.')
+
+  def testThatDiskUsageOfCorrectMountPointIsUsed(self):
+    self.filesystem.AddMountPoint('/mount1', total_size=20)
+    self.filesystem.AddMountPoint('/mount1/bar/mount2', total_size=50)
+
+    self.filesystem.CreateFile('/foo/bar', st_size=10)
+    self.filesystem.CreateFile('/mount1/foo/bar', st_size=10)
+    self.filesystem.CreateFile('/mount1/bar/mount2/foo/bar', st_size=10)
+
+    self.assertEqual(90, self.filesystem.GetDiskUsage('/foo').free)
+    self.assertEqual(10, self.filesystem.GetDiskUsage('/mount1/foo').free)
+    self.assertEqual(40, self.filesystem.GetDiskUsage('/mount1/bar/mount2').free)
+
+  def testSetLargerDiskSize(self):
+    self.filesystem.AddMountPoint('/mount1', total_size=20)
+    self.assertRaises(IOError, lambda: self.filesystem.CreateFile('/mount1/foo', st_size=100))
+    self.filesystem.SetDiskUsage(total_size=200, path='/mount1')
+    self.filesystem.CreateFile('/mount1/foo', st_size=100)
+    self.assertEqual(100, self.filesystem.GetDiskUsage('/mount1/foo').free)
+
+  def testSetSmallerDiskSize(self):
+    self.filesystem.AddMountPoint('/mount1', total_size=200)
+    self.filesystem.CreateFile('/mount1/foo', st_size=100)
+    self.assertRaises(IOError, lambda: self.filesystem.SetDiskUsage(total_size=50, path='/mount1'))
+    self.filesystem.SetDiskUsage(total_size=150, path='/mount1')
+    self.assertEqual(50, self.filesystem.GetDiskUsage('/mount1/foo').free)
+
+  def testDiskSizeOnUnlimitedDisk(self):
+    self.filesystem.AddMountPoint('/mount1')
+    self.filesystem.CreateFile('/mount1/foo', st_size=100)
+    self.filesystem.SetDiskUsage(total_size=1000, path='/mount1')
+    self.assertEqual(900, self.filesystem.GetDiskUsage('/mount1/foo').free)
+
+
+class MountPointTest(TestCase):
+  def setUp(self):
+    self.filesystem = fake_filesystem.FakeFilesystem(path_separator='/', total_size=100)
+    self.filesystem.AddMountPoint('/foo')
+    self.filesystem.AddMountPoint('/bar')
+    self.filesystem.AddMountPoint('/foo/baz')
+
+  def testThatNewMountPointsGetNewDeviceNumer(self):
+    self.assertEqual(1, self.filesystem.GetObject('/').st_dev)
+    self.assertEqual(2, self.filesystem.GetObject('/foo').st_dev)
+    self.assertEqual(3, self.filesystem.GetObject('/bar').st_dev)
+    self.assertEqual(4, self.filesystem.GetObject('/foo/baz').st_dev)
+
+  def testThatNewDirectoriesGetCorrectDeviceNumer(self):
+    self.assertEqual(1, self.filesystem.CreateDirectory('/foo1/bar').st_dev)
+    self.assertEqual(2, self.filesystem.CreateDirectory('/foo/bar').st_dev)
+    self.assertEqual(4, self.filesystem.CreateDirectory('/foo/baz/foo/bar').st_dev)
+
+  def testThatNewFilesGetCorrectDeviceNumer(self):
+    self.assertEqual(1, self.filesystem.CreateFile('/foo1/bar').st_dev)
+    self.assertEqual(2, self.filesystem.CreateFile('/foo/bar').st_dev)
+    self.assertEqual(4, self.filesystem.CreateFile('/foo/baz/foo/bar').st_dev)
+
+  def testThatMountPointCannotBeAddedTwice(self):
+    self.assertRaises(OSError, lambda: self.filesystem.AddMountPoint('/foo'))
+    self.assertRaises(OSError, lambda: self.filesystem.AddMountPoint('/foo/'))
 
 
 if __name__ == '__main__':
