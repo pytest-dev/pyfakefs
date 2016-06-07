@@ -494,6 +494,9 @@ class FakeFilesystem(object):
       total_size: the new total size of the added filesystem device in bytes
                   Defaults to infinite size.
 
+    Returns:
+        The newly created mount point dict.
+
     Raises:
       OSError: if trying to mount an existing mount point again
     """
@@ -507,25 +510,40 @@ class FakeFilesystem(object):
     # special handling for root path: has been created before
     root_dir = self.root if path == self.root.name else self.CreateDirectory(path)
     root_dir.st_dev = self.last_dev
-    return root_dir
+    return self.mount_points[path]
+
+  def _AutoMountDriveIfNeeded(self, path, force=False):
+    if self.supports_drive_letter and (force or not self._MountPointForPath(path)):
+      drive = self.SplitDrive(path)[0]
+      if drive:
+        return self.AddMountPoint(path=drive)
 
   def _MountPointForPath(self, path):
     path = self.NormalizePath(path)
     if path in self.mount_points:
       return self.mount_points[path]
     mount_path = ''
+    drive = self.SplitDrive(path)[0]
+    if not self.is_case_sensitive:
+      drive = drive.lower()
+      path = path.lower()
     for root_path in self.mount_points:
+      if not self.is_case_sensitive:
+        root_path = root_path.lower()
+      if drive and not root_path.startswith(drive):
+          continue
       if path.startswith(root_path) and len(root_path) > len(mount_path):
         mount_path = root_path
     if mount_path:
       return self.mount_points[mount_path]
-    return None
+    mount_point = self._AutoMountDriveIfNeeded(path, force=True)
+    assert mount_point
+    return mount_point
 
   def _MountPointForDevice(self, idev):
     for mount_point in self.mount_points.values():
       if mount_point['idev'] == idev:
         return mount_point
-    return None
 
   def GetDiskUsage(self, path=None):
     """Returns the total, used and free disk space in bytes as named tuple
@@ -717,7 +735,7 @@ class FakeFilesystem(object):
         return path
       normalized_components.append(dir_name)
     normalized_path = self.path_separator.join(normalized_components)
-    if path.startswith(self.path_separator):
+    if path.startswith(self.path_separator) and not normalized_path.startswith(self.path_separator):
       normalized_path = self.path_separator + normalized_path
     return normalized_path
 
@@ -888,11 +906,14 @@ class FakeFilesystem(object):
     """
     if not path or path == self.path_separator:
       return []
+    drive, path = self.SplitDrive(path)
     path_components = path.split(self.path_separator)
-    assert path_components
+    assert drive or path_components
     if not path_components[0]:
       # This is an absolute path.
       path_components = path_components[1:]
+    if drive:
+      path_components.insert(0, drive)
     return path_components
 
   def _StartsWithDriveLetter(self, file_path):
@@ -943,7 +964,7 @@ class FakeFilesystem(object):
       file_path = self.ResolvePath(file_path)
     except IOError:
       return False
-    if self._IsRootPath(file_path):
+    if file_path == self.root.name:
       return True
     path_components = self.GetPathComponents(file_path)
     current_dir = self.root
@@ -1047,7 +1068,7 @@ class FakeFilesystem(object):
                     'No such file or directory: \'%s\'' % file_path)
     file_path = self.NormalizePath(self.NormalizeCase(file_path))
     if self._IsRootPath(file_path):
-      return self.root.name
+      return file_path
 
     current_dir = self.root
     path_components = self.GetPathComponents(file_path)
@@ -1300,6 +1321,7 @@ class FakeFilesystem(object):
       OSError:  if the directory already exists
     """
     directory_path = self.NormalizePath(directory_path)
+    self._AutoMountDriveIfNeeded(directory_path)
     if self.Exists(directory_path):
       raise OSError(errno.EEXIST,
                     'Directory exists in fake filesystem',
@@ -1349,6 +1371,7 @@ class FakeFilesystem(object):
     parent_directory, new_file = self.SplitPath(file_path)
     if not parent_directory:
       parent_directory = self.cwd
+    self._AutoMountDriveIfNeeded(parent_directory)
     if not self.Exists(parent_directory):
       if not create_missing_dirs:
         raise IOError(errno.ENOENT, 'No such fake directory', parent_directory)

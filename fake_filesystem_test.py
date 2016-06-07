@@ -3237,6 +3237,15 @@ class ResolvePathTest(FakeFileOpenTestBase):
     self.filesystem.CreateLink('/a/loop', 'loop')
     self.assertFalse(self.filesystem.Exists('/a/loop'))
 
+  def testThatDriveLettersArePreserved(self):
+    self.filesystem.supports_drive_letter = True
+    self.assertEqual('c:/foo/bar', self.filesystem.ResolvePath('c:/foo//bar'))
+
+  @unittest.skipIf(sys.version_info < (2, 7, 8), 'UNC path support since Python 2.7.8')
+  def testThatUncPathsArePreserved(self):
+    self.filesystem.supports_drive_letter = True
+    self.assertEqual('//foo/bar/baz', self.filesystem.ResolvePath('//foo/bar/baz//'))
+
 
 class PathManipulationTests(TestCase):
   def setUp(self):
@@ -3603,6 +3612,20 @@ class DiskSpaceTest(TestCase):
     self.filesystem.SetDiskUsage(total_size=1000, path='/mount1')
     self.assertEqual(900, self.filesystem.GetDiskUsage('/mount1/foo').free)
 
+  def testDiskSizeOnAutoMountedDriveOnFileCreation(self):
+    self.filesystem.supports_drive_letter = True
+    # drive d: shall be auto-mounted and the used size adapted
+    self.filesystem.CreateFile('d:/foo/bar', st_size=100)
+    self.filesystem.SetDiskUsage(total_size=1000, path='d:')
+    self.assertEqual(self.filesystem.GetDiskUsage('d:/foo').free, 900)
+
+  def testDiskSizeOnAutoMountedDriveOnDirectoryCreation(self):
+    self.filesystem.supports_drive_letter = True
+    self.filesystem.CreateDirectory('d:/foo/bar')
+    self.filesystem.CreateFile('d:/foo/bar/baz', st_size=100)
+    self.filesystem.CreateFile('d:/foo/baz', st_size=100)
+    self.filesystem.SetDiskUsage(total_size=1000, path='d:')
+    self.assertEqual(self.filesystem.GetDiskUsage('d:/foo').free, 800)
 
 class MountPointTest(TestCase):
   def setUp(self):
@@ -3631,6 +3654,21 @@ class MountPointTest(TestCase):
     self.assertRaises(OSError, lambda: self.filesystem.AddMountPoint('/foo'))
     self.assertRaises(OSError, lambda: self.filesystem.AddMountPoint('/foo/'))
 
+  def testThatDrivesAreAutoMounted(self):
+    self.filesystem.CreateDirectory('d:/foo/bar')
+    self.filesystem.CreateFile('d:/foo/baz')
+    self.filesystem.CreateFile('z:/foo/baz')
+    self.assertEqual(5, self.filesystem.GetObject('d:').st_dev)
+    self.assertEqual(5, self.filesystem.GetObject('d:/foo/bar').st_dev)
+    self.assertEqual(5, self.filesystem.GetObject('d:/foo/baz').st_dev)
+    self.assertEqual(6, self.filesystem.GetObject('z:/foo/baz').st_dev)
+
+  @unittest.skipIf(sys.version_info < (2, 7, 8), 'UNC path support since Python 2.7.8')
+  def testThatUncPathsAreAutoMounted(self):
+    self.filesystem.CreateDirectory('//foo/bar/baz')
+    self.filesystem.CreateFile('//foo/bar/bip/bop')
+    self.assertEqual(5, self.filesystem.GetObject('//foo/bar').st_dev)
+    self.assertEqual(5, self.filesystem.GetObject('//foo/bar/bip/bop').st_dev)
 
 if __name__ == '__main__':
   unittest.main()
