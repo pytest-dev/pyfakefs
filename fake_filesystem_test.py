@@ -3655,6 +3655,7 @@ class MountPointTest(TestCase):
     self.assertRaises(OSError, lambda: self.filesystem.AddMountPoint('/foo/'))
 
   def testThatDrivesAreAutoMounted(self):
+    self.filesystem.supports_drive_letter = True
     self.filesystem.CreateDirectory('d:/foo/bar')
     self.filesystem.CreateFile('d:/foo/baz')
     self.filesystem.CreateFile('z:/foo/baz')
@@ -3665,6 +3666,7 @@ class MountPointTest(TestCase):
 
   @unittest.skipIf(sys.version_info < (2, 7, 8), 'UNC path support since Python 2.7.8')
   def testThatUncPathsAreAutoMounted(self):
+    self.filesystem.supports_drive_letter = True
     self.filesystem.CreateDirectory('//foo/bar/baz')
     self.filesystem.CreateFile('//foo/bar/bip/bop')
     self.assertEqual(5, self.filesystem.GetObject('//foo/bar').st_dev)

@@ -1256,7 +1256,7 @@ class FakeFilesystem(object):
                       new_file)
       else:
         try:
-          self.RemoveObject(new_obj)
+          self.RemoveObject(new_file)
         except IOError as e:
           raise OSError(e.errno, e.strerror, e.filename)
 
