@@ -115,7 +115,7 @@ class Patcher(object):
 
     # To add py.test support per issue https://github.com/jmcgeheeiv/pyfakefs/issues/43,
     # it appears that adding  'py', 'pytest', '_pytest' to SKIPNAMES will help
-    SKIPNAMES = set(['os', 'glob', 'path', 'shutil', 'tempfile'])
+    SKIPNAMES = set(['os', 'glob', 'path', 'shutil', 'tempfile', 'io'])
 
     def __init__(self):
         # Attributes set by _findModules()
@@ -236,6 +236,8 @@ class Patcher(object):
             globs['shutil'] = fake_filesystem_shutil.FakeShutilModule(self.fs)
         if 'tempfile' in globs:
             globs['tempfile'] = fake_tempfile.FakeTempfileModule(self.fs)
+        if 'io' in globs:
+            globs['io'] = fake_filesystem.FakeIoModule(self.fs)
         return globs
 
     def tearDown(self, doctester=None):
