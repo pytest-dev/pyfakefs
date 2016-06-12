@@ -5,10 +5,12 @@ touching the real disk.  The software under test requires no modification to
 work with pyfakefs.
 
 ## Usage
-See the [usage tutorial](http://github.com/jmcgeheeiv/pyfakefs/wiki/Tutorial)
-for a concrete example of how to apply pyfakefs.
+There are two approaches to implementing tests using pyfakes.
 
-Usually you would use it this way:
+The first method is to allow pyfakefs to automatically find all real file functions and modules, and stub these out with the fake file system functions and modules.  This is explained in the [usage tutorial](http://github.com/jmcgeheeiv/pyfakefs/wiki/Tutorial)
+and demonstrated by `example.py` and `example_test.py`.
+
+The other approach is to do the patching yourself using `mock.patch()`:
 
 ```python
 import pyfakefs.fake_filesystem as fake_fs
