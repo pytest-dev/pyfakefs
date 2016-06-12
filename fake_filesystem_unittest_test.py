@@ -18,7 +18,7 @@
 """
 Test the :py:class`pyfakefs.fake_filesystem_unittest.TestCase` base class.
 """
-
+import io
 import os
 import glob
 import shutil
@@ -64,6 +64,17 @@ class TestPyfakefsUnittest(fake_filesystem_unittest.TestCase): # pylint: disable
             content = f.read()
         self.assertEqual(content,
                          'This test file was created using the open() function.\n')
+
+    def test_io_open(self):
+        '''Fake io module is bound'''
+        self.assertFalse(os.path.exists('/fake_file.txt'))
+        with io.open('/fake_file.txt', 'w') as f:
+            f.write("This test file was created using the io.open() function.\n")
+        self.assertTrue(self.fs.Exists('/fake_file.txt'))
+        with open('/fake_file.txt') as f:
+            content = f.read()
+        self.assertEqual(content,
+                         'This test file was created using the io.open() function.\n')
 
     def test_os(self):
         '''Fake os module is bound'''

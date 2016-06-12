@@ -2241,6 +2241,33 @@ class FakeOsModule(object):
     """Forwards any unfaked calls to the standard os module."""
     return getattr(self._os_module, name)
 
+class FakeIoModule(object):
+  """Uses FakeFilesystem to provide a fake io module replacement.
+     Currently only used to wrap io.open() which is an alias to open()
+
+  # You need a fake_filesystem to use this:
+  filesystem = fake_filesystem.FakeFilesystem()
+  my_io_module = fake_filesystem.FakeIoModule(filesystem)
+  """
+
+  def __init__(self, filesystem):
+    """
+    Args:
+      filesystem:  FakeFilesystem used to provide file system information
+    """
+    self.filesystem = filesystem
+
+  def open(self, file_path, mode='r', buffering=-1, encoding=None,
+           errors=None, newline=None, closefd=True, opener=None):
+    """Redirect the call to FakeFileOpen.
+    See FakeFileOpen.Call() for description.
+    """
+    if opener is not None and sys.version_info < (3, 3):
+      raise TypeError("open() got an unexpected keyword argument 'opener'")
+    return FakeFileOpen(self.filesystem).Call(
+      file_path, mode, buffering, encoding, errors, newline, closefd, opener)
+
+
 class FakeFileWrapper(object):
   """Wrapper for a StringIO object for use by a FakeFile object.
 

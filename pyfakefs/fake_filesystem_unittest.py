@@ -124,6 +124,7 @@ class Patcher(object):
         self._pathModules = None
         self._shutilModules = None
         self._tempfileModules = None
+        self._ioModules = None
         self._findModules()
         assert None not in vars(self).values(), \
                 "_findModules() missed the initialization of an instance variable"
@@ -137,6 +138,7 @@ class Patcher(object):
         self.fake_shutil = None
         self.fake_tempfile_ = None
         self.fake_open = None
+        self.fake_io = None
         # _isStale is set by tearDown(), reset by _refresh()
         self._isStale = True
         self._refresh()
@@ -154,6 +156,7 @@ class Patcher(object):
         self._pathModules = set()
         self._shutilModules = set()
         self._tempfileModules = set()
+        self._ioModules = set()
         for name, module in set(sys.modules.items()):
             if (module in self.SKIPMODULES or
                 (not inspect.ismodule(module)) or
@@ -169,6 +172,8 @@ class Patcher(object):
                 self._shutilModules.add(module)
             if 'tempfile' in module.__dict__:
                 self._tempfileModules.add(module)
+            if 'io' in module.__dict__:
+                self._ioModules.add(module)
 
     def _refresh(self):
         '''Renew the fake file system and set the _isStale flag to `False`.'''
@@ -183,6 +188,7 @@ class Patcher(object):
         self.fake_shutil = fake_filesystem_shutil.FakeShutilModule(self.fs)
         self.fake_tempfile_ = fake_tempfile.FakeTempfileModule(self.fs)
         self.fake_open = fake_filesystem.FakeFileOpen(self.fs)
+        self.fake_io = fake_filesystem.FakeIoModule(self.fs)
 
         self._isStale = False
 
@@ -211,6 +217,8 @@ class Patcher(object):
             self._stubs.SmartSet(module,  'shutil', self.fake_shutil)
         for module in self._tempfileModules:
             self._stubs.SmartSet(module,  'tempfile', self.fake_tempfile_)
+        for module in self._ioModules:
+            self._stubs.SmartSet(module,  'io', self.fake_io)
 
     def replaceGlobs(self, globs_):
         globs = globs_.copy()
