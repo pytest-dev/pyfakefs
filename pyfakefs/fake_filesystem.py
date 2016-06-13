@@ -296,7 +296,7 @@ class FakeFile(object):
     elif isinstance(contents, Hexlified):
       st_size = len(contents)
     else:
-      st_size = len(contents.encode('utf=8'))
+      st_size = len(contents.encode('utf-8'))
 
     if self.contents:
       self.SetSize(0)
