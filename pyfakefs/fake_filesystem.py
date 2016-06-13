@@ -180,11 +180,12 @@ class FakeFile(object):
        st_atime: the time.time() timestamp when the file was last accessed.
        st_mtime: the time.time() timestamp when the file was last modified.
        st_size: the size of the file
+       st_nlink: the number of hard links to the file
        st_ino: the inode number - a unique number identifying the file
        st_dev: a unique number identifying the (fake) file system device the file belongs to
 
      Other attributes needed by os.stat are assigned default value of None
-      these include: st_ino, st_dev, st_nlink, st_uid, st_gid
+      these include: st_uid, st_gid
   """
 
   def __init__(self, name, st_mode=stat.S_IFREG | PERM_DEF_FILE,
