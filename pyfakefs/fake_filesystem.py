@@ -291,14 +291,16 @@ class FakeFile(object):
       IOError: if the st_size is not a non-negative integer,
                or if st_size exceeds the available file system space
     """
-    # Wrap byte arrays into a safe format
     if sys.version_info >= (3, 0) and isinstance(contents, bytes):
       st_size = len(contents)
+      # Wrap byte arrays into a safe format
       contents = Hexlified(contents)
     elif sys.version_info < (3, 0) and isinstance(contents, str):
       st_size = len(contents)
+    elif isinstance(contents, Hexlified):
+      st_size = len(contents)
     else:
-      st_size = len(contents.encode('utf=8'))
+      st_size = len(contents.encode('utf-8'))
 
     if self.contents:
       self.SetSize(0)
