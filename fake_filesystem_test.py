@@ -3674,8 +3674,8 @@ class MountPointTest(TestCase):
 
   @unittest.skipIf(sys.version_info < (3, 0), 'Tests byte contents in Python3')
   def testCopyingPreservesByteContents(self):
-    source_file = self.filesystem.CreateFile('foo', contents=b'somebytes')
-    dest_file = self.filesystem.CreateFile('bar')
+    source_file = self.filesystem.CreateFile('/foo', contents=b'somebytes')
+    dest_file = self.filesystem.CreateFile('/bar')
     dest_file.SetContents(source_file.contents)
     self.assertEqual(dest_file.contents, source_file.contents)
 
