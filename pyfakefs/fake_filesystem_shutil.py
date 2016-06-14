@@ -198,18 +198,7 @@ class FakeShutilModule(object):
     self.copyfile(src, dst)
     self.copystat(src, dst)
 
-  def copytree(self, src, dst, symlinks=False):
-    """Recursively copy a directory tree.
-
-    Args:
-      src: (str) source directory
-      dst: (str) destination directory, must not already exist
-      symlinks: (bool) copy symlinks as symlinks instead of copying the
-                contents of the linked files. Currently unused.
-
-    Raises:
-      OSError: if src is missing or isn't a directory
-    """
+  def _copytree(self, src, dst, copy_function, symlinks):
     self.filesystem.CreateDirectory(dst)
     try:
       directory = self.filesystem.GetObject(src)
@@ -223,31 +212,96 @@ class FakeShutilModule(object):
       dstname = self.filesystem.JoinPaths(dst, name)
       src_mode = self.filesystem.GetObject(srcname).st_mode
       if stat.S_ISDIR(src_mode):
-        self.copytree(srcname, dstname, symlinks)
+        self._copytree(srcname, dstname, copy_function=copy_function, symlinks=symlinks)
       else:
-        self.copy2(srcname, dstname)
+        copy_function(srcname, dstname)
 
-  def move(self, src, dst):
+  # argument order changed between versions, have to use separate definitions
+  if sys.version_info < (3, 2):
+    def copytree(self, src, dst, symlinks=False):
+      """Recursively copy a directory tree.
+
+      Args:
+        src: (str) source directory
+        dst: (str) destination directory, must not already exist
+        symlinks: (bool) copy symlinks as symlinks instead of copying the
+                  contents of the linked files. Currently unused.
+
+      Raises:
+        OSError: if src is missing or isn't a directory
+      """
+      self._copytree(src, dst, copy_function=self.copy2, symlinks=symlinks)
+  else:
+    def copytree(self, src, dst, copy_function=None, symlinks=False):
+      """Recursively copy a directory tree.
+
+      Args:
+        src: (str) source directory
+        dst: (str) destination directory, must not already exist
+        copy_function: replacement for copy2
+        symlinks: (bool) copy symlinks as symlinks instead of copying the
+                  contents of the linked files. Currently unused.
+
+      Raises:
+        OSError: if src is missing or isn't a directory
+      """
+      copy_function = copy_function or self.copy2
+      self._copytree(src, dst, copy_function=copy_function, symlinks=symlinks)
+
+  def move(self, src, dst, copy_function=None):
     """Rename a file or directory.
 
     Args:
       src: (str) source file or directory
       dst: (str) if the src is a directory, the dst must not already exist
+      copy_function: replacement for copy2 if copying is needed (Python >= 3.5 only)
     """
-    if stat.S_ISDIR(self.filesystem.GetObject(src).st_mode):
-      self.copytree(src, dst, symlinks=True)
+    def _destinsrc(src, dst):
+      src = os.path.abspath(src)
+      dst = os.path.abspath(dst)
+      if not src.endswith(self.filesystem.path_separator):
+        src += os.path.sep
+      if not dst.endswith(self.filesystem.path_separator):
+        dst += self.filesystem.path_separator
+      return dst.startswith(src)
+
+    if copy_function is not None:
+      if sys.version_info < (3,5):
+        raise TypeError("move() got an unexpected keyword argument 'copy_function")
     else:
-      self.copy2(src, dst)
-    self.filesystem.RemoveObject(src)
+      copy_function = self.copy2
+
+    src = self.filesystem.NormalizePath(src)
+    dst = self.filesystem.NormalizePath(dst)
+    if src == dst:
+      return dst
+
+    source_is_dir = stat.S_ISDIR(self.filesystem.GetObject(src).st_mode)
+    if source_is_dir and self.filesystem.Exists(dst):
+      raise shutil.Error("Destination path '%s' already exists" % dst)
+
+    try:
+      self.filesystem.RenameObject(src, dst)
+    except OSError:
+      if source_is_dir:
+        if _destinsrc(src, dst):
+          raise shutil.Error("Cannot move a directory '%s' into itself"
+                             " '%s'." % (src, dst))
+        self._copytree(src, dst, copy_function=copy_function, symlinks=True)
+        self.rmtree(src)
+      else:
+        copy_function(src, dst)
+        self.filesystem.RemoveObject(src)
+    return dst
 
   def disk_usage(self, path):
     """Returns the total, used and free disk space in bytes as named tuple
        or placeholder holder values simulating unlimited space if not set.
 
     Args:
-      path: ignored (always the whole fake file system is considered)
+      path: defines the filesystem device which is queried
     """
-    return self.filesystem.GetDiskUsage()
+    return self.filesystem.GetDiskUsage(path)
 
   def __getattr__(self, name):
     """Forwards any non-faked calls to the standard shutil module."""
