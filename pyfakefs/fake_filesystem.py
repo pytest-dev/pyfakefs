@@ -84,6 +84,7 @@ True
 
 import errno
 import heapq
+import io
 import os
 import stat
 import sys
@@ -92,10 +93,8 @@ import warnings
 import binascii
 from collections import namedtuple
 
-try:
-  import cStringIO as io  # pylint: disable-msg=C6204
-except ImportError:
-  import io  # pylint: disable-msg=C6204
+if sys.version_info < (3, 0):
+  import cStringIO
 
 __pychecker__ = 'no-reimportself'
 
@@ -2433,6 +2432,7 @@ class FakeIoModule(object):
       filesystem:  FakeFilesystem used to provide file system information
     """
     self.filesystem = filesystem
+    self._io_module = io
 
   def open(self, file_path, mode='r', buffering=-1, encoding=None,
            errors=None, newline=None, closefd=True, opener=None):
@@ -2443,6 +2443,10 @@ class FakeIoModule(object):
       raise TypeError("open() got an unexpected keyword argument 'opener'")
     return FakeFileOpen(self.filesystem).Call(
       file_path, mode, buffering, encoding, errors, newline, closefd, opener)
+
+  def __getattr__(self, name):
+    """Forwards any unfaked calls to the standard io module."""
+    return getattr(self._io_module, name)
 
 
 class FakeFileWrapper(object):
@@ -2468,14 +2472,16 @@ class FakeFileWrapper(object):
     self._file_epoch = file_object.epoch
     contents = file_object.contents
     newline_arg = {} if binary else {'newline': newline}
-    io_class = io.StringIO
     if contents and isinstance(contents, Hexlified):
       contents = contents.recover(binary)
-    # For Python 3, files opened as binary only read/write byte contents.
-    if sys.version_info >= (3, 0) and binary:
-      io_class = io.BytesIO
-      if contents and isinstance(contents, str):
-        contents = bytes(contents, 'ascii')
+    if sys.version_info >= (3, 0):
+      if binary:
+        if contents and isinstance(contents, str):
+          contents = bytes(contents, 'ascii')
+      else:
+        io_class = io.StringIO
+    else:
+      io_class = cStringIO.StringIO
     if contents:
       if update:
         self._io = io_class(**newline_arg)
