@@ -2476,6 +2476,8 @@ class FakeFileWrapper(object):
       contents = contents.recover(binary)
     if sys.version_info >= (3, 0):
       if binary:
+        io_class = io.BytesIO
+        # For Python 3, files opened as binary only read/write byte contents.
         if contents and isinstance(contents, str):
           contents = bytes(contents, 'ascii')
       else:
