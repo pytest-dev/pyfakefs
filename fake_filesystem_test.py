@@ -513,6 +513,25 @@ class CaseInsensitiveFakeFilesystemTest(TestCase):
     self.assertTrue(self.filesystem.Exists('/Foo/bar/BAZ'))
     self.assertTrue(self.filesystem.Exists('/foo/bar/baz'))
 
+  def testCreateDirectoryWithDifferentCaseRoot(self):
+    self.filesystem.CreateDirectory('/Foo/Bar')
+    self.filesystem.CreateDirectory('/foo/bar/baz')
+    dir1 = self.filesystem.GetObject('/Foo/Bar')
+    dir2 = self.filesystem.GetObject('/foo/bar')
+    self.assertEqual(dir1, dir2)
+
+  def testCreateFileWithDifferentCaseDir(self):
+    self.filesystem.CreateDirectory('/Foo/Bar')
+    self.filesystem.CreateFile('/foo/bar/baz')
+    dir1 = self.filesystem.GetObject('/Foo/Bar')
+    dir2 = self.filesystem.GetObject('/foo/bar')
+    self.assertEqual(dir1, dir2)
+
+  def testResolvePath(self):
+    self.filesystem.CreateDirectory('/foo/baz')
+    self.filesystem.CreateLink('/Foo/Bar', './baz/bip')
+    self.assertEqual('/foo/baz/bip', self.filesystem.ResolvePath('/foo/bar'))
+
   def testIsdirIsfile(self):
     self.filesystem.CreateFile('foo/bar')
     self.assertTrue(self.path.isdir('Foo'))
@@ -529,6 +548,65 @@ class CaseInsensitiveFakeFilesystemTest(TestCase):
     test_file = self.filesystem.CreateFile('foo/bar1.txt')
     test_file.SetMTime(24)
     self.assertEqual(24, self.path.getmtime('Foo/Bar1.TXT'))
+
+
+class CaseSensitiveFakeFilesystemTest(TestCase):
+  def setUp(self):
+    self.filesystem = fake_filesystem.FakeFilesystem(path_separator='/')
+    self.filesystem.is_case_sensitive = True
+    self.os = fake_filesystem.FakeOsModule(self.filesystem)
+    self.path = self.os.path
+
+  def testGetObject(self):
+    self.filesystem.CreateDirectory('/foo/bar')
+    self.filesystem.CreateFile('/foo/bar/baz')
+    self.assertRaises(IOError, self.filesystem.GetObject, '/Foo/Bar/Baz')
+
+  def testRemoveObject(self):
+    self.filesystem.CreateDirectory('/foo/bar')
+    self.filesystem.CreateFile('/foo/bar/baz')
+    self.assertRaises(IOError, self.filesystem.RemoveObject, '/Foo/Bar/Baz')
+    self.assertTrue(self.filesystem.Exists('/foo/bar/baz'))
+
+  def testExists(self):
+    self.filesystem.CreateDirectory('/Foo/Bar')
+    self.assertTrue(self.filesystem.Exists('/Foo/Bar'))
+    self.assertFalse(self.filesystem.Exists('/foo/bar'))
+
+    self.filesystem.CreateFile('/foo/Bar/baz')
+    self.assertFalse(self.filesystem.Exists('/Foo/bar/BAZ'))
+    self.assertFalse(self.filesystem.Exists('/foo/bar/baz'))
+
+  def testCreateDirectoryWithDifferentCaseRoot(self):
+    self.filesystem.CreateDirectory('/Foo/Bar')
+    self.filesystem.CreateDirectory('/foo/bar/baz')
+    dir1 = self.filesystem.GetObject('/Foo/Bar')
+    dir2 = self.filesystem.GetObject('/foo/bar')
+    self.assertNotEqual(dir1, dir2)
+
+  def testCreateFileWithDifferentCaseDir(self):
+    self.filesystem.CreateDirectory('/Foo/Bar')
+    self.filesystem.CreateFile('/foo/bar/baz')
+    dir1 = self.filesystem.GetObject('/Foo/Bar')
+    dir2 = self.filesystem.GetObject('/foo/bar')
+    self.assertNotEqual(dir1, dir2)
+
+  def testIsdirIsfile(self):
+    self.filesystem.CreateFile('foo/bar')
+    self.assertFalse(self.path.isdir('Foo'))
+    self.assertFalse(self.path.isfile('Foo'))
+    self.assertFalse(self.path.isfile('Foo/Bar'))
+    self.assertFalse(self.path.isdir('Foo/Bar'))
+
+  def testGetsize(self):
+    file_path = 'foo/bar/baz'
+    self.filesystem.CreateFile(file_path, contents='1234567')
+    self.assertRaises(os.error, self.path.getsize, 'FOO/BAR/BAZ')
+
+  def testGetMtime(self):
+    test_file = self.filesystem.CreateFile('foo/bar1.txt')
+    test_file.SetMTime(24)
+    self.assertRaises(OSError, self.path.getmtime, 'Foo/Bar1.TXT')
 
 
 class FakeOsModuleTest(TestCase):
@@ -2151,7 +2229,7 @@ class FakePathModuleTest(TestCase):
 
   def testGetsizePathNonexistent(self):
     file_path = 'foo/bar/baz'
-    self.assertRaises(IOError, self.path.getsize, file_path)
+    self.assertRaises(os.error, self.path.getsize, file_path)
 
   def testGetsizeFileEmpty(self):
     file_path = 'foo/bar/baz'
@@ -3641,18 +3719,18 @@ class MountPointTest(TestCase):
     self.filesystem.AddMountPoint('/bar')
     self.filesystem.AddMountPoint('/foo/baz')
 
-  def testThatNewMountPointsGetNewDeviceNumer(self):
+  def testThatNewMountPointsGetNewDeviceNumber(self):
     self.assertEqual(1, self.filesystem.GetObject('/').st_dev)
     self.assertEqual(2, self.filesystem.GetObject('/foo').st_dev)
     self.assertEqual(3, self.filesystem.GetObject('/bar').st_dev)
     self.assertEqual(4, self.filesystem.GetObject('/foo/baz').st_dev)
 
-  def testThatNewDirectoriesGetCorrectDeviceNumer(self):
+  def testThatNewDirectoriesGetCorrectDeviceNumber(self):
     self.assertEqual(1, self.filesystem.CreateDirectory('/foo1/bar').st_dev)
     self.assertEqual(2, self.filesystem.CreateDirectory('/foo/bar').st_dev)
     self.assertEqual(4, self.filesystem.CreateDirectory('/foo/baz/foo/bar').st_dev)
 
-  def testThatNewFilesGetCorrectDeviceNumer(self):
+  def testThatNewFilesGetCorrectDeviceNumber(self):
     self.assertEqual(1, self.filesystem.CreateFile('/foo1/bar').st_dev)
     self.assertEqual(2, self.filesystem.CreateFile('/foo/bar').st_dev)
     self.assertEqual(4, self.filesystem.CreateFile('/foo/baz/foo/bar').st_dev)
@@ -3670,6 +3748,16 @@ class MountPointTest(TestCase):
     self.assertEqual(5, self.filesystem.GetObject('d:/foo/bar').st_dev)
     self.assertEqual(5, self.filesystem.GetObject('d:/foo/baz').st_dev)
     self.assertEqual(6, self.filesystem.GetObject('z:/foo/baz').st_dev)
+
+  def testThatDrivesAreAutoMountedCaseInsensitive(self):
+    self.filesystem.supports_drive_letter = True
+    self.filesystem.is_case_sensitive = False
+    self.filesystem.CreateDirectory('D:/foo/bar')
+    self.filesystem.CreateFile('e:/foo/baz')
+    self.assertEqual(5, self.filesystem.GetObject('D:').st_dev)
+    self.assertEqual(5, self.filesystem.GetObject('d:/foo/bar').st_dev)
+    self.assertEqual(6, self.filesystem.GetObject('e:/foo').st_dev)
+    self.assertEqual(6, self.filesystem.GetObject('E:/Foo/Baz').st_dev)
 
   @unittest.skipIf(sys.version_info < (2, 7, 8), 'UNC path support since Python 2.7.8')
   def testThatUncPathsAreAutoMounted(self):

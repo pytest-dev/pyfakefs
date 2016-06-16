@@ -972,9 +972,9 @@ class FakeFilesystem(object):
     path_components = self.GetPathComponents(file_path)
     current_dir = self.root
     for component in path_components:
-      if component not in current_dir.contents:
+      current_dir = self._DirectoryContent(current_dir, component)[1]
+      if not current_dir:
         return False
-      current_dir = current_dir.contents[component]
     return True
 
   def ResolvePath(self, file_path):
@@ -1081,7 +1081,8 @@ class FakeFilesystem(object):
     while path_components:
       component = path_components.pop(0)
       resolved_components.append(component)
-      if component not in current_dir.contents:
+      current_dir = self._DirectoryContent(current_dir, component)[1]
+      if current_dir is None:
         # The component of the path at this point does not actually exist in
         # the folder.   We can't resolve the path any more.  It is legal to link
         # to a file that does not yet exist, so rather than raise an error, we
@@ -1089,7 +1090,6 @@ class FakeFilesystem(object):
         # so far and return that.
         resolved_components.extend(path_components)
         break
-      current_dir = current_dir.contents[component]
 
       # Resolve any possible symlinks in the current path component.
       if stat.S_ISLNK(current_dir.st_mode):
@@ -1333,12 +1333,13 @@ class FakeFilesystem(object):
     current_dir = self.root
 
     for component in path_components:
-      if component not in current_dir.contents:
+      dir = self._DirectoryContent(current_dir, component)[1]
+      if not dir:
         new_dir = FakeDirectory(component, perm_bits, filesystem=self)
         current_dir.AddEntry(new_dir)
         current_dir = new_dir
       else:
-        current_dir = current_dir.contents[component]
+        current_dir = dir
 
     self.last_ino += 1
     current_dir.SetIno(self.last_ino)
@@ -1517,8 +1518,11 @@ class FakePathModule(object):
     Returns:
       file size in bytes
     """
-    file_obj = self.filesystem.GetObject(path)
-    return file_obj.st_size
+    try:
+      file_obj = self.filesystem.GetObject(path)
+      return file_obj.st_size
+    except IOError as e:
+      raise os.error(e.errno, e.strerror)
 
   def _istype(self, path, st_flag):
     """Helper function to implement isdir(), islink(), etc.
