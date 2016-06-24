@@ -734,7 +734,7 @@ class FakeFilesystem(object):
     current_dir = self.root
     for component in path_components:
       dir_name, current_dir = self._DirectoryContent(current_dir, component)
-      if current_dir is None or current_dir.contents is None:
+      if current_dir is None or current_dir.contents is None and current_dir.st_size == 0:
         return path
       normalized_components.append(dir_name)
     normalized_path = self.path_separator.join(normalized_components)

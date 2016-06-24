@@ -549,6 +549,11 @@ class CaseInsensitiveFakeFilesystemTest(TestCase):
     test_file.SetMTime(24)
     self.assertEqual(24, self.path.getmtime('Foo/Bar1.TXT'))
 
+  def testGetObjectWithFileSize(self):
+    self.filesystem.CreateFile('/Foo/Bar', st_size=10)
+    self.assertTrue(self.filesystem.GetObject('/foo/bar'))
+
+
 
 class CaseSensitiveFakeFilesystemTest(TestCase):
   def setUp(self):
