@@ -117,7 +117,7 @@ class FakeTempfileModuleTest(unittest.TestCase):
     self.assertEqual(created_filenames[0], obj.name)
     self.assertTrue(self.filesystem.GetObject(obj.name))
     obj.close()
-    self.assertRaises(IOError, self.filesystem.GetObject, obj.name)
+    self.assertRaises(IOError, self.filesystem.GetObject, created_filenames[0])
 
   def testNamedTemporaryFileNoDelete(self):
     obj = self.tempfile.NamedTemporaryFile(delete=False)
