@@ -51,7 +51,7 @@ class FakeShutilModuleTest(unittest.TestCase):
     self.assertRaises(OSError, self.shutil.rmtree, '/foo')
     self.assertTrue(self.filesystem.Exists('/foo/baz'))
 
-  @unittest.skipIf(sys.platform == 'win32', 'Open files cannot be removed under Windows')
+  @unittest.skipIf(sys.platform != 'win32', 'Open files cannot be removed under Windows')
   def testRmtreeWithOpenFileFailsUnderWindows(self):
     fake_open = fake_filesystem.FakeFileOpen(self.filesystem)
     self.filesystem.CreateFile('/foo/bar')
