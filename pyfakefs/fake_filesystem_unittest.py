@@ -69,8 +69,23 @@ def load_doctests(loader, tests, ignore, module):
 
 
 class TestCase(unittest.TestCase):
-    def __init__(self, methodName='runTest'):
+    def __init__(self, methodName='runTest', additional_skip_names=None):
+        """Creates the test class instance and the stubber used to stub out file system related modules.
+
+          Args:
+            methodName: the name of the test method (as in unittest.TestCase)
+            additional_skip_names: names of modules inside of which no module replacement shall be done
+               (additionally to the hard-coded list: 'os', 'glob', 'path', 'tempfile', 'io')
+
+          Example usage in a derived test class:
+
+          class MyTestCase(fake_filesystem_unittest.TestCase):
+            def __init__(self, methodName='runTest'):
+              super(MyTestCase, self).__init__(methodName=methodName, additional_skip_names=['posixpath'])
+        """
         super(TestCase, self).__init__(methodName)
+        if additional_skip_names is not None:
+            Patcher.SKIPNAMES.update(additional_skip_names)
         self._stubber = Patcher()
 
     @property
@@ -115,7 +130,7 @@ class Patcher(object):
 
     # To add py.test support per issue https://github.com/jmcgeheeiv/pyfakefs/issues/43,
     # it appears that adding  'py', 'pytest', '_pytest' to SKIPNAMES will help
-    SKIPNAMES = set(['os', 'glob', 'path', 'shutil', 'tempfile', 'io'])
+    SKIPNAMES = {'os', 'glob', 'path', 'tempfile', 'io'}
 
     def __init__(self):
         # Attributes set by _findModules()
