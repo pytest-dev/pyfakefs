@@ -7,7 +7,7 @@ work with pyfakefs.
 pyfakefs works with Linux, Windows and MacOS.
 
 ## Usage
-There are two approaches to implementing tests using pyfakes.
+There are two approaches to implementing tests using pyfakefs.
 
 The first method is to allow pyfakefs to automatically find all real file functions and modules, and stub these out with the fake file system functions and modules.  This is explained in the [usage tutorial](http://github.com/jmcgeheeiv/pyfakefs/wiki/Tutorial)
 and demonstrated by `example.py` and `example_test.py`.
