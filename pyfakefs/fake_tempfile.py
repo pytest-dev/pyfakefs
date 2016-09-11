@@ -147,6 +147,8 @@ class FakeTempfileModule(object):
         self._filesystem, delete_on_close=delete)
     obj = mock_open(filename, mode)
     obj.name = filename
+    # remove file wrapper created by mkstemp to avoid double open file entries
+    self._filesystem.CloseOpenFile(temp[0])
     return obj
 
   # pylint: disable-msg=C6409

@@ -933,6 +933,20 @@ class FakeOsModuleTest(TestCase):
     self.os.remove(file_name)
     self.assertFalse(self.filesystem.Exists(file_path))
 
+  def testRemoveFileWithoutPermissionRaises(self):
+      path = self.os.path.join('/foo/bar')
+      self.filesystem.CreateFile(path)
+      self.os.chmod(path, 0o444)
+      self.assertRaises(OSError, self.os.remove, path)
+
+  @unittest.skipIf(not TestCase.is_windows, 'Open files cannot be removed under Windows')
+  def testRemoveOpenFileFailsUnderWindows(self):
+    fake_open = fake_filesystem.FakeFileOpen(self.filesystem)
+    path = self.os.path.join('/foo/bar')
+    self.filesystem.CreateFile(path)
+    fake_open(path, 'r')
+    self.assertRaises(OSError, self.os.remove, path)
+
   def testRemoveFileRelativePath(self):
     original_dir = self.os.getcwd()
     directory = 'zzy'

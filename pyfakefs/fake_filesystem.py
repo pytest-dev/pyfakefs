@@ -421,17 +421,26 @@ class FakeDirectory(FakeFile):
     """
     return self.contents[pathname_name]
 
-  def RemoveEntry(self, pathname_name):
+  def RemoveEntry(self, pathname_name, recursive=True):
     """Removes the specified child file or directory.
 
     Args:
       pathname_name: basename of the child object to remove
+      recursive: if True (default), the entries in contained directories are deleted first
+        Needed to propagate removal errors (e.g. permission problems) from contained entries.
 
     Raises:
       KeyError: if no child exists by the specified name
     """
     entry = self.contents[pathname_name]
-    if self.filesystem and entry.st_nlink == 1:
+    if entry.st_mode & PERM_WRITE == 0:
+      raise OSError(errno.EACCES, 'Trying to remove object without write permission', pathname_name)
+    if _is_windows and self.filesystem and self.filesystem.HasOpenFile(entry):
+      raise OSError(errno.EACCES, 'Trying to remove an open file', pathname_name)
+    if recursive and isinstance(entry, FakeDirectory):
+      while entry.contents:
+        entry.RemoveEntry(list(entry.contents)[0])
+    elif self.filesystem and entry.st_nlink == 1:
       self.filesystem.ChangeDiskUsage(-entry.GetSize(), pathname_name, entry.st_dev)
 
     entry.st_nlink -= 1
@@ -639,16 +648,16 @@ class FakeFilesystem(object):
     self.open_files.append(file_obj)
     return len(self.open_files) - 1
 
-  def CloseOpenFile(self, file_obj):
-    """Removes file_obj from the list of open files on the filesystem.
+  def CloseOpenFile(self, file_des):
+    """Removes file object with given descriptor from the list of open files.
 
     Sets the entry in open_files to None.
 
     Args:
-      file_obj:  file object to be removed to open files list.
+      file_des:  descriptor of file object to be removed from open files list.
     """
-    self.open_files[file_obj.filedes] = None
-    heapq.heappush(self.free_fd_heap, file_obj.filedes)
+    self.open_files[file_des] = None
+    heapq.heappush(self.free_fd_heap, file_des)
 
   def GetOpenFile(self, file_des):
     """Returns an open file.
@@ -669,6 +678,17 @@ class FakeFilesystem(object):
         self.open_files[file_des] is None):
       raise OSError(errno.EBADF, 'Bad file descriptor', file_des)
     return self.open_files[file_des]
+
+  def HasOpenFile(self, file_object):
+    """Returns True if the given file object is in the list of open files.
+
+    Args:
+      file_object: The FakeFile object to be checked.
+
+    Returns:
+      True if the file is open.
+    """
+    return file_object in [wrapper.GetObject() for wrapper in self.open_files if wrapper]
 
   def NormalizePathSeparator(self, path):
     """Replace all appearances of alternative path separator with path separator.
@@ -1274,7 +1294,7 @@ class FakeFilesystem(object):
                     old_file)
 
     object_to_rename = old_dir_object.GetEntry(old_name)
-    old_dir_object.RemoveEntry(old_name)
+    old_dir_object.RemoveEntry(old_name, recursive=False)
     object_to_rename.name = new_name
     new_dir_object.AddEntry(object_to_rename)
 
@@ -2535,7 +2555,7 @@ class FakeFileWrapper(object):
     if self._update:
       self._file_object.SetContents(self._io.getvalue())
     if self._closefd:
-      self._filesystem.CloseOpenFile(self)
+      self._filesystem.CloseOpenFile(self.filedes)
     if self._delete_on_close:
       self._filesystem.RemoveObject(self.name)
 
