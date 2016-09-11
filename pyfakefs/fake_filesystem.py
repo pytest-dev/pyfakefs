@@ -2217,7 +2217,7 @@ class FakeOsModule(object):
     self.filesystem.AddObject(
         head, FakeDirectory(tail, mode & ~self.filesystem.umask))
 
-  def makedirs(self, dir_name, mode=PERM_DEF):
+  def makedirs(self, dir_name, mode=PERM_DEF, exist_ok=False):
     """Create a leaf Fake directory + create any non-existent parent dirs.
 
     Args:
@@ -2225,11 +2225,16 @@ class FakeOsModule(object):
       mode: (int) Mode to create directory (and any necessary parent
         directories) with. This argument defaults to 0o777.  The umask is
         applied to this mode.
+      exist_ok: (boolean) If exist_ok is False (the default), an OSError is
+        raised if the target directory already exists.  New in Python 3.2.
 
     Raises:
-      OSError: if the directory already exists or as per
-      FakeFilesystem.CreateDirectory
+      OSError: if the directory already exists and exist_ok=False, or as per
+      FakeFilesystem.CreateDirectory()
     """
+    if exist_ok and sys.version_info < (3, 2):
+      raise TypeError("makedir() got an unexpected keyword argument 'exist_ok'")
+
     dir_name = self.filesystem.NormalizePath(dir_name)
     path_components = self.filesystem.GetPathComponents(dir_name)
 
@@ -2244,8 +2249,11 @@ class FakeOsModule(object):
           break
       else:
         current_dir = current_dir.contents[component]
-
-    self.filesystem.CreateDirectory(dir_name, mode & ~self.filesystem.umask)
+    try:
+      self.filesystem.CreateDirectory(dir_name, mode & ~self.filesystem.umask)
+    except OSError:
+      if not exist_ok or not self.path.isdir(dir_name):
+        raise
 
   def access(self, path, mode):
     """Check if a file exists and has the specified permissions.

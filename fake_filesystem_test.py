@@ -1321,12 +1321,12 @@ class FakeOsModuleTest(TestCase):
     self.assertRaises(Exception, self.os.mkdir, directory)
 
   def testMakedirs(self):
-    """makedirs can create a directory even in parent does not exist."""
+    """makedirs can create a directory even if parent does not exist."""
     parent = 'xyzzy'
     directory = '%s/foo' % (parent,)
     self.assertFalse(self.filesystem.Exists(parent))
     self.os.makedirs(directory)
-    self.assertTrue(self.filesystem.Exists(parent))
+    self.assertTrue(self.filesystem.Exists(directory))
 
   def testMakedirsRaisesIfParentIsFile(self):
     """makedirs raises exception if a parent component exists as a file."""
@@ -1346,6 +1346,18 @@ class FakeOsModuleTest(TestCase):
 
     directory = '/a/b'
     self.assertRaises(Exception, self.os.makedirs, directory)
+
+  @unittest.skipIf(sys.version_info < (3, 2),
+                  'os.makedirs(exist_ok) argument new in version 3.2')
+  def testMakedirsExistOk(self):
+    """makedirs uses the exist_ok argument"""
+    directory = 'xyzzy/foo'
+    self.filesystem.CreateDirectory(directory)
+    self.assertTrue(self.filesystem.Exists(directory))
+
+    self.assertRaises(OSError, self.os.makedirs, directory)
+    self.os.makedirs(directory, exist_ok=True)
+    self.assertTrue(self.filesystem.Exists(directory))
 
   # test fsync and fdatasync
 
