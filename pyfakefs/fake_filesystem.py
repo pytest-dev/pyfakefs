@@ -81,10 +81,11 @@ True
 >>> stat.S_ISDIR(os_module.stat(os_module.path.dirname(pathname)).st_mode)
 True
 """
-
+import codecs
 import errno
 import heapq
 import io
+import locale
 import os
 import stat
 import sys
@@ -151,24 +152,6 @@ def CopyModule(old):
   return new
 
 
-class Hexlified(object):
-  """Wraps binary data in non-binary string"""
-  def __init__(self, contents):
-    self.contents = binascii.hexlify(contents).decode('utf-8')
-
-  def __len__(self):
-    return len(self.contents)//2
-
-  def __getitem__(self, item):
-    return self.contents.__getitem__(item)
-
-  def recover(self, binary):
-    if binary:
-      return binascii.unhexlify(bytearray(self.contents, 'utf-8'))
-    else:
-      return binascii.unhexlify(bytearray(self.contents, 'utf-8')).decode(sys.getdefaultencoding())
-
-
 class FakeFile(object):
   """Provides the appearance of a real file.
 
@@ -188,30 +171,28 @@ class FakeFile(object):
   """
 
   def __init__(self, name, st_mode=stat.S_IFREG | PERM_DEF_FILE,
-               contents=None, filesystem=None):
+               contents=None, filesystem=None, encoding=None):
     """init.
 
     Args:
       name:  name of the file/directory, without parent path information
       st_mode:  the stat.S_IF* constant representing the file type (i.e.
         stat.S_IFREG, stat.SIFDIR)
-      contents:  the contents of the filesystem object; should be a string for
+      contents:  the contents of the filesystem object; should be a string or byte object for
         regular files, and a list of other FakeFile or FakeDirectory objects
         for FakeDirectory objects
+      encoding: if contents is a unicode string, the encoding used for serialization
       filesystem: if set, the fake filesystem where the file is created
     """
     self.name = name
     self.st_mode = st_mode
-    self.contents = contents
+    self.byte_contents = self._EncodeContents(contents, encoding)
+    self.st_size = len(self.byte_contents) if self.byte_contents else 0
     self.filesystem = filesystem
     self.epoch = 0
     self._st_ctime = time.time()    # times are accessed through properties
     self._st_atime = self._st_ctime
     self._st_mtime = self._st_ctime
-    if contents:
-      self.st_size = len(contents)
-    else:
-      self.st_size = 0
     self.st_nlink = 0
     self.st_ino = None
     self.st_dev = None
@@ -220,6 +201,13 @@ class FakeFile(object):
     self.st_uid = None
     self.st_gid = None
     # shall be set on creating the file from the file system to get access to fs available space
+
+  @property
+  def contents(self):
+    # returns the byte contents as ACSII string - for testing convenience 
+    if sys.version_info >= (3, 0) and isinstance(self.byte_contents, bytes):
+      return self.byte_contents.decode('ascii')
+    return self.byte_contents
 
   @property
   def st_ctime(self):
@@ -273,54 +261,53 @@ class FakeFile(object):
     if self.filesystem:
       self.filesystem.ChangeDiskUsage(st_size, self.name, self.st_dev)
     self.st_size = st_size
-    self.contents = None
+    self.byte_contents = None
 
   def IsLargeFile(self):
     """Return True if this file was initialized with size but no contents."""
-    return self.contents is None
+    return self.byte_contents is None
 
-  def _SetInitialContents(self, contents):
+  def _EncodeContents(self, contents, encoding=None):
+    if sys.version_info >= (3, 0) and isinstance(contents, str):
+      contents = bytes(contents, encoding or locale.getpreferredencoding(False))
+    return contents
+
+  def _SetInitialContents(self, contents, encoding):
     """Sets the file contents and size.
        Called internally after initial file creation.
 
     Args:
       contents: string, new content of file.
-
+      encoding: the encoding to be used for writing the contents if they are a unicode string
     Raises:
       IOError: if the st_size is not a non-negative integer,
                or if st_size exceeds the available file system space
     """
-    if sys.version_info >= (3, 0) and isinstance(contents, bytes):
-      st_size = len(contents)
-      # Wrap byte arrays into a safe format
-      contents = Hexlified(contents)
-    elif sys.version_info < (3, 0) and isinstance(contents, str):
-      st_size = len(contents)
-    elif isinstance(contents, Hexlified):
-      st_size = len(contents)
-    else:
-      st_size = len(contents.encode('utf-8'))
+    contents = self._EncodeContents(contents, encoding)
+    st_size = len(contents)
 
-    if self.contents:
+    if self.byte_contents:
       self.SetSize(0)
     current_size = self.st_size or 0
-    self.contents = contents
+    self.byte_contents = contents
     self.st_size = st_size
     if self.filesystem:
       self.filesystem.ChangeDiskUsage(self.st_size - current_size, self.name, self.st_dev)
     self.epoch += 1
 
-  def SetContents(self, contents):
+  def SetContents(self, contents, encoding=None):
     """Sets the file contents and size and increases the modification time.
 
     Args:
       contents: string, new content of file.
+      encoding: the encoding to be used for writing the contents if they are a unicode string
+                if not given, the locale preferred encoding is used
 
     Raises:
       IOError: if the st_size is not a non-negative integer,
                or if st_size exceeds the available file system space
     """
-    self._SetInitialContents(contents)
+    self._SetInitialContents(contents, encoding)
     self.st_ctime = time.time()
     self.st_mtime = self._st_ctime
 
@@ -348,11 +335,14 @@ class FakeFile(object):
     current_size = self.st_size or 0
     if self.filesystem:
       self.filesystem.ChangeDiskUsage(st_size - current_size, self.name, self.st_dev)
-    if self.contents:
+    if self.byte_contents:
       if st_size < current_size:
-        self.contents = self.contents[:st_size]
+        self.byte_contents = self.byte_contents[:st_size]
       else:
-        self.contents = '%s%s' % (self.contents, '\0' * (st_size - current_size))
+        if sys.version_info < (3, 0):
+          self.byte_contents = '%s%s' % (self.byte_contents, '\0' * (st_size - current_size))
+        else:
+          self.byte_contents += b'\0' * (st_size - current_size)
     self.st_size = st_size
     self.epoch += 1
 
@@ -396,6 +386,10 @@ class FakeDirectory(FakeFile):
       filesystem: if set, the fake filesystem where the directory is created
     """
     FakeFile.__init__(self, name, stat.S_IFDIR | perm_bits, {}, filesystem=filesystem)
+
+  @property
+  def contents(self):
+    return self.byte_contents
 
   def AddEntry(self, path_object):
     """Adds a child FakeFile to this directory.
@@ -753,7 +747,7 @@ class FakeFilesystem(object):
     current_dir = self.root
     for component in path_components:
       dir_name, current_dir = self._DirectoryContent(current_dir, component)
-      if current_dir is None or current_dir.contents is None and current_dir.st_size == 0:
+      if current_dir is None or current_dir.byte_contents is None and current_dir.st_size == 0:
         return path
       normalized_components.append(dir_name)
     normalized_path = self.path_separator.join(normalized_components)
@@ -1366,7 +1360,7 @@ class FakeFilesystem(object):
 
   def CreateFile(self, file_path, st_mode=stat.S_IFREG | PERM_DEF_FILE,
                  contents='', st_size=None, create_missing_dirs=True,
-                 apply_umask=False):
+                 apply_umask=False, encoding=None):
     """Creates file_path, including all the parent directories along the way.
 
     Helper method to set up your test faster.
@@ -1378,6 +1372,7 @@ class FakeFilesystem(object):
       st_size: file size; only valid if contents=None
       create_missing_dirs: if True, auto create missing directories
       apply_umask: whether or not the current umask must be applied on st_mode
+      encoding: if contents is a unicode string, the encoding used for serialization
 
     Returns:
       the newly created FakeFile object
@@ -1413,7 +1408,7 @@ class FakeFilesystem(object):
         if st_size is not None:
           file_object.SetLargeFileSize(st_size)
         else:
-          file_object._SetInitialContents(contents)
+          file_object._SetInitialContents(contents, encoding)
       except IOError:
         self.RemoveObject(file_path)
         raise
@@ -2473,8 +2468,8 @@ class FakeIoModule(object):
     """
     if opener is not None and sys.version_info < (3, 3):
       raise TypeError("open() got an unexpected keyword argument 'opener'")
-    return FakeFileOpen(self.filesystem).Call(
-      file_path, mode, buffering, encoding, errors, newline, closefd, opener)
+    fake_open = FakeFileOpen(self.filesystem, use_io=True)
+    return fake_open(file_path, mode, buffering, encoding, errors, newline, closefd, opener)
 
   def __getattr__(self, name):
     """Forwards any unfaked calls to the standard io module."""
@@ -2494,7 +2489,7 @@ class FakeFileWrapper(object):
 
   def __init__(self, file_object, file_path, update=False, read=False, append=False,
                delete_on_close=False, filesystem=None, newline=None,
-               binary=True, closefd=True):
+               binary=True, closefd=True, encoding=None):
     self._file_object = file_object
     self._file_path = file_path
     self._append = append
@@ -2502,23 +2497,30 @@ class FakeFileWrapper(object):
     self._update = update
     self._closefd = closefd
     self._file_epoch = file_object.epoch
-    contents = file_object.contents
-    newline_arg = {} if binary else {'newline': newline}
-    if contents and isinstance(contents, Hexlified):
-      contents = contents.recover(binary)
-    if sys.version_info >= (3, 0):
-      if binary:
-        io_class = io.BytesIO
-        # For Python 3, files opened as binary only read/write byte contents.
-        if contents and isinstance(contents, str):
-          contents = bytes(contents, 'ascii')
-      else:
-        io_class = io.StringIO
+    contents = file_object.byte_contents
+    self._encoding = encoding
+    if encoding:
+      file_wrapper = FakeFileWrapper(file_object, file_path, update, read,
+                                     append, delete_on_close, filesystem,
+                                     newline, binary=True, closefd=closefd)
+      codec_info = codecs.lookup(encoding)
+      self._io = codecs.StreamReaderWriter(file_wrapper, codec_info.streamreader,
+                                           codec_info.streamwriter)
     else:
-      io_class = cStringIO.StringIO
+      if sys.version_info >= (3, 0):
+        io_class = io.BytesIO if binary else io.StringIO
+      else:
+        io_class = cStringIO.StringIO
+      io_args = {} if binary else {'newline': newline}
+      if contents and not binary:
+        contents = contents.decode(encoding or locale.getpreferredencoding(False))
+      if contents and not update:
+        self._io = io_class(contents, **io_args)
+      else:
+        self._io = io_class(**io_args)
+
     if contents:
       if update:
-        self._io = io_class(**newline_arg)
         self._io.write(contents)
         if not append:
           self._io.seek(0)
@@ -2528,14 +2530,12 @@ class FakeFileWrapper(object):
             self._read_seek = 0
           else:
             self._read_seek = self._io.tell()
-      else:
-        self._io = io_class(contents, **newline_arg)
     else:
-      self._io = io_class(**newline_arg)
       self._read_whence = 0
       self._read_seek = 0
+
     if delete_on_close:
-      assert filesystem, 'delete_on_close=True requires filesystem='
+      assert filesystem, 'delete_on_close=True requires filesystem'
     self._filesystem = filesystem
     self._delete_on_close = delete_on_close
     # override, don't modify FakeFile.name, as FakeFilesystem expects
@@ -2561,7 +2561,7 @@ class FakeFileWrapper(object):
   def close(self):
     """File close."""
     if self._update:
-      self._file_object.SetContents(self._io.getvalue())
+      self._file_object.SetContents(self._io.getvalue(), self._encoding)
     if self._closefd:
       self._filesystem.CloseOpenFile(self.filedes)
     if self._delete_on_close:
@@ -2570,7 +2570,7 @@ class FakeFileWrapper(object):
   def flush(self):
     """Flush file contents to 'disk'."""
     if self._update:
-      self._file_object.SetContents(self._io.getvalue())
+      self._file_object.SetContents(self._io.getvalue(), self._encoding)
       self._file_epoch = self._file_object.epoch
 
   def seek(self, offset, whence=0):
@@ -2720,22 +2720,25 @@ class FakeFileOpen(object):
   or open() function.
   """
 
-  def __init__(self, filesystem, delete_on_close=False):
+  def __init__(self, filesystem, delete_on_close=False, use_io=False):
     """init.
 
     Args:
       filesystem:  FakeFilesystem used to provide file system information
       delete_on_close:  optional boolean, deletes file on close()
+      use_io: if True, the io.open() version is used (ignored for Python 3,
+              where io.open() is an alias to open() )
     """
     self.filesystem = filesystem
     self._delete_on_close = delete_on_close
+    self._use_io = use_io or sys.version_info >= (3, 0)
 
   def __call__(self, *args, **kwargs):
     """Redirects calls to file() or open() to appropriate method."""
-    if sys.version_info < (3, 0):
-      return self._call_ver2(*args, **kwargs)
-    else:
+    if self._use_io:
       return self.Call(*args, **kwargs)
+    else:
+      return self._call_ver2(*args, **kwargs)
 
   def _call_ver2(self, file_path, mode='r', buffering=-1, flags=None):
     """Limits args of open() or file() for Python 2.x versions."""
@@ -2745,7 +2748,7 @@ class FakeFileOpen(object):
 
   def Call(self, file_, mode='r', buffering=-1, encoding=None,
            errors=None, newline=None, closefd=True, opener=None):
-    """Returns a StringIO object with the contents of the target file object.
+    """Returns a file-like object with the contents of the target file object.
 
     Args:
       file_: path to target file or a file descriptor
@@ -2753,7 +2756,7 @@ class FakeFileOpen(object):
         't', and 'U' are ignored, e.g., 'wU' is treated as 'w'. 'b' sets
         binary mode, no end of line translations in StringIO.
       buffering: ignored. (Used for signature compliance with __builtin__.open)
-      encoding: ignored, strings have no encoding
+      encoding: the encoding used to encode unicode strings / decode bytes
       errors: ignored, this relates to encoding
       newline: controls universal newlines, passed to StringIO object
       closefd: if a file descriptor rather than file name is passed, and set
@@ -2761,15 +2764,15 @@ class FakeFileOpen(object):
       opener: not supported
 
     Returns:
-      a StringIO object containing the contents of the target file
+      a file-like object containing the contents of the target file
 
     Raises:
       IOError: if the target object is a directory, the path is invalid or
         permission is denied.
     """
     orig_modes = mode  # Save original mdoes for error messages.
-    # Binary mode for non 3.x or set by mode
-    binary = sys.version_info < (3, 0) or 'b' in mode
+    # Binary mode for non 3.x or set by mode; an explicit encoding forces binary mode
+    binary = sys.version_info < (3, 0) or 'b' in mode or encoding is not None
     # Normalize modes. Ignore 't' and 'U'.
     mode = mode.replace('t', '').replace('b', '')
     mode = mode.replace('rU', 'r').replace('U', 'r')
@@ -2822,7 +2825,8 @@ class FakeFileOpen(object):
                                filesystem=self.filesystem,
                                newline=newline,
                                binary=binary,
-                               closefd=closefd)
+                               closefd=closefd,
+                               encoding=encoding)
     if filedes is not None:
       fakefile.filedes = filedes
     else:

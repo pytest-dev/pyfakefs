@@ -17,6 +17,7 @@
 """Unittest for fake_filesystem module."""
 
 import errno
+import locale
 import os
 import re
 import stat
@@ -2487,6 +2488,8 @@ class FakeFileOpenTestBase(TestCase):
 
 
 class FakeFileOpenTest(FakeFileOpenTestBase):
+
+
   def testOpenNoParentDir(self):
     """Expect raise when open'ing a file in a missing directory."""
     file_path = 'foo/bar.txt'
@@ -2526,7 +2529,10 @@ class FakeFileOpenTest(FakeFileOpenTestBase):
   def testUnicodeContents(self):
     self.file = fake_filesystem.FakeFileOpen(self.filesystem)
     file_path = 'foo'
-    text_fractions =  '⅓ ⅔ ⅕ ⅖'
+    # note that this will work only if the string can be represented
+    # by the locale preferred encoding - which under Windows is
+    # usually not UTF-8, but something like Latin1, depending on the locale
+    text_fractions = 'Ümläüts'
     with self.file(file_path, 'w') as f:
       f.write(text_fractions)
     with self.file(file_path) as f:
@@ -2534,7 +2540,7 @@ class FakeFileOpenTest(FakeFileOpenTestBase):
     self.assertEqual(contents, text_fractions)
 
   @unittest.skipIf(sys.version_info >= (3, 0),
-                   'Python2-specific behavior')
+                   'Python2 specific string handling')
   def testByteContentsPy2(self):
     self.file = fake_filesystem.FakeFileOpen(self.filesystem)
     file_path = 'foo'
@@ -2546,16 +2552,57 @@ class FakeFileOpenTest(FakeFileOpenTestBase):
     self.assertEqual(contents, byte_fractions)
 
   @unittest.skipIf(sys.version_info < (3, 0),
-                   'Python3-specific behavior')
+                   'Python3 specific string handling')
   def testByteContentsPy3(self):
     self.file = fake_filesystem.FakeFileOpen(self.filesystem)
     file_path = 'foo'
     byte_fractions = b'\xe2\x85\x93 \xe2\x85\x94 \xe2\x85\x95 \xe2\x85\x96'
     with self.file(file_path, 'wb') as f:
       f.write(byte_fractions)
-    with self.file(file_path) as f:
+    # the encoding has to be specified, otherwise the locale default is used which
+    # can be different on different systems
+    with self.file(file_path, encoding='utf-8') as f:
       contents = f.read()
     self.assertEqual(contents, byte_fractions.decode('utf-8'))
+
+  def testWriteStrReadBytes(self):
+    self.file = fake_filesystem.FakeFileOpen(self.filesystem)
+    file_path = 'foo'
+    str_contents = 'Äsgül'
+    with self.file(file_path, 'w') as f:
+      f.write(str_contents)
+    with self.file(file_path, 'rb') as f:
+      contents = f.read()
+    if sys.version_info < (3, 0):
+      self.assertEqual(str_contents, contents)
+    else:
+      self.assertEqual(str_contents, contents.decode(locale.getpreferredencoding(False)))
+
+  @unittest.skipIf(sys.version_info < (3, 0),
+                   'Python3 specific string handling')
+  def testWriteStrWithEncodingReadBytes(self):
+    # note: this and the following test can be run under Python 2
+    # after support for Python 3.2 will be skipped (by using the u literal)
+    self.file = fake_filesystem.FakeFileOpen(self.filesystem, use_io=True)
+    file_path = 'foo'
+    str_contents = 'علي بابا'
+    with self.file(file_path, 'w', encoding='arabic') as f:
+      f.write(str_contents)
+    with self.file(file_path, 'rb') as f:
+      contents = f.read()
+    self.assertEqual(str_contents, contents.decode('arabic'))
+
+  @unittest.skipIf(sys.version_info < (3, 0),
+                   'Python3 specific string handling')
+  def testWriteAndReadStrWithEncoding(self):
+    self.file = fake_filesystem.FakeFileOpen(self.filesystem, use_io=True)
+    file_path = 'foo'
+    str_contents = 'علي بابا'
+    with self.file(file_path, 'w', encoding='arabic') as f:
+      f.write(str_contents)
+    with self.file(file_path, 'r', encoding='arabic') as f:
+      contents = f.read()
+    self.assertEqual(str_contents, contents)
 
   def testByteContents(self):
     self.file = fake_filesystem.FakeFileOpen(self.filesystem)
@@ -2590,7 +2637,7 @@ class FakeFileOpenTest(FakeFileOpenTestBase):
     if sys.version_info >= (3, 0):
       self.assertEqual(
           contents, self.open(file_path, mode='r', buffering=1,
-                              encoding='utf-8', errors='strict', newline='\n',
+                              errors='strict', newline='\n',
                               closefd=False, opener=False).readlines())
 
   @unittest.skipIf(sys.version_info < (3, 0), 'only tested on 3.0 or greater')
@@ -3085,10 +3132,13 @@ class OpenWithBinaryFlagsTest(TestCase):
     fake_file.seek(0, 2)
     return fake_file
 
-  def WriteAndReopenFile(self, fake_file, mode='rb'):
+  def WriteAndReopenFile(self, fake_file, mode='rb', encoding=None):
     fake_file.write(self.file_contents)
     fake_file.close()
-    return self.file(self.file_path, mode=mode)
+    args = {'mode': mode}
+    if encoding:
+      args['encoding'] = encoding
+    return self.file(self.file_path, **args)
 
   def testReadBinary(self):
     fake_file = self.OpenFakeFile('rb')
@@ -3102,11 +3152,11 @@ class OpenWithBinaryFlagsTest(TestCase):
     # Attempt to reopen the file in text mode
     fake_file = self.OpenFakeFile('wb')
     if sys.version_info >= (3, 0):
-        self.assertRaises(UnicodeDecodeError, self.WriteAndReopenFile, fake_file, mode='r')
+      fake_file = self.WriteAndReopenFile(fake_file, mode='r', encoding='ascii')
+      self.assertRaises(UnicodeDecodeError, fake_file.read)
     else:
-        fake_file = self.WriteAndReopenFile(fake_file, mode='r')
-        self.assertEqual(self.file_contents, fake_file.read())
-
+      fake_file = self.WriteAndReopenFile(fake_file, mode='r')
+      self.assertEqual(self.file_contents, fake_file.read())
 
   def testWriteAndReadBinary(self):
     fake_file = self.OpenFileAndSeek('w+b')
@@ -3127,7 +3177,7 @@ class OpenWithIgnoredFlagsTest(TestCase):
     if sys.version_info >= (3, 0):
       self.read_contents = 'two\nlines'
     self.filesystem.CreateFile(self.file_path, contents=self.file_contents)
-    # It's resonable to assume the file exists at this point
+    # It's reasonable to assume the file exists at this point
 
   def OpenFakeFile(self, mode):
     return self.file(self.file_path, mode=mode)
@@ -3595,11 +3645,11 @@ class DiskSpaceTest(TestCase):
     self.assertEqual((100, 11, 89), self.filesystem.GetDiskUsage())
 
   def testFileSystemSizeAfter2ByteUnicodeStringFileCreation(self):
-    self.filesystem.CreateFile('/foo/bar', contents='сложно')
+    self.filesystem.CreateFile('/foo/bar', contents='сложно', encoding='utf-8')
     self.assertEqual((100, 12, 88), self.filesystem.GetDiskUsage())
 
   def testFileSystemSizeAfter3ByteUnicodeStringFileCreation(self):
-    self.filesystem.CreateFile('/foo/bar', contents='複雑')
+    self.filesystem.CreateFile('/foo/bar', contents='複雑', encoding='utf-8')
     self.assertEqual((100, 6, 94), self.filesystem.GetDiskUsage())
 
   def testFileSystemSizeAfterFileDeletion(self):
