@@ -2501,8 +2501,8 @@ class FakeFileWrapper(object):
     self._encoding = encoding
     if encoding:
       file_wrapper = FakeFileWrapper(file_object, file_path, update, read,
-                                     append, delete_on_close, filesystem,
-                                     newline, binary=True, closefd=closefd)
+                                     append, delete_on_close=False, filesystem=filesystem,
+                                     newline=None, binary=True, closefd=closefd)
       codec_info = codecs.lookup(encoding)
       self._io = codecs.StreamReaderWriter(file_wrapper, codec_info.streamreader,
                                            codec_info.streamwriter)
@@ -2521,7 +2521,8 @@ class FakeFileWrapper(object):
 
     if contents:
       if update:
-        self._io.write(contents)
+        if not encoding:  # already written with encoding
+          self._io.write(contents)
         if not append:
           self._io.seek(0)
         else:
@@ -2772,7 +2773,7 @@ class FakeFileOpen(object):
     """
     orig_modes = mode  # Save original mdoes for error messages.
     # Binary mode for non 3.x or set by mode; an explicit encoding forces binary mode
-    binary = sys.version_info < (3, 0) or 'b' in mode or encoding is not None
+    binary = sys.version_info < (3, 0) or 'b' in mode
     # Normalize modes. Ignore 't' and 'U'.
     mode = mode.replace('t', '').replace('b', '')
     mode = mode.replace('rU', 'r').replace('U', 'r')

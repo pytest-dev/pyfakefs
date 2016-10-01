@@ -2489,7 +2489,6 @@ class FakeFileOpenTestBase(TestCase):
 
 class FakeFileOpenTest(FakeFileOpenTestBase):
 
-
   def testOpenNoParentDir(self):
     """Expect raise when open'ing a file in a missing directory."""
     file_path = 'foo/bar.txt'
@@ -2577,32 +2576,6 @@ class FakeFileOpenTest(FakeFileOpenTestBase):
       self.assertEqual(str_contents, contents)
     else:
       self.assertEqual(str_contents, contents.decode(locale.getpreferredencoding(False)))
-
-  @unittest.skipIf(sys.version_info < (3, 0),
-                   'Python3 specific string handling')
-  def testWriteStrWithEncodingReadBytes(self):
-    # note: this and the following test can be run under Python 2
-    # after support for Python 3.2 will be skipped (by using the u literal)
-    self.file = fake_filesystem.FakeFileOpen(self.filesystem, use_io=True)
-    file_path = 'foo'
-    str_contents = 'علي بابا'
-    with self.file(file_path, 'w', encoding='arabic') as f:
-      f.write(str_contents)
-    with self.file(file_path, 'rb') as f:
-      contents = f.read()
-    self.assertEqual(str_contents, contents.decode('arabic'))
-
-  @unittest.skipIf(sys.version_info < (3, 0),
-                   'Python3 specific string handling')
-  def testWriteAndReadStrWithEncoding(self):
-    self.file = fake_filesystem.FakeFileOpen(self.filesystem, use_io=True)
-    file_path = 'foo'
-    str_contents = 'علي بابا'
-    with self.file(file_path, 'w', encoding='arabic') as f:
-      f.write(str_contents)
-    with self.file(file_path, 'r', encoding='arabic') as f:
-      contents = f.read()
-    self.assertEqual(str_contents, contents)
 
   def testByteContents(self):
     self.file = fake_filesystem.FakeFileOpen(self.filesystem)
@@ -3090,6 +3063,128 @@ class FakeFileOpenTest(FakeFileOpenTestBase):
                                |fake_filesystem.PERM_ALL)
     with self.open(device_path, 'r') as fh:
       self.assertEqual('', fh.read())
+
+
+@unittest.skipIf(sys.version_info < (3, 0),
+                 'Python3 specific string handling')
+class OpenFileWithEncodingTest(TestCase):
+  """Tests that are similar to some open file tests above but using an explicit text encoding.
+    Note: these tests can also be run under Python 2 after support for Python 3.2 will be skipped
+          (by using the u literal in the strings which is not supported in Pzthon 3.2)
+  """
+
+  def setUp(self):
+    self.filesystem = fake_filesystem.FakeFilesystem(path_separator='/')
+    self.open = fake_filesystem.FakeFileOpen(self.filesystem, use_io=True)
+    self.file_path = 'foo'
+    self.os = fake_filesystem.FakeOsModule(self.filesystem)
+
+  def testWriteStrReadBytes(self):
+    # note: this and the following test can be run under Python 2
+    # after support for Python 3.2 will be skipped (by using the u literal)
+    str_contents = 'علي بابا'
+    with self.open(self.file_path, 'w', encoding='arabic') as f:
+      f.write(str_contents)
+    with self.open(self.file_path, 'rb') as f:
+      contents = f.read()
+    self.assertEqual(str_contents, contents.decode('arabic'))
+
+  def testWriteAndReadStr(self):
+    str_contents = 'علي بابا'
+    with self.open(self.file_path, 'w', encoding='arabic') as f:
+      f.write(str_contents)
+    with self.open(self.file_path, 'r', encoding='arabic') as f:
+      contents = f.read()
+    self.assertEqual(str_contents, contents)
+
+  def testCreateFileWithAppend(self):
+    contents = [
+        'Allons enfants de la Patrie,'
+        'Le jour de gloire est arrivé!',
+        'Contre nous de la tyrannie,',
+        'L’étendard sanglant est levé.',
+        ]
+    fake_file = self.open(self.file_path, 'a', encoding='utf-8')
+    for line in contents:
+      fake_file.write(line + '\n')
+    fake_file.close()
+    result = [line.rstrip() for line in self.open(self.file_path, encoding='utf-8')]
+    self.assertEqual(contents, result)
+
+  def testAppendExistingFile(self):
+    contents = [
+        'Оригинальное содержание'
+        'Дополнительное содержание',
+        ]
+    self.filesystem.CreateFile(self.file_path, contents=contents[0], encoding='cyrillic')
+    fake_file = self.open(self.file_path, 'a', encoding='cyrillic')
+    for line in contents[1:]:
+      fake_file.write(line + '\n')
+    fake_file.close()
+    result = [line.rstrip() for line in self.open(self.file_path, encoding='cyrillic')]
+    self.assertEqual(contents, result)
+
+  def testOpenWithWplus(self):
+    self.filesystem.CreateFile(self.file_path, contents='старое содержание', encoding='cyrillic')
+    fake_file = self.open(self.file_path, 'r', encoding='cyrillic')
+    self.assertEqual('старое содержание', fake_file.read())
+    fake_file.close()
+
+    fake_file = self.open(self.file_path, 'w+', encoding='cyrillic')
+    fake_file.write('новое содержание')
+    fake_file.seek(0)
+    self.assertTrue('новое содержание', fake_file.read())
+    fake_file.close()
+
+  def testOpenWithAppendFlag(self):
+    contents = [
+        'Калинка,\n',
+        'калинка,\n',
+        'калинка моя,\n'
+        ]
+    additional_contents = [
+        'В саду ягода-малинка,\n',
+        'малинка моя.\n'
+        ]
+    self.filesystem.CreateFile(self.file_path, contents=''.join(contents), encoding='cyrillic')
+    fake_file = self.open(self.file_path, 'a', encoding='cyrillic')
+    self.assertRaises(IOError, fake_file.read)
+    self.assertEqual('', fake_file.read(0))
+    self.assertEqual('', fake_file.readline(0))
+    self.assertEqual(len(''.join(contents)), fake_file.tell())
+    fake_file.seek(0)
+    self.assertEqual(0, fake_file.tell())
+    fake_file.writelines(additional_contents)
+    fake_file.close()
+    result = self.open(self.file_path, encoding='cyrillic').readlines()
+    self.assertEqual(contents + additional_contents, result)
+
+  def testAppendWithAplus(self):
+    self.filesystem.CreateFile(self.file_path, contents='старое содержание', encoding='cyrillic')
+    fake_file = self.open(self.file_path, 'r', encoding='cyrillic')
+    fake_file.close()
+
+    fake_file = self.open(self.file_path, 'a+', encoding='cyrillic')
+    self.assertEqual(0, fake_file.tell())
+    fake_file.seek(6, 1)
+    fake_file.write('новое содержание')
+    self.assertEqual(33, fake_file.tell())
+    fake_file.seek(0)
+    self.assertEqual('старое содержаниеновое содержание', fake_file.read())
+    fake_file.close()
+
+  def testReadWithRplus(self):
+    self.filesystem.CreateFile(self.file_path, contents='старое содержание здесь', encoding='cyrillic')
+    fake_file = self.open(self.file_path, 'r', encoding='cyrillic')
+    fake_file.close()
+
+    fake_file = self.open(self.file_path, 'r+', encoding='cyrillic')
+    self.assertEqual('старое содержание здесь', fake_file.read())
+    fake_file.seek(0)
+    fake_file.write('новое  содержание')
+    fake_file.seek(0)
+    self.assertEqual('новое  содержание здесь', fake_file.read())
+    fake_file.close()
 
 
 class OpenWithFileDescriptorTest(FakeFileOpenTestBase):
