@@ -124,10 +124,7 @@ class FakeTempfileModuleTest(unittest.TestCase):
     obj.write(b'foo')
     obj.close()
     file_obj = self.filesystem.GetObject(obj.name)
-    if sys.version_info >= (3, 0):
-        contents = file_obj.contents.recover(False)
-    else:
-        contents = file_obj.contents
+    contents = file_obj.contents
     self.assertEqual('foo', contents)
     obj = self.tempfile.NamedTemporaryFile(mode='w', delete=False)
     obj.write('foo')
