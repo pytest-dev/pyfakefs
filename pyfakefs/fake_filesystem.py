@@ -131,8 +131,8 @@ class Error(Exception):
 
 _is_windows = sys.platform.startswith('win')
 _is_cygwin = sys.platform == 'cygwin'
-# Python 3.2 supports symbolic links in Windows
-_is_symbolic_link_supported = not _is_windows or sys.version_info >= (3, 2)
+# Python 3.2 supports links in Windows
+_is_link_supported = not _is_windows or sys.version_info >= (3, 2)
 
 if _is_windows:
   # On Windows, raise WindowsError instead of OSError if available
