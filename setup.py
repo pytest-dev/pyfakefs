@@ -20,6 +20,7 @@
 from pyfakefs.fake_filesystem import __version__
 
 import os
+import setuptools
 
 
 NAME = 'pyfakefs'
@@ -76,7 +77,7 @@ touching the real disk. The software under test requires no modification to
 work with pyfakefs.''', # LONG_DESCRIPTION,
     keywords=KEYWORDS,
     url=URL,
-    pac=CLASSIFIERS,
+    classifiers=CLASSIFIERS,
     packages=[
         'pyfakefs'
     ]
