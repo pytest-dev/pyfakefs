@@ -26,7 +26,7 @@ NAME = 'pyfakefs'
 REQUIRES = ['mox3']
 DESCRIPTION = 'pyfakefs implements a fake file system that mocks the Python file system modules.'
 
-URL = "https://github.com/jmcgeheeiv/pyfakefs"
+URL = "http://pyfakefs.org"
 
 readme = os.path.join(os.path.dirname(__file__), 'README.md')
 LONG_DESCRIPTION = open(readme).read()
@@ -76,7 +76,7 @@ touching the real disk. The software under test requires no modification to
 work with pyfakefs.''', # LONG_DESCRIPTION,
     keywords=KEYWORDS,
     url=URL,
-    pac=CLASSIFIERS,
+    classifiers=CLASSIFIERS,
     packages=[
         'pyfakefs'
     ]
