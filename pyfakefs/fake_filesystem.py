@@ -91,7 +91,6 @@ import stat
 import sys
 import time
 import warnings
-import binascii
 from collections import namedtuple
 
 if sys.version_info < (3, 0):
@@ -427,6 +426,7 @@ class FakeDirectory(FakeFile):
 
     Raises:
       KeyError: if no child exists by the specified name
+      OSError: if user lacks permission to delete the file, or (Windows only) the file is open
     """
     entry = self.contents[pathname_name]
     if entry.st_mode & PERM_WRITE == 0:
@@ -465,6 +465,7 @@ class FakeFilesystem(object):
 
     Args:
       path_separator:  optional substitute for os.path.sep
+      total_size: if not None, the total size in bytes of the root filesystem
 
       Example usage to emulate real file systems:
          filesystem = FakeFilesystem(alt_path_separator='/' if _is_windows else None)
@@ -2779,8 +2780,8 @@ class FakeFileOpen(object):
       IOError: if the target object is a directory, the path is invalid or
         permission is denied.
     """
-    orig_modes = mode  # Save original mdoes for error messages.
-    # Binary mode for non 3.x or set by mode; an explicit encoding forces binary mode
+    orig_modes = mode  # Save original modes for error messages.
+    # Binary mode for non 3.x or set by mode
     binary = sys.version_info < (3, 0) or 'b' in mode
     # Normalize modes. Ignore 't' and 'U'.
     mode = mode.replace('t', '').replace('b', '')

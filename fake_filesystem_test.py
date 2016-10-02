@@ -3122,7 +3122,7 @@ class FakeFileOpenTest(FakeFileOpenTestBase):
 class OpenFileWithEncodingTest(TestCase):
   """Tests that are similar to some open file tests above but using an explicit text encoding.
     Note: these tests can also be run under Python 2 after support for Python 3.2 will be skipped
-          (by using the u literal in the strings which is not supported in Pzthon 3.2)
+          (by using the u literal in the strings which is not supported in Python 3.2)
   """
 
   def setUp(self):
@@ -3132,8 +3132,6 @@ class OpenFileWithEncodingTest(TestCase):
     self.os = fake_filesystem.FakeOsModule(self.filesystem)
 
   def testWriteStrReadBytes(self):
-    # note: this and the following test can be run under Python 2
-    # after support for Python 3.2 will be skipped (by using the u literal)
     str_contents = 'علي بابا'
     with self.open(self.file_path, 'w', encoding='arabic') as f:
       f.write(str_contents)
