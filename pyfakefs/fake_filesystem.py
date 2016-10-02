@@ -1432,7 +1432,7 @@ class FakeFilesystem(object):
       OSError:  if on Windows before Python 3.2
     """
     if not _is_link_supported:
-        raise OSError("Symbolic links are not supported on Windows before Python 3.2")
+      raise OSError("Symbolic links are not supported on Windows before Python 3.2")
     resolved_file_path = self.ResolvePath(file_path)
     return self.CreateFile(resolved_file_path, st_mode=stat.S_IFLNK | PERM_DEF,
                            contents=link_target)
@@ -1453,7 +1453,7 @@ class FakeFilesystem(object):
       OSError:  if on Windows before Python 3.2
     """
     if not _is_link_supported:
-        raise OSError("Links are not supported on Windows before Python 3.2")
+      raise OSError("Links are not supported on Windows before Python 3.2")
     new_path_normalized = self.NormalizePath(new_path)
     if self.Exists(new_path_normalized):
       raise IOError(errno.EEXIST,
