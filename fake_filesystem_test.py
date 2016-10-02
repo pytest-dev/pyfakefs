@@ -440,6 +440,8 @@ class FakeFilesystemUnitTest(TestCase):
     self.filesystem.CreateFile(path, contents='dummy_data')
     self.assertRaises(IOError, self.filesystem.CreateFile, path)
 
+  @unittest.skipIf(TestCase.is_windows and sys.version_info < (3, 3),
+                   'Links are not supported under Windows before Python 3.3')
   def testCreateLink(self):
     path = 'foo/bar/baz'
     target_path = 'foo/bar/quux'
@@ -455,6 +457,8 @@ class FakeFilesystemUnitTest(TestCase):
     self.assertTrue(self.filesystem.Exists(path))
     self.assertTrue(self.filesystem.Exists(target_path))
 
+  @unittest.skipIf(TestCase.is_windows and sys.version_info < (3, 3),
+                   'Links are not supported under Windows before Python 3.3')
   def testResolveObject(self):
     target_path = 'dir/target'
     target_contents = '0123456789ABCDEF'
@@ -466,6 +470,8 @@ class FakeFilesystemUnitTest(TestCase):
     self.assertEqual('target', obj.name)
     self.assertEqual(target_contents, obj.contents)
 
+  @unittest.skipIf(TestCase.is_windows and sys.version_info < (3, 3),
+                   'Links are not supported under Windows before Python 3.3')
   def testLresolveObject(self):
     target_path = 'dir/target'
     target_contents = '0123456789ABCDEF'
@@ -528,6 +534,8 @@ class CaseInsensitiveFakeFilesystemTest(TestCase):
     dir2 = self.filesystem.GetObject('/foo/bar')
     self.assertEqual(dir1, dir2)
 
+  @unittest.skipIf(TestCase.is_windows and sys.version_info < (3, 3),
+                   'Links are not supported under Windows before Python 3.3')
   def testResolvePath(self):
     self.filesystem.CreateDirectory('/foo/baz')
     self.filesystem.CreateLink('/Foo/Bar', './baz/bip')
@@ -706,6 +714,8 @@ class FakeOsModuleTest(TestCase):
     files.sort()
     self.assertEqual(files, self.os.listdir(directory))
 
+  @unittest.skipIf(TestCase.is_windows and sys.version_info < (3, 3),
+                   'Links are not supported under Windows before Python 3.3')
   def testListdirOnSymlink(self):
     directory = 'xyzzy'
     files = ['foo', 'bar', 'baz']
@@ -850,6 +860,8 @@ class FakeOsModuleTest(TestCase):
     self.assertTrue(stat.S_IFREG & self.os.stat(file_path).st_mode)
     self.assertEqual(5, self.os.stat(file_path)[stat.ST_SIZE])
 
+  @unittest.skipIf(TestCase.is_windows and sys.version_info < (3, 3),
+                   'Links are not supported under Windows before Python 3.3')
   def testLstat(self):
     directory = 'xyzzy'
     base_name = 'plugh'
@@ -876,28 +888,40 @@ class FakeOsModuleTest(TestCase):
       self.assertEqual(errno.ENOENT, os_error.errno)
       self.assertEqual(file_path, os_error.filename)
 
+  @unittest.skipIf(TestCase.is_windows and sys.version_info < (3, 3),
+                   'Links are not supported under Windows before Python 3.3')
   def testReadlink(self):
     link_path = 'foo/bar/baz'
     target = 'tarJAY'
     self.filesystem.CreateLink(link_path, target)
     self.assertEqual(self.os.readlink(link_path), target)
 
+  @unittest.skipIf(TestCase.is_windows and sys.version_info < (3, 3),
+                   'Links are not supported under Windows before Python 3.3')
   def testReadlinkRaisesIfPathIsNotALink(self):
     file_path = 'foo/bar/eleventyone'
     self.filesystem.CreateFile(file_path)
     self.assertRaises(OSError, self.os.readlink, file_path)
 
+  @unittest.skipIf(TestCase.is_windows and sys.version_info < (3, 3),
+                   'Links are not supported under Windows before Python 3.3')
   def testReadlinkRaisesIfPathDoesNotExist(self):
     self.assertRaises(OSError, self.os.readlink, '/this/path/does/not/exist')
 
+  @unittest.skipIf(TestCase.is_windows and sys.version_info < (3, 3),
+                   'Links are not supported under Windows before Python 3.3')
   def testReadlinkRaisesIfPathIsNone(self):
     self.assertRaises(TypeError, self.os.readlink, None)
 
+  @unittest.skipIf(TestCase.is_windows and sys.version_info < (3, 3),
+                   'Links are not supported under Windows before Python 3.3')
   def testReadlinkWithLinksInPath(self):
     self.filesystem.CreateLink('/meyer/lemon/pie', 'yum')
     self.filesystem.CreateLink('/geo/metro', '/meyer')
     self.assertEqual('yum', self.os.readlink('/geo/metro/lemon/pie'))
 
+  @unittest.skipIf(TestCase.is_windows and sys.version_info < (3, 3),
+                   'Links are not supported under Windows before Python 3.3')
   def testReadlinkWithChainedLinksInPath(self):
     self.filesystem.CreateLink('/eastern/european/wolfhounds/chase', 'cats')
     self.filesystem.CreateLink('/russian', '/eastern/european')
@@ -972,6 +996,8 @@ class FakeOsModuleTest(TestCase):
                       self.os.remove,
                       directory)
 
+  @unittest.skipIf(TestCase.is_windows and sys.version_info < (3, 3),
+                   'Links are not supported under Windows before Python 3.3')
   def testRemoveSymlinkToDir(self):
     directory = 'zzy'
     link = 'link_to_dir'
@@ -1863,6 +1889,8 @@ class FakeOsModuleTest(TestCase):
 
     self.assertEqual(True, visited_visit_directory)
 
+  @unittest.skipIf(TestCase.is_windows and sys.version_info < (3, 3),
+                   'Links are not supported under Windows before Python 3.3')
   def testSymlink(self):
     file_path = 'foo/bar/baz'
     self.os.symlink('bogus', file_path)
@@ -1874,11 +1902,15 @@ class FakeOsModuleTest(TestCase):
 
   # hard link related tests
 
+  @unittest.skipIf(TestCase.is_windows and sys.version_info < (3, 3),
+                   'Links are not supported under Windows before Python 3.3')
   def testLinkBogus(self):
     # trying to create a link from a non-existent file should fail
     self.assertRaises(OSError,
                      self.os.link, '/nonexistent_source', '/link_dest')
 
+  @unittest.skipIf(TestCase.is_windows and sys.version_info < (3, 3),
+                   'Links are not supported under Windows before Python 3.3')
   def testLinkDelete(self):
     fake_open = fake_filesystem.FakeFileOpen(self.filesystem)
 
@@ -1896,6 +1928,8 @@ class FakeOsModuleTest(TestCase):
     with fake_open(file2_path) as f:
         self.assertEqual(f.read(), contents1)
 
+  @unittest.skipIf(TestCase.is_windows and sys.version_info < (3, 3),
+                   'Links are not supported under Windows before Python 3.3')
   def testLinkUpdate(self):
     fake_open = fake_filesystem.FakeFileOpen(self.filesystem)
 
@@ -1916,6 +1950,8 @@ class FakeOsModuleTest(TestCase):
     with fake_open(file2_path) as f:
         self.assertEqual(f.read(), contents2)
 
+  @unittest.skipIf(TestCase.is_windows and sys.version_info < (3, 3),
+                   'Links are not supported under Windows before Python 3.3')
   def testLinkNonExistentParent(self):
     fake_open = fake_filesystem.FakeFileOpen(self.filesystem)
 
@@ -1929,6 +1965,8 @@ class FakeOsModuleTest(TestCase):
     self.assertRaises(OSError,
                      self.os.link, file1_path, breaking_link_path)
 
+  @unittest.skipIf(TestCase.is_windows and sys.version_info < (3, 3),
+                   'Links are not supported under Windows before Python 3.3')
   def testLinkCount1(self):
     """Test that hard link counts are updated correctly."""
     file1_path = 'test_file1'
@@ -2229,6 +2267,8 @@ class FakePathModuleTest(TestCase):
     self.assertTrue(self.path.exists(file_path))
     self.assertFalse(self.path.exists('/some/other/bogus/path'))
 
+  @unittest.skipIf(TestCase.is_windows and sys.version_info < (3, 3),
+                   'Links are not supported under Windows before Python 3.3')
   def testLexists(self):
     file_path = 'foo/bar/baz'
     self.filesystem.CreateDirectory('foo/bar')
@@ -2324,6 +2364,8 @@ class FakePathModuleTest(TestCase):
     self.assertFalse(self.path.exists('it_dont_exist'))
     self.assertRaises(OSError, self.path.getmtime, 'it_dont_exist')
 
+  @unittest.skipIf(TestCase.is_windows and sys.version_info < (3, 3),
+                   'Links are not supported under Windows before Python 3.3')
   def testIslink(self):
     self.filesystem.CreateDirectory('foo')
     self.filesystem.CreateFile('foo/regular_file')
@@ -2394,6 +2436,8 @@ class FakePathModuleTest(TestCase):
                 ('/foo/bar/xyzzy', 'plugh')]
     self.assertEqual(expected, visited_nodes)
 
+  @unittest.skipIf(TestCase.is_windows and sys.version_info < (3, 3),
+                   'Links are not supported under Windows before Python 3.3')
   def testWalkFollowsymlinkDisabled(self):
     self.filesystem.CreateFile('/linkerStrinkter/sublink/')
     self.filesystem.CreateFile('/foo/bar/baz')
@@ -2419,6 +2463,8 @@ class FakePathModuleTest(TestCase):
     self.assertEqual(expected, visited_nodes)
 
 
+  @unittest.skipIf(TestCase.is_windows and sys.version_info < (3, 3),
+                   'Links are not supported under Windows before Python 3.3')
   def testWalkFollowsymlinkEnabled(self):
     self.filesystem.CreateFile('/linked/subfile')
     self.filesystem.CreateFile('/foo/bar/baz')
@@ -2915,6 +2961,8 @@ class FakeFileOpenTest(FakeFileOpenTestBase):
     self.assertRaises(IOError, self.file, file_path, 'w')
     self.assertRaises(IOError, self.file, file_path, 'w+')
 
+  @unittest.skipIf(TestCase.is_windows and sys.version_info < (3, 3),
+                   'Links are not supported under Windows before Python 3.3')
   def testFollowLinkRead(self):
     link_path = '/foo/bar/baz'
     target = '/tarJAY'
@@ -2927,6 +2975,8 @@ class FakeFileOpenTest(FakeFileOpenTestBase):
     fh.close()
     self.assertEqual(target_contents, got_contents)
 
+  @unittest.skipIf(TestCase.is_windows and sys.version_info < (3, 3),
+                   'Links are not supported under Windows before Python 3.3')
   def testFollowLinkWrite(self):
     link_path = '/foo/bar/TBD'
     target = '/tarJAY'
@@ -2942,6 +2992,8 @@ class FakeFileOpenTest(FakeFileOpenTestBase):
     fh.close()
     self.assertEqual(target_contents, got_contents)
 
+  @unittest.skipIf(TestCase.is_windows and sys.version_info < (3, 3),
+                   'Links are not supported under Windows before Python 3.3')
   def testFollowIntraPathLinkWrite(self):
     # Test a link in the middle of of a file path.
     link_path = '/foo/build/local_machine/output/1'
@@ -3350,6 +3402,8 @@ class ResolvePathTest(FakeFileOpenTestBase):
     self.__WriteToFile('foo')
     self.assertTrue(self.filesystem.Exists('foo'))
 
+  @unittest.skipIf(TestCase.is_windows and sys.version_info < (3, 3),
+                   'Links are not supported under Windows before Python 3.3')
   def testLinkWithinSameDirectory(self):
     final_target = '/foo/baz'
     self.filesystem.CreateLink('/foo/bar', 'baz')
@@ -3357,6 +3411,8 @@ class ResolvePathTest(FakeFileOpenTestBase):
     self.assertTrue(self.filesystem.Exists(final_target))
     self.assertEqual(1, self.os.stat(final_target)[stat.ST_SIZE])
 
+  @unittest.skipIf(TestCase.is_windows and sys.version_info < (3, 3),
+                   'Links are not supported under Windows before Python 3.3')
   def testLinkToSubDirectory(self):
     final_target = '/foo/baz/bip'
     self.filesystem.CreateDirectory('/foo/baz')
@@ -3369,6 +3425,8 @@ class ResolvePathTest(FakeFileOpenTestBase):
     new_dir = self.filesystem.GetObject('/foo/baz')
     self.assertTrue(stat.S_IFDIR & new_dir.st_mode)
 
+  @unittest.skipIf(TestCase.is_windows and sys.version_info < (3, 3),
+                   'Links are not supported under Windows before Python 3.3')
   def testLinkToParentDirectory(self):
     final_target = '/baz/bip'
     self.filesystem.CreateDirectory('/foo')
@@ -3379,6 +3437,8 @@ class ResolvePathTest(FakeFileOpenTestBase):
     self.assertEqual(1, self.os.stat(final_target)[stat.ST_SIZE])
     self.assertTrue(self.filesystem.Exists('/foo/bar'))
 
+  @unittest.skipIf(TestCase.is_windows and sys.version_info < (3, 3),
+                   'Links are not supported under Windows before Python 3.3')
   def testLinkToAbsolutePath(self):
     final_target = '/foo/baz/bip'
     self.filesystem.CreateDirectory('/foo/baz')
@@ -3386,6 +3446,8 @@ class ResolvePathTest(FakeFileOpenTestBase):
     self.__WriteToFile('/foo/bar')
     self.assertTrue(self.filesystem.Exists(final_target))
 
+  @unittest.skipIf(TestCase.is_windows and sys.version_info < (3, 3),
+                   'Links are not supported under Windows before Python 3.3')
   def testRelativeLinksWorkAfterChdir(self):
     final_target = '/foo/baz/bip'
     self.filesystem.CreateDirectory('/foo/baz')
@@ -3405,6 +3467,8 @@ class ResolvePathTest(FakeFileOpenTestBase):
     self.__WriteToFile('/foo/bar')
     self.assertTrue(self.filesystem.Exists(final_target))
 
+  @unittest.skipIf(TestCase.is_windows and sys.version_info < (3, 3),
+                   'Links are not supported under Windows before Python 3.3')
   def testAbsoluteLinksWorkAfterChdir(self):
     final_target = '/foo/baz/bip'
     self.filesystem.CreateDirectory('/foo/baz')
@@ -3424,6 +3488,8 @@ class ResolvePathTest(FakeFileOpenTestBase):
     self.__WriteToFile('/foo/bar')
     self.assertTrue(self.filesystem.Exists(final_target))
 
+  @unittest.skipIf(TestCase.is_windows and sys.version_info < (3, 3),
+                   'Links are not supported under Windows before Python 3.3')
   def testChdirThroughRelativeLink(self):
     self.filesystem.CreateDirectory('/x/foo')
     self.filesystem.CreateDirectory('/x/bar')
@@ -3438,6 +3504,8 @@ class ResolvePathTest(FakeFileOpenTestBase):
     os_module.chdir('bar')
     self.assertEqual('/x/bar', os_module.getcwd())
 
+  @unittest.skipIf(TestCase.is_windows and sys.version_info < (3, 3),
+                   'Links are not supported under Windows before Python 3.3')
   def testReadLinkToLink(self):
     # Write into the final link target and read back from a file which will
     # point to that.
@@ -3447,6 +3515,8 @@ class ResolvePathTest(FakeFileOpenTestBase):
     fh = self.open('/foo/bar', 'r')
     self.assertEqual('x', fh.read())
 
+  @unittest.skipIf(TestCase.is_windows and sys.version_info < (3, 3),
+                   'Links are not supported under Windows before Python 3.3')
   def testWriteLinkToLink(self):
     final_target = '/foo/baz'
     self.filesystem.CreateLink('/foo/bar', 'link')
@@ -3454,6 +3524,8 @@ class ResolvePathTest(FakeFileOpenTestBase):
     self.__WriteToFile('/foo/bar')
     self.assertTrue(self.filesystem.Exists(final_target))
 
+  @unittest.skipIf(TestCase.is_windows and sys.version_info < (3, 3),
+                   'Links are not supported under Windows before Python 3.3')
   def testMultipleLinks(self):
     final_target = '/a/link1/c/link2/e'
     self.os.makedirs('/a/link1/c/link2')
@@ -3471,6 +3543,8 @@ class ResolvePathTest(FakeFileOpenTestBase):
     self.__WriteToFile('/a/b/c/d/e')
     self.assertTrue(self.filesystem.Exists(final_target))
 
+  @unittest.skipIf(TestCase.is_windows and sys.version_info < (3, 3),
+                   'Links are not supported under Windows before Python 3.3')
   def testUtimeLink(self):
     '''os.utime() and os.stat() via symbolic link (issue #49)'''
     self.filesystem.CreateDirectory('/foo/baz')
@@ -3487,6 +3561,8 @@ class ResolvePathTest(FakeFileOpenTestBase):
     self.assertEqual(3, st.st_atime)
     self.assertEqual(4, st.st_mtime)
 
+  @unittest.skipIf(TestCase.is_windows and sys.version_info < (3, 3),
+                   'Links are not supported under Windows before Python 3.3')
   def testTooManyLinks(self):
     self.filesystem.CreateLink('/a/loop', 'loop')
     self.assertFalse(self.filesystem.Exists('/a/loop'))
@@ -3807,6 +3883,8 @@ class DiskSpaceTest(TestCase):
     self.os.rename('/foo/bar', '/foo/baz')
     self.assertEqual(20, self.filesystem.GetDiskUsage().used)
 
+  @unittest.skipIf(TestCase.is_windows and sys.version_info < (3, 3),
+                   'Links are not supported under Windows before Python 3.3')
   def testThatHardLinkDoesNotChangeUsedSize(self):
     file1_path = 'test_file1'
     file2_path = 'test_file2'
