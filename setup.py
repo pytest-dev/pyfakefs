@@ -20,7 +20,6 @@
 from pyfakefs.fake_filesystem import __version__
 
 import os
-import setuptools
 
 
 NAME = 'pyfakefs'
