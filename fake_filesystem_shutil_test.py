@@ -306,6 +306,8 @@ class CopyFileTest(unittest.TestCase):
     self.assertRaises(self.shutil.Error,
                       self.shutil.copyfile, src_file, dst_file)
 
+  @unittest.skipIf(sys.platform.startswith('win') and sys.version_info < (3, 3),
+                   'Links are not supported under Windows before Python 3.3')
   def testRaisesIfDestIsASymlinkToSrc(self):
     src_file = '/tmp/foo'
     dst_file = '/tmp/bar'

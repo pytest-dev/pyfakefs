@@ -131,6 +131,8 @@ class Error(Exception):
 
 _is_windows = sys.platform.startswith('win')
 _is_cygwin = sys.platform == 'cygwin'
+# Python 3.2 supports links in Windows
+_is_link_supported = not _is_windows or sys.version_info >= (3, 2)
 
 if _is_windows:
   # On Windows, raise WindowsError instead of OSError if available
@@ -1427,7 +1429,10 @@ class FakeFilesystem(object):
 
     Raises:
       IOError:  if the file already exists
+      OSError:  if on Windows before Python 3.2
     """
+    if not _is_link_supported:
+      raise OSError("Symbolic links are not supported on Windows before Python 3.2")
     resolved_file_path = self.ResolvePath(file_path)
     return self.CreateFile(resolved_file_path, st_mode=stat.S_IFLNK | PERM_DEF,
                            contents=link_target)
@@ -1445,7 +1450,10 @@ class FakeFilesystem(object):
     Raises:
       OSError:  if something already exists at new_path
       OSError:  if the parent directory doesn't exist
+      OSError:  if on Windows before Python 3.2
     """
+    if not _is_link_supported:
+      raise OSError("Links are not supported on Windows before Python 3.2")
     new_path_normalized = self.NormalizePath(new_path)
     if self.Exists(new_path_normalized):
       raise IOError(errno.EEXIST,
