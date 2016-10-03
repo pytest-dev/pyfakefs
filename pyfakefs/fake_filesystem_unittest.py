@@ -15,8 +15,8 @@
 
 """A base class for unit tests using the :py:class:`pyfakefs` module.
 
-This class searches `sys.modules` for modules that import the `os`, `glob`,
-`shutil`, and `tempfile` modules.
+This class searches `sys.modules` for modules that import the `os`, `io`,
+`path`, and `tempfile` modules.
 
 The `setUp()` method binds these modules to the corresponding fake
 modules from `pyfakefs`.  Further, the built in functions `file()` and
@@ -47,7 +47,6 @@ else:
 import doctest
 import inspect
 from pyfakefs import fake_filesystem
-from pyfakefs import fake_filesystem_glob
 from pyfakefs import fake_filesystem_shutil
 from pyfakefs import fake_tempfile
 if sys.version_info < (3,):
@@ -120,8 +119,8 @@ class Patcher(object):
     Instantiate a stub creator to bind and un-bind the file-related modules to
     the :py:mod:`pyfakefs` fake modules.
     '''
-    SKIPMODULES = set([None, fake_filesystem, fake_filesystem_glob,
-                      fake_filesystem_shutil, fake_tempfile, sys])
+    SKIPMODULES = set([None, fake_filesystem, fake_filesystem_shutil,
+                       fake_tempfile, sys])
     '''Stub nothing that is imported within these modules.
     `sys` is included to prevent `sys.path` from being stubbed with the fake
     `os.path`.
@@ -130,12 +129,11 @@ class Patcher(object):
 
     # To add py.test support per issue https://github.com/jmcgeheeiv/pyfakefs/issues/43,
     # it appears that adding  'py', 'pytest', '_pytest' to SKIPNAMES will help
-    SKIPNAMES = set(['os', 'glob', 'path', 'tempfile', 'io'])
+    SKIPNAMES = set(['os', 'path', 'tempfile', 'io'])
 
     def __init__(self):
         # Attributes set by _findModules()
         self._osModules = None
-        self._globModules = None
         self._pathModules = None
         self._shutilModules = None
         self._tempfileModules = None
@@ -148,7 +146,6 @@ class Patcher(object):
         self._stubs = None
         self.fs = None
         self.fake_os = None
-        self.fake_glob = None
         self.fake_path = None
         self.fake_shutil = None
         self.fake_tempfile_ = None
@@ -167,7 +164,6 @@ class Patcher(object):
         modules.
         '''
         self._osModules = set()
-        self._globModules = set()
         self._pathModules = set()
         self._shutilModules = set()
         self._tempfileModules = set()
@@ -179,8 +175,6 @@ class Patcher(object):
                 continue
             if 'os' in module.__dict__:
                 self._osModules.add(module)
-            if 'glob' in module.__dict__:
-                self._globModules.add(module)
             if 'path' in module.__dict__:
                 self._pathModules.add(module)
             if 'shutil' in module.__dict__:
@@ -198,7 +192,6 @@ class Patcher(object):
 
         self.fs = fake_filesystem.FakeFilesystem()
         self.fake_os = fake_filesystem.FakeOsModule(self.fs)
-        self.fake_glob = fake_filesystem_glob.FakeGlobModule(self.fs)
         self.fake_path = self.fake_os.path
         self.fake_shutil = fake_filesystem_shutil.FakeShutilModule(self.fs)
         self.fake_tempfile_ = fake_tempfile.FakeTempfileModule(self.fs)
@@ -224,8 +217,6 @@ class Patcher(object):
 
         for module in self._osModules:
             self._stubs.SmartSet(module,  'os', self.fake_os)
-        for module in self._globModules:
-            self._stubs.SmartSet(module,  'glob', self.fake_glob)
         for module in self._pathModules:
             self._stubs.SmartSet(module,  'path', self.fake_path)
         for module in self._shutilModules:
@@ -241,8 +232,6 @@ class Patcher(object):
             self._refresh()
         if 'os' in globs:
             globs['os'] = fake_filesystem.FakeOsModule(self.fs)
-        if 'glob' in globs:
-            globs['glob'] = fake_filesystem_glob.FakeGlobModule(self.fs)
         if 'path' in globs:
             fake_os = globs['os'] if 'os' in globs \
                 else fake_filesystem.FakeOsModule(self.fs)
