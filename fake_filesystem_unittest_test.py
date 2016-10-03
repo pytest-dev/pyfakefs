@@ -24,6 +24,7 @@ import glob
 import shutil
 import tempfile
 import sys
+
 if sys.version_info < (2, 7):
     import unittest2 as unittest
 else:
@@ -31,20 +32,21 @@ else:
 import pytest
 from pyfakefs import fake_filesystem_unittest
 
-class TestPyfakefsUnittest(fake_filesystem_unittest.TestCase): # pylint: disable=R0904
-    '''Test the pyfakefs.fake_filesystem_unittest.TestCase` base class.'''
+
+class TestPyfakefsUnittest(fake_filesystem_unittest.TestCase):  # pylint: disable=R0904
+    """Test the pyfakefs.fake_filesystem_unittest.TestCase` base class."""
 
     def setUp(self):
-        '''Set up the fake file system'''
+        """Set up the fake file system"""
         self.setUpPyfakefs()
 
     def tearDown(self):
-        '''Tear down the fake file system'''
+        """Tear down the fake file system"""
         self.tearDownPyfakefs()
 
     @unittest.skipIf(sys.version_info > (2,), "file() was removed in Python 3")
     def test_file(self):
-        '''Fake `file()` function is bound'''
+        """Fake `file()` function is bound"""
         self.assertFalse(os.path.exists('/fake_file.txt'))
         with file('/fake_file.txt', 'w') as f:
             f.write("This test file was created using the file() function.\n")
@@ -55,7 +57,7 @@ class TestPyfakefsUnittest(fake_filesystem_unittest.TestCase): # pylint: disable
                          'This test file was created using the file() function.\n')
 
     def test_open(self):
-        '''Fake `open()` function is bound'''
+        """Fake `open()` function is bound"""
         self.assertFalse(os.path.exists('/fake_file.txt'))
         with open('/fake_file.txt', 'w') as f:
             f.write("This test file was created using the open() function.\n")
@@ -66,7 +68,7 @@ class TestPyfakefsUnittest(fake_filesystem_unittest.TestCase): # pylint: disable
                          'This test file was created using the open() function.\n')
 
     def test_io_open(self):
-        '''Fake io module is bound'''
+        """Fake io module is bound"""
         self.assertFalse(os.path.exists('/fake_file.txt'))
         with io.open('/fake_file.txt', 'w') as f:
             f.write("This test file was created using the io.open() function.\n")
@@ -77,16 +79,16 @@ class TestPyfakefsUnittest(fake_filesystem_unittest.TestCase): # pylint: disable
                          'This test file was created using the io.open() function.\n')
 
     def test_os(self):
-        '''Fake os module is bound'''
+        """Fake os module is bound"""
         self.assertFalse(self.fs.Exists('/test/dir1/dir2'))
         os.makedirs('/test/dir1/dir2')
         self.assertTrue(self.fs.Exists('/test/dir1/dir2'))
 
     def test_glob(self):
-        '''Fake glob module is bound'''
+        """Fake glob module is bound"""
         is_windows = sys.platform.startswith('win')
         self.assertEqual(glob.glob('/test/dir1/dir*'),
-                              [])
+                         [])
         self.fs.CreateDirectory('/test/dir1/dir2a')
         matching_paths = glob.glob('/test/dir1/dir*')
         if is_windows:
@@ -101,7 +103,7 @@ class TestPyfakefsUnittest(fake_filesystem_unittest.TestCase): # pylint: disable
             self.assertEqual(matching_paths, ['/test/dir1/dir2a', '/test/dir1/dir2b'])
 
     def test_shutil(self):
-        '''Fake shutil module is bound'''
+        """Fake shutil module is bound"""
         self.fs.CreateDirectory('/test/dir1/dir2a')
         self.fs.CreateDirectory('/test/dir1/dir2b')
         self.assertTrue(self.fs.Exists('/test/dir1/dir2b'))
@@ -111,15 +113,15 @@ class TestPyfakefsUnittest(fake_filesystem_unittest.TestCase): # pylint: disable
         self.assertFalse(self.fs.Exists('/test/dir1'))
 
     def test_tempfile(self):
-        '''Fake tempfile module is bound'''
+        """Fake tempfile module is bound"""
         with tempfile.NamedTemporaryFile() as tf:
             tf.write(b'Temporary file contents\n')
             name = tf.name
             self.assertTrue(self.fs.Exists(tf.name))
 
-    @unittest.skipIf(sys.version_info < (3,0), "TemporaryDirectory new in Python3")
+    @unittest.skipIf(sys.version_info < (3, 0), "TemporaryDirectory new in Python3")
     def test_tempdirectory(self):
-        '''Fake TemporaryDirectory class is bound'''
+        """Fake TemporaryDirectory class is bound"""
         with tempfile.TemporaryDirectory() as td:
             with open('%s/fake_file.txt' % td, 'w') as f:
                 self.assertTrue(self.fs.Exists(td))

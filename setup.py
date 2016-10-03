@@ -21,7 +21,6 @@ from pyfakefs.fake_filesystem import __version__
 
 import os
 
-
 NAME = 'pyfakefs'
 REQUIRES = ['mox3']
 DESCRIPTION = 'pyfakefs implements a fake file system that mocks the Python file system modules.'
@@ -52,7 +51,6 @@ CLASSIFIERS = [
     'Topic :: System :: Filesystems',
 ]
 
-
 AUTHOR = 'Google'
 AUTHOR_EMAIL = 'google-pyfakefs@google.com'
 MAINTAINER = 'John McGehee'
@@ -73,7 +71,7 @@ params = dict(
     description=DESCRIPTION,
     long_description='''Using pyfakefs, your tests operate on a fake file system in memory without
 touching the real disk. The software under test requires no modification to
-work with pyfakefs.''', # LONG_DESCRIPTION,
+work with pyfakefs.''',  # LONG_DESCRIPTION,
     keywords=KEYWORDS,
     url=URL,
     classifiers=CLASSIFIERS,
@@ -90,4 +88,4 @@ else:
     params['tests_require'] = ['unittest2']
     params['test_suite'] = 'unittest2.collector'
 
-setup(**params) # pylint: disable = W0142
+setup(**params)  # pylint: disable = W0142

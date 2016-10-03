@@ -22,9 +22,9 @@ def make_file_factory(func_name, fake, result):
         {result}
         >>> os.remove(name)  # Cleanup
         """.format(
-            command="getfixture('fs')" if fake else "pass",
-            func_name=func_name,
-            result=result)
+        command="getfixture('fs')" if fake else "pass",
+        func_name=func_name,
+        result=result)
 
     return make_file
 

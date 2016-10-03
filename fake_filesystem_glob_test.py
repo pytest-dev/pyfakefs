@@ -18,6 +18,7 @@
 
 import doctest
 import sys
+
 if sys.version_info < (2, 7):
     import unittest2 as unittest
 else:
@@ -28,55 +29,54 @@ from pyfakefs import fake_filesystem_glob
 
 
 class FakeGlobUnitTest(unittest.TestCase):
+    def setUp(self):
+        self.filesystem = fake_filesystem.FakeFilesystem(path_separator='/')
+        self.glob = fake_filesystem_glob.FakeGlobModule(self.filesystem)
+        directory = './xyzzy'
+        self.filesystem.CreateDirectory(directory)
+        self.filesystem.CreateDirectory('%s/subdir' % directory)
+        self.filesystem.CreateDirectory('%s/subdir2' % directory)
+        self.filesystem.CreateFile('%s/subfile' % directory)
+        self.filesystem.CreateFile('[Temp]')
 
-  def setUp(self):
-    self.filesystem = fake_filesystem.FakeFilesystem(path_separator='/')
-    self.glob = fake_filesystem_glob.FakeGlobModule(self.filesystem)
-    directory = './xyzzy'
-    self.filesystem.CreateDirectory(directory)
-    self.filesystem.CreateDirectory('%s/subdir' % directory)
-    self.filesystem.CreateDirectory('%s/subdir2' % directory)
-    self.filesystem.CreateFile('%s/subfile' % directory)
-    self.filesystem.CreateFile('[Temp]')
+    def testGlobEmpty(self):
+        self.assertEqual(self.glob.glob(''), [])
 
-  def testGlobEmpty(self):
-    self.assertEqual(self.glob.glob(''), [])
+    def testGlobStar(self):
+        self.assertEqual(['/xyzzy/subdir', '/xyzzy/subdir2', '/xyzzy/subfile'],
+                         self.glob.glob('/xyzzy/*'))
 
-  def testGlobStar(self):
-    self.assertEqual(['/xyzzy/subdir', '/xyzzy/subdir2', '/xyzzy/subfile'],
-                     self.glob.glob('/xyzzy/*'))
+    def testGlobExact(self):
+        self.assertEqual(['/xyzzy'], self.glob.glob('/xyzzy'))
+        self.assertEqual(['/xyzzy/subfile'], self.glob.glob('/xyzzy/subfile'))
 
-  def testGlobExact(self):
-    self.assertEqual(['/xyzzy'], self.glob.glob('/xyzzy'))
-    self.assertEqual(['/xyzzy/subfile'], self.glob.glob('/xyzzy/subfile'))
+    def testGlobQuestion(self):
+        self.assertEqual(['/xyzzy/subdir', '/xyzzy/subdir2', '/xyzzy/subfile'],
+                         self.glob.glob('/x?zz?/*'))
 
-  def testGlobQuestion(self):
-    self.assertEqual(['/xyzzy/subdir', '/xyzzy/subdir2', '/xyzzy/subfile'],
-                     self.glob.glob('/x?zz?/*'))
+    def testGlobNoMagic(self):
+        self.assertEqual(['/xyzzy'], self.glob.glob('/xyzzy'))
+        self.assertEqual(['/xyzzy/subdir'], self.glob.glob('/xyzzy/subdir'))
 
-  def testGlobNoMagic(self):
-    self.assertEqual(['/xyzzy'], self.glob.glob('/xyzzy'))
-    self.assertEqual(['/xyzzy/subdir'], self.glob.glob('/xyzzy/subdir'))
+    def testNonExistentPath(self):
+        self.assertEqual([], self.glob.glob('nonexistent'))
 
-  def testNonExistentPath(self):
-    self.assertEqual([], self.glob.glob('nonexistent'))
+    def testDocTest(self):
+        self.assertFalse(doctest.testmod(fake_filesystem_glob)[0])
 
-  def testDocTest(self):
-    self.assertFalse(doctest.testmod(fake_filesystem_glob)[0])
+    def testMagicDir(self):
+        self.assertEqual(['/[Temp]'], self.glob.glob('/*emp*'))
 
-  def testMagicDir(self):
-    self.assertEqual(['/[Temp]'], self.glob.glob('/*emp*'))
+    def testRootGlob(self):
+        self.assertEqual(['[Temp]', 'xyzzy'], self.glob.glob('*'))
 
-  def testRootGlob(self):
-    self.assertEqual(['[Temp]', 'xyzzy'], self.glob.glob('*'))
+    def testGlob1(self):
+        self.assertEqual(['[Temp]'], self.glob.glob1('/', '*Tem*'))
 
-  def testGlob1(self):
-    self.assertEqual(['[Temp]'], self.glob.glob1('/', '*Tem*'))
-
-  def testHasMagic(self):
-    self.assertTrue(self.glob.has_magic('['))
-    self.assertFalse(self.glob.has_magic('a'))
+    def testHasMagic(self):
+        self.assertTrue(self.glob.has_magic('['))
+        self.assertFalse(self.glob.has_magic('a'))
 
 
 if __name__ == '__main__':
-  unittest.main()
+    unittest.main()

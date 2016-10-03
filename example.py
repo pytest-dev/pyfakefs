@@ -40,8 +40,9 @@ import os
 import glob
 import shutil
 
+
 def create_file(path):
-    '''Create the specified file and add some content to it.  Use the `open()`
+    """Create the specified file and add some content to it.  Use the `open()`
     built in function.
 
     For example, the following file operations occur in the fake file system.
@@ -60,13 +61,14 @@ def create_file(path):
     >>> with open('/test/file.txt') as f:
     ...     f.readlines()
     ["This is test file '/test/file.txt'.\\n", 'It was created using the open() function.\\n']
-    '''
+    """
     with open(path, 'w') as f:
         f.write("This is test file '{0}'.\n".format(path))
         f.write("It was created using the open() function.\n")
 
+
 def delete_file(path):
-    '''Delete the specified file.
+    """Delete the specified file.
 
     For example:
 
@@ -79,11 +81,12 @@ def delete_file(path):
     >>> delete_file('/test/file.txt')
     >>> os.path.exists('/test/file.txt')
     False
-    '''
+    """
     os.remove(path)
 
+
 def path_exists(path):
-    '''Return True if the specified file exists.
+    """Return True if the specified file exists.
 
     For example:
 
@@ -98,11 +101,12 @@ def path_exists(path):
     >>> create_file('/test/file.txt')
     >>> path_exists('/test/file.txt')
     True
-    '''
+    """
     return os.path.exists(path)
 
+
 def get_glob(glob_path):
-    r'''Return the list of paths matching the specified glob expression.
+    r"""Return the list of paths matching the specified glob expression.
 
     For example:
 
@@ -119,9 +123,10 @@ def get_glob(glob_path):
     ...     # UNIX style path
     ...     file_names == ['/test/file1.txt', '/test/file2.txt']
     True
-    '''
+    """
     return glob.glob(glob_path)
 
+
 def rm_tree(path):
-    '''Delete the specified file hierarchy.'''
+    """Delete the specified file hierarchy."""
     shutil.rmtree(path)

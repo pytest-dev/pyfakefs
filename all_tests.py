@@ -28,22 +28,24 @@ import example_test
 
 
 class AllTests(unittest.TestSuite):
-  """A test suite that runs all tests for pyfakefs at once."""
+    """A test suite that runs all tests for pyfakefs at once."""
 
-  def suite(self):  # pylint: disable-msg=C6409
-    loader = unittest.defaultTestLoader
-    self.addTests([
-        loader.loadTestsFromModule(fake_filesystem_test),
-        loader.loadTestsFromModule(fake_filesystem_glob_test),
-        loader.loadTestsFromModule(fake_filesystem_shutil_test),
-        loader.loadTestsFromModule(fake_tempfile_test),
-        loader.loadTestsFromModule(fake_filesystem_vs_real_test),
-        loader.loadTestsFromModule(fake_filesystem_unittest_test),
-        loader.loadTestsFromModule(example_test),
-    ])
-    return self
+    def suite(self):  # pylint: disable-msg=C6409
+        loader = unittest.defaultTestLoader
+        self.addTests([
+            loader.loadTestsFromModule(fake_filesystem_test),
+            loader.loadTestsFromModule(fake_filesystem_glob_test),
+            loader.loadTestsFromModule(fake_filesystem_shutil_test),
+            loader.loadTestsFromModule(fake_tempfile_test),
+            loader.loadTestsFromModule(fake_filesystem_vs_real_test),
+            loader.loadTestsFromModule(fake_filesystem_unittest_test),
+            loader.loadTestsFromModule(example_test),
+        ])
+        return self
+
 
 if __name__ == '__main__':
-  import sys
-  result = unittest.TextTestRunner(verbosity=2).run(AllTests().suite())
-  sys.exit(int(not result.wasSuccessful()))
+    import sys
+
+    result = unittest.TextTestRunner(verbosity=2).run(AllTests().suite())
+    sys.exit(int(not result.wasSuccessful()))
