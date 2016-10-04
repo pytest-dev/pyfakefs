@@ -21,7 +21,6 @@ python:
   - "3.3"
   - "3.4"
   - "3.5"
-  - "nightly"
 
 install:
   - if [[ $TRAVIS_PYTHON_VERSION == 2.6 ]]; then pip install importlib unittest2; fi
