@@ -272,6 +272,8 @@ class FakeFile(object):
     def _EncodeContents(self, contents, encoding=None):
         if sys.version_info >= (3, 0) and isinstance(contents, str):
             contents = bytes(contents, encoding or locale.getpreferredencoding(False))
+        elif sys.version_info < (3, 0) and isinstance(contents, unicode):
+            contents = contents.encode(encoding or locale.getpreferredencoding(False))
         return contents
 
     def _SetInitialContents(self, contents, encoding):
