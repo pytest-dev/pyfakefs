@@ -3114,8 +3114,6 @@ class FakeFileOpenTest(FakeFileOpenTestBase):
             self.assertEqual('', fh.read())
 
 
-@unittest.skipIf(sys.version_info < (3, 0),
-                 'Python3 specific string handling')
 class OpenFileWithEncodingTest(TestCase):
     """Tests that are similar to some open file tests above but using an explicit text encoding.
     Note: these tests can also be run under Python 2 after support for Python 3.2 will be skipped
@@ -3129,7 +3127,7 @@ class OpenFileWithEncodingTest(TestCase):
         self.os = fake_filesystem.FakeOsModule(self.filesystem)
 
     def testWriteStrReadBytes(self):
-        str_contents = 'علي بابا'
+        str_contents = u'علي بابا'
         with self.open(self.file_path, 'w', encoding='arabic') as f:
             f.write(str_contents)
         with self.open(self.file_path, 'rb') as f:
@@ -3137,7 +3135,7 @@ class OpenFileWithEncodingTest(TestCase):
         self.assertEqual(str_contents, contents.decode('arabic'))
 
     def testWriteAndReadStr(self):
-        str_contents = 'علي بابا'
+        str_contents = u'علي بابا'
         with self.open(self.file_path, 'w', encoding='arabic') as f:
             f.write(str_contents)
         with self.open(self.file_path, 'r', encoding='arabic') as f:
@@ -3146,10 +3144,10 @@ class OpenFileWithEncodingTest(TestCase):
 
     def testCreateFileWithAppend(self):
         contents = [
-            'Allons enfants de la Patrie,'
-            'Le jour de gloire est arrivé!',
-            'Contre nous de la tyrannie,',
-            'L’étendard sanglant est levé.',
+            u'Allons enfants de la Patrie,'
+            u'Le jour de gloire est arrivé!',
+            u'Contre nous de la tyrannie,',
+            u'L’étendard sanglant est levé.',
         ]
         fake_file = self.open(self.file_path, 'a', encoding='utf-8')
         for line in contents:
@@ -3160,8 +3158,8 @@ class OpenFileWithEncodingTest(TestCase):
 
     def testAppendExistingFile(self):
         contents = [
-            'Оригинальное содержание'
-            'Дополнительное содержание',
+            u'Оригинальное содержание'
+            u'Дополнительное содержание',
         ]
         self.filesystem.CreateFile(self.file_path, contents=contents[0], encoding='cyrillic')
         fake_file = self.open(self.file_path, 'a', encoding='cyrillic')
@@ -3172,26 +3170,26 @@ class OpenFileWithEncodingTest(TestCase):
         self.assertEqual(contents, result)
 
     def testOpenWithWplus(self):
-        self.filesystem.CreateFile(self.file_path, contents='старое содержание', encoding='cyrillic')
+        self.filesystem.CreateFile(self.file_path, contents=u'старое содержание', encoding='cyrillic')
         fake_file = self.open(self.file_path, 'r', encoding='cyrillic')
-        self.assertEqual('старое содержание', fake_file.read())
+        self.assertEqual(u'старое содержание', fake_file.read())
         fake_file.close()
 
         fake_file = self.open(self.file_path, 'w+', encoding='cyrillic')
-        fake_file.write('новое содержание')
+        fake_file.write(u'новое содержание')
         fake_file.seek(0)
-        self.assertTrue('новое содержание', fake_file.read())
+        self.assertTrue(u'новое содержание', fake_file.read())
         fake_file.close()
 
     def testOpenWithAppendFlag(self):
         contents = [
-            'Калинка,\n',
-            'калинка,\n',
-            'калинка моя,\n'
+            u'Калинка,\n',
+            u'калинка,\n',
+            u'калинка моя,\n'
         ]
         additional_contents = [
-            'В саду ягода-малинка,\n',
-            'малинка моя.\n'
+            u'В саду ягода-малинка,\n',
+            u'малинка моя.\n'
         ]
         self.filesystem.CreateFile(self.file_path, contents=''.join(contents), encoding='cyrillic')
         fake_file = self.open(self.file_path, 'a', encoding='cyrillic')
@@ -3207,30 +3205,30 @@ class OpenFileWithEncodingTest(TestCase):
         self.assertEqual(contents + additional_contents, result)
 
     def testAppendWithAplus(self):
-        self.filesystem.CreateFile(self.file_path, contents='старое содержание', encoding='cyrillic')
+        self.filesystem.CreateFile(self.file_path, contents=u'старое содержание', encoding='cyrillic')
         fake_file = self.open(self.file_path, 'r', encoding='cyrillic')
         fake_file.close()
 
         fake_file = self.open(self.file_path, 'a+', encoding='cyrillic')
         self.assertEqual(0, fake_file.tell())
         fake_file.seek(6, 1)
-        fake_file.write('новое содержание')
+        fake_file.write(u'новое содержание')
         self.assertEqual(33, fake_file.tell())
         fake_file.seek(0)
-        self.assertEqual('старое содержаниеновое содержание', fake_file.read())
+        self.assertEqual(u'старое содержаниеновое содержание', fake_file.read())
         fake_file.close()
 
     def testReadWithRplus(self):
-        self.filesystem.CreateFile(self.file_path, contents='старое содержание здесь', encoding='cyrillic')
+        self.filesystem.CreateFile(self.file_path, contents=u'старое содержание здесь', encoding='cyrillic')
         fake_file = self.open(self.file_path, 'r', encoding='cyrillic')
         fake_file.close()
 
         fake_file = self.open(self.file_path, 'r+', encoding='cyrillic')
-        self.assertEqual('старое содержание здесь', fake_file.read())
+        self.assertEqual(u'старое содержание здесь', fake_file.read())
         fake_file.seek(0)
-        fake_file.write('новое  содержание')
+        fake_file.write(u'новое  содержание')
         fake_file.seek(0)
-        self.assertEqual('новое  содержание здесь', fake_file.read())
+        self.assertEqual(u'новое  содержание здесь', fake_file.read())
         fake_file.close()
 
 
@@ -3802,15 +3800,15 @@ class DiskSpaceTest(TestCase):
         self.assertEqual((100, 5, 95), self.filesystem.GetDiskUsage())
 
     def testFileSystemSizeAfterAsciiStringFileCreation(self):
-        self.filesystem.CreateFile('/foo/bar', contents='complicated')
+        self.filesystem.CreateFile('/foo/bar', contents=u'complicated')
         self.assertEqual((100, 11, 89), self.filesystem.GetDiskUsage())
 
     def testFileSystemSizeAfter2ByteUnicodeStringFileCreation(self):
-        self.filesystem.CreateFile('/foo/bar', contents='сложно', encoding='utf-8')
+        self.filesystem.CreateFile('/foo/bar', contents=u'сложно', encoding='utf-8')
         self.assertEqual((100, 12, 88), self.filesystem.GetDiskUsage())
 
     def testFileSystemSizeAfter3ByteUnicodeStringFileCreation(self):
-        self.filesystem.CreateFile('/foo/bar', contents='複雑', encoding='utf-8')
+        self.filesystem.CreateFile('/foo/bar', contents=u'複雑', encoding='utf-8')
         self.assertEqual((100, 6, 94), self.filesystem.GetDiskUsage())
 
     def testFileSystemSizeAfterFileDeletion(self):
