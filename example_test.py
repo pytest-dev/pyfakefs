@@ -39,7 +39,10 @@ def load_tests(loader, tests, ignore):
 
 
 class TestExample(fake_filesystem_unittest.TestCase):  # pylint: disable=R0904
-    """Test the example module."""
+    """Test the example module.
+       The os and sutil modules have been replaced with the fake modules
+       so all of the following calls to os and shutil occur in the fake filesystem.
+    """
 
     def setUp(self):
         """Invoke the :py:class:`pyfakefs.fake_filesystem_unittest.TestCase`
@@ -60,8 +63,6 @@ class TestExample(fake_filesystem_unittest.TestCase):  # pylint: disable=R0904
 
     def test_create_file(self):
         """Test example.create_file()"""
-        # The os module has been replaced with the fake os module so all of the
-        # following occurs in the fake filesystem.
         self.assertFalse(os.path.isdir('/test'))
         os.mkdir('/test')
         self.assertTrue(os.path.isdir('/test'))
@@ -72,12 +73,6 @@ class TestExample(fake_filesystem_unittest.TestCase):  # pylint: disable=R0904
 
     def test_delete_file(self):
         """Test example.delete_file()
-
-        `self.fs.CreateFile()` is convenient because it automatically creates
-        directories in the fake file system and allows you to specify the file
-        contents.
-
-        You could also use `open()` or `file()`.
         """
         self.fs.CreateFile('/test/full.txt',
                            contents='First line\n'
@@ -88,12 +83,6 @@ class TestExample(fake_filesystem_unittest.TestCase):  # pylint: disable=R0904
 
     def test_file_exists(self):
         """Test example.path_exists()
-
-        `self.fs.CreateFile()` is convenient because it automatically creates
-        directories in the fake file system and allows you to specify the file
-        contents.
-
-        You could also use `open()` or `file()` if you wanted.
         """
         self.assertFalse(example.path_exists('/test/empty.txt'))
         self.fs.CreateFile('/test/empty.txt')
@@ -101,10 +90,6 @@ class TestExample(fake_filesystem_unittest.TestCase):  # pylint: disable=R0904
 
     def test_get_globs(self):
         """Test example.get_glob()
-
-        `self.fs.CreateDirectory()` creates directories.  However, you might
-        prefer the familiar `os.makedirs()`, which also works fine on the fake
-        file system.
         """
         self.assertFalse(os.path.isdir('/test'))
         self.fs.CreateDirectory('/test/dir1/dir2a')
@@ -124,10 +109,6 @@ class TestExample(fake_filesystem_unittest.TestCase):  # pylint: disable=R0904
 
     def test_rm_tree(self):
         """Test example.rm_tree()
-
-        `self.fs.CreateDirectory()` creates directories.  However, you might
-        prefer the familiar `os.makedirs()`, which also works fine on the fake
-        file system.
         """
         self.fs.CreateDirectory('/test/dir1/dir2a')
         # os.mkdirs() works, too.
@@ -137,6 +118,25 @@ class TestExample(fake_filesystem_unittest.TestCase):  # pylint: disable=R0904
 
         example.rm_tree('/test/dir1')
         self.assertFalse(os.path.exists('/test/dir1'))
+
+    if sys.version_info >= (3, 5):
+        def test_scandir(self):
+            """Test example.scandir()
+
+            # The os module has been replaced with the fake os module so the
+            # fake filesystem path entries are returned.
+            """
+            self.fs.CreateFile('/test/text.txt')
+            self.fs.CreateDirectory('/test/dir')
+            self.fs.CreateFile('/linktest/linked')
+            self.fs.CreateLink('/test/linked_file', '/linktest/linked')
+
+            entries = sorted(os.scandir('/test'), key=lambda e: e.name)
+            self.assertEqual(3, len(entries))
+            self.assertEqual('linked_file', entries[1].name)
+            self.assertTrue(entries[0].is_dir())
+            self.assertTrue(entries[1].is_symlink())
+            self.assertTrue(entries[2].is_file())
 
 
 if __name__ == "__main__":

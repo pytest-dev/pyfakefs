@@ -130,3 +130,7 @@ def get_glob(glob_path):
 def rm_tree(path):
     """Delete the specified file hierarchy."""
     shutil.rmtree(path)
+
+def scandir(path):
+    """Returns a list of directory entries for the given path."""
+    return list(os.scandir(path))
