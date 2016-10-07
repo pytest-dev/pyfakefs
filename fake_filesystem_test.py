@@ -2041,7 +2041,7 @@ class FakeOsModuleTest(FakeOsModuleTestBase):
         self.assertModeEqual(0o640, self.os.stat('file2').st_mode)
 
 
-@unittest.skipIf(sys.version_info < (3, 5), 'os.scandir introduced in Python 3.5')
+@unittest.skipIf(sys.version_info < (3, 5), 'os.scandir was introduced in Python 3.5')
 class FakeScandirTest(FakeOsModuleTestBase):
     def setUp(self):
         super(FakeScandirTest, self).setUp()
