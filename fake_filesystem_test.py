@@ -623,10 +623,15 @@ class CaseSensitiveFakeFilesystemTest(TestCase):
         self.assertRaises(OSError, self.path.getmtime, 'Foo/Bar1.TXT')
 
 
-class FakeOsModuleTest(TestCase):
+class FakeOsModuleTestBase(TestCase):
     def setUp(self):
         self.filesystem = fake_filesystem.FakeFilesystem(path_separator='/')
         self.os = fake_filesystem.FakeOsModule(self.filesystem)
+
+
+class FakeOsModuleTest(FakeOsModuleTestBase):
+    def setUp(self):
+        super(FakeOsModuleTest, self).setUp()
         self.rwx = self.os.R_OK | self.os.W_OK | self.os.X_OK
         self.rw = self.os.R_OK | self.os.W_OK
         self.orig_time = time.time
@@ -2034,6 +2039,76 @@ class FakeOsModuleTest(TestCase):
         self.os.umask(0o27)
         fake_open('file2', 'w').close()
         self.assertModeEqual(0o640, self.os.stat('file2').st_mode)
+
+
+@unittest.skipIf(sys.version_info < (3, 5), 'os.scandir was introduced in Python 3.5')
+class FakeScandirTest(FakeOsModuleTestBase):
+    def setUp(self):
+        super(FakeScandirTest, self).setUp()
+        directory = '/xyzzy/plugh'
+        link_dir = '/linked/plugh'
+        linked_file_path = self.filesystem.JoinPaths(link_dir, 'file')
+        linked_dir_path = self.filesystem.JoinPaths(link_dir, 'dir')
+
+        self.filesystem.CreateDirectory(linked_dir_path)
+        self.filesystem.CreateFile(linked_file_path, st_size=100)
+        self.filesystem.CreateDirectory(self.filesystem.JoinPaths(directory, 'dir'))
+        self.filesystem.CreateFile(self.filesystem.JoinPaths(directory, 'file'), st_size=500)
+        self.filesystem.CreateLink(self.filesystem.JoinPaths(
+            directory, 'link_file'), linked_file_path)
+        self.filesystem.CreateLink(self.filesystem.JoinPaths(
+            directory, 'link_dir'), linked_dir_path)
+
+        self.dir_entries = [entry for entry in self.os.scandir(directory)]
+        self.dir_entries = sorted(self.dir_entries, key=lambda entry: entry.name)
+
+    def testPaths(self):
+        self.assertEqual(4, len(self.dir_entries))
+        sorted_names = ['dir', 'file', 'link_dir', 'link_file']
+        self.assertEqual(sorted_names, [entry.name for entry in self.dir_entries])
+        self.assertEqual('/xyzzy/plugh/dir', self.dir_entries[0].path)
+
+    def testIsfile(self):
+        self.assertFalse(self.dir_entries[0].is_file())
+        self.assertTrue(self.dir_entries[1].is_file())
+        self.assertFalse(self.dir_entries[2].is_file())
+        self.assertFalse(self.dir_entries[2].is_file(follow_symlinks=False))
+        self.assertTrue(self.dir_entries[3].is_file())
+        self.assertFalse(self.dir_entries[3].is_file(follow_symlinks=False))
+
+    def testIsdir(self):
+        self.assertTrue(self.dir_entries[0].is_dir())
+        self.assertFalse(self.dir_entries[1].is_dir())
+        self.assertTrue(self.dir_entries[2].is_dir())
+        self.assertFalse(self.dir_entries[2].is_dir(follow_symlinks=False))
+        self.assertFalse(self.dir_entries[3].is_dir())
+        self.assertFalse(self.dir_entries[3].is_dir(follow_symlinks=False))
+
+    def testIsLink(self):
+        self.assertFalse(self.dir_entries[0].is_symlink())
+        self.assertFalse(self.dir_entries[1].is_symlink())
+        self.assertTrue(self.dir_entries[2].is_symlink())
+        self.assertTrue(self.dir_entries[3].is_symlink())
+
+    def testInode(self):
+        self.assertEqual(self.filesystem.GetObject('/xyzzy/plugh/dir').st_ino,
+                         self.dir_entries[0].inode())
+        self.assertEqual(self.filesystem.GetObject('/xyzzy/plugh/file').st_ino,
+                         self.dir_entries[1].inode())
+        self.assertEqual(self.filesystem.GetObject('/xyzzy/plugh/link_dir').st_ino,
+                         self.dir_entries[2].inode())
+        self.assertEqual(self.filesystem.GetObject('/xyzzy/plugh/link_file').st_ino,
+                         self.dir_entries[3].inode())
+
+    def testStat(self):
+        self.assertEqual(500, self.dir_entries[1].stat().st_size)
+        self.assertEqual(100, self.dir_entries[3].stat().st_size)
+        self.assertEqual(len('/linked/plugh/file'),
+                         self.dir_entries[3].stat(follow_symlinks=False).st_size)
+        self.assertEqual(self.filesystem.ResolveObject('/xyzzy/plugh/dir').st_ctime,
+                         self.dir_entries[0].stat().st_ctime)
+        self.assertEqual(self.filesystem.ResolveObject('/linked/plugh/dir').st_mtime,
+                         self.dir_entries[2].stat().st_mtime)
 
 
 class StatPropagationTest(TestCase):

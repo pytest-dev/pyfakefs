@@ -1613,7 +1613,6 @@ class FakePathModule(object):
             return False
         except KeyError:
             return False
-        return False
 
     def getmtime(self, path):
         """Returns the mtime of the file."""
@@ -1983,6 +1982,86 @@ class FakeOsModule(object):
         target_directory = self.filesystem.ResolvePath(target_directory)
         directory = self._ConfirmDir(target_directory)
         return sorted(directory.contents)
+
+    if sys.version_info >= (3, 5):
+        class DirEntry():
+            """Emulates os.DirEntry. Note that we did not enforce keyword only arguments."""
+
+            def __init__(self, fake_os):
+                self._fake_os = fake_os
+                self.name = ''
+                self.path = ''
+                self._inode = None
+                self._islink = False
+                self._isdir = False
+                self._statresult = None
+                self._statresult_symlink = None
+
+            def inode(self):
+                if self._inode is None:
+                    self.stat(follow_symlinks=False)
+                return self._inode
+
+            def is_dir(self, follow_symlinks=True):
+                return self._isdir and (follow_symlinks or not self._islink)
+
+            def is_file(self, follow_symlinks=True):
+                return not self._isdir and (follow_symlinks or not self._islink)
+
+            def is_symlink(self):
+                return self._islink
+
+            def stat(self, follow_symlinks=True):
+                if follow_symlinks:
+                    if self._statresult_symlink is None:
+                        stats = self._fake_os.filesystem.ResolveObject(self.path)
+                        if _is_windows:
+                            # under Windows, some properties are 0 probably due to performance reasons
+                            stats.st_ino = 0
+                            stats.st_dev = 0
+                            stats.st_nlink = 0
+                        self._statresult_symlink = os.stat_result(
+                            (stats.st_mode, stats.st_ino, stats.st_dev,
+                             stats.st_nlink, stats.st_uid, stats.st_gid,
+                             stats.st_size, stats.st_atime,
+                             stats.st_mtime, stats.st_ctime))
+                    return self._statresult_symlink
+
+                if self._statresult is None:
+                    stats = self._fake_os.filesystem.LResolveObject(self.path)
+                    self._inode = stats.st_ino
+                    if _is_windows:
+                        stats.st_ino = 0
+                        stats.st_dev = 0
+                        stats.st_nlink = 0
+                    self._statresult = os.stat_result(
+                        (stats.st_mode, stats.st_ino, stats.st_dev,
+                         stats.st_nlink, stats.st_uid, stats.st_gid,
+                         stats.st_size, stats.st_atime,
+                         stats.st_mtime, stats.st_ctime))
+                return self._statresult
+
+        def scandir(self, path=''):
+            """Return an iterator of DirEntry objects corresponding to the entries in the directory given by path.
+
+            Args:
+              path: path to the target directory within the fake filesystem
+
+            Returns:
+              an iterator to an unsorted list of os.DirEntry objects for each entry in path
+
+            Raises:
+              OSError: if the target is not a directory
+            """
+            path = self.filesystem.ResolvePath(path)
+            fake_dir = self._ConfirmDir(path)
+            for entry in fake_dir.contents:
+                dir_entry = self.DirEntry(self)
+                dir_entry.name = entry
+                dir_entry.path = self.path.join(path, dir_entry.name)
+                dir_entry._isdir = self.path.isdir(dir_entry.path)
+                dir_entry._islink = self.path.islink(dir_entry.path)
+                yield dir_entry
 
     def _ClassifyDirectoryContents(self, root):
         """Classify contents of a directory as files/directories.
