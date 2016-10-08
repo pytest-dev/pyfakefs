@@ -71,13 +71,15 @@ def load_doctests(loader, tests, ignore, module):
 
 
 class TestCase(unittest.TestCase):
-    def __init__(self, methodName='runTest', additional_skip_names=None):
+    def __init__(self, methodName='runTest', additional_skip_names=None, patch_path=True):
         """Creates the test class instance and the stubber used to stub out file system related modules.
 
           Args:
             methodName: the name of the test method (as in unittest.TestCase)
             additional_skip_names: names of modules inside of which no module replacement shall be done
                (additionally to the hard-coded list: 'os', 'glob', 'path', 'tempfile', 'io')
+            path_path: if set to False, 'path' modules will not be stubbed out, and 'path' will be
+               removed from SKIPNAMES.
 
           Example usage in a derived test class:
 
@@ -88,6 +90,9 @@ class TestCase(unittest.TestCase):
         super(TestCase, self).__init__(methodName)
         if additional_skip_names is not None:
             Patcher.SKIPNAMES.update(additional_skip_names)
+        if not patch_path:
+            Patcher.patch_path = True
+            Patcher.SKIPNAMES.remove('path')
         self._stubber = Patcher()
 
     @property
@@ -134,6 +139,12 @@ class Patcher(object):
     # it appears that adding  'py', 'pytest', '_pytest' to SKIPNAMES will help
     SKIPNAMES = set(['os', 'path', 'tempfile', 'io'])
 
+    # To avoid stubbing out path because another top=level module named path is present
+    # this has to be set to False.
+    # Note that os.path still be correctedly faked if it is imported the usual way
+    # using `import os` or `import os.path`.
+    patch_path = True
+
     def __init__(self):
         # Attributes set by _findModules()
         self._osModules = None
@@ -178,7 +189,7 @@ class Patcher(object):
                 continue
             if 'os' in module.__dict__:
                 self._osModules.add(module)
-            if 'path' in module.__dict__:
+            if self.patch_path and 'path' in module.__dict__:
                 self._pathModules.add(module)
             if 'shutil' in module.__dict__:
                 self._shutilModules.add(module)
