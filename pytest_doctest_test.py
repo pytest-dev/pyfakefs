@@ -1,6 +1,10 @@
 """
+This is a test case for pyfakefs issue #45.
+
 To run these doctests, install pytest and run:
-$ py.test --doctest-modules pytest_doctest_test.py
+
+    $ py.test --doctest-modules pytest_doctest_test.py
+
 Add `-s` option to enable print statements.
 """
 from __future__ import unicode_literals
@@ -38,6 +42,7 @@ passes_too.__doc__ = passes_too.__doc__.replace('>>> os.remove(name)',
 
 fails = make_file_factory('fails', fake=False, result=False)
 
-# Pytest crashes when running these doctests:
-# crashes = make_file_factory('crashes', fake=True, result=False)
-# crashes_too = make_file_factory(') SyntaxError', fake=True, result=False)
+# Pytest raises an internal error when running these doctests:
+crashes = make_file_factory('crashes', fake=True, result=False)
+crashes_too = make_file_factory(') SyntaxError', fake=True, result=False)
+
