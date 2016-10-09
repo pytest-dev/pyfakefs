@@ -2818,6 +2818,7 @@ class FakeFileOpen(object):
     Returns FakeFile objects in a FakeFilesystem in place of the file()
     or open() function.
     """
+    __name__ = 'FakeFileOpen'
 
     def __init__(self, filesystem, delete_on_close=False, use_io=False):
         """init.
