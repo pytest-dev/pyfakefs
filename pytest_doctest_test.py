@@ -1,5 +1,6 @@
 """
 This is a test case for pyfakefs issue #45.
+This problem is resolved by using PyTest version 2.8.6 or above.
 
 To run these doctests, install pytest and run:
 
