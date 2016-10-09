@@ -2370,7 +2370,11 @@ class FakePathModuleTest(TestCase):
     @unittest.skipIf(TestCase.is_windows or TestCase.is_cygwin,
                      'only tested on unix systems')
     def testExpandRoot(self):
-        self.assertEqual('/root', self.path.expanduser('~root'))
+        if sys.platform == 'darwin':
+            roothome = '/var/root'
+        else:
+            roothome = '/root'
+        self.assertEqual(self.path.expanduser('~root'), roothome)
 
     def testGetsizePathNonexistent(self):
         file_path = 'foo/bar/baz'
