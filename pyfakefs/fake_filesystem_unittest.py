@@ -71,13 +71,18 @@ def load_doctests(loader, tests, ignore, module):
 
 
 class TestCase(unittest.TestCase):
-    def __init__(self, methodName='runTest', additional_skip_names=None):
+    def __init__(self, methodName='runTest', additional_skip_names=None, patch_path=True):
         """Creates the test class instance and the stubber used to stub out file system related modules.
 
           Args:
             methodName: the name of the test method (as in unittest.TestCase)
             additional_skip_names: names of modules inside of which no module replacement shall be done
                (additionally to the hard-coded list: 'os', 'glob', 'path', 'tempfile', 'io')
+            patch_path: if False, modules named 'path' will not be patched with the fake 'os.path' module.
+               Set this to False when you need to import some other module named 'path', for example,
+                   `from my_module import path`
+               Irrespective of patch_path, module 'os.path' is still correctly faked if imported the usual way
+               using `import os` or `import os.path`.
 
           Example usage in a derived test class:
 
@@ -86,9 +91,8 @@ class TestCase(unittest.TestCase):
               super(MyTestCase, self).__init__(methodName=methodName, additional_skip_names=['posixpath'])
         """
         super(TestCase, self).__init__(methodName)
-        if additional_skip_names is not None:
-            Patcher.SKIPNAMES.update(additional_skip_names)
-        self._stubber = Patcher()
+        self._stubber = Patcher(additional_skip_names=additional_skip_names,
+                                patch_path=patch_path)
 
     @property
     def fs(self):
@@ -134,7 +138,16 @@ class Patcher(object):
     # it appears that adding  'py', 'pytest', '_pytest' to SKIPNAMES will help
     SKIPNAMES = set(['os', 'path', 'tempfile', 'io'])
 
-    def __init__(self):
+    def __init__(self, additional_skip_names=None, patch_path=True):
+        """For a description of the arguments, see TestCase.__init__"""
+
+        self._skipNames = self.SKIPNAMES.copy()
+        if additional_skip_names is not None:
+            self._skipNames.update(additional_skip_names)
+        self._patchPath = patch_path
+        if not patch_path:
+            self._skipNames.discard('path')
+
         # Attributes set by _findModules()
         self._osModules = None
         self._pathModules = None
@@ -174,11 +187,11 @@ class Patcher(object):
         for name, module in set(sys.modules.items()):
             if (module in self.SKIPMODULES or
                     (not inspect.ismodule(module)) or
-                        name.split('.')[0] in self.SKIPNAMES):
+                        name.split('.')[0] in self._skipNames):
                 continue
             if 'os' in module.__dict__:
                 self._osModules.add(module)
-            if 'path' in module.__dict__:
+            if self._patchPath and 'path' in module.__dict__:
                 self._pathModules.add(module)
             if 'shutil' in module.__dict__:
                 self._shutilModules.add(module)

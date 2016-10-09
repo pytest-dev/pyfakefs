@@ -29,7 +29,6 @@ if sys.version_info < (2, 7):
     import unittest2 as unittest
 else:
     import unittest
-import pytest
 from pyfakefs import fake_filesystem_unittest
 
 
@@ -125,6 +124,35 @@ class TestPyfakefsUnittest(fake_filesystem_unittest.TestCase):  # pylint: disabl
         with tempfile.TemporaryDirectory() as td:
             with open('%s/fake_file.txt' % td, 'w') as f:
                 self.assertTrue(self.fs.Exists(td))
+
+
+import math as path
+
+
+class TestPatchPathUnittestFailing(TestPyfakefsUnittest):
+    """Tests the default behavior regarding the argument patch_path:
+       An own path module (in this case an alias to math) cannot be imported,
+       because it is faked by FakePathModule
+    """
+
+    def __init__(self, methodName='runTest'):
+        super(TestPatchPathUnittestFailing, self).__init__(methodName, patch_path=True)
+
+    @unittest.expectedFailure
+    def test_own_path_module(self):
+        self.assertEqual(2, path.floor(2.5))
+
+
+class TestPatchPathUnittestPassing(TestPyfakefsUnittest):
+    """Tests the behavior with patch_path set to False:
+       An own path module (in this case an alias to math) can be imported and used
+    """
+
+    def __init__(self, methodName='runTest'):
+        super(TestPatchPathUnittestPassing, self).__init__(methodName, patch_path=False)
+
+    def test_own_path_module(self):
+        self.assertEqual(2, path.floor(2.5))
 
 
 if __name__ == "__main__":
