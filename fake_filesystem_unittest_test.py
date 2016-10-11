@@ -32,9 +32,7 @@ else:
 from pyfakefs import fake_filesystem_unittest
 
 
-class TestPyfakefsUnittest(fake_filesystem_unittest.TestCase):  # pylint: disable=R0904
-    """Test the pyfakefs.fake_filesystem_unittest.TestCase` base class."""
-
+class TestPyfakefsUnittestBase(fake_filesystem_unittest.TestCase):
     def setUp(self):
         """Set up the fake file system"""
         self.setUpPyfakefs()
@@ -42,6 +40,10 @@ class TestPyfakefsUnittest(fake_filesystem_unittest.TestCase):  # pylint: disabl
     def tearDown(self):
         """Tear down the fake file system"""
         self.tearDownPyfakefs()
+
+
+class TestPyfakefsUnittest(TestPyfakefsUnittestBase):  # pylint: disable=R0904
+    """Test the `pyfakefs.fake_filesystem_unittest.TestCase` base class."""
 
     @unittest.skipIf(sys.version_info > (2,), "file() was removed in Python 3")
     def test_file(self):
@@ -129,7 +131,7 @@ class TestPyfakefsUnittest(fake_filesystem_unittest.TestCase):  # pylint: disabl
 import math as path
 
 
-class TestPatchPathUnittestFailing(TestPyfakefsUnittest):
+class TestPatchPathUnittestFailing(TestPyfakefsUnittestBase):
     """Tests the default behavior regarding the argument patch_path:
        An own path module (in this case an alias to math) cannot be imported,
        because it is faked by FakePathModule
@@ -143,7 +145,7 @@ class TestPatchPathUnittestFailing(TestPyfakefsUnittest):
         self.assertEqual(2, path.floor(2.5))
 
 
-class TestPatchPathUnittestPassing(TestPyfakefsUnittest):
+class TestPatchPathUnittestPassing(TestPyfakefsUnittestBase):
     """Tests the behavior with patch_path set to False:
        An own path module (in this case an alias to math) can be imported and used
     """
