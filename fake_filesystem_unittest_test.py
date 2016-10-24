@@ -25,6 +25,9 @@ import shutil
 import tempfile
 import sys
 
+if sys.version_info >= (3, 4):
+    import pathlib
+
 if sys.version_info < (2, 7):
     import unittest2 as unittest
 else:
@@ -127,6 +130,16 @@ class TestPyfakefsUnittest(TestPyfakefsUnittestBase):  # pylint: disable=R0904
             with open('%s/fake_file.txt' % td, 'w') as f:
                 self.assertTrue(self.fs.Exists(td))
 
+    @unittest.skipIf(sys.version_info < (3, 4), "pathlib new in Python 3.4")
+    def test_fakepathlib(self):
+        with pathlib.Path('/fake_file.txt') as p:
+            with p.open('w') as f:
+                f.write('text')
+        is_windows = sys.platform.startswith('win')
+        if is_windows:
+            self.assertTrue(self.fs.Exists(r'\fake_file.txt'))
+        else:
+            self.assertTrue(self.fs.Exists('/fake_file.txt'))
 
 import math as path
 
