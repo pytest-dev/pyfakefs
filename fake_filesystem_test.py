@@ -1100,7 +1100,8 @@ class FakeOsModuleTest(FakeOsModuleTestBase):
 
     @unittest.skipIf(sys.version_info < (3, 3), 'replace is new in Python 3.3')
     def testReplaceToExistentFile(self):
-        """Can rename a file to a used name under Unix, but raises OSError under Windows."""
+        """Replaces an existing file (does not work with `rename()` under Windows).
+        """
         directory = 'xyzzy'
         old_file_path = '%s/plugh_old' % directory
         new_file_path = '%s/plugh_new' % directory
