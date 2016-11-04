@@ -864,6 +864,21 @@ class FakeOsModuleTest(FakeOsModuleTestBase):
         self.assertTrue(stat.S_IFREG & self.os.stat(file_path).st_mode)
         self.assertEqual(5, self.os.stat(file_path)[stat.ST_SIZE])
 
+    @unittest.skipIf(sys.version_info < (3, 3), 'follow_symlinks new in Python 3.3')
+    def testStatNoFollowSymlinks(self):
+        """Test that stat with follow_symlinks=False behaves like lstat."""
+        directory = 'xyzzy'
+        base_name = 'plugh'
+        file_contents = 'frobozz'
+        # Just make sure we didn't accidentally make our test data meaningless.
+        self.assertNotEqual(len(base_name), len(file_contents))
+        file_path = '%s/%s' % (directory, base_name)
+        link_path = '%s/link' % directory
+        self.filesystem.CreateFile(file_path, contents=file_contents)
+        self.filesystem.CreateLink(link_path, base_name)
+        self.assertEqual(len(file_contents), self.os.stat(file_path, follow_symlinks=False)[stat.ST_SIZE])
+        self.assertEqual(len(base_name), self.os.stat(link_path, follow_symlinks=False)[stat.ST_SIZE])
+
     @unittest.skipIf(TestCase.is_windows and sys.version_info < (3, 3),
                      'Links are not supported under Windows before Python 3.3')
     def testLstat(self):
@@ -1082,6 +1097,23 @@ class FakeOsModuleTest(FakeOsModuleTestBase):
             self.assertTrue(self.filesystem.Exists(new_file_path))
             self.assertEqual('test contents 1',
                              self.filesystem.GetObject(new_file_path).contents)
+
+    @unittest.skipIf(sys.version_info < (3, 3), 'replace is new in Python 3.3')
+    def testReplaceToExistentFile(self):
+        """Replaces an existing file (does not work with `rename()` under Windows).
+        """
+        directory = 'xyzzy'
+        old_file_path = '%s/plugh_old' % directory
+        new_file_path = '%s/plugh_new' % directory
+        self.filesystem.CreateFile(old_file_path, contents='test contents 1')
+        self.filesystem.CreateFile(new_file_path, contents='test contents 2')
+        self.assertTrue(self.filesystem.Exists(old_file_path))
+        self.assertTrue(self.filesystem.Exists(new_file_path))
+        self.os.replace(old_file_path, new_file_path)
+        self.assertFalse(self.filesystem.Exists(old_file_path))
+        self.assertTrue(self.filesystem.Exists(new_file_path))
+        self.assertEqual('test contents 1',
+                         self.filesystem.GetObject(new_file_path).contents)
 
     def testRenameToNonexistentDir(self):
         """Can rename a file to a name in a nonexistent dir."""
@@ -1488,6 +1520,30 @@ class FakeOsModuleTest(FakeOsModuleTestBase):
         self.assertFalse(self.os.access(path, self.rwx))
         self.assertFalse(self.os.access(path, self.rw))
 
+    @unittest.skipIf(sys.version_info < (3, 3), 'follow_symlinks new in Python 3.3')
+    def testAccessSymlink(self):
+        path = '/some_file'
+        self._CreateTestFile(path)
+        link_path = '/link_to_some_file'
+        self.filesystem.CreateLink(link_path, path)
+        self.os.chmod(link_path, 0o400)
+
+        # test file
+        self.assertTrue(self.os.access(link_path, self.os.F_OK))
+        self.assertTrue(self.os.access(link_path, self.os.R_OK))
+        self.assertFalse(self.os.access(link_path, self.os.W_OK))
+        self.assertFalse(self.os.access(link_path, self.os.X_OK))
+        self.assertFalse(self.os.access(link_path, self.rwx))
+        self.assertFalse(self.os.access(link_path, self.rw))
+
+        # test link itself
+        self.assertTrue(self.os.access(link_path, self.os.F_OK, follow_symlinks=False))
+        self.assertTrue(self.os.access(link_path, self.os.R_OK, follow_symlinks=False))
+        self.assertTrue(self.os.access(link_path, self.os.W_OK, follow_symlinks=False))
+        self.assertTrue(self.os.access(link_path, self.os.X_OK, follow_symlinks=False))
+        self.assertTrue(self.os.access(link_path, self.rwx, follow_symlinks=False))
+        self.assertTrue(self.os.access(link_path, self.rw, follow_symlinks=False))
+
     def testAccessNonExistentFile(self):
         # set up
         path = '/non/existent/file'
@@ -1510,6 +1566,46 @@ class FakeOsModuleTest(FakeOsModuleTestBase):
         self.assertModeEqual(0o6543, st.st_mode)
         self.assertTrue(st.st_mode & stat.S_IFREG)
         self.assertFalse(st.st_mode & stat.S_IFDIR)
+
+    @unittest.skipIf(sys.version_info < (3, 3), 'follow_symlinks new in Python 3.3')
+    def testChmodFollowSymlink(self):
+        path = '/some_file'
+        self._CreateTestFile(path)
+        link_path = '/link_to_some_file'
+        self.filesystem.CreateLink(link_path, path)
+        self.os.chmod(link_path, 0o6543)
+
+        st = self.os.stat(link_path)
+        self.assertModeEqual(0o6543, st.st_mode)
+        st = self.os.stat(link_path, follow_symlinks=False)
+        self.assertModeEqual(0o777, st.st_mode)
+
+    @unittest.skipIf(sys.version_info < (3, 3), 'follow_symlinks new in Python 3.3')
+    def testChmodNoFollowSymlink(self):
+        path = '/some_file'
+        self._CreateTestFile(path)
+        link_path = '/link_to_some_file'
+        self.filesystem.CreateLink(link_path, path)
+        self.os.chmod(link_path, 0o6543, follow_symlinks=False)
+
+        st = self.os.stat(link_path)
+        self.assertModeEqual(0o666, st.st_mode)
+        st = self.os.stat(link_path, follow_symlinks=False)
+        self.assertModeEqual(0o6543, st.st_mode)
+
+    @unittest.skipIf(TestCase.is_windows, 'lchmod not supported in Windows')
+    def testLchmod(self):
+        """lchmod shall behave like chmod with follow_symlinks=True since Python 3.3"""
+        path = '/some_file'
+        self._CreateTestFile(path)
+        link_path = '/link_to_some_file'
+        self.filesystem.CreateLink(link_path, path)
+        self.os.lchmod(link_path, 0o6543)
+
+        st = self.os.stat(link_path)
+        self.assertModeEqual(0o666, st.st_mode)
+        st = self.os.lstat(link_path)
+        self.assertModeEqual(0o6543, st.st_mode)
 
     def testChmodDir(self):
         # set up
@@ -1642,6 +1738,33 @@ class FakeOsModuleTest(FakeOsModuleTestBase):
         self.assertEqual(1.0, st.st_atime)
         self.assertEqual(2.0, st.st_mtime)
 
+    @unittest.skipIf(sys.version_info < (3, 3), 'follow_symlinks new in Python 3.3')
+    def testUtimeFollowSymlinks(self):
+        path = '/some_file'
+        self._CreateTestFile(path)
+        link_path = '/link_to_some_file'
+        self.filesystem.CreateLink(link_path, path)
+
+        self.os.utime(link_path, (1, 2))
+        st = self.os.stat(link_path)
+        self.assertEqual(1, st.st_atime)
+        self.assertEqual(2, st.st_mtime)
+
+    @unittest.skipIf(sys.version_info < (3, 3), 'follow_symlinks new in Python 3.3')
+    def testUtimeNoFollowSymlinks(self):
+        path = '/some_file'
+        self._CreateTestFile(path)
+        link_path = '/link_to_some_file'
+        self.filesystem.CreateLink(link_path, path)
+
+        self.os.utime(link_path, (1, 2), follow_symlinks=False)
+        st = self.os.stat(link_path)
+        self.assertNotEqual(1, st.st_atime)
+        self.assertNotEqual(2, st.st_mtime)
+        st = self.os.stat(link_path, follow_symlinks=False)
+        self.assertEqual(1, st.st_atime)
+        self.assertEqual(2, st.st_mtime)
+
     def testUtimeNonExistent(self):
         # set up
         path = '/non/existent/file'
@@ -1692,6 +1815,36 @@ class FakeOsModuleTest(FakeOsModuleTestBase):
         st = self.os.stat(file_path)
         self.assertEqual(st[stat.ST_UID], 200)
         self.assertEqual(st[stat.ST_GID], 201)
+
+    @unittest.skipIf(sys.version_info < (3, 3), 'follow_symlinks new in Python 3.3')
+    def testChownFollowSymlink(self):
+        file_path = 'some_file'
+        self.filesystem.CreateFile(file_path)
+        link_path = '/link_to_some_file'
+        self.filesystem.CreateLink(link_path, file_path)
+
+        self.os.chown(link_path, 100, 101)
+        st = self.os.stat(link_path)
+        self.assertEqual(st[stat.ST_UID], 100)
+        self.assertEqual(st[stat.ST_GID], 101)
+        st = self.os.stat(link_path, follow_symlinks=False)
+        self.assertNotEqual(st[stat.ST_UID], 100)
+        self.assertNotEqual(st[stat.ST_GID], 101)
+
+    @unittest.skipIf(sys.version_info < (3, 3), 'follow_symlinks new in Python 3.3')
+    def testChownNoFollowSymlink(self):
+        file_path = 'some_file'
+        self.filesystem.CreateFile(file_path)
+        link_path = '/link_to_some_file'
+        self.filesystem.CreateLink(link_path, file_path)
+
+        self.os.chown(link_path, 100, 101, follow_symlinks=False)
+        st = self.os.stat(link_path)
+        self.assertNotEqual(st[stat.ST_UID], 100)
+        self.assertNotEqual(st[stat.ST_GID], 101)
+        st = self.os.stat(link_path, follow_symlinks=False)
+        self.assertEqual(st[stat.ST_UID], 100)
+        self.assertEqual(st[stat.ST_GID], 101)
 
     def testChownBadArguments(self):
         """os.chown() with bad args (Issue #30)"""

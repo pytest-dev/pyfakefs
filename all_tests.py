@@ -17,6 +17,7 @@
 """A test suite that runs all tests for pyfakefs at once."""
 
 import unittest
+import sys
 
 import fake_filesystem_glob_test
 import fake_filesystem_shutil_test
@@ -25,6 +26,9 @@ import fake_filesystem_vs_real_test
 import fake_tempfile_test
 import fake_filesystem_unittest_test
 import example_test
+
+if sys.version_info >= (3, 4):
+    import fake_pathlib_test
 
 
 class AllTests(unittest.TestSuite):
@@ -41,11 +45,13 @@ class AllTests(unittest.TestSuite):
             loader.loadTestsFromModule(fake_filesystem_unittest_test),
             loader.loadTestsFromModule(example_test),
         ])
+        if sys.version_info >= (3, 4):
+            self.addTests([
+                loader.loadTestsFromModule(fake_pathlib_test)
+            ])
         return self
 
 
 if __name__ == '__main__':
-    import sys
-
     result = unittest.TextTestRunner(verbosity=2).run(AllTests().suite())
     sys.exit(int(not result.wasSuccessful()))
