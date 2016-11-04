@@ -38,34 +38,39 @@ from pyfakefs.fake_filesystem import FakeFileOpen, FakeFilesystem
 
 
 def init_module(filesystem):
+    """Initializes the fake module with the fake file system."""
+    # pylint: disable=protected-access
     FakePath.filesystem = filesystem
     FakePathlibModule.PureWindowsPath._flavour = _FakeWindowsFlavour(filesystem)
     FakePathlibModule.PurePosixPath._flavour = _FakePosixFlavour(filesystem)
 
 
-class _FakeAccessor(pathlib._Accessor):
+def _wrap_strfunc(strfunc):
+    @functools.wraps(strfunc)
+    def _wrapped(pathobj, *args):
+        return strfunc(pathobj.filesystem, str(pathobj), *args)
+
+    return staticmethod(_wrapped)
+
+
+def _wrap_binary_strfunc(strfunc):
+    @functools.wraps(strfunc)
+    def _wrapped(pathobj1, pathobj2, *args):
+        return strfunc(pathobj1.filesystem, str(pathobj1), str(pathobj2), *args)
+
+    return staticmethod(_wrapped)
+
+
+def _wrap_binary_strfunc_reverse(strfunc):
+    @functools.wraps(strfunc)
+    def _wrapped(pathobj1, pathobj2, *args):
+        return strfunc(pathobj2.filesystem, str(pathobj2), str(pathobj1), *args)
+
+    return staticmethod(_wrapped)
+
+
+class _FakeAccessor(pathlib._Accessor):  # pylint: disable=protected-access
     """Accessor which forwards some of the functions to FakeFilesystem methods."""
-
-    def _wrap_strfunc(strfunc):
-        @functools.wraps(strfunc)
-        def wrapped(pathobj, *args):
-            return strfunc(pathobj.filesystem, str(pathobj), *args)
-
-        return staticmethod(wrapped)
-
-    def _wrap_binary_strfunc(strfunc):
-        @functools.wraps(strfunc)
-        def wrapped(pathobjA, pathobjB, *args):
-            return strfunc(pathobjA.filesystem, str(pathobjA), str(pathobjB), *args)
-
-        return staticmethod(wrapped)
-
-    def _wrap_binary_strfunc_reverse(strfunc):
-        @functools.wraps(strfunc)
-        def wrapped(pathobjA, pathobjB, *args):
-            return strfunc(pathobjB.filesystem, str(pathobjB), str(pathobjA), *args)
-
-        return staticmethod(wrapped)
 
     stat = _wrap_strfunc(FakeFilesystem.GetStat)
 
@@ -76,9 +81,11 @@ class _FakeAccessor(pathlib._Accessor):
     chmod = _wrap_strfunc(FakeFilesystem.ChangeMode)
 
     if hasattr(os, "lchmod"):
-        lchmod = _wrap_strfunc(lambda fs, path: FakeFilesystem.ChangeMode(fs, path, follow_symlinks=False))
+        lchmod = _wrap_strfunc(lambda fs, path, mode: FakeFilesystem.ChangeMode(
+            fs, path, mode, follow_symlinks=False))
     else:
         def lchmod(self, pathobj, mode):
+            """Raises not implemented for Windows systems."""
             raise NotImplementedError("lchmod() not available on this system")
 
     mkdir = _wrap_strfunc(FakeFilesystem.MakeDirectory)
@@ -90,7 +97,8 @@ class _FakeAccessor(pathlib._Accessor):
     rename = _wrap_binary_strfunc(FakeFilesystem.RenameObject)
 
     replace = _wrap_binary_strfunc(lambda fs, old_path, new_path:
-                                   FakeFilesystem.RenameObject(fs, old_path, new_path, force_replace=True))
+                                   FakeFilesystem.RenameObject(
+                                       fs, old_path, new_path, force_replace=True))
 
     symlink = _wrap_binary_strfunc_reverse(FakeFilesystem.CreateLink)
 
@@ -122,86 +130,93 @@ class _FakeFlavour(pathlib._Flavour):
         self.has_drv = filesystem.supports_drive_letter
         super(_FakeFlavour, self).__init__()
 
-    def _split_extended_path(self, s, ext_prefix=ext_namespace_prefix):
+    @staticmethod
+    def _split_extended_path(path, ext_prefix=ext_namespace_prefix):
         prefix = ''
-        if s.startswith(ext_prefix):
-            prefix = s[:4]
-            s = s[4:]
-            if s.startswith('UNC\\'):
-                prefix += s[:3]
-                s = '\\' + s[3:]
-        return prefix, s
+        if path.startswith(ext_prefix):
+            prefix = path[:4]
+            path = path[4:]
+            if path.startswith('UNC\\'):
+                prefix += path[:3]
+                path = '\\' + path[3:]
+        return prefix, path
 
-    def _splitroot_with_drive(self, part, sep):
-        first = part[0:1]
-        second = part[1:2]
-        if (second == sep and first == sep):
+    def _splitroot_with_drive(self, path, sep):
+        first = path[0:1]
+        second = path[1:2]
+        if second == sep and first == sep:
             # XXX extended paths should also disable the collapsing of "."
             # components (according to MSDN docs).
-            prefix, part = self._split_extended_path(part)
-            first = part[0:1]
-            second = part[1:2]
+            prefix, path = self._split_extended_path(path)
+            first = path[0:1]
+            second = path[1:2]
         else:
             prefix = ''
-        third = part[2:3]
-        if (second == sep and first == sep and third != sep):
+        third = path[2:3]
+        if second == sep and first == sep and third != sep:
             # is a UNC path:
             # vvvvvvvvvvvvvvvvvvvvv root
             # \\machine\mountpoint\directory\etc\...
             #            directory ^^^^^^^^^^^^^^
-            index = part.find(sep, 2)
+            index = path.find(sep, 2)
             if index != -1:
-                index2 = part.find(sep, index + 1)
+                index2 = path.find(sep, index + 1)
                 # a UNC path can't have two slashes in a row
                 # (after the initial two)
                 if index2 != index + 1:
                     if index2 == -1:
-                        index2 = len(part)
+                        index2 = len(path)
                     if prefix:
-                        return prefix + part[1:index2], sep, part[index2 + 1:]
+                        return prefix + path[1:index2], sep, path[index2 + 1:]
                     else:
-                        return part[:index2], sep, part[index2 + 1:]
+                        return path[:index2], sep, path[index2 + 1:]
         drv = root = ''
         if second == ':' and first in self.drive_letters:
-            drv = part[:2]
-            part = part[2:]
+            drv = path[:2]
+            path = path[2:]
             first = third
         if first == sep:
             root = first
-            part = part.lstrip(sep)
-        return prefix + drv, root, part
+            path = path.lstrip(sep)
+        return prefix + drv, root, path
 
-    def _splitroot_posix(self, part, sep):
-        if part and part[0] == sep:
-            stripped_part = part.lstrip(sep)
-            if len(part) - len(stripped_part) == 2:
+    @staticmethod
+    def _splitroot_posix(path, sep):
+        if path and path[0] == sep:
+            stripped_part = path.lstrip(sep)
+            if len(path) - len(stripped_part) == 2:
                 return '', sep * 2, stripped_part
             else:
                 return '', sep, stripped_part
         else:
-            return '', '', part
+            return '', '', path
 
-    def splitroot(self, part, sep=None):
+    def splitroot(self, path, sep=None):
+        """Split path into drive, root and rest."""
         if sep is None:
             sep = self.filesystem.path_separator
         if self.filesystem.supports_drive_letter:
-            return self._splitroot_with_drive(part, sep)
-        return self._splitroot_posix(part, sep)
+            return self._splitroot_with_drive(path, sep)
+        return self._splitroot_posix(path, sep)
 
     def casefold(self, s):
+        """Return the lower-case version of s for a case-insensitive filesystem."""
         if self.filesystem.is_case_sensitive:
             return s
         return s.lower()
 
     def casefold_parts(self, parts):
+        """Return the lower-case version of parts for a case-insensitive filesystem."""
         if self.filesystem.is_case_sensitive:
             return parts
         return [p.lower() for p in parts]
 
     def resolve(self, path):
+        """Make the path absolute, resolving any symlinks."""
         return self.filesystem.ResolvePath(str(path))
 
     def gethomedir(self, username):
+        """Return the home directory of the current user."""
         if not username:
             try:
                 return os.environ['HOME']
@@ -228,6 +243,8 @@ class _FakeWindowsFlavour(_FakeFlavour):
     )
 
     def is_reserved(self, parts):
+        """Return True if the path is considered reserved under Windows."""
+
         # NOTE: the rules for reserved names seem somewhat complicated
         # (e.g. r"..\NUL" is reserved but not r"foo\NUL").
         # We err on the side of caution and return True for paths which are
@@ -240,6 +257,8 @@ class _FakeWindowsFlavour(_FakeFlavour):
         return parts[-1].partition('.')[0].upper() in self.reserved_names
 
     def make_uri(self, path):
+        """Return a file URI for the given path"""
+
         # Under Windows, file URIs use the UTF-8 encoding.
         # original version, not faked
         # todo: make this part dependent on drive support, add encoding as property
@@ -254,6 +273,8 @@ class _FakeWindowsFlavour(_FakeFlavour):
             return 'file:' + urlquote_from_bytes(path.as_posix().encode('utf-8'))
 
     def gethomedir(self, username):
+        """Return the home directory of the current user."""
+
         # original version, not faked
         if 'HOME' in os.environ:
             userhome = os.environ['HOME']
@@ -395,7 +416,8 @@ class FakePath(pathlib.Path):
         """
         if self._closed:
             self._raise_closed()
-        return FakeFileOpen(self.filesystem)(self._path(), mode, buffering, encoding, errors, newline)
+        return FakeFileOpen(self.filesystem)(
+            self._path(), mode, buffering, encoding, errors, newline)
 
     if sys.version_info >= (3, 5):
         def read_bytes(self):
@@ -413,7 +435,7 @@ class FakePath(pathlib.Path):
             Open the fake file in text mode, read it, and close the file.
             """
             with FakeFileOpen(self.filesystem)(
-                    self._path(), mode='r', encoding=encoding, errors=errors) as f:
+                self._path(), mode='r', encoding=encoding, errors=errors) as f:
                 return f.read()
 
         def write_bytes(self, data):
@@ -445,7 +467,8 @@ class FakePath(pathlib.Path):
             if not isinstance(data, str):
                 raise TypeError('data must be str, not %s' %
                                 data.__class__.__name__)
-            with FakeFileOpen(self.filesystem)(self._path(), mode='w', encoding=encoding, errors=errors) as f:
+            with FakeFileOpen(self.filesystem)(
+                self._path(), mode='w', encoding=encoding, errors=errors) as f:
                 return f.write(data)
 
     def touch(self, mode=0o666, exist_ok=True):
@@ -498,16 +521,24 @@ class FakePathlibModule(object):
         self._pathlib_module = pathlib
 
     class PurePosixPath(pathlib.PurePath):
+        """A subclass of PurePath, that represents non-Windows filesystem paths"""
         __slots__ = ()
 
     class PureWindowsPath(pathlib.PurePath):
+        """A subclass of PurePath, that represents Windows filesystem paths"""
         __slots__ = ()
 
     if sys.platform == 'win32':
         class WindowsPath(FakePath, PureWindowsPath):
+            """A subclass of Path and PureWindowsPath that represents
+            concrete Windows filesystem paths.
+            """
             __slots__ = ()
     else:
         class PosixPath(FakePath, PurePosixPath):
+            """A subclass of Path and PurePosixPath that represents
+            concrete non-Windows filesystem paths.
+            """
             __slots__ = ()
 
     Path = FakePath
