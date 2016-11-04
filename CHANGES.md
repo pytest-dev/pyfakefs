@@ -1,4 +1,5 @@
-# Release Notes
+# Release Notes 
+The release versions are PyPi releases.
 
 ## Unreleased
 
@@ -32,3 +33,34 @@
  * `shutil.copy` error with bytes contents (#105)
  * mtime and ctime not updated on content changes
  * Reading from fake block devices doesn't work (#24)
+
+## Version 2.7
+
+### Infrastructure
+ * moved repository from GoogleCode to GitHub, merging 3 projects
+ * added continous integration testing with Travis CI
+ * added usage documentation in project wiki
+ * better support for pypi releases
+ 
+#### New Features
+ * added direct unit test support in `fake_filesystem_unittest` 
+   (transparently patches all calls to faked implementations)
+ * added support for doctests
+ * added support for cygwin
+ * better support for Python 3
+
+#### Fixes
+ * `chown` incorrectly accepts non-integer uid/gid arguments
+ * incorrect behavior of `relpath`, `abspath` and `normpath` on Windows.
+ * Python 3 `open` in binary mode not working (#32)
+ * `mkstemp` returns no valid file descriptor (#19)
+ * `open` methods lack `IOError` for prohibited operations (#18)
+ * incorrectly resolved relative path (#3)
+ * `FakeFileOpen` keyword args do not match the `__builtin__` equivalents (#5)
+ * relative paths not supported (#16, #17)
+
+## Older Versions
+As there have been three different projects that have been merged together 
+for release 2.7, no older release notes are given.
+The following versions are still avaliable in PyPi:
+ * 1.1, 1.2, 2.0, 2.1, 2.2, 2.3 and 2.4
