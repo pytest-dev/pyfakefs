@@ -194,8 +194,9 @@ max-nested-blocks=5
 
 [FORMAT]
 
-# Maximum number of characters on a single line as per Google coding style.
-max-line-length=80
+# Maximum number of characters on a single line
+# increased from 80 to 100
+max-line-length=100
 
 # Regexp for a line that is allowed to be longer than the limit.
 ignore-long-lines=^\s*(# )?<?https?://\S+>?$

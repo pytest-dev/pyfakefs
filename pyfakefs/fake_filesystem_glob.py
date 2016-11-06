@@ -17,8 +17,8 @@
 Includes:
   FakeGlob: Uses a FakeFilesystem to provide a fake replacement for the
     glob module.
-Note: Code is taken form Python 3.5 and slightly adapted to work with older versions
-      and use the fake os and os.path modules
+Note: Code is taken form Python 3.5 and slightly adapted to work with older
+    versions and use the fake os and os.path modules
 
 Usage:
 >>> from pyfakefs import fake_filesystem
@@ -68,10 +68,11 @@ class FakeGlobModule(object):
         Returns:
             List of strings matching the glob pattern.
         """
-        return list(self.iglob(pathname, recursive=_recursive_from_arg(recursive)))
+        return list(
+            self.iglob(pathname, recursive=_recursive_from_arg(recursive)))
 
     def iglob(self, pathname, recursive=None):
-        """Return an iterator which yields the paths matching a pathname pattern.
+        """Return an iterator yielding the paths matching a pathname pattern.
 
         The pattern may contain shell-style wildcards a la fnmatch.
 
@@ -81,11 +82,11 @@ class FakeGlobModule(object):
             zero or more directories and subdirectories. (>= Python 3.5 only)
         """
         recursive = _recursive_from_arg(recursive)
-        it = self._iglob(pathname, recursive)
+        itr = self._iglob(pathname, recursive)
         if recursive and _isrecursive(pathname):
-            s = next(it)  # skip empty string
-            assert not s
-        return it
+            string = next(itr)  # skip empty string
+            assert not string
+        return itr
 
     def _iglob(self, pathname, recursive):
         dirname, basename = self._path_module.split(pathname)
@@ -106,8 +107,9 @@ class FakeGlobModule(object):
                 for name in self.glob1(dirname, basename):
                     yield name
             return
-        # `self._path_module.split()` returns the argument itself as a dirname if it is a
-        # drive or UNC path.  Prevent an infinite recursion if a drive or UNC path
+        # `self._path_module.split()` returns the argument itself as a dirname
+        # if it is a drive or UNC path.
+        # Prevent an infinite recursion if a drive or UNC path
         # contains magic characters (i.e. r'\\?\C:').
         if dirname != pathname and self.has_magic(dirname):
             dirs = self._iglob(dirname, recursive)
@@ -125,15 +127,17 @@ class FakeGlobModule(object):
                 yield self._path_module.join(dirname, name)
 
     # These 2 helper functions non-recursively glob inside a literal directory.
-    # They return a list of basenames. `glob1` accepts a pattern while `glob0`
+    # They return a list of basenames. `_glob1` accepts a pattern while `_glob0`
     # takes a literal basename (so it only has to check for its existence).
     def glob1(self, dirname, pattern):
         if not dirname:
+            # pylint: disable=undefined-variable
             if sys.version_info >= (3,) and isinstance(pattern, bytes):
                 dirname = bytes(self._os_module.curdir, 'ASCII')
             elif sys.version_info < (3,) and isinstance(pattern, unicode):
-                dirname = unicode(self._os_module.curdir,
-                                  sys.getfilesystemencoding() or sys.getdefaultencoding())
+                dirname = unicode(
+                    self._os_module.curdir,
+                    sys.getfilesystemencoding() or sys.getdefaultencoding())
             else:
                 dirname = self._os_module.curdir
 
@@ -147,17 +151,19 @@ class FakeGlobModule(object):
 
     def glob0(self, dirname, basename):
         if not basename:
-            # `self._path_module.split()` returns an empty basename for paths ending with a
-            # directory separator.  'q*x/' should match only directories.
+            # `self._path_module.split()` returns an empty basename
+            # for paths ending with a directory separator.
+            # 'q*x/' should match only directories.
             if self._path_module.isdir(dirname):
                 return [basename]
         else:
-            if self._path_module.lexists(self._path_module.join(dirname, basename)):
+            if self._path_module.lexists(
+                    self._path_module.join(dirname, basename)):
                 return [basename]
         return []
 
-    # This helper function recursively yields relative pathnames inside a literal
-    # directory.
+    # This helper function recursively yields relative pathnames
+    # inside a literal directory.
     def glob2(self, dirname, pattern):
         assert _isrecursive(pattern)
         yield pattern[:0]
@@ -167,11 +173,13 @@ class FakeGlobModule(object):
     # Recursively yields relative pathnames inside a literal directory.
     def _rlistdir(self, dirname):
         if not dirname:
+            # pylint: disable=undefined-variable
             if sys.version_info >= (3,) and isinstance(dirname, bytes):
                 dirname = bytes(self._os_module.curdir, 'ASCII')
             elif sys.version_info < (3,) and isinstance(dirname, unicode):
-                dirname = unicode(self._os_module.curdir,
-                                  sys.getfilesystemencoding() or sys.getdefaultencoding())
+                dirname = unicode(
+                    self._os_module.curdir,
+                    sys.getfilesystemencoding() or sys.getdefaultencoding())
             else:
                 dirname = self._os_module.curdir
 
@@ -179,21 +187,22 @@ class FakeGlobModule(object):
             names = self._os_module.listdir(dirname)
         except self._os_module.error:
             return
-        for x in names:
-            if not _ishidden(x):
-                yield x
-                path = self._path_module.join(dirname, x) if dirname else x
-                for y in self._rlistdir(path):
-                    yield self._path_module.join(x, y)
+        for name in names:
+            if not _ishidden(name):
+                yield name
+                path = self._path_module.join(dirname,
+                                              name) if dirname else name
+                for dir_name in self._rlistdir(path):
+                    yield self._path_module.join(name, dir_name)
 
     magic_check = re.compile('([*?[])')
     magic_check_bytes = re.compile(b'([*?[])')
 
-    def has_magic(self, s):
-        if isinstance(s, bytes):
-            match = self.magic_check_bytes.search(s)
+    def has_magic(self, string):
+        if isinstance(string, bytes):
+            match = self.magic_check_bytes.search(string)
         else:
-            match = self.magic_check.search(s)
+            match = self.magic_check.search(string)
         return match is not None
 
     def escape(self, pathname):
@@ -234,7 +243,7 @@ def _recursive_from_arg(recursive):
 
 
 def _RunDoctest():
-    # pylint: disable-msg=C6111,C6204,W0406
+    # pylint: disable=import-self
     import doctest
     from pyfakefs import fake_filesystem_glob
     return doctest.testmod(fake_filesystem_glob)

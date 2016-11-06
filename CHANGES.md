@@ -4,9 +4,13 @@ The release versions are PyPi releases.
 ## Unreleased
 
 #### New Features
+ * support for `pathlib` (Python >= 3.4)
+ * support for `os.replace` (Python >= 3.3)
+ * `os.access`, `os.chmod`, `os.chown`, `os.stat`, `os.utime`:
+   support for `follow_symlinks` argument (Python >= 3.3)
  * support for `os.scandir` (Python >= 3.5)
  * option to not fake modules named `path`
- * `glob.glob`, `glob.iglob`: support for `recursive` argument
+ * `glob.glob`, `glob.iglob`: support for `recursive` argument (Python >= 3.5)
  * support for `glob.iglob`
 
 ## Version 2.9

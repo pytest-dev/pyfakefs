@@ -40,28 +40,29 @@ retrofitted to use `pyfakefs` by simply changing their base class from
 """
 
 import sys
-
-if sys.version_info < (2, 7):
-    import unittest2 as unittest
-else:
-    import unittest
 import doctest
 import inspect
+
+import mox3.stubout
+
 from pyfakefs import fake_filesystem
 from pyfakefs import fake_filesystem_shutil
 from pyfakefs import fake_tempfile
 if sys.version_info >= (3, 4):
     from pyfakefs import fake_pathlib
 
+if sys.version_info < (2, 7):
+    import unittest2 as unittest
+else:
+    import unittest
+
 if sys.version_info < (3,):
-    import __builtin__ as builtins
+    import __builtin__ as builtins  # pylint: disable=import-error
 else:
     import builtins
 
-import mox3.stubout
 
-
-def load_doctests(loader, tests, ignore, module):
+def load_doctests(loader, tests, ignore, module):  # pylint: disable=unused-argument
     """Load the doctest tests for the specified module into unittest."""
     _patcher = Patcher()
     globs = _patcher.replaceGlobs(vars(module))
@@ -73,24 +74,32 @@ def load_doctests(loader, tests, ignore, module):
 
 
 class TestCase(unittest.TestCase):
-    def __init__(self, methodName='runTest', additional_skip_names=None, patch_path=True):
-        """Creates the test class instance and the stubber used to stub out file system related modules.
+    """Test case class that automatically replaces file-system related
+    modules by fake implementations.
+    """
 
-          Args:
+    def __init__(self, methodName='runTest', additional_skip_names=None, patch_path=True):
+        """Creates the test class instance and the stubber used to stub out
+        file system related modules.
+
+        Args:
             methodName: the name of the test method (as in unittest.TestCase)
-            additional_skip_names: names of modules inside of which no module replacement shall be done
-               (additionally to the hard-coded list: 'os', 'glob', 'path', 'tempfile', 'io')
-            patch_path: if False, modules named 'path' will not be patched with the fake 'os.path' module.
-               Set this to False when you need to import some other module named 'path', for example,
+            additional_skip_names: names of modules inside of which no module replacement
+                shall be done
+                (additionally to the hard-coded list: 'os', 'glob', 'path', 'tempfile', 'io')
+            patch_path: if False, modules named 'path' will not be patched with the
+                fake 'os.path' module. Set this to False when you need to import
+                some other module named 'path', for example,
                    `from my_module import path`
-               Irrespective of patch_path, module 'os.path' is still correctly faked if imported the usual way
-               using `import os` or `import os.path`.
+               Irrespective of patch_path, module 'os.path' is still correctly faked
+               if imported the usual way using `import os` or `import os.path`.
 
           Example usage in a derived test class:
 
           class MyTestCase(fake_filesystem_unittest.TestCase):
             def __init__(self, methodName='runTest'):
-              super(MyTestCase, self).__init__(methodName=methodName, additional_skip_names=['posixpath'])
+              super(MyTestCase, self).__init__(
+                    methodName=methodName, additional_skip_names=['posixpath'])
         """
         super(TestCase, self).__init__(methodName)
         self._stubber = Patcher(additional_skip_names=additional_skip_names,
@@ -155,13 +164,13 @@ class Patcher(object):
             self._skipNames.discard('path')
 
         # Attributes set by _findModules()
-        self._osModules = None
-        self._pathModules = None
+        self._os_modules = None
+        self._path_modules = None
         if self.HAS_PATHLIB:
-            self._pathlibModules = None
-        self._shutilModules = None
-        self._tempfileModules = None
-        self._ioModules = None
+            self._pathlib_modules = None
+        self._shutil_modules = None
+        self._tempfile_modules = None
+        self._io_modules = None
         self._findModules()
         assert None not in vars(self).values(), \
             "_findModules() missed the initialization of an instance variable"
@@ -189,30 +198,30 @@ class Patcher(object):
         Later, `setUp()` will stub these with the fake file system
         modules.
         """
-        self._osModules = set()
-        self._pathModules = set()
+        self._os_modules = set()
+        self._path_modules = set()
         if self.HAS_PATHLIB:
-            self._pathlibModules = set()
-        self._shutilModules = set()
-        self._tempfileModules = set()
-        self._ioModules = set()
+            self._pathlib_modules = set()
+        self._shutil_modules = set()
+        self._tempfile_modules = set()
+        self._io_modules = set()
         for name, module in set(sys.modules.items()):
             if (module in self.SKIPMODULES or
                     (not inspect.ismodule(module)) or
-                        name.split('.')[0] in self._skipNames):
+                    name.split('.')[0] in self._skipNames):
                 continue
             if 'os' in module.__dict__:
-                self._osModules.add(module)
+                self._os_modules.add(module)
             if self._patchPath and 'path' in module.__dict__:
-                self._pathModules.add(module)
+                self._path_modules.add(module)
             if self.HAS_PATHLIB and 'pathlib' in module.__dict__:
-                self._pathlibModules.add(module)
+                self._pathlib_modules.add(module)
             if 'shutil' in module.__dict__:
-                self._shutilModules.add(module)
+                self._shutil_modules.add(module)
             if 'tempfile' in module.__dict__:
-                self._tempfileModules.add(module)
+                self._tempfile_modules.add(module)
             if 'io' in module.__dict__:
-                self._ioModules.add(module)
+                self._io_modules.add(module)
 
     def _refresh(self):
         """Renew the fake file system and set the _isStale flag to `False`."""
@@ -246,18 +255,18 @@ class Patcher(object):
             self._stubs.SmartSet(builtins, 'file', self.fake_open)
         self._stubs.SmartSet(builtins, 'open', self.fake_open)
 
-        for module in self._osModules:
+        for module in self._os_modules:
             self._stubs.SmartSet(module, 'os', self.fake_os)
-        for module in self._pathModules:
+        for module in self._path_modules:
             self._stubs.SmartSet(module, 'path', self.fake_path)
         if self.HAS_PATHLIB:
-            for module in self._pathlibModules:
+            for module in self._pathlib_modules:
                 self._stubs.SmartSet(module, 'pathlib', self.fake_pathlib)
-        for module in self._shutilModules:
+        for module in self._shutil_modules:
             self._stubs.SmartSet(module, 'shutil', self.fake_shutil)
-        for module in self._tempfileModules:
+        for module in self._tempfile_modules:
             self._stubs.SmartSet(module, 'tempfile', self.fake_tempfile_)
-        for module in self._ioModules:
+        for module in self._io_modules:
             self._stubs.SmartSet(module, 'io', self.fake_io)
 
     def replaceGlobs(self, globs_):

@@ -103,7 +103,7 @@ class FakeTempfileModuleTest(unittest.TestCase):
 
     def testTempFilenameDir(self):
         """test tempfile._TempFilename(dir=)."""
-        filename = self.tempfile._TempFilename(dir='/dir')
+        filename = self.tempfile._TempFilename(directory='/dir')
         self.assertTrue(filename.startswith('/dir/tmp'))
         self.assertLess(len('/dir/tmpX'), len(filename))
 

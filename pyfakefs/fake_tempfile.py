@@ -17,21 +17,21 @@
 Fake implementation of the python2.4.1 tempfile built-in module that works with
 a FakeFilesystem object.
 """
-# pylint: disable-all
 
 import errno
 import logging
 import os
-import stat
 import tempfile
 import warnings
+
+import stat
 
 from pyfakefs import fake_filesystem
 
 try:
-    import StringIO as io  # pylint: disable-msg=C6204
+    import StringIO as io
 except ImportError:
-    import io  # pylint: disable-msg=C6204
+    import io
 
 
 class FakeTempfileModule(object):
@@ -52,8 +52,7 @@ class FakeTempfileModule(object):
         self._temp_prefix = 'tmp'
         self._mktemp_retvals = []
 
-    # pylint: disable-msg=W0622
-    def _TempFilename(self, suffix='', prefix=None, dir=None):
+    def _TempFilename(self, suffix='', prefix=None, directory=None):
         """Create a temporary filename that does not exist.
 
         This is a re-implementation of how tempfile creates random filenames,
@@ -65,43 +64,52 @@ class FakeTempfileModule(object):
         Args:
           suffix: filename suffix
           prefix: filename prefix
-          dir: dir to put filename in
+          directory: dir to put filename in
         Returns:
           string, temp filename that does not exist
         """
-        if dir is None:
-            dir = self._filesystem.JoinPaths(self._filesystem.root.name, 'tmp')
+        if directory is None:
+            directory = self._filesystem.JoinPaths(
+                self._filesystem.root.name, 'tmp')
         filename = None
         if prefix is None:
             prefix = self._temp_prefix
         while not filename or self._filesystem.Exists(filename):
-            # pylint: disable-msg=W0212
-            filename = self._filesystem.JoinPaths(dir, '%s%s%s' % (
+            # pylint: disable=protected-access
+            filename = self._filesystem.JoinPaths(directory, '%s%s%s' % (
                 prefix,
                 next(self._tempfile._RandomNameSequence()),
                 suffix))
         return filename
 
-    # pylint: disable-msg=W0622,W0613
-    def TemporaryFile(self, mode='w+b', bufsize=-1,
+    # pylint: disable=redefined-builtin,unused-argument,too-many-arguments
+    @staticmethod
+    def TemporaryFile(mode='w+b', bufsize=-1,
                       suffix='', prefix=None, dir=None):
         """Return a file-like object deleted on close().
 
-        Python 2.4.1 tempfile.TemporaryFile.__doc__ =
-        >Return a file (or file-like) object that can be used as a temporary
-        >storage area. The file is created using mkstemp. It will be destroyed as
-        >soon as it is closed (including an implicit close when the object is
-        >garbage collected). Under Unix, the directory entry for the file is
-        >removed immediately after the file is created. Other platforms do not
-        >support this; your code should not rely on a temporary file created using
-        >this function having or not having a visible name in the file system.
+        Python 3.5 tempfile.TemporaryFile.__doc__ =
+        >Return a file-like object that can be used as a temporary storage area.
+        >The file is created securely, using the same rules as mkstemp().
+        >It will be destroyed as soon as it is closed (including an implicit
+        >close when the object is garbage collected). Under Unix, the directory
+        >entry for the file is either not created at all or is removed
+        >immediately after the file is created. Other platforms do not support
+        >this; your code should not rely on a temporary file created using this
+        >function having or not having a visible name in the file system.
         >
-        >The mode parameter defaults to 'w+b' so that the file created can be read
-        >and written without being closed. Binary mode is used so that it behaves
-        >consistently on all platforms without regard for the data that is stored.
-        >bufsize defaults to -1, meaning that the operating system default is used.
+        >The resulting object can be used as a context manager (see Examples).
+        >On completion of the context or destruction of the file object the
+        >temporary file will be removed from the filesystem.
         >
-        >The dir, prefix and suffix parameters are passed to mkstemp()
+        >The mode parameter defaults to 'w+b' so that the file created can be
+        >read and written without being closed. Binary mode is used so that it
+        >behaves consistently on all platforms without regard for the data that
+        >is stored. buffering, encoding and newline are interpreted as for
+        >open().
+        >
+        >The dir, prefix and suffix parameters have the same meaning and
+        >defaults as with mkstemp().
 
         Args:
           mode: optional string, see above
@@ -112,14 +120,13 @@ class FakeTempfileModule(object):
         Returns:
           a file-like object.
         """
-        # pylint: disable-msg=C6002
         # TODO: prefix, suffix, bufsize, dir, mode unused?
         # cannot be cStringIO due to .name requirement below
         retval = io.StringIO()
         retval.name = '<fdopen>'  # as seen on 2.4.3
         return retval
 
-    # pylint: disable-msg=W0622,W0613
+    # pylint: disable=redefined-builtin,unused-argument
     def NamedTemporaryFile(self, mode='w+b', bufsize=-1,
                            suffix='', prefix=None, dir=None, delete=True):
         """Return a file-like object with name that is deleted on close().
@@ -139,7 +146,6 @@ class FakeTempfileModule(object):
         Returns:
           a file-like object including obj.name
         """
-        # pylint: disable-msg=C6002
         # TODO: bufsiz unused?
         temp = self.mkstemp(suffix=suffix, prefix=prefix, dir=dir)
         filename = temp[1]
@@ -147,11 +153,11 @@ class FakeTempfileModule(object):
             self._filesystem, delete_on_close=delete)
         obj = mock_open(filename, mode)
         obj.name = filename
-        # remove file wrapper created by mkstemp to avoid double open file entries
+        # remove file wrapper created by mkstemp to avoid double
+        # open file entries
         self._filesystem.CloseOpenFile(temp[0])
         return obj
 
-    # pylint: disable-msg=C6409
     def mkstemp(self, suffix='', prefix=None, dir=None, text=False):
         """Create temp file, returning a 2-tuple: (9999, filename).
 
@@ -189,18 +195,17 @@ class FakeTempfileModule(object):
         Raises:
           OSError: when dir= is specified but does not exist
         """
-        # pylint: disable-msg=C6002
         # TODO: optional boolean text is unused?
         # default dir affected by "global"
         filename = self._TempEntryname(suffix, prefix, dir)
-        fh = self._filesystem.CreateFile(filename, st_mode=stat.S_IFREG | 0o600)
-        fh.opened_as = filename
-        fakefile = fake_filesystem.FakeFileWrapper(fh, filename)
-        fd = self._filesystem.AddOpenFile(fakefile)
+        file_handle = \
+            self._filesystem.CreateFile(filename, st_mode=stat.S_IFREG | 0o600)
+        file_handle.opened_as = filename
+        fakefile = fake_filesystem.FakeFileWrapper(file_handle, filename)
+        file_des = self._filesystem.AddOpenFile(fakefile)
         self._mktemp_retvals.append(filename)
-        return (fd, filename)
+        return file_des, filename
 
-    # pylint: disable-msg=C6409
     def mkdtemp(self, suffix='', prefix=None, dir=None):
         """Create temp directory, returns string, absolute pathname.
 
@@ -246,7 +251,8 @@ class FakeTempfileModule(object):
 
         entryname = None
         while not entryname or self._filesystem.Exists(entryname):
-            entryname = self._TempFilename(suffix=suffix, prefix=prefix, dir=dir)
+            entryname = self._TempFilename(
+                suffix=suffix, prefix=prefix, directory=dir)
         if not call_mkdir:
             # This is simplistic. A bad input of suffix=/f will cause tempfile
             # to blow up, but this mock won't.  But that's already a broken
@@ -256,25 +262,24 @@ class FakeTempfileModule(object):
                 self._filesystem.GetObject(parent_dir)
             except IOError as err:
                 assert 'No such file or directory' in str(err)
-                # python -c 'import tempfile; tempfile.mkstemp(dir="/no/such/dr")'
-                # OSError: [Errno 2] No such file or directory: '/no/such/dr/tmpFBuqjO'
+                # python -c 'import tempfile;
+                #            tempfile.mkstemp(dir="/no/such/dr")'
+                # OSError: [Errno 2] No such file or directory:
+                #  '/no/such/dr/tmpFBuqjO'
                 raise OSError(
                     errno.ENOENT,
                     'No such directory in mock filesystem',
                     parent_dir)
         return entryname
 
-    # pylint: disable-msg=C6409
     def gettempdir(self):
         """Get default temp dir.  Sets default if unset."""
         if self.tempdir:
             return self.tempdir
-        # pylint: disable-msg=C6002
         # TODO: environment variables TMPDIR TEMP TMP, or other dirs?
         self.tempdir = '/tmp'
         return self.tempdir
 
-    # pylint: disable-msg=C6409
     def gettempprefix(self):
         """Get temp filename prefix.
 
@@ -285,7 +290,6 @@ class FakeTempfileModule(object):
         """
         return self._temp_prefix
 
-    # pylint: disable-msg=C6409
     def mktemp(self, suffix=''):
         """mktemp is deprecated in 2.4.1, and is thus unimplemented."""
         raise NotImplementedError
@@ -338,14 +342,11 @@ class FakeTempfileModule(object):
         """
 
         class FakeTemporaryDirectory(object):
-            def __init__(self, filesystem, tempfile, suffix=None, prefix=None, dir=None):
+            def __init__(self, filesystem, tempfile,
+                         suffix=None, prefix=None, dir=None):
                 self.closed = False
                 self.filesystem = filesystem
                 self.name = tempfile.mkdtemp(suffix, prefix, dir)
-
-            def cleanup(self, _warn=False):
-                self.filesystem.RemoveObject(name)
-                warnings.warn(warn_message, ResourceWarning)
 
             def __repr__(self):
                 return "<{} {!r}>".format(self.__class__.__name__, self.name)
@@ -361,11 +362,12 @@ class FakeTempfileModule(object):
                     self.filesystem.RemoveObject(self.name)
                     self.closed = True
                     if warn:
-                        warnings.warn("Implicitly cleaning up {!r}".format(self),
-                                      ResourceWarning)
+                        warnings.warn("Implicitly cleaning up {!r}"
+                                      .format(self), ResourceWarning)
 
             def __del__(self):
                 # Issue a ResourceWarning if implicit cleanup needed
                 self.cleanup(warn=True)
 
-        return FakeTemporaryDirectory(self._filesystem, self, suffix, prefix, dir)
+        return FakeTemporaryDirectory(
+            self._filesystem, self, suffix, prefix, dir)

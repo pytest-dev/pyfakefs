@@ -13,8 +13,6 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#
-# pylint: disable-msg=W0612,W0613,C6409
 
 """A fake shutil module implementation that uses fake_filesystem for unit tests.
 
@@ -43,8 +41,9 @@ False
 import errno
 import os
 import shutil
-import stat
 import sys
+
+import stat
 
 __pychecker__ = 'no-reimportself'
 
@@ -90,11 +89,8 @@ class FakeShutilModule(object):
                    be caught.
         """
         if ignore_errors:
-            def onerror(*args):
+            def onerror(*args):  # pylint: disable=unused-argument,function-redefined
                 pass
-        elif onerror is None:
-            def onerror(*args):
-                raise
         try:
             if not self.filesystem.Exists(path):
                 raise IOError("The specified path does not exist")
@@ -102,12 +98,16 @@ class FakeShutilModule(object):
                 # symlinks to directories are forbidden.
                 raise OSError("Cannot call rmtree on a symbolic link")
         except Exception:
+            if onerror is None:
+                raise
             onerror(os.path.islink, path, sys.exc_info())
             # can't continue even if onerror hook returns
             return
         try:
             self.filesystem.RemoveObject(path)
         except (IOError, OSError):
+            if onerror is None:
+                raise
             onerror(FakeShutilModule.rmtree, path, sys.exc_info())
 
     def copy(self, src, dst):
@@ -202,8 +202,8 @@ class FakeShutilModule(object):
         self.filesystem.CreateDirectory(dst)
         try:
             directory = self.filesystem.GetObject(src)
-        except IOError as e:
-            raise OSError(e.errno, e.message)
+        except IOError as exception:
+            raise OSError(exception.errno, exception.message)
         if not stat.S_ISDIR(directory.st_mode):
             raise OSError(errno.ENOTDIR,
                           'Fake os module: %r not a directory' % src)
@@ -310,7 +310,7 @@ class FakeShutilModule(object):
 
 
 def _RunDoctest():
-    # pylint: disable-msg=C6111,C6204,W0406
+    # pylint: disable=import-self
     import doctest
     from pyfakefs import fake_filesystem_shutil
     return doctest.testmod(fake_filesystem_shutil)
