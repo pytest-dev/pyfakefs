@@ -102,9 +102,8 @@ from collections import namedtuple
 
 import stat
 
-
 if sys.version_info < (3, 0):
-    import cStringIO    # pylint: disable=import-error
+    import cStringIO  # pylint: disable=import-error
 
 __pychecker__ = 'no-reimportself'
 
@@ -134,7 +133,6 @@ FAKE_PATH_MODULE_DEPRECATION = ('Do not instantiate a FakePathModule directly; '
                                 'let FakeOsModule instantiate it.  See the '
                                 'FakeOsModule docstring for details.')
 
-
 _IS_WINDOWS = sys.platform.startswith('win')
 _IS_CYGWIN = sys.platform == 'cygwin'
 # Python 3.2 supports links in Windows
@@ -149,6 +147,7 @@ class FakeLargeFileIoException(Exception):
     """Exception thrown on unsupported operations for fake large files.
     Fake large files have a size with no real content.
     """
+
     def __init__(self, file_path):
         super(FakeLargeFileIoException, self).__init__(
             'Read and write operations not supported for '
@@ -1682,6 +1681,61 @@ class FakeFilesystem(object):
                     not isinstance(self.ResolveObject(dir_name), FakeDirectory)):
                 raise
 
+    def _IsType(self, path, st_flag):
+        """Helper function to implement isdir(), islink(), etc.
+
+        See the stat(2) man page for valid stat.S_I* flag values
+
+        Args:
+          path:  path to file to stat and test
+          st_flag:  the stat.S_I* flag checked for the file's st_mode
+
+        Returns:
+          boolean (the st_flag is set in path's st_mode)
+
+        Raises:
+          TypeError: if path is None
+        """
+        if path is None:
+            raise TypeError
+        try:
+            obj = self.ResolveObject(path)
+            if obj:
+                return stat.S_IFMT(obj.st_mode) == st_flag
+        except IOError:
+            return False
+        return False
+
+    def IsDir(self, path):
+        """Determines if path identifies a directory."""
+        return self._IsType(path, stat.S_IFDIR)
+
+    def IsFile(self, path):
+        """Determines if path identifies a regular file."""
+        return self._IsType(path, stat.S_IFREG)
+
+    def IsLink(self, path):
+        """Determines if path identifies a symbolic link.
+
+        Args:
+          path: path to filesystem object.
+
+        Returns:
+          boolean (the st_flag is set in path's st_mode)
+
+        Raises:
+          TypeError: if path is None
+        """
+        if path is None:
+            raise TypeError
+        try:
+            link_obj = self.LResolveObject(path)
+            return stat.S_IFMT(link_obj.st_mode) == stat.S_IFLNK
+        except IOError:
+            return False
+        except KeyError:
+            return False
+
     def ConfirmDir(self, target_directory):
         """Tests that the target is actually a directory, raising OSError if not.
 
@@ -1760,6 +1814,142 @@ class FakeFilesystem(object):
         directory = self.ConfirmDir(target_directory)
         return sorted(directory.contents)
 
+    if sys.version_info >= (3, 5):
+        class DirEntry():
+            """Emulates os.DirEntry. Note that we did not enforce keyword only arguments."""
+
+            def __init__(self, filesystem):
+                """Initialize the dir entry with unset values.
+
+                Args:
+                    filesystem: the fake filesystem used for implementation.
+                """
+                self._filesystem = filesystem
+                self.name = ''
+                self.path = ''
+                self._inode = None
+                self._islink = False
+                self._isdir = False
+                self._statresult = None
+                self._statresult_symlink = None
+
+            def inode(self):
+                """Return the inode number of the entry."""
+                if self._inode is None:
+                    self.stat(follow_symlinks=False)
+                return self._inode
+
+            def is_dir(self, follow_symlinks=True):
+                """Return True if this entry is a directory or a symbolic link
+                pointing to a directory; return False if the entry is or points
+                to any other kind of file, or if it doesn't exist anymore.
+
+                Args:
+                    follow_symlinks: If False, return True only if this entry is a directory
+                                    (without following symlinks)
+                """
+                return self._isdir and (follow_symlinks or not self._islink)
+
+            def is_file(self, follow_symlinks=True):
+                """Return True if this entry is a file or a symbolic link
+                 pointing to a file; return False if the entry is or points
+                 to a directory or other non-file entry, or if it doesn't exist anymore.
+
+                Args:
+                    follow_symlinks: If False, return True only if this entry is a file
+                                    (without following symlinks)
+                 """
+                return not self._isdir and (follow_symlinks or not self._islink)
+
+            def is_symlink(self):
+                """Return True if this entry is a symbolic link (even if broken)."""
+                return self._islink
+
+            def stat(self, follow_symlinks=True):
+                """Return a stat_result object for this entry.
+
+                Args:
+                    follow_symlinks: If False and the entry is a symlink, return the
+                        result for the symlink, otherwise for the object is points to.
+                """
+                if follow_symlinks:
+                    if self._statresult_symlink is None:
+                        stats = self._filesystem.ResolveObject(self.path)
+                        if _IS_WINDOWS:
+                            # under Windows, some properties are 0
+                            # probably due to performance reasons
+                            stats.st_ino = 0
+                            stats.st_dev = 0
+                            stats.st_nlink = 0
+                        self._statresult_symlink = os.stat_result(
+                            (stats.st_mode, stats.st_ino, stats.st_dev,
+                             stats.st_nlink, stats.st_uid, stats.st_gid,
+                             stats.st_size, stats.st_atime,
+                             stats.st_mtime, stats.st_ctime))
+                    return self._statresult_symlink
+
+                if self._statresult is None:
+                    stats = self._filesystem.LResolveObject(self.path)
+                    self._inode = stats.st_ino
+                    if _IS_WINDOWS:
+                        stats.st_ino = 0
+                        stats.st_dev = 0
+                        stats.st_nlink = 0
+                    self._statresult = os.stat_result(
+                        (stats.st_mode, stats.st_ino, stats.st_dev,
+                         stats.st_nlink, stats.st_uid, stats.st_gid,
+                         stats.st_size, stats.st_atime,
+                         stats.st_mtime, stats.st_ctime))
+                return self._statresult
+
+        class ScanDirIter:
+            def __init__(self, filesystem, path):
+                self.filesystem = filesystem
+                self.path = self.filesystem.ResolvePath(path)
+                contents = {}
+                try:
+                    contents = self.filesystem.ConfirmDir(path).contents
+                except OSError:
+                    pass
+                self.contents_iter = iter(contents)
+
+            def __iter__(self):
+                return self
+
+            def __next__(self):
+                entry = self.contents_iter.__next__()
+                dir_entry = self.filesystem.DirEntry(self.filesystem)
+                dir_entry.name = entry
+                dir_entry.path = self.filesystem.JoinPaths(self.path, dir_entry.name)
+                dir_entry._isdir = self.filesystem.IsDir(dir_entry.path)
+                dir_entry._islink = self.filesystem.IsLink(dir_entry.path)
+                return dir_entry
+
+            if sys.version_info >= (3, 6):
+                def __enter__(self):
+                    return self
+
+                def __exit__(self, exc_type, exc_val, exc_tb):
+                    self.close()
+
+                def close(self):
+                    pass
+
+        def ScanDir(self, path=''):
+            """Return an iterator of DirEntry objects corresponding to the entries
+            in the directory given by path.
+
+            Args:
+              path: path to the target directory within the fake filesystem
+
+            Returns:
+              an iterator to an unsorted list of os.DirEntry objects for each entry in path
+
+            Raises:
+              OSError: if the target is not a directory
+            """
+            return self.ScanDirIter(self, path)
+
     def __str__(self):
         return str(self.root)
 
@@ -1825,31 +2015,6 @@ class FakePathModule(object):
         except IOError as exc:
             raise os.error(exc.errno, exc.strerror)
 
-    def _istype(self, path, st_flag):
-        """Helper function to implement isdir(), islink(), etc.
-
-        See the stat(2) man page for valid stat.S_I* flag values
-
-        Args:
-          path:  path to file to stat and test
-          st_flag:  the stat.S_I* flag checked for the file's st_mode
-
-        Returns:
-          boolean (the st_flag is set in path's st_mode)
-
-        Raises:
-          TypeError: if path is None
-        """
-        if path is None:
-            raise TypeError
-        try:
-            obj = self.filesystem.ResolveObject(path)
-            if obj:
-                return stat.S_IFMT(obj.st_mode) == st_flag
-        except IOError:
-            return False
-        return False
-
     def isabs(self, path):
         """Return True if path is an absolute pathname."""
         if self.filesystem.supports_drive_letter:
@@ -1862,11 +2027,11 @@ class FakePathModule(object):
 
     def isdir(self, path):
         """Determines if path identifies a directory."""
-        return self._istype(path, stat.S_IFDIR)
+        return self.filesystem.IsDir(path)
 
     def isfile(self, path):
         """Determines if path identifies a regular file."""
-        return self._istype(path, stat.S_IFREG)
+        return self.filesystem.IsFile(path)
 
     def islink(self, path):
         """Determines if path identifies a symbolic link.
@@ -1880,15 +2045,7 @@ class FakePathModule(object):
         Raises:
           TypeError: if path is None
         """
-        if path is None:
-            raise TypeError
-        try:
-            link_obj = self.filesystem.LResolveObject(path)
-            return stat.S_IFMT(link_obj.st_mode) == stat.S_IFLNK
-        except IOError:
-            return False
-        except KeyError:
-            return False
+        return self.filesystem.IsLink(path)
 
     def getmtime(self, path):
         """Returns the mtime of the file."""
@@ -2243,93 +2400,6 @@ class FakeOsModule(object):
         return self.filesystem.ListDir(target_directory)
 
     if sys.version_info >= (3, 5):
-        class DirEntry():
-            """Emulates os.DirEntry. Note that we did not enforce keyword only arguments."""
-
-            def __init__(self, fake_os):
-                """Initialize the dir entry with unset values.
-
-                Args:
-                    fake_os: the fake os module used for implementation.
-                """
-                self._fake_os = fake_os
-                self.name = ''
-                self.path = ''
-                self._inode = None
-                self._islink = False
-                self._isdir = False
-                self._statresult = None
-                self._statresult_symlink = None
-
-            def inode(self):
-                """Return the inode number of the entry."""
-                if self._inode is None:
-                    self.stat(follow_symlinks=False)
-                return self._inode
-
-            def is_dir(self, follow_symlinks=True):
-                """Return True if this entry is a directory or a symbolic link
-                pointing to a directory; return False if the entry is or points
-                to any other kind of file, or if it doesn't exist anymore.
-
-                Args:
-                    follow_symlinks: If False, return True only if this entry is a directory
-                                    (without following symlinks)
-                """
-                return self._isdir and (follow_symlinks or not self._islink)
-
-            def is_file(self, follow_symlinks=True):
-                """Return True if this entry is a file or a symbolic link
-                 pointing to a file; return False if the entry is or points
-                 to a directory or other non-file entry, or if it doesn't exist anymore.
-
-                Args:
-                    follow_symlinks: If False, return True only if this entry is a file
-                                    (without following symlinks)
-                 """
-                return not self._isdir and (follow_symlinks or not self._islink)
-
-            def is_symlink(self):
-                """Return True if this entry is a symbolic link (even if broken)."""
-                return self._islink
-
-            def stat(self, follow_symlinks=True):
-                """Return a stat_result object for this entry.
-
-                Args:
-                    follow_symlinks: If False and the entry is a symlink, return the
-                        result for the symlink, otherwise for the object is points to.
-                """
-                if follow_symlinks:
-                    if self._statresult_symlink is None:
-                        stats = self._fake_os.filesystem.ResolveObject(self.path)
-                        if _IS_WINDOWS:
-                            # under Windows, some properties are 0
-                            # probably due to performance reasons
-                            stats.st_ino = 0
-                            stats.st_dev = 0
-                            stats.st_nlink = 0
-                        self._statresult_symlink = os.stat_result(
-                            (stats.st_mode, stats.st_ino, stats.st_dev,
-                             stats.st_nlink, stats.st_uid, stats.st_gid,
-                             stats.st_size, stats.st_atime,
-                             stats.st_mtime, stats.st_ctime))
-                    return self._statresult_symlink
-
-                if self._statresult is None:
-                    stats = self._fake_os.filesystem.LResolveObject(self.path)
-                    self._inode = stats.st_ino
-                    if _IS_WINDOWS:
-                        stats.st_ino = 0
-                        stats.st_dev = 0
-                        stats.st_nlink = 0
-                    self._statresult = os.stat_result(
-                        (stats.st_mode, stats.st_ino, stats.st_dev,
-                         stats.st_nlink, stats.st_uid, stats.st_gid,
-                         stats.st_size, stats.st_atime,
-                         stats.st_mtime, stats.st_ctime))
-                return self._statresult
-
         def scandir(self, path=''):
             """Return an iterator of DirEntry objects corresponding to the entries
             in the directory given by path.
@@ -2343,15 +2413,7 @@ class FakeOsModule(object):
             Raises:
               OSError: if the target is not a directory
             """
-            path = self.filesystem.ResolvePath(path)
-            fake_dir = self.filesystem.ConfirmDir(path)
-            for entry in fake_dir.contents:
-                dir_entry = self.DirEntry(self)
-                dir_entry.name = entry
-                dir_entry.path = self.path.join(path, dir_entry.name)
-                dir_entry._isdir = self.path.isdir(dir_entry.path)
-                dir_entry._islink = self.path.islink(dir_entry.path)
-                yield dir_entry
+            return self.filesystem.ScanDir(path)
 
     def _ClassifyDirectoryContents(self, root):
         """Classify contents of a directory as files/directories.
@@ -2502,7 +2564,6 @@ class FakeOsModule(object):
                     - if the file would be moved to another filesystem (e.g. mount point)
         """
         self.filesystem.RenameObject(old_file, new_file)
-
 
     if sys.version_info >= (3, 3):
         def replace(self, old_file, new_file):

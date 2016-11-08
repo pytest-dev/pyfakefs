@@ -80,6 +80,9 @@ class _FakeAccessor(pathlib._Accessor):  # pylint: disable=protected-access
 
     chmod = _wrap_strfunc(FakeFilesystem.ChangeMode)
 
+    if sys.version_info >= (3, 6):
+        scandir = _wrap_strfunc(FakeFilesystem.ScanDir)
+
     if hasattr(os, "lchmod"):
         lchmod = _wrap_strfunc(lambda fs, path, mode: FakeFilesystem.ChangeMode(
             fs, path, mode, follow_symlinks=False))

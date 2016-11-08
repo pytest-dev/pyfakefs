@@ -17,7 +17,7 @@ The release versions are PyPi releases.
 
 #### New Features
  * `io.open`, `os.open`: support for `encoding` argument
- * `os.makedirs`: support for `exist_ok` argument
+ * `os.makedirs`: support for `exist_ok` argument (Python >= 3.2)
  * support for fake `io.open()`
  * support for mount points
  * support for hard links
@@ -25,7 +25,7 @@ The release versions are PyPi releases.
  * Windows support:
      * support for alternative path separator (Windows)
      * support for case-insensitive filesystems
-     * supprt for drive letters and UNC paths
+     * support for drive letters and UNC paths
  * support for filesystem size
  * `shutil.rmtree`: support for `ignore_errors` and `onerror` arguments
  * support for `os.fsync()` and `os.fdatasync()`
@@ -40,7 +40,7 @@ The release versions are PyPi releases.
 
 ## Version 2.7
 
-### Infrastructure
+#### Infrastructure
  * moved repository from GoogleCode to GitHub, merging 3 projects
  * added continous integration testing with Travis CI
  * added usage documentation in project wiki
