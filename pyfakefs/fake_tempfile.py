@@ -81,7 +81,6 @@ class FakeTempfileModule(object):
                 prefix,
                 next(self._randomSequence),
                 suffix))
-            print(filename)
         return filename
 
     # pylint: disable=redefined-builtin,unused-argument,too-many-arguments
