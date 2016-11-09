@@ -127,7 +127,7 @@ class FakeGlobModule(object):
                 yield self._path_module.join(dirname, name)
 
     # These 2 helper functions non-recursively glob inside a literal directory.
-    # They return a list of basenames. `_glob1` accepts a pattern while `_glob0`
+    # They return a list of basenames. `glob1` accepts a pattern while `glob0`
     # takes a literal basename (so it only has to check for its existence).
     def glob1(self, dirname, pattern):
         if not dirname:

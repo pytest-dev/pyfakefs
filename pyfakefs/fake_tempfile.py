@@ -51,6 +51,8 @@ class FakeTempfileModule(object):
         self.tempdir = None  # initialized by mktemp(), others
         self._temp_prefix = 'tmp'
         self._mktemp_retvals = []
+        # pylint: disable=protected-access
+        self._randomSequence = self._tempfile._RandomNameSequence()
 
     def _TempFilename(self, suffix='', prefix=None, directory=None):
         """Create a temporary filename that does not exist.
@@ -75,10 +77,9 @@ class FakeTempfileModule(object):
         if prefix is None:
             prefix = self._temp_prefix
         while not filename or self._filesystem.Exists(filename):
-            # pylint: disable=protected-access
             filename = self._filesystem.JoinPaths(directory, '%s%s%s' % (
                 prefix,
-                next(self._tempfile._RandomNameSequence()),
+                next(self._randomSequence),
                 suffix))
         return filename
 
