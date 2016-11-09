@@ -822,6 +822,8 @@ class FakeFilesystem(object):
         Returns:
           (str) A copy of path with empty components and dot components removed.
         """
+        if sys.version_info >= (3, 6):
+            path = os.fspath(path)
         path = self.NormalizePathSeparator(path)
         drive, path = self.SplitDrive(path)
         is_absolute_path = path.startswith(self.path_separator)
@@ -910,6 +912,8 @@ class FakeFilesystem(object):
           (str) A duple (pathname, basename) for which pathname does not
               end with a slash, and basename does not contain a slash.
         """
+        if sys.version_info >= (3, 6):
+            path = os.fspath(path)
         drive, path = self.SplitDrive(path)
         path = self.NormalizePathSeparator(path)
         path_components = path.split(self.path_separator)
@@ -934,6 +938,8 @@ class FakeFilesystem(object):
         original path.
         Taken from Windows specific implementation in Python 3.5 and slightly adapted.
         """
+        if sys.version_info >= (3, 6):
+            path = os.fspath(path)
         if self.supports_drive_letter:
             if len(path) >= 2:
                 path = self.NormalizePathSeparator(path)
@@ -2019,6 +2025,8 @@ class FakePathModule(object):
         """Return True if path is an absolute pathname."""
         if self.filesystem.supports_drive_letter:
             path = self.splitdrive(path)[1]
+        if sys.version_info >= (3, 6):
+            path = os.fspath(path)
         if _IS_WINDOWS:
             return len(path) > 0 and path[0] in (self.sep, self.altsep)
         else:
@@ -2065,6 +2073,8 @@ class FakePathModule(object):
             else:
                 return self.os.getcwd()
 
+        if sys.version_info >= (3, 6):
+            path = os.fspath(path)
         if not self.isabs(path):
             path = self.join(getcwd(), path)
         elif (self.filesystem.supports_drive_letter and
