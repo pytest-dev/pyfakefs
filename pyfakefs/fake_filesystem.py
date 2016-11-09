@@ -2108,6 +2108,10 @@ class FakePathModule(object):
 
         def relpath(self, path, start=None):
             """ntpath.relpath() needs the cwd passed in the start argument."""
+            if not path:
+                raise ValueError("no path specified")
+            if sys.version_info >= (3, 6):
+                path = os.fspath(path)
             if start is None:
                 start = self.filesystem.cwd
             path = self._os_path.relpath(path, start)
