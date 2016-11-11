@@ -370,7 +370,7 @@ class FakeFile(object):
         """Set the self.st_atime attribute.
 
         Args:
-          st_atime: The desired atime.
+          st_atime: The desired access time.
         """
         self.st_atime = st_atime
 
@@ -378,9 +378,17 @@ class FakeFile(object):
         """Set the self.st_mtime attribute.
 
         Args:
-          st_mtime: The desired mtime.
+          st_mtime: The desired modification time.
         """
         self.st_mtime = st_mtime
+
+    def SetCTime(self, st_ctime):
+        """Set the self.st_ctime attribute.
+
+        Args:
+          st_ctime: The desired creation time.
+        """
+        self.st_ctime = st_ctime
 
     def __str__(self):
         return '%s(%o)' % (self.name, self.st_mode)
@@ -798,6 +806,8 @@ class FakeFilesystem(object):
         Returns:
           The normalized path that will be used internally.
         """
+        if sys.version_info >= (3, 6):
+            path = os.fspath(path)
         if self.alternative_path_separator is None or not path:
             return path
         return path.replace(self.alternative_path_separator, self.path_separator)
@@ -822,8 +832,6 @@ class FakeFilesystem(object):
         Returns:
           (str) A copy of path with empty components and dot components removed.
         """
-        if sys.version_info >= (3, 6):
-            path = os.fspath(path)
         path = self.NormalizePathSeparator(path)
         drive, path = self.SplitDrive(path)
         is_absolute_path = path.startswith(self.path_separator)
@@ -912,8 +920,6 @@ class FakeFilesystem(object):
           (str) A duple (pathname, basename) for which pathname does not
               end with a slash, and basename does not contain a slash.
         """
-        if sys.version_info >= (3, 6):
-            path = os.fspath(path)
         drive, path = self.SplitDrive(path)
         path = self.NormalizePathSeparator(path)
         path_components = path.split(self.path_separator)
@@ -1006,6 +1012,8 @@ class FakeFilesystem(object):
           (str) The paths joined by the path separator, starting with the last
               absolute path in paths.
         """
+        if sys.version_info >= (3, 6):
+            paths = [os.fspath(path) for path in paths]
         if len(paths) == 1:
             return paths[0]
         if self.supports_drive_letter:
@@ -1102,6 +1110,8 @@ class FakeFilesystem(object):
         Raises:
           TypeError: if file_path is None
         """
+        if sys.version_info >= (3, 6):
+            file_path = os.fspath(file_path)
         if file_path is None:
             raise TypeError
         if not file_path:
@@ -1204,6 +1214,8 @@ class FakeFilesystem(object):
             # Don't call self.NormalizePath(), as we don't want to prepend self.cwd.
             return self.CollapsePath(link_path)
 
+        if sys.version_info >= (3, 6):
+            file_path = os.fspath(file_path)
         if file_path is None:
             # file.open(None) raises TypeError, so mimic that.
             raise TypeError('Expected file system path string, received None')
@@ -1267,6 +1279,8 @@ class FakeFilesystem(object):
         Raises:
           IOError: if the object is not found
         """
+        if sys.version_info >= (3, 6):
+            file_path = os.fspath(file_path)
         if file_path == self.root.name:
             return self.root
         path_components = self.GetPathComponents(file_path)
@@ -1296,6 +1310,8 @@ class FakeFilesystem(object):
         Raises:
           IOError: if the object is not found
         """
+        if sys.version_info >= (3, 6):
+            file_path = os.fspath(file_path)
         file_path = self.NormalizePath(self.NormalizeCase(file_path))
         return self.GetObjectFromNormalizedPath(file_path)
 
@@ -1313,6 +1329,8 @@ class FakeFilesystem(object):
           IOError: if the object is not found
         """
         if follow_symlinks:
+            if sys.version_info >= (3, 6):
+                file_path = os.fspath(file_path)
             return self.GetObjectFromNormalizedPath(self.ResolvePath(file_path))
         return self.LResolveObject(file_path)
 
@@ -1331,6 +1349,8 @@ class FakeFilesystem(object):
         Raises:
           IOError: if the object is not found
         """
+        if sys.version_info >= (3, 6):
+            path = os.fspath(path)
         if path == self.root.name:
             # The root directory will never be a link
             return self.root
@@ -1569,6 +1589,8 @@ class FakeFilesystem(object):
         if not _IS_LINK_SUPPORTED:
             raise OSError("Symbolic links are not supported on Windows before Python 3.2")
         resolved_file_path = self.ResolvePath(file_path)
+        if sys.version_info >= (3, 6):
+            link_target = os.fspath(link_target)
         return self.CreateFile(resolved_file_path, st_mode=stat.S_IFLNK | PERM_DEF,
                                contents=link_target)
 
@@ -1629,6 +1651,8 @@ class FakeFilesystem(object):
           OSError: if the directory name is invalid or parent directory is read only
           or as per FakeFilesystem.AddObject.
         """
+        if sys.version_info >= (3, 6):
+            dir_name = os.fspath(dir_name)
         if self._EndsWithPathSeparator(dir_name):
             dir_name = dir_name[:-1]
 
@@ -1702,6 +1726,8 @@ class FakeFilesystem(object):
         Raises:
           TypeError: if path is None
         """
+        if sys.version_info >= (3, 6):
+            path = os.fspath(path)
         if path is None:
             raise TypeError
         try:
@@ -1732,6 +1758,8 @@ class FakeFilesystem(object):
         Raises:
           TypeError: if path is None
         """
+        if sys.version_info >= (3, 6):
+            path = os.fspath(path)
         if path is None:
             raise TypeError
         try:
@@ -2056,12 +2084,28 @@ class FakePathModule(object):
         return self.filesystem.IsLink(path)
 
     def getmtime(self, path):
-        """Returns the mtime of the file."""
+        """Returns the modification time of the file."""
         try:
             file_obj = self.filesystem.GetObject(path)
         except IOError as exc:
             raise OSError(errno.ENOENT, str(exc))
         return file_obj.st_mtime
+
+    def getatime(self, path):
+        """Returns the access time of the file."""
+        try:
+            file_obj = self.filesystem.GetObject(path)
+        except IOError as exc:
+            raise OSError(errno.ENOENT, str(exc))
+        return file_obj.st_atime
+
+    def getctime(self, path):
+        """Returns the creation time of the file."""
+        try:
+            file_obj = self.filesystem.GetObject(path)
+        except IOError as exc:
+            raise OSError(errno.ENOENT, str(exc))
+        return file_obj.st_ctime
 
     def abspath(self, path):
         """Return the absolute version of a path."""
@@ -2135,6 +2179,8 @@ class FakePathModule(object):
           True if path is a mount point added to the fake file system.
           Under Windows also returns True for drive and UNC roots (independent of their existence).
         """
+        if sys.version_info >= (3, 6):
+            path = os.fspath(path)
         if not path:
             return False
         normed_path = self.filesystem.NormalizePath(path)
