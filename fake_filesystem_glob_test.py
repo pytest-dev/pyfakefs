@@ -44,7 +44,7 @@ class FakeGlobUnitTest(unittest.TestCase):
 
     def testGlobStar(self):
         self.assertEqual(['/xyzzy/subdir', '/xyzzy/subdir2', '/xyzzy/subfile'],
-                         self.glob.glob('/xyzzy/*'))
+                         sorted(self.glob.glob('/xyzzy/*')))
 
     def testGlobExact(self):
         self.assertEqual(['/xyzzy'], self.glob.glob('/xyzzy'))
@@ -52,7 +52,7 @@ class FakeGlobUnitTest(unittest.TestCase):
 
     def testGlobQuestion(self):
         self.assertEqual(['/xyzzy/subdir', '/xyzzy/subdir2', '/xyzzy/subfile'],
-                         self.glob.glob('/x?zz?/*'))
+                         sorted(self.glob.glob('/x?zz?/*')))
 
     def testGlobNoMagic(self):
         self.assertEqual(['/xyzzy'], self.glob.glob('/xyzzy'))
@@ -68,7 +68,7 @@ class FakeGlobUnitTest(unittest.TestCase):
         self.assertEqual(['/[Temp]'], self.glob.glob('/*emp*'))
 
     def testRootGlob(self):
-        self.assertEqual(['[Temp]', 'xyzzy'], self.glob.glob('*'))
+        self.assertEqual(['[Temp]', 'xyzzy'], sorted(self.glob.glob('*')))
 
     def testGlob1(self):
         self.assertEqual(['[Temp]'], self.glob.glob1('/', '*Tem*'))

@@ -17,7 +17,7 @@
 
 :Includes:
   * FakeFile:  Provides the appearance of a real file.
-  * FakeDirectory: Provides the appearance of a real dir.
+  * FakeDirectory: Provides the appearance of a real directory.
   * FakeFilesystem:  Provides the appearance of a real directory hierarchy.
   * FakeOsModule:  Uses FakeFilesystem to provide a fake os module replacement.
   * FakePathModule:  Faked os.path module replacement.
@@ -255,10 +255,11 @@ class FakeFile(object):
         """Sets the self.st_size attribute and replaces self.content with None.
 
         Provided specifically to simulate very large files without regards
-        to their content (which wouldn't fit in memory)
+        to their content (which wouldn't fit in memory).
+        Note that read/write operations with such a file raise FakeLargeFileIoException.
 
         Args:
-          st_size: The desired file size
+          st_size: (int) The desired file size
 
         Raises:
           IOError: if the st_size is not a non-negative integer,
@@ -318,13 +319,14 @@ class FakeFile(object):
         """Sets the file contents and size and increases the modification time.
 
         Args:
-          contents: string, new content of file.
-          encoding: the encoding to be used for writing the contents if they are a unicode string
-                    if not given, the locale preferred encoding is used
+          contents: (str, bytes, unicode) new content of file.
+          encoding: (str) the encoding to be used for writing the contents
+                    if they are a unicode string.
+                    If not given, the locale preferred encoding is used.
 
         Raises:
           IOError: if the st_size is not a non-negative integer,
-                   or if st_size exceeds the available file system space
+                   or if st_size exceeds the available file system space.
         """
         self._SetInitialContents(contents, encoding)
         self.st_ctime = time.time()
@@ -395,15 +397,17 @@ class FakeFile(object):
 
     def SetIno(self, st_ino):
         """Set the self.st_ino attribute.
+        Note that a unique inode is assigned automatically to a new fake file.
+        Using this function does not guarantee uniqueness and should used with caution.
 
         Args:
-          st_ino: The desired inode.
+          st_ino: (int) The desired inode.
         """
         self.st_ino = st_ino
 
 
 class FakeDirectory(FakeFile):
-    """Provides the appearance of a real dir."""
+    """Provides the appearance of a real directory."""
 
     def __init__(self, name, perm_bits=PERM_DEF, filesystem=None):
         """init.
@@ -417,13 +421,14 @@ class FakeDirectory(FakeFile):
 
     @property
     def contents(self):
+        """Return the list of contained directory entries."""
         return self.byte_contents
 
     def AddEntry(self, path_object):
         """Adds a child FakeFile to this directory.
 
         Args:
-          path_object:  FakeFile instance to add as a child of this directory
+          path_object:  FakeFile instance to add as a child of this directory.
         """
         self.contents[path_object.name] = path_object
         path_object.st_nlink += 1
@@ -432,14 +437,16 @@ class FakeDirectory(FakeFile):
             self.filesystem.ChangeDiskUsage(path_object.GetSize(), path_object.name, self.st_dev)
 
     def GetEntry(self, pathname_name):
-        """Retrieves the specified child file or directory.
+        """Retrieves the specified child file or directory entry.
 
         Args:
-          pathname_name: basename of the child object to retrieve
+          pathname_name: basename of the child object to retrieve.
+
         Returns:
-          string, file contents
+          fake file or directory object.
+
         Raises:
-          KeyError: if no child exists by the specified name
+          KeyError: if no child exists by the specified name.
         """
         return self.contents[pathname_name]
 
@@ -447,13 +454,13 @@ class FakeDirectory(FakeFile):
         """Removes the specified child file or directory.
 
         Args:
-          pathname_name: basename of the child object to remove
-          recursive: if True (default), the entries in contained directories are deleted first
+          pathname_name: basename of the child object to remove.
+          recursive: if True (default), the entries in contained directories are deleted first.
             Needed to propagate removal errors (e.g. permission problems) from contained entries.
 
         Raises:
-          KeyError: if no child exists by the specified name
-          OSError: if user lacks permission to delete the file, or (Windows only) the file is open
+          KeyError: if no child exists by the specified name.
+          OSError: if user lacks permission to delete the file, or (Windows only) the file is open.
         """
         entry = self.contents[pathname_name]
         if entry.st_mode & PERM_WRITE == 0:
@@ -473,7 +480,7 @@ class FakeDirectory(FakeFile):
         del self.contents[pathname_name]
 
     def GetSize(self):
-        """Get the size of all files contained in this directory tree"""
+        """Return the total size of all files contained in this directory tree."""
         return sum([item[1].GetSize() for item in self.contents.items()])
 
     def __str__(self):
@@ -522,20 +529,20 @@ class FakeFilesystem(object):
         self.AddMountPoint(self.root.name, total_size)
 
     def AddMountPoint(self, path, total_size=None):
-        """Adds a new mount point for a filesystem device.
-           The mount point gets a new unique device number.
+        """Add a new mount point for a filesystem device.
+        The mount point gets a new unique device number.
 
         Args:
-          path: The root path for the ew mount path.
+          path: The root path for the new mount path.
 
-          total_size: the new total size of the added filesystem device in bytes
+          total_size: the new total size of the added filesystem device in bytes.
                       Defaults to infinite size.
 
         Returns:
             The newly created mount point dict.
 
         Raises:
-          OSError: if trying to mount an existing mount point again
+          OSError: if trying to mount an existing mount point again.
         """
         path = self.NormalizePath(path)
         if path in self.mount_points:
@@ -583,9 +590,9 @@ class FakeFilesystem(object):
                 return mount_point
 
     def GetDiskUsage(self, path=None):
-        """Returns the total, used and free disk space in bytes as named tuple
-           or placeholder values simulating unlimited space if not set.
-           Note: This matches the return value of shutil.disk_usage().
+        """Return the total, used and free disk space in bytes as named tuple,
+        or placeholder values simulating unlimited space if not set.
+        Note: This matches the return value of shutil.disk_usage().
 
         Args:
           path: The disk space is returned for the file system device where path resides.
@@ -603,7 +610,7 @@ class FakeFilesystem(object):
 
     def SetDiskUsage(self, total_size, path=None):
         """Changes the total size of the file system, preserving the used space.
-           Example usage: set the size of an auto-mounted Windows drive.
+        Example usage: set the size of an auto-mounted Windows drive.
 
         Args:
           total_size: the new total size of the filesystem in bytes
@@ -624,15 +631,15 @@ class FakeFilesystem(object):
         mount_point['total_size'] = total_size
 
     def ChangeDiskUsage(self, usage_change, file_path, st_dev):
-        """Changes the used disk space by the given amount.
+        """Change the used disk space by the given amount.
 
         Args:
-          usage_change: number of bytes added to the used space
-                        if negative, the used space will be decreased
+          usage_change: number of bytes added to the used space.
+                        If negative, the used space will be decreased.
 
-          file_path: the path of the object needing the disk space
+          file_path: the path of the object needing the disk space.
 
-          st_dev: The device ID for the respective file system
+          st_dev: the device ID for the respective file system.
 
         Raises:
           IOError: if usage_change exceeds the free file system space
@@ -647,15 +654,15 @@ class FakeFilesystem(object):
             mount_point['used_size'] += usage_change
 
     def GetStat(self, entry_path, follow_symlinks=True):
-        """Returns the os.stat-like tuple for the FakeFile object of entry_path.
+        """Return the os.stat-like tuple for the FakeFile object of entry_path.
 
         Args:
-          entry_path:  path to filesystem object to retrieve
-          follow_symlinks: if False and entry_path points to a link, the link itself is inspected
-              instead of the linked object
+          entry_path:  path to filesystem object to retrieve.
+          follow_symlinks: if False and entry_path points to a symlink, the link itself is inspected
+              instead of the linked object.
 
         Returns:
-          the os.stat_result object corresponding to entry_path
+          the os.stat_result object corresponding to entry_path.
 
         Raises:
           OSError: if the filesystem object doesn't exist.
@@ -676,9 +683,9 @@ class FakeFilesystem(object):
 
         Args:
           path: (str) Path to the file.
-          mode: (int) Permissions
-          follow_symlinks: if False and entry_path points to a link, the link itself is affected
-              instead of the linked object
+          mode: (int) Permissions.
+          follow_symlinks: if False and entry_path points to a symlink, the link itself is affected
+              instead of the linked object.
         """
         try:
             file_object = self.ResolveObject(path, follow_symlinks)
@@ -700,8 +707,8 @@ class FakeFilesystem(object):
           times: 2-tuple of numbers, of the form (atime, mtime) which is used to set
               the access and modified times, respectively. If None, file's access
               and modified times are set to the current time.
-          follow_symlinks: if False and entry_path points to a link, the link itself is queried
-              instead of the linked object
+          follow_symlinks: if False and entry_path points to a symlink, the link itself is queried
+              instead of the linked object.
 
         Raises:
           TypeError: If anything other than integers is specified in passed tuple or
@@ -730,6 +737,8 @@ class FakeFilesystem(object):
 
     def SetIno(self, path, st_ino):
         """Set the self.st_ino attribute of file at 'path'.
+        Note that a unique inode is assigned automatically to a new fake file.
+        Using this function does not guarantee uniqueness and should used with caution.
 
         Args:
           path: Path to file.
@@ -738,9 +747,9 @@ class FakeFilesystem(object):
         self.GetObject(path).SetIno(st_ino)
 
     def AddOpenFile(self, file_obj):
-        """Adds file_obj to the list of open files on the filesystem.
+        """Add file_obj to the list of open files on the filesystem.
 
-        The position in the self.open_files array is the file descriptor number
+        The position in the self.open_files array is the file descriptor number.
 
         Args:
           file_obj:  file object to be added to open files list.
@@ -757,7 +766,7 @@ class FakeFilesystem(object):
         return len(self.open_files) - 1
 
     def CloseOpenFile(self, file_des):
-        """Removes file object with given descriptor from the list of open files.
+        """Remove file object with given descriptor from the list of open files.
 
         Sets the entry in open_files to None.
 
@@ -768,7 +777,7 @@ class FakeFilesystem(object):
         heapq.heappush(self.free_fd_heap, file_des)
 
     def GetOpenFile(self, file_des):
-        """Returns an open file.
+        """Return an open file.
 
         Args:
           file_des:  file descriptor of the open file.
@@ -788,7 +797,7 @@ class FakeFilesystem(object):
         return self.open_files[file_des]
 
     def HasOpenFile(self, file_object):
-        """Returns True if the given file object is in the list of open files.
+        """Return True if the given file object is in the list of open files.
 
         Args:
           file_object: The FakeFile object to be checked.
@@ -801,8 +810,10 @@ class FakeFilesystem(object):
     def NormalizePathSeparator(self, path):
         """Replace all appearances of alternative path separator with path separator.
         Do nothing if no alternative separator is set.
+
         Args:
           path: the path to be normalized.
+
         Returns:
           The normalized path that will be used internally.
         """
@@ -813,10 +824,10 @@ class FakeFilesystem(object):
         return path.replace(self.alternative_path_separator, self.path_separator)
 
     def CollapsePath(self, path):
-        """Mimics os.path.normpath using the specified path_separator.
+        """Mimic os.path.normpath using the specified path_separator.
 
         Mimics os.path.normpath using the path_separator that was specified
-        for this FakeFilesystem.  Normalizes the path, but unlike the method
+        for this FakeFilesystem. Normalizes the path, but unlike the method
         NormalizePath, does not make it absolute.  Eliminates dot components
         (. and ..) and combines repeated path separators (//).  Initial ..
         components are left in place for relative paths.  If the result is an empty
@@ -908,7 +919,7 @@ class FakeFilesystem(object):
         return self.CollapsePath(path)
 
     def SplitPath(self, path):
-        """Mimics os.path.split using the specified path_separator.
+        """Mimic os.path.split using the specified path_separator.
 
         Mimics os.path.split using the path_separator that was specified
         for this FakeFilesystem.
@@ -939,10 +950,15 @@ class FakeFilesystem(object):
         return (drive or self.path_separator, basename)
 
     def SplitDrive(self, path):
-        """Splits the path into the drive part and the rest of the path, if drive letters
-        are supported and a drive is present, otherwise returns an empty string and the
-        original path.
+        """Splits the path into the drive part and the rest of the path.
+
         Taken from Windows specific implementation in Python 3.5 and slightly adapted.
+
+        Args:
+            path: the full path to be split.
+
+        Returns: a tuple of the drive part and the rest of the path, or of an empty string
+            and the full path if drive letters are not supported or no drive is present.
         """
         if sys.version_info >= (3, 6):
             path = os.fspath(path)
@@ -1000,10 +1016,7 @@ class FakeFilesystem(object):
         return result_drive + result_path
 
     def JoinPaths(self, *paths):
-        """Mimics os.path.join using the specified path_separator.
-
-        Mimics os.path.join using the path_separator that was specified
-        for this FakeFilesystem.
+        """Mimic os.path.join using the specified path_separator.
 
         Args:
           *paths:  (str) Zero or more paths to join.
@@ -1066,8 +1079,15 @@ class FakeFilesystem(object):
         return path_components
 
     def StartsWithDriveLetter(self, file_path):
-        """Return True if file_path starts with a drive letter
-        and drive letter support is enabled in the filesystem."""
+        """Return True if file_path starts with a drive letter.
+
+        Args:
+            file_path: the full path to be examined.
+
+        Returns:
+            True if drive letter support is enabled in the filesystem and
+            the path starts with a drive letter.
+        """
         return (self.supports_drive_letter and len(file_path) >= 2 and
                 file_path[0].isalpha and file_path[1] == ':')
 
@@ -1099,16 +1119,16 @@ class FakeFilesystem(object):
         return None, None
 
     def Exists(self, file_path):
-        """True if a path points to an existing file system object.
+        """Return true if a path points to an existing file system object.
 
         Args:
-          file_path:  path to examine
+          file_path:  path to examine.
 
         Returns:
-          bool(if object exists)
+          (bool) True if the corresponding object exists.
 
         Raises:
-          TypeError: if file_path is None
+          TypeError: if file_path is None.
         """
         if sys.version_info >= (3, 6):
             file_path = os.fspath(file_path)
@@ -1155,14 +1175,14 @@ class FakeFilesystem(object):
               /a/b/c/d/e  =>  /a/b2/d/e
 
         Args:
-          file_path:  path to examine
+          file_path:  path to examine.
 
         Returns:
-          resolved_path (string) or None
+          resolved_path (string) or None.
 
         Raises:
-          TypeError: if file_path is None
-          IOError: if file_path is '' or a part of the path doesn't exist
+          TypeError: if file_path is None.
+          IOError: if file_path is '' or a part of the path doesn't exist.
         """
 
         def _ComponentsToPath(component_folders):
@@ -1267,17 +1287,17 @@ class FakeFilesystem(object):
         return _ComponentsToPath(resolved_components)
 
     def GetObjectFromNormalizedPath(self, file_path):
-        """Searches for the specified filesystem object within the fake filesystem.
+        """Search for the specified filesystem object within the fake filesystem.
 
         Args:
           file_path: specifies target FakeFile object to retrieve, with a
-              path that has already been normalized/resolved
+              path that has already been normalized/resolved.
 
         Returns:
-          the FakeFile object corresponding to file_path
+          the FakeFile object corresponding to file_path.
 
         Raises:
-          IOError: if the object is not found
+          IOError: if the object is not found.
         """
         if sys.version_info >= (3, 6):
             file_path = os.fspath(file_path)
@@ -1299,16 +1319,16 @@ class FakeFilesystem(object):
         return target_object
 
     def GetObject(self, file_path):
-        """Searches for the specified filesystem object within the fake filesystem.
+        """Search for the specified filesystem object within the fake filesystem.
 
         Args:
-          file_path: specifies target FakeFile object to retrieve
+          file_path: specifies target FakeFile object to retrieve.
 
         Returns:
-          the FakeFile object corresponding to file_path
+          the FakeFile object corresponding to file_path.
 
         Raises:
-          IOError: if the object is not found
+          IOError: if the object is not found.
         """
         if sys.version_info >= (3, 6):
             file_path = os.fspath(file_path)
@@ -1316,17 +1336,17 @@ class FakeFilesystem(object):
         return self.GetObjectFromNormalizedPath(file_path)
 
     def ResolveObject(self, file_path, follow_symlinks=True):
-        """Searches for the specified filesystem object, resolving all links.
+        """Search for the specified filesystem object, resolving all links.
 
         Args:
-          file_path: specifies target FakeFile object to retrieve
-          follow_symlinks: if False, the link itself is resolved, other wise the object linked to
+          file_path: specifies target FakeFile object to retrieve.
+          follow_symlinks: if False, the link itself is resolved, otherwise the object linked to.
 
         Returns:
-          the FakeFile object corresponding to file_path
+          the FakeFile object corresponding to file_path.
 
         Raises:
-          IOError: if the object is not found
+          IOError: if the object is not found.
         """
         if follow_symlinks:
             if sys.version_info >= (3, 6):
@@ -1335,19 +1355,19 @@ class FakeFilesystem(object):
         return self.LResolveObject(file_path)
 
     def LResolveObject(self, path):
-        """Searches for the specified object, resolving only parent links.
+        """Search for the specified object, resolving only parent links.
 
         This is analogous to the stat/lstat difference.  This resolves links *to*
         the object but not of the final object itself.
 
         Args:
-          path: specifies target FakeFile object to retrieve
+          path: specifies target FakeFile object to retrieve.
 
         Returns:
-          the FakeFile object corresponding to path
+          the FakeFile object corresponding to path.
 
         Raises:
-          IOError: if the object is not found
+          IOError: if the object is not found.
         """
         if sys.version_info >= (3, 6):
             path = os.fspath(path)
@@ -1374,11 +1394,11 @@ class FakeFilesystem(object):
         """Add a fake file or directory into the filesystem at file_path.
 
         Args:
-          file_path: the path to the file to be added relative to self
-          file_object: file or directory to add
+          file_path: the path to the file to be added relative to self.
+          file_object: file or directory to add.
 
         Raises:
-          IOError: if file_path does not correspond to a directory
+          IOError: if file_path does not correspond to a directory.
         """
         try:
             target_directory = self.GetObject(file_path)
@@ -1388,51 +1408,52 @@ class FakeFilesystem(object):
                           'Not a directory in the fake filesystem',
                           file_path)
 
-    def RenameObject(self, old_file, new_file, force_replace=False):
-        """Renames a FakeFile object at old_file to new_file, preserving all properties.
-           Also replaces existing new_file object, if one existed (Unix only).
+    def RenameObject(self, old_file_path, new_file_path, force_replace=False):
+        """Renames a FakeFile object at old_file_path to new_file_path, preserving all properties.
 
         Args:
-          old_file:  path to filesystem object to rename
-          new_file:  path to where the filesystem object will live after this call
+          old_file_path:  path to filesystem object to rename.
+          new_file_path:  path to where the filesystem object will live after this call.
           force_replace: if set and destination is an existing file, it will be replaced
-                     even under Windows if the user has permissions
+                     even under Windows if the user has permissions, otherwise replacement
+                     happens under Unix only.
 
         Raises:
-          OSError:  - if old_file does not exist
-                    - if new_file is an existing directory
-                    - if new_file is an existing file (Windows)
-                    - if new_file is an existing file and could not be removed (Unix)
-                    - if dirname(new_file) does not exist
-                    - if the file would be moved to another filesystem (e.g. mount point)
+          OSError: if old_file_path does not exist.
+          OSError: if new_file_path is an existing directory.
+          OSError: if new_file_path is an existing file and force_replace not set (Windows).
+          OSError: if new_file_path is an existing file and could not be removed (Unix,
+                      or Windows with force_replace set).
+          OSError: if dirname(new_file_path) does not exist.
+          OSError: if the file would be moved to another filesystem (e.g. mount point).
         """
-        old_file = self.NormalizePath(old_file)
-        new_file = self.NormalizePath(new_file)
-        if not self.Exists(old_file):
+        old_file_path = self.NormalizePath(old_file_path)
+        new_file_path = self.NormalizePath(new_file_path)
+        if not self.Exists(old_file_path):
             raise OSError(errno.ENOENT,
                           'Fake filesystem object: can not rename nonexistent file',
-                          old_file)
+                          old_file_path)
 
-        if self.Exists(new_file):
-            if old_file == new_file:
+        if self.Exists(new_file_path):
+            if old_file_path == new_file_path:
                 return  # Nothing to do here.
-            new_obj = self.GetObject(new_file)
+            new_obj = self.GetObject(new_file_path)
             if stat.S_ISDIR(new_obj.st_mode):
                 raise OSError(errno.EEXIST,
                               'Fake filesystem object: can not rename to existing directory',
-                              new_file)
+                              new_file_path)
             elif _IS_WINDOWS and not force_replace:
                 raise OSError(errno.EEXIST,
                               'Fake filesystem object: can not rename to existing file',
-                              new_file)
+                              new_file_path)
             else:
                 try:
-                    self.RemoveObject(new_file)
+                    self.RemoveObject(new_file_path)
                 except IOError as exc:
                     raise OSError(exc.errno, exc.strerror, exc.filename)
 
-        old_dir, old_name = os.path.split(old_file)
-        new_dir, new_name = os.path.split(new_file)
+        old_dir, old_name = os.path.split(old_file_path)
+        new_dir, new_name = os.path.split(new_file_path)
         if not self.Exists(new_dir):
             raise OSError(errno.ENOENT, 'No such fake directory', new_dir)
         old_dir_object = self.ResolveObject(old_dir)
@@ -1440,7 +1461,7 @@ class FakeFilesystem(object):
         if old_dir_object.st_dev != new_dir_object.st_dev:
             raise OSError(errno.EXDEV,
                           'Fake filesystem object: cannot rename across file systems',
-                          old_file)
+                          old_file_path)
 
         object_to_rename = old_dir_object.GetEntry(old_name)
         old_dir_object.RemoveEntry(old_name, recursive=False)
@@ -1451,12 +1472,12 @@ class FakeFilesystem(object):
         """Remove an existing file or directory.
 
         Args:
-          file_path: the path to the file relative to self
+          file_path: the path to the file relative to self.
 
         Raises:
           IOError: if file_path does not correspond to an existing file, or if part
-            of the path refers to something other than a directory
-          OSError: if the directory is in use (eg, if it is '/')
+            of the path refers to something other than a directory.
+          OSError: if the directory is in use (eg, if it is '/').
         """
         file_path = self.NormalizeCase(file_path)
         if self._IsRootPath(file_path):
@@ -1476,20 +1497,19 @@ class FakeFilesystem(object):
                           file_path)
 
     def CreateDirectory(self, directory_path, perm_bits=PERM_DEF):
-        """Creates directory_path, and all the parent directories.
+        """Create directory_path, and all the parent directories.
 
-        Helper method to set up your test faster
+        Helper method to set up your test faster.
 
         Args:
-          directory_path:  directory to create
-          perm_bits: permission bits
-          inode: inode of directory
+          directory_path:  full directory path to create.
+          perm_bits: permission bits.
 
         Returns:
-          the newly created FakeDirectory object
+          the newly created FakeDirectory object.
 
         Raises:
-          OSError:  if the directory already exists
+          OSError:  if the directory already exists.
         """
         directory_path = self.NormalizePath(directory_path)
         self._AutoMountDriveIfNeeded(directory_path)
@@ -1516,25 +1536,25 @@ class FakeFilesystem(object):
     def CreateFile(self, file_path, st_mode=stat.S_IFREG | PERM_DEF_FILE,
                    contents='', st_size=None, create_missing_dirs=True,
                    apply_umask=False, encoding=None):
-        """Creates file_path, including all the parent directories along the way.
+        """Create file_path, including all the parent directories along the way.
 
         Helper method to set up your test faster.
 
         Args:
-          file_path: path to the file to create
-          st_mode: the stat.S_IF constant representing the file type
-          contents: the contents of the file
-          st_size: file size; only valid if contents=None
-          create_missing_dirs: if True, auto create missing directories
-          apply_umask: whether or not the current umask must be applied on st_mode
-          encoding: if contents is a unicode string, the encoding used for serialization
+          file_path: path to the file to create.
+          st_mode: the stat.S_IF constant representing the file type.
+          contents: the contents of the file.
+          st_size: file size; only valid if contents not given.
+          create_missing_dirs: if True, auto create missing directories.
+          apply_umask: whether or not the current umask must be applied on st_mode.
+          encoding: if contents is a unicode string, the encoding used for serialization.
 
         Returns:
-          the newly created FakeFile object
+          the newly created FakeFile object.
 
         Raises:
-          IOError: if the file already exists
-          IOError: if the containing directory is required and missing
+          IOError: if the file already exists.
+          IOError: if the containing directory is required and missing.
         """
         file_path = self.NormalizePath(file_path)
         if self.Exists(file_path):
@@ -1572,7 +1592,7 @@ class FakeFilesystem(object):
 
     # pylint: disable=unused-argument
     def CreateLink(self, file_path, link_target, target_is_directory=False):
-        """Creates the specified symlink, pointed at the specified link target.
+        """Create the specified symlink, pointed at the specified link target.
 
         Args:
           file_path:  path to the symlink to create
@@ -1580,11 +1600,11 @@ class FakeFilesystem(object):
           target_is_directory: ignored, here to satisfy pathlib API
 
         Returns:
-          the newly created FakeFile object
+          the newly created FakeFile object.
 
         Raises:
-          IOError:  if the file already exists
-          OSError:  if on Windows before Python 3.2
+          IOError:  if the file already exists.
+          OSError:  if on Windows before Python 3.2.
         """
         if not _IS_LINK_SUPPORTED:
             raise OSError("Symbolic links are not supported on Windows before Python 3.2")
@@ -1598,16 +1618,16 @@ class FakeFilesystem(object):
         """Create a hard link at new_path, pointing at old_path.
 
         Args:
-          old_path: an existing link to the target file
-          new_path: the destination path to create a new link at
+          old_path: an existing link to the target file.
+          new_path: the destination path to create a new link at.
 
         Returns:
-          the FakeFile object referred to by old_path
+          the FakeFile object referred to by old_path.
 
         Raises:
-          OSError:  if something already exists at new_path
-          OSError:  if the parent directory doesn't exist
-          OSError:  if on Windows before Python 3.2
+          OSError:  if something already exists at new_path.
+          OSError:  if the parent directory doesn't exist.
+          OSError:  if on Windows before Python 3.2.
         """
         if not _IS_LINK_SUPPORTED:
             raise OSError("Links are not supported on Windows before Python 3.2")
@@ -1649,7 +1669,7 @@ class FakeFilesystem(object):
 
         Raises:
           OSError: if the directory name is invalid or parent directory is read only
-          or as per FakeFilesystem.AddObject.
+          or as per `FakeFilesystem.AddObject()`.
         """
         if sys.version_info >= (3, 6):
             dir_name = os.fspath(dir_name)
@@ -1676,7 +1696,7 @@ class FakeFilesystem(object):
             head, FakeDirectory(tail, mode & ~self.umask))
 
     def MakeDirectories(self, dir_name, mode=PERM_DEF, exist_ok=False):
-        """Create a leaf Fake directory + create any non-existent parent dirs.
+        """Create a leaf Fake directory and create any non-existent parent dirs.
 
         Args:
           dir_name: (str) Name of directory to create.
@@ -1688,7 +1708,7 @@ class FakeFilesystem(object):
 
         Raises:
           OSError: if the directory already exists and exist_ok=False, or as per
-          FakeFilesystem.CreateDirectory()
+          `FakeFilesystem.CreateDirectory()`.
         """
         dir_name = self.NormalizePath(dir_name)
         path_components = self.GetPathComponents(dir_name)
@@ -1739,24 +1759,44 @@ class FakeFilesystem(object):
         return False
 
     def IsDir(self, path):
-        """Determines if path identifies a directory."""
-        return self._IsType(path, stat.S_IFDIR)
-
-    def IsFile(self, path):
-        """Determines if path identifies a regular file."""
-        return self._IsType(path, stat.S_IFREG)
-
-    def IsLink(self, path):
-        """Determines if path identifies a symbolic link.
+        """Determine if path identifies a directory.
 
         Args:
           path: path to filesystem object.
 
         Returns:
-          boolean (the st_flag is set in path's st_mode)
+          True if path points to a directory (following symlinks).
 
         Raises:
-          TypeError: if path is None
+          TypeError: if path is None.
+        """
+        return self._IsType(path, stat.S_IFDIR)
+
+    def IsFile(self, path):
+        """Determine if path identifies a regular file.
+
+        Args:
+          path: path to filesystem object.
+
+        Returns:
+          True if path points to a regular file (following symlinks).
+
+        Raises:
+          TypeError: if path is None.
+        """
+        return self._IsType(path, stat.S_IFREG)
+
+    def IsLink(self, path):
+        """Determine if path identifies a symbolic link.
+
+        Args:
+          path: path to filesystem object.
+
+        Returns:
+          True if path points to a symlink (S_IFLNK set in st_mode)
+
+        Raises:
+          TypeError: if path is None.
         """
         if sys.version_info >= (3, 6):
             path = os.fspath(path)
@@ -1771,17 +1811,16 @@ class FakeFilesystem(object):
             return False
 
     def ConfirmDir(self, target_directory):
-        """Tests that the target is actually a directory, raising OSError if not.
+        """Test that the target is actually a directory, raising OSError if not.
 
         Args:
-          target_directory:  path to the target directory within the fake
-            filesystem
+          target_directory:  path to the target directory within the fake filesystem.
 
         Returns:
-          the FakeFile object corresponding to target_directory
+          the FakeDirectory object corresponding to target_directory.
 
         Raises:
-          OSError:  if the target is not a directory
+          OSError:  if the target is not a directory.
         """
         try:
             directory = self.GetObject(target_directory)
@@ -1794,7 +1833,16 @@ class FakeFilesystem(object):
         return directory
 
     def RemoveFile(self, path):
-        """Removes the FakeFile object representing the specified file."""
+        """Remove the FakeFile object at the specified file path.
+
+        Args:
+          path:  path to file to be removed.
+
+        Raises:
+          OSError: if path points to a directory.
+          OSError: if path does not exist.
+          OSError: if removal failed.
+        """
         path = self.NormalizePath(path)
         if self.Exists(path):
             obj = self.ResolveObject(path)
@@ -1815,8 +1863,9 @@ class FakeFilesystem(object):
           target_directory: (str) Name of directory to remove.
 
         Raises:
-          OSError: if target_directory does not exist or is not a directory,
-          or as per FakeFilesystem.RemoveObject. Cannot remove '.'.
+          OSError: if target_directory does not exist.
+          OSError: if target_directory does not point to a directory.
+          OSError: if removal failed per FakeFilesystem.RemoveObject. Cannot remove '.'.
         """
         if target_directory == '.':
             raise OSError(errno.EINVAL, 'Invalid argument: \'.\'')
@@ -1832,21 +1881,20 @@ class FakeFilesystem(object):
                 raise OSError(exc.errno, exc.strerror, exc.filename)
 
     def ListDir(self, target_directory):
-        """Returns a sorted list of filenames in target_directory.
+        """Return a list of file names in target_directory.
 
         Args:
-          target_directory:  path to the target directory within the fake
-            filesystem
+          target_directory:  path to the target directory within the fake filesystem.
 
         Returns:
-          a sorted list of file names within the target directory
+          a list of file names within the target directory in arbitrary order.
 
         Raises:
-          OSError:  if the target is not a directory
+          OSError:  if the target is not a directory.
         """
         target_directory = self.ResolvePath(target_directory)
         directory = self.ConfirmDir(target_directory)
-        return sorted(directory.contents)
+        return directory.contents
 
     if sys.version_info >= (3, 5):
         class DirEntry():
@@ -1874,25 +1922,29 @@ class FakeFilesystem(object):
                 return self._inode
 
             def is_dir(self, follow_symlinks=True):
-                """Return True if this entry is a directory or a symbolic link
-                pointing to a directory; return False if the entry is or points
-                to any other kind of file, or if it doesn't exist anymore.
+                """Return True if this entry is a directory entry.
 
                 Args:
-                    follow_symlinks: If False, return True only if this entry is a directory
-                                    (without following symlinks)
+                    follow_symlinks: If True, also return True if this entry is a symlink
+                                    pointing to a directory.
+
+                Returns:
+                    True if this entry is an existing directory entry, or if
+                    follow_symlinks is set, and this entry points to an existing directory entry.
                 """
                 return self._isdir and (follow_symlinks or not self._islink)
 
             def is_file(self, follow_symlinks=True):
-                """Return True if this entry is a file or a symbolic link
-                 pointing to a file; return False if the entry is or points
-                 to a directory or other non-file entry, or if it doesn't exist anymore.
+                """Return True if this entry is a regular file entry.
 
                 Args:
-                    follow_symlinks: If False, return True only if this entry is a file
-                                    (without following symlinks)
-                 """
+                    follow_symlinks: If True, also return True if this entry is a symlink
+                                    pointing to a regular file.
+
+                Returns:
+                    True if this entry is an existing file entry, or if
+                    follow_symlinks is set, and this entry points to an existing file entry.
+                """
                 return not self._isdir and (follow_symlinks or not self._islink)
 
             def is_symlink(self):
@@ -1904,7 +1956,7 @@ class FakeFilesystem(object):
 
                 Args:
                     follow_symlinks: If False and the entry is a symlink, return the
-                        result for the symlink, otherwise for the object is points to.
+                        result for the symlink, otherwise for the object it points to.
                 """
                 if follow_symlinks:
                     if self._statresult_symlink is None:
@@ -1937,6 +1989,7 @@ class FakeFilesystem(object):
                 return self._statresult
 
         class ScanDirIter:
+            """Iterator for DirEntry objects returned from `scandir()` function."""
             def __init__(self, filesystem, path):
                 self.filesystem = filesystem
                 self.path = self.filesystem.ResolvePath(path)
@@ -1974,13 +2027,13 @@ class FakeFilesystem(object):
             in the directory given by path.
 
             Args:
-              path: path to the target directory within the fake filesystem
+              path: path to the target directory within the fake filesystem.
 
             Returns:
-              an iterator to an unsorted list of os.DirEntry objects for each entry in path
+              an iterator to an unsorted list of os.DirEntry objects for each entry in path.
 
             Raises:
-              OSError: if the target is not a directory
+              OSError: if the target is not a directory.
             """
             return self.ScanDirIter(self, path)
 
@@ -2013,13 +2066,13 @@ class FakePathModule(object):
         self.altsep = self.filesystem.alternative_path_separator
 
     def exists(self, path):
-        """Determines whether the file object exists within the fake filesystem.
+        """Determine whether the file object exists within the fake filesystem.
 
         Args:
-          path:  path to the file object
+          path:  path to the file object.
 
         Returns:
-          bool (if file exists)
+          bool (if file exists).
         """
         return self.filesystem.Exists(path)
 
@@ -2027,10 +2080,10 @@ class FakePathModule(object):
         """Test whether a path exists.  Returns True for broken symbolic links.
 
         Args:
-          path:  path to the symlnk object
+          path:  path to the symlink object.
 
         Returns:
-          bool (if file exists)
+          bool (if file exists).
         """
         return self.exists(path) or self.islink(path)
 
@@ -2038,10 +2091,10 @@ class FakePathModule(object):
         """Return the file object size in bytes.
 
         Args:
-          path:  path to the file object
+          path:  path to the file object.
 
         Returns:
-          file size in bytes
+          file size in bytes.
         """
         try:
             file_obj = self.filesystem.GetObject(path)
@@ -2062,29 +2115,40 @@ class FakePathModule(object):
                 self.altsep)
 
     def isdir(self, path):
-        """Determines if path identifies a directory."""
+        """Determine if path identifies a directory."""
         return self.filesystem.IsDir(path)
 
     def isfile(self, path):
-        """Determines if path identifies a regular file."""
+        """Determine if path identifies a regular file."""
         return self.filesystem.IsFile(path)
 
     def islink(self, path):
-        """Determines if path identifies a symbolic link.
+        """Determine if path identifies a symbolic link.
 
         Args:
           path: path to filesystem object.
 
         Returns:
-          boolean (the st_flag is set in path's st_mode)
+          True if path points to a symbolic link.
 
         Raises:
-          TypeError: if path is None
+          TypeError: if path is None.
         """
         return self.filesystem.IsLink(path)
 
     def getmtime(self, path):
-        """Returns the modification time of the file."""
+        """Returns the modification time of the fake file.
+
+        Args:
+            path: the path to fake file.
+
+        Returns:
+            (int, float) the modification time of the fake file
+                         in number of seconds since the epoch.
+
+        Raises:
+            OSError: if the file does not exist.
+        """
         try:
             file_obj = self.filesystem.GetObject(path)
         except IOError as exc:
@@ -2092,7 +2156,19 @@ class FakePathModule(object):
         return file_obj.st_mtime
 
     def getatime(self, path):
-        """Returns the access time of the file."""
+        """Returns the last access time of the fake file.
+
+        Note: Access time is not set automatically in fake filesystem on access.
+
+        Args:
+            path: the path to fake file.
+
+        Returns:
+            (int, float) the access time of the fake file in number of seconds since the epoch.
+
+        Raises:
+            OSError: if the file does not exist.
+        """
         try:
             file_obj = self.filesystem.GetObject(path)
         except IOError as exc:
@@ -2100,7 +2176,17 @@ class FakePathModule(object):
         return file_obj.st_atime
 
     def getctime(self, path):
-        """Returns the creation time of the file."""
+        """Returns the creation time of the fake file.
+
+        Args:
+            path: the path to fake file.
+
+        Returns:
+            (int, float) the creation time of the fake file in number of seconds since the epoch.
+
+        Raises:
+            OSError: if the file does not exist.
+        """
         try:
             file_obj = self.filesystem.GetObject(path)
         except IOError as exc:
@@ -2112,7 +2198,8 @@ class FakePathModule(object):
 
         def getcwd():
             """Return the current working directory."""
-            if sys.version_info < (3, 0) and isinstance(path, unicode):  # pylint: disable=undefined-variable
+            # pylint: disable=undefined-variable
+            if sys.version_info < (3, 0) and isinstance(path, unicode):
                 return self.os.getcwdu()
             else:
                 return self.os.getcwd()
@@ -2130,11 +2217,11 @@ class FakePathModule(object):
         return self.normpath(path)
 
     def join(self, *p):
-        """Returns the completed path with a separator of the parts."""
+        """Return the completed path with a separator of the parts."""
         return self.filesystem.JoinPaths(*p)
 
     def splitdrive(self, path):
-        """Splits the path into the drive part and the rest of the path, if supported."""
+        """Split the path into the drive part and the rest of the path, if supported."""
         return self.filesystem.SplitDrive(path)
 
     def normpath(self, path):
@@ -2142,7 +2229,7 @@ class FakePathModule(object):
         return self.filesystem.CollapsePath(path)
 
     def normcase(self, path):
-        """Converts to lower case under windows, replaces additional path separator"""
+        """Convert to lower case under windows, replaces additional path separator."""
         path = self.filesystem.NormalizePathSeparator(path)
         if _IS_WINDOWS:
             path = path.lower()
@@ -2170,7 +2257,7 @@ class FakePathModule(object):
         return self._os_path.expanduser(path).replace(self._os_path.sep, self.sep)
 
     def ismount(self, path):
-        """Returns true if the given path is a mount point.
+        """Return true if the given path is a mount point.
 
         Args:
           path:  path to filesystem object to be checked
@@ -2287,7 +2374,7 @@ class FakeOsModule(object):
             raise OSError(exc)
 
     def open(self, file_path, flags, mode=None):
-        """Returns the file descriptor for a FakeFile.
+        """Return the file descriptor for a FakeFile.
 
         WARNING: This implementation only implements creating a file. Please fill
         out the remainder for your needs.
@@ -2314,7 +2401,7 @@ class FakeOsModule(object):
             raise NotImplementedError('FakeOsModule.open')
 
     def close(self, file_des):
-        """Closes a file descriptor.
+        """Close a file descriptor.
 
         Args:
           file_des: An integer file descriptor for the file object requested.
@@ -2327,7 +2414,7 @@ class FakeOsModule(object):
         file_handle.close()
 
     def read(self, file_des, num_bytes):
-        """Reads number of bytes from a file descriptor, returns bytes read.
+        """Read number of bytes from a file descriptor, returns bytes read.
 
         Args:
           file_des: An integer file descriptor for the file object requested.
@@ -2344,7 +2431,7 @@ class FakeOsModule(object):
         return file_handle.read(num_bytes)
 
     def write(self, file_des, contents):
-        """Writes string to file descriptor, returns number of bytes written.
+        """Write string to file descriptor, returns number of bytes written.
 
         Args:
           file_des: An integer file descriptor for the file object requested.
@@ -2378,13 +2465,13 @@ class FakeOsModule(object):
         return cls._stat_float_times
 
     def fstat(self, file_des):
-        """Returns the os.stat-like tuple for the FakeFile object of file_des.
+        """Return the os.stat-like tuple for the FakeFile object of file_des.
 
         Args:
-          file_des:  file descriptor of filesystem object to retrieve
+          file_des:  file descriptor of filesystem object to retrieve.
 
         Returns:
-          the os.stat_result object corresponding to entry_path
+          the os.stat_result object corresponding to entry_path.
 
         Raises:
           OSError: if the filesystem object doesn't exist.
@@ -2419,7 +2506,7 @@ class FakeOsModule(object):
         """Change current working directory to target directory.
 
         Args:
-          target_directory:  path to new current working directory
+          target_directory:  path to new current working directory.
 
         Raises:
           OSError: if user lacks permission to enter the argument directory or if
@@ -2439,23 +2526,23 @@ class FakeOsModule(object):
         return self.filesystem.cwd
 
     def getcwdu(self):
-        """Return current working directory. Deprecated in Python 3."""
+        """Return current working directory as unicode. Python 2 only."""
         if sys.version_info >= (3, 0):
             raise AttributeError('no attribute getcwdu')
         return unicode(self.filesystem.cwd)  # pylint: disable=undefined-variable
 
     def listdir(self, target_directory):
-        """Returns a sorted list of filenames in target_directory.
+        """Return a list of file names in target_directory.
 
         Args:
           target_directory:  path to the target directory within the fake
-            filesystem
+            filesystem.
 
         Returns:
-          a sorted list of file names within the target directory
+          a list of file names within the target directory in arbitrary order.
 
         Raises:
-          OSError:  if the target is not a directory
+          OSError:  if the target is not a directory.
         """
         return self.filesystem.ListDir(target_directory)
 
@@ -2465,13 +2552,13 @@ class FakeOsModule(object):
             in the directory given by path.
 
             Args:
-              path: path to the target directory within the fake filesystem
+              path: path to the target directory within the fake filesystem.
 
             Returns:
-              an iterator to an unsorted list of os.DirEntry objects for each entry in path
+              an iterator to an unsorted list of os.DirEntry objects for each entry in path.
 
             Raises:
-              OSError: if the target is not a directory
+              OSError: if the target is not a directory.
             """
             return self.filesystem.ScanDir(path)
 
@@ -2501,15 +2588,15 @@ class FakeOsModule(object):
         return (root, dirs, files)
 
     def walk(self, top, topdown=True, onerror=None, followlinks=False):
-        """Performs an os.walk operation over the fake filesystem.
+        """Perform an os.walk operation over the fake filesystem.
 
         Args:
-          top:  root directory from which to begin walk
+          top:  root directory from which to begin walk.
           topdown:  determines whether to return the tuples with the root as the
             first entry (True) or as the last, after all the child directory
-            tuples (False)
+            tuples (False).
           onerror:  if not None, function which will be called to handle the
-            os.error instance provided when os.listdir() fails
+            os.error instance provided when os.listdir() fails.
 
         Yields:
           (path, directories, nondirectories) for top and each of its
@@ -2542,10 +2629,10 @@ class FakeOsModule(object):
                 yield top_contents
 
     def readlink(self, path):
-        """Reads the target of a symlink.
+        """Read the target of a symlink.
 
         Args:
-          path:  symlink to read the target of
+          path:  symlink to read the target of.
 
         Returns:
           the string representing the path to which the symbolic link points.
@@ -2553,7 +2640,7 @@ class FakeOsModule(object):
         Raises:
           TypeError: if path is None
           OSError: (with errno=ENOENT) if path is not a valid path, or
-                   (with errno=EINVAL) if path is valid, but is not a symlink
+                   (with errno=EINVAL) if path is valid, but is not a symlink.
         """
         if path is None:
             raise TypeError
@@ -2566,15 +2653,15 @@ class FakeOsModule(object):
         return link_obj.contents
 
     def stat(self, entry_path, follow_symlinks=None):
-        """Returns the os.stat-like tuple for the FakeFile object of entry_path.
+        """Return the os.stat-like tuple for the FakeFile object of entry_path.
 
         Args:
-          entry_path:  path to filesystem object to retrieve
-          follow_symlinks: if False and entry_path points to a link, the link itself is inspected
+          entry_path:  path to filesystem object to retrieve.
+          follow_symlinks: if False and entry_path points to a symlink, the link itself is inspected
               instead of the linked object. New in Python 3.3.
 
         Returns:
-          the os.stat_result object corresponding to entry_path
+          the os.stat_result object corresponding to entry_path.
 
         Raises:
           OSError: if the filesystem object doesn't exist.
@@ -2586,13 +2673,13 @@ class FakeOsModule(object):
         return self.filesystem.GetStat(entry_path, follow_symlinks)
 
     def lstat(self, entry_path):
-        """Returns the os.stat-like tuple for entry_path, not following symlinks.
+        """Return the os.stat-like tuple for entry_path, not following symlinks.
 
         Args:
-          entry_path:  path to filesystem object to retrieve
+          entry_path:  path to filesystem object to retrieve.
 
         Returns:
-          the os.stat_result object corresponding to entry_path
+          the os.stat_result object corresponding to entry_path.
 
         Raises:
           OSError: if the filesystem object doesn't exist.
@@ -2601,47 +2688,58 @@ class FakeOsModule(object):
         return self.filesystem.GetStat(entry_path, follow_symlinks=False)
 
     def remove(self, path):
-        """Removes the FakeFile object representing the specified file."""
+        """Remove the FakeFile object at the specified file path.
+
+        Args:
+          path:  path to file to be removed.
+
+        Raises:
+          OSError: if path points to a directory.
+          OSError: if path does not exist.
+          OSError: if removal failed.
+        """
         self.filesystem.RemoveFile(path)
 
     # As per the documentation unlink = remove.
     unlink = remove
 
-    def rename(self, old_file, new_file):
-        """Renames a FakeFile object at old_file to new_file, preserving all properties.
-        Also replaces existing new_file object, if one existed (Unix only).
+    def rename(self, old_file_path, new_file_path):
+        """Rename a FakeFile object at old_file_path to new_file_path,
+        preserving all properties.
+        Also replaces existing new_file_path object, if one existed (Unix only).
 
         Args:
-          old_file:  path to filesystem object to rename
-          new_file:  path to where the filesystem object will live after this call
+          old_file_path:  path to filesystem object to rename.
+          new_file_path:  path to where the filesystem object will live after this call.
 
         Raises:
-          OSError:  - if old_file does not exist
-                    - new_file is an existing directory,
-                    - if new_file is an existing file (Windows)
-                    - if new_file is an existing file and could not be removed (Unix)
-                    - if dirname(new_file) does not exist
-                    - if the file would be moved to another filesystem (e.g. mount point)
+          OSError: if old_file_path does not exist.
+          OSError: if new_file_path is an existing directory.
+          OSError: if new_file_path is an existing file (Windows only)
+          OSError: if new_file_path is an existing file and could not be removed (Unix)
+          OSError: if `dirname(new_file)` does not exist
+          OSError: if the file would be moved to another filesystem (e.g. mount point)
         """
-        self.filesystem.RenameObject(old_file, new_file)
+        self.filesystem.RenameObject(old_file_path, new_file_path)
 
     if sys.version_info >= (3, 3):
-        def replace(self, old_file, new_file):
-            """Renames a FakeFile object at old_file to new_file, preserving all properties.
-            Also replaces existing new_file object, if one existed (both Windows and Unix).
+        def replace(self, old_file_path, new_file_path):
+            """Renames a FakeFile object at old_file_path to new_file_path,
+            preserving all properties.
+            Also replaces existing new_file_path object, if one existed.
 
             Args:
-              old_file:  path to filesystem object to rename
-              new_file:  path to where the filesystem object will live after this call
+              old_file_path:  path to filesystem object to rename
+              new_file_path:  path to where the filesystem object will live after this call
 
             Raises:
-              OSError:  - if old_file does not exist
-                        - new_file is an existing directory,
-                        - if new_file is an existing file and could not be removed (Unix)
-                        - if dirname(new_file) does not exist
-                        - if the file would be moved to another filesystem (e.g. mount point)
+              OSError: if old_file_path does not exist.
+              OSError: if new_file_path is an existing directory.
+              OSError: if new_file_path is an existing file and could not be removed
+              OSError: if `dirname(new_file)` does not exist
+              OSError: if the file would be moved to another filesystem (e.g. mount point)
             """
-            self.filesystem.RenameObject(old_file, new_file, force_replace=True)
+            self.filesystem.RenameObject(old_file_path, new_file_path, force_replace=True)
 
     def rmdir(self, target_directory):
         """Remove a leaf Fake directory.
@@ -2656,7 +2754,15 @@ class FakeOsModule(object):
         self.filesystem.RemoveDirectory(target_directory)
 
     def removedirs(self, target_directory):
-        """Remove a leaf Fake directory and all empty intermediate ones."""
+        """Remove a leaf fake directory and all empty intermediate ones.
+
+        Args:
+            target_directory: the directory to be removed.
+
+        Raises:
+            OSError: if target_directory does not exist or is not a directory.
+            OSError: if target_directory is not empty.
+        """
         target_directory = self.filesystem.NormalizePath(target_directory)
         directory = self.filesystem.ConfirmDir(target_directory)
         if directory.contents:
@@ -2702,7 +2808,7 @@ class FakeOsModule(object):
 
         Raises:
           OSError: if the directory already exists and exist_ok=False, or as per
-          FakeFilesystem.CreateDirectory()
+          `FakeFilesystem.CreateDirectory()`.
         """
         if exist_ok is None:
             exist_ok = False
@@ -2717,10 +2823,10 @@ class FakeOsModule(object):
           path: (str) Path to the file.
           mode: (int) Permissions represented as a bitwise-OR combination of
               os.F_OK, os.R_OK, os.W_OK, and os.X_OK.
-          follow_symlinks: if False and entry_path points to a link, the link itself is queried
+          follow_symlinks: if False and entry_path points to a symlink, the link itself is queried
               instead of the linked object. New in Python 3.3.
         Returns:
-          boolean, True if file is accessible, False otherwise
+          boolean, True if file is accessible, False otherwise.
         """
         if follow_symlinks is not None and sys.version_info < (3, 3):
             raise TypeError("access() got an unexpected keyword argument 'follow_symlinks'")
@@ -2737,8 +2843,8 @@ class FakeOsModule(object):
 
         Args:
           path: (str) Path to the file.
-          mode: (int) Permissions
-          follow_symlinks: if False and entry_path points to a link, the link itself is changed
+          mode: (int) Permissions.
+          follow_symlinks: if False and entry_path points to a symlink, the link itself is changed
               instead of the linked object. New in Python 3.3.
         """
         if follow_symlinks is None:
@@ -2754,7 +2860,7 @@ class FakeOsModule(object):
 
             Args:
               path: (str) Path to the file.
-              mode: (int) Permissions
+              mode: (int) Permissions.
             """
             self.filesystem.ChangeMode(path, mode, follow_symlinks=False)
 
@@ -2766,7 +2872,7 @@ class FakeOsModule(object):
           times: 2-tuple of numbers, of the form (atime, mtime) which is used to set
               the access and modified times, respectively. If None, file's access
               and modified times are set to the current time.
-          follow_symlinks: if False and entry_path points to a link, the link itself is queried
+          follow_symlinks: if False and entry_path points to a symlink, the link itself is queried
               instead of the linked object. New in Python 3.3.
 
         Raises:
@@ -2786,8 +2892,11 @@ class FakeOsModule(object):
           path: (str) Path to the file or directory.
           uid: (int) Numeric uid to set the file or directory to.
           gid: (int) Numeric gid to set the file or directory to.
-          follow_symlinks: if False and entry_path points to a link, the link itself is changed
+          follow_symlinks: if False and entry_path points to a symlink, the link itself is changed
               instead of the linked object. New in Python 3.3.
+
+        Raises:
+          OSError: if path does not exist.
 
         `None` is also allowed for `uid` and `gid`.  This permits `os.rename` to
         use `os.chown` even when the source file `uid` and `gid` are `None` (unset).
@@ -2858,18 +2967,29 @@ class FakeOsModule(object):
         """Creates the specified symlink, pointed at the specified link target.
 
         Args:
-          link_target:  the target of the symlink
-          path:  path to the symlink to create
-
-        Returns:
-          None
-
+          link_target:  the target of the symlink.
+          path:  path to the symlink to create.
+.
         Raises:
-          IOError:  if the file already exists
+          OSError:  if the file already exists.
         """
         self.filesystem.CreateLink(path, link_target)
 
     def link(self, oldpath, newpath):
+        """Create a hard link at new_path, pointing at old_path.
+
+        Args:
+          old_path: an existing link to the target file.
+          new_path: the destination path to create a new link at.
+
+        Returns:
+          the FakeFile object referred to by old_path.
+
+        Raises:
+          OSError:  if something already exists at new_path.
+          OSError:  if the parent directory doesn't exist.
+          OSError:  if on Windows before Python 3.2.
+        """
         self.filesystem.CreateHardLink(oldpath, newpath)
 
     def fsync(self, file_des):
@@ -2881,9 +3001,6 @@ class FakeOsModule(object):
         Raises:
           OSError: file_des is an invalid file descriptor.
           TypeError: file_des is not an integer.
-
-        Returns:
-          None
         """
         # Throw an error if file_des isn't valid
         self.filesystem.GetOpenFile(file_des)
@@ -2897,9 +3014,6 @@ class FakeOsModule(object):
         Raises:
           OSError: file_des is an invalid file descriptor.
           TypeError: file_des is not an integer.
-
-        Returns:
-          None
         """
         # Throw an error if file_des isn't valid
         self.filesystem.GetOpenFile(file_des)
@@ -2911,9 +3025,10 @@ class FakeOsModule(object):
 
 class FakeIoModule(object):
     """Uses FakeFilesystem to provide a fake io module replacement.
-       Currently only used to wrap io.open() which is an alias to open()
 
-    # You need a fake_filesystem to use this:
+    Currently only used to wrap `io.open()` which is an alias to `open()`.
+
+    You need a fake_filesystem to use this:
     filesystem = fake_filesystem.FakeFilesystem()
     my_io_module = fake_filesystem.FakeIoModule(filesystem)
     """
@@ -3018,15 +3133,15 @@ class FakeFileWrapper(object):
         self.close()
 
     def GetObject(self):
-        """Returns FakeFile object that is wrapped by current class."""
+        """Return the FakeFile object that is wrapped by the current instance."""
         return self._file_object
 
     def fileno(self):
-        """Returns file descriptor of file object."""
+        """Return the file descriptor of the file object."""
         return self.filedes
 
     def close(self):
-        """File close."""
+        """Close the file."""
         if self._update:
             self._file_object.SetContents(self._io.getvalue(), self._encoding)
         if self._closefd:
@@ -3065,7 +3180,7 @@ class FakeFileWrapper(object):
         return self._read_seek
 
     def _UpdateStringIO(self):
-        """Updates the StringIO with changes to the file object contents."""
+        """Update the StringIO with changes to the file object contents."""
         if self._file_epoch == self._file_object.epoch:
             return
         whence = self._io.tell()
@@ -3146,6 +3261,7 @@ class FakeFileWrapper(object):
         return other_wrapper
 
     def Size(self):
+        """Return the content size in bytes of the wrapped file."""
         return self._file_object.st_size
 
     def __getattr__(self, name):
@@ -3185,10 +3301,10 @@ class FakeFileWrapper(object):
 
 
 class FakeFileOpen(object):
-    """Faked file() and open() function replacements.
+    """Faked `file()` and `open()` function replacements.
 
-    Returns FakeFile objects in a FakeFilesystem in place of the file()
-    or open() function.
+    Returns FakeFile objects in a FakeFilesystem in place of the `file()`
+    or `open()` function.
     """
     __name__ = 'FakeFileOpen'
 
@@ -3220,10 +3336,10 @@ class FakeFileOpen(object):
 
     def Call(self, file_, mode='r', buffering=-1, encoding=None,
              errors=None, newline=None, closefd=True, opener=None):
-        """Returns a file-like object with the contents of the target file object.
+        """Return a file-like object with the contents of the target file object.
 
         Args:
-          file_: path to target file or a file descriptor
+          file_: path to target file or a file descriptor.
           mode: additional file modes. All r/w/a r+/w+/a+ modes are supported.
             't', and 'U' are ignored, e.g., 'wU' is treated as 'w'. 'b' sets
             binary mode, no end of line translations in StringIO.
@@ -3236,7 +3352,7 @@ class FakeFileOpen(object):
           opener: not supported
 
         Returns:
-          a file-like object containing the contents of the target file
+          a file-like object containing the contents of the target file.
 
         Raises:
           IOError: if the target object is a directory, the path is invalid or

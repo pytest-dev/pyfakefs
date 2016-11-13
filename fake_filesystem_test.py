@@ -716,7 +716,7 @@ class FakeOsModuleTest(FakeOsModuleTestBase):
         for f in files:
             self.filesystem.CreateFile('%s/%s' % (directory, f))
         files.sort()
-        self.assertEqual(files, self.os.listdir(directory))
+        self.assertEqual(files, sorted(self.os.listdir(directory)))
 
     @unittest.skipIf(TestCase.is_windows and sys.version_info < (3, 3),
                      'Links are not supported under Windows before Python 3.3')
@@ -727,7 +727,7 @@ class FakeOsModuleTest(FakeOsModuleTestBase):
             self.filesystem.CreateFile('%s/%s' % (directory, f))
         self.filesystem.CreateLink('symlink', 'xyzzy')
         files.sort()
-        self.assertEqual(files, self.os.listdir('symlink'))
+        self.assertEqual(files, sorted(self.os.listdir('symlink')))
 
     def testListdirError(self):
         file_path = 'foo/bar/baz'
@@ -742,7 +742,7 @@ class FakeOsModuleTest(FakeOsModuleTestBase):
         for f in files:
             self.filesystem.CreateFile('%s' % f)
         files.sort()
-        self.assertEqual(files, self.os.listdir('.'))
+        self.assertEqual(files, sorted(self.os.listdir('.')))
 
     def testFdopen(self):
         fake_open = fake_filesystem.FakeFileOpen(self.filesystem)
@@ -2404,7 +2404,13 @@ class OsPathInjectionRegressionTest(TestCase):
             ('/x/gv', [], ['control']),
             ('/x/po', [], ['control', 'experiment']),
         ]
-        self.assertEqual(expected, [step for step in self.os.walk('/')])
+        # as the result is unsorted, we have to check against sorted results
+        result = sorted([step for step in self.os.walk('/')], key=lambda l: l[0])
+        self.assertEqual(len(expected), len(result))
+        for entry, expected_entry in zip(result, expected):
+            self.assertEqual(expected_entry[0], entry[0])
+            self.assertEqual(expected_entry[1], sorted(entry[1]))
+            self.assertEqual(expected_entry[2], sorted(entry[2]))
 
 
 class FakePathModuleTest(TestCase):
