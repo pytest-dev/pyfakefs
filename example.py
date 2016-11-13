@@ -113,7 +113,7 @@ def get_glob(glob_path):
     >>> os.mkdir('/test')
     >>> create_file('/test/file1.txt')
     >>> create_file('/test/file2.txt')
-    >>> file_names = get_glob('/test/file*.txt')
+    >>> file_names = sorted(get_glob('/test/file*.txt'))
     >>>
     >>> import sys
     >>> if sys.platform.startswith('win'):
