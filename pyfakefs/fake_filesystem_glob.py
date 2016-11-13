@@ -20,7 +20,7 @@ Includes:
 Note: Code is taken form Python 3.5 and slightly adapted to work with older
     versions and use the fake os and os.path modules
 
-Usage:
+:Usage:
 >>> from pyfakefs import fake_filesystem
 >>> from pyfakefs import fake_filesystem_glob
 >>> filesystem = fake_filesystem.FakeFilesystem()
@@ -61,9 +61,9 @@ class FakeGlobModule(object):
         The pattern may contain shell-style wildcards a la fnmatch.
 
         Args:
-            pathname: the pattern with which to find a list of paths
+            pathname: the pattern with which to find a list of paths.
             recursive: if true, the pattern '**' will match any files and
-            zero or more directories and subdirectories. (>= Python 3.5 only)
+            zero or more directories and subdirectories. New in Python 3.5.
 
         Returns:
             List of strings matching the glob pattern.
@@ -77,9 +77,9 @@ class FakeGlobModule(object):
         The pattern may contain shell-style wildcards a la fnmatch.
 
         Args:
-            pathname: the pattern with which to find a list of paths
+            pathname: the pattern with which to find a list of paths.
             recursive: if true, the pattern '**' will match any files and
-            zero or more directories and subdirectories. (>= Python 3.5 only)
+            zero or more directories and subdirectories. New in Python 3.5.
         """
         recursive = _recursive_from_arg(recursive)
         itr = self._iglob(pathname, recursive)
@@ -130,6 +130,15 @@ class FakeGlobModule(object):
     # They return a list of basenames. `glob1` accepts a pattern while `glob0`
     # takes a literal basename (so it only has to check for its existence).
     def glob1(self, dirname, pattern):
+        """Return a list of paths matching a pattern inside the given path non-recursively.
+
+        Args:
+            dirname: the directory where to look for the paths.
+            pattern: the pattern with which to find a list of paths.
+
+        Returns:
+            List of strings matching the pattern.
+        """
         if not dirname:
             # pylint: disable=undefined-variable
             if sys.version_info >= (3,) and isinstance(pattern, bytes):
@@ -150,6 +159,15 @@ class FakeGlobModule(object):
         return fnmatch.filter(names, pattern)
 
     def glob0(self, dirname, basename):
+        """Return a list with the given basename if it exists.
+
+        Args:
+            dirname: the directory where to look for the path.
+            basename: the name of the looked up directory.
+
+        Returns:
+            List containing the matching path or empty list.
+        """
         if not basename:
             # `self._path_module.split()` returns an empty basename
             # for paths ending with a directory separator.
@@ -165,6 +183,15 @@ class FakeGlobModule(object):
     # This helper function recursively yields relative pathnames
     # inside a literal directory.
     def glob2(self, dirname, pattern):
+        """Return a list of paths matching a pattern inside the given path recursively.
+
+        Args:
+            dirname: the top=level directory where to look for the paths.
+            pattern: the pattern with which to find a list of paths.
+
+        Returns:
+            List of strings matching the pattern.
+        """
         assert _isrecursive(pattern)
         yield pattern[:0]
         for path_name in self._rlistdir(dirname):
@@ -199,6 +226,7 @@ class FakeGlobModule(object):
     magic_check_bytes = re.compile(b'([*?[])')
 
     def has_magic(self, string):
+        """Return True if the given string contains placeholder characters."""
         if isinstance(string, bytes):
             match = self.magic_check_bytes.search(string)
         else:

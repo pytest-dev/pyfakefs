@@ -716,7 +716,7 @@ class FakeOsModuleTest(FakeOsModuleTestBase):
         for f in files:
             self.filesystem.CreateFile('%s/%s' % (directory, f))
         files.sort()
-        self.assertEqual(files, self.os.listdir(directory))
+        self.assertEqual(files, sorted(self.os.listdir(directory)))
 
     @unittest.skipIf(TestCase.is_windows and sys.version_info < (3, 3),
                      'Links are not supported under Windows before Python 3.3')
@@ -727,7 +727,7 @@ class FakeOsModuleTest(FakeOsModuleTestBase):
             self.filesystem.CreateFile('%s/%s' % (directory, f))
         self.filesystem.CreateLink('symlink', 'xyzzy')
         files.sort()
-        self.assertEqual(files, self.os.listdir('symlink'))
+        self.assertEqual(files, sorted(self.os.listdir('symlink')))
 
     def testListdirError(self):
         file_path = 'foo/bar/baz'
@@ -742,7 +742,7 @@ class FakeOsModuleTest(FakeOsModuleTestBase):
         for f in files:
             self.filesystem.CreateFile('%s' % f)
         files.sort()
-        self.assertEqual(files, self.os.listdir('.'))
+        self.assertEqual(files, sorted(self.os.listdir('.')))
 
     def testFdopen(self):
         fake_open = fake_filesystem.FakeFileOpen(self.filesystem)
@@ -1887,6 +1887,17 @@ class FakeOsModuleTest(FakeOsModuleTestBase):
         self.assertEqual(False, self.filesystem.Exists(directory))
         self.assertRaises(OSError, self.os._ClassifyDirectoryContents, directory)
 
+    def assertWalkResults(self, expected, result):
+        # as the result of walk is unsorted, we have to check against sorted results
+        result = sorted(result, key=lambda lst: lst[0])
+        expected = sorted(expected, key=lambda lst: lst[0])
+        self.assertEqual(len(expected), len(result))
+        for entry, expected_entry in zip(result, expected):
+            self.assertEqual(expected_entry[0], entry[0])
+            self.assertEqual(expected_entry[1], sorted(entry[1]))
+            self.assertEqual(expected_entry[2], sorted(entry[2]))
+
+
     def testWalkTopDown(self):
         """Walk down ordering is correct."""
         self.filesystem.CreateFile('foo/1.txt')
@@ -1899,7 +1910,7 @@ class FakeOsModuleTest(FakeOsModuleTestBase):
             ('foo/bar1/baz', [], ['3.txt']),
             ('foo/bar2', [], ['4.txt']),
         ]
-        self.assertEqual(expected, [step for step in self.os.walk('foo')])
+        self.assertWalkResults(expected, [step for step in self.os.walk('foo')])
 
     def testWalkBottomUp(self):
         """Walk up ordering is correct."""
@@ -1914,7 +1925,7 @@ class FakeOsModuleTest(FakeOsModuleTestBase):
             ('foo/bar2', [], ['3.txt']),
             ('foo', ['bar1', 'bar2'], ['4.txt']),
         ]
-        self.assertEqual(expected,
+        self.assertWalkResults(expected,
                          [step for step in self.os.walk('foo', topdown=False)])
 
     def testWalkRaisesIfNonExistent(self):
@@ -2404,7 +2415,13 @@ class OsPathInjectionRegressionTest(TestCase):
             ('/x/gv', [], ['control']),
             ('/x/po', [], ['control', 'experiment']),
         ]
-        self.assertEqual(expected, [step for step in self.os.walk('/')])
+        # as the result is unsorted, we have to check against sorted results
+        result = sorted([step for step in self.os.walk('/')], key=lambda l: l[0])
+        self.assertEqual(len(expected), len(result))
+        for entry, expected_entry in zip(result, expected):
+            self.assertEqual(expected_entry[0], entry[0])
+            self.assertEqual(expected_entry[1], sorted(entry[1]))
+            self.assertEqual(expected_entry[2], sorted(entry[2]))
 
 
 class FakePathModuleTest(TestCase):
@@ -2664,7 +2681,7 @@ class FakePathModuleTest(TestCase):
                     ('/foo/bar', 'baz'),
                     ('/foo/bar', 'xyzzy'),
                     ('/foo/bar/xyzzy', 'plugh')]
-        self.assertEqual(expected, visited_nodes)
+        self.assertEqual(expected, sorted(visited_nodes))
 
     @unittest.skipIf(TestCase.is_windows and sys.version_info < (3, 3),
                      'Links are not supported under Windows before Python 3.3')
@@ -2680,8 +2697,9 @@ class FakePathModuleTest(TestCase):
                 visited_nodes.append(self.os.path.join(root, dir))
             for file in files:
                 visited_nodes.append(self.os.path.join(root, file))
-        expected = ['/foo/bar', '/foo/linkedMeh', '/foo/bar/xyzzy', '/foo/bar/baz', '/foo/bar/xyzzy/plugh']
-        self.assertEqual(expected, visited_nodes)
+        expected = ['/foo/bar', '/foo/bar/baz', '/foo/bar/xyzzy',
+                    '/foo/bar/xyzzy/plugh', '/foo/linkedMeh']
+        self.assertEqual(expected, sorted(visited_nodes))
 
         visited_nodes = []
         for root, dirs, files in self.os.walk('/foo/created_link', followlinks=True):
@@ -2706,9 +2724,9 @@ class FakePathModuleTest(TestCase):
                 visited_nodes.append(self.os.path.join(root, dir))
             for file in files:
                 visited_nodes.append(self.os.path.join(root, file))
-        expected = ['/foo/bar', '/foo/created_link', '/foo/bar/xyzzy', '/foo/bar/baz', '/foo/bar/xyzzy/plugh',
-                    '/foo/created_link/subfile']
-        self.assertEqual(expected, visited_nodes)
+        expected = ['/foo/bar', '/foo/bar/baz', '/foo/bar/xyzzy', '/foo/bar/xyzzy/plugh',
+                    '/foo/created_link', '/foo/created_link/subfile']
+        self.assertEqual(expected, sorted(visited_nodes))
 
         visited_nodes = []
         for root, dirs, files in self.os.walk('/foo/created_link', followlinks=True):

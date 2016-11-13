@@ -4,6 +4,8 @@ The release versions are PyPi releases.
 ## Unreleased
 
 #### New Features
+ * support for path-like objects as arguments in fake os
+   and os.path modules (Python >= 3.6)
  * support for `pathlib` (Python >= 3.4)
  * support for `os.replace` (Python >= 3.3)
  * `os.access`, `os.chmod`, `os.chown`, `os.stat`, `os.utime`:
@@ -66,5 +68,5 @@ The release versions are PyPi releases.
 ## Older Versions
 As there have been three different projects that have been merged together 
 for release 2.7, no older release notes are given.
-The following versions are still avaliable in PyPi:
+The following versions are still available in PyPi:
  * 1.1, 1.2, 2.0, 2.1, 2.2, 2.3 and 2.4
