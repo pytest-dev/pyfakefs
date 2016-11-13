@@ -284,10 +284,8 @@ class FakeTempfileModule(object):
     def gettempprefix(self):
         """Get temp filename prefix.
 
-        NOTE: This has no effect on py2.4
-
         Returns:
-          string, prefix to use in temporary filenames
+          string, prefix to use in temporary filenames.
         """
         return self._temp_prefix
 

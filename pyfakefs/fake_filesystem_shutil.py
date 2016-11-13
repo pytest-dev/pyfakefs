@@ -16,23 +16,25 @@
 
 """A fake shutil module implementation that uses fake_filesystem for unit tests.
 
-Includes:
+:Includes:
   FakeShutil: Uses a FakeFilesystem to provide a fake replacement for the
     shutil module.
 
-Usage:
+:Usage:
 >>> from pyfakefs import fake_filesystem
 >>> from pyfakefs import fake_filesystem_shutil
 >>> filesystem = fake_filesystem.FakeFilesystem()
 >>> shutil_module = fake_filesystem_shutil.FakeShutilModule(filesystem)
 
 Copy a fake_filesystem directory tree:
+
 >>> new_file = filesystem.CreateFile('/src/new-file')
 >>> shutil_module.copytree('/src', '/dst')
 >>> filesystem.Exists('/dst/new-file')
 True
 
 Remove a fake_filesystem directory tree:
+
 >>> shutil_module.rmtree('/src')
 >>> filesystem.Exists('/src/new-file')
 False
@@ -296,8 +298,8 @@ class FakeShutilModule(object):
         return dst
 
     def disk_usage(self, path):
-        """Returns the total, used and free disk space in bytes as named tuple
-           or placeholder holder values simulating unlimited space if not set.
+        """Return the total, used and free disk space in bytes as named tuple
+        or placeholder holder values simulating unlimited space if not set.
 
         Args:
           path: defines the filesystem device which is queried
