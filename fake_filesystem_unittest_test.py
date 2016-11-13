@@ -100,7 +100,7 @@ class TestPyfakefsUnittest(TestPyfakefsUnittestBase):  # pylint: disable=R0904
         else:
             self.assertEqual(matching_paths, ['/test/dir1/dir2a'])
         self.fs.CreateDirectory('/test/dir1/dir2b')
-        matching_paths = glob.glob('/test/dir1/dir*')
+        matching_paths = sorted(glob.glob('/test/dir1/dir*'))
         if is_windows:
             self.assertEqual(matching_paths, [r'\test\dir1\dir2a', r'\test\dir1\dir2b'])
         else:

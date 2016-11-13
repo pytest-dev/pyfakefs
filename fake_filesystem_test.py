@@ -2686,8 +2686,9 @@ class FakePathModuleTest(TestCase):
                 visited_nodes.append(self.os.path.join(root, dir))
             for file in files:
                 visited_nodes.append(self.os.path.join(root, file))
-        expected = ['/foo/bar', '/foo/linkedMeh', '/foo/bar/xyzzy', '/foo/bar/baz', '/foo/bar/xyzzy/plugh']
-        self.assertEqual(expected, visited_nodes)
+        expected = ['/foo/bar', '/foo/bar/baz', '/foo/bar/xyzzy',
+                    '/foo/bar/xyzzy/plugh', '/foo/linkedMeh']
+        self.assertEqual(expected, sorted(visited_nodes))
 
         visited_nodes = []
         for root, dirs, files in self.os.walk('/foo/created_link', followlinks=True):
@@ -2712,9 +2713,9 @@ class FakePathModuleTest(TestCase):
                 visited_nodes.append(self.os.path.join(root, dir))
             for file in files:
                 visited_nodes.append(self.os.path.join(root, file))
-        expected = ['/foo/bar', '/foo/created_link', '/foo/bar/xyzzy', '/foo/bar/baz', '/foo/bar/xyzzy/plugh',
-                    '/foo/created_link/subfile']
-        self.assertEqual(expected, visited_nodes)
+        expected = ['/foo/bar', '/foo/bar/baz', '/foo/bar/xyzzy', '/foo/bar/xyzzy/plugh',
+                    '/foo/created_link', '/foo/created_link/subfile']
+        self.assertEqual(expected, sorted(visited_nodes))
 
         visited_nodes = []
         for root, dirs, files in self.os.walk('/foo/created_link', followlinks=True):
