@@ -1,5 +1,0 @@
-include COPYING
-include README.md
-include example.py
-include example_test.py
-
