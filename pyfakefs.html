@@ -787,9 +787,79 @@ it behaves like the real os.path.normpath on Windows if initialized with
 </table>
 </dd></dl>
 
+<dl class="class">
+<dt id="pyfakefs.fake_filesystem.FakeFilesystem.DirEntry">
+<em class="property">class </em><code class="descname">DirEntry</code><span class="sig-paren">(</span><em>filesystem</em><span class="sig-paren">)</span><a class="headerlink" href="#pyfakefs.fake_filesystem.FakeFilesystem.DirEntry" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal"><span class="pre">object</span></code></p>
+<p>Emulates os.DirEntry. Note that we did not enforce keyword only arguments.</p>
+<dl class="method">
+<dt id="pyfakefs.fake_filesystem.FakeFilesystem.DirEntry.inode">
+<code class="descname">inode</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#pyfakefs.fake_filesystem.FakeFilesystem.DirEntry.inode" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return the inode number of the entry.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="pyfakefs.fake_filesystem.FakeFilesystem.DirEntry.is_dir">
+<code class="descname">is_dir</code><span class="sig-paren">(</span><em>follow_symlinks=True</em><span class="sig-paren">)</span><a class="headerlink" href="#pyfakefs.fake_filesystem.FakeFilesystem.DirEntry.is_dir" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return True if this entry is a directory entry.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>follow_symlinks</strong> &#8211; If True, also return True if this entry is a symlink
+pointing to a directory.</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">True if this entry is an existing directory entry, or if
+follow_symlinks is set, and this entry points to an existing directory entry.</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="pyfakefs.fake_filesystem.FakeFilesystem.DirEntry.is_file">
+<code class="descname">is_file</code><span class="sig-paren">(</span><em>follow_symlinks=True</em><span class="sig-paren">)</span><a class="headerlink" href="#pyfakefs.fake_filesystem.FakeFilesystem.DirEntry.is_file" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return True if this entry is a regular file entry.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>follow_symlinks</strong> &#8211; If True, also return True if this entry is a symlink
+pointing to a regular file.</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">True if this entry is an existing file entry, or if
+follow_symlinks is set, and this entry points to an existing file entry.</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="pyfakefs.fake_filesystem.FakeFilesystem.DirEntry.is_symlink">
+<code class="descname">is_symlink</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#pyfakefs.fake_filesystem.FakeFilesystem.DirEntry.is_symlink" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return True if this entry is a symbolic link (even if broken).</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="pyfakefs.fake_filesystem.FakeFilesystem.DirEntry.stat">
+<code class="descname">stat</code><span class="sig-paren">(</span><em>follow_symlinks=True</em><span class="sig-paren">)</span><a class="headerlink" href="#pyfakefs.fake_filesystem.FakeFilesystem.DirEntry.stat" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return a stat_result object for this entry.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>follow_symlinks</strong> &#8211; If False and the entry is a symlink, return the
+result for the symlink, otherwise for the object it points to.</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</dd></dl>
+
 <dl class="method">
 <dt id="pyfakefs.fake_filesystem.FakeFilesystem.Exists">
-<code class="descname">Exists</code><span class="sig-paren">(</span><em>file_path</em><span class="sig-paren">)</span><a class="headerlink" href="#pyfakefs.fake_filesystem.FakeFilesystem.Exists" title="Permalink to this definition">¶</a></dt>
+<code class="descclassname">FakeFilesystem.</code><code class="descname">Exists</code><span class="sig-paren">(</span><em>file_path</em><span class="sig-paren">)</span><a class="headerlink" href="#pyfakefs.fake_filesystem.FakeFilesystem.Exists" title="Permalink to this definition">¶</a></dt>
 <dd><p>Return true if a path points to an existing file system object.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
@@ -807,7 +877,7 @@ it behaves like the real os.path.normpath on Windows if initialized with
 
 <dl class="method">
 <dt id="pyfakefs.fake_filesystem.FakeFilesystem.GetDiskUsage">
-<code class="descname">GetDiskUsage</code><span class="sig-paren">(</span><em>path=None</em><span class="sig-paren">)</span><a class="headerlink" href="#pyfakefs.fake_filesystem.FakeFilesystem.GetDiskUsage" title="Permalink to this definition">¶</a></dt>
+<code class="descclassname">FakeFilesystem.</code><code class="descname">GetDiskUsage</code><span class="sig-paren">(</span><em>path=None</em><span class="sig-paren">)</span><a class="headerlink" href="#pyfakefs.fake_filesystem.FakeFilesystem.GetDiskUsage" title="Permalink to this definition">¶</a></dt>
 <dd><p>Return the total, used and free disk space in bytes as named tuple,
 or placeholder values simulating unlimited space if not set.
 Note: This matches the return value of shutil.disk_usage().</p>
@@ -824,7 +894,7 @@ Defaults to the root path (e.g. &#8216;/&#8217; on Unix systems)</td>
 
 <dl class="method">
 <dt id="pyfakefs.fake_filesystem.FakeFilesystem.GetObject">
-<code class="descname">GetObject</code><span class="sig-paren">(</span><em>file_path</em><span class="sig-paren">)</span><a class="headerlink" href="#pyfakefs.fake_filesystem.FakeFilesystem.GetObject" title="Permalink to this definition">¶</a></dt>
+<code class="descclassname">FakeFilesystem.</code><code class="descname">GetObject</code><span class="sig-paren">(</span><em>file_path</em><span class="sig-paren">)</span><a class="headerlink" href="#pyfakefs.fake_filesystem.FakeFilesystem.GetObject" title="Permalink to this definition">¶</a></dt>
 <dd><p>Search for the specified filesystem object within the fake filesystem.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
@@ -842,7 +912,7 @@ Defaults to the root path (e.g. &#8216;/&#8217; on Unix systems)</td>
 
 <dl class="method">
 <dt id="pyfakefs.fake_filesystem.FakeFilesystem.GetObjectFromNormalizedPath">
-<code class="descname">GetObjectFromNormalizedPath</code><span class="sig-paren">(</span><em>file_path</em><span class="sig-paren">)</span><a class="headerlink" href="#pyfakefs.fake_filesystem.FakeFilesystem.GetObjectFromNormalizedPath" title="Permalink to this definition">¶</a></dt>
+<code class="descclassname">FakeFilesystem.</code><code class="descname">GetObjectFromNormalizedPath</code><span class="sig-paren">(</span><em>file_path</em><span class="sig-paren">)</span><a class="headerlink" href="#pyfakefs.fake_filesystem.FakeFilesystem.GetObjectFromNormalizedPath" title="Permalink to this definition">¶</a></dt>
 <dd><p>Search for the specified filesystem object within the fake filesystem.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
@@ -861,7 +931,7 @@ path that has already been normalized/resolved.</td>
 
 <dl class="method">
 <dt id="pyfakefs.fake_filesystem.FakeFilesystem.GetOpenFile">
-<code class="descname">GetOpenFile</code><span class="sig-paren">(</span><em>file_des</em><span class="sig-paren">)</span><a class="headerlink" href="#pyfakefs.fake_filesystem.FakeFilesystem.GetOpenFile" title="Permalink to this definition">¶</a></dt>
+<code class="descclassname">FakeFilesystem.</code><code class="descname">GetOpenFile</code><span class="sig-paren">(</span><em>file_des</em><span class="sig-paren">)</span><a class="headerlink" href="#pyfakefs.fake_filesystem.FakeFilesystem.GetOpenFile" title="Permalink to this definition">¶</a></dt>
 <dd><p>Return an open file.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
@@ -885,7 +955,7 @@ path that has already been normalized/resolved.</td>
 
 <dl class="method">
 <dt id="pyfakefs.fake_filesystem.FakeFilesystem.GetPathComponents">
-<code class="descname">GetPathComponents</code><span class="sig-paren">(</span><em>path</em><span class="sig-paren">)</span><a class="headerlink" href="#pyfakefs.fake_filesystem.FakeFilesystem.GetPathComponents" title="Permalink to this definition">¶</a></dt>
+<code class="descclassname">FakeFilesystem.</code><code class="descname">GetPathComponents</code><span class="sig-paren">(</span><em>path</em><span class="sig-paren">)</span><a class="headerlink" href="#pyfakefs.fake_filesystem.FakeFilesystem.GetPathComponents" title="Permalink to this definition">¶</a></dt>
 <dd><p>Breaks the path into a list of component names.</p>
 <p>Does not include the root directory as a component, as all paths
 are considered relative to the root directory for the FakeFilesystem.
@@ -914,7 +984,7 @@ Callers should basically follow this pattern:</p>
 
 <dl class="method">
 <dt id="pyfakefs.fake_filesystem.FakeFilesystem.GetStat">
-<code class="descname">GetStat</code><span class="sig-paren">(</span><em>entry_path</em>, <em>follow_symlinks=True</em><span class="sig-paren">)</span><a class="headerlink" href="#pyfakefs.fake_filesystem.FakeFilesystem.GetStat" title="Permalink to this definition">¶</a></dt>
+<code class="descclassname">FakeFilesystem.</code><code class="descname">GetStat</code><span class="sig-paren">(</span><em>entry_path</em>, <em>follow_symlinks=True</em><span class="sig-paren">)</span><a class="headerlink" href="#pyfakefs.fake_filesystem.FakeFilesystem.GetStat" title="Permalink to this definition">¶</a></dt>
 <dd><p>Return the os.stat-like tuple for the FakeFile object of entry_path.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
@@ -939,7 +1009,7 @@ instead of the linked object.</li>
 
 <dl class="method">
 <dt id="pyfakefs.fake_filesystem.FakeFilesystem.HasOpenFile">
-<code class="descname">HasOpenFile</code><span class="sig-paren">(</span><em>file_object</em><span class="sig-paren">)</span><a class="headerlink" href="#pyfakefs.fake_filesystem.FakeFilesystem.HasOpenFile" title="Permalink to this definition">¶</a></dt>
+<code class="descclassname">FakeFilesystem.</code><code class="descname">HasOpenFile</code><span class="sig-paren">(</span><em>file_object</em><span class="sig-paren">)</span><a class="headerlink" href="#pyfakefs.fake_filesystem.FakeFilesystem.HasOpenFile" title="Permalink to this definition">¶</a></dt>
 <dd><p>Return True if the given file object is in the list of open files.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
@@ -955,7 +1025,7 @@ instead of the linked object.</li>
 
 <dl class="method">
 <dt id="pyfakefs.fake_filesystem.FakeFilesystem.IsDir">
-<code class="descname">IsDir</code><span class="sig-paren">(</span><em>path</em><span class="sig-paren">)</span><a class="headerlink" href="#pyfakefs.fake_filesystem.FakeFilesystem.IsDir" title="Permalink to this definition">¶</a></dt>
+<code class="descclassname">FakeFilesystem.</code><code class="descname">IsDir</code><span class="sig-paren">(</span><em>path</em><span class="sig-paren">)</span><a class="headerlink" href="#pyfakefs.fake_filesystem.FakeFilesystem.IsDir" title="Permalink to this definition">¶</a></dt>
 <dd><p>Determine if path identifies a directory.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
@@ -973,7 +1043,7 @@ instead of the linked object.</li>
 
 <dl class="method">
 <dt id="pyfakefs.fake_filesystem.FakeFilesystem.IsFile">
-<code class="descname">IsFile</code><span class="sig-paren">(</span><em>path</em><span class="sig-paren">)</span><a class="headerlink" href="#pyfakefs.fake_filesystem.FakeFilesystem.IsFile" title="Permalink to this definition">¶</a></dt>
+<code class="descclassname">FakeFilesystem.</code><code class="descname">IsFile</code><span class="sig-paren">(</span><em>path</em><span class="sig-paren">)</span><a class="headerlink" href="#pyfakefs.fake_filesystem.FakeFilesystem.IsFile" title="Permalink to this definition">¶</a></dt>
 <dd><p>Determine if path identifies a regular file.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
@@ -991,7 +1061,7 @@ instead of the linked object.</li>
 
 <dl class="method">
 <dt id="pyfakefs.fake_filesystem.FakeFilesystem.IsLink">
-<code class="descname">IsLink</code><span class="sig-paren">(</span><em>path</em><span class="sig-paren">)</span><a class="headerlink" href="#pyfakefs.fake_filesystem.FakeFilesystem.IsLink" title="Permalink to this definition">¶</a></dt>
+<code class="descclassname">FakeFilesystem.</code><code class="descname">IsLink</code><span class="sig-paren">(</span><em>path</em><span class="sig-paren">)</span><a class="headerlink" href="#pyfakefs.fake_filesystem.FakeFilesystem.IsLink" title="Permalink to this definition">¶</a></dt>
 <dd><p>Determine if path identifies a symbolic link.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
@@ -1009,7 +1079,7 @@ instead of the linked object.</li>
 
 <dl class="method">
 <dt id="pyfakefs.fake_filesystem.FakeFilesystem.JoinPaths">
-<code class="descname">JoinPaths</code><span class="sig-paren">(</span><em>*paths</em><span class="sig-paren">)</span><a class="headerlink" href="#pyfakefs.fake_filesystem.FakeFilesystem.JoinPaths" title="Permalink to this definition">¶</a></dt>
+<code class="descclassname">FakeFilesystem.</code><code class="descname">JoinPaths</code><span class="sig-paren">(</span><em>*paths</em><span class="sig-paren">)</span><a class="headerlink" href="#pyfakefs.fake_filesystem.FakeFilesystem.JoinPaths" title="Permalink to this definition">¶</a></dt>
 <dd><p>Mimic os.path.join using the specified path_separator.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
@@ -1029,7 +1099,7 @@ instead of the linked object.</li>
 
 <dl class="method">
 <dt id="pyfakefs.fake_filesystem.FakeFilesystem.LResolveObject">
-<code class="descname">LResolveObject</code><span class="sig-paren">(</span><em>path</em><span class="sig-paren">)</span><a class="headerlink" href="#pyfakefs.fake_filesystem.FakeFilesystem.LResolveObject" title="Permalink to this definition">¶</a></dt>
+<code class="descclassname">FakeFilesystem.</code><code class="descname">LResolveObject</code><span class="sig-paren">(</span><em>path</em><span class="sig-paren">)</span><a class="headerlink" href="#pyfakefs.fake_filesystem.FakeFilesystem.LResolveObject" title="Permalink to this definition">¶</a></dt>
 <dd><p>Search for the specified object, resolving only parent links.</p>
 <p>This is analogous to the stat/lstat difference.  This resolves links <em>to</em>
 the object but not of the final object itself.</p>
@@ -1049,7 +1119,7 @@ the object but not of the final object itself.</p>
 
 <dl class="method">
 <dt id="pyfakefs.fake_filesystem.FakeFilesystem.ListDir">
-<code class="descname">ListDir</code><span class="sig-paren">(</span><em>target_directory</em><span class="sig-paren">)</span><a class="headerlink" href="#pyfakefs.fake_filesystem.FakeFilesystem.ListDir" title="Permalink to this definition">¶</a></dt>
+<code class="descclassname">FakeFilesystem.</code><code class="descname">ListDir</code><span class="sig-paren">(</span><em>target_directory</em><span class="sig-paren">)</span><a class="headerlink" href="#pyfakefs.fake_filesystem.FakeFilesystem.ListDir" title="Permalink to this definition">¶</a></dt>
 <dd><p>Return a list of file names in target_directory.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
@@ -1067,7 +1137,7 @@ the object but not of the final object itself.</p>
 
 <dl class="method">
 <dt id="pyfakefs.fake_filesystem.FakeFilesystem.MakeDirectories">
-<code class="descname">MakeDirectories</code><span class="sig-paren">(</span><em>dir_name</em>, <em>mode=511</em>, <em>exist_ok=False</em><span class="sig-paren">)</span><a class="headerlink" href="#pyfakefs.fake_filesystem.FakeFilesystem.MakeDirectories" title="Permalink to this definition">¶</a></dt>
+<code class="descclassname">FakeFilesystem.</code><code class="descname">MakeDirectories</code><span class="sig-paren">(</span><em>dir_name</em>, <em>mode=511</em>, <em>exist_ok=False</em><span class="sig-paren">)</span><a class="headerlink" href="#pyfakefs.fake_filesystem.FakeFilesystem.MakeDirectories" title="Permalink to this definition">¶</a></dt>
 <dd><p>Create a leaf Fake directory and create any non-existent parent dirs.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
@@ -1095,7 +1165,7 @@ raised if the target directory already exists.  New in Python 3.2.</li>
 
 <dl class="method">
 <dt id="pyfakefs.fake_filesystem.FakeFilesystem.MakeDirectory">
-<code class="descname">MakeDirectory</code><span class="sig-paren">(</span><em>dir_name</em>, <em>mode=511</em><span class="sig-paren">)</span><a class="headerlink" href="#pyfakefs.fake_filesystem.FakeFilesystem.MakeDirectory" title="Permalink to this definition">¶</a></dt>
+<code class="descclassname">FakeFilesystem.</code><code class="descname">MakeDirectory</code><span class="sig-paren">(</span><em>dir_name</em>, <em>mode=511</em><span class="sig-paren">)</span><a class="headerlink" href="#pyfakefs.fake_filesystem.FakeFilesystem.MakeDirectory" title="Permalink to this definition">¶</a></dt>
 <dd><p>Create a leaf Fake directory.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
@@ -1121,7 +1191,7 @@ to be relative to &#8216;/&#8217;.</li>
 
 <dl class="method">
 <dt id="pyfakefs.fake_filesystem.FakeFilesystem.NormalizeCase">
-<code class="descname">NormalizeCase</code><span class="sig-paren">(</span><em>path</em><span class="sig-paren">)</span><a class="headerlink" href="#pyfakefs.fake_filesystem.FakeFilesystem.NormalizeCase" title="Permalink to this definition">¶</a></dt>
+<code class="descclassname">FakeFilesystem.</code><code class="descname">NormalizeCase</code><span class="sig-paren">(</span><em>path</em><span class="sig-paren">)</span><a class="headerlink" href="#pyfakefs.fake_filesystem.FakeFilesystem.NormalizeCase" title="Permalink to this definition">¶</a></dt>
 <dd><p>Return a normalized case version of the given path for case-insensitive
 file systems. For case-sensitive file systems, return path unchanged.</p>
 <table class="docutils field-list" frame="void" rules="none">
@@ -1138,7 +1208,7 @@ file systems. For case-sensitive file systems, return path unchanged.</p>
 
 <dl class="method">
 <dt id="pyfakefs.fake_filesystem.FakeFilesystem.NormalizePath">
-<code class="descname">NormalizePath</code><span class="sig-paren">(</span><em>path</em><span class="sig-paren">)</span><a class="headerlink" href="#pyfakefs.fake_filesystem.FakeFilesystem.NormalizePath" title="Permalink to this definition">¶</a></dt>
+<code class="descclassname">FakeFilesystem.</code><code class="descname">NormalizePath</code><span class="sig-paren">(</span><em>path</em><span class="sig-paren">)</span><a class="headerlink" href="#pyfakefs.fake_filesystem.FakeFilesystem.NormalizePath" title="Permalink to this definition">¶</a></dt>
 <dd><p>Absolutize and minimalize the given path.</p>
 <p>Forces all relative paths to be absolute, and normalizes the path to
 eliminate dot and empty components.</p>
@@ -1160,7 +1230,7 @@ eliminate dot and empty components.</p>
 
 <dl class="method">
 <dt id="pyfakefs.fake_filesystem.FakeFilesystem.NormalizePathSeparator">
-<code class="descname">NormalizePathSeparator</code><span class="sig-paren">(</span><em>path</em><span class="sig-paren">)</span><a class="headerlink" href="#pyfakefs.fake_filesystem.FakeFilesystem.NormalizePathSeparator" title="Permalink to this definition">¶</a></dt>
+<code class="descclassname">FakeFilesystem.</code><code class="descname">NormalizePathSeparator</code><span class="sig-paren">(</span><em>path</em><span class="sig-paren">)</span><a class="headerlink" href="#pyfakefs.fake_filesystem.FakeFilesystem.NormalizePathSeparator" title="Permalink to this definition">¶</a></dt>
 <dd><p>Replace all appearances of alternative path separator with path separator.
 Do nothing if no alternative separator is set.</p>
 <table class="docutils field-list" frame="void" rules="none">
@@ -1177,7 +1247,7 @@ Do nothing if no alternative separator is set.</p>
 
 <dl class="method">
 <dt id="pyfakefs.fake_filesystem.FakeFilesystem.RemoveDirectory">
-<code class="descname">RemoveDirectory</code><span class="sig-paren">(</span><em>target_directory</em><span class="sig-paren">)</span><a class="headerlink" href="#pyfakefs.fake_filesystem.FakeFilesystem.RemoveDirectory" title="Permalink to this definition">¶</a></dt>
+<code class="descclassname">FakeFilesystem.</code><code class="descname">RemoveDirectory</code><span class="sig-paren">(</span><em>target_directory</em><span class="sig-paren">)</span><a class="headerlink" href="#pyfakefs.fake_filesystem.FakeFilesystem.RemoveDirectory" title="Permalink to this definition">¶</a></dt>
 <dd><p>Remove a leaf Fake directory.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
@@ -1199,7 +1269,7 @@ Do nothing if no alternative separator is set.</p>
 
 <dl class="method">
 <dt id="pyfakefs.fake_filesystem.FakeFilesystem.RemoveFile">
-<code class="descname">RemoveFile</code><span class="sig-paren">(</span><em>path</em><span class="sig-paren">)</span><a class="headerlink" href="#pyfakefs.fake_filesystem.FakeFilesystem.RemoveFile" title="Permalink to this definition">¶</a></dt>
+<code class="descclassname">FakeFilesystem.</code><code class="descname">RemoveFile</code><span class="sig-paren">(</span><em>path</em><span class="sig-paren">)</span><a class="headerlink" href="#pyfakefs.fake_filesystem.FakeFilesystem.RemoveFile" title="Permalink to this definition">¶</a></dt>
 <dd><p>Remove the FakeFile object at the specified file path.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
@@ -1221,7 +1291,7 @@ Do nothing if no alternative separator is set.</p>
 
 <dl class="method">
 <dt id="pyfakefs.fake_filesystem.FakeFilesystem.RemoveObject">
-<code class="descname">RemoveObject</code><span class="sig-paren">(</span><em>file_path</em><span class="sig-paren">)</span><a class="headerlink" href="#pyfakefs.fake_filesystem.FakeFilesystem.RemoveObject" title="Permalink to this definition">¶</a></dt>
+<code class="descclassname">FakeFilesystem.</code><code class="descname">RemoveObject</code><span class="sig-paren">(</span><em>file_path</em><span class="sig-paren">)</span><a class="headerlink" href="#pyfakefs.fake_filesystem.FakeFilesystem.RemoveObject" title="Permalink to this definition">¶</a></dt>
 <dd><p>Remove an existing file or directory.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
@@ -1243,7 +1313,7 @@ of the path refers to something other than a directory.</li>
 
 <dl class="method">
 <dt id="pyfakefs.fake_filesystem.FakeFilesystem.RenameObject">
-<code class="descname">RenameObject</code><span class="sig-paren">(</span><em>old_file_path</em>, <em>new_file_path</em>, <em>force_replace=False</em><span class="sig-paren">)</span><a class="headerlink" href="#pyfakefs.fake_filesystem.FakeFilesystem.RenameObject" title="Permalink to this definition">¶</a></dt>
+<code class="descclassname">FakeFilesystem.</code><code class="descname">RenameObject</code><span class="sig-paren">(</span><em>old_file_path</em>, <em>new_file_path</em>, <em>force_replace=False</em><span class="sig-paren">)</span><a class="headerlink" href="#pyfakefs.fake_filesystem.FakeFilesystem.RenameObject" title="Permalink to this definition">¶</a></dt>
 <dd><p>Renames a FakeFile object at old_file_path to new_file_path, preserving all properties.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
@@ -1275,7 +1345,7 @@ or Windows with force_replace set).</li>
 
 <dl class="method">
 <dt id="pyfakefs.fake_filesystem.FakeFilesystem.ResolveObject">
-<code class="descname">ResolveObject</code><span class="sig-paren">(</span><em>file_path</em>, <em>follow_symlinks=True</em><span class="sig-paren">)</span><a class="headerlink" href="#pyfakefs.fake_filesystem.FakeFilesystem.ResolveObject" title="Permalink to this definition">¶</a></dt>
+<code class="descclassname">FakeFilesystem.</code><code class="descname">ResolveObject</code><span class="sig-paren">(</span><em>file_path</em>, <em>follow_symlinks=True</em><span class="sig-paren">)</span><a class="headerlink" href="#pyfakefs.fake_filesystem.FakeFilesystem.ResolveObject" title="Permalink to this definition">¶</a></dt>
 <dd><p>Search for the specified filesystem object, resolving all links.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
@@ -1299,7 +1369,7 @@ or Windows with force_replace set).</li>
 
 <dl class="method">
 <dt id="pyfakefs.fake_filesystem.FakeFilesystem.ResolvePath">
-<code class="descname">ResolvePath</code><span class="sig-paren">(</span><em>file_path</em><span class="sig-paren">)</span><a class="headerlink" href="#pyfakefs.fake_filesystem.FakeFilesystem.ResolvePath" title="Permalink to this definition">¶</a></dt>
+<code class="descclassname">FakeFilesystem.</code><code class="descname">ResolvePath</code><span class="sig-paren">(</span><em>file_path</em><span class="sig-paren">)</span><a class="headerlink" href="#pyfakefs.fake_filesystem.FakeFilesystem.ResolvePath" title="Permalink to this definition">¶</a></dt>
 <dd><p>Follow a path, resolving symlinks.</p>
 <p>ResolvePath traverses the filesystem along the specified file path,
 resolving file names and symbolic links until all elements of the path are
@@ -1345,8 +1415,34 @@ file system that looks like this:</p>
 </dd></dl>
 
 <dl class="method">
+<dt id="pyfakefs.fake_filesystem.FakeFilesystem.ScanDir">
+<code class="descclassname">FakeFilesystem.</code><code class="descname">ScanDir</code><span class="sig-paren">(</span><em>path=''</em><span class="sig-paren">)</span><a class="headerlink" href="#pyfakefs.fake_filesystem.FakeFilesystem.ScanDir" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return an iterator of DirEntry objects corresponding to the entries
+in the directory given by path.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>path</strong> &#8211; path to the target directory within the fake filesystem.</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">an iterator to an unsorted list of os.DirEntry objects for each entry in path.</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Raises:</th><td class="field-body"><code class="xref py py-exc docutils literal"><span class="pre">OSError</span></code> &#8211; if the target is not a directory.</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="class">
+<dt id="pyfakefs.fake_filesystem.FakeFilesystem.ScanDirIter">
+<em class="property">class </em><code class="descclassname">FakeFilesystem.</code><code class="descname">ScanDirIter</code><span class="sig-paren">(</span><em>filesystem</em>, <em>path</em><span class="sig-paren">)</span><a class="headerlink" href="#pyfakefs.fake_filesystem.FakeFilesystem.ScanDirIter" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal"><span class="pre">object</span></code></p>
+<p>Iterator for DirEntry objects returned from <cite>scandir()</cite> function.</p>
+</dd></dl>
+
+<dl class="method">
 <dt id="pyfakefs.fake_filesystem.FakeFilesystem.SetDiskUsage">
-<code class="descname">SetDiskUsage</code><span class="sig-paren">(</span><em>total_size</em>, <em>path=None</em><span class="sig-paren">)</span><a class="headerlink" href="#pyfakefs.fake_filesystem.FakeFilesystem.SetDiskUsage" title="Permalink to this definition">¶</a></dt>
+<code class="descclassname">FakeFilesystem.</code><code class="descname">SetDiskUsage</code><span class="sig-paren">(</span><em>total_size</em>, <em>path=None</em><span class="sig-paren">)</span><a class="headerlink" href="#pyfakefs.fake_filesystem.FakeFilesystem.SetDiskUsage" title="Permalink to this definition">¶</a></dt>
 <dd><p>Changes the total size of the file system, preserving the used space.
 Example usage: set the size of an auto-mounted Windows drive.</p>
 <table class="docutils field-list" frame="void" rules="none">
@@ -1369,7 +1465,7 @@ Defaults to the root path (e.g. &#8216;/&#8217; on Unix systems)</li>
 
 <dl class="method">
 <dt id="pyfakefs.fake_filesystem.FakeFilesystem.SetIno">
-<code class="descname">SetIno</code><span class="sig-paren">(</span><em>path</em>, <em>st_ino</em><span class="sig-paren">)</span><a class="headerlink" href="#pyfakefs.fake_filesystem.FakeFilesystem.SetIno" title="Permalink to this definition">¶</a></dt>
+<code class="descclassname">FakeFilesystem.</code><code class="descname">SetIno</code><span class="sig-paren">(</span><em>path</em>, <em>st_ino</em><span class="sig-paren">)</span><a class="headerlink" href="#pyfakefs.fake_filesystem.FakeFilesystem.SetIno" title="Permalink to this definition">¶</a></dt>
 <dd><p>Set the self.st_ino attribute of file at &#8216;path&#8217;.
 Note that a unique inode is assigned automatically to a new fake file.
 Using this function does not guarantee uniqueness and should used with caution.</p>
@@ -1389,7 +1485,7 @@ Using this function does not guarantee uniqueness and should used with caution.<
 
 <dl class="method">
 <dt id="pyfakefs.fake_filesystem.FakeFilesystem.SplitDrive">
-<code class="descname">SplitDrive</code><span class="sig-paren">(</span><em>path</em><span class="sig-paren">)</span><a class="headerlink" href="#pyfakefs.fake_filesystem.FakeFilesystem.SplitDrive" title="Permalink to this definition">¶</a></dt>
+<code class="descclassname">FakeFilesystem.</code><code class="descname">SplitDrive</code><span class="sig-paren">(</span><em>path</em><span class="sig-paren">)</span><a class="headerlink" href="#pyfakefs.fake_filesystem.FakeFilesystem.SplitDrive" title="Permalink to this definition">¶</a></dt>
 <dd><p>Splits the path into the drive part and the rest of the path.</p>
 <p>Taken from Windows specific implementation in Python 3.5 and slightly adapted.</p>
 <table class="docutils field-list" frame="void" rules="none">
@@ -1408,7 +1504,7 @@ Using this function does not guarantee uniqueness and should used with caution.<
 
 <dl class="method">
 <dt id="pyfakefs.fake_filesystem.FakeFilesystem.SplitPath">
-<code class="descname">SplitPath</code><span class="sig-paren">(</span><em>path</em><span class="sig-paren">)</span><a class="headerlink" href="#pyfakefs.fake_filesystem.FakeFilesystem.SplitPath" title="Permalink to this definition">¶</a></dt>
+<code class="descclassname">FakeFilesystem.</code><code class="descname">SplitPath</code><span class="sig-paren">(</span><em>path</em><span class="sig-paren">)</span><a class="headerlink" href="#pyfakefs.fake_filesystem.FakeFilesystem.SplitPath" title="Permalink to this definition">¶</a></dt>
 <dd><p>Mimic os.path.split using the specified path_separator.</p>
 <p>Mimics os.path.split using the path_separator that was specified
 for this FakeFilesystem.</p>
@@ -1430,7 +1526,7 @@ for this FakeFilesystem.</p>
 
 <dl class="method">
 <dt id="pyfakefs.fake_filesystem.FakeFilesystem.StartsWithDriveLetter">
-<code class="descname">StartsWithDriveLetter</code><span class="sig-paren">(</span><em>file_path</em><span class="sig-paren">)</span><a class="headerlink" href="#pyfakefs.fake_filesystem.FakeFilesystem.StartsWithDriveLetter" title="Permalink to this definition">¶</a></dt>
+<code class="descclassname">FakeFilesystem.</code><code class="descname">StartsWithDriveLetter</code><span class="sig-paren">(</span><em>file_path</em><span class="sig-paren">)</span><a class="headerlink" href="#pyfakefs.fake_filesystem.FakeFilesystem.StartsWithDriveLetter" title="Permalink to this definition">¶</a></dt>
 <dd><p>Return True if file_path starts with a drive letter.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
@@ -1447,7 +1543,7 @@ the path starts with a drive letter.</td>
 
 <dl class="method">
 <dt id="pyfakefs.fake_filesystem.FakeFilesystem.UpdateTime">
-<code class="descname">UpdateTime</code><span class="sig-paren">(</span><em>path</em>, <em>times</em>, <em>follow_symlinks=True</em><span class="sig-paren">)</span><a class="headerlink" href="#pyfakefs.fake_filesystem.FakeFilesystem.UpdateTime" title="Permalink to this definition">¶</a></dt>
+<code class="descclassname">FakeFilesystem.</code><code class="descname">UpdateTime</code><span class="sig-paren">(</span><em>path</em>, <em>times</em>, <em>follow_symlinks=True</em><span class="sig-paren">)</span><a class="headerlink" href="#pyfakefs.fake_filesystem.FakeFilesystem.UpdateTime" title="Permalink to this definition">¶</a></dt>
 <dd><p>Change the access and modified times of a file.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
@@ -2066,6 +2162,25 @@ Also replaces existing new_file_path object, if one existed.</p>
 </dd></dl>
 
 <dl class="method">
+<dt id="pyfakefs.fake_filesystem.FakeOsModule.scandir">
+<code class="descname">scandir</code><span class="sig-paren">(</span><em>path=''</em><span class="sig-paren">)</span><a class="headerlink" href="#pyfakefs.fake_filesystem.FakeOsModule.scandir" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return an iterator of DirEntry objects corresponding to the entries
+in the directory given by path.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>path</strong> &#8211; path to the target directory within the fake filesystem.</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">an iterator to an unsorted list of os.DirEntry objects for each entry in path.</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Raises:</th><td class="field-body"><code class="xref py py-exc docutils literal"><span class="pre">OSError</span></code> &#8211; if the target is not a directory.</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
 <dt id="pyfakefs.fake_filesystem.FakeOsModule.stat">
 <code class="descname">stat</code><span class="sig-paren">(</span><em>entry_path</em>, <em>follow_symlinks=None</em><span class="sig-paren">)</span><a class="headerlink" href="#pyfakefs.fake_filesystem.FakeOsModule.stat" title="Permalink to this definition">¶</a></dt>
 <dd><p>Return the os.stat-like tuple for the FakeFile object of entry_path.</p>
@@ -2616,12 +2731,12 @@ Under Windows also returns True for drive and UNC roots (independent of their ex
 
 <dl class="attribute">
 <dt id="pyfakefs.fake_filesystem_glob.FakeGlobModule.magic_check">
-<code class="descname">magic_check</code><em class="property"> = &lt;_sre.SRE_Pattern object&gt;</em><a class="headerlink" href="#pyfakefs.fake_filesystem_glob.FakeGlobModule.magic_check" title="Permalink to this definition">¶</a></dt>
+<code class="descname">magic_check</code><em class="property"> = re.compile('([*?[])')</em><a class="headerlink" href="#pyfakefs.fake_filesystem_glob.FakeGlobModule.magic_check" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="attribute">
 <dt id="pyfakefs.fake_filesystem_glob.FakeGlobModule.magic_check_bytes">
-<code class="descname">magic_check_bytes</code><em class="property"> = &lt;_sre.SRE_Pattern object&gt;</em><a class="headerlink" href="#pyfakefs.fake_filesystem_glob.FakeGlobModule.magic_check_bytes" title="Permalink to this definition">¶</a></dt>
+<code class="descname">magic_check_bytes</code><em class="property"> = re.compile(b'([*?[])')</em><a class="headerlink" href="#pyfakefs.fake_filesystem_glob.FakeGlobModule.magic_check_bytes" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 </dd></dl>
@@ -2870,12 +2985,12 @@ retrofitted to use <cite>pyfakefs</cite> by simply changing their base class fro
 the <a class="reference internal" href="#module-pyfakefs" title="pyfakefs"><code class="xref py py-mod docutils literal"><span class="pre">pyfakefs</span></code></a> fake modules.</p>
 <dl class="attribute">
 <dt id="pyfakefs.fake_filesystem_unittest.Patcher.HAS_PATHLIB">
-<code class="descname">HAS_PATHLIB</code><em class="property"> = False</em><a class="headerlink" href="#pyfakefs.fake_filesystem_unittest.Patcher.HAS_PATHLIB" title="Permalink to this definition">¶</a></dt>
+<code class="descname">HAS_PATHLIB</code><em class="property"> = True</em><a class="headerlink" href="#pyfakefs.fake_filesystem_unittest.Patcher.HAS_PATHLIB" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="attribute">
 <dt id="pyfakefs.fake_filesystem_unittest.Patcher.SKIPMODULES">
-<code class="descname">SKIPMODULES</code><em class="property"> = {&lt;module 'pyfakefs.fake_filesystem_shutil' from '/home/travis/build/mrbean-bremen/pyfakefs/pyfakefs/fake_filesystem_shutil.py'&gt;, &lt;module 'sys' (built-in)&gt;, None, &lt;module 'pyfakefs.fake_tempfile' from '/home/travis/build/mrbean-bremen/pyfakefs/pyfakefs/fake_tempfile.py'&gt;, &lt;module 'pyfakefs.fake_filesystem' from '/home/travis/build/mrbean-bremen/pyfakefs/pyfakefs/fake_filesystem.py'&gt;}</em><a class="headerlink" href="#pyfakefs.fake_filesystem_unittest.Patcher.SKIPMODULES" title="Permalink to this definition">¶</a></dt>
+<code class="descname">SKIPMODULES</code><em class="property"> = {&lt;module 'sys' (built-in)&gt;, None, &lt;module 'pyfakefs.fake_filesystem_shutil' from '/home/travis/build/mrbean-bremen/pyfakefs/pyfakefs/fake_filesystem_shutil.py'&gt;, &lt;module 'pyfakefs.fake_filesystem' from '/home/travis/build/mrbean-bremen/pyfakefs/pyfakefs/fake_filesystem.py'&gt;, &lt;module 'pyfakefs.fake_tempfile' from '/home/travis/build/mrbean-bremen/pyfakefs/pyfakefs/fake_tempfile.py'&gt;}</em><a class="headerlink" href="#pyfakefs.fake_filesystem_unittest.Patcher.SKIPMODULES" title="Permalink to this definition">¶</a></dt>
 <dd><p>Stub nothing that is imported within these modules.
 <cite>sys</cite> is included to prevent <cite>sys.path</cite> from being stubbed with the fake
 <cite>os.path</cite>.</p>
@@ -2883,7 +2998,7 @@ the <a class="reference internal" href="#module-pyfakefs" title="pyfakefs"><code
 
 <dl class="attribute">
 <dt id="pyfakefs.fake_filesystem_unittest.Patcher.SKIPNAMES">
-<code class="descname">SKIPNAMES</code><em class="property"> = {'os', 'path', 'tempfile', 'io'}</em><a class="headerlink" href="#pyfakefs.fake_filesystem_unittest.Patcher.SKIPNAMES" title="Permalink to this definition">¶</a></dt>
+<code class="descname">SKIPNAMES</code><em class="property"> = {'pathlib', 'path', 'io', 'os', 'tempfile'}</em><a class="headerlink" href="#pyfakefs.fake_filesystem_unittest.Patcher.SKIPNAMES" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="method">
