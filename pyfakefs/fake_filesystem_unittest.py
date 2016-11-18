@@ -136,6 +136,9 @@ class Patcher(object):
     """
     Instantiate a stub creator to bind and un-bind the file-related modules to
     the :py:mod:`pyfakefs` fake modules.
+    For usage outside of TestCase (for example with pytest) use:
+    >>> with Patcher():
+    >>>     doStuff()
     """
     SKIPMODULES = set([None, fake_filesystem, fake_filesystem_shutil,
                        fake_tempfile, sys])
@@ -192,6 +195,15 @@ class Patcher(object):
         assert None not in vars(self).values(), \
             "_refresh() missed the initialization of an instance variable"
         assert self._isStale == False, "_refresh() did not reset _isStale"
+
+    def __enter__(self):
+        """Context manager for usage outside of fake_filesystem_unittest.TestCase.
+        Ensure that all patched modules are removed in case of an unhandled exception.
+        """
+        self.setUp()
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        self.tearDown()
 
     def _findModules(self):
         """Find and cache all modules that import file system modules.
