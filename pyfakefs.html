@@ -1494,7 +1494,7 @@ See FakeFileOpen.Call() for description.</p>
 <dl class="exception">
 <dt id="pyfakefs.fake_filesystem.FakeLargeFileIoException">
 <em class="property">exception </em><code class="descclassname">pyfakefs.fake_filesystem.</code><code class="descname">FakeLargeFileIoException</code><span class="sig-paren">(</span><em>file_path</em><span class="sig-paren">)</span><a class="headerlink" href="#pyfakefs.fake_filesystem.FakeLargeFileIoException" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <code class="xref py py-class docutils literal"><span class="pre">exceptions.Exception</span></code></p>
+<dd><p>Bases: <code class="xref py py-class docutils literal"><span class="pre">Exception</span></code></p>
 <p>Exception thrown on unsupported operations for fake large files.
 Fake large files have a size with no real content.</p>
 </dd></dl>
@@ -2006,6 +2006,35 @@ Also replaces existing new_file_path object, if one existed (Unix only).</p>
 <li><code class="xref py py-exc docutils literal"><span class="pre">OSError</span></code> &#8211; if new_file_path is an existing directory.</li>
 <li><code class="xref py py-exc docutils literal"><span class="pre">OSError</span></code> &#8211; if new_file_path is an existing file (Windows only)</li>
 <li><code class="xref py py-exc docutils literal"><span class="pre">OSError</span></code> &#8211; if new_file_path is an existing file and could not be removed (Unix)</li>
+<li><code class="xref py py-exc docutils literal"><span class="pre">OSError</span></code> &#8211; if <cite>dirname(new_file)</cite> does not exist</li>
+<li><code class="xref py py-exc docutils literal"><span class="pre">OSError</span></code> &#8211; if the file would be moved to another filesystem (e.g. mount point)</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="pyfakefs.fake_filesystem.FakeOsModule.replace">
+<code class="descname">replace</code><span class="sig-paren">(</span><em>old_file_path</em>, <em>new_file_path</em><span class="sig-paren">)</span><a class="headerlink" href="#pyfakefs.fake_filesystem.FakeOsModule.replace" title="Permalink to this definition">¶</a></dt>
+<dd><p>Renames a FakeFile object at old_file_path to new_file_path,
+preserving all properties.
+Also replaces existing new_file_path object, if one existed.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>old_file_path</strong> &#8211; path to filesystem object to rename</li>
+<li><strong>new_file_path</strong> &#8211; path to where the filesystem object will live after this call</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Raises:</th><td class="field-body"><ul class="first last simple">
+<li><code class="xref py py-exc docutils literal"><span class="pre">OSError</span></code> &#8211; if old_file_path does not exist.</li>
+<li><code class="xref py py-exc docutils literal"><span class="pre">OSError</span></code> &#8211; if new_file_path is an existing directory.</li>
+<li><code class="xref py py-exc docutils literal"><span class="pre">OSError</span></code> &#8211; if new_file_path is an existing file and could not be removed</li>
 <li><code class="xref py py-exc docutils literal"><span class="pre">OSError</span></code> &#8211; if <cite>dirname(new_file)</cite> does not exist</li>
 <li><code class="xref py py-exc docutils literal"><span class="pre">OSError</span></code> &#8211; if the file would be moved to another filesystem (e.g. mount point)</li>
 </ul>
@@ -2587,12 +2616,12 @@ Under Windows also returns True for drive and UNC roots (independent of their ex
 
 <dl class="attribute">
 <dt id="pyfakefs.fake_filesystem_glob.FakeGlobModule.magic_check">
-<code class="descname">magic_check</code><em class="property"> = &lt;_sre.SRE_Pattern object&gt;</em><a class="headerlink" href="#pyfakefs.fake_filesystem_glob.FakeGlobModule.magic_check" title="Permalink to this definition">¶</a></dt>
+<code class="descname">magic_check</code><em class="property"> = re.compile('([*?[])')</em><a class="headerlink" href="#pyfakefs.fake_filesystem_glob.FakeGlobModule.magic_check" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="attribute">
 <dt id="pyfakefs.fake_filesystem_glob.FakeGlobModule.magic_check_bytes">
-<code class="descname">magic_check_bytes</code><em class="property"> = &lt;_sre.SRE_Pattern object&gt;</em><a class="headerlink" href="#pyfakefs.fake_filesystem_glob.FakeGlobModule.magic_check_bytes" title="Permalink to this definition">¶</a></dt>
+<code class="descname">magic_check_bytes</code><em class="property"> = re.compile(b'([*?[])')</em><a class="headerlink" href="#pyfakefs.fake_filesystem_glob.FakeGlobModule.magic_check_bytes" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 </dd></dl>
@@ -2720,7 +2749,7 @@ Under Windows also returns True for drive and UNC roots (independent of their ex
 
 <dl class="method">
 <dt id="pyfakefs.fake_filesystem_shutil.FakeShutilModule.copytree">
-<code class="descname">copytree</code><span class="sig-paren">(</span><em>src</em>, <em>dst</em>, <em>symlinks=False</em><span class="sig-paren">)</span><a class="headerlink" href="#pyfakefs.fake_filesystem_shutil.FakeShutilModule.copytree" title="Permalink to this definition">¶</a></dt>
+<code class="descname">copytree</code><span class="sig-paren">(</span><em>src</em>, <em>dst</em>, <em>copy_function=None</em>, <em>symlinks=False</em><span class="sig-paren">)</span><a class="headerlink" href="#pyfakefs.fake_filesystem_shutil.FakeShutilModule.copytree" title="Permalink to this definition">¶</a></dt>
 <dd><p>Recursively copy a directory tree.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
@@ -2729,6 +2758,7 @@ Under Windows also returns True for drive and UNC roots (independent of their ex
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
 <li><strong>src</strong> &#8211; (str) source directory</li>
 <li><strong>dst</strong> &#8211; (str) destination directory, must not already exist</li>
+<li><strong>copy_function</strong> &#8211; replacement for copy2</li>
 <li><strong>symlinks</strong> &#8211; (bool) copy symlinks as symlinks instead of copying the
 contents of the linked files. Currently unused.</li>
 </ul>
@@ -2840,12 +2870,12 @@ retrofitted to use <cite>pyfakefs</cite> by simply changing their base class fro
 the <a class="reference internal" href="#module-pyfakefs" title="pyfakefs"><code class="xref py py-mod docutils literal"><span class="pre">pyfakefs</span></code></a> fake modules.</p>
 <dl class="attribute">
 <dt id="pyfakefs.fake_filesystem_unittest.Patcher.HAS_PATHLIB">
-<code class="descname">HAS_PATHLIB</code><em class="property"> = False</em><a class="headerlink" href="#pyfakefs.fake_filesystem_unittest.Patcher.HAS_PATHLIB" title="Permalink to this definition">¶</a></dt>
+<code class="descname">HAS_PATHLIB</code><em class="property"> = True</em><a class="headerlink" href="#pyfakefs.fake_filesystem_unittest.Patcher.HAS_PATHLIB" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="attribute">
 <dt id="pyfakefs.fake_filesystem_unittest.Patcher.SKIPMODULES">
-<code class="descname">SKIPMODULES</code><em class="property"> = set([&lt;module 'pyfakefs.fake_filesystem' from '/home/travis/build/mrbean-bremen/pyfakefs/pyfakefs/fake_filesystem.pyc'&gt;, &lt;module 'pyfakefs.fake_filesystem_shutil' from '/home/travis/build/mrbean-bremen/pyfakefs/pyfakefs/fake_filesystem_shutil.pyc'&gt;, &lt;module 'sys' (built-in)&gt;, &lt;module 'pyfakefs.fake_tempfile' from '/home/travis/build/mrbean-bremen/pyfakefs/pyfakefs/fake_tempfile.pyc'&gt;, None])</em><a class="headerlink" href="#pyfakefs.fake_filesystem_unittest.Patcher.SKIPMODULES" title="Permalink to this definition">¶</a></dt>
+<code class="descname">SKIPMODULES</code><em class="property"> = {&lt;module 'pyfakefs.fake_filesystem' from '/home/travis/build/mrbean-bremen/pyfakefs/pyfakefs/fake_filesystem.py'&gt;, None, &lt;module 'pyfakefs.fake_filesystem_shutil' from '/home/travis/build/mrbean-bremen/pyfakefs/pyfakefs/fake_filesystem_shutil.py'&gt;, &lt;module 'pyfakefs.fake_tempfile' from '/home/travis/build/mrbean-bremen/pyfakefs/pyfakefs/fake_tempfile.py'&gt;, &lt;module 'sys' (built-in)&gt;}</em><a class="headerlink" href="#pyfakefs.fake_filesystem_unittest.Patcher.SKIPMODULES" title="Permalink to this definition">¶</a></dt>
 <dd><p>Stub nothing that is imported within these modules.
 <cite>sys</cite> is included to prevent <cite>sys.path</cite> from being stubbed with the fake
 <cite>os.path</cite>.</p>
@@ -2853,7 +2883,7 @@ the <a class="reference internal" href="#module-pyfakefs" title="pyfakefs"><code
 
 <dl class="attribute">
 <dt id="pyfakefs.fake_filesystem_unittest.Patcher.SKIPNAMES">
-<code class="descname">SKIPNAMES</code><em class="property"> = set(['tempfile', 'path', 'os', 'io'])</em><a class="headerlink" href="#pyfakefs.fake_filesystem_unittest.Patcher.SKIPNAMES" title="Permalink to this definition">¶</a></dt>
+<code class="descname">SKIPNAMES</code><em class="property"> = {'os', 'path', 'io', 'pathlib', 'tempfile'}</em><a class="headerlink" href="#pyfakefs.fake_filesystem_unittest.Patcher.SKIPNAMES" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="method">
