@@ -2616,12 +2616,12 @@ Under Windows also returns True for drive and UNC roots (independent of their ex
 
 <dl class="attribute">
 <dt id="pyfakefs.fake_filesystem_glob.FakeGlobModule.magic_check">
-<code class="descname">magic_check</code><em class="property"> = re.compile('([*?[])')</em><a class="headerlink" href="#pyfakefs.fake_filesystem_glob.FakeGlobModule.magic_check" title="Permalink to this definition">¶</a></dt>
+<code class="descname">magic_check</code><em class="property"> = &lt;_sre.SRE_Pattern object&gt;</em><a class="headerlink" href="#pyfakefs.fake_filesystem_glob.FakeGlobModule.magic_check" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="attribute">
 <dt id="pyfakefs.fake_filesystem_glob.FakeGlobModule.magic_check_bytes">
-<code class="descname">magic_check_bytes</code><em class="property"> = re.compile(b'([*?[])')</em><a class="headerlink" href="#pyfakefs.fake_filesystem_glob.FakeGlobModule.magic_check_bytes" title="Permalink to this definition">¶</a></dt>
+<code class="descname">magic_check_bytes</code><em class="property"> = &lt;_sre.SRE_Pattern object&gt;</em><a class="headerlink" href="#pyfakefs.fake_filesystem_glob.FakeGlobModule.magic_check_bytes" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 </dd></dl>
@@ -2870,12 +2870,12 @@ retrofitted to use <cite>pyfakefs</cite> by simply changing their base class fro
 the <a class="reference internal" href="#module-pyfakefs" title="pyfakefs"><code class="xref py py-mod docutils literal"><span class="pre">pyfakefs</span></code></a> fake modules.</p>
 <dl class="attribute">
 <dt id="pyfakefs.fake_filesystem_unittest.Patcher.HAS_PATHLIB">
-<code class="descname">HAS_PATHLIB</code><em class="property"> = True</em><a class="headerlink" href="#pyfakefs.fake_filesystem_unittest.Patcher.HAS_PATHLIB" title="Permalink to this definition">¶</a></dt>
+<code class="descname">HAS_PATHLIB</code><em class="property"> = False</em><a class="headerlink" href="#pyfakefs.fake_filesystem_unittest.Patcher.HAS_PATHLIB" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="attribute">
 <dt id="pyfakefs.fake_filesystem_unittest.Patcher.SKIPMODULES">
-<code class="descname">SKIPMODULES</code><em class="property"> = {&lt;module 'pyfakefs.fake_filesystem' from '/home/travis/build/mrbean-bremen/pyfakefs/pyfakefs/fake_filesystem.py'&gt;, None, &lt;module 'pyfakefs.fake_filesystem_shutil' from '/home/travis/build/mrbean-bremen/pyfakefs/pyfakefs/fake_filesystem_shutil.py'&gt;, &lt;module 'pyfakefs.fake_tempfile' from '/home/travis/build/mrbean-bremen/pyfakefs/pyfakefs/fake_tempfile.py'&gt;, &lt;module 'sys' (built-in)&gt;}</em><a class="headerlink" href="#pyfakefs.fake_filesystem_unittest.Patcher.SKIPMODULES" title="Permalink to this definition">¶</a></dt>
+<code class="descname">SKIPMODULES</code><em class="property"> = {&lt;module 'pyfakefs.fake_filesystem_shutil' from '/home/travis/build/mrbean-bremen/pyfakefs/pyfakefs/fake_filesystem_shutil.py'&gt;, &lt;module 'sys' (built-in)&gt;, None, &lt;module 'pyfakefs.fake_tempfile' from '/home/travis/build/mrbean-bremen/pyfakefs/pyfakefs/fake_tempfile.py'&gt;, &lt;module 'pyfakefs.fake_filesystem' from '/home/travis/build/mrbean-bremen/pyfakefs/pyfakefs/fake_filesystem.py'&gt;}</em><a class="headerlink" href="#pyfakefs.fake_filesystem_unittest.Patcher.SKIPMODULES" title="Permalink to this definition">¶</a></dt>
 <dd><p>Stub nothing that is imported within these modules.
 <cite>sys</cite> is included to prevent <cite>sys.path</cite> from being stubbed with the fake
 <cite>os.path</cite>.</p>
@@ -2883,7 +2883,7 @@ the <a class="reference internal" href="#module-pyfakefs" title="pyfakefs"><code
 
 <dl class="attribute">
 <dt id="pyfakefs.fake_filesystem_unittest.Patcher.SKIPNAMES">
-<code class="descname">SKIPNAMES</code><em class="property"> = {'os', 'path', 'io', 'pathlib', 'tempfile'}</em><a class="headerlink" href="#pyfakefs.fake_filesystem_unittest.Patcher.SKIPNAMES" title="Permalink to this definition">¶</a></dt>
+<code class="descname">SKIPNAMES</code><em class="property"> = {'os', 'path', 'tempfile', 'io'}</em><a class="headerlink" href="#pyfakefs.fake_filesystem_unittest.Patcher.SKIPNAMES" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="method">
