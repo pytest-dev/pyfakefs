@@ -187,12 +187,13 @@ class FakeTempfileModule(object):
           suffix: optional string, filename suffix
           prefix: optional string, filename prefix
           dir: optional string, directory for temp file; must exist before call
-          text: optional boolean, True = open file in text mode.
-              default False = open file in binary mode.
+          text: optional boolean, if True open file is in text mode, otherwise in binary mode.
+
         Returns:
           2-tuple containing
           [0] = int, file descriptor number for the file object
           [1] = string, absolute pathname of a file
+
         Raises:
           OSError: when dir= is specified but does not exist
         """

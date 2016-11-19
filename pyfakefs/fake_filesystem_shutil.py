@@ -21,6 +21,7 @@
     shutil module.
 
 :Usage:
+
 >>> from pyfakefs import fake_filesystem
 >>> from pyfakefs import fake_filesystem_shutil
 >>> filesystem = fake_filesystem.FakeFilesystem()

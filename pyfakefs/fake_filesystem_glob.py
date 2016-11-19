@@ -21,6 +21,7 @@ Note: Code is taken form Python 3.5 and slightly adapted to work with older
     versions and use the fake os and os.path modules
 
 :Usage:
+
 >>> from pyfakefs import fake_filesystem
 >>> from pyfakefs import fake_filesystem_glob
 >>> filesystem = fake_filesystem.FakeFilesystem()

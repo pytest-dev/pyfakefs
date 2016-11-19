@@ -11,7 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#
+
 
 """A fake filesystem implementation for unit testing.
 
@@ -24,6 +24,7 @@
   * FakeFileOpen:  Faked file() and open() function replacements.
 
 :Usage:
+
 >>> from pyfakefs import fake_filesystem
 >>> filesystem = fake_filesystem.FakeFilesystem()
 >>> os_module = fake_filesystem.FakeOsModule(filesystem)
@@ -165,19 +166,19 @@ def CopyModule(old):
 class FakeFile(object):
     """Provides the appearance of a real file.
 
-       Attributes currently faked out:
-         st_mode: user-specified, otherwise S_IFREG
-         st_ctime: the time.time() timestamp of the file change time (updated
-           each time a file's attributes is modified).
-         st_atime: the time.time() timestamp when the file was last accessed.
-         st_mtime: the time.time() timestamp when the file was last modified.
-         st_size: the size of the file
-         st_nlink: the number of hard links to the file
-         st_ino: the inode number - a unique number identifying the file
-         st_dev: a unique number identifying the (fake) file system device the file belongs to
+    Attributes currently faked out:
+        st_mode: user-specified, otherwise S_IFREG
+        st_ctime: the time.time() timestamp of the file change time (updated
+        each time a file's attributes is modified).
+        st_atime: the time.time() timestamp when the file was last accessed.
+        st_mtime: the time.time() timestamp when the file was last modified.
+        st_size: the size of the file
+        st_nlink: the number of hard links to the file
+        st_ino: the inode number - a unique number identifying the file
+        st_dev: a unique number identifying the (fake) file system device the file belongs to
 
-       Other attributes needed by os.stat are assigned default value of None
-        these include: st_uid, st_gid
+    Other attributes needed by os.stat are assigned default value of None
+    these include: st_uid, st_gid
     """
 
     def __init__(self, name, st_mode=stat.S_IFREG | PERM_DEF_FILE,
@@ -1051,20 +1052,20 @@ class FakeFilesystem(object):
         are considered relative to the root directory for the FakeFilesystem.
         Callers should basically follow this pattern:
 
-          file_path = self.NormalizePath(file_path)
-          path_components = self.GetPathComponents(file_path)
-          current_dir = self.root
-          for component in path_components:
-            if component not in current_dir.contents:
-              raise IOError
-            DoStuffWithComponent(current_dir, component)
-            current_dir = current_dir.GetEntry(component)
+        >>> file_path = self.NormalizePath(file_path)
+        >>> path_components = self.GetPathComponents(file_path)
+        >>> current_dir = self.root
+        >>> for component in path_components:
+        >>>     if component not in current_dir.contents:
+        >>>         raise IOError
+        >>>     DoStuffWithComponent(current_dir, component)
+        >>>     current_dir = current_dir.GetEntry(component)
 
         Args:
-          path:  path to tokenize
+            path:  path to tokenize
 
         Returns:
-          The list of names split from path
+            The list of names split from path
         """
         if not path or path == self.path_separator:
             return []
@@ -1168,6 +1169,7 @@ class FakeFilesystem(object):
               /a/b2/x
               /a/c   -> ../d
               /a/x   -> y
+
          Then:
               /a/b/x      =>  /a/b/x
               /a/c        =>  /a/d
@@ -2969,7 +2971,7 @@ class FakeOsModule(object):
         Args:
           link_target:  the target of the symlink.
           path:  path to the symlink to create.
-.
+
         Raises:
           OSError:  if the file already exists.
         """

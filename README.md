@@ -5,6 +5,7 @@ touching the real disk.  The software under test requires no modification to
 work with pyfakefs.
 
 pyfakefs works with Linux, Windows and MacOS.
+Auto-generated documentation for the current version can be found [here](http://jmcgeheeiv.github.io/pyfakefs/).
 
 ## Usage
 There are two approaches to implementing tests using pyfakefs.
