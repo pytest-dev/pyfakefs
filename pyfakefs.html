@@ -2987,7 +2987,10 @@ retrofitted to use <cite>pyfakefs</cite> by simply changing their base class fro
 <em class="property">class </em><code class="descclassname">pyfakefs.fake_filesystem_unittest.</code><code class="descname">Patcher</code><span class="sig-paren">(</span><em>additional_skip_names=None</em>, <em>patch_path=True</em><span class="sig-paren">)</span><a class="headerlink" href="#pyfakefs.fake_filesystem_unittest.Patcher" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal"><span class="pre">object</span></code></p>
 <p>Instantiate a stub creator to bind and un-bind the file-related modules to
-the <a class="reference internal" href="#module-pyfakefs" title="pyfakefs"><code class="xref py py-mod docutils literal"><span class="pre">pyfakefs</span></code></a> fake modules.</p>
+the <a class="reference internal" href="#module-pyfakefs" title="pyfakefs"><code class="xref py py-mod docutils literal"><span class="pre">pyfakefs</span></code></a> fake modules.
+For usage outside of TestCase (for example with pytest) use:
+&gt;&gt;&gt; with Patcher():
+&gt;&gt;&gt;     doStuff()</p>
 <dl class="attribute">
 <dt id="pyfakefs.fake_filesystem_unittest.Patcher.HAS_PATHLIB">
 <code class="descname">HAS_PATHLIB</code><em class="property"> = True</em><a class="headerlink" href="#pyfakefs.fake_filesystem_unittest.Patcher.HAS_PATHLIB" title="Permalink to this definition">¶</a></dt>
@@ -2995,7 +2998,7 @@ the <a class="reference internal" href="#module-pyfakefs" title="pyfakefs"><code
 
 <dl class="attribute">
 <dt id="pyfakefs.fake_filesystem_unittest.Patcher.SKIPMODULES">
-<code class="descname">SKIPMODULES</code><em class="property"> = {&lt;module 'pyfakefs.fake_filesystem_shutil' from '/home/travis/build/mrbean-bremen/pyfakefs/pyfakefs/fake_filesystem_shutil.py'&gt;, &lt;module 'sys' (built-in)&gt;, &lt;module 'pyfakefs.fake_tempfile' from '/home/travis/build/mrbean-bremen/pyfakefs/pyfakefs/fake_tempfile.py'&gt;, None, &lt;module 'pyfakefs.fake_filesystem' from '/home/travis/build/mrbean-bremen/pyfakefs/pyfakefs/fake_filesystem.py'&gt;}</em><a class="headerlink" href="#pyfakefs.fake_filesystem_unittest.Patcher.SKIPMODULES" title="Permalink to this definition">¶</a></dt>
+<code class="descname">SKIPMODULES</code><em class="property"> = {&lt;module 'pyfakefs.fake_filesystem_shutil' from '/home/travis/build/mrbean-bremen/pyfakefs/pyfakefs/fake_filesystem_shutil.py'&gt;, &lt;module 'sys' (built-in)&gt;, None, &lt;module 'pyfakefs.fake_tempfile' from '/home/travis/build/mrbean-bremen/pyfakefs/pyfakefs/fake_tempfile.py'&gt;, &lt;module 'pyfakefs.fake_filesystem' from '/home/travis/build/mrbean-bremen/pyfakefs/pyfakefs/fake_filesystem.py'&gt;}</em><a class="headerlink" href="#pyfakefs.fake_filesystem_unittest.Patcher.SKIPMODULES" title="Permalink to this definition">¶</a></dt>
 <dd><p>Stub nothing that is imported within these modules.
 <cite>sys</cite> is included to prevent <cite>sys.path</cite> from being stubbed with the fake
 <cite>os.path</cite>.</p>
@@ -3003,7 +3006,7 @@ the <a class="reference internal" href="#module-pyfakefs" title="pyfakefs"><code
 
 <dl class="attribute">
 <dt id="pyfakefs.fake_filesystem_unittest.Patcher.SKIPNAMES">
-<code class="descname">SKIPNAMES</code><em class="property"> = {'tempfile', 'os', 'io', 'pathlib', 'path'}</em><a class="headerlink" href="#pyfakefs.fake_filesystem_unittest.Patcher.SKIPNAMES" title="Permalink to this definition">¶</a></dt>
+<code class="descname">SKIPNAMES</code><em class="property"> = {'tempfile', 'pathlib', 'io', 'path', 'os'}</em><a class="headerlink" href="#pyfakefs.fake_filesystem_unittest.Patcher.SKIPNAMES" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="method">
