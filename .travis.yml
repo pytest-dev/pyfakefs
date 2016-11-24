@@ -31,8 +31,8 @@ install:
   - if [[ $TRAVIS_PYTHON_VERSION == 2.6 ]]; then pip install importlib unittest2; fi
   - pip install -r requirements.txt
 
-script: "./all_tests.py"
+script: ./all_tests.py
 
 after_success:
   - pip install sphinx
-  - "./build-docs.sh"
+  - ./build-docs.sh

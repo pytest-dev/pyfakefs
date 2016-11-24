@@ -11,6 +11,8 @@
 # limitations under the License.
 
 """A fake implementation for pathlib working with FakeFilesystem.
+New in pyfakefs 3.0.
+
 Usage:
 * With fake_filesystem_unittest:
   If using fake_filesystem_unittest.TestCase, pathlib gets replaced
@@ -344,6 +346,7 @@ class _FakePosixFlavour(_FakeFlavour):
 class FakePath(pathlib.Path):
     """Replacement for pathlib.Path. Reimplement some methods to use fake filesystem.
     The rest of the methods work as they are, as they will use the fake accessor.
+    New in pyfakefs 3.0.
     """
 
     # the underlying fake filesystem

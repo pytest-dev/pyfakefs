@@ -64,7 +64,8 @@ class FakeGlobModule(object):
         Args:
             pathname: the pattern with which to find a list of paths.
             recursive: if true, the pattern '**' will match any files and
-            zero or more directories and subdirectories. New in Python 3.5.
+            zero or more directories and subdirectories.
+            New in Python 3.5. New in pyfakefs 3.0.
 
         Returns:
             List of strings matching the glob pattern.
@@ -74,6 +75,7 @@ class FakeGlobModule(object):
 
     def iglob(self, pathname, recursive=None):
         """Return an iterator yielding the paths matching a pathname pattern.
+        New in pyfakefs 3.0.
 
         The pattern may contain shell-style wildcards a la fnmatch.
 
