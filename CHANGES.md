@@ -1,12 +1,12 @@
 # Release Notes 
 The release versions are PyPi releases.
 
-## Unreleased
+## Version 3.0 (unreleased)
 
 #### New Features
- * support for path-like objects as arguments in fake os
-   and os.path modules (Python >= 3.6)
- * support for `pathlib` (Python >= 3.4)
+ * support for path-like objects as arguments in fake `os`
+   and `os.path` modules (Python >= 3.6)
+ * support for `pathlib` module (Python >= 3.4)
  * support for `os.replace` (Python >= 3.3)
  * `os.access`, `os.chmod`, `os.chown`, `os.stat`, `os.utime`:
    support for `follow_symlinks` argument (Python >= 3.3)
@@ -14,6 +14,9 @@ The release versions are PyPi releases.
  * option to not fake modules named `path`
  * `glob.glob`, `glob.iglob`: support for `recursive` argument (Python >= 3.5)
  * support for `glob.iglob`
+
+#### Fixes
+ * Exception handling when using `Patcher` with py.test (#135)
 
 ## Version 2.9
 

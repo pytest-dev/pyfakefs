@@ -21,6 +21,7 @@ Note: Code is taken form Python 3.5 and slightly adapted to work with older
     versions and use the fake os and os.path modules
 
 :Usage:
+
 >>> from pyfakefs import fake_filesystem
 >>> from pyfakefs import fake_filesystem_glob
 >>> filesystem = fake_filesystem.FakeFilesystem()
@@ -63,7 +64,8 @@ class FakeGlobModule(object):
         Args:
             pathname: the pattern with which to find a list of paths.
             recursive: if true, the pattern '**' will match any files and
-            zero or more directories and subdirectories. New in Python 3.5.
+            zero or more directories and subdirectories.
+            New in Python 3.5. New in pyfakefs 3.0.
 
         Returns:
             List of strings matching the glob pattern.
@@ -73,6 +75,7 @@ class FakeGlobModule(object):
 
     def iglob(self, pathname, recursive=None):
         """Return an iterator yielding the paths matching a pathname pattern.
+        New in pyfakefs 3.0.
 
         The pattern may contain shell-style wildcards a la fnmatch.
 

@@ -21,6 +21,7 @@
     shutil module.
 
 :Usage:
+
 >>> from pyfakefs import fake_filesystem
 >>> from pyfakefs import fake_filesystem_shutil
 >>> filesystem = fake_filesystem.FakeFilesystem()
@@ -80,6 +81,7 @@ class FakeShutilModule(object):
                          failed removals will be ignored; if false or omitted, such
                          errors are handled by calling a handler specified by
                          onerror.
+                         New in pyfakefs 2.9.
           onerror: (func) If onerror is provided, it must be a callable that accepts
                    three parameters: function, path, and excinfo.
 
@@ -89,6 +91,7 @@ class FakeShutilModule(object):
                    The third parameter, excinfo, will be the exception information
                    returned by sys.exc_info(). Exceptions raised by onerror will not
                    be caught.
+                   New in pyfakefs 2.9.
         """
         if ignore_errors:
             def onerror(*args):  # pylint: disable=unused-argument,function-redefined
@@ -300,6 +303,7 @@ class FakeShutilModule(object):
     def disk_usage(self, path):
         """Return the total, used and free disk space in bytes as named tuple
         or placeholder holder values simulating unlimited space if not set.
+        New in pyfakefs 2.9.
 
         Args:
           path: defines the filesystem device which is queried
