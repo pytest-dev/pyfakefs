@@ -243,7 +243,8 @@ class FakeShutilModule(object):
             Args:
               src: (str) source directory
               dst: (str) destination directory, must not already exist
-              copy_function: replacement for copy2
+              copy_function: replacement for copy2.
+                New in python 3.2. New in pyfakefs 2.9.
               symlinks: (bool) copy symlinks as symlinks instead of copying the
                         contents of the linked files. Currently unused.
 
@@ -259,7 +260,8 @@ class FakeShutilModule(object):
         Args:
           src: (str) source file or directory
           dst: (str) if the src is a directory, the dst must not already exist
-          copy_function: replacement for copy2 if copying is needed (Python >= 3.5 only)
+          copy_function: replacement for copy2 if copying is needed.
+            New in Python 3.5. New in pyfakefs 2.9.
         """
 
         def _destinsrc(src, dst):
@@ -300,15 +302,16 @@ class FakeShutilModule(object):
                 self.filesystem.RemoveObject(src)
         return dst
 
-    def disk_usage(self, path):
-        """Return the total, used and free disk space in bytes as named tuple
-        or placeholder holder values simulating unlimited space if not set.
-        New in pyfakefs 2.9.
+    if sys.version_info >= (3, 3):
+        def disk_usage(self, path):
+            """Return the total, used and free disk space in bytes as named tuple
+            or placeholder holder values simulating unlimited space if not set.
+            New in Python 3.3. New in pyfakefs 2.9.
 
-        Args:
-          path: defines the filesystem device which is queried
-        """
-        return self.filesystem.GetDiskUsage(path)
+            Args:
+              path: defines the filesystem device which is queried
+            """
+            return self.filesystem.GetDiskUsage(path)
 
     def __getattr__(self, name):
         """Forwards any non-faked calls to the standard shutil module."""

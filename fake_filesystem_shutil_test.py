@@ -268,6 +268,7 @@ class FakeShutilModuleTest(unittest.TestCase):
         self.assertTrue(self.filesystem.Exists('%s/subdir' % dst_directory))
         self.assertFalse(self.filesystem.Exists(src_directory))
 
+    @unittest.skipIf(sys.version_info < (3, 3), 'New in Python 3.3')
     def testDiskUsage(self):
         self.filesystem.CreateFile('/foo/bar', st_size=400)
         disk_usage = self.shutil.disk_usage('/')
