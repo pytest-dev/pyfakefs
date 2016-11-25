@@ -463,6 +463,7 @@ class FakeDirectory(FakeFile):
           pathname_name: basename of the child object to remove.
           recursive: if True (default), the entries in contained directories are deleted first.
             Needed to propagate removal errors (e.g. permission problems) from contained entries.
+            New in pyfakefs 2.9.
 
         Raises:
           KeyError: if no child exists by the specified name.
@@ -2257,7 +2258,9 @@ class FakePathModule(object):
         return self.filesystem.JoinPaths(*p)
 
     def splitdrive(self, path):
-        """Split the path into the drive part and the rest of the path, if supported."""
+        """Split the path into the drive part and the rest of the path, if supported.
+        New in pyfakefs 2.9.
+        """
         return self.filesystem.SplitDrive(path)
 
     def normpath(self, path):
@@ -2265,7 +2268,9 @@ class FakePathModule(object):
         return self.filesystem.CollapsePath(path)
 
     def normcase(self, path):
-        """Convert to lower case under windows, replaces additional path separator."""
+        """Convert to lower case under windows, replaces additional path separator.
+        New in pyfakefs 2.9.
+        """
         path = self.filesystem.NormalizePathSeparator(path)
         if _IS_WINDOWS:
             path = path.lower()
@@ -2294,6 +2299,7 @@ class FakePathModule(object):
 
     def ismount(self, path):
         """Return true if the given path is a mount point.
+        New in pyfakefs 2.9.
 
         Args:
           path:  path to filesystem object to be checked
@@ -2488,6 +2494,7 @@ class FakeOsModule(object):
     @classmethod
     def stat_float_times(cls, newvalue=None):
         """Determine whether a file's time stamps are reported as floats or ints.
+        New in pyfakefs 2.9.
 
         Calling without arguments returns the current value. The value is shared
         by all instances of FakeOsModule.

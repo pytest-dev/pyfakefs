@@ -9,7 +9,7 @@ if [ "$TRAVIS_PYTHON_VERSION" != "3.6-dev" ]; then
   exit 0
 fi
 
-SOURCE_BRANCH="master"
+SOURCE_BRANCH="autodoc-master"
 TARGET_BRANCH="gh-pages"
 REPO_URL="https://${GH_TOKEN}@github.com/jmcgeheeiv/pyfakefs.git"
 
