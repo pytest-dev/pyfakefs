@@ -189,7 +189,8 @@
 <dl class="method">
 <dt id="pyfakefs.fake_filesystem.FakeDirectory.GetSize">
 <code class="descname">GetSize</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#pyfakefs.fake_filesystem.FakeDirectory.GetSize" title="Permalink to this definition">¶</a></dt>
-<dd><p>Return the total size of all files contained in this directory tree.</p>
+<dd><p>Return the total size of all files contained in this directory tree.
+New in pyfakefs 2.9.</p>
 </dd></dl>
 
 <dl class="method">
@@ -203,7 +204,8 @@
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
 <li><strong>pathname_name</strong> &#8211; basename of the child object to remove.</li>
 <li><strong>recursive</strong> &#8211; if True (default), the entries in contained directories are deleted first.
-Needed to propagate removal errors (e.g. permission problems) from contained entries.</li>
+Needed to propagate removal errors (e.g. permission problems) from contained entries.
+New in pyfakefs 2.9.</li>
 </ul>
 </td>
 </tr>
@@ -247,7 +249,8 @@ these include: st_uid, st_gid</p>
 <dl class="method">
 <dt id="pyfakefs.fake_filesystem.FakeFile.GetSize">
 <code class="descname">GetSize</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#pyfakefs.fake_filesystem.FakeFile.GetSize" title="Permalink to this definition">¶</a></dt>
-<dd><p>Returns the size in bytes of the file contents.</p>
+<dd><p>Returns the size in bytes of the file contents.
+New in pyfakefs 2.9.</p>
 </dd></dl>
 
 <dl class="method">
@@ -273,7 +276,8 @@ these include: st_uid, st_gid</p>
 <dl class="method">
 <dt id="pyfakefs.fake_filesystem.FakeFile.SetCTime">
 <code class="descname">SetCTime</code><span class="sig-paren">(</span><em>st_ctime</em><span class="sig-paren">)</span><a class="headerlink" href="#pyfakefs.fake_filesystem.FakeFile.SetCTime" title="Permalink to this definition">¶</a></dt>
-<dd><p>Set the self.st_ctime attribute.</p>
+<dd><p>Set the self.st_ctime attribute.
+New in pyfakefs 3.0.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />
@@ -296,7 +300,8 @@ these include: st_uid, st_gid</p>
 <li><strong>contents</strong> &#8211; (str, bytes, unicode) new content of file.</li>
 <li><strong>encoding</strong> &#8211; (str) the encoding to be used for writing the contents
 if they are a unicode string.
-If not given, the locale preferred encoding is used.</li>
+If not given, the locale preferred encoding is used.
+New in pyfakefs 2.9.</li>
 </ul>
 </td>
 </tr>
@@ -422,12 +427,13 @@ or <cite>open()</cite> function.</p>
 &#8216;t&#8217;, and &#8216;U&#8217; are ignored, e.g., &#8216;wU&#8217; is treated as &#8216;w&#8217;. &#8216;b&#8217; sets
 binary mode, no end of line translations in StringIO.</li>
 <li><strong>buffering</strong> &#8211; ignored. (Used for signature compliance with __builtin__.open)</li>
-<li><strong>encoding</strong> &#8211; the encoding used to encode unicode strings / decode bytes</li>
-<li><strong>errors</strong> &#8211; ignored, this relates to encoding</li>
-<li><strong>newline</strong> &#8211; controls universal newlines, passed to StringIO object</li>
+<li><strong>encoding</strong> &#8211; the encoding used to encode unicode strings / decode bytes.</li>
+<li><strong>in pyfakefs 2.9.</strong> (<em>New</em>) &#8211; </li>
+<li><strong>errors</strong> &#8211; ignored, this relates to encoding.</li>
+<li><strong>newline</strong> &#8211; controls universal newlines, passed to StringIO object.</li>
 <li><strong>closefd</strong> &#8211; if a file descriptor rather than file name is passed, and set
-to false, then the file descriptor is kept open when file is closed</li>
-<li><strong>opener</strong> &#8211; not supported</li>
+to false, then the file descriptor is kept open when file is closed.</li>
+<li><strong>opener</strong> &#8211; not supported.</li>
 </ul>
 </td>
 </tr>
@@ -512,7 +518,8 @@ the FakeFile object on close() or flush().</p>
 <dt id="pyfakefs.fake_filesystem.FakeFilesystem.AddMountPoint">
 <code class="descname">AddMountPoint</code><span class="sig-paren">(</span><em>path</em>, <em>total_size=None</em><span class="sig-paren">)</span><a class="headerlink" href="#pyfakefs.fake_filesystem.FakeFilesystem.AddMountPoint" title="Permalink to this definition">¶</a></dt>
 <dd><p>Add a new mount point for a filesystem device.
-The mount point gets a new unique device number.</p>
+The mount point gets a new unique device number.
+New in pyfakefs 2.9.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />
@@ -575,7 +582,8 @@ Defaults to infinite size.</li>
 <dl class="method">
 <dt id="pyfakefs.fake_filesystem.FakeFilesystem.ChangeDiskUsage">
 <code class="descname">ChangeDiskUsage</code><span class="sig-paren">(</span><em>usage_change</em>, <em>file_path</em>, <em>st_dev</em><span class="sig-paren">)</span><a class="headerlink" href="#pyfakefs.fake_filesystem.FakeFilesystem.ChangeDiskUsage" title="Permalink to this definition">¶</a></dt>
-<dd><p>Change the used disk space by the given amount.</p>
+<dd><p>Change the used disk space by the given amount.
+New in pyfakefs 2.9.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />
@@ -598,7 +606,8 @@ If negative, the used space will be decreased.</li>
 <dl class="method">
 <dt id="pyfakefs.fake_filesystem.FakeFilesystem.ChangeMode">
 <code class="descname">ChangeMode</code><span class="sig-paren">(</span><em>path</em>, <em>mode</em>, <em>follow_symlinks=True</em><span class="sig-paren">)</span><a class="headerlink" href="#pyfakefs.fake_filesystem.FakeFilesystem.ChangeMode" title="Permalink to this definition">¶</a></dt>
-<dd><p>Change the permissions of a file as encoded in integer mode.</p>
+<dd><p>Change the permissions of a file as encoded in integer mode.
+New in pyfakefs 3.0.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />
@@ -658,7 +667,8 @@ it behaves like the real os.path.normpath on Windows if initialized with
 <dl class="method">
 <dt id="pyfakefs.fake_filesystem.FakeFilesystem.ConfirmDir">
 <code class="descname">ConfirmDir</code><span class="sig-paren">(</span><em>target_directory</em><span class="sig-paren">)</span><a class="headerlink" href="#pyfakefs.fake_filesystem.FakeFilesystem.ConfirmDir" title="Permalink to this definition">¶</a></dt>
-<dd><p>Test that the target is actually a directory, raising OSError if not.</p>
+<dd><p>Test that the target is actually a directory, raising OSError if not.
+New in pyfakefs 3.0.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />
@@ -715,6 +725,7 @@ it behaves like the real os.path.normpath on Windows if initialized with
 <li><strong>create_missing_dirs</strong> &#8211; if True, auto create missing directories.</li>
 <li><strong>apply_umask</strong> &#8211; whether or not the current umask must be applied on st_mode.</li>
 <li><strong>encoding</strong> &#8211; if contents is a unicode string, the encoding used for serialization.</li>
+<li><strong>in pyfakefs 2.9.</strong> (<em>New</em>) &#8211; </li>
 </ul>
 </td>
 </tr>
@@ -734,7 +745,8 @@ it behaves like the real os.path.normpath on Windows if initialized with
 <dl class="method">
 <dt id="pyfakefs.fake_filesystem.FakeFilesystem.CreateHardLink">
 <code class="descname">CreateHardLink</code><span class="sig-paren">(</span><em>old_path</em>, <em>new_path</em><span class="sig-paren">)</span><a class="headerlink" href="#pyfakefs.fake_filesystem.FakeFilesystem.CreateHardLink" title="Permalink to this definition">¶</a></dt>
-<dd><p>Create a hard link at new_path, pointing at old_path.</p>
+<dd><p>Create a hard link at new_path, pointing at old_path.
+New in pyfakefs 2.9.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />
@@ -880,7 +892,8 @@ result for the symlink, otherwise for the object it points to.</td>
 <code class="descclassname">FakeFilesystem.</code><code class="descname">GetDiskUsage</code><span class="sig-paren">(</span><em>path=None</em><span class="sig-paren">)</span><a class="headerlink" href="#pyfakefs.fake_filesystem.FakeFilesystem.GetDiskUsage" title="Permalink to this definition">¶</a></dt>
 <dd><p>Return the total, used and free disk space in bytes as named tuple,
 or placeholder values simulating unlimited space if not set.
-Note: This matches the return value of shutil.disk_usage().</p>
+Note: This matches the return value of shutil.disk_usage().
+New in pyfakefs 2.9.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />
@@ -985,7 +998,8 @@ Callers should basically follow this pattern:</p>
 <dl class="method">
 <dt id="pyfakefs.fake_filesystem.FakeFilesystem.GetStat">
 <code class="descclassname">FakeFilesystem.</code><code class="descname">GetStat</code><span class="sig-paren">(</span><em>entry_path</em>, <em>follow_symlinks=True</em><span class="sig-paren">)</span><a class="headerlink" href="#pyfakefs.fake_filesystem.FakeFilesystem.GetStat" title="Permalink to this definition">¶</a></dt>
-<dd><p>Return the os.stat-like tuple for the FakeFile object of entry_path.</p>
+<dd><p>Return the os.stat-like tuple for the FakeFile object of entry_path.
+New in pyfakefs 3.0.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />
@@ -1010,7 +1024,8 @@ instead of the linked object.</li>
 <dl class="method">
 <dt id="pyfakefs.fake_filesystem.FakeFilesystem.HasOpenFile">
 <code class="descclassname">FakeFilesystem.</code><code class="descname">HasOpenFile</code><span class="sig-paren">(</span><em>file_object</em><span class="sig-paren">)</span><a class="headerlink" href="#pyfakefs.fake_filesystem.FakeFilesystem.HasOpenFile" title="Permalink to this definition">¶</a></dt>
-<dd><p>Return True if the given file object is in the list of open files.</p>
+<dd><p>Return True if the given file object is in the list of open files.
+New in pyfakefs 2.9.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />
@@ -1026,7 +1041,8 @@ instead of the linked object.</li>
 <dl class="method">
 <dt id="pyfakefs.fake_filesystem.FakeFilesystem.IsDir">
 <code class="descclassname">FakeFilesystem.</code><code class="descname">IsDir</code><span class="sig-paren">(</span><em>path</em><span class="sig-paren">)</span><a class="headerlink" href="#pyfakefs.fake_filesystem.FakeFilesystem.IsDir" title="Permalink to this definition">¶</a></dt>
-<dd><p>Determine if path identifies a directory.</p>
+<dd><p>Determine if path identifies a directory.
+New in pyfakefs 3.0.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />
@@ -1044,7 +1060,8 @@ instead of the linked object.</li>
 <dl class="method">
 <dt id="pyfakefs.fake_filesystem.FakeFilesystem.IsFile">
 <code class="descclassname">FakeFilesystem.</code><code class="descname">IsFile</code><span class="sig-paren">(</span><em>path</em><span class="sig-paren">)</span><a class="headerlink" href="#pyfakefs.fake_filesystem.FakeFilesystem.IsFile" title="Permalink to this definition">¶</a></dt>
-<dd><p>Determine if path identifies a regular file.</p>
+<dd><p>Determine if path identifies a regular file.
+New in pyfakefs 3.0.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />
@@ -1062,7 +1079,8 @@ instead of the linked object.</li>
 <dl class="method">
 <dt id="pyfakefs.fake_filesystem.FakeFilesystem.IsLink">
 <code class="descclassname">FakeFilesystem.</code><code class="descname">IsLink</code><span class="sig-paren">(</span><em>path</em><span class="sig-paren">)</span><a class="headerlink" href="#pyfakefs.fake_filesystem.FakeFilesystem.IsLink" title="Permalink to this definition">¶</a></dt>
-<dd><p>Determine if path identifies a symbolic link.</p>
+<dd><p>Determine if path identifies a symbolic link.
+New in pyfakefs 3.0.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />
@@ -1120,7 +1138,8 @@ the object but not of the final object itself.</p>
 <dl class="method">
 <dt id="pyfakefs.fake_filesystem.FakeFilesystem.ListDir">
 <code class="descclassname">FakeFilesystem.</code><code class="descname">ListDir</code><span class="sig-paren">(</span><em>target_directory</em><span class="sig-paren">)</span><a class="headerlink" href="#pyfakefs.fake_filesystem.FakeFilesystem.ListDir" title="Permalink to this definition">¶</a></dt>
-<dd><p>Return a list of file names in target_directory.</p>
+<dd><p>Return a list of file names in target_directory.
+New in pyfakefs 3.0.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />
@@ -1138,7 +1157,8 @@ the object but not of the final object itself.</p>
 <dl class="method">
 <dt id="pyfakefs.fake_filesystem.FakeFilesystem.MakeDirectories">
 <code class="descclassname">FakeFilesystem.</code><code class="descname">MakeDirectories</code><span class="sig-paren">(</span><em>dir_name</em>, <em>mode=511</em>, <em>exist_ok=False</em><span class="sig-paren">)</span><a class="headerlink" href="#pyfakefs.fake_filesystem.FakeFilesystem.MakeDirectories" title="Permalink to this definition">¶</a></dt>
-<dd><p>Create a leaf Fake directory and create any non-existent parent dirs.</p>
+<dd><p>Create a leaf Fake directory and create any non-existent parent dirs.
+New in pyfakefs 3.0.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />
@@ -1166,7 +1186,8 @@ raised if the target directory already exists.  New in Python 3.2.</li>
 <dl class="method">
 <dt id="pyfakefs.fake_filesystem.FakeFilesystem.MakeDirectory">
 <code class="descclassname">FakeFilesystem.</code><code class="descname">MakeDirectory</code><span class="sig-paren">(</span><em>dir_name</em>, <em>mode=511</em><span class="sig-paren">)</span><a class="headerlink" href="#pyfakefs.fake_filesystem.FakeFilesystem.MakeDirectory" title="Permalink to this definition">¶</a></dt>
-<dd><p>Create a leaf Fake directory.</p>
+<dd><p>Create a leaf Fake directory.
+New in pyfakefs 3.0.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />
@@ -1193,7 +1214,8 @@ to be relative to &#8216;/&#8217;.</li>
 <dt id="pyfakefs.fake_filesystem.FakeFilesystem.NormalizeCase">
 <code class="descclassname">FakeFilesystem.</code><code class="descname">NormalizeCase</code><span class="sig-paren">(</span><em>path</em><span class="sig-paren">)</span><a class="headerlink" href="#pyfakefs.fake_filesystem.FakeFilesystem.NormalizeCase" title="Permalink to this definition">¶</a></dt>
 <dd><p>Return a normalized case version of the given path for case-insensitive
-file systems. For case-sensitive file systems, return path unchanged.</p>
+file systems. For case-sensitive file systems, return path unchanged.
+New in pyfakefs 2.9.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />
@@ -1232,7 +1254,8 @@ eliminate dot and empty components.</p>
 <dt id="pyfakefs.fake_filesystem.FakeFilesystem.NormalizePathSeparator">
 <code class="descclassname">FakeFilesystem.</code><code class="descname">NormalizePathSeparator</code><span class="sig-paren">(</span><em>path</em><span class="sig-paren">)</span><a class="headerlink" href="#pyfakefs.fake_filesystem.FakeFilesystem.NormalizePathSeparator" title="Permalink to this definition">¶</a></dt>
 <dd><p>Replace all appearances of alternative path separator with path separator.
-Do nothing if no alternative separator is set.</p>
+Do nothing if no alternative separator is set.
+New in pyfakefs 2.9.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />
@@ -1248,7 +1271,8 @@ Do nothing if no alternative separator is set.</p>
 <dl class="method">
 <dt id="pyfakefs.fake_filesystem.FakeFilesystem.RemoveDirectory">
 <code class="descclassname">FakeFilesystem.</code><code class="descname">RemoveDirectory</code><span class="sig-paren">(</span><em>target_directory</em><span class="sig-paren">)</span><a class="headerlink" href="#pyfakefs.fake_filesystem.FakeFilesystem.RemoveDirectory" title="Permalink to this definition">¶</a></dt>
-<dd><p>Remove a leaf Fake directory.</p>
+<dd><p>Remove a leaf Fake directory.
+New in pyfakefs 3.0.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />
@@ -1270,7 +1294,8 @@ Do nothing if no alternative separator is set.</p>
 <dl class="method">
 <dt id="pyfakefs.fake_filesystem.FakeFilesystem.RemoveFile">
 <code class="descclassname">FakeFilesystem.</code><code class="descname">RemoveFile</code><span class="sig-paren">(</span><em>path</em><span class="sig-paren">)</span><a class="headerlink" href="#pyfakefs.fake_filesystem.FakeFilesystem.RemoveFile" title="Permalink to this definition">¶</a></dt>
-<dd><p>Remove the FakeFile object at the specified file path.</p>
+<dd><p>Remove the FakeFile object at the specified file path.
+New in pyfakefs 3.0.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />
@@ -1418,7 +1443,8 @@ file system that looks like this:</p>
 <dt id="pyfakefs.fake_filesystem.FakeFilesystem.ScanDir">
 <code class="descclassname">FakeFilesystem.</code><code class="descname">ScanDir</code><span class="sig-paren">(</span><em>path=''</em><span class="sig-paren">)</span><a class="headerlink" href="#pyfakefs.fake_filesystem.FakeFilesystem.ScanDir" title="Permalink to this definition">¶</a></dt>
 <dd><p>Return an iterator of DirEntry objects corresponding to the entries
-in the directory given by path.</p>
+in the directory given by path.
+New in pyfakefs 3.0.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />
@@ -1437,7 +1463,8 @@ in the directory given by path.</p>
 <dt id="pyfakefs.fake_filesystem.FakeFilesystem.ScanDirIter">
 <em class="property">class </em><code class="descclassname">FakeFilesystem.</code><code class="descname">ScanDirIter</code><span class="sig-paren">(</span><em>filesystem</em>, <em>path</em><span class="sig-paren">)</span><a class="headerlink" href="#pyfakefs.fake_filesystem.FakeFilesystem.ScanDirIter" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal"><span class="pre">object</span></code></p>
-<p>Iterator for DirEntry objects returned from <cite>scandir()</cite> function.</p>
+<p>Iterator for DirEntry objects returned from <cite>scandir()</cite> function.
+New in pyfakefs 3.0.</p>
 <dl class="method">
 <dt id="pyfakefs.fake_filesystem.FakeFilesystem.ScanDirIter.close">
 <code class="descname">close</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#pyfakefs.fake_filesystem.FakeFilesystem.ScanDirIter.close" title="Permalink to this definition">¶</a></dt>
@@ -1449,7 +1476,8 @@ in the directory given by path.</p>
 <dt id="pyfakefs.fake_filesystem.FakeFilesystem.SetDiskUsage">
 <code class="descclassname">FakeFilesystem.</code><code class="descname">SetDiskUsage</code><span class="sig-paren">(</span><em>total_size</em>, <em>path=None</em><span class="sig-paren">)</span><a class="headerlink" href="#pyfakefs.fake_filesystem.FakeFilesystem.SetDiskUsage" title="Permalink to this definition">¶</a></dt>
 <dd><p>Changes the total size of the file system, preserving the used space.
-Example usage: set the size of an auto-mounted Windows drive.</p>
+Example usage: set the size of an auto-mounted Windows drive.
+New in pyfakefs 2.9.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />
@@ -1491,7 +1519,8 @@ Using this function does not guarantee uniqueness and should used with caution.<
 <dl class="method">
 <dt id="pyfakefs.fake_filesystem.FakeFilesystem.SplitDrive">
 <code class="descclassname">FakeFilesystem.</code><code class="descname">SplitDrive</code><span class="sig-paren">(</span><em>path</em><span class="sig-paren">)</span><a class="headerlink" href="#pyfakefs.fake_filesystem.FakeFilesystem.SplitDrive" title="Permalink to this definition">¶</a></dt>
-<dd><p>Splits the path into the drive part and the rest of the path.</p>
+<dd><p>Splits the path into the drive part and the rest of the path.
+New in pyfakefs 2.9.</p>
 <p>Taken from Windows specific implementation in Python 3.5 and slightly adapted.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
@@ -1532,7 +1561,8 @@ for this FakeFilesystem.</p>
 <dl class="method">
 <dt id="pyfakefs.fake_filesystem.FakeFilesystem.StartsWithDriveLetter">
 <code class="descclassname">FakeFilesystem.</code><code class="descname">StartsWithDriveLetter</code><span class="sig-paren">(</span><em>file_path</em><span class="sig-paren">)</span><a class="headerlink" href="#pyfakefs.fake_filesystem.FakeFilesystem.StartsWithDriveLetter" title="Permalink to this definition">¶</a></dt>
-<dd><p>Return True if file_path starts with a drive letter.</p>
+<dd><p>Return True if file_path starts with a drive letter.
+New in pyfakefs 2.9.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />
@@ -1549,7 +1579,8 @@ the path starts with a drive letter.</td>
 <dl class="method">
 <dt id="pyfakefs.fake_filesystem.FakeFilesystem.UpdateTime">
 <code class="descclassname">FakeFilesystem.</code><code class="descname">UpdateTime</code><span class="sig-paren">(</span><em>path</em>, <em>times</em>, <em>follow_symlinks=True</em><span class="sig-paren">)</span><a class="headerlink" href="#pyfakefs.fake_filesystem.FakeFilesystem.UpdateTime" title="Permalink to this definition">¶</a></dt>
-<dd><p>Change the access and modified times of a file.</p>
+<dd><p>Change the access and modified times of a file.
+New in pyfakefs 3.0.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />
@@ -1578,7 +1609,8 @@ number of elements in the tuple is not equal to 2.</p>
 <dt id="pyfakefs.fake_filesystem.FakeIoModule">
 <em class="property">class </em><code class="descclassname">pyfakefs.fake_filesystem.</code><code class="descname">FakeIoModule</code><span class="sig-paren">(</span><em>filesystem</em><span class="sig-paren">)</span><a class="headerlink" href="#pyfakefs.fake_filesystem.FakeIoModule" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal"><span class="pre">object</span></code></p>
-<p>Uses FakeFilesystem to provide a fake io module replacement.</p>
+<p>Uses FakeFilesystem to provide a fake io module replacement.
+New in pyfakefs 2.9.</p>
 <p>Currently only used to wrap <cite>io.open()</cite> which is an alias to <cite>open()</cite>.</p>
 <p>You need a fake_filesystem to use this:
 filesystem = fake_filesystem.FakeFilesystem()
@@ -1625,7 +1657,7 @@ my_os_module = fake_filesystem.FakeOsModule(filesystem)</p>
 <li><strong>mode</strong> &#8211; (int) Permissions represented as a bitwise-OR combination of
 os.F_OK, os.R_OK, os.W_OK, and os.X_OK.</li>
 <li><strong>follow_symlinks</strong> &#8211; if False and entry_path points to a symlink, the link itself is queried
-instead of the linked object. New in Python 3.3.</li>
+instead of the linked object. New in Python 3.3. New in pyfakefs 3.0.</li>
 </ul>
 </td>
 </tr>
@@ -1665,7 +1697,7 @@ the target is not a directory</td>
 <li><strong>path</strong> &#8211; (str) Path to the file.</li>
 <li><strong>mode</strong> &#8211; (int) Permissions.</li>
 <li><strong>follow_symlinks</strong> &#8211; if False and entry_path points to a symlink, the link itself is changed
-instead of the linked object. New in Python 3.3.</li>
+instead of the linked object. New in Python 3.3. New in pyfakefs 3.0.</li>
 </ul>
 </td>
 </tr>
@@ -1686,7 +1718,7 @@ instead of the linked object. New in Python 3.3.</li>
 <li><strong>uid</strong> &#8211; (int) Numeric uid to set the file or directory to.</li>
 <li><strong>gid</strong> &#8211; (int) Numeric gid to set the file or directory to.</li>
 <li><strong>follow_symlinks</strong> &#8211; if False and entry_path points to a symlink, the link itself is changed
-instead of the linked object. New in Python 3.3.</li>
+instead of the linked object. New in Python 3.3. New in pyfakefs 3.0.</li>
 </ul>
 </td>
 </tr>
@@ -1723,7 +1755,8 @@ use <cite>os.chown</cite> even when the source file <cite>uid</cite> and <cite>g
 <dl class="method">
 <dt id="pyfakefs.fake_filesystem.FakeOsModule.fdatasync">
 <code class="descname">fdatasync</code><span class="sig-paren">(</span><em>file_des</em><span class="sig-paren">)</span><a class="headerlink" href="#pyfakefs.fake_filesystem.FakeOsModule.fdatasync" title="Permalink to this definition">¶</a></dt>
-<dd><p>Perform fdatasync for a fake file (in other words, do nothing).</p>
+<dd><p>Perform fdatasync for a fake file (in other words, do nothing).
+New in pyfakefs 2.9.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />
@@ -1762,7 +1795,8 @@ use <cite>os.chown</cite> even when the source file <cite>uid</cite> and <cite>g
 <dl class="method">
 <dt id="pyfakefs.fake_filesystem.FakeOsModule.fsync">
 <code class="descname">fsync</code><span class="sig-paren">(</span><em>file_des</em><span class="sig-paren">)</span><a class="headerlink" href="#pyfakefs.fake_filesystem.FakeOsModule.fsync" title="Permalink to this definition">¶</a></dt>
-<dd><p>Perform fsync for a fake file (in other words, do nothing).</p>
+<dd><p>Perform fsync for a fake file (in other words, do nothing).
+New in pyfakefs 2.9.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />
@@ -1814,7 +1848,8 @@ If the file is a link, the permissions of the link are changed.</p>
 <dl class="method">
 <dt id="pyfakefs.fake_filesystem.FakeOsModule.link">
 <code class="descname">link</code><span class="sig-paren">(</span><em>oldpath</em>, <em>newpath</em><span class="sig-paren">)</span><a class="headerlink" href="#pyfakefs.fake_filesystem.FakeOsModule.link" title="Permalink to this definition">¶</a></dt>
-<dd><p>Create a hard link at new_path, pointing at old_path.</p>
+<dd><p>Create a hard link at new_path, pointing at old_path.
+New in pyfakefs 2.9.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />
@@ -1890,7 +1925,8 @@ filesystem.</td>
 directories) with. This argument defaults to 0o777.  The umask is
 applied to this mode.</li>
 <li><strong>exist_ok</strong> &#8211; (boolean) If exist_ok is False (the default), an OSError is
-raised if the target directory already exists.  New in Python 3.2.</li>
+raised if the target directory already exists.  New in Python 3.2.
+New in pyfakefs 2.9.</li>
 </ul>
 </td>
 </tr>
@@ -2121,7 +2157,8 @@ Also replaces existing new_file_path object, if one existed (Unix only).</p>
 <code class="descname">replace</code><span class="sig-paren">(</span><em>old_file_path</em>, <em>new_file_path</em><span class="sig-paren">)</span><a class="headerlink" href="#pyfakefs.fake_filesystem.FakeOsModule.replace" title="Permalink to this definition">¶</a></dt>
 <dd><p>Renames a FakeFile object at old_file_path to new_file_path,
 preserving all properties.
-Also replaces existing new_file_path object, if one existed.</p>
+Also replaces existing new_file_path object, if one existed.
+New in pyfakefs 3.0.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />
@@ -2196,7 +2233,7 @@ in the directory given by path.</p>
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
 <li><strong>entry_path</strong> &#8211; path to filesystem object to retrieve.</li>
 <li><strong>follow_symlinks</strong> &#8211; if False and entry_path points to a symlink, the link itself is inspected
-instead of the linked object. New in Python 3.3.</li>
+instead of the linked object. New in Python 3.3. New in pyfakefs 3.0.</li>
 </ul>
 </td>
 </tr>
@@ -2213,7 +2250,8 @@ instead of the linked object. New in Python 3.3.</li>
 <dl class="classmethod">
 <dt id="pyfakefs.fake_filesystem.FakeOsModule.stat_float_times">
 <em class="property">classmethod </em><code class="descname">stat_float_times</code><span class="sig-paren">(</span><em>newvalue=None</em><span class="sig-paren">)</span><a class="headerlink" href="#pyfakefs.fake_filesystem.FakeOsModule.stat_float_times" title="Permalink to this definition">¶</a></dt>
-<dd><p>Determine whether a file&#8217;s time stamps are reported as floats or ints.</p>
+<dd><p>Determine whether a file&#8217;s time stamps are reported as floats or ints.
+New in pyfakefs 2.9.</p>
 <p>Calling without arguments returns the current value. The value is shared
 by all instances of FakeOsModule.</p>
 <table class="docutils field-list" frame="void" rules="none">
@@ -2302,7 +2340,7 @@ Else, as ints (rounding down).</td>
 the access and modified times, respectively. If None, file&#8217;s access
 and modified times are set to the current time.</li>
 <li><strong>follow_symlinks</strong> &#8211; if False and entry_path points to a symlink, the link itself is queried
-instead of the linked object. New in Python 3.3.</li>
+instead of the linked object. New in Python 3.3. New in pyfakefs 3.0.</li>
 </ul>
 </td>
 </tr>
@@ -2329,6 +2367,7 @@ first entry (True) or as the last, after all the child directory
 tuples (False).</li>
 <li><strong>onerror</strong> &#8211; if not None, function which will be called to handle the
 os.error instance provided when os.listdir() fails.</li>
+<li><strong>followlinks</strong> &#8211; if True, symbolic links are followed. New in pyfakefs 2.9.</li>
 </ul>
 </td>
 </tr>
@@ -2520,7 +2559,8 @@ replaced by that user&#8217;s home directory.</p>
 <dl class="method">
 <dt id="pyfakefs.fake_filesystem.FakePathModule.ismount">
 <code class="descname">ismount</code><span class="sig-paren">(</span><em>path</em><span class="sig-paren">)</span><a class="headerlink" href="#pyfakefs.fake_filesystem.FakePathModule.ismount" title="Permalink to this definition">¶</a></dt>
-<dd><p>Return true if the given path is a mount point.</p>
+<dd><p>Return true if the given path is a mount point.
+New in pyfakefs 2.9.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />
@@ -2559,7 +2599,8 @@ Under Windows also returns True for drive and UNC roots (independent of their ex
 <dl class="method">
 <dt id="pyfakefs.fake_filesystem.FakePathModule.normcase">
 <code class="descname">normcase</code><span class="sig-paren">(</span><em>path</em><span class="sig-paren">)</span><a class="headerlink" href="#pyfakefs.fake_filesystem.FakePathModule.normcase" title="Permalink to this definition">¶</a></dt>
-<dd><p>Convert to lower case under windows, replaces additional path separator.</p>
+<dd><p>Convert to lower case under windows, replaces additional path separator.
+New in pyfakefs 2.9.</p>
 </dd></dl>
 
 <dl class="method">
@@ -2571,7 +2612,8 @@ Under Windows also returns True for drive and UNC roots (independent of their ex
 <dl class="method">
 <dt id="pyfakefs.fake_filesystem.FakePathModule.splitdrive">
 <code class="descname">splitdrive</code><span class="sig-paren">(</span><em>path</em><span class="sig-paren">)</span><a class="headerlink" href="#pyfakefs.fake_filesystem.FakePathModule.splitdrive" title="Permalink to this definition">¶</a></dt>
-<dd><p>Split the path into the drive part and the rest of the path, if supported.</p>
+<dd><p>Split the path into the drive part and the rest of the path, if supported.
+New in pyfakefs 2.9.</p>
 </dd></dl>
 
 </dd></dl>
@@ -2634,7 +2676,8 @@ Under Windows also returns True for drive and UNC roots (independent of their ex
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
 <li><strong>pathname</strong> &#8211; the pattern with which to find a list of paths.</li>
 <li><strong>recursive</strong> &#8211; if true, the pattern &#8216;**&#8217; will match any files and</li>
-<li><strong>or more directories and subdirectories. New in Python 3.5.</strong> (<em>zero</em>) &#8211; </li>
+<li><strong>or more directories and subdirectories.</strong> (<em>zero</em>) &#8211; </li>
+<li><strong>in Python 3.5. New in pyfakefs 3.0.</strong> (<em>New</em>) &#8211; </li>
 </ul>
 </td>
 </tr>
@@ -2717,7 +2760,8 @@ Under Windows also returns True for drive and UNC roots (independent of their ex
 <dl class="method">
 <dt id="pyfakefs.fake_filesystem_glob.FakeGlobModule.iglob">
 <code class="descname">iglob</code><span class="sig-paren">(</span><em>pathname</em>, <em>recursive=None</em><span class="sig-paren">)</span><a class="headerlink" href="#pyfakefs.fake_filesystem_glob.FakeGlobModule.iglob" title="Permalink to this definition">¶</a></dt>
-<dd><p>Return an iterator yielding the paths matching a pathname pattern.</p>
+<dd><p>Return an iterator yielding the paths matching a pathname pattern.
+New in pyfakefs 3.0.</p>
 <p>The pattern may contain shell-style wildcards a la fnmatch.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
@@ -2878,7 +2922,8 @@ Under Windows also returns True for drive and UNC roots (independent of their ex
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
 <li><strong>src</strong> &#8211; (str) source directory</li>
 <li><strong>dst</strong> &#8211; (str) destination directory, must not already exist</li>
-<li><strong>copy_function</strong> &#8211; replacement for copy2</li>
+<li><strong>copy_function</strong> &#8211; replacement for copy2.
+New in python 3.2. New in pyfakefs 2.9.</li>
 <li><strong>symlinks</strong> &#8211; (bool) copy symlinks as symlinks instead of copying the
 contents of the linked files. Currently unused.</li>
 </ul>
@@ -2895,7 +2940,8 @@ contents of the linked files. Currently unused.</li>
 <dt id="pyfakefs.fake_filesystem_shutil.FakeShutilModule.disk_usage">
 <code class="descname">disk_usage</code><span class="sig-paren">(</span><em>path</em><span class="sig-paren">)</span><a class="headerlink" href="#pyfakefs.fake_filesystem_shutil.FakeShutilModule.disk_usage" title="Permalink to this definition">¶</a></dt>
 <dd><p>Return the total, used and free disk space in bytes as named tuple
-or placeholder holder values simulating unlimited space if not set.</p>
+or placeholder holder values simulating unlimited space if not set.
+New in Python 3.3. New in pyfakefs 2.9.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />
@@ -2917,7 +2963,8 @@ or placeholder holder values simulating unlimited space if not set.</p>
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
 <li><strong>src</strong> &#8211; (str) source file or directory</li>
 <li><strong>dst</strong> &#8211; (str) if the src is a directory, the dst must not already exist</li>
-<li><strong>copy_function</strong> &#8211; replacement for copy2 if copying is needed (Python &gt;= 3.5 only)</li>
+<li><strong>copy_function</strong> &#8211; replacement for copy2 if copying is needed.
+New in Python 3.5. New in pyfakefs 2.9.</li>
 </ul>
 </td>
 </tr>
@@ -2942,7 +2989,8 @@ they raise an exception.</p>
 <li><strong>ignore_errors</strong> &#8211; (bool) If ignore_errors is true, errors resulting from
 failed removals will be ignored; if false or omitted, such
 errors are handled by calling a handler specified by
-onerror.</li>
+onerror.
+New in pyfakefs 2.9.</li>
 <li><strong>onerror</strong> &#8211; <p>(func) If onerror is provided, it must be a callable that accepts
 three parameters: function, path, and excinfo.</p>
 <p>The first parameter, function, is the function which raised the
@@ -2950,7 +2998,8 @@ exception; it depends on the platform and implementation. The
 second parameter, path, will be the path name passed to function.
 The third parameter, excinfo, will be the exception information
 returned by sys.exc_info(). Exceptions raised by onerror will not
-be caught.</p>
+be caught.
+New in pyfakefs 2.9.</p>
 </li>
 </ul>
 </td>
@@ -2998,7 +3047,7 @@ For usage outside of TestCase (for example with pytest) use:
 
 <dl class="attribute">
 <dt id="pyfakefs.fake_filesystem_unittest.Patcher.SKIPMODULES">
-<code class="descname">SKIPMODULES</code><em class="property"> = {&lt;module 'pyfakefs.fake_filesystem_shutil' from '/home/travis/build/mrbean-bremen/pyfakefs/pyfakefs/fake_filesystem_shutil.py'&gt;, &lt;module 'sys' (built-in)&gt;, None, &lt;module 'pyfakefs.fake_tempfile' from '/home/travis/build/mrbean-bremen/pyfakefs/pyfakefs/fake_tempfile.py'&gt;, &lt;module 'pyfakefs.fake_filesystem' from '/home/travis/build/mrbean-bremen/pyfakefs/pyfakefs/fake_filesystem.py'&gt;}</em><a class="headerlink" href="#pyfakefs.fake_filesystem_unittest.Patcher.SKIPMODULES" title="Permalink to this definition">¶</a></dt>
+<code class="descname">SKIPMODULES</code><em class="property"> = {&lt;module 'pyfakefs.fake_filesystem_shutil' from '/home/travis/build/mrbean-bremen/pyfakefs/pyfakefs/fake_filesystem_shutil.py'&gt;, &lt;module 'sys' (built-in)&gt;, &lt;module 'pyfakefs.fake_filesystem' from '/home/travis/build/mrbean-bremen/pyfakefs/pyfakefs/fake_filesystem.py'&gt;, None, &lt;module 'pyfakefs.fake_tempfile' from '/home/travis/build/mrbean-bremen/pyfakefs/pyfakefs/fake_tempfile.py'&gt;}</em><a class="headerlink" href="#pyfakefs.fake_filesystem_unittest.Patcher.SKIPMODULES" title="Permalink to this definition">¶</a></dt>
 <dd><p>Stub nothing that is imported within these modules.
 <cite>sys</cite> is included to prevent <cite>sys.path</cite> from being stubbed with the fake
 <cite>os.path</cite>.</p>
@@ -3006,7 +3055,7 @@ For usage outside of TestCase (for example with pytest) use:
 
 <dl class="attribute">
 <dt id="pyfakefs.fake_filesystem_unittest.Patcher.SKIPNAMES">
-<code class="descname">SKIPNAMES</code><em class="property"> = {'tempfile', 'pathlib', 'io', 'path', 'os'}</em><a class="headerlink" href="#pyfakefs.fake_filesystem_unittest.Patcher.SKIPNAMES" title="Permalink to this definition">¶</a></dt>
+<code class="descname">SKIPNAMES</code><em class="property"> = {'tempfile', 'io', 'path', 'pathlib', 'os'}</em><a class="headerlink" href="#pyfakefs.fake_filesystem_unittest.Patcher.SKIPNAMES" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="method">
@@ -3379,7 +3428,7 @@ my_tempfile_module = mock_tempfile.FakeTempfileModule(filesystem)</p>
     </div>
     <div class="footer" role="contentinfo">
         &#169; Copyright 2016, John McGehee.
-      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.4.8.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.4.9.
     </div>
   </body>
 </html>
