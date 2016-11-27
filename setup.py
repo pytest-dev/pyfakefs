@@ -27,6 +27,15 @@ DESCRIPTION = 'pyfakefs implements a fake file system that mocks the Python file
 
 URL = "http://pyfakefs.org"
 
+try:
+    import pypandoc
+
+    LONG_DESCRIPTION = pypandoc.convert('README.md', 'rst')
+except ImportError:
+    LONG_DESCRIPTION = '''Using pyfakefs, your tests operate on a fake file system in memory without
+touching the real disk. The software under test requires no modification to work with pyfakefs.'''
+
+
 readme = os.path.join(os.path.dirname(__file__), 'README.md')
 LONG_DESCRIPTION = open(readme).read()
 
@@ -70,9 +79,7 @@ params = dict(
     maintainer=MAINTAINER,
     maintainer_email=MAINTAINER_EMAIL,
     description=DESCRIPTION,
-    long_description='''Using pyfakefs, your tests operate on a fake file system in memory without
-touching the real disk. The software under test requires no modification to
-work with pyfakefs.''',  # LONG_DESCRIPTION,
+    long_description=LONG_DESCRIPTION,
     keywords=KEYWORDS,
     url=URL,
     classifiers=CLASSIFIERS,
