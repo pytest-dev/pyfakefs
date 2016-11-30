@@ -36,6 +36,8 @@ import sys
 
 import functools
 
+import errno
+
 from pyfakefs.fake_filesystem import FakeFileOpen, FakeFilesystem
 
 
@@ -216,9 +218,83 @@ class _FakeFlavour(pathlib._Flavour):
             return parts
         return [p.lower() for p in parts]
 
-    def resolve(self, path):
+    def _resolve_posix(self, path, strict):
+        """Original implementation in Python 3.6."""
+        sep = self.sep
+        seen = {}
+
+        def _resolve(path, rest):
+            if rest.startswith(sep):
+                path = ''
+
+            for name in rest.split(sep):
+                if not name or name == '.':
+                    # current dir
+                    continue
+                if name == '..':
+                    # parent dir
+                    path, _, _ = path.rpartition(sep)
+                    continue
+                newpath = path + sep + name
+                if newpath in seen:
+                    # Already seen this path
+                    path = seen[newpath]
+                    if path is not None:
+                        # use cached value
+                        continue
+                    # The symlink is not resolved, so we must have a symlink loop.
+                    raise RuntimeError("Symlink loop from %r" % newpath)
+                # Resolve the symbolic link
+                try:
+                    target = self.filesystem.ReadLink(newpath)
+                except OSError as e:
+                    if e.errno != errno.EINVAL:
+                        if strict:
+                            raise
+                        else:
+                            return newpath
+                    # Not a symlink
+                    path = newpath
+                else:
+                    seen[newpath] = None  # not resolved symlink
+                    path = _resolve(path, target)
+                    seen[newpath] = path  # resolved symlink
+
+            return path
+
+        # NOTE: according to POSIX, getcwd() cannot contain path components
+        # which are symlinks.
+        base = '' if path.is_absolute() else self.filesystem.cwd
+        return _resolve(base, str(path)) or sep
+
+    def _resolve_windows(self, path, strict):
+        s = str(path)
+        if not s:
+            return os.getcwd()
+        previous_s = None
+        if strict:
+            if not self.filesystem.Exists(s):
+                raise FileNotFoundError(s)
+            return self.filesystem.ResolvePath(s)
+        else:
+            while True:
+                try:
+                    s = self.filesystem.ResolvePath(s)
+                except FileNotFoundError:
+                    previous_s = s
+                    s = self.filesystem.SplitPath(s)[0]
+                else:
+                    if previous_s is None:
+                        return s
+                    else:
+                        return self.filesystem.JoinPaths(s, os.path.basename(previous_s))
+
+    def resolve(self, path, strict):
         """Make the path absolute, resolving any symlinks."""
-        return self.filesystem.ResolvePath(str(path))
+        if self.filesystem.supports_drive_letter:
+            return self._resolve_windows(path, strict)
+        else:
+            return self._resolve_posix(path, strict)
 
     def gethomedir(self, username):
         """Return the home directory of the current user."""
@@ -375,41 +451,28 @@ class FakePath(pathlib.Path):
         """
         return cls(cls.filesystem.cwd)
 
-    @classmethod
-    def home(cls):
-        """Return a new path pointing to the user's home directory (as
-        returned by os.path.expanduser('~')).
-        """
-        return cls(cls()._flavour.gethomedir(None).
-                   replace(os.sep, cls.filesystem.path_separator))
-
-    def samefile(self, other_path):
-        """Return whether other_path is the same or not as this file
-        (as returned by os.path.samefile()).
-
-        Args:
-            other_path: a path object or string of the file object to be compared with
-
-        Raises:
-          OSError: if the filesystem object doesn't exist.
-        """
-        st = self.stat()
-        try:
-            other_st = other_path.stat()
-        except AttributeError:
-            other_st = self.filesystem.GetStat(other_path)
-        return st.st_ino == other_st.st_ino and st.st_dev == other_st.st_dev
-
-    def resolve(self):
+    def resolve(self, strict=None):
         """Make the path absolute, resolving all symlinks on the way and also
         normalizing it (for example turning slashes into backslashes under Windows).
 
+        Args:
+            strict: if False (default) no excpetion is raised if the path does not exist
+                New in Python 3.6.
+
         Raises:
-            IOError: if the path doesn't exist
+            IOError: if the path doesn't exist (strict=True or Python < 3.6)
         """
+        if strict is None:
+            strict = sys.version_info < (3, 6)
+        elif sys.version_info < (3, 6):
+            raise TypeError("resolve() got an unexpected keyword argument 'strict'")
         if self._closed:
             self._raise_closed()
-        path = self.filesystem.ResolvePath(self._path())
+        path = self._flavour.resolve(self, strict=strict)
+        if path is None:
+            self.stat()
+            path = str(self.absolute())
+        path = self.filesystem.NormalizePath(path)
         return FakePath(path)
 
     def open(self, mode='r', buffering=-1, encoding=None,
@@ -441,7 +504,7 @@ class FakePath(pathlib.Path):
             Open the fake file in text mode, read it, and close the file.
             """
             with FakeFileOpen(self.filesystem)(
-                self._path(), mode='r', encoding=encoding, errors=errors) as f:
+                    self._path(), mode='r', encoding=encoding, errors=errors) as f:
                 return f.read()
 
         def write_bytes(self, data):
@@ -474,8 +537,40 @@ class FakePath(pathlib.Path):
                 raise TypeError('data must be str, not %s' %
                                 data.__class__.__name__)
             with FakeFileOpen(self.filesystem)(
-                self._path(), mode='w', encoding=encoding, errors=errors) as f:
+                    self._path(), mode='w', encoding=encoding, errors=errors) as f:
                 return f.write(data)
+
+        @classmethod
+        def home(cls):
+            """Return a new path pointing to the user's home directory (as
+            returned by os.path.expanduser('~')).
+            """
+            return cls(cls()._flavour.gethomedir(None).
+                       replace(os.sep, cls.filesystem.path_separator))
+
+        def samefile(self, other_path):
+            """Return whether other_path is the same or not as this file
+            (as returned by os.path.samefile()).
+
+            Args:
+                other_path: a path object or string of the file object to be compared with
+
+            Raises:
+              OSError: if the filesystem object doesn't exist.
+            """
+            st = self.stat()
+            try:
+                other_st = other_path.stat()
+            except AttributeError:
+                other_st = self.filesystem.GetStat(other_path)
+            return st.st_ino == other_st.st_ino and st.st_dev == other_st.st_dev
+
+        def expanduser(self):
+            """ Return a new path with expanded ~ and ~user constructs
+            (as returned by os.path.expanduser)
+            """
+            return FakePath(os.path.expanduser(self._path())
+                            .replace(os.path.sep, self.filesystem.path_separator))
 
     def touch(self, mode=0o666, exist_ok=True):
         """Create a fake file for the path with the given access mode, if it doesn't exist.
@@ -499,13 +594,6 @@ class FakePath(pathlib.Path):
             fake_file = self.open('w')
             fake_file.close()
             self.chmod(mode)
-
-    def expanduser(self):
-        """ Return a new path with expanded ~ and ~user constructs
-        (as returned by os.path.expanduser)
-        """
-        return FakePath(os.path.expanduser(self._path())
-                        .replace(os.path.sep, self.filesystem.path_separator))
 
 
 class FakePathlibModule(object):

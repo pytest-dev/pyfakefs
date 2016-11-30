@@ -1331,6 +1331,12 @@ class FakeFilesystem(object):
         try:
             for component in path_components:
                 if not isinstance(target_object, FakeDirectory):
+                    # we use supports_drive_letter instead of checking the OS
+                    # to allow tests on other systems
+                    if not self.supports_drive_letter:
+                        raise IOError(errno.ENOTDIR,
+                                      'Not a directory in fake filesystem',
+                                      file_path)
                     raise IOError(errno.ENOENT,
                                   'No such file or directory in fake filesystem',
                                   file_path)
@@ -1404,6 +1410,9 @@ class FakeFilesystem(object):
             parent_obj = self.ResolveObject(parent_directory)
             assert parent_obj
             if not isinstance(parent_obj, FakeDirectory):
+                if not self.supports_drive_letter and isinstance(parent_obj, FakeFile):
+                    raise IOError(errno.ENOTDIR,
+                                  'The parent object is not a directory', path)
                 raise IOError(errno.ENOENT,
                               'No such file or directory in fake filesystem',
                               path)
@@ -1682,6 +1691,31 @@ class FakeFilesystem(object):
         old_file.name = new_basename
         self.AddObject(new_parent_directory, old_file)
         return old_file
+
+    def ReadLink(self, path):
+        """Read the target of a symlink.
+        New in pyfakefs 3.0.
+
+        Args:
+          path:  symlink to read the target of.
+
+        Returns:
+          the string representing the path to which the symbolic link points.
+
+        Raises:
+          TypeError: if path is None
+          OSError: (with errno=ENOENT) if path is not a valid path, or
+                   (with errno=EINVAL) if path is valid, but is not a symlink.
+        """
+        if path is None:
+            raise TypeError
+        try:
+            link_obj = self.LResolveObject(path)
+        except IOError as exc:
+            raise OSError(exc.errno, 'Fake path does not exist', path)
+        if stat.S_IFMT(link_obj.st_mode) != stat.S_IFLNK:
+            raise OSError(errno.EINVAL, 'Fake filesystem: not a symlink', path)
+        return link_obj.contents
 
     def MakeDirectory(self, dir_name, mode=PERM_DEF):
         """Create a leaf Fake directory.
@@ -2026,6 +2060,7 @@ class FakeFilesystem(object):
             """Iterator for DirEntry objects returned from `scandir()` function.
             New in pyfakefs 3.0.
             """
+
             def __init__(self, filesystem, path):
                 self.filesystem = filesystem
                 self.path = self.filesystem.ResolvePath(path)
@@ -2686,15 +2721,7 @@ class FakeOsModule(object):
           OSError: (with errno=ENOENT) if path is not a valid path, or
                    (with errno=EINVAL) if path is valid, but is not a symlink.
         """
-        if path is None:
-            raise TypeError
-        try:
-            link_obj = self.filesystem.LResolveObject(path)
-        except IOError:
-            raise OSError(errno.ENOENT, 'Fake os module: path does not exist', path)
-        if stat.S_IFMT(link_obj.st_mode) != stat.S_IFLNK:
-            raise OSError(errno.EINVAL, 'Fake os module: not a symlink', path)
-        return link_obj.contents
+        return self.filesystem.ReadLink(path)
 
     def stat(self, entry_path, follow_symlinks=None):
         """Return the os.stat-like tuple for the FakeFile object of entry_path.
