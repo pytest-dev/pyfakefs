@@ -51,7 +51,7 @@ class TestCase(unittest.TestCase):
     def assertRaisesIOError(self, subtype, expression):
         try:
             expression()
-        except IOError as exc:
+        except (IOError, OSError) as exc:
             self.assertEqual(exc.errno, subtype)
 
 
