@@ -277,10 +277,36 @@ class FakePathlibFileObjectPropertyTest(unittest.TestCase):
         self.assertEqual(self.path('docs/../setup.py').resolve(),
                          self.path('/home/antoine/setup.py'))
 
+    @unittest.skipIf(sys.version_info >= (3, 6), 'Changed behavior in Python 3.6')
+    def test_resolve_nonexisting_file(self):
+        path = self.path('/foo/bar')
+        self.assertRaises(FileNotFoundError, path.resolve)
+
+    @unittest.skipIf(sys.version_info >= (3, 6), 'Changed behavior in Python 3.6')
+    def test_resolve_file_as_parent_windows(self):
+        self.filesystem.supports_drive_letter = True
+        self.filesystem.CreateFile('/a_file')
+        path = self.path('/a_file/this can not exist')
+        self.assertRaises(FileNotFoundError, path.resolve)
+
+    @unittest.skipIf(sys.version_info >= (3, 6), 'Changed behavior in Python 3.6')
+    def test_resolve_file_as_parent_posix(self):
+        self.filesystem.supports_drive_letter = False
+        self.filesystem.CreateFile('/a_file')
+        path = self.path('/a_file/this can not exist')
+        self.assertRaises(NotADirectoryError, path.resolve)
+
+    @unittest.skipIf(sys.version_info < (3, 6), 'Changed behavior in Python 3.6')
+    def test_resolve_nonexisting_file(self):
+        path = self.path('/path/to/file/this can not exist')
+        self.assertTrue(path, path.resolve())
+        self.assertRaises(FileNotFoundError, path.resolve, strict=True)
+
     def test_cwd(self):
         self.filesystem.cwd = '/home/jane'
         self.assertEqual(self.path.cwd(), self.path('/home/jane'))
 
+    @unittest.skipIf(sys.version_info < (3, 5), 'New in version 3.5')
     def test_expanduser(self):
         if is_windows:
             self.assertEqual(self.path('~').expanduser(),
@@ -289,6 +315,7 @@ class FakePathlibFileObjectPropertyTest(unittest.TestCase):
             self.assertEqual(self.path('~').expanduser(),
                              self.path(os.environ['HOME']))
 
+    @unittest.skipIf(sys.version_info < (3, 5), 'New in version 3.5')
     def test_home(self):
         if is_windows:
             self.assertEqual(self.path.home(),
@@ -394,6 +421,7 @@ class FakePathlibPathFileOperationTest(unittest.TestCase):
         self.assertTrue(file_obj)
         self.assertEqual(file_obj.contents, 'test')
 
+    @unittest.skipIf(sys.version_info < (3, 5), 'New in version 3.5')
     def test_samefile(self):
         self.filesystem.CreateFile('/foo/bar.txt')
         self.filesystem.CreateFile('/foo/baz.txt')
