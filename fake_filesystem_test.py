@@ -48,9 +48,9 @@ class TestCase(unittest.TestCase):
     def assertModeEqual(self, expected, actual):
         return self.assertEqual(stat.S_IMODE(expected), stat.S_IMODE(actual))
 
-    def assertRaisesIOError(self, subtype, expression):
+    def assertRaisesIOError(self, subtype, expression, *args, **kwargs):
         try:
-            expression()
+            expression(*args, **kwargs)
         except (IOError, OSError) as exc:
             self.assertEqual(exc.errno, subtype)
 
@@ -86,10 +86,10 @@ class FakeDirectoryUnitTest(TestCase):
         self.assertRaises(KeyError, self.fake_dir.GetEntry, 'foobar')
 
     def testShouldThrowIfSetSizeIsNotInteger(self):
-        self.assertRaisesIOError(errno.ENOSPC, lambda: self.fake_file.SetSize(0.1))
+        self.assertRaisesIOError(errno.ENOSPC, self.fake_file.SetSize, 0.1)
 
     def testShouldThrowIfSetSizeIsNegative(self):
-        self.assertRaisesIOError(errno.ENOSPC, lambda: self.fake_file.SetSize(-1))
+        self.assertRaisesIOError(errno.ENOSPC, self.fake_file.SetSize, -1)
 
     def testProduceEmptyFileIfSetSizeIsZero(self):
         self.fake_file.SetSize(0)
@@ -143,10 +143,10 @@ class FakeDirectoryUnitTest(TestCase):
 
 class SetLargeFileSizeTest(FakeDirectoryUnitTest):
     def testShouldThrowIfSizeIsNotInteger(self):
-        self.assertRaisesIOError(errno.ENOSPC, lambda: self.fake_file.SetLargeFileSize(0.1))
+        self.assertRaisesIOError(errno.ENOSPC, self.fake_file.SetLargeFileSize, 0.1)
 
     def testShouldThrowIfSizeIsNegative(self):
-        self.assertRaisesIOError(errno.ENOSPC, lambda: self.fake_file.SetLargeFileSize(-1))
+        self.assertRaisesIOError(errno.ENOSPC, self.fake_file.SetLargeFileSize, -1)
 
     def testSetsContentNoneIfSizeIsNonNegativeInteger(self):
         self.fake_file.SetLargeFileSize(1000000000)
@@ -272,18 +272,15 @@ class FakeFilesystemUnitTest(TestCase):
     def testGetNonexistentObjectFromRootError(self):
         self.filesystem.AddObject(self.root_name, self.fake_file)
         self.assertEqual(self.fake_file, self.filesystem.GetObject('foobar'))
-        self.assertRaisesIOError(errno.ENOENT,
-                                 lambda: self.filesystem.GetObject('some_bogus_filename'))
+        self.assertRaisesIOError(errno.ENOENT, self.filesystem.GetObject, 'some_bogus_filename')
 
     def testRemoveObjectFromRoot(self):
         self.filesystem.AddObject(self.root_name, self.fake_file)
         self.filesystem.RemoveObject(self.fake_file.name)
-        self.assertRaisesIOError(errno.ENOENT,
-                                 lambda: self.filesystem.GetObject(self.fake_file.name))
+        self.assertRaisesIOError(errno.ENOENT, self.filesystem.GetObject, self.fake_file.name)
 
     def testRemoveNonexistenObjectFromRootError(self):
-        self.assertRaisesIOError(errno.ENOENT,
-                                 lambda: self.filesystem.RemoveObject('some_bogus_filename'))
+        self.assertRaisesIOError(errno.ENOENT, self.filesystem.RemoveObject, 'some_bogus_filename')
 
     def testExistsRemovedFile(self):
         self.filesystem.AddObject(self.root_name, self.fake_file)
@@ -300,8 +297,7 @@ class FakeFilesystemUnitTest(TestCase):
     def testAddObjectToRegularFileError(self):
         self.filesystem.AddObject(self.root_name, self.fake_file)
         self.assertRaisesIOError(errno.ENOTDIR,
-                                 lambda: self.filesystem.AddObject(self.fake_file.name,
-                                                                   self.fake_file))
+                                 self.filesystem.AddObject, self.fake_file.name, self.fake_file)
 
     def testExistsFileAddedToChild(self):
         self.filesystem.AddObject(self.root_name, self.fake_child)
@@ -321,9 +317,9 @@ class FakeFilesystemUnitTest(TestCase):
     def testGetNonexistentObjectFromChildError(self):
         self.filesystem.AddObject(self.root_name, self.fake_child)
         self.filesystem.AddObject(self.fake_child.name, self.fake_file)
-        self.assertRaises(IOError, self.filesystem.GetObject,
-                          self.filesystem.JoinPaths(self.fake_child.name,
-                                                    'some_bogus_filename'))
+        self.assertRaisesIOError(errno.ENOENT, self.filesystem.GetObject,
+                                 self.filesystem.JoinPaths(self.fake_child.name,
+                                                           'some_bogus_filename'))
 
     def testRemoveObjectFromChild(self):
         self.filesystem.AddObject(self.root_name, self.fake_child)
@@ -331,21 +327,20 @@ class FakeFilesystemUnitTest(TestCase):
         target_path = self.filesystem.JoinPaths(self.fake_child.name,
                                                 self.fake_file.name)
         self.filesystem.RemoveObject(target_path)
-        self.assertRaises(IOError, self.filesystem.GetObject, target_path)
+        self.assertRaisesIOError(errno.ENOENT, self.filesystem.GetObject, target_path)
 
     def testRemoveObjectFromChildError(self):
         self.filesystem.AddObject(self.root_name, self.fake_child)
-        self.assertRaises(IOError, self.filesystem.RemoveObject,
-                          self.filesystem.JoinPaths(self.fake_child.name,
-                                                    'some_bogus_filename'))
+        self.assertRaisesIOError(errno.ENOENT, self.filesystem.RemoveObject,
+                                 self.filesystem.JoinPaths(self.fake_child.name,
+                                                           'some_bogus_filename'))
 
     def testRemoveObjectFromNonDirectoryError(self):
         self.filesystem.AddObject(self.root_name, self.fake_file)
-        self.assertRaises(
-            IOError, self.filesystem.RemoveObject,
-            self.filesystem.JoinPaths(
-                '%s' % self.fake_file.name,
-                'file_does_not_matter_since_parent_not_a_directory'))
+        self.assertRaisesIOError(errno.ENOTDIR, self.filesystem.RemoveObject,
+                                 self.filesystem.JoinPaths(
+                                     '%s' % self.fake_file.name,
+                                     'file_does_not_matter_since_parent_not_a_directory'))
 
     def testExistsFileRemovedFromChild(self):
         self.filesystem.AddObject(self.root_name, self.fake_child)
@@ -498,10 +493,9 @@ class FakeFilesystemUnitTest(TestCase):
         self.assertRaises(IOError, self.filesystem.ResolveObject, 'not_a_dir/foo')
         self.assertRaises(IOError, self.filesystem.ResolveObject,
                           'not_a_dir/foo/bar')
+        self.assertRaisesIOError(errno.ENOTDIR, self.filesystem.LResolveObject, 'not_a_dir/foo')
         self.assertRaisesIOError(errno.ENOTDIR,
-                                 lambda: self.filesystem.LResolveObject('not_a_dir/foo'))
-        self.assertRaisesIOError(errno.ENOTDIR,
-                                 lambda: self.filesystem.LResolveObject('not_a_dir/foo/bar'))
+                                 self.filesystem.LResolveObject, 'not_a_dir/foo/bar')
 
 
 class CaseInsensitiveFakeFilesystemTest(TestCase):
@@ -932,7 +926,7 @@ class FakeOsModuleTest(FakeOsModuleTestBase):
     def testReadlinkRaisesIfPathIsNotALink(self):
         file_path = 'foo/bar/eleventyone'
         self.filesystem.CreateFile(file_path)
-        self.assertRaisesIOError(errno.EINVAL, lambda: self.os.readlink(file_path))
+        self.assertRaisesIOError(errno.EINVAL, self.os.readlink, file_path)
 
     @unittest.skipIf(TestCase.is_windows and sys.version_info < (3, 3),
                      'Links are not supported under Windows before Python 3.3')
@@ -940,15 +934,14 @@ class FakeOsModuleTest(FakeOsModuleTestBase):
         self.filesystem.supports_drive_letter = False
         self.filesystem.CreateFile('/a_file')
         file_path = '/a_file/foo'
-        self.assertRaisesIOError(errno.ENOTDIR, lambda: self.os.readlink(file_path))
+        self.assertRaisesIOError(errno.ENOTDIR, self.os.readlink, file_path)
         file_path = '/a_file/foo/bar'
-        self.assertRaisesIOError(errno.ENOTDIR, lambda: self.os.readlink(file_path))
+        self.assertRaisesIOError(errno.ENOTDIR, self.os.readlink, file_path)
 
     @unittest.skipIf(TestCase.is_windows and sys.version_info < (3, 3),
                      'Links are not supported under Windows before Python 3.3')
     def testReadlinkRaisesIfPathDoesNotExist(self):
-        self.assertRaisesIOError(errno.ENOENT,
-                                 lambda: self.os.readlink('/this/path/does/not/exist'))
+        self.assertRaisesIOError(errno.ENOENT, self.os.readlink, '/this/path/does/not/exist')
 
     @unittest.skipIf(TestCase.is_windows and sys.version_info < (3, 3),
                      'Links are not supported under Windows before Python 3.3')
@@ -2804,9 +2797,9 @@ class FakeFileOpenTestBase(TestCase):
 
 class FakeFileOpenTest(FakeFileOpenTestBase):
     def testOpenNoParentDir(self):
-        """Expect raise when open'ing a file in a missing directory."""
+        """Expect raise when opening a file in a missing directory."""
         file_path = 'foo/bar.txt'
-        self.assertRaises(IOError, self.file, file_path, 'w')
+        self.assertRaisesIOError(errno.ENOENT, self.file, file_path, 'w')
 
     def testDeleteOnClose(self):
         file_dir = 'boo'
@@ -2968,7 +2961,7 @@ class FakeFileOpenTest(FakeFileOpenTestBase):
     def testOpenDirectoryError(self):
         directory_path = 'foo/bar'
         self.filesystem.CreateDirectory(directory_path)
-        self.assertRaises(IOError, self.file.__call__, directory_path)
+        self.assertRaisesIOError(errno.EISDIR, self.file.__call__, directory_path)
 
     def testCreateFileWithWrite(self):
         contents = [
@@ -3073,7 +3066,7 @@ class FakeFileOpenTest(FakeFileOpenTestBase):
         file_path = 'append/this/file'
         self.filesystem.CreateFile(file_path, contents=''.join(contents))
         fake_file = self.file(file_path, 'a')
-        self.assertRaises(IOError, fake_file.read)
+        self.assertRaisesIOError(None, fake_file.read)
         self.assertEqual('', fake_file.read(0))
         self.assertEqual('', fake_file.readline(0))
         self.assertEqual(len(''.join(contents)), fake_file.tell())
@@ -3200,7 +3193,7 @@ class FakeFileOpenTest(FakeFileOpenTestBase):
         self.file(file_path, 'r').close()
         self.file(file_path, 'w').close()
         self.file(file_path, 'w+').close()
-        self.assertRaises(IOError, self.file, file_path, 'INV')
+        self.assertRaises(ValueError, self.file, file_path, 'INV')
 
     def testOpenFlags400(self):
         # set up
@@ -3208,8 +3201,8 @@ class FakeFileOpenTest(FakeFileOpenTestBase):
         self._CreateWithPermission(file_path, 0o400)
         # actual tests
         self.file(file_path, 'r').close()
-        self.assertRaises(IOError, self.file, file_path, 'w')
-        self.assertRaises(IOError, self.file, file_path, 'w+')
+        self.assertRaisesIOError(errno.EACCES, self.file, file_path, 'w')
+        self.assertRaisesIOError(errno.EACCES, self.file, file_path, 'w+')
 
     def testOpenFlags200(self):
         # set up
@@ -3634,19 +3627,19 @@ class OpenWithIgnoredFlagsTest(TestCase):
 
 class OpenWithInvalidFlagsTest(FakeFileOpenTestBase):
     def testCapitalR(self):
-        self.assertRaises(IOError, self.file, 'some_file', 'R')
+        self.assertRaises(ValueError, self.file, 'some_file', 'R')
 
     def testCapitalW(self):
-        self.assertRaises(IOError, self.file, 'some_file', 'W')
+        self.assertRaises(ValueError, self.file, 'some_file', 'W')
 
     def testCapitalA(self):
-        self.assertRaises(IOError, self.file, 'some_file', 'A')
+        self.assertRaises(ValueError, self.file, 'some_file', 'A')
 
     def testLowerU(self):
-        self.assertRaises(IOError, self.file, 'some_file', 'u')
+        self.assertRaises(ValueError, self.file, 'some_file', 'u')
 
     def testLowerRw(self):
-        self.assertRaises(IOError, self.file, 'some_file', 'rw')
+        self.assertRaises(ValueError, self.file, 'some_file', 'rw')
 
 
 class ResolvePathTest(FakeFileOpenTestBase):
@@ -4134,8 +4127,8 @@ class DiskSpaceTest(TestCase):
 
     def testResizeFileWithSizeTooLarge(self):
         file_object = self.filesystem.CreateFile('/foo/bar', st_size=50)
-        self.assertRaises(IOError, lambda: file_object.SetLargeFileSize(200))
-        self.assertRaises(IOError, lambda: file_object.SetContents('a' * 150))
+        self.assertRaisesIOError(errno.ENOSPC, file_object.SetLargeFileSize, 200)
+        self.assertRaisesIOError(errno.ENOSPC, file_object.SetContents, 'a' * 150)
 
     def testFileSystemSizeAfterDirectoryRename(self):
         self.filesystem.CreateFile('/foo/bar', st_size=20)
@@ -4167,9 +4160,10 @@ class DiskSpaceTest(TestCase):
         self.filesystem.AddMountPoint('/mount_limited', total_size=50)
         self.filesystem.AddMountPoint('/mount_unlimited')
 
-        self.assertRaises(IOError,
-                          lambda: self.filesystem.CreateFile('/mount_limited/foo', st_size=60))
-        self.assertRaises(IOError, lambda: self.filesystem.CreateFile('/bar', st_size=110))
+        self.assertRaisesIOError(errno.ENOSPC,
+                                 self.filesystem.CreateFile, '/mount_limited/foo', st_size=60)
+        self.assertRaisesIOError(errno.ENOSPC, self.filesystem.CreateFile, '/bar', st_size=110)
+
         try:
             self.filesystem.CreateFile('/foo', st_size=60)
             self.filesystem.CreateFile('/mount_limited/foo', st_size=40)
@@ -4191,7 +4185,8 @@ class DiskSpaceTest(TestCase):
 
     def testSetLargerDiskSize(self):
         self.filesystem.AddMountPoint('/mount1', total_size=20)
-        self.assertRaises(IOError, lambda: self.filesystem.CreateFile('/mount1/foo', st_size=100))
+        self.assertRaisesIOError(errno.ENOSPC,
+                                 self.filesystem.CreateFile, '/mount1/foo', st_size=100)
         self.filesystem.SetDiskUsage(total_size=200, path='/mount1')
         self.filesystem.CreateFile('/mount1/foo', st_size=100)
         self.assertEqual(100, self.filesystem.GetDiskUsage('/mount1/foo').free)
@@ -4199,8 +4194,8 @@ class DiskSpaceTest(TestCase):
     def testSetSmallerDiskSize(self):
         self.filesystem.AddMountPoint('/mount1', total_size=200)
         self.filesystem.CreateFile('/mount1/foo', st_size=100)
-        self.assertRaises(IOError,
-                          lambda: self.filesystem.SetDiskUsage(total_size=50, path='/mount1'))
+        self.assertRaisesIOError(errno.ENOSPC,
+                                 self.filesystem.SetDiskUsage, total_size=50, path='/mount1')
         self.filesystem.SetDiskUsage(total_size=150, path='/mount1')
         self.assertEqual(50, self.filesystem.GetDiskUsage('/mount1/foo').free)
 

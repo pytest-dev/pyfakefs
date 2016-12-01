@@ -16,8 +16,9 @@ The release versions are PyPi releases.
  * support for `glob.iglob`
 
 #### Fixes
+ * Incorrect exception type in Posix if path ancestor is a file (#139)
  * Exception handling when using `Patcher` with py.test (#135)
-
+ 
 ## Version 2.9
 
 #### New Features
