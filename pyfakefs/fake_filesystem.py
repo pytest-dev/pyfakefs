@@ -3444,7 +3444,7 @@ class FakeFileOpen(object):
         mode = mode.replace('rU', 'r').replace('U', 'r')
 
         if mode not in _OPEN_MODE_MAP:
-            raise IOError('Invalid mode: %r' % orig_modes)
+            raise ValueError('Invalid mode: %r' % orig_modes)
 
         must_exist, need_read, need_write, truncate, append = _OPEN_MODE_MAP[mode]
 
