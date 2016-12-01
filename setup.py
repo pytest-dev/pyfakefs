@@ -35,10 +35,6 @@ except ImportError:
     LONG_DESCRIPTION = '''Using pyfakefs, your tests operate on a fake file system in memory without
 touching the real disk. The software under test requires no modification to work with pyfakefs.'''
 
-
-readme = os.path.join(os.path.dirname(__file__), 'README.md')
-LONG_DESCRIPTION = open(readme).read()
-
 CLASSIFIERS = [
     'Development Status :: 5 - Production/Stable',
     'Environment :: Console',
