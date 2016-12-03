@@ -959,30 +959,27 @@ class FakeOsModuleTest(FakeOsModuleTestBase):
         self.filesystem.is_windows_fs = False
         self.checkReadlinkRaisesIfPathIsNotALink()
 
-    @unittest.skipIf(TestCase.is_windows and sys.version_info < (3, 3),
-                     'Links are not supported under Windows before Python 3.3')
-    def checkReadlinkRaisesIfPathHasFile(self):
-        self.filesystem.is_windows_fs = False
+    def checkReadlinkRaisesIfPathHasFile(self, error_subtype):
         self.filesystem.CreateFile('/a_file')
         file_path = '/a_file/foo'
-        self.assertRaisesIOError(errno.ENOTDIR, self.os.readlink, file_path)
+        self.assertRaisesOSError(error_subtype, self.os.readlink, file_path)
         file_path = '/a_file/foo/bar'
-        self.assertRaisesIOError(errno.ENOTDIR, self.os.readlink, file_path)
+        self.assertRaisesOSError(error_subtype, self.os.readlink, file_path)
 
-    @unittest.skipIf(TestCase.is_windows and sys.version_info < (3, 3),
+    @unittest.skipIf(sys.version_info < (3, 3),
                      'Links are not supported under Windows before Python 3.3')
     def testReadlinkRaisesIfPathHasFileWindows(self):
-        self.filesystem.is_windows_fs = False
-        self.checkReadlinkRaisesIfPathHasFile()
+        self.filesystem.is_windows_fs = True
+        self.checkReadlinkRaisesIfPathHasFile(errno.ENOENT)
 
     def testReadlinkRaisesIfPathHasFilePosix(self):
-        self.filesystem.is_windows_fs = True
-        self.checkReadlinkRaisesIfPathHasFile()
+        self.filesystem.is_windows_fs = False
+        self.checkReadlinkRaisesIfPathHasFile(errno.ENOTDIR)
 
-    @unittest.skipIf(TestCase.is_windows and sys.version_info < (3, 3),
+    @unittest.skipIf(sys.version_info < (3, 3),
                      'Links are not supported under Windows before Python 3.3')
     def testReadlinkRaisesIfPathDoesNotExist(self):
-        self.assertRaisesIOError(errno.ENOENT, self.os.readlink, '/this/path/does/not/exist')
+        self.assertRaisesOSError(errno.ENOENT, self.os.readlink, '/this/path/does/not/exist')
 
     @unittest.skipIf(TestCase.is_windows and sys.version_info < (3, 3),
                      'Links are not supported under Windows before Python 3.3')
@@ -1142,8 +1139,7 @@ class FakeOsModuleTest(FakeOsModuleTestBase):
         old_path = '/foo/bar'
         new_path = '/mount/bar'
         self.filesystem.CreateFile(old_path)
-        self.filesystem.CreateFile(new_path)
-        self.assertRaisesOSError(errno.EEXIST, self.os.rename, old_path, new_path)
+        self.assertRaisesOSError(errno.EXDEV, self.os.rename, old_path, new_path)
 
     def testRenameToExistentFilePosix(self):
         """Can rename a file to a used name under Unix."""
