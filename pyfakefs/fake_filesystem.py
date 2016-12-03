@@ -136,8 +136,6 @@ FAKE_PATH_MODULE_DEPRECATION = ('Do not instantiate a FakePathModule directly; '
 
 _IS_WINDOWS = sys.platform.startswith('win')
 _IS_CYGWIN = sys.platform == 'cygwin'
-# Python 3.2 supports links in Windows
-_IS_LINK_SUPPORTED = not _IS_WINDOWS or sys.version_info >= (3, 2)
 
 if _IS_WINDOWS:
     # On Windows, raise WindowsError instead of OSError if available
@@ -473,7 +471,7 @@ class FakeDirectory(FakeFile):
         if entry.st_mode & PERM_WRITE == 0:
             raise OSError(errno.EACCES, 'Trying to remove object without write permission',
                           pathname_name)
-        if _IS_WINDOWS and self.filesystem and self.filesystem.HasOpenFile(entry):
+        if self.filesystem and self.filesystem.is_windows_fs and self.filesystem.HasOpenFile(entry):
             raise OSError(errno.EACCES, 'Trying to remove an open file', pathname_name)
         if recursive and isinstance(entry, FakeDirectory):
             while entry.contents:
@@ -520,8 +518,16 @@ class FakeFilesystem(object):
         self.alternative_path_separator = os.path.altsep
         if path_separator != os.sep:
             self.alternative_path_separator = None
-        self.is_case_sensitive = not _IS_WINDOWS and sys.platform != 'darwin'
-        self.supports_drive_letter = _IS_WINDOWS
+
+        # is_windows_fs can be used to test the behavior of pyfakefs under Windows fs
+        # on non-Windows systems and vice verse
+        # is it used to support drive letters, UNC path and some other Windows-specific features
+        self.is_windows_fs = _IS_WINDOWS
+
+        # is_case_sensitive can be used to test pyfakefs for case-sensitive filesystems
+        # on non-case-sensitive systems and vice verse
+        self.is_case_sensitive = not self.is_windows_fs and sys.platform != 'darwin'
+
         self.root = FakeDirectory(self.path_separator, filesystem=self)
         self.cwd = self.root.name
         # We can't query the current value without changing it:
@@ -537,6 +543,10 @@ class FakeFilesystem(object):
         self.last_dev = 0
         self.mount_points = {}
         self.AddMountPoint(self.root.name, total_size)
+
+    def _IsLinkSupported(self):
+        # Python 3.2 supports links in Windows
+        return not self.is_windows_fs or sys.version_info >= (3, 2)
 
     def AddMountPoint(self, path, total_size=None):
         """Add a new mount point for a filesystem device.
@@ -568,7 +578,7 @@ class FakeFilesystem(object):
         return self.mount_points[path]
 
     def _AutoMountDriveIfNeeded(self, path, force=False):
-        if self.supports_drive_letter and (force or not self._MountPointForPath(path)):
+        if self.is_windows_fs and (force or not self._MountPointForPath(path)):
             drive = self.SplitDrive(path)[0]
             if drive:
                 return self.AddMountPoint(path=drive)
@@ -983,7 +993,7 @@ class FakeFilesystem(object):
         """
         if sys.version_info >= (3, 6):
             path = os.fspath(path)
-        if self.supports_drive_letter:
+        if self.is_windows_fs:
             if len(path) >= 2:
                 path = self.NormalizePathSeparator(path)
                 # UNC path handling is here since Python 2.7.8, back-ported from Python 3
@@ -1050,7 +1060,7 @@ class FakeFilesystem(object):
             paths = [os.fspath(path) for path in paths]
         if len(paths) == 1:
             return paths[0]
-        if self.supports_drive_letter:
+        if self.is_windows_fs:
             return self._JoinPathsWithDriveSupport(*paths)
         joined_path_segments = []
         for path_segment in paths:
@@ -1110,7 +1120,7 @@ class FakeFilesystem(object):
             True if drive letter support is enabled in the filesystem and
             the path starts with a drive letter.
         """
-        return (self.supports_drive_letter and len(file_path) >= 2 and
+        return (self.is_windows_fs and len(file_path) >= 2 and
                 file_path[0].isalpha and file_path[1] == ':')
 
     def _StartsWithRootPath(self, file_path):
@@ -1331,9 +1341,7 @@ class FakeFilesystem(object):
         try:
             for component in path_components:
                 if not isinstance(target_object, FakeDirectory):
-                    # we use supports_drive_letter instead of checking the OS
-                    # to allow tests on other systems
-                    if not self.supports_drive_letter:
+                    if not self.is_windows_fs:
                         raise IOError(errno.ENOTDIR,
                                       'Not a directory in fake filesystem',
                                       file_path)
@@ -1410,7 +1418,7 @@ class FakeFilesystem(object):
             parent_obj = self.ResolveObject(parent_directory)
             assert parent_obj
             if not isinstance(parent_obj, FakeDirectory):
-                if not self.supports_drive_letter and isinstance(parent_obj, FakeFile):
+                if not self.is_windows_fs and isinstance(parent_obj, FakeFile):
                     raise IOError(errno.ENOTDIR,
                                   'The parent object is not a directory', path)
                 raise IOError(errno.ENOENT,
@@ -1474,7 +1482,7 @@ class FakeFilesystem(object):
                 raise OSError(errno.EEXIST,
                               'Fake filesystem object: can not rename to existing directory',
                               new_file_path)
-            elif _IS_WINDOWS and not force_replace:
+            elif self.is_windows_fs and not force_replace:
                 raise OSError(errno.EEXIST,
                               'Fake filesystem object: can not rename to existing file',
                               new_file_path)
@@ -1484,8 +1492,8 @@ class FakeFilesystem(object):
                 except IOError as exc:
                     raise OSError(exc.errno, exc.strerror, exc.filename)
 
-        old_dir, old_name = os.path.split(old_file_path)
-        new_dir, new_name = os.path.split(new_file_path)
+        old_dir, old_name = self.SplitPath(old_file_path)
+        new_dir, new_name = self.SplitPath(new_file_path)
         if not self.Exists(new_dir):
             raise OSError(errno.ENOENT, 'No such fake directory', new_dir)
         old_dir_object = self.ResolveObject(old_dir)
@@ -1639,7 +1647,7 @@ class FakeFilesystem(object):
           IOError:  if the file already exists.
           OSError:  if on Windows before Python 3.2.
         """
-        if not _IS_LINK_SUPPORTED:
+        if not self._IsLinkSupported():
             raise OSError("Symbolic links are not supported on Windows before Python 3.2")
         resolved_file_path = self.ResolvePath(file_path)
         if sys.version_info >= (3, 6):
@@ -1663,7 +1671,7 @@ class FakeFilesystem(object):
           OSError:  if the parent directory doesn't exist.
           OSError:  if on Windows before Python 3.2.
         """
-        if not _IS_LINK_SUPPORTED:
+        if not self._IsLinkSupported():
             raise OSError("Links are not supported on Windows before Python 3.2")
         new_path_normalized = self.NormalizePath(new_path)
         if self.Exists(new_path_normalized):
@@ -1735,6 +1743,8 @@ class FakeFilesystem(object):
             dir_name = os.fspath(dir_name)
         if self._EndsWithPathSeparator(dir_name):
             dir_name = dir_name[:-1]
+        if not dir_name:
+            raise OSError(errno.ENOENT, 'Empty directory name')
 
         parent_dir, _ = self.SplitPath(dir_name)
         if parent_dir:
@@ -2176,7 +2186,7 @@ class FakePathModule(object):
 
     def isabs(self, path):
         """Return True if path is an absolute pathname."""
-        if self.filesystem.supports_drive_letter:
+        if self.filesystem.is_windows_fs:
             path = self.splitdrive(path)[1]
         if sys.version_info >= (3, 6):
             path = os.fspath(path)
@@ -2280,7 +2290,7 @@ class FakePathModule(object):
             path = os.fspath(path)
         if not self.isabs(path):
             path = self.join(getcwd(), path)
-        elif (self.filesystem.supports_drive_letter and
+        elif (self.filesystem.is_windows_fs and
               path.startswith(self.sep) or self.altsep is not None and
               path.startswith(self.altsep)):
             cwd = getcwd()
@@ -2307,7 +2317,7 @@ class FakePathModule(object):
         New in pyfakefs 2.9.
         """
         path = self.filesystem.NormalizePathSeparator(path)
-        if _IS_WINDOWS:
+        if self.filesystem.is_windows_fs:
             path = path.lower()
         return path
 
@@ -2348,7 +2358,7 @@ class FakePathModule(object):
         if not path:
             return False
         normed_path = self.filesystem.NormalizePath(path)
-        if self.filesystem.supports_drive_letter:
+        if self.filesystem.is_windows_fs:
             if self.filesystem.alternative_path_separator is not None:
                 path_seps = (
                     self.filesystem.path_separator,
@@ -2926,16 +2936,17 @@ class FakeOsModule(object):
             raise TypeError("chmod() got an unexpected keyword argument 'follow_symlinks'")
         self.filesystem.ChangeMode(path, mode, follow_symlinks)
 
-    if not _IS_WINDOWS:
-        def lchmod(self, path, mode):
-            """Change the permissions of a file as encoded in integer mode.
-            If the file is a link, the permissions of the link are changed.
+    def lchmod(self, path, mode):
+        """Change the permissions of a file as encoded in integer mode.
+        If the file is a link, the permissions of the link are changed.
 
-            Args:
-              path: (str) Path to the file.
-              mode: (int) Permissions.
-            """
-            self.filesystem.ChangeMode(path, mode, follow_symlinks=False)
+        Args:
+          path: (str) Path to the file.
+          mode: (int) Permissions.
+        """
+        if self.filesystem.is_windows_fs:
+            raise(NameError, "name 'lchmod' is not defined")
+        self.filesystem.ChangeMode(path, mode, follow_symlinks=False)
 
     def utime(self, path, times, follow_symlinks=None):
         """Change the access and modified times of a file.
