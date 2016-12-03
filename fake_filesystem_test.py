@@ -57,13 +57,11 @@ class TestCase(unittest.TestCase):
     def assertRaisesOSError(self, subtype, expression, *args, **kwargs):
         try:
             expression(*args, **kwargs)
-        except WindowsError as exc:
-            if sys.version_info < (3, 0):
+        except OSError as exc:
+            if self.is_windows and sys.version_info < (3, 0):
                 self.assertEqual(exc.winerror, subtype)
             else:
                 self.assertEqual(exc.errno, subtype)
-        except OSError as exc:
-            self.assertEqual(exc.errno, subtype)
 
 
 class FakeDirectoryUnitTest(TestCase):
