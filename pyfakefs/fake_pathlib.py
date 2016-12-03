@@ -134,7 +134,7 @@ class _FakeFlavour(pathlib._Flavour):
         self.filesystem = filesystem
         self.sep = filesystem.path_separator
         self.altsep = filesystem.alternative_path_separator
-        self.has_drv = filesystem.supports_drive_letter
+        self.has_drv = filesystem.is_windows_fs
         super(_FakeFlavour, self).__init__()
 
     @staticmethod
@@ -202,7 +202,7 @@ class _FakeFlavour(pathlib._Flavour):
         """Split path into drive, root and rest."""
         if sep is None:
             sep = self.filesystem.path_separator
-        if self.filesystem.supports_drive_letter:
+        if self.filesystem.is_windows_fs:
             return self._splitroot_with_drive(path, sep)
         return self._splitroot_posix(path, sep)
 
@@ -291,7 +291,7 @@ class _FakeFlavour(pathlib._Flavour):
 
     def resolve(self, path, strict):
         """Make the path absolute, resolving any symlinks."""
-        if self.filesystem.supports_drive_letter:
+        if self.filesystem.is_windows_fs:
             return self._resolve_windows(path, strict)
         else:
             return self._resolve_posix(path, strict)
@@ -332,7 +332,7 @@ class _FakeWindowsFlavour(_FakeFlavour):
         # not considered reserved by Windows.
         if not parts:
             return False
-        if self.filesystem.supports_drive_letter and parts[0].startswith('\\\\'):
+        if self.filesystem.is_windows_fs and parts[0].startswith('\\\\'):
             # UNC paths are never reserved
             return False
         return parts[-1].partition('.')[0].upper() in self.reserved_names
