@@ -22,17 +22,10 @@ python:
   - "3.4"
   - "3.5"
   - "3.6-dev"
-
-env:
-  global:
-    secure: o3gp5nDx3ZCtmDqDEIq9iqE7UHoQyWXTDUKG6CjJWxQVDhcIoxGbqyNaa2dW3koxWwyEqXb95DjF1mSDd6rh7V5eSa444dk0lMJbda95EKyk/kToJQsGYIqf6tFZ4snRt7/SuiZB5WkDdPOWmaQpCdii45Mj0beTgbvfQHfDfZ+ECWNB3OBU4z3JBC3ybPThCyDP1npaGgKLFiEyAAbhR0enLy0ztGfKJ2KLc8/s2sM+IbAYW3+Y7kLiK3UxL1nFhujqXvV61+eLdK0349OuwFFCmpd+4Cec5ZSLdeXceWEPFioUkxZS5sRUokodA94pr1h3kpo4i+/7tr+bO1BatkbVCr8bxZeRnDRYamWXs8AlejlrTXmVk7+BN4Dzsu+hzLHIpyJlJfEef8WQNvxbgJAlW0q/VrStO/209/CML2jiV7D7CTY9hAVdlZ4GNlUQFOXcPk1npHWpjmFmwahAi7oVTvSzFDWFRZoW0jcRPQIunXG5NXpCimgQPE3+/+GhXWhvjbyTog815GOntxszkpL9/hq97LK3sFjE0ebkf74o7HVZDhorRR0z+TaY4Gb94AjxlYUrsYGPVvnX5KbxBTFFEMC0veJCqns3NqV3zhAR4oHIZbujWEft/zRI+WEVd4EZmlYXOe6CvQtIYX8GdOC49h8KPvLwS7XzSP16PJY=
+  - "nightly" # points to 3.7-dev
 
 install:
   - if [[ $TRAVIS_PYTHON_VERSION == 2.6 ]]; then pip install importlib unittest2; fi
   - pip install -r requirements.txt
 
 script: ./all_tests.py
-
-after_success:
-  - pip install sphinx
-  - ./build-docs.sh
