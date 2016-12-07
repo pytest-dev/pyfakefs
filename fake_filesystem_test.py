@@ -745,7 +745,7 @@ class FakeOsModuleTest(FakeOsModuleTestBase):
         files.sort()
         self.assertEqual(files, sorted(self.os.listdir(directory)))
 
-    def testListdirDictionnary(self):
+    def testListdirReturnsList(self):
         directory_root = 'xyzzy'
         self.os.mkdir(directory_root)
         directory = '%s/bug' % directory_root
