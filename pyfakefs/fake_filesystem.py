@@ -1972,7 +1972,8 @@ class FakeFilesystem(object):
         """
         target_directory = self.ResolvePath(target_directory)
         directory = self.ConfirmDir(target_directory)
-        return directory.contents
+        directory_contents = directory.contents
+        return list(directory_contents.keys())
 
     if sys.version_info >= (3, 5):
         class DirEntry():
