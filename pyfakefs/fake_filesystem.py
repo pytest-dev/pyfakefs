@@ -120,13 +120,15 @@ PERM_ALL = 0o7777  # All permission bits.
 _OPEN_MODE_MAP = {
     # mode name:(file must exist, need read, need write,
     #            truncate [implies need write], append)
-    'r': (True, True, False, False, False),
-    'w': (False, False, True, True, False),
-    'a': (False, False, True, False, True),
-    'r+': (True, True, True, False, False),
-    'w+': (False, True, True, True, False),
-    'a+': (False, True, True, False, True),
+    'r': (True, True, False, False, False, False),
+    'w': (False, False, True, True, False, False),
+    'a': (False, False, True, False, True, False),
+    'r+': (True, True, True, False, False, False),
+    'w+': (False, True, True, True, False, False),
+    'a+': (False, True, True, False, True, False),
 }
+if sys.version_info >= (3, 3):
+    _OPEN_MODE_MAP['x'] = (False, False, True, False, False, True)
 
 _MAX_LINK_DEPTH = 20
 
@@ -3429,7 +3431,7 @@ class FakeFileOpen(object):
 
         Args:
           file_: path to target file or a file descriptor.
-          mode: additional file modes. All r/w/a r+/w+/a+ modes are supported.
+          mode: additional file modes. All r/w/a/x r+/w+/a+ modes are supported.
             't', and 'U' are ignored, e.g., 'wU' is treated as 'w'. 'b' sets
             binary mode, no end of line translations in StringIO.
           buffering: ignored. (Used for signature compliance with __builtin__.open)
@@ -3458,7 +3460,7 @@ class FakeFileOpen(object):
         if mode not in _OPEN_MODE_MAP:
             raise ValueError('Invalid mode: %r' % orig_modes)
 
-        must_exist, need_read, need_write, truncate, append = _OPEN_MODE_MAP[mode]
+        must_exist, need_read, need_write, truncate, append, must_not_exist = _OPEN_MODE_MAP[mode]
 
         file_object = None
         filedes = None
@@ -3478,6 +3480,8 @@ class FakeFileOpen(object):
             if ((need_read and not file_object.st_mode & PERM_READ) or
                     (need_write and not file_object.st_mode & PERM_WRITE)):
                 raise IOError(errno.EACCES, 'Permission denied', file_path)
+            if must_not_exist:
+                raise IOError(errno.EEXIST, 'File exists', file_path)
             if need_write:
                 if truncate:
                     file_object.SetContents('')
