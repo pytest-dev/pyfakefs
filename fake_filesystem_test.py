@@ -3048,6 +3048,33 @@ class FakeFileOpenTest(FakeFileOpenTestBase):
         result = [line.rstrip() for line in self.file(file_path)]
         self.assertEqual(contents, result)
 
+    @unittest.skipIf(sys.version_info < (3, 3), 'Exclusive mode new in Python 3.3')
+    def testExclusiveCreateFileFailure(self):
+        file_path = '/foo/bar'
+        self.filesystem.CreateFile(file_path)
+        self.assertRaisesIOError(errno.EEXIST, self.file, file_path, 'x')
+        self.assertRaisesIOError(errno.EEXIST, self.file, file_path, 'xb')
+
+    @unittest.skipIf(sys.version_info < (3, 3), 'Exclusive mode new in Python 3.3')
+    def testExclusiveCreateFile(self):
+        file_path = '/foo/bar'
+        self.filesystem.CreateDirectory('/foo')
+        contents = 'String contents'
+        fake_file = self.file(file_path, 'x')
+        fake_file.write(contents)
+        fake_file.close()
+        self.assertEqual(contents, self.file(file_path).read())
+
+    @unittest.skipIf(sys.version_info < (3, 3), 'Exclusive mode new in Python 3.3')
+    def testExclusiveCreateBinaryFile(self):
+        file_path = '/foo/bar'
+        self.filesystem.CreateDirectory('/foo')
+        contents = b'Binary contents'
+        fake_file = self.file(file_path, 'xb')
+        fake_file.write(contents)
+        fake_file.close()
+        self.assertEqual(contents, self.file(file_path, 'rb').read())
+
     def testOverwriteExistingFile(self):
         file_path = 'overwrite/this/file'
         self.filesystem.CreateFile(file_path, contents='To disappear')
