@@ -273,8 +273,8 @@ class FakeShutilModuleTest(unittest.TestCase):
         self.assertFalse(self.filesystem.Exists(dst_directory))
         self.shutil.move(src_directory, dst_directory)
         self.assertTrue(self.filesystem.Exists(dst_directory))
-        self.assertTrue(self.filesystem.Exists('%s/subfile' % dst_directory))
-        self.assertTrue(self.filesystem.Exists('%s/subdir' % dst_directory))
+        self.assertTrue(self.filesystem.Exists('%s/%s/subfile' % (dst_directory, src_directory)))
+        self.assertTrue(self.filesystem.Exists('%s/%s/subdir' % (dst_directory, src_directory)))
         self.assertFalse(self.filesystem.Exists(src_directory))
 
     @unittest.skipIf(sys.version_info < (3, 3), 'New in Python 3.3')
