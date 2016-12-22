@@ -16,6 +16,7 @@ The release versions are PyPi releases.
  * support for `glob.iglob`
 
 #### Fixes
+ * Missing support for 'x' mode in `open` (Python >= 3.3) (#147)
  * Incorrect exception type in Posix if path ancestor is a file (#139)
  * Exception handling when using `Patcher` with py.test (#135)
  
@@ -29,7 +30,7 @@ The release versions are PyPi releases.
  * support for hard links
  * support for float times (mtime, ctime)
  * Windows support:
-     * support for alternative path separator (Windows)
+     * support for alternative path separator
      * support for case-insensitive filesystems
      * support for drive letters and UNC paths
  * support for filesystem size

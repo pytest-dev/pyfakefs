@@ -285,8 +285,10 @@ class FakeShutilModule(object):
             return dst
 
         source_is_dir = stat.S_ISDIR(self.filesystem.GetObject(src).st_mode)
-        if source_is_dir and self.filesystem.Exists(dst):
-            raise shutil.Error("Destination path '%s' already exists" % dst)
+        if source_is_dir:
+            dst = self.filesystem.JoinPaths(dst, os.path.basename(src))
+            if self.filesystem.Exists(dst):
+                raise shutil.Error("Destination path '%s' already exists" % dst)
 
         try:
             self.filesystem.RenameObject(src, dst)
