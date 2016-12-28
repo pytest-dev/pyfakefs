@@ -119,7 +119,7 @@ PERM_ALL = 0o7777  # All permission bits.
 
 _OPEN_MODE_MAP = {
     # mode name:(file must exist, need read, need write,
-    #            truncate [implies need write], append)
+    #            truncate [implies need write], append, must must not exist)
     'r': (True, True, False, False, False, False),
     'w': (False, False, True, True, False, False),
     'a': (False, False, True, False, True, False),
@@ -136,11 +136,8 @@ FAKE_PATH_MODULE_DEPRECATION = ('Do not instantiate a FakePathModule directly; '
                                 'let FakeOsModule instantiate it.  See the '
                                 'FakeOsModule docstring for details.')
 
-_IS_WINDOWS = sys.platform.startswith('win')
-_IS_CYGWIN = sys.platform == 'cygwin'
-
-if _IS_WINDOWS:
-    # On Windows, raise WindowsError instead of OSError if available
+if sys.platform == 'win32':
+    # On native Windows, raise WindowsError instead of OSError if available
     OSError = WindowsError  # pylint: disable=undefined-variable,redefined-builtin
 
 
@@ -524,11 +521,11 @@ class FakeFilesystem(object):
         # is_windows_fs can be used to test the behavior of pyfakefs under Windows fs
         # on non-Windows systems and vice verse
         # is it used to support drive letters, UNC path and some other Windows-specific features
-        self.is_windows_fs = _IS_WINDOWS
+        self.is_windows_fs = sys.platform == 'win32'
 
         # is_case_sensitive can be used to test pyfakefs for case-sensitive filesystems
         # on non-case-sensitive systems and vice verse
-        self.is_case_sensitive = not self.is_windows_fs and sys.platform != 'darwin'
+        self.is_case_sensitive = sys.platform not in ['win32', 'cygwin', 'darwin']
 
         self.root = FakeDirectory(self.path_separator, filesystem=self)
         self.cwd = self.root.name
@@ -2042,7 +2039,7 @@ class FakeFilesystem(object):
                 if follow_symlinks:
                     if self._statresult_symlink is None:
                         stats = self._filesystem.ResolveObject(self.path)
-                        if _IS_WINDOWS:
+                        if self._filesystem.is_windows_fs:
                             # under Windows, some properties are 0
                             # probably due to performance reasons
                             stats.st_ino = 0
@@ -2058,7 +2055,7 @@ class FakeFilesystem(object):
                 if self._statresult is None:
                     stats = self._filesystem.LResolveObject(self.path)
                     self._inode = stats.st_ino
-                    if _IS_WINDOWS:
+                    if self._filesystem.is_windows_fs:
                         stats.st_ino = 0
                         stats.st_dev = 0
                         stats.st_nlink = 0
@@ -2193,7 +2190,7 @@ class FakePathModule(object):
             path = self.splitdrive(path)[1]
         if sys.version_info >= (3, 6):
             path = os.fspath(path)
-        if _IS_WINDOWS:
+        if self.filesystem.is_windows_fs:
             return len(path) > 0 and path[0] in (self.sep, self.altsep)
         else:
             return path.startswith(self.sep) or self.altsep is not None and path.startswith(
@@ -2305,6 +2302,12 @@ class FakePathModule(object):
         """Return the completed path with a separator of the parts."""
         return self.filesystem.JoinPaths(*p)
 
+    def split(self, path):
+        """Split the path into the directory and the filename of the path.
+        New in pyfakefs 3.0.
+        """
+        return self.filesystem.SplitPath(path)
+
     def splitdrive(self, path):
         """Split the path into the drive part and the rest of the path, if supported.
         New in pyfakefs 2.9.
@@ -2324,20 +2327,32 @@ class FakePathModule(object):
             path = path.lower()
         return path
 
-    if _IS_WINDOWS:
+    def relpath(self, path, start=None):
+        """We mostly rely on the native implementation and adapt the path separator."""
+        if not path:
+            raise ValueError("no path specified")
+        if sys.version_info >= (3, 6):
+            path = os.fspath(path)
+            if start is not None:
+                start = os.fspath(start)
+        if start is None:
+            start = self.filesystem.cwd
+        if self.filesystem.alternative_path_separator is not None:
+            path = path.replace(self.filesystem.alternative_path_separator, self._os_path.sep)
+            start = start.replace(self.filesystem.alternative_path_separator, self._os_path.sep)
+        path = path.replace(self.filesystem.path_separator, self._os_path.sep)
+        start = start.replace(self.filesystem.path_separator, self._os_path.sep)
+        path = self._os_path.relpath(path, start)
+        return path.replace(self._os_path.sep, self.filesystem.path_separator)
 
-        def relpath(self, path, start=None):
-            """ntpath.relpath() needs the cwd passed in the start argument."""
-            if not path:
-                raise ValueError("no path specified")
-            if sys.version_info >= (3, 6):
-                path = os.fspath(path)
-            if start is None:
-                start = self.filesystem.cwd
-            path = self._os_path.relpath(path, start)
-            return path.replace(self._os_path.sep, self.filesystem.path_separator)
-
+    if sys.platform == 'win32':
         realpath = abspath
+
+    def dirname(self, path):
+        """Returns the first part of the result of `split()`.
+        New in pyfakefs 3.0.
+        """
+        return self.split(path)[0]
 
     def expanduser(self, path):
         """Return the argument with an initial component of ~ or ~user
@@ -2948,7 +2963,7 @@ class FakeOsModule(object):
           mode: (int) Permissions.
         """
         if self.filesystem.is_windows_fs:
-            raise(NameError, "name 'lchmod' is not defined")
+            raise (NameError, "name 'lchmod' is not defined")
         self.filesystem.ChangeMode(path, mode, follow_symlinks=False)
 
     def utime(self, path, times, follow_symlinks=None):
