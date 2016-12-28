@@ -43,7 +43,6 @@ def Sep(path):
 
 class TestCase(unittest.TestCase):
     is_windows = sys.platform.startswith('win')
-    is_cygwin = sys.platform == 'cygwin'
     _FAKE_FS_BASE = Sep('/fakefs')
 
 

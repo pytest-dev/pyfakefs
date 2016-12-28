@@ -16,6 +16,7 @@ The release versions are PyPi releases.
  * support for `glob.iglob`
 
 #### Fixes
+ * shutil.move incorrectly moves directories (#145)
  * Missing support for 'x' mode in `open` (Python >= 3.3) (#147)
  * Incorrect exception type in Posix if path ancestor is a file (#139)
  * Exception handling when using `Patcher` with py.test (#135)
