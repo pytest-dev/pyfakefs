@@ -2345,8 +2345,64 @@ class FakePathModule(object):
         path = self._os_path.relpath(path, start)
         return path.replace(self._os_path.sep, self.filesystem.path_separator)
 
-    if sys.platform == 'win32':
-        realpath = abspath
+    def realpath(self, filename):
+        """Return the canonical path of the specified filename, eliminating any
+        symbolic links encountered in the path.
+        New in pyfakefs 3.0.
+        """
+        if self.filesystem.is_windows_fs:
+            return self.abspath(filename)
+        if sys.version_info >= (3, 6):
+            filename = os.fspath(filename)
+        path, ok = self._joinrealpath(filename[:0], filename, {})
+        return self.abspath(path)
+
+    def _joinrealpath(self, path, rest, seen):
+        """Join two paths, normalizing and eliminating any symbolic links
+        encountered in the second path.
+        Taken from Python source and adapted.
+        """
+        curdir = '.'
+        pardir = '..'
+
+        if self.isabs(rest):
+            rest = rest[1:]
+            path = self.sep
+
+        while rest:
+            name, _, rest = rest.partition(self.sep)
+            if not name or name == curdir:
+                # current dir
+                continue
+            if name == pardir:
+                # parent dir
+                if path:
+                    path, name = self.filesystem.SplitPath(path)
+                    if name == pardir:
+                        path = self.filesystem.JoinPaths(path, pardir, pardir)
+                else:
+                    path = pardir
+                continue
+            newpath = self.filesystem.JoinPaths(path, name)
+            if not self.filesystem.IsLink(newpath):
+                path = newpath
+                continue
+            # Resolve the symbolic link
+            if newpath in seen:
+                # Already seen this path
+                path = seen[newpath]
+                if path is not None:
+                    # use cached value
+                    continue
+                # The symlink is not resolved, so we must have a symlink loop.
+                # Return already resolved part + rest of the path unchanged.
+                return self.filesystem.JoinPaths(newpath, rest), False
+            seen[newpath] = None  # not resolved symlink
+            path, ok = self._joinrealpath(path, self.filesystem.ReadLink(newpath), seen)
+            if not ok:
+                return self.filesystem.JoinPaths(path, rest), False
+            seen[newpath] = path  # resolved symlink
+        return path, True
 
     def dirname(self, path):
         """Returns the first part of the result of `split()`.
@@ -2394,6 +2450,34 @@ class FakePathModule(object):
                     mount_point.rstrip(self.filesystem.path_separator)):
                 return True
         return False
+
+    if sys.version_info < (3, 0):
+        def walk(self, top, func, arg):
+            """Directory tree walk with callback function.
+            New in pyfakefs 3.0.
+
+            Args:
+                top: root path to traverse. The root itself is not included in the called elements.
+                func: function to be called for each visited path node.
+                arg: first argument to be called with func (apart from dirname and filenames).
+            """
+            try:
+                names = self.filesystem.ListDir(top)
+            except os.error:
+                return
+            func(arg, top, names)
+            for name in names:
+                name = self.filesystem.JoinPaths(top, name)
+                if self.filesystem.is_windows_fs:
+                    if self.filesystem.IsDir(name):
+                        self.walk(name, func, arg)
+                else:
+                    try:
+                        st = self.filesystem.GetStat(name, follow_symlinks=False)
+                    except os.error:
+                        continue
+                    if stat.S_ISDIR(st.st_mode):
+                        self.walk(name, func, arg)
 
     def __getattr__(self, name):
         """Forwards any non-faked calls to the real os.path."""

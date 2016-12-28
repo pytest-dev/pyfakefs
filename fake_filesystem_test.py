@@ -2581,8 +2581,8 @@ class FakePathModuleTest(TestCase):
         self.assertEqual('.',
                          self.path.relpath(path_bar, path_bar))
 
-    @unittest.skipIf(TestCase.is_windows, 'realpath does not follow symlinks in win32')
     def testRealpathVsAbspath(self):
+        self.filesystem.is_windows_fs = False
         self.filesystem.CreateFile('!george!washington!bridge')
         self.filesystem.CreateLink('!first!president', '!george!washington')
         self.assertEqual('!first!president!bridge',
@@ -2624,7 +2624,7 @@ class FakePathModuleTest(TestCase):
                              self.os.environ['USERPROFILE'].replace('\\', '!'))
         else:
             self.assertEqual(self.path.expanduser('~'),
-                             self.os.environ['HOME'])
+                             self.os.environ['HOME'].replace('/', '!'))
 
     @unittest.skipIf(TestCase.is_windows or TestCase.is_cygwin,
                      'only tested on unix systems')
@@ -2754,9 +2754,7 @@ class FakePathModuleTest(TestCase):
         self.filesystem.is_windows_fs = True
         self.assertTrue(self.path.ismount('Z:!'))
 
-    @unittest.skipIf(sys.version_info >= (3, 0) or TestCase.is_windows,
-                     'os.path.walk deprecrated in Python 3, cannot be properly '
-                     'tested in win32')
+    @unittest.skipIf(sys.version_info >= (3, 0), 'os.path.walk removed in Python 3')
     def testWalk(self):
         self.filesystem.CreateFile('!foo!bar!baz')
         self.filesystem.CreateFile('!foo!bar!xyzzy!plugh')
