@@ -149,6 +149,16 @@ class FakeDirectoryUnitTest(TestCase):
         dir_obj.SetIno(43)
         self.assertEqual(43, fake_os.stat(dirpath)[stat.ST_INO])
 
+    def testOrderedDirs(self):
+        filesystem = fake_filesystem.FakeFilesystem(path_separator='/')
+        filesystem.CreateDirectory('/foo')
+        filesystem.CreateFile('/foo/2')
+        filesystem.CreateFile('/foo/4')
+        filesystem.CreateFile('/foo/1')
+        filesystem.CreateFile('/foo/3')
+        fake_dir = filesystem.GetObject('/foo')
+        self.assertEqual(['2', '4', '1', '3'], fake_dir.ordered_dirs)
+
 
 class SetLargeFileSizeTest(FakeDirectoryUnitTest):
     def testShouldThrowIfSizeIsNotInteger(self):
