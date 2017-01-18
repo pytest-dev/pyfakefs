@@ -427,6 +427,11 @@ class FakeDirectory(FakeFile):
         """Return the list of contained directory entries."""
         return self.byte_contents
 
+    @property
+    def ordered_dirs(self):
+        """Return the list of contained directory entry names ordered by creation order."""
+        return [item[0] for item in sorted(self.byte_contents.items(), key=lambda entry: entry[1].st_ino)]
+
     def AddEntry(self, path_object):
         """Adds a child FakeFile to this directory.
 
