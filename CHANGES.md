@@ -1,7 +1,7 @@
 # Release Notes 
 The release versions are PyPi releases.
 
-## Version 3.0 (unreleased)
+## Version 3.0
 
 #### New Features
  * support for path-like objects as arguments in fake `os`
