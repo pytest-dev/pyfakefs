@@ -2,7 +2,6 @@
 import os
 
 
-def test_fs_fixture(fs, f):
-    assert not os.path.exists(f)
-    fs.CreateFile(f)
-    assert os.path.exists(f)
+def test_fs_fixture(fs):
+    fs.CreateFile('/var/data/xx1.txt')
+    assert os.path.exists('/var/data/xx1.txt')
