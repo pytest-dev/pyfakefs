@@ -67,7 +67,7 @@ KEYWORDS = ("testing test file os shutil glob mocking unittest "
 params = dict(
     name=NAME,
     entry_points={
-        'pytest11': ['pytest_fakefs = pyfakefs.pytest_module'],
+        'pytest11': ['pytest_fakefs = pyfakefs.pytest_plugin'],
     },
     version=__version__,
     install_requires=REQUIRES,
