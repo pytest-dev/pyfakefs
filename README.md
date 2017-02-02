@@ -43,6 +43,21 @@ with patch('mymodule.glob', glob):
     print(glob.glob('/var/data/xx*'))
 ```
 
+### Usage as a Pytest Plugin
+
+Installation of pyfakefs also provides a [PyTest](doc.pytest.org) plugin. The plugin makes the `fs`
+fixture available for any test. For example:
+
+```
+def my_fakefs_test(fs):
+    # "fs" is the reference to the fake file system
+    fs.CreateFile('/var/data/xx1.txt')
+    assert os.path.exists('/var/data/xx1.txt')
+```
+
+Similar to the unittest class (`fake_filesystem_unittest.TestCase`), the `fs` fixture stubs
+out all file system functions and modules. 
+
 ## Continuous Integration
 
 pyfakefs is automatically tested with Python 2.6 and above, and it is currently
