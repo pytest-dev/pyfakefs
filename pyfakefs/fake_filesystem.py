@@ -308,10 +308,10 @@ class FakeFile(object):
         if self.byte_contents:
             self.SetSize(0)
         current_size = self.st_size or 0
+        if self.filesystem:
+            self.filesystem.ChangeDiskUsage(st_size - current_size, self.name, self.st_dev)
         self.byte_contents = contents
         self.st_size = st_size
-        if self.filesystem:
-            self.filesystem.ChangeDiskUsage(self.st_size - current_size, self.name, self.st_dev)
         self.epoch += 1
 
     def SetContents(self, contents, encoding=None):

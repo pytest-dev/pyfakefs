@@ -4165,6 +4165,25 @@ class DiskSpaceTest(TestCase):
         self.filesystem = fake_filesystem.FakeFilesystem(path_separator='!', total_size=100)
         self.os = fake_filesystem.FakeOsModule(self.filesystem)
 
+    def testDiskUsageOnFileCreation(self):
+        fake_open = fake_filesystem.FakeFileOpen(self.filesystem)
+
+        total_size = 100
+        self.filesystem.AddMountPoint('mount', total_size)
+        def create_too_large_file():
+            with fake_open('!mount!file', 'w') as dest:
+                dest.write('a' * (total_size + 1))
+
+        self.assertRaises((OSError, IOError), create_too_large_file)
+
+        self.assertEqual(0, self.filesystem.GetDiskUsage('!mount').used)
+
+        with fake_open('!mount!file', 'w') as dest:
+            dest.write('a' * total_size)
+
+        self.assertEqual(total_size, self.filesystem.GetDiskUsage('!mount').used)
+
+
     def testFileSystemSizeAfterLargeFileCreation(self):
         filesystem = fake_filesystem.FakeFilesystem(path_separator='!',
                                                     total_size=1024 * 1024 * 1024 * 100)
@@ -4203,28 +4222,44 @@ class DiskSpaceTest(TestCase):
         self.assertEqual((100, 40, 60), self.filesystem.GetDiskUsage())
 
     def testCreatingFileWithFittingContent(self):
+        initial_usage = self.filesystem.GetDiskUsage()
+
         try:
             self.filesystem.CreateFile('!foo!bar', contents=b'a' * 100)
         except IOError:
             self.fail('File with contents fitting into disk space could not be written.')
 
+        self.assertEqual(initial_usage.used + 100, self.filesystem.GetDiskUsage().used)
+
     def testCreatingFileWithContentTooLarge(self):
         def create_large_file():
             self.filesystem.CreateFile('!foo!bar', contents=b'a' * 101)
 
+        initial_usage = self.filesystem.GetDiskUsage()
+
         self.assertRaises(IOError, create_large_file)
 
+        self.assertEqual(initial_usage, self.filesystem.GetDiskUsage())
+
     def testCreatingFileWithFittingSize(self):
+        initial_usage = self.filesystem.GetDiskUsage()
+
         try:
             self.filesystem.CreateFile('!foo!bar', st_size=100)
         except IOError:
             self.fail('File with size fitting into disk space could not be written.')
 
+        self.assertEqual(initial_usage.used + 100, self.filesystem.GetDiskUsage().used)
+
     def testCreatingFileWithSizeTooLarge(self):
+        initial_usage = self.filesystem.GetDiskUsage()
+
         def create_large_file():
             self.filesystem.CreateFile('!foo!bar', st_size=101)
 
         self.assertRaises(IOError, create_large_file)
+
+        self.assertEqual(initial_usage, self.filesystem.GetDiskUsage())
 
     def testResizeFileWithFittingSize(self):
         file_object = self.filesystem.CreateFile('!foo!bar', st_size=50)
