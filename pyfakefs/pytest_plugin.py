@@ -16,10 +16,10 @@ from pyfakefs.fake_filesystem_unittest import Patcher
 Patcher.SKIPMODULES.add(py)  # Ignore pytest components when faking filesystem
 
 
-@pytest.yield_fixture
-def fs():
+@pytest.fixture
+def fs(request):
     """ Fake filesystem. """
     patcher = Patcher()
     patcher.setUp()
-    yield patcher.fs
-    patcher.tearDown()
+    request.addfinalizer(patcher.tearDown)
+    return patcher.fs
