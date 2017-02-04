@@ -463,6 +463,33 @@ class FakeFilesystemUnitTest(TestCase):
         self.filesystem.CreateFile(path, contents='dummy_data')
         self.assertRaises(IOError, self.filesystem.CreateFile, path)
 
+    def testCopyRealFile(self):
+        '''Copy real file to fake file system'''
+        real_file_path = __file__
+        fake_file_path = 'foo/bar/baz'
+        fake_file = self.filesystem.CopyRealFile(real_file_path, fake_file_path)
+        
+        real_stat = os.stat(real_file_path)
+        with open(real_file_path, 'rb') as real_file:
+            real_contents = real_file.read()
+        self.assertEqual(fake_file.name, 'baz')
+        self.assertEqual(fake_file.st_mode, real_stat.st_mode)
+        self.assertEqual(fake_file.byte_contents, real_contents)
+        self.assertEqual(fake_file.st_size, real_stat.st_size)
+        self.assertEqual(fake_file.st_ctime, real_stat.st_ctime)
+        self.assertEqual(fake_file.st_atime, real_stat.st_atime)
+        self.assertEqual(fake_file.st_mtime, real_stat.st_mtime)
+        self.assertEqual(fake_file.st_nlink, real_stat.st_nlink)
+        # The inode number is not copied to the fake file.
+        self.assertEqual(fake_file.st_dev, real_stat.st_dev)
+        self.assertEqual(fake_file.st_uid, real_stat.st_uid)
+        self.assertEqual(fake_file.st_gid, real_stat.st_gid)
+
+        fake_file_path = '/nonexistent/directory/file'
+        with self.assertRaises(IOError):
+            self.filesystem.CopyRealFile(real_file_path, fake_file_path,
+                                         create_missing_dirs=False)
+
     @unittest.skipIf(TestCase.is_windows and sys.version_info < (3, 3),
                      'Links are not supported under Windows before Python 3.3')
     def testCreateLink(self):
