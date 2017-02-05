@@ -172,12 +172,11 @@ class TestCopyRealFile(TestPyfakefsUnittestBase):
 
     @classmethod
     def setUpClass(cls):
-        if sys.version_info >= (2, 7):
-            with open(__file__, 'rb') as f:
-                cls.real_byte_contents = f.read()
+        cls.real_stat = os.stat(__file__)
         with open(__file__) as f:
             cls.real_string_contents = f.read()
-        cls.real_stat = os.stat(__file__)
+        with open(__file__, 'rb') as f:
+            cls.real_byte_contents = f.read()
 
     def testCopyRealFile(self):
         '''Copy a real file to the fake file system'''
@@ -186,18 +185,11 @@ class TestCopyRealFile(TestPyfakefsUnittestBase):
         fake_file_path = 'foo/bar/baz'
         fake_file = self.CopyRealFile(real_file_path, fake_file_path)
 
-        if sys.version_info >= (2, 7):
-            self.assertTrue(b'class TestCopyRealFile(TestPyfakefsUnittestBase)' in self.real_byte_contents,
-                            'Verify real file byte contents')
-            self.assertEqual(fake_file.byte_contents, self.real_byte_contents)
-
         self.assertTrue('class TestCopyRealFile(TestPyfakefsUnittestBase)' in self.real_string_contents,
                         'Verify real file string contents')
         self.assertEqual(fake_file.contents, self.real_string_contents)
 
-        self.assertEqual(fake_file.name, 'baz')
         self.assertEqual(fake_file.st_mode, self.real_stat.st_mode)
-        self.assertEqual(fake_file.byte_contents, self.real_byte_contents)
         self.assertEqual(fake_file.st_size, self.real_stat.st_size)
         self.assertEqual(fake_file.st_ctime, self.real_stat.st_ctime)
         self.assertEqual(fake_file.st_atime, self.real_stat.st_atime)
@@ -209,6 +201,18 @@ class TestCopyRealFile(TestPyfakefsUnittestBase):
         with self.assertRaises(IOError):
             self.CopyRealFile(real_file_path, fake_file_path,
                               create_missing_dirs=False)
+
+    @unittest.skipIf(sys.version_info < (2, 7), "No byte strings in Python 2.6")
+    def testCopyRealFileByteContents(self):
+        '''Copy a byte real file to the fake file system'''
+        # Use this file as the file to be copied to the fake file system
+        real_file_path = __file__
+        fake_file_path = 'foo/bar/baz'
+        fake_file = self.CopyRealFile(real_file_path, fake_file_path)
+
+        self.assertTrue(b'class TestCopyRealFile(TestPyfakefsUnittestBase)' in self.real_byte_contents,
+                        'Verify real file byte contents')
+        self.assertEqual(fake_file.byte_contents, self.real_byte_contents)
 
 if __name__ == "__main__":
     unittest.main()
