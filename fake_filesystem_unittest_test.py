@@ -172,25 +172,29 @@ class TestCopyRealFile(TestPyfakefsUnittestBase):
 
     @classmethod
     def setUpClass(cls):
-        with open(__file__, 'rb') as f:
-            cls.real_byte_contents = f.read()
+        if sys.version_info >= (2, 7):
+            with open(__file__, 'rb') as f:
+                cls.real_byte_contents = f.read()
         with open(__file__) as f:
             cls.real_string_contents = f.read()
         cls.real_stat = os.stat(__file__)
 
     def testCopyRealFile(self):
         '''Copy a real file to the fake file system'''
-        self.assertTrue(b'class TestCopyRealFile(TestPyfakefsUnittestBase)' in self.real_byte_contents,
-                        'Verify byte contents of real file')
-        self.assertTrue('class TestCopyRealFile(TestPyfakefsUnittestBase)' in self.real_string_contents,
-                        'Verify string contents of real file')
         # Use this file as the file to be copied to the fake file system
         real_file_path = __file__
         fake_file_path = 'foo/bar/baz'
         fake_file = self.CopyRealFile(real_file_path, fake_file_path)
 
-        self.assertEqual(fake_file.byte_contents, self.real_byte_contents)
+        if sys.version_info >= (2, 7):
+            self.assertTrue(b'class TestCopyRealFile(TestPyfakefsUnittestBase)' in self.real_byte_contents,
+                            'Verify real file byte contents')
+            self.assertEqual(fake_file.byte_contents, self.real_byte_contents)
+
+        self.assertTrue('class TestCopyRealFile(TestPyfakefsUnittestBase)' in self.real_string_contents,
+                        'Verify real file string contents')
         self.assertEqual(fake_file.contents, self.real_string_contents)
+
         self.assertEqual(fake_file.name, 'baz')
         self.assertEqual(fake_file.st_mode, self.real_stat.st_mode)
         self.assertEqual(fake_file.byte_contents, self.real_byte_contents)
