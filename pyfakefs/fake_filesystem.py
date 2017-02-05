@@ -1635,41 +1635,6 @@ class FakeFilesystem(object):
 
         return file_object
 
-    def CopyRealFile(self, real_file_path, fake_file_path,
-                     create_missing_dirs=True):
-        """Copy the specified file from the real file system to the fake file
-        system.  With the exception of inode, the stat (permissions, modification
-        time, etc.) of the source file is copied to the new fake file.
-
-        This helper method can be used to set up tests more easily.
-
-        Args:
-          real_file_path: Path to the source file in the real file system.
-          fake_file_path: path to the destination file in the fake file system.
-          create_missing_dirs: if True, auto create missing directories.
-
-        Returns:
-          the newly created FakeFile object.
-
-        Raises:
-          IOError: if the file already exists.
-          IOError: if the containing directory is required but missing.
-        """
-        real_stat = os.stat(real_file_path)
-        with open(real_file_path, 'rb') as real_file:
-            real_contents = real_file.read()
-        file_object = self.CreateFile(fake_file_path, st_mode=real_stat.st_mode,
-                                    contents=real_contents,
-                                    create_missing_dirs=create_missing_dirs)
-        file_object.st_ctime = real_stat.st_ctime
-        file_object.st_atime = real_stat.st_atime
-        file_object.st_mtime = real_stat.st_mtime
-        file_object.st_nlink = real_stat.st_nlink
-        file_object.st_dev = real_stat.st_dev
-        file_object.st_gid = real_stat.st_gid
-        file_object.st_uid = real_stat.st_uid
-        return file_object
-
     # pylint: disable=unused-argument
     def CreateLink(self, file_path, link_target, target_is_directory=False):
         """Create the specified symlink, pointed at the specified link target.
