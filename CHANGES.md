@@ -3,6 +3,9 @@ The release versions are PyPi releases.
 
 ## Version 3.1 (as yet unreleased)
 
+ * Added helper method `FakeFile.CopyRealFile()` to copy a file from \
+   the real file system to the fake file system.  This makes it easy to use \
+   files from the real file system in your tests.
 
 ## Version 3.0
 

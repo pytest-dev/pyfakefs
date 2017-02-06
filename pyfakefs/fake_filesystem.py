@@ -1582,7 +1582,7 @@ class FakeFilesystem(object):
                    apply_umask=False, encoding=None):
         """Create file_path, including all the parent directories along the way.
 
-        Helper method to set up your test faster.
+        This helper method can be used to set up tests more easily.
 
         Args:
           file_path: path to the file to create.

@@ -39,6 +39,7 @@ retrofitted to use `pyfakefs` by simply changing their base class from
 `:py:class`pyfakefs.fake_filesystem_unittest.TestCase`.
 """
 
+import os
 import sys
 import doctest
 import inspect
@@ -60,6 +61,11 @@ if sys.version_info < (3,):
     import __builtin__ as builtins  # pylint: disable=import-error
 else:
     import builtins
+
+REAL_OPEN = builtins.open
+"""The real (not faked) `open` builtin."""
+REAL_OS = os
+"""The real (not faked) `os` module."""
 
 
 def load_doctests(loader, tests, ignore, module):  # pylint: disable=unused-argument
@@ -112,6 +118,42 @@ class TestCase(unittest.TestCase):
     @property
     def patches(self):
         return self._stubber.patches
+
+    if sys.version_info >= (2, 7):
+        def copyRealFile(self, real_file_path, fake_file_path=None,
+                         create_missing_dirs=True):
+            """Copy the file `real_file_path` from the real file system to the fake
+            file system file `fake_file_path`.  The permissions, gid, uid, ctime,
+            mtime and atime of the real file are copied to the fake file.
+
+           This is a helper method you can use to set up your test more easily.
+
+           This method is available in Python 2.7 and above.
+
+            Args:
+              real_file_path: Path to the source file in the real file system.
+              fake_file_path: path to the destination file in the fake file system.
+              create_missing_dirs: if True, auto create missing directories.
+
+            Returns:
+              the newly created FakeFile object.
+
+            Raises:
+              IOError: if the file already exists.
+              IOError: if the containing directory is required and missing.
+            """
+            real_stat = REAL_OS.stat(real_file_path)
+            with REAL_OPEN(real_file_path, 'rb') as real_file:
+                real_contents = real_file.read()
+            fake_file = self.fs.CreateFile(fake_file_path, st_mode=real_stat.st_mode,
+                                        contents=real_contents,
+                                        create_missing_dirs=create_missing_dirs)
+            fake_file.st_ctime = real_stat.st_ctime
+            fake_file.st_atime = real_stat.st_atime
+            fake_file.st_mtime = real_stat.st_mtime
+            fake_file.st_gid = real_stat.st_gid
+            fake_file.st_uid = real_stat.st_uid
+            return fake_file
 
     def setUpPyfakefs(self):
         """Bind the file-related modules to the :py:class:`pyfakefs` fake file

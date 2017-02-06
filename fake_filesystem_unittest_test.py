@@ -1,6 +1,7 @@
 #! /usr/bin/env python
 #
 # Copyright 2014 Altera Corporation. All Rights Reserved.
+# Copyright 2015-2017 John McGehee
 # Author: John McGehee
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -39,10 +40,6 @@ class TestPyfakefsUnittestBase(fake_filesystem_unittest.TestCase):
     def setUp(self):
         """Set up the fake file system"""
         self.setUpPyfakefs()
-
-    def tearDown(self):
-        """Tear down the fake file system"""
-        self.tearDownPyfakefs()
 
 
 class TestPyfakefsUnittest(TestPyfakefsUnittestBase):  # pylint: disable=R0904
@@ -168,6 +165,46 @@ class TestPatchPathUnittestPassing(TestPyfakefsUnittestBase):
 
     def test_own_path_module(self):
         self.assertEqual(2, path.floor(2.5))
+
+
+@unittest.skipIf(sys.version_info < (2, 7), "No byte strings in Python 2.6")
+class TestCopyRealFile(TestPyfakefsUnittestBase):
+    """Tests the `fake_filesystem_unittest.TestCase.copyRealFile()` method."""
+
+    @classmethod
+    def setUpClass(cls):
+        cls.real_stat = os.stat(__file__)
+        with open(__file__) as f:
+            cls.real_string_contents = f.read()
+        with open(__file__, 'rb') as f:
+            cls.real_byte_contents = f.read()
+
+    def testCopyRealFile(self):
+        '''Copy a real file to the fake file system'''
+        # Use this file as the file to be copied to the fake file system
+        real_file_path = __file__
+        fake_file_path = 'foo/bar/baz'
+        fake_file = self.copyRealFile(real_file_path, fake_file_path)
+
+        self.assertTrue('class TestCopyRealFile(TestPyfakefsUnittestBase)' in self.real_string_contents,
+                        'Verify real file string contents')
+        self.assertTrue(b'class TestCopyRealFile(TestPyfakefsUnittestBase)' in self.real_byte_contents,
+                        'Verify real file byte contents')
+        self.assertEqual(fake_file.contents, self.real_string_contents)
+        self.assertEqual(fake_file.byte_contents, self.real_byte_contents)
+
+        self.assertEqual(fake_file.st_mode, self.real_stat.st_mode)
+        self.assertEqual(fake_file.st_size, self.real_stat.st_size)
+        self.assertEqual(fake_file.st_ctime, self.real_stat.st_ctime)
+        self.assertEqual(fake_file.st_atime, self.real_stat.st_atime)
+        self.assertEqual(fake_file.st_mtime, self.real_stat.st_mtime)
+        self.assertEqual(fake_file.st_uid, self.real_stat.st_uid)
+        self.assertEqual(fake_file.st_gid, self.real_stat.st_gid)
+
+        fake_file_path = '/nonexistent/directory/file'
+        with self.assertRaises(IOError):
+            self.copyRealFile(real_file_path, fake_file_path,
+                              create_missing_dirs=False)
 
 
 if __name__ == "__main__":
