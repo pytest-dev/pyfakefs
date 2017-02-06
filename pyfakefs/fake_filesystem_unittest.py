@@ -1,6 +1,5 @@
 # Copyright 2014 Altera Corporation. All Rights Reserved.
-# Copyright 2015-2017 John McGehee
-# Author: John McGehee
+# Copyright 2015 John McGehee
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -120,42 +119,42 @@ class TestCase(unittest.TestCase):
     def patches(self):
         return self._stubber.patches
 
-    def CopyRealFile(self, real_file_path, fake_file_path=None,
-                     create_missing_dirs=True):
-        """Copy the file `real_file_path` from the real file system to the fake
-        file system file `fake_file_path`.
-
-        This is a helper method you can use to set up your test more easily.
-
-        The permissions, gid, uid, ctime, mtime and atime of the real file are
-        copied to the fake file.  nlink, dev, and inode are not copied because
-        their values depend on the fake file system, not the real file system
-        from which the file was copied.
-
-        Args:
-          real_file_path: Path to the source file in the real file system.
-          fake_file_path: path to the destination file in the fake file system.
-          create_missing_dirs: if True, auto create missing directories.
-
-        Returns:
-          The newly created FakeFile object.
-
-        Raises:
-          IOError: if the file already exists.
-          IOError: if the containing directory is required and missing.
-        """
-        real_stat = REAL_OS.stat(real_file_path)
-        with REAL_OPEN(real_file_path, 'rb') as real_file:
-            real_contents = real_file.read()
-        fake_file = self.fs.CreateFile(fake_file_path, st_mode=real_stat.st_mode,
-                                    contents=real_contents,
-                                    create_missing_dirs=create_missing_dirs)
-        fake_file.st_ctime = real_stat.st_ctime
-        fake_file.st_atime = real_stat.st_atime
-        fake_file.st_mtime = real_stat.st_mtime
-        fake_file.st_gid = real_stat.st_gid
-        fake_file.st_uid = real_stat.st_uid
-        return fake_file
+    if sys.version_info >= (2, 7):
+        def CopyRealFile(self, real_file_path, fake_file_path=None,
+                         create_missing_dirs=True):
+            """Copy the file `real_file_path` from the real file system to the fake
+            file system file `fake_file_path`.  The permissions, gid, uid, ctime,
+            mtime and atime of the real file are copied to the fake file.
+            
+           This is a helper method you can use to set up your test more easily.
+           
+           This method is available in Python 2.7 and above.
+    
+            Args:
+              real_file_path: Path to the source file in the real file system.
+              fake_file_path: path to the destination file in the fake file system.
+              create_missing_dirs: if True, auto create missing directories.
+    
+            Returns:
+              the newly created FakeFile object.
+    
+            Raises:
+              IOError: if the file already exists.
+              IOError: if the containing directory is required and missing.
+            """
+            assert 
+            real_stat = REAL_OS.stat(real_file_path)
+            with REAL_OPEN(real_file_path, 'rb') as real_file:
+                real_contents = real_file.read()
+            fake_file = self.fs.CreateFile(fake_file_path, st_mode=real_stat.st_mode,
+                                        contents=real_contents,
+                                        create_missing_dirs=create_missing_dirs)
+            fake_file.st_ctime = real_stat.st_ctime
+            fake_file.st_atime = real_stat.st_atime
+            fake_file.st_mtime = real_stat.st_mtime
+            fake_file.st_gid = real_stat.st_gid
+            fake_file.st_uid = real_stat.st_uid
+            return fake_file
 
     def setUpPyfakefs(self):
         """Bind the file-related modules to the :py:class:`pyfakefs` fake file

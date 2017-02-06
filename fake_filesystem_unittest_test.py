@@ -167,6 +167,7 @@ class TestPatchPathUnittestPassing(TestPyfakefsUnittestBase):
         self.assertEqual(2, path.floor(2.5))
 
 
+@unittest.skipIf(sys.version_info < (2, 7), "No byte strings in Python 2.6")
 class TestCopyRealFile(TestPyfakefsUnittestBase):
     """Tests the `fake_filesystem_unittest.TestCase.CopyRealFile()` method."""
 
@@ -187,7 +188,10 @@ class TestCopyRealFile(TestPyfakefsUnittestBase):
 
         self.assertTrue('class TestCopyRealFile(TestPyfakefsUnittestBase)' in self.real_string_contents,
                         'Verify real file string contents')
+        self.assertTrue(b'class TestCopyRealFile(TestPyfakefsUnittestBase)' in self.real_byte_contents,
+                        'Verify real file byte contents')
         self.assertEqual(fake_file.contents, self.real_string_contents)
+        self.assertEqual(fake_file.byte_contents, self.real_byte_contents)
 
         self.assertEqual(fake_file.st_mode, self.real_stat.st_mode)
         self.assertEqual(fake_file.st_size, self.real_stat.st_size)
@@ -202,17 +206,6 @@ class TestCopyRealFile(TestPyfakefsUnittestBase):
             self.CopyRealFile(real_file_path, fake_file_path,
                               create_missing_dirs=False)
 
-    @unittest.skipIf(sys.version_info < (2, 7), "No byte strings in Python 2.6")
-    def testCopyRealFileByteContents(self):
-        '''Copy a byte real file to the fake file system'''
-        # Use this file as the file to be copied to the fake file system
-        real_file_path = __file__
-        fake_file_path = 'foo/bar/baz'
-        fake_file = self.CopyRealFile(real_file_path, fake_file_path)
-
-        self.assertTrue(b'class TestCopyRealFile(TestPyfakefsUnittestBase)' in self.real_byte_contents,
-                        'Verify real file byte contents')
-        self.assertEqual(fake_file.byte_contents, self.real_byte_contents)
 
 if __name__ == "__main__":
     unittest.main()
