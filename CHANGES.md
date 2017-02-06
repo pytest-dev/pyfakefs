@@ -3,9 +3,12 @@ The release versions are PyPi releases.
 
 ## Version 3.1 (as yet unreleased)
 
- * Added helper method `FakeFile.CopyRealFile()` to copy a file from \
-   the real file system to the fake file system.  This makes it easy to use \
+#### New Features
+ * Added helper method `TestCase.copyRealFile()` to copy a file from
+   the real file system to the fake file system. This makes it easy to use
    files from the real file system in your tests.
+ * A pytest plugin is now installed with pyfakefs that exports `fs`
+   as a pytest fixture.
 
 ## Version 3.0
 
