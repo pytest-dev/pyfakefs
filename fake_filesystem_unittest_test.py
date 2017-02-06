@@ -171,13 +171,11 @@ class TestPatchPathUnittestPassing(TestPyfakefsUnittestBase):
 class TestCopyRealFile(TestPyfakefsUnittestBase):
     """Tests the `fake_filesystem_unittest.TestCase.copyRealFile()` method."""
 
-    @classmethod
-    def setUpClass(cls):
-        cls.real_stat = os.stat(__file__)
-        with open(__file__) as f:
-            cls.real_string_contents = f.read()
-        with open(__file__, 'rb') as f:
-            cls.real_byte_contents = f.read()
+    real_stat = os.stat(__file__)
+    with open(__file__) as f:
+        real_string_contents = f.read()
+    with open(__file__, 'rb') as f:
+        real_byte_contents = f.read()
 
     def testCopyRealFile(self):
         '''Copy a real file to the fake file system'''
@@ -190,7 +188,8 @@ class TestCopyRealFile(TestPyfakefsUnittestBase):
                         'Verify real file string contents')
         self.assertTrue(b'class TestCopyRealFile(TestPyfakefsUnittestBase)' in self.real_byte_contents,
                         'Verify real file byte contents')
-        self.assertEqual(fake_file.contents, self.real_string_contents)
+
+        # note that real_string_contents may differ to fake_file.contents due to newline conversions in open()
         self.assertEqual(fake_file.byte_contents, self.real_byte_contents)
 
         self.assertEqual(fake_file.st_mode, self.real_stat.st_mode)
