@@ -7,14 +7,18 @@ The release versions are PyPi releases.
  * Added helper method `TestCase.copyRealFile()` to copy a file from
    the real file system to the fake file system. This makes it easy to use
    files from the real file system in your tests.
- * A pytest plugin is now installed with pyfakefs that exports `fs`
-   as a pytest fixture.
+ * A pytest plugin is now installed with pyfakefs that exports the 
+   fake filesystem as pytest fixture `fs`.
+
+#### Fixes
+ * Incorrect disk usage calculation if too large file created (#155)
 
 ## Version 3.0
 
 #### New Features
  * support for path-like objects as arguments in fake `os`
    and `os.path` modules (Python >= 3.6)
+ * some changes to make pyfakefs work with Python 3.6 
  * support for `pathlib` module (Python >= 3.4)
  * support for `os.replace` (Python >= 3.3)
  * `os.access`, `os.chmod`, `os.chown`, `os.stat`, `os.utime`:
@@ -23,12 +27,16 @@ The release versions are PyPi releases.
  * option to not fake modules named `path`
  * `glob.glob`, `glob.iglob`: support for `recursive` argument (Python >= 3.5)
  * support for `glob.iglob`
+ 
+#### Infrastructure
+ * added [auto-generated documentation](http://jmcgeheeiv.github.io/pyfakefs/)
 
 #### Fixes
  * shutil.move incorrectly moves directories (#145)
  * Missing support for 'x' mode in `open` (Python >= 3.3) (#147)
  * Incorrect exception type in Posix if path ancestor is a file (#139)
  * Exception handling when using `Patcher` with py.test (#135)
+ * Fake `os.listdir` returned sorted instead of unsorted entries
  
 ## Version 2.9
 
