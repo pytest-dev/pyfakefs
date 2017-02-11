@@ -1,12 +1,12 @@
 # Release Notes 
 The release versions are PyPi releases.
 
-## Version 3.1 (as yet unreleased)
+## Version 3.1
 
 #### New Features
  * Added helper method `TestCase.copyRealFile()` to copy a file from
    the real file system to the fake file system. This makes it easy to use
-   files from the real file system in your tests.
+   template, data and configuration files in your tests.
  * A pytest plugin is now installed with pyfakefs that exports the 
    fake filesystem as pytest fixture `fs`.
 
