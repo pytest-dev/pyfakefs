@@ -1,5 +1,12 @@
-# Release Notes 
+# pyfakefs Release Notes 
 The release versions are PyPi releases.
+
+## Version 3.2 (as yet unreleased)
+
+#### New Features
+ * Added the CHANGES.md release notes to the release manifest
+
+#### Fixes
 
 ## Version 3.1
 
