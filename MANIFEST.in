@@ -1,3 +1,4 @@
+include CHANGES.md
 include COPYING
 include README.md
 include example.py
