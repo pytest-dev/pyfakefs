@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>pyfakefs package &#8212; pyfakefs 3.0 documentation</title>
+    <title>pyfakefs package &#8212; pyfakefs 3.1 documentation</title>
     
     <link rel="stylesheet" href="_static/nature.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
@@ -14,7 +14,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    './',
-        VERSION:     '3.0',
+        VERSION:     '3.1',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -25,7 +25,7 @@
     <script type="text/javascript" src="_static/doctools.js"></script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
-    <link rel="top" title="pyfakefs 3.0 documentation" href="index.html" />
+    <link rel="top" title="pyfakefs 3.1 documentation" href="index.html" />
     <link rel="up" title="pyfakefs" href="modules.html" />
     <link rel="prev" title="pyfakefs" href="modules.html" /> 
   </head>
@@ -42,7 +42,7 @@
         <li class="right" >
           <a href="modules.html" title="pyfakefs"
              accesskey="P">previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="index.html">pyfakefs 3.0 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="index.html">pyfakefs 3.1 documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="modules.html" accesskey="U">pyfakefs</a> &#187;</li> 
       </ul>
     </div>  
@@ -223,6 +223,12 @@ New in pyfakefs 2.9.</li>
 <dt id="pyfakefs.fake_filesystem.FakeDirectory.contents">
 <code class="descname">contents</code><a class="headerlink" href="#pyfakefs.fake_filesystem.FakeDirectory.contents" title="Permalink to this definition">¶</a></dt>
 <dd><p>Return the list of contained directory entries.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="pyfakefs.fake_filesystem.FakeDirectory.ordered_dirs">
+<code class="descname">ordered_dirs</code><a class="headerlink" href="#pyfakefs.fake_filesystem.FakeDirectory.ordered_dirs" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return the list of contained directory entry names ordered by creation order.</p>
 </dd></dl>
 
 </dd></dl>
@@ -423,7 +429,7 @@ or <cite>open()</cite> function.</p>
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
 <li><strong>file</strong> &#8211; path to target file or a file descriptor.</li>
-<li><strong>mode</strong> &#8211; additional file modes. All r/w/a r+/w+/a+ modes are supported.
+<li><strong>mode</strong> &#8211; additional file modes. All r/w/a/x r+/w+/a+ modes are supported.
 &#8216;t&#8217;, and &#8216;U&#8217; are ignored, e.g., &#8216;wU&#8217; is treated as &#8216;w&#8217;. &#8216;b&#8217; sets
 binary mode, no end of line translations in StringIO.</li>
 <li><strong>buffering</strong> &#8211; ignored. (Used for signature compliance with __builtin__.open)</li>
@@ -712,7 +718,7 @@ New in pyfakefs 3.0.</p>
 <dt id="pyfakefs.fake_filesystem.FakeFilesystem.CreateFile">
 <code class="descname">CreateFile</code><span class="sig-paren">(</span><em>file_path</em>, <em>st_mode=33206</em>, <em>contents=''</em>, <em>st_size=None</em>, <em>create_missing_dirs=True</em>, <em>apply_umask=False</em>, <em>encoding=None</em><span class="sig-paren">)</span><a class="headerlink" href="#pyfakefs.fake_filesystem.FakeFilesystem.CreateFile" title="Permalink to this definition">¶</a></dt>
 <dd><p>Create file_path, including all the parent directories along the way.</p>
-<p>Helper method to set up your test faster.</p>
+<p>This helper method can be used to set up tests more easily.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />
@@ -2444,6 +2450,13 @@ FakeOsModule docstring for details.</p>
 </dd></dl>
 
 <dl class="method">
+<dt id="pyfakefs.fake_filesystem.FakePathModule.dirname">
+<code class="descname">dirname</code><span class="sig-paren">(</span><em>path</em><span class="sig-paren">)</span><a class="headerlink" href="#pyfakefs.fake_filesystem.FakePathModule.dirname" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns the first part of the result of <cite>split()</cite>.
+New in pyfakefs 3.0.</p>
+</dd></dl>
+
+<dl class="method">
 <dt id="pyfakefs.fake_filesystem.FakePathModule.exists">
 <code class="descname">exists</code><span class="sig-paren">(</span><em>path</em><span class="sig-paren">)</span><a class="headerlink" href="#pyfakefs.fake_filesystem.FakePathModule.exists" title="Permalink to this definition">¶</a></dt>
 <dd><p>Determine whether the file object exists within the fake filesystem.</p>
@@ -2632,14 +2645,23 @@ New in pyfakefs 2.9.</p>
 
 <dl class="method">
 <dt id="pyfakefs.fake_filesystem.FakePathModule.realpath">
-<code class="descname">realpath</code><span class="sig-paren">(</span><em>path</em><span class="sig-paren">)</span><a class="headerlink" href="#pyfakefs.fake_filesystem.FakePathModule.realpath" title="Permalink to this definition">¶</a></dt>
-<dd><p>Return the absolute version of a path.</p>
+<code class="descname">realpath</code><span class="sig-paren">(</span><em>filename</em><span class="sig-paren">)</span><a class="headerlink" href="#pyfakefs.fake_filesystem.FakePathModule.realpath" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return the canonical path of the specified filename, eliminating any
+symbolic links encountered in the path.
+New in pyfakefs 3.0.</p>
 </dd></dl>
 
 <dl class="method">
 <dt id="pyfakefs.fake_filesystem.FakePathModule.relpath">
 <code class="descname">relpath</code><span class="sig-paren">(</span><em>path</em>, <em>start=None</em><span class="sig-paren">)</span><a class="headerlink" href="#pyfakefs.fake_filesystem.FakePathModule.relpath" title="Permalink to this definition">¶</a></dt>
-<dd><p>ntpath.relpath() needs the cwd passed in the start argument.</p>
+<dd><p>We mostly rely on the native implementation and adapt the path separator.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="pyfakefs.fake_filesystem.FakePathModule.split">
+<code class="descname">split</code><span class="sig-paren">(</span><em>path</em><span class="sig-paren">)</span><a class="headerlink" href="#pyfakefs.fake_filesystem.FakePathModule.split" title="Permalink to this definition">¶</a></dt>
+<dd><p>Split the path into the directory and the filename of the path.
+New in pyfakefs 3.0.</p>
 </dd></dl>
 
 <dl class="method">
@@ -3080,7 +3102,7 @@ For usage outside of TestCase (for example with pytest) use:
 
 <dl class="attribute">
 <dt id="pyfakefs.fake_filesystem_unittest.Patcher.SKIPMODULES">
-<code class="descname">SKIPMODULES</code><em class="property"> = {&lt;module 'pyfakefs.fake_filesystem_shutil' from 'C:\\Users\\andreas\\dev\\GitHub\\pyfakefs-doc\\pyfakefs\\fake_filesystem_shutil.py'&gt;, &lt;module 'pyfakefs.fake_tempfile' from 'C:\\Users\\andreas\\dev\\GitHub\\pyfakefs-doc\\pyfakefs\\fake_tempfile.py'&gt;, &lt;module 'sys' (built-in)&gt;, &lt;module 'pyfakefs.fake_filesystem' from 'C:\\Users\\andreas\\dev\\GitHub\\pyfakefs-doc\\pyfakefs\\fake_filesystem.py'&gt;, None}</em><a class="headerlink" href="#pyfakefs.fake_filesystem_unittest.Patcher.SKIPMODULES" title="Permalink to this definition">¶</a></dt>
+<code class="descname">SKIPMODULES</code><em class="property"> = {&lt;module 'sys' (built-in)&gt;, &lt;module 'pyfakefs.fake_filesystem_shutil' from 'c:\\Users\\andreas\\dev\\GitHub\\pyfakefs-doc\\pyfakefs\\fake_filesystem_shutil.py'&gt;, None, &lt;module 'pyfakefs.fake_tempfile' from 'c:\\Users\\andreas\\dev\\GitHub\\pyfakefs-doc\\pyfakefs\\fake_tempfile.py'&gt;, &lt;module 'pyfakefs.fake_filesystem' from 'c:\\Users\\andreas\\dev\\GitHub\\pyfakefs-doc\\pyfakefs\\fake_filesystem.py'&gt;}</em><a class="headerlink" href="#pyfakefs.fake_filesystem_unittest.Patcher.SKIPMODULES" title="Permalink to this definition">¶</a></dt>
 <dd><p>Stub nothing that is imported within these modules.
 <cite>sys</cite> is included to prevent <cite>sys.path</cite> from being stubbed with the fake
 <cite>os.path</cite>.</p>
@@ -3088,7 +3110,7 @@ For usage outside of TestCase (for example with pytest) use:
 
 <dl class="attribute">
 <dt id="pyfakefs.fake_filesystem_unittest.Patcher.SKIPNAMES">
-<code class="descname">SKIPNAMES</code><em class="property"> = {'pathlib', 'path', 'io', 'os', 'tempfile'}</em><a class="headerlink" href="#pyfakefs.fake_filesystem_unittest.Patcher.SKIPNAMES" title="Permalink to this definition">¶</a></dt>
+<code class="descname">SKIPNAMES</code><em class="property"> = {'os', 'pathlib', 'tempfile', 'path', 'io'}</em><a class="headerlink" href="#pyfakefs.fake_filesystem_unittest.Patcher.SKIPNAMES" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="method">
@@ -3111,12 +3133,49 @@ modules real ones.  Also bind the fake <cite>file()</cite> and <cite>open()</cit
 
 </dd></dl>
 
+<dl class="function">
+<dt id="pyfakefs.fake_filesystem_unittest.REAL_OPEN">
+<code class="descclassname">pyfakefs.fake_filesystem_unittest.</code><code class="descname">REAL_OPEN</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#pyfakefs.fake_filesystem_unittest.REAL_OPEN" title="Permalink to this definition">¶</a></dt>
+<dd><p>The real (not faked) <cite>open</cite> builtin.</p>
+</dd></dl>
+
+<dl class="data">
+<dt id="pyfakefs.fake_filesystem_unittest.REAL_OS">
+<code class="descclassname">pyfakefs.fake_filesystem_unittest.</code><code class="descname">REAL_OS</code><em class="property"> = &lt;module 'os' from 'c:\\users\\andreas\\dev\\venv\\pyfakefs-3.5\\lib\\os.py'&gt;</em><a class="headerlink" href="#pyfakefs.fake_filesystem_unittest.REAL_OS" title="Permalink to this definition">¶</a></dt>
+<dd><p>The real (not faked) <cite>os</cite> module.</p>
+</dd></dl>
+
 <dl class="class">
 <dt id="pyfakefs.fake_filesystem_unittest.TestCase">
 <em class="property">class </em><code class="descclassname">pyfakefs.fake_filesystem_unittest.</code><code class="descname">TestCase</code><span class="sig-paren">(</span><em>methodName='runTest'</em>, <em>additional_skip_names=None</em>, <em>patch_path=True</em><span class="sig-paren">)</span><a class="headerlink" href="#pyfakefs.fake_filesystem_unittest.TestCase" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal"><span class="pre">unittest.case.TestCase</span></code></p>
 <p>Test case class that automatically replaces file-system related
 modules by fake implementations.</p>
+<dl class="method">
+<dt id="pyfakefs.fake_filesystem_unittest.TestCase.copyRealFile">
+<code class="descname">copyRealFile</code><span class="sig-paren">(</span><em>real_file_path</em>, <em>fake_file_path=None</em>, <em>create_missing_dirs=True</em><span class="sig-paren">)</span><a class="headerlink" href="#pyfakefs.fake_filesystem_unittest.TestCase.copyRealFile" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="docutils">
+<dt>Copy the file <cite>real_file_path</cite> from the real file system to the fake</dt>
+<dd>file system file <cite>fake_file_path</cite>.  The permissions, gid, uid, ctime,
+mtime and atime of the real file are copied to the fake file.</dd>
+</dl>
+<p>This is a helper method you can use to set up your test more easily.</p>
+<p>This method is available in Python 2.7 and above.</p>
+<blockquote>
+<div><dl class="docutils">
+<dt>Args:</dt>
+<dd>real_file_path: Path to the source file in the real file system.
+fake_file_path: path to the destination file in the fake file system.
+create_missing_dirs: if True, auto create missing directories.</dd>
+<dt>Returns:</dt>
+<dd>the newly created FakeFile object.</dd>
+<dt>Raises:</dt>
+<dd>IOError: if the file already exists.
+IOError: if the containing directory is required and missing.</dd>
+</dl>
+</div></blockquote>
+</dd></dl>
+
 <dl class="attribute">
 <dt id="pyfakefs.fake_filesystem_unittest.TestCase.fs">
 <code class="descname">fs</code><a class="headerlink" href="#pyfakefs.fake_filesystem_unittest.TestCase.fs" title="Permalink to this definition">¶</a></dt>
@@ -3455,12 +3514,12 @@ my_tempfile_module = mock_tempfile.FakeTempfileModule(filesystem)</p>
         <li class="right" >
           <a href="modules.html" title="pyfakefs"
              >previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="index.html">pyfakefs 3.0 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="index.html">pyfakefs 3.1 documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="modules.html" >pyfakefs</a> &#187;</li> 
       </ul>
     </div>
     <div class="footer" role="contentinfo">
-        &#169; Copyright 2016, John McGehee.
+        &#169; Copyright 2017, John McGehee.
       Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.4.8.
     </div>
   </body>
