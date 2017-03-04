@@ -7,7 +7,8 @@ The release versions are PyPi releases.
  * Added the CHANGES.md release notes to the release manifest
 
 #### Fixes
-
+ * Rename that only changes case was not possible under Windows (#160)
+ 
 ## Version 3.1
 
 #### New Features
