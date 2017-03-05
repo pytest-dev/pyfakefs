@@ -1481,8 +1481,12 @@ class FakeFilesystem(object):
         if self.Exists(new_file_path):
             if old_file_path == new_file_path:
                 return  # Nothing to do here.
+            old_obj = self.GetObject(old_file_path)
             new_obj = self.GetObject(new_file_path)
-            if stat.S_ISDIR(new_obj.st_mode):
+            if old_obj == new_obj:
+                # can happen in case-insensitive file system if only case is changed
+                pass
+            elif stat.S_ISDIR(new_obj.st_mode):
                 raise OSError(errno.EEXIST,
                               'Fake filesystem object: can not rename to existing directory',
                               new_file_path)

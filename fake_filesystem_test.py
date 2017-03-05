@@ -1130,6 +1130,19 @@ class FakeOsModuleTest(FakeOsModuleTestBase):
         self.assertEqual('test contents',
                          self.filesystem.GetObject(new_file_path).contents)
 
+    def testChangeCaseInCaseInsensitiveFileSystem(self):
+        """Can use `rename()` to change filename case in a case-insensitive file system."""
+        self.filesystem.is_case_sensitive = False
+        directory = 'xyzzy'
+        old_file_path = '/%s/fileName' % directory
+        new_file_path = '/%s/FileNAME' % directory
+        self.filesystem.CreateFile(old_file_path, contents='test contents')
+        self.assertEqual(old_file_path, self.filesystem.NormalizeCase(old_file_path))
+        self.os.rename(old_file_path, new_file_path)
+        self.assertTrue(self.filesystem.Exists(old_file_path))
+        self.assertTrue(self.filesystem.Exists(new_file_path))
+        self.assertEqual(new_file_path, self.filesystem.NormalizeCase(old_file_path))
+
     def testRenameDirectory(self):
         """Can rename a directory to an unused name."""
         for old_path, new_path in [('wxyyw', 'xyzzy'), ('/abccb', 'cdeed')]:
