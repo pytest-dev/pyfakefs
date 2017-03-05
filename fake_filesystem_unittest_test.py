@@ -170,12 +170,14 @@ class TestPatchPathUnittestPassing(TestPyfakefsUnittestBase):
 @unittest.skipIf(sys.version_info < (2, 7), "No byte strings in Python 2.6")
 class TestCopyRealFile(TestPyfakefsUnittestBase):
     """Tests the `fake_filesystem_unittest.TestCase.copyRealFile()` method."""
-
-    real_stat = os.stat(__file__)
     with open(__file__) as f:
         real_string_contents = f.read()
     with open(__file__, 'rb') as f:
         real_byte_contents = f.read()
+    # It is essential to do os.stat() after opening the real file, not before.
+    # This is because opening the file on MacOS and BSD updates access time
+    # st_atime.  Windows offers the option to enable this behavior as well.
+    real_stat = os.stat(__file__)
 
     def testCopyRealFile(self):
         '''Copy a real file to the fake file system'''

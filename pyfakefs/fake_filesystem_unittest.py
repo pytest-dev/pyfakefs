@@ -141,6 +141,18 @@ class TestCase(unittest.TestCase):
         Raises:
           IOError: if the file already exists.
           IOError: if the containing directory is required and missing.
+
+        .. note:: The fake file's atime is the access time of the real file \
+                  before it accessed by `copyRealFile()`.  Then, the real file \
+                  is opened in order to copy its contents, whereupon \
+                  **MacOS and BSD update the real file's atime** to the time \
+                  at which your test used `copyRealFile()`. \
+                  \
+                  Thus on these platforms atime is subject to Heisenberg's \
+                  uncertainty principle--by merely accessing the real file, \
+                  your test changes the real file's atime.  Further, Windows \
+                  offers the option to enable atime, and older versions of \
+                  Linux may also modify atime.
         """
         real_stat = REAL_OS.stat(real_file_path)
         with REAL_OPEN(real_file_path, 'rb') as real_file:
