@@ -1,5 +1,6 @@
 *.pyc
 *.egg-info/
+.tox/
 
 # Eclipse
 .settings
@@ -8,3 +9,6 @@
 
 # PyCharm
 .idea/
+
+# pytest
+.cache/
