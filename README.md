@@ -58,14 +58,6 @@ def my_fakefs_test(fs):
 Similar to the unittest class (`fake_filesystem_unittest.TestCase`), the `fs` fixture stubs
 out all file system functions and modules.
 
-## Continuous Integration
-
-pyfakefs is automatically tested with Python 2.6 and above, and it is currently
-[![Build Status](https://travis-ci.org/jmcgeheeiv/pyfakefs.svg)](https://travis-ci.org/jmcgeheeiv/pyfakefs).
-
-See [Travis-CI](http://travis-ci.org) for
-[test results for each Python version](https://travis-ci.org/jmcgeheeiv/pyfakefs).
-
 ## Installation
 
 ### Compatibility
@@ -77,6 +69,32 @@ pyfakefs works with [PyTest](doc.pytest.org) version 2.8.0 or above.
 
 ### PyPi
 [pyfakefs is available on PyPi](https://pypi.python.org/pypi/pyfakefs/).
+
+## Development
+
+### Continuous Integration
+
+pyfakefs is automatically tested with Python 2.6 and above, and it is currently
+[![Build Status](https://travis-ci.org/jmcgeheeiv/pyfakefs.svg)](https://travis-ci.org/jmcgeheeiv/pyfakefs).
+
+See [Travis-CI](http://travis-ci.org) for
+[test results for each Python version](https://travis-ci.org/jmcgeheeiv/pyfakefs).
+
+### Running Tests
+
+pyfakefs unit tests are available via two test scripts:
+
+```bash
+$ python all_tests.py
+$ py.test pytest_plugin_test.py
+```
+
+These scripts are called by `tox` and Travis-CI. `tox` can be used to run tests
+locally against supported python versions:
+
+```bash
+$ tox
+```
 
 ## History
 pyfakefs.py was initially developed at Google by Mike Bland as a modest fake
