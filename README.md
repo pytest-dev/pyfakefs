@@ -4,7 +4,7 @@ Using pyfakefs, your tests operate on a fake file system in memory without
 touching the real disk.  The software under test requires no modification to
 work with pyfakefs.
 
-pyfakefs works with Linux, Windows and MacOS. 
+pyfakefs works with Linux, Windows and MacOS.
 
 The current pyfakfs API is referenced in the [auto-generated documentation](http://jmcgeheeiv.github.io/pyfakefs/).
 A list of changes in the latest versions can be found in the [Release Notes](CHANGES.md).
@@ -56,7 +56,7 @@ def my_fakefs_test(fs):
 ```
 
 Similar to the unittest class (`fake_filesystem_unittest.TestCase`), the `fs` fixture stubs
-out all file system functions and modules. 
+out all file system functions and modules.
 
 ## Continuous Integration
 
@@ -101,4 +101,3 @@ added further corrections.
 After the [shutdown of Google Code was announced,](http://google-opensource.blogspot.com/2015/03/farewell-to-google-code.html)
 John McGehee merged all three Google Code projects together here on GitHub where an
 enthusiastic community actively maintains and extends pyfakefs.
-
