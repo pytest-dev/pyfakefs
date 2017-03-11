@@ -160,7 +160,10 @@ class FakeDirectoryUnitTest(TestCase):
         self.assertEqual(['2', '4', '1', '3'], fake_dir.ordered_dirs)
 
 
-class SetLargeFileSizeTest(FakeDirectoryUnitTest):
+class SetLargeFileSizeTest(TestCase):
+    def setUp(self):
+        self.fake_file = fake_filesystem.FakeFile('foobar')
+
     def testShouldThrowIfSizeIsNotInteger(self):
         self.assertRaisesIOError(errno.ENOSPC, self.fake_file.SetLargeFileSize, 0.1)
 
