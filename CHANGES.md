@@ -7,6 +7,7 @@ The release versions are PyPi releases.
  * Added the CHANGES.md release notes to the release manifest
 
 #### Fixes
+ * tox support was broken (#163)
  * Rename that only changes case was not possible under Windows (#160)
  
 ## Version 3.1
@@ -75,7 +76,7 @@ The release versions are PyPi releases.
 
 #### Infrastructure
  * moved repository from GoogleCode to GitHub, merging 3 projects
- * added continous integration testing with Travis CI
+ * added continuous integration testing with Travis CI
  * added usage documentation in project wiki
  * better support for pypi releases
  
