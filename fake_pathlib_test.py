@@ -485,6 +485,24 @@ class FakePathlibPathFileOperationTest(unittest.TestCase):
         self.assertEqual(sorted(path.glob('*.py')),
                          [self.path('!foo!all_tests.py'), self.path('!foo!setup.py')])
 
+    def test_glob_case_windows(self):
+        self.filesystem.is_windows_fs = True
+        self.filesystem.CreateFile('!foo!setup.py')
+        self.filesystem.CreateFile('!foo!all_tests.PY')
+        self.filesystem.CreateFile('!foo!README.md')
+        self.filesystem.CreateFile('!foo!example.Py')
+        path = self.path('!foo')
+        self.assertEqual(sorted(path.glob('*.py')),
+                         [self.path('!foo!all_tests.PY'), self.path('!foo!example.Py'), self.path('!foo!setup.py')])
+
+    def test_glob_case_posix(self):
+        self.filesystem.is_windows_fs = False
+        self.filesystem.CreateFile('!foo!setup.py')
+        self.filesystem.CreateFile('!foo!all_tests.PY')
+        self.filesystem.CreateFile('!foo!README.md')
+        self.filesystem.CreateFile('!foo!example.Py')
+        path = self.path('!foo')
+        self.assertEqual(sorted(path.glob('*.py')), [self.path('!foo!setup.py')])
 
 @unittest.skipIf(sys.version_info < (3, 6), 'path-like objects new in Python 3.6')
 class FakePathlibUsageInOsFunctionsTest(unittest.TestCase):
