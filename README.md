@@ -4,7 +4,7 @@ Using pyfakefs, your tests operate on a fake file system in memory without
 touching the real disk.  The software under test requires no modification to
 work with pyfakefs.
 
-pyfakefs works with Linux, Windows and MacOS. 
+pyfakefs works with Linux, Windows and MacOS.
 
 The current pyfakfs API is referenced in the [auto-generated documentation](http://jmcgeheeiv.github.io/pyfakefs/).
 A list of changes in the latest versions can be found in the [Release Notes](CHANGES.md).
@@ -56,15 +56,7 @@ def my_fakefs_test(fs):
 ```
 
 Similar to the unittest class (`fake_filesystem_unittest.TestCase`), the `fs` fixture stubs
-out all file system functions and modules. 
-
-## Continuous Integration
-
-pyfakefs is automatically tested with Python 2.6 and above, and it is currently
-[![Build Status](https://travis-ci.org/jmcgeheeiv/pyfakefs.svg)](https://travis-ci.org/jmcgeheeiv/pyfakefs).
-
-See [Travis-CI](http://travis-ci.org) for
-[test results for each Python version](https://travis-ci.org/jmcgeheeiv/pyfakefs).
+out all file system functions and modules.
 
 ## Installation
 
@@ -73,10 +65,36 @@ pyfakefs works with Python 2.6 and above, on Linux, Windows and OSX (MacOS).
 
 pyfakefs requires [mox3](https://pypi.python.org/pypi/mox3).
 
-pyfakefs works with [PyTest](doc.pytest.org) version 2.8.6 or above.
+pyfakefs works with [PyTest](doc.pytest.org) version 2.8.0 or above.
 
 ### PyPi
 [pyfakefs is available on PyPi](https://pypi.python.org/pypi/pyfakefs/).
+
+## Development
+
+### Continuous Integration
+
+pyfakefs is automatically tested with Python 2.6 and above, and it is currently
+[![Build Status](https://travis-ci.org/jmcgeheeiv/pyfakefs.svg)](https://travis-ci.org/jmcgeheeiv/pyfakefs).
+
+See [Travis-CI](http://travis-ci.org) for
+[test results for each Python version](https://travis-ci.org/jmcgeheeiv/pyfakefs).
+
+### Running Tests
+
+pyfakefs unit tests are available via two test scripts:
+
+```bash
+$ python all_tests.py
+$ py.test pytest_plugin_test.py
+```
+
+These scripts are called by `tox` and Travis-CI. `tox` can be used to run tests
+locally against supported python versions:
+
+```bash
+$ tox
+```
 
 ## History
 pyfakefs.py was initially developed at Google by Mike Bland as a modest fake
@@ -101,4 +119,3 @@ added further corrections.
 After the [shutdown of Google Code was announced,](http://google-opensource.blogspot.com/2015/03/farewell-to-google-code.html)
 John McGehee merged all three Google Code projects together here on GitHub where an
 enthusiastic community actively maintains and extends pyfakefs.
-
