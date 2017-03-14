@@ -208,15 +208,15 @@ class _FakeFlavour(pathlib._Flavour):
 
     def casefold(self, s):
         """Return the lower-case version of s for a case-insensitive filesystem."""
-        if self.filesystem.is_case_sensitive:
-            return s
-        return s.lower()
+        if self.filesystem.is_windows_fs:
+            return s.lower()
+        return s
 
     def casefold_parts(self, parts):
         """Return the lower-case version of parts for a case-insensitive filesystem."""
-        if self.filesystem.is_case_sensitive:
-            return parts
-        return [p.lower() for p in parts]
+        if self.filesystem.is_windows_fs:
+            return [p.lower() for p in parts]
+        return parts
 
     def _resolve_posix(self, path, strict):
         """Original implementation in Python 3.6."""
