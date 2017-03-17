@@ -3958,12 +3958,12 @@ class ResolvePathTest(FakeFileOpenTestBase):
         self.assertEqual('!!foo!bar!baz', self.filesystem.ResolvePath('!!foo!bar!baz!!'))
 
 
-class PathManipulationTests(TestCase):
+class PathManipulationTestBase(TestCase):
     def setUp(self):
         self.filesystem = fake_filesystem.FakeFilesystem(path_separator='|')
 
 
-class CollapsePathPipeSeparatorTest(PathManipulationTests):
+class CollapsePathPipeSeparatorTest(PathManipulationTestBase):
     """Tests CollapsePath (mimics os.path.normpath) using | as path separator."""
 
     def testEmptyPathBecomesDotPath(self):
@@ -4015,7 +4015,7 @@ class CollapsePathPipeSeparatorTest(PathManipulationTests):
             'bar', self.filesystem.CollapsePath('foo|..|yes|..|no|..|bar'))
 
 
-class SplitPathTest(PathManipulationTests):
+class SplitPathTest(PathManipulationTestBase):
     """Tests SplitPath (which mimics os.path.split) using | as path separator."""
 
     def testEmptyPath(self):
@@ -4047,7 +4047,7 @@ class SplitPathTest(PathManipulationTests):
         self.assertEqual(('|a||b', 'c'), self.filesystem.SplitPath('|a||b||c'))
 
 
-class JoinPathTest(PathManipulationTests):
+class JoinPathTest(PathManipulationTestBase):
     """Tests JoinPath (which mimics os.path.join) using | as path separator."""
 
     def testOneEmptyComponent(self):
