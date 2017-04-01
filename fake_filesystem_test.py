@@ -4186,6 +4186,7 @@ class DiskSpaceTest(TestCase):
 
         total_size = 100
         self.filesystem.AddMountPoint('mount', total_size)
+
         def create_too_large_file():
             with fake_open('!mount!file', 'w') as dest:
                 dest.write('a' * (total_size + 1))
@@ -4198,7 +4199,6 @@ class DiskSpaceTest(TestCase):
             dest.write('a' * total_size)
 
         self.assertEqual(total_size, self.filesystem.GetDiskUsage('!mount').used)
-
 
     def testFileSystemSizeAfterLargeFileCreation(self):
         filesystem = fake_filesystem.FakeFilesystem(path_separator='!',
@@ -4442,6 +4442,137 @@ class MountPointTest(TestCase):
         self.filesystem.CreateFile('!!foo!bar!bip!bop')
         self.assertEqual(5, self.filesystem.GetObject('!!foo!bar').st_dev)
         self.assertEqual(5, self.filesystem.GetObject('!!foo!bar!bip!bop').st_dev)
+
+
+class RealFileSystemAccessTest(TestCase):
+    def setUp(self):
+        # use the real path separator to work with the real file system
+        self.filesystem = fake_filesystem.FakeFilesystem()
+        self.fake_open = fake_filesystem.FakeFileOpen(self.filesystem)
+
+    def testAddNonExistingRealFileRaises(self):
+        nonexisting_path = os.path.join('nonexisting', 'test.txt')
+        self.assertRaises(OSError, self.filesystem.add_real_file, nonexisting_path)
+        self.assertFalse(self.filesystem.Exists(nonexisting_path))
+
+    def testAddNonExistingRealDirectoryRaises(self):
+        nonexisting_path = '/nonexisting'
+        self.assertRaisesIOError(errno.ENOENT, self.filesystem.add_real_directory, nonexisting_path)
+        self.assertFalse(self.filesystem.Exists(nonexisting_path))
+
+    def testExistingFakeFileRaises(self):
+        real_file_path = __file__
+        self.filesystem.CreateFile(real_file_path)
+        self.assertRaisesIOError(errno.EEXIST, self.filesystem.add_real_file, real_file_path)
+
+    def testExistingFakeDirectoryRaises(self):
+        real_dir_path = os.path.dirname(__file__)
+        self.filesystem.CreateDirectory(real_dir_path)
+        self.assertRaisesOSError(errno.EEXIST, self.filesystem.add_real_directory, real_dir_path)
+
+    def checkFakeFileStat(self, fake_file, real_file_path):
+        self.assertTrue(self.filesystem.Exists(real_file_path))
+        real_stat = os.stat(real_file_path)
+        self.assertIsNone(fake_file._byte_contents)
+        self.assertEqual(fake_file.st_size, real_stat.st_size)
+        self.assertEqual(fake_file.st_ctime, real_stat.st_ctime)
+        self.assertEqual(fake_file.st_atime, real_stat.st_atime)
+        self.assertEqual(fake_file.st_mtime, real_stat.st_mtime)
+        self.assertEqual(fake_file.st_uid, real_stat.st_uid)
+        self.assertEqual(fake_file.st_gid, real_stat.st_gid)
+
+    def checkReadOnlyFile(self, fake_file, real_file_path):
+        with open(real_file_path, 'rb') as f:
+            real_contents = f.read()
+        self.assertEqual(fake_file.byte_contents, real_contents)
+        self.assertRaisesIOError(errno.EACCES, self.fake_open, real_file_path, 'w')
+
+    def checkWritableFile(self, fake_file, real_file_path):
+        with open(real_file_path, 'rb') as f:
+            real_contents = f.read()
+        self.assertEqual(fake_file.byte_contents, real_contents)
+        with self.fake_open(real_file_path, 'wb') as f:
+            f.write(b'test')
+        with open(real_file_path, 'rb') as f:
+            real_contents1 = f.read()
+        self.assertEqual(real_contents1, real_contents)
+        with self.fake_open(real_file_path, 'rb') as f:
+            fake_contents = f.read()
+        self.assertEqual(fake_contents, b'test')
+
+    def testAddExistingRealFileReadOnly(self):
+        real_file_path = __file__
+        fake_file = self.filesystem.add_real_file(real_file_path)
+        self.checkFakeFileStat(fake_file, real_file_path)
+        self.assertEqual(fake_file.st_mode & 0o333, 0)
+        self.checkReadOnlyFile(fake_file, real_file_path)
+
+    def testAddExistingRealFileReadWrite(self):
+        real_file_path = os.path.realpath(__file__)
+        fake_file = self.filesystem.add_real_file(real_file_path, read_only=False)
+
+        self.checkFakeFileStat(fake_file, real_file_path)
+        self.assertEqual(fake_file.st_mode, os.stat(real_file_path).st_mode)
+        self.checkWritableFile(fake_file, real_file_path)
+
+    def testAddExistingRealDirectoryReadOnly(self):
+        real_dir_path = os.path.join(os.path.dirname(__file__), 'pyfakefs')
+        fake_dir = self.filesystem.add_real_directory(real_dir_path)
+        self.assertTrue(self.filesystem.Exists(real_dir_path))
+        self.assertTrue(self.filesystem.Exists(os.path.join(real_dir_path, 'fake_filesystem.py')))
+        self.assertTrue(self.filesystem.Exists(os.path.join(real_dir_path, 'fake_pathlib.py')))
+
+        file_path = os.path.join(real_dir_path, 'fake_tempfile.py')
+        fake_file = self.filesystem.ResolveObject(file_path)
+        self.checkFakeFileStat(fake_file, file_path)
+        self.checkReadOnlyFile(fake_file, file_path)
+
+    def testAddExistingRealDirectoryTree(self):
+        real_dir_path = os.path.dirname(__file__)
+        self.filesystem.add_real_directory(real_dir_path)
+        self.assertTrue(self.filesystem.Exists(os.path.join(real_dir_path, 'fake_filesystem_test.py')))
+        self.assertTrue(self.filesystem.Exists(os.path.join(real_dir_path, 'pyfakefs', 'fake_filesystem.py')))
+        self.assertTrue(self.filesystem.Exists(os.path.join(real_dir_path, 'pyfakefs', '__init__.py')))
+
+    def testAddExistingRealDirectoryReadWrite(self):
+        real_dir_path = os.path.join(os.path.dirname(__file__), 'pyfakefs')
+        self.filesystem.add_real_directory(real_dir_path, read_only=False)
+        self.assertTrue(self.filesystem.Exists(real_dir_path))
+        self.assertTrue(self.filesystem.Exists(os.path.join(real_dir_path, 'fake_filesystem.py')))
+        self.assertTrue(self.filesystem.Exists(os.path.join(real_dir_path, 'fake_pathlib.py')))
+
+        file_path = os.path.join(real_dir_path, 'pytest_plugin.py')
+        fake_file = self.filesystem.ResolveObject(file_path)
+        self.checkFakeFileStat(fake_file, file_path)
+        self.checkWritableFile(fake_file, file_path)
+
+    def testAddExistingRealPathsReadOnly(self):
+        real_file_path = os.path.realpath(__file__)
+        real_dir_path = os.path.join(os.path.dirname(__file__), 'pyfakefs')
+        self.filesystem.add_real_paths([real_file_path, real_dir_path])
+
+        fake_file = self.filesystem.ResolveObject(real_file_path)
+        self.checkFakeFileStat(fake_file, real_file_path)
+        self.checkReadOnlyFile(fake_file, real_file_path)
+
+        real_file_path = os.path.join(real_dir_path, 'fake_filesystem_shutil.py')
+        fake_file = self.filesystem.ResolveObject(real_file_path)
+        self.checkFakeFileStat(fake_file, real_file_path)
+        self.checkReadOnlyFile(fake_file, real_file_path)
+
+    def testAddExistingRealPathsReadWrite(self):
+        real_file_path = os.path.realpath(__file__)
+        real_dir_path = os.path.join(os.path.dirname(__file__), 'pyfakefs')
+        self.filesystem.add_real_paths([real_file_path, real_dir_path], read_only=False)
+
+        fake_file = self.filesystem.ResolveObject(real_file_path)
+        self.checkFakeFileStat(fake_file, real_file_path)
+        self.checkWritableFile(fake_file, real_file_path)
+
+        real_file_path = os.path.join(real_dir_path, 'fake_filesystem_glob.py')
+        fake_file = self.filesystem.ResolveObject(real_file_path)
+        self.checkFakeFileStat(fake_file, real_file_path)
+        self.checkWritableFile(fake_file, real_file_path)
 
 
 if __name__ == '__main__':

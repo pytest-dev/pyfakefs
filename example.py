@@ -132,5 +132,10 @@ def rm_tree(path):
     shutil.rmtree(path)
 
 def scandir(path):
-    """Returns a list of directory entries for the given path."""
+    """Return a list of directory entries for the given path."""
     return list(os.scandir(path))
+
+def file_contents(path):
+    """Return the contents of the given path as byte array."""
+    with open(path, 'rb') as f:
+        return f.read()
