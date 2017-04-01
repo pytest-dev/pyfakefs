@@ -4,6 +4,7 @@ The release versions are PyPi releases.
 ## Version 3.2 (as yet unreleased)
 
 #### New Features
+ * Added possibility to add lazily read real files to fake filesystem
  * Added the CHANGES.md release notes to the release manifest
 
 #### Fixes
