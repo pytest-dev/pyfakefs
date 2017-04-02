@@ -10,10 +10,30 @@ The current pyfakfs API is referenced in the [auto-generated documentation](http
 A list of changes in the latest versions can be found in the [Release Notes](CHANGES.md).
 
 ## Usage
-There are two approaches to implementing tests using pyfakefs.
+There are several approaches to implementing tests using pyfakefs.
 
-The first method is to allow pyfakefs to automatically find all real file functions and modules, and stub these out with the fake file system functions and modules.  This is explained in the [usage tutorial](http://github.com/jmcgeheeiv/pyfakefs/wiki/Tutorial)
-and demonstrated by `example.py` and `example_test.py`.
+### Automatically find and patch
+The first approach is to allow pyfakefs to automatically find all real file functions and modules, and stub these out with the fake file system functions and modules.  This is explained in the pyfakefs wiki page
+[Automatically find and patch file functions and modules](../../wiki/Automatically-find-and-patch-file-functions-and-modules)
+and demonstrated in files `example.py` and `example_test.py`.
+
+### Patch using the PyTest plugin
+
+If you use [PyTest](doc.pytest.org), you will be interested in the PyTest plugin in pyfakefs.
+This automatically patches all file system functions and modules in a manner similar to the
+[automatic find and patch approach](../../wiki/Automatically-find-and-patch-file-functions-and-modules)
+described above.
+
+The PyTest plugin provides the `fs` fixture for use in your test. For example:
+
+```python
+def my_fakefs_test(fs):
+    # "fs" is the reference to the fake file system
+    fs.CreateFile('/var/data/xx1.txt')
+    assert os.path.exists('/var/data/xx1.txt')
+```
+
+### Patch using unittest.mock
 
 The other approach is to do the patching yourself using `mock.patch()`:
 
@@ -42,21 +62,6 @@ glob = fake_glob.FakeGlobModule(fs)
 with patch('mymodule.glob', glob):
     print(glob.glob('/var/data/xx*'))
 ```
-
-### Usage as a Pytest Plugin
-
-Installation of pyfakefs also provides a [PyTest](doc.pytest.org) plugin. The plugin makes the `fs`
-fixture available for any test. For example:
-
-```
-def my_fakefs_test(fs):
-    # "fs" is the reference to the fake file system
-    fs.CreateFile('/var/data/xx1.txt')
-    assert os.path.exists('/var/data/xx1.txt')
-```
-
-Similar to the unittest class (`fake_filesystem_unittest.TestCase`), the `fs` fixture stubs
-out all file system functions and modules.
 
 ## Installation
 
