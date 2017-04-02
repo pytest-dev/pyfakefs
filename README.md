@@ -6,8 +6,20 @@ work with pyfakefs.
 
 pyfakefs works with Linux, Windows and MacOS.
 
-The current pyfakfs API is referenced in the [auto-generated documentation](http://jmcgeheeiv.github.io/pyfakefs/).
-A list of changes in the latest versions can be found in the [Release Notes](CHANGES.md).
+## Documentation
+
+This file provides general usage instructions for pyfakefs.  There is more:
+
+* The [pyfakfs API Reference](http://jmcgeheeiv.github.io/pyfakefs/)
+  contains documentation for each pyfakefs class, method and function
+* The [pyfakefs Wiki](../../wiki/Home) provides more detailed information on
+  specific topics
+* The [Release Notes](CHANGES.md) shows a list of changes in the latest versions
+
+### Link to pyfakefs.org
+
+In your own documentation, please link to pyfakefs using <http://pyfakefs.org>.
+This URL always points to the most relevant top page for pyfakefs.
 
 ## Usage
 There are several approaches to implementing tests using pyfakefs.
@@ -77,7 +89,7 @@ pyfakefs works with [PyTest](doc.pytest.org) version 2.8.0 or above.
 
 ## Development
 
-### Continuous Integration
+### Continuous integration
 
 pyfakefs is automatically tested with Python 2.6 and above, and it is currently
 [![Build Status](https://travis-ci.org/jmcgeheeiv/pyfakefs.svg)](https://travis-ci.org/jmcgeheeiv/pyfakefs).
@@ -85,7 +97,7 @@ pyfakefs is automatically tested with Python 2.6 and above, and it is currently
 See [Travis-CI](http://travis-ci.org) for
 [test results for each Python version](https://travis-ci.org/jmcgeheeiv/pyfakefs).
 
-### Running Tests
+### Running pyfakefs unit tests
 
 pyfakefs unit tests are available via two test scripts:
 
@@ -105,8 +117,8 @@ $ tox
 pyfakefs.py was initially developed at Google by Mike Bland as a modest fake
 implementation of core Python modules.  It was introduced to all of Google
 in September 2006. Since then, it has been enhanced to extend its
-functionality and usefulness.  At Google alone, pyfakefs is used in over 2,000
-Python tests.
+functionality and usefulness.  At last count, pyfakefs is used in over 2,000
+Python tests at Google.
 
 Google released pyfakefs to the public in 2011 as Google Code project
 [pyfakefs](http://code.google.com/p/pyfakefs/).
@@ -121,6 +133,7 @@ Fork
 [shiffdane-jmcgeheeiv-pyfakefs](http://code.google.com/p/shiffdane-jmcgeheeiv-pyfakefs/)
 added further corrections.
 
-After the [shutdown of Google Code was announced,](http://google-opensource.blogspot.com/2015/03/farewell-to-google-code.html)
-John McGehee merged all three Google Code projects together here on GitHub where an
-enthusiastic community actively maintains and extends pyfakefs.
+After the [shutdown of Google Code](http://google-opensource.blogspot.com/2015/03/farewell-to-google-code.html)
+was announced, [John McGehee](https://github.com/jmcgeheeiv) merged all three Google Code projects together
+[here on GitHub](https://github.com/jmcgeheeiv/pyfakefs) where an enthusiastic community actively maintains
+and extends pyfakefs.
