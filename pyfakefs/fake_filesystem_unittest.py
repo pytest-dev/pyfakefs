@@ -1,5 +1,5 @@
 # Copyright 2014 Altera Corporation. All Rights Reserved.
-# Copyright 2015 John McGehee
+# Copyright 2015-2017 John McGehee
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -13,30 +13,28 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""A base class for unit tests using the :py:class:`pyfakefs` module.
+"""This module provides a base class derived from `unittest.TestClass`
+for unit tests using the :py:class:`pyfakefs` module.
 
-This class searches `sys.modules` for modules that import the `os`, `io`,
-`path`, and `tempfile` modules.
+`fake_filesystem_unittest.TestCase` searches `sys.modules` for modules
+that import the `os`, `io`, `path`, and `tempfile` modules.
 
-The `setUp()` method binds these modules to the corresponding fake
-modules from `pyfakefs`.  Further, the built in functions `file()` and
-`open()` are bound to fake functions.
+The `setUpPyfakefs()` method binds these modules to the corresponding fake
+modules from `pyfakefs`.  Further, the `open()` built-in is bound to a fake
+`open()`.  In Python 2, built-in `file()` is similarly bound to the fake
+`open()`.
 
-The `tearDownPyfakefs()` method returns the module bindings to their original
-state.
-
-It is expected that `setUp()` be invoked at the beginning of the derived
-class' `setUp()` method, and `tearDownPyfakefs()` be invoked at the end of the
-derived class' `tearDown()` method.
+It is expected that `setUpPyfakefs()` be invoked at the beginning of the derived
+class' `setUp()` method.  There is no need to add anything to the derived
+class' `tearDown()` method.
 
 During the test, everything uses the fake file system and modules.  This means
-that even in your test, you can use familiar functions like `open()` and
-`os.makedirs()` to manipulate the fake file system.
+that even in your test fixture, familiar functions like `open()` and
+`os.makedirs()` manipulate the fake file system.
 
-This also means existing unit tests that use the real file system can be
-retrofitted to use `pyfakefs` by simply changing their base class from
-`:py:class`unittest.TestCase` to
-`:py:class`pyfakefs.fake_filesystem_unittest.TestCase`.
+Existing unit tests that use the real file system can be retrofitted to use
+pyfakefs by simply changing their base class from `:py:class`unittest.TestCase`
+to `:py:class`pyfakefs.fake_filesystem_unittest.TestCase`.
 """
 
 import os
@@ -169,8 +167,8 @@ class TestCase(unittest.TestCase):
 
     def setUpPyfakefs(self):
         """Bind the file-related modules to the :py:class:`pyfakefs` fake file
-        system instead of the real file system.  Also bind the fake `file()` and
-        `open()` functions.
+        system instead of the real file system.  Also bind the fake `open()`
+        function, and on Python 2, the `file()` function.
 
         Invoke this at the beginning of the `setUp()` method in your unit test
         class.
@@ -179,9 +177,8 @@ class TestCase(unittest.TestCase):
         self.addCleanup(self._stubber.tearDown)
 
     def tearDownPyfakefs(self):
-        """:meth:`pyfakefs.fake_filesystem_unittest.setUpPyfakefs` registers the
-        tear down procedure using :py:meth:`unittest.TestCase.addCleanup`.  Thus this
-        method is deprecated, and remains just for backward compatibility.
+        """This method is deprecated and exists only for backward compatibility.
+        It does nothing.
         """
         pass
 
