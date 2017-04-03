@@ -4,8 +4,11 @@ The release versions are PyPi releases.
 ## Version 3.2 (as yet unreleased)
 
 #### New Features
- * Added possibility to add lazily read real files to fake filesystem
- * Added the CHANGES.md release notes to the release manifest
+  * Added new methods to `fake_filesystem.FakeFilesystem` that make real files 
+    and directories appear within the fake file system: 
+    `AddRealFile()`, `AddRealDirectory()` and `AddRealPaths()`.
+    File contents are read from the real file system only when needed.
+  * Added the CHANGES.md release notes to the release manifest
 
 #### Fixes
  * `pathlib.glob()` incorrectly handled case under MacOS (#167)

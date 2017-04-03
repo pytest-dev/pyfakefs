@@ -30,6 +30,8 @@ and allows you to specify the contents or the size of the file.
 import os
 import sys
 
+from pyfakefs.fake_filesystem_unittest import REAL_OPEN
+
 if sys.version_info < (2, 7):
     import unittest2 as unittest
 else:
@@ -135,12 +137,21 @@ class TestExample(fake_filesystem_unittest.TestCase):  # pylint: disable=R0904
         self.fs.CreateFile('/linktest/linked')
         self.fs.CreateLink('/test/linked_file', '/linktest/linked')
 
-        entries = sorted(os.scandir('/test'), key=lambda e: e.name)
+        entries = sorted(example.scandir('/test'), key=lambda e: e.name)
         self.assertEqual(3, len(entries))
         self.assertEqual('linked_file', entries[1].name)
         self.assertTrue(entries[0].is_dir())
         self.assertTrue(entries[1].is_symlink())
         self.assertTrue(entries[2].is_file())
+
+    def test_real_file_access(self):
+        """Test `example.file_contents()` for a real file after adding it using `AddRealFile()`."""
+        real_file = __file__
+        with REAL_OPEN(real_file, 'rb') as f:
+            real_contents = f.read()
+        self.assertRaises(IOError, example.file_contents, real_file)
+        self.fs.AddRealFile(real_file)
+        self.assertEqual(example.file_contents(real_file), real_contents)
 
 
 if __name__ == "__main__":

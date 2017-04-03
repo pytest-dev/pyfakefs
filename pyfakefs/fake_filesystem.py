@@ -196,7 +196,7 @@ class FakeFile(object):
         self.name = name
         self.st_mode = st_mode
         self._byte_contents = self._EncodeContents(contents, encoding)
-        self.st_size = len(self._byte_contents) if self._byte_contents else 0
+        self.st_size = len(self._byte_contents) if self._byte_contents is not None else 0
         self.filesystem = filesystem
         self.epoch = 0
         self._st_ctime = time.time()  # times are accessed through properties
@@ -834,7 +834,7 @@ class FakeFilesystem(object):
         if not isinstance(file_des, int):
             raise TypeError('an integer is required')
         if (file_des >= len(self.open_files) or
-                    self.open_files[file_des] is None):
+                self.open_files[file_des] is None):
             raise OSError(errno.EBADF, 'Bad file descriptor', file_des)
         return self.open_files[file_des]
 
@@ -897,7 +897,7 @@ class FakeFilesystem(object):
                 continue
             if component == '..':
                 if collapsed_path_components and (
-                            collapsed_path_components[-1] != '..'):
+                        collapsed_path_components[-1] != '..'):
                     # Remove an up-reference: directory/..
                     collapsed_path_components.pop()
                     continue
@@ -929,7 +929,7 @@ class FakeFilesystem(object):
         for component in path_components:
             dir_name, current_dir = self._DirectoryContent(current_dir, component)
             if current_dir is None or (
-                            current_dir._byte_contents is None and current_dir.st_size == 0):
+                    current_dir._byte_contents is None and current_dir.st_size == 0):
                 return path
             normalized_components.append(dir_name)
         normalized_path = self.path_separator.join(normalized_components)
@@ -1014,7 +1014,7 @@ class FakeFilesystem(object):
                 # UNC path handling is here since Python 2.7.8, back-ported from Python 3
                 if sys.version_info >= (2, 7, 8):
                     if (path[0:2] == self.path_separator * 2) and (
-                                path[2:3] != self.path_separator):
+                            path[2:3] != self.path_separator):
                         # UNC path handling - splits off the mount point instead of the drive
                         sep_index = path.find(self.path_separator, 2)
                         if sep_index == -1:
