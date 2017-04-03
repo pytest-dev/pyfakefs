@@ -31,7 +31,7 @@ and demonstrated in files `example.py` and `example_test.py`.
 
 ### Patch using the PyTest plugin
 
-If you use [PyTest](doc.pytest.org), you will be interested in the PyTest plugin in pyfakefs.
+If you use [PyTest](https://doc.pytest.org), you will be interested in the PyTest plugin in pyfakefs.
 This automatically patches all file system functions and modules in a manner similar to the
 [automatic find and patch approach](../../wiki/Automatically-find-and-patch-file-functions-and-modules)
 described above.
