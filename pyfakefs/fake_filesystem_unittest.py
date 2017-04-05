@@ -130,7 +130,8 @@ class TestCase(unittest.TestCase):
 
         Args:
           real_file_path: Path to the source file in the real file system.
-          fake_file_path: path to the destination file in the fake file system.  Defaults to real_file_path.
+          fake_file_path: path to the destination file in the fake file system.
+            Defaults to real_file_path.
           create_missing_dirs: if True, auto create missing directories.
 
         Returns:
@@ -152,7 +153,7 @@ class TestCase(unittest.TestCase):
                   offers the option to enable atime, and older versions of \
                   Linux may also modify atime.
         """
-        if not fake_file_path:
+        if fake_file_path is None:
             fake_file_path = real_file_path
         real_stat = REAL_OS.stat(real_file_path)
         with REAL_OPEN(real_file_path, 'rb') as real_file:
