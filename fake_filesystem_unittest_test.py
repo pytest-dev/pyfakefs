@@ -207,6 +207,12 @@ class TestCopyRealFile(TestPyfakefsUnittestBase):
             self.copyRealFile(real_file_path, fake_file_path,
                               create_missing_dirs=False)
 
+    def testCopyRealFileNoDestination(self):
+        real_file_path = __file__
+        self.assertFalse(self.fs.Exists(real_file_path))
+        self.copyRealFile(real_file_path)
+        self.assertTrue(self.fs.Exists(real_file_path))
+
 
 if __name__ == "__main__":
     unittest.main()
