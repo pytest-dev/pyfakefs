@@ -121,17 +121,13 @@ functionality and usefulness.  At last count, pyfakefs is used in over 2,000
 Python tests at Google.
 
 Google released pyfakefs to the public in 2011 as Google Code project
-[pyfakefs](http://code.google.com/p/pyfakefs/).
-
-Fork
-[jmcgeheeiv-pyfakefs](http://code.google.com/p/jmcgeheeiv-pyfakefs/)
-added a [usage tutorial](http://github.com/jmcgeheeiv/pyfakefs/wiki/Tutorial),
-direct support for [unittest](http://docs.python.org/2/library/unittest.html)
-and [doctest](http://docs.python.org/2/library/doctest.html).
-
-Fork
-[shiffdane-jmcgeheeiv-pyfakefs](http://code.google.com/p/shiffdane-jmcgeheeiv-pyfakefs/)
-added further corrections.
+[pyfakefs](http://code.google.com/p/pyfakefs/):
+* Fork
+  [jmcgeheeiv-pyfakefs](http://code.google.com/p/jmcgeheeiv-pyfakefs/) added
+  [direct support for unittest and doctest](../../wiki/Automatically-find-and-patch-file-functions-and-modules)
+* Fork
+  [shiffdane-jmcgeheeiv-pyfakefs](http://code.google.com/p/shiffdane-jmcgeheeiv-pyfakefs/)
+  added further corrections
 
 After the [shutdown of Google Code](http://google-opensource.blogspot.com/2015/03/farewell-to-google-code.html)
 was announced, [John McGehee](https://github.com/jmcgeheeiv) merged all three Google Code projects together
