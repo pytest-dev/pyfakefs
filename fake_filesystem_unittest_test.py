@@ -207,6 +207,29 @@ class TestCopyRealFile(TestPyfakefsUnittestBase):
             self.copyRealFile(real_file_path, fake_file_path,
                               create_missing_dirs=False)
 
+    def testCopyRealFileNoDestination(self):
+        real_file_path = __file__
+        fake_file = self.copyRealFile(real_file_path)
+
+        self.assertTrue('class TestCopyRealFile(TestPyfakefsUnittestBase)' in self.real_string_contents,
+                        'Verify real file string contents')
+        self.assertTrue(b'class TestCopyRealFile(TestPyfakefsUnittestBase)' in self.real_byte_contents,
+                        'Verify real file byte contents')
+
+        # note that real_string_contents may differ to fake_file.contents due to newline conversions in open()
+        self.assertEqual(fake_file.byte_contents, self.real_byte_contents)
+
+        self.assertEqual(fake_file.st_mode, self.real_stat.st_mode)
+        self.assertEqual(fake_file.st_size, self.real_stat.st_size)
+        self.assertEqual(fake_file.st_ctime, self.real_stat.st_ctime)
+        self.assertEqual(fake_file.st_atime, self.real_stat.st_atime)
+        self.assertEqual(fake_file.st_mtime, self.real_stat.st_mtime)
+        self.assertEqual(fake_file.st_uid, self.real_stat.st_uid)
+        self.assertEqual(fake_file.st_gid, self.real_stat.st_gid)
+
+        with self.assertRaises(IOError):
+            self.copyRealFile(real_file_path, create_missing_dirs=False)
+
 
 if __name__ == "__main__":
     unittest.main()
