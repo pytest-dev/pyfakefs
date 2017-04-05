@@ -17,7 +17,8 @@
 for unit tests using the :py:class:`pyfakefs` module.
 
 `fake_filesystem_unittest.TestCase` searches `sys.modules` for modules
-that import the `os`, `io`, `path`, and `tempfile` modules.
+that import the `os`, `io`, `path` `shutil`, `pathlib`, and `tempfile`
+modules.
 
 The `setUpPyfakefs()` method binds these modules to the corresponding fake
 modules from `pyfakefs`.  Further, the `open()` built-in is bound to a fake
@@ -67,9 +68,19 @@ REAL_OS = os
 """The real (not faked) `os` module."""
 
 
-def load_doctests(loader, tests, ignore, module):  # pylint: disable=unused-argument
-    """Load the doctest tests for the specified module into unittest."""
-    _patcher = Patcher()
+def load_doctests(loader, tests, ignore, module, 
+                  additional_skip_names=None, patch_path=True):  # pylint: disable=unused-argument
+    """Load the doctest tests for the specified module into unittest.
+        Args:
+            loader, tests, ignore : arguments passed in from `load_tests()`
+            module: module under test 
+            additional_skip_names: see :py:class:`TestCase` for an explanation
+            patch_path: see :py:class:`TestCase` for an explanation
+
+    File `example_test.py` in the pyfakefs release provides a usage example.
+    """
+    _patcher = Patcher(additional_skip_names=additional_skip_names,
+                       patch_path=patch_path)
     globs = _patcher.replaceGlobs(vars(module))
     tests.addTests(doctest.DocTestSuite(module,
                                         globs=globs,
@@ -88,18 +99,22 @@ class TestCase(unittest.TestCase):
         file system related modules.
 
         Args:
-            methodName: the name of the test method (as in unittest.TestCase)
-            additional_skip_names: names of modules inside of which no module replacement
-                shall be done
-                (additionally to the hard-coded list: 'os', 'glob', 'path', 'tempfile', 'io')
+            methodName: the name of the test method (same as unittest.TestCase)
+            additional_skip_names: names of modules inside of which no module
+                replacement shall be performed, in addition to the names in
+                attribute :py:attr:`fake_filesystem_unittest.Patcher.SKIPNAMES`.
             patch_path: if False, modules named 'path' will not be patched with the
                 fake 'os.path' module. Set this to False when you need to import
-                some other module named 'path', for example,
-                   `from my_module import path`
-               Irrespective of patch_path, module 'os.path' is still correctly faked
-               if imported the usual way using `import os` or `import os.path`.
+                some other module named 'path', for example::
+                        from my_module import path
+                Irrespective of patch_path, module 'os.path' is still correctly faked
+                if imported the usual way using `import os` or `import os.path`.
 
-          Example usage in a derived test class:
+        If you specify arguments `additional_skip_names` or `patch_path` here
+        and you have DocTests, consider also specifying the same arguments to
+        :py:func:`load_doctests`.
+        
+        Example usage in a derived test class::
 
           class MyTestCase(fake_filesystem_unittest.TestCase):
             def __init__(self, methodName='runTest'):
@@ -190,9 +205,14 @@ class Patcher(object):
     """
     Instantiate a stub creator to bind and un-bind the file-related modules to
     the :py:mod:`pyfakefs` fake modules.
-    For usage outside of TestCase (for example with pytest) use:
-    >>> with Patcher():
-    >>>     doStuff()
+    
+    The arguments are explained in :py:class:`TestCase`.
+
+    :py:class:`Patcher` is used in :py:class:`TestCase`.  :py:class:`Patcher`
+    also works as a context manager for PyTest::
+    
+        with Patcher():
+            doStuff()
     """
     SKIPMODULES = set([None, fake_filesystem, fake_filesystem_shutil,
                        fake_tempfile, sys])
@@ -276,17 +296,21 @@ class Patcher(object):
                     (not inspect.ismodule(module)) or
                         name.split('.')[0] in self._skipNames):
                 continue
-            if 'os' in module.__dict__:
+            # IMPORTANT TESTING NOTE: Whenever you add a new module below, test
+            # it by adding an attribute in fixtures/module_with_attributes.py
+            # and a test in fake_filesystem_unittest_test.py, class
+            # TestAttributesWithFakeModuleNames.
+            if inspect.ismodule(module.__dict__.get('os')):
                 self._os_modules.add(module)
-            if self._patchPath and 'path' in module.__dict__:
+            if self._patchPath and inspect.ismodule(module.__dict__.get('path')):
                 self._path_modules.add(module)
-            if self.HAS_PATHLIB and 'pathlib' in module.__dict__:
+            if self.HAS_PATHLIB and inspect.ismodule(module.__dict__.get('pathlib')):
                 self._pathlib_modules.add(module)
-            if 'shutil' in module.__dict__:
+            if inspect.ismodule(module.__dict__.get('shutil')):
                 self._shutil_modules.add(module)
-            if 'tempfile' in module.__dict__:
+            if inspect.ismodule(module.__dict__.get('tempfile')):
                 self._tempfile_modules.add(module)
-            if 'io' in module.__dict__:
+            if inspect.ismodule(module.__dict__.get('io')):
                 self._io_modules.add(module)
 
     def _refresh(self):
