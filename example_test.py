@@ -145,12 +145,12 @@ class TestExample(fake_filesystem_unittest.TestCase):  # pylint: disable=R0904
         self.assertTrue(entries[2].is_file())
 
     def test_real_file_access(self):
-        """Test `example.file_contents()` for a real file after adding it using `AddRealFile()`."""
+        """Test `example.file_contents()` for a real file after adding it using `add_real_file()`."""
         real_file = __file__
         with REAL_OPEN(real_file, 'rb') as f:
             real_contents = f.read()
         self.assertRaises(IOError, example.file_contents, real_file)
-        self.fs.AddRealFile(real_file)
+        self.fs.add_real_file(real_file)
         self.assertEqual(example.file_contents(real_file), real_contents)
 
 

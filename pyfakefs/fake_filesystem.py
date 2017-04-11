@@ -210,7 +210,7 @@ class FakeFile(object):
         self.st_uid = None
         self.st_gid = None
 
-        # members changed only by _CreateFile() to implement AddRealFile()
+        # members changed only by _CreateFile() to implement add_real_file()
         self.read_from_real_fs = False
         self.file_path = None
 
@@ -1618,7 +1618,7 @@ class FakeFilesystem(object):
         """
         return self._CreateFile(file_path, st_mode, contents, st_size, create_missing_dirs, apply_umask, encoding)
 
-    def AddRealFile(self, file_path, read_only=True):
+    def add_real_file(self, file_path, read_only=True):
         """Create file_path, including all the parent directories along the way, for a file
         existing in the real file system without reading the contents, which will be read on demand.
         New in pyfakefs 3.2.
@@ -1641,7 +1641,7 @@ class FakeFilesystem(object):
         return self._CreateFile(file_path, contents=None, read_from_real_fs=True,
                                 st_mode=mode, real_stat=real_stat)
 
-    def AddRealDirectory(self, dir_path, read_only=True):
+    def add_real_directory(self, dir_path, read_only=True):
         """Create fake directory for the existing directory at path, and entries for all contained
         files in the real file system.
         New in pyfakefs 3.2.
@@ -1664,11 +1664,11 @@ class FakeFilesystem(object):
         self.CreateDirectory(dir_path)
         for base, _, files in os.walk(dir_path):
             for fileEntry in files:
-                self.AddRealFile(os.path.join(base, fileEntry), read_only)
+                self.add_real_file(os.path.join(base, fileEntry), read_only)
 
-    def AddRealPaths(self, path_list, read_only=True):
+    def add_real_paths(self, path_list, read_only=True):
         """Convenience method to add several files and directories from the real file system
-        in the fake file system. See `AddRealFile()` and `AddRealDirectory()`.
+        in the fake file system. See `add_real_file()` and `add_real_directory()`.
         New in pyfakefs 3.2.
 
         Args:
@@ -1683,9 +1683,9 @@ class FakeFilesystem(object):
         """
         for path in path_list:
             if os.path.isdir(path):
-                self.AddRealDirectory(path, read_only)
+                self.add_real_directory(path, read_only)
             else:
-                self.AddRealFile(path, read_only)
+                self.add_real_file(path, read_only)
 
     def _CreateFile(self, file_path, st_mode=stat.S_IFREG | PERM_DEF_FILE,
                     contents='', st_size=None, create_missing_dirs=True,

@@ -6,7 +6,7 @@ The release versions are PyPi releases.
 #### New Features
   * Added new methods to `fake_filesystem.FakeFilesystem` that make real files 
     and directories appear within the fake file system: 
-    `AddRealFile()`, `AddRealDirectory()` and `AddRealPaths()`.
+    `add_real_file()`, `add_real_directory()` and `add_real_paths()`.
     File contents are read from the real file system only when needed.
   * Added the CHANGES.md release notes to the release manifest
 
