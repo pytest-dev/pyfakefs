@@ -239,6 +239,7 @@ class Patcher(object):
         self._patchPath = patch_path
         if not patch_path:
             self._skipNames.discard('path')
+            self._skipNames.discard('genericpath')
 
         # Attributes set by _findModules()
         self._os_modules = None

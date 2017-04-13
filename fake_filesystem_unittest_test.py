@@ -190,7 +190,7 @@ class TestPatchPathUnittestPassing(TestPyfakefsUnittestBase):
 
 
 @unittest.skipIf(sys.version_info < (2, 7), "No byte strings in Python 2.6")
-class TestCopyRealFile(TestPyfakefsUnittestBase):
+class TestCopyOrAddRealFile(TestPyfakefsUnittestBase):
     """Tests the `fake_filesystem_unittest.TestCase.copyRealFile()` method."""
     with open(__file__) as f:
         real_string_contents = f.read()
@@ -234,6 +234,28 @@ class TestCopyRealFile(TestPyfakefsUnittestBase):
         self.assertFalse(self.fs.Exists(real_file_path))
         self.copyRealFile(real_file_path)
         self.assertTrue(self.fs.Exists(real_file_path))
+
+    def testAddRealFile(self):
+        '''Add a real file to the fake file system to be read on demand'''
+
+        # this tests only the basic functionality inside a unit test, more thorough tests
+        # are done in fake_filesystem_test.RealFileSystemAccessTest
+        real_file_path = __file__
+        fake_file = self.fs.add_real_file(real_file_path)
+        self.assertTrue(self.fs.Exists(real_file_path))
+        self.assertIsNone(fake_file._byte_contents)
+        self.assertEqual(self.real_byte_contents, fake_file.byte_contents)
+
+    def testAddRealDirectory(self):
+        '''Add a real directory and the contained files to the fake file system to be read on demand'''
+
+        # this tests only the basic functionality inside a unit test, more thorough tests
+        # are done in fake_filesystem_test.RealFileSystemAccessTest
+        # Note: this test fails (add_real_directory raises) if 'genericpath' is not added to SKIPNAMES
+        real_dir_path = os.path.join(os.path.dirname(__file__), 'pyfakefs')
+        self.fs.add_real_directory(real_dir_path)
+        self.assertTrue(self.fs.Exists(real_dir_path))
+        self.assertTrue(self.fs.Exists(os.path.join(real_dir_path, 'fake_filesystem.py')))
 
 
 if __name__ == "__main__":
