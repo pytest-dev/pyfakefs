@@ -922,9 +922,13 @@ class FakeFilesystem(object):
         normalized_components = []
         current_dir = self.root
         for component in path_components:
+            if not isinstance(current_dir, FakeDirectory):
+                return path
             dir_name, current_dir = self._DirectoryContent(current_dir, component)
             if current_dir is None or (
-                    current_dir._byte_contents is None and current_dir.st_size == 0):
+                            isinstance(current_dir, FakeDirectory) and
+                            current_dir._byte_contents is None and
+                            current_dir.st_size == 0):
                 return path
             normalized_components.append(dir_name)
         normalized_path = self.path_separator.join(normalized_components)

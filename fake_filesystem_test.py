@@ -4090,6 +4090,37 @@ class PathSeparatorTest(TestCase):
         self.assertEqual('!', fake_os.path.sep)
 
 
+class NormalizeCaseTest(TestCase):
+    def setUp(self):
+        self.filesystem = fake_filesystem.FakeFilesystem(path_separator='/')
+        self.filesystem.is_case_sensitive = False
+
+    def testNormalizeCase(self):
+        self.filesystem.CreateFile('/Foo/Bar')
+        self.assertEqual('/Foo/Bar', self.filesystem.NormalizeCase('/foo/bar'))
+        self.assertEqual('/Foo/Bar', self.filesystem.NormalizeCase('/FOO/BAR'))
+
+    def testNormalizeCaseForDrive(self):
+        self.filesystem.is_windows_fs = True
+        self.filesystem.CreateFile('C:/Foo/Bar')
+        self.assertEqual('C:/Foo/Bar', self.filesystem.NormalizeCase('c:/foo/bar'))
+        self.assertEqual('C:/Foo/Bar', self.filesystem.NormalizeCase('C:/FOO/BAR'))
+
+    def testNormalizeCaseForNonExistingFile(self):
+        self.filesystem.CreateDirectory('/Foo/Bar')
+        self.assertEqual('/foo/bar/baz', self.filesystem.NormalizeCase('/foo/bar/baz'))
+        self.assertEqual('/FOO/BAR/BAZ', self.filesystem.NormalizeCase('/FOO/BAR/BAZ'))
+
+    @unittest.skipIf(not TestCase.is_windows, 'Regression test for Windows problem only')
+    def testNormalizeCaseForLazilyAddedEmptyFile(self):
+        # regression test for specific issue with added empty real files
+        filesystem = fake_filesystem.FakeFilesystem()
+        real_dir_path = os.path.join(os.path.dirname(__file__), 'pyfakefs')
+        filesystem.add_real_directory(real_dir_path)
+        initPyPath = os.path.join(real_dir_path, '__init__.py')
+        self.assertEqual(initPyPath, filesystem.NormalizeCase(initPyPath.upper()))
+
+
 class AlternativePathSeparatorTest(TestCase):
     def setUp(self):
         self.filesystem = fake_filesystem.FakeFilesystem(path_separator='!')
@@ -4147,12 +4178,6 @@ class DriveLetterSupportTest(TestCase):
         self.assertEqual('c:!foo!bar', self.filesystem.NormalizePath('c:!foo!!bar'))
         self.filesystem.cwd = 'c:!foo'
         self.assertEqual('c:!foo!bar', self.filesystem.NormalizePath('bar'))
-
-    def testNormalizeCase(self):
-        self.filesystem.is_case_sensitive = False
-        self.filesystem.CreateFile('C:!Foo!Bar')
-        self.assertEqual('C:!Foo!Bar', self.filesystem.NormalizeCase('c:!foo!bar'))
-        self.assertEqual('C:!Foo!Bar', self.filesystem.NormalizeCase('C:!FOO!BAR'))
 
     def testSplitPath(self):
         self.assertEqual(('c:!foo', 'bar'), self.filesystem.SplitPath('c:!foo!bar'))
@@ -4523,7 +4548,7 @@ class RealFileSystemAccessTest(TestCase):
 
     def testAddExistingRealDirectoryReadOnly(self):
         real_dir_path = os.path.join(os.path.dirname(__file__), 'pyfakefs')
-        fake_dir = self.filesystem.add_real_directory(real_dir_path)
+        self.filesystem.add_real_directory(real_dir_path)
         self.assertTrue(self.filesystem.Exists(real_dir_path))
         self.assertTrue(self.filesystem.Exists(os.path.join(real_dir_path, 'fake_filesystem.py')))
         self.assertTrue(self.filesystem.Exists(os.path.join(real_dir_path, 'fake_pathlib.py')))
