@@ -599,17 +599,12 @@ class FakeFilesystem(object):
                 return self.AddMountPoint(path=drive)
 
     def _MountPointForPath(self, path):
-        path = self.NormalizePath(path)
+        path = self.NormalizePath(self.NormalizeCase(path))
         if path in self.mount_points:
             return self.mount_points[path]
         mount_path = ''
         drive = self.SplitDrive(path)[0]
-        if not self.is_case_sensitive:
-            drive = drive.lower()
-            path = path.lower()
         for root_path in self.mount_points:
-            if not self.is_case_sensitive:
-                root_path = root_path.lower()
             if drive and not root_path.startswith(drive):
                 continue
             if path.startswith(root_path) and len(root_path) > len(mount_path):

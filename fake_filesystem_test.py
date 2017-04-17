@@ -4148,6 +4148,12 @@ class DriveLetterSupportTest(TestCase):
         self.filesystem.cwd = 'c:!foo'
         self.assertEqual('c:!foo!bar', self.filesystem.NormalizePath('bar'))
 
+    def testNormalizeCase(self):
+        self.filesystem.is_case_sensitive = False
+        self.filesystem.CreateFile('C:!Foo!Bar')
+        self.assertEqual('C:!Foo!Bar', self.filesystem.NormalizeCase('c:!foo!bar'))
+        self.assertEqual('C:!Foo!Bar', self.filesystem.NormalizeCase('C:!FOO!BAR'))
+
     def testSplitPath(self):
         self.assertEqual(('c:!foo', 'bar'), self.filesystem.SplitPath('c:!foo!bar'))
         self.assertEqual(('c:', 'foo'), self.filesystem.SplitPath('c:!foo'))
