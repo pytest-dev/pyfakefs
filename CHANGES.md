@@ -11,6 +11,7 @@ The release versions are PyPi releases.
   * Added the CHANGES.md release notes to the release manifest
 
 #### Fixes
+ * `FakeShutilModule.rmtree` failed for directory ending with path separator (#177)
  * Case incorrectly handled for added Windows drives 
  * `pathlib.glob()` incorrectly handled case under MacOS (#167)
  * tox support was broken (#163)

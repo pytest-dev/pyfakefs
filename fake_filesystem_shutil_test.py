@@ -45,6 +45,16 @@ class FakeShutilModuleTest(unittest.TestCase):
         self.assertFalse(self.filesystem.Exists('%s/subdir' % directory))
         self.assertFalse(self.filesystem.Exists('%s/subfile' % directory))
 
+    def testRmtreeWithTrailingSlash(self):
+        directory = 'xyzzy'
+        self.filesystem.CreateDirectory(directory)
+        self.filesystem.CreateDirectory('%s/subdir' % directory)
+        self.filesystem.CreateFile('%s/subfile' % directory)
+        self.shutil.rmtree(directory + '/')
+        self.assertFalse(self.filesystem.Exists(directory))
+        self.assertFalse(self.filesystem.Exists('%s/subdir' % directory))
+        self.assertFalse(self.filesystem.Exists('%s/subfile' % directory))
+
     def testRmtreeWithoutPermissionForAFile(self):
         self.filesystem.CreateFile('/foo/bar')
         self.filesystem.CreateFile('/foo/baz', st_mode=stat.S_IFREG | 0o444)

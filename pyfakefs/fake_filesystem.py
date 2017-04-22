@@ -1537,7 +1537,7 @@ class FakeFilesystem(object):
             of the path refers to something other than a directory.
           OSError: if the directory is in use (eg, if it is '/').
         """
-        file_path = self.NormalizeCase(file_path)
+        file_path = self.NormalizePath(self.NormalizeCase(file_path))
         if self._IsRootPath(file_path):
             raise OSError(errno.EBUSY, 'Fake device or resource busy',
                           file_path)
