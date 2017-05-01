@@ -82,7 +82,7 @@ pyfakefs works with Python 2.6 and above, on Linux, Windows and OSX (MacOS).
 
 pyfakefs requires [mox3](https://pypi.python.org/pypi/mox3).
 
-pyfakefs works with [PyTest](doc.pytest.org) version 2.8.0 or above.
+pyfakefs works with [PyTest](doc.pytest.org) version 2.8.6 or above.
 
 ### PyPi
 [pyfakefs is available on PyPi](https://pypi.python.org/pypi/pyfakefs/).
