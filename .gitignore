@@ -12,3 +12,6 @@
 
 # pytest
 .cache/
+
+# autodoc created by sphinx
+gh-pages/

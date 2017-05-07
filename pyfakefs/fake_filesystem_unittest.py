@@ -68,7 +68,7 @@ REAL_OS = os
 """The real (not faked) `os` module."""
 
 
-def load_doctests(loader, tests, ignore, module, 
+def load_doctests(loader, tests, ignore, module,
                   additional_skip_names=None, patch_path=True):  # pylint: disable=unused-argument
     """Load the doctest tests for the specified module into unittest.
         Args:
@@ -139,9 +139,9 @@ class TestCase(unittest.TestCase):
         file system file `fake_file_path`.  The permissions, gid, uid, ctime,
         mtime and atime of the real file are copied to the fake file.
 
-       This is a helper method you can use to set up your test more easily.
+        This is a helper method you can use to set up your test more easily.
 
-       This method is available in Python 2.7 and above.
+        This method is available in Python 2.7 and above.
 
         Args:
           real_file_path: Path to the source file in the real file system.
