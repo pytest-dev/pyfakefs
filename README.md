@@ -12,9 +12,9 @@ This file provides general usage instructions for pyfakefs.  There is more:
 
 * The [pyfakfs API Reference](http://jmcgeheeiv.github.io/pyfakefs/)
   contains documentation for each pyfakefs class, method and function
-* The [pyfakefs Wiki](../../wiki/Home) provides more detailed information on
+* The [pyfakefs Wiki](https://github.com/jmcgeheeiv/pyfakefs/wiki/Home) provides more detailed information on
   specific topics
-* The [Release Notes](CHANGES.md) shows a list of changes in the latest versions
+* The [Release Notes](https://github.com/jmcgeheeiv/pyfakefs/blob/master/CHANGES.md) shows a list of changes in the latest versions
 
 ### Link to pyfakefs.org
 
@@ -26,14 +26,14 @@ There are several approaches to implementing tests using pyfakefs.
 
 ### Automatically find and patch
 The first approach is to allow pyfakefs to automatically find all real file functions and modules, and stub these out with the fake file system functions and modules.  This is explained in the pyfakefs wiki page
-[Automatically find and patch file functions and modules](../../wiki/Automatically-find-and-patch-file-functions-and-modules)
+[Automatically find and patch file functions and modules](https://github.com/jmcgeheeiv/pyfakefs/wiki/Automatically-find-and-patch-file-functions-and-modules)
 and demonstrated in files `example.py` and `example_test.py`.
 
 ### Patch using the PyTest plugin
 
 If you use [PyTest](https://doc.pytest.org), you will be interested in the PyTest plugin in pyfakefs.
 This automatically patches all file system functions and modules in a manner similar to the
-[automatic find and patch approach](../../wiki/Automatically-find-and-patch-file-functions-and-modules)
+[automatic find and patch approach](https://github.com/jmcgeheeiv/pyfakefs/wiki/Automatically-find-and-patch-file-functions-and-modules)
 described above.
 
 The PyTest plugin provides the `fs` fixture for use in your test. For example:

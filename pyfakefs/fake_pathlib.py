@@ -14,6 +14,7 @@
 New in pyfakefs 3.0.
 
 Usage:
+
 * With fake_filesystem_unittest:
   If using fake_filesystem_unittest.TestCase, pathlib gets replaced
   by fake_pathlib together with other file system related modules.
