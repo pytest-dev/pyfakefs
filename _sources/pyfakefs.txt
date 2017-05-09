@@ -1,8 +1,5 @@
-pyfakefs package
-================
-
-Submodules
-----------
+Modules
+=======
 
 pyfakefs.fake_filesystem module
 -------------------------------
@@ -44,11 +41,10 @@ pyfakefs.fake_tempfile module
     :undoc-members:
     :show-inheritance:
 
+pyfakefs.fake_pathlib module
+----------------------------
 
-Module contents
----------------
-
-.. automodule:: pyfakefs
+.. automodule:: pyfakefs.fake_pathlib
     :members:
     :undoc-members:
     :show-inheritance:
