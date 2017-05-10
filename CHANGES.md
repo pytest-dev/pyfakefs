@@ -10,6 +10,9 @@ The release versions are PyPi releases.
     File contents are read from the real file system only when needed ([#170](../../issues/170)).
   * Added the CHANGES.md release notes to the release manifest
 
+#### Infrastructure
+  * `mox3` is no longer required - the relevant part has been integrated into pyfakefs ([#182](../../issues/182))
+  
 #### Fixes
  * `FakeShutilModule.rmtree` failed for directory ending with path separator ([#177](../../issues/177))
  * Case incorrectly handled for added Windows drives 
@@ -39,7 +42,7 @@ The release versions are PyPi releases.
  * support for `os.replace` (Python >= 3.3)
  * `os.access`, `os.chmod`, `os.chown`, `os.stat`, `os.utime`:
    support for `follow_symlinks` argument (Python >= 3.3)
- * support for `os.scandir` (Python >= 3.5)([#119](../../issues/119))
+ * support for `os.scandir` (Python >= 3.5) ([#119](../../issues/119))
  * option to not fake modules named `path` ([#53](../../issues/53))
  * `glob.glob`, `glob.iglob`: support for `recursive` argument (Python >= 3.5) ([#116](../../issues/116))
  * support for `glob.iglob` ([#59](../../issues/59))
@@ -61,15 +64,15 @@ The release versions are PyPi releases.
  * `os.makedirs`: support for `exist_ok` argument (Python >= 3.2) ([#98](../../issues/98))
  * support for fake `io.open()` ([#70](../../issues/70))
  * support for mount points ([#25](../../issues/25))
- * support for hard links
+ * support for hard links ([#75](../../issues/75))
  * support for float times (mtime, ctime)
  * Windows support:
      * support for alternative path separator
      * support for case-insensitive filesystems ([#69](../../issues/69))
      * support for drive letters and UNC paths
  * support for filesystem size ([#86](../../issues/86))
- * `shutil.rmtree`: support for `ignore_errors` and `onerror` arguments
- * support for `os.fsync()` and `os.fdatasync()`
+ * `shutil.rmtree`: support for `ignore_errors` and `onerror` arguments ([#72](../../issues/72))
+ * support for `os.fsync()` and `os.fdatasync()` ([#73](../../issues/73))
  * `os.walk`: Support for `followlinks` argument
  
 #### Fixes
@@ -77,7 +80,6 @@ The release versions are PyPi releases.
  * file permissions on deletion not correctly handled ([#27](../../issues/27))
  * `shutil.copy` error with bytes contents ([#105](../../issues/105))
  * mtime and ctime not updated on content changes
- * Reading from fake block devices doesn't work ([#24](../../issues/24))
 
 ## [Version 2.7](https://pypi.python.org/pypi/pyfakefs/2.7)
 
@@ -95,9 +97,14 @@ The release versions are PyPi releases.
  * better support for Python 3
 
 #### Fixes
- * `chown` incorrectly accepts non-integer uid/gid arguments
+ * `os.utime` fails to traverse symlinks ([#49](../../issues/49))
+ * `chown` incorrectly accepts non-integer uid/gid arguments ([#30](../../issues/30))
+ * Reading from fake block devices doesn't work ([#24](../../issues/24))
+ * `fake_tempfile` is using `AddOpenFile` incorrectly ([#23](../../issues/23))
  * incorrect behavior of `relpath`, `abspath` and `normpath` on Windows.
+ * cygwin wasn't treated as Windows ([#37](../../issues/37))
  * Python 3 `open` in binary mode not working ([#32](../../issues/32))
+ * `os.remove` doesn't work with relative paths ([#31](../../issues/31))
  * `mkstemp` returns no valid file descriptor ([#19](../../issues/19))
  * `open` methods lack `IOError` for prohibited operations ([#18](../../issues/18))
  * incorrectly resolved relative path ([#3](../../issues/3))

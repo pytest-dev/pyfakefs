@@ -29,7 +29,7 @@ The PyTest plugin provides the ``fs`` fixture for use in your test. For example:
 
 Patch using unittest.mock
 ~~~~~~~~~~~~~~~~~~~~~~~~~
-If you are using other means of testing like `nose <http://nose2.readthedocs.io>`__, you can to do the patching yourself using
+If you are using other means of testing like `nose <http://nose2.readthedocs.io>`__, you can do the patching yourself using
 ``mock.patch()``:
 
 .. code:: python

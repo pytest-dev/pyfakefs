@@ -43,11 +43,10 @@ import sys
 import doctest
 import inspect
 
-import mox3.stubout
-
 from pyfakefs import fake_filesystem
 from pyfakefs import fake_filesystem_shutil
 from pyfakefs import fake_tempfile
+from pyfakefs import mox3_stubout
 
 if sys.version_info >= (3, 4):
     from pyfakefs import fake_pathlib
@@ -318,7 +317,7 @@ class Patcher(object):
         """Renew the fake file system and set the _isStale flag to `False`."""
         if self._stubs is not None:
             self._stubs.SmartUnsetAll()
-        self._stubs = mox3.stubout.StubOutForTesting()
+        self._stubs = mox3_stubout.StubOutForTesting()
 
         self.fs = fake_filesystem.FakeFilesystem()
         self.fake_os = fake_filesystem.FakeOsModule(self.fs)

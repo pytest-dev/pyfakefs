@@ -1,2 +1,2 @@
-mox3>=0.10.0
+unittest2; python_version < '2.7'
 pytest>=2.8.6
