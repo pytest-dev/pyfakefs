@@ -114,7 +114,7 @@ class StubOutForTesting(object):
     def Set(self, parent, child_name, new_child):
         """Replace child_name's old definition with new_child.
 
-        Replace definiion in the context of the given parent. The parent could
+        Replace definition in the context of the given parent. The parent could
         be a module when the child is a function at module scope. Or the parent
         could be a class when a class' method is being replaced. The named
         child is set to new_child, while the prior definition is saved away

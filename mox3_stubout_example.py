@@ -1,7 +1,3 @@
-# Perform continuous integration testing with Travis CI.
-#
-# Copyright 2015 John McGehee. All Rights Reserved.
-#
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
@@ -14,22 +10,25 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-language: python
-python:
-  - "2.6"
-  - "2.7"
-  - "3.3"
-  - "3.4"
-  - "3.5"
-  - "3.6"
-  - "nightly" # points to 3.7-dev
-  - "pypy"
-  - "pypy3"
+"""
+Example module that is used for testing the functionality of :py:class`pyfakefs.mox_stubout.StubOutForTesting`.
+"""
+import datetime
+import math
+import os
 
-install:
-  - pip install -r requirements.txt
-  - pip install .
 
-script:
-  - ./all_tests.py
-  - py.test pytest_plugin_test.py
+def check_if_exists(filepath):
+    return os.path.exists(filepath)
+
+
+def fabs(x):
+    return math.fabs(x)
+
+
+def set_contains(container, element):
+    return element in container
+
+
+def tomorrow():
+    return datetime.date.today() + datetime.timedelta(days=1)
