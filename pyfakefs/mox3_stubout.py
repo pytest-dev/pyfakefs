@@ -14,6 +14,13 @@
 #
 # This is a fork of the pymox library intended to work with Python 3.
 # The file was modified by quermit@gmail.com and dawid.fatyga@gmail.com
+#
+# Previously, pyfakefs used just this file from the mox3 library.
+# However, mox3 will soon be decommissioned, yet standard mock cannot
+# be used because of the problem described in pyfakefs #182 and
+# mock issue 250 (https://github.com/testing-cabal/mock/issues/250).
+# Therefore just this file was forked from mox3 and incorporated
+# into pyfakefs.
 
 import inspect
 
@@ -33,6 +40,7 @@ class StubOutForTesting(object):
        of os.path.exists and restores it.
 
     """
+
     def __init__(self):
         self.cache = []
         self.stubs = []
@@ -91,7 +99,7 @@ class StubOutForTesting(object):
         # function. We need to ensure that we put it back as a staticmethod.
         old_attribute = obj.__dict__.get(attr_name)
         if (old_attribute is not None
-                and isinstance(old_attribute, staticmethod)):
+            and isinstance(old_attribute, staticmethod)):
             orig_attr = staticmethod(orig_attr)
 
         self.stubs.append((orig_obj, attr_name, orig_attr))
