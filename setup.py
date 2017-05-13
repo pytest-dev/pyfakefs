@@ -22,7 +22,7 @@ from pyfakefs.fake_filesystem import __version__
 import os
 
 NAME = 'pyfakefs'
-REQUIRES = ['mox3']
+REQUIRES = []
 DESCRIPTION = 'pyfakefs implements a fake file system that mocks the Python file system modules.'
 
 URL = "http://pyfakefs.org"

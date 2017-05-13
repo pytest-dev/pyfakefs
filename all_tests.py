@@ -26,6 +26,7 @@ import fake_filesystem_vs_real_test
 import fake_tempfile_test
 import fake_filesystem_unittest_test
 import example_test
+import mox3_stubout_test
 
 if sys.version_info >= (3, 4):
     import fake_pathlib_test
@@ -44,6 +45,7 @@ class AllTests(unittest.TestSuite):
             loader.loadTestsFromModule(fake_filesystem_vs_real_test),
             loader.loadTestsFromModule(fake_filesystem_unittest_test),
             loader.loadTestsFromModule(example_test),
+            loader.loadTestsFromModule(mox3_stubout_test),
         ])
         if sys.version_info >= (3, 4):
             self.addTests([

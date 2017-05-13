@@ -62,7 +62,7 @@ class TestExample(fake_filesystem_unittest.TestCase):  # pylint: disable=R0904
           :py:class:`pyfakefs.fake_filesystem.FakeFilesystem`.  This is useful \
           for creating test files.
         * Attribute `self.stubs`, an instance of \
-          :py:class:`mox.stubout.StubOutForTesting`.  Use this if you need to
+          :py:class:`pyfakefs.mox3_stubout.StubOutForTesting`.  Use this if you need to
           define additional stubs.
         """
         self.setUpPyfakefs()
