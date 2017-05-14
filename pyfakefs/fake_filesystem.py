@@ -199,6 +199,7 @@ class FakeFile(object):
         self.st_size = len(self._byte_contents) if self._byte_contents is not None else 0
         self.filesystem = filesystem
         self.epoch = 0
+        self.encoding = encoding
         self._st_ctime = time.time()  # times are accessed through properties
         self._st_atime = self._st_ctime
         self._st_mtime = self._st_ctime
@@ -223,9 +224,9 @@ class FakeFile(object):
 
     @property
     def contents(self):
-        """Return the byte contents as ACSII string (for testing convenience)."""
+        """Return the contents as string with the original encoding."""
         if sys.version_info >= (3, 0) and isinstance(self.byte_contents, bytes):
-            return self.byte_contents.decode('ascii')
+            return self.byte_contents.decode(self.encoding or locale.getpreferredencoding(False))
         return self.byte_contents
 
     @property
@@ -3382,7 +3383,7 @@ class FakeFileWrapper(object):
         self._file_path = file_path
         self._append = append
         self._read = read
-        self._update = update
+        self.allow_update = update
         self._closefd = closefd
         self._file_epoch = file_object.epoch
         contents = file_object.byte_contents
@@ -3450,7 +3451,7 @@ class FakeFileWrapper(object):
 
     def close(self):
         """Close the file."""
-        if self._update:
+        if self.allow_update:
             self._file_object.SetContents(self._io.getvalue(), self._encoding)
         if self._closefd:
             self._filesystem.CloseOpenFile(self.filedes)
@@ -3459,7 +3460,7 @@ class FakeFileWrapper(object):
 
     def flush(self):
         """Flush file contents to 'disk'."""
-        if self._update:
+        if self.allow_update:
             self._file_object.SetContents(self._io.getvalue(), self._encoding)
             self._file_epoch = self._file_object.epoch
 
@@ -3491,11 +3492,23 @@ class FakeFileWrapper(object):
         """Update the StringIO with changes to the file object contents."""
         if self._file_epoch == self._file_object.epoch:
             return
+
+        if isinstance(self._io, io.BytesIO):
+            contents = self._file_object.byte_contents
+        else:
+            contents = self._file_object.contents
+
+        is_stream_reader_writer = isinstance(self._io, codecs.StreamReaderWriter)
+        if is_stream_reader_writer:
+            self._io.stream.allow_update = True
         whence = self._io.tell()
         self._io.seek(0)
         self._io.truncate()
-        self._io.write(self._file_object.contents)
+        self._io.write(contents)
         self._io.seek(whence)
+
+        if is_stream_reader_writer:
+            self._io.stream.allow_update = False
         self._file_epoch = self._file_object.epoch
 
     def _ReadWrappers(self, name):
@@ -3585,7 +3598,7 @@ class FakeFileWrapper(object):
                 raise self._OPERATION_ERROR('File is not open for reading.')
 
             return read_error
-        if not self._update and (name.startswith('write')
+        if not self.allow_update and (name.startswith('write')
                                  or name == 'truncate'):
             def write_error(*args, **kwargs):
                 """Throw an error."""

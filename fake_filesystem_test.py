@@ -3474,6 +3474,29 @@ class FakeFileOpenTest(FakeFileOpenTestBase):
                     reads.append(reader.read())
                 self.assertEqual(['' for _ in writes], reads)
 
+    @unittest.skipIf(sys.version_info < (3, 0), 'Python 3 specific string handling')
+    def testIntertwinedReadWritePython3Str(self):
+        file_path = 'some_file'
+        self.filesystem.CreateFile(file_path)
+        with self.open(file_path, 'a', encoding='utf-8') as writer:
+            with self.open(file_path, 'r', encoding='utf-8') as reader:
+                writes = ['привет', 'мир\n', 'где-то\за', 'радугой']
+                reads = []
+                # when writes are flushes, they are piped to the reader
+                for write in writes:
+                    writer.write(write)
+                    writer.flush()
+                    reads.append(reader.read())
+                    reader.flush()
+                self.assertEqual(writes, reads)
+                writes = ['ничего', 'не\nвидно']
+                reads = []
+                # when writes are not flushed, the reader doesn't read anything new
+                for write in writes:
+                    writer.write(write)
+                    reads.append(reader.read())
+                self.assertEqual(['' for _ in writes], reads)
+
     def testOpenIoErrors(self):
         file_path = 'some_file'
         self.filesystem.CreateFile(file_path)
