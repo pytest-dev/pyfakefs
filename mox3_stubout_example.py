@@ -26,9 +26,5 @@ def fabs(x):
     return math.fabs(x)
 
 
-def set_contains(container, element):
-    return element in container
-
-
 def tomorrow():
     return datetime.date.today() + datetime.timedelta(days=1)
