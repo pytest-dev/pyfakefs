@@ -3528,10 +3528,7 @@ class FakeFileOpenTest(FakeFileOpenTestBase):
 
 
 class OpenFileWithEncodingTest(TestCase):
-    """Tests that are similar to some open file tests above but using an explicit text encoding.
-    Note: these tests can also be run under Python 2 after support for Python 3.2 will be skipped
-          (by using the u literal in the strings which is not supported in Python 3.2)
-  """
+    """Tests that are similar to some open file tests above but using an explicit text encoding."""
 
     def setUp(self):
         self.filesystem = fake_filesystem.FakeFilesystem(path_separator='!')
@@ -3546,6 +3543,44 @@ class OpenFileWithEncodingTest(TestCase):
         with self.open(self.file_path, 'rb') as f:
             contents = f.read()
         self.assertEqual(str_contents, contents.decode('arabic'))
+
+    def testWriteStrErrorModes(self):
+        str_contents = u'علي بابا'
+        with self.open(self.file_path, 'w', encoding='cyrillic') as f:
+            self.assertRaises(UnicodeEncodeError, f.write, str_contents)
+
+        with self.open(self.file_path, 'w', encoding='ascii', errors='xmlcharrefreplace') as f:
+            f.write(str_contents)
+        with self.open(self.file_path, 'r', encoding='ascii') as f:
+            contents = f.read()
+        self.assertEqual('&#1593;&#1604;&#1610; &#1576;&#1575;&#1576;&#1575;', contents)
+
+        if sys.version_info >= (3, 5):
+            with self.open(self.file_path, 'w', encoding='ascii', errors='namereplace') as f:
+                f.write(str_contents)
+            with self.open(self.file_path, 'r', encoding='ascii') as f:
+                contents = f.read()
+            self.assertEqual(r'\N{ARABIC LETTER AIN}\N{ARABIC LETTER LAM}\N{ARABIC LETTER YEH} '
+                             r'\N{ARABIC LETTER BEH}\N{ARABIC LETTER ALEF}\N{ARABIC LETTER BEH}'
+                             r'\N{ARABIC LETTER ALEF}', contents)
+
+    def testReadStrErrorModes(self):
+        str_contents = u'علي بابا'
+        with self.open(self.file_path, 'w', encoding='arabic') as f:
+            f.write(str_contents)
+
+        # default strict encoding
+        with self.open(self.file_path, encoding='ascii') as f:
+            self.assertRaises(UnicodeDecodeError, f.read)
+        with self.open(self.file_path, encoding='ascii', errors='replace') as f:
+            contents = f.read()
+        self.assertNotEqual(str_contents, contents)
+
+        if sys.version_info >= (3, 5):
+            with self.open(self.file_path, encoding='ascii', errors='backslashreplace') as f:
+                contents = f.read()
+            self.assertEqual(r'\xd9\xe4\xea \xc8\xc7\xc8\xc7', contents)
+
 
     def testWriteAndReadStr(self):
         str_contents = u'علي بابا'
