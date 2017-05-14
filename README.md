@@ -82,6 +82,13 @@ pyfakefs works with Python 2.6 and above, on Linux, Windows and OSX (MacOS).
 
 pyfakefs works with [PyTest](doc.pytest.org) version 2.8.6 or above.
 
+pyfakefs will not work with Python libraries that use C libraries to access the
+file system.  This is because pyfakefs cannot patch the underlying C libraries'
+file access functions--the C libraries will always access the real file system.
+For example, pyfakefs will not work with [`lxml`](http://lxml.de/).  In this case
+`lxml` must be replaced with a pure Python alternative such as
+[`xml.etree.ElementTree`](https://docs.python.org/3/library/xml.etree.elementtree.html).
+
 ### PyPi
 [pyfakefs is available on PyPi](https://pypi.python.org/pypi/pyfakefs/).
 
