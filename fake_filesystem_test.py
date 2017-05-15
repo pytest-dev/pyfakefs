@@ -4623,6 +4623,13 @@ class RealFileSystemAccessTest(TestCase):
         self.assertTrue(self.filesystem.Exists(os.path.join(real_dir_path, 'pyfakefs', 'fake_filesystem.py')))
         self.assertTrue(self.filesystem.Exists(os.path.join(real_dir_path, 'pyfakefs', '__init__.py')))
 
+    def testGetObjectFromLazilyAddedRealDirectory(self):
+        self.filesystem.is_case_sensitive = True
+        real_dir_path = os.path.dirname(__file__)
+        self.filesystem.add_real_directory(real_dir_path)
+        self.assertTrue(self.filesystem.GetObject(os.path.join(real_dir_path, 'pyfakefs', 'fake_filesystem.py')))
+        self.assertTrue(self.filesystem.GetObject(os.path.join(real_dir_path, 'pyfakefs', '__init__.py')))
+
     def testAddExistingRealDirectoryReadWrite(self):
         real_dir_path = os.path.join(os.path.dirname(__file__), 'pyfakefs')
         self.filesystem.add_real_directory(real_dir_path, read_only=False)

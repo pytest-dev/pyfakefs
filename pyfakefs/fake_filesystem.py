@@ -214,15 +214,8 @@ class FakeFile(object):
         self.st_uid = None
         self.st_gid = None
 
-        # members changed only by _CreateFile() to implement add_real_file()
-        self.read_from_real_fs = False
-        self.file_path = None
-
     @property
     def byte_contents(self):
-        if self._byte_contents is None and self.read_from_real_fs:
-            with io.open(self.file_path, 'rb') as f:
-                self._byte_contents = f.read()
         return self._byte_contents
 
     @property
@@ -297,7 +290,7 @@ class FakeFile(object):
 
     def IsLargeFile(self):
         """Return True if this file was initialized with size but no contents."""
-        return self._byte_contents is None and not self.read_from_real_fs
+        return self._byte_contents is None
 
     def _encode_contents(self, contents):
         # pylint: disable=undefined-variable
@@ -425,6 +418,53 @@ class FakeFile(object):
         self.st_ino = st_ino
 
 
+class FakeFileFromRealFile(FakeFile):
+    """Represents a fake file copied from the real file system.
+    
+    The contents of the file are read on demand only.
+    New in pyfakefs 3.2.
+    """
+
+    def __init__(self, file_path, filesystem, read_only=True):
+        """init.
+
+        Args:
+            file_path: path to the existing file.
+            filesystem: the fake filesystem where the file is created.
+            read_only: if set, the file is treated as read-only, e.g. a write access raises an exception;
+                otherwise, writing to the file changes the fake file only as usually.
+
+        Raises:
+            OSError: if the file does not exist in the real file system.
+        """
+        real_stat = os.stat(file_path)
+        # for read-only mode, remove the write/executable permission bits
+        mode = real_stat.st_mode & 0o777444 if read_only else real_stat.st_mode
+        super(FakeFileFromRealFile, self).__init__(name=os.path.basename(file_path),
+                                                   st_mode=mode,
+                                                   filesystem=filesystem)
+        self.st_ctime = real_stat.st_ctime
+        self.st_atime = real_stat.st_atime
+        self.st_mtime = real_stat.st_mtime
+        self.st_gid = real_stat.st_gid
+        self.st_uid = real_stat.st_uid
+        self.st_size = real_stat.st_size
+        self.file_path = file_path
+        self.contents_read = False
+
+    @property
+    def byte_contents(self):
+        if not self.contents_read:
+            self.contents_read = True
+            with io.open(self.file_path, 'rb') as f:
+                self._byte_contents = f.read()
+        return self._byte_contents
+
+    def IsLargeFile(self):
+        """The contents are never faked."""
+        return False
+
+
 class FakeDirectory(FakeFile):
     """Provides the appearance of a real directory."""
 
@@ -518,6 +558,58 @@ class FakeDirectory(FakeFile):
                 if line:
                     description = description + '  ' + line + '\n'
         return description
+
+
+class FakeDirectoryFromRealDirectory(FakeDirectory):
+    """Represents a fake directory copied from the real file system.
+    
+    The contents of the directory are read on demand only.
+    New in pyfakefs 3.2.
+    """
+
+    def __init__(self, dir_path, filesystem, read_only):
+        """init.
+
+        Args:
+            dir_path:  full directory path
+            filesystem: the fake filesystem where the directory is created
+            read_only: if set, all files under the directory are treated as read-only,
+                e.g. a write access raises an exception;
+                otherwise, writing to the files changes the fake files only as usually.
+                
+        Raises:
+            OSError if the directory does not exist in the real file system
+        """
+        real_stat = os.stat(dir_path)
+        super(FakeDirectoryFromRealDirectory, self).__init__(
+            name=os.path.split(dir_path)[1],
+            perm_bits=real_stat.st_mode,
+            filesystem=filesystem)
+
+        self.st_ctime = real_stat.st_ctime
+        self.st_atime = real_stat.st_atime
+        self.st_mtime = real_stat.st_mtime
+        self.st_gid = real_stat.st_gid
+        self.st_uid = real_stat.st_uid
+        self.dir_path = dir_path
+        self.read_only = read_only
+        self.contents_read = False
+
+    @property
+    def contents(self):
+        """Return the list of contained directory entries, loading them if not already loaded."""
+        if not self.contents_read:
+            self.contents_read = True
+            self.filesystem.add_real_paths(
+                [os.path.join(self.dir_path, entry) for entry in os.listdir(self.dir_path)],
+                read_only=self.read_only)
+        return self.byte_contents
+
+    def GetSize(self):
+        # we cannot get the size until the contents are loaded
+        if not self.contents_read:
+            return 0
+        return FakeDirectory.GetSize()
 
 
 class FakeFilesystem(object):
@@ -1167,6 +1259,7 @@ class FakeFilesystem(object):
                                 if subdir.lower() == component.lower()]
             if matching_content:
                 return matching_content[0]
+
         return None, None
 
     def Exists(self, file_path):
@@ -1642,11 +1735,9 @@ class FakeFilesystem(object):
             OSError: if the file does not exist in the real file system.
             IOError: if the file already exists in the fake file system.
         """
-        real_stat = os.stat(file_path)
-        # for read-only mode, remove the write/executable permission bits
-        mode = real_stat.st_mode & 0o777444 if read_only else real_stat.st_mode
-        return self._CreateFile(file_path, contents=None, read_from_real_fs=True,
-                                st_mode=mode, real_stat=real_stat)
+        return self._CreateFile(file_path,
+                                read_from_real_fs=True,
+                                read_only=read_only)
 
     def add_real_directory(self, dir_path, read_only=True):
         """Create fake directory for the existing directory at path, and entries for all contained
@@ -1668,10 +1759,16 @@ class FakeFilesystem(object):
         """
         if not os.path.exists(dir_path):
             raise IOError(errno.ENOENT, 'No such directory', dir_path)
-        self.CreateDirectory(dir_path)
-        for base, _, files in os.walk(dir_path):
-            for fileEntry in files:
-                self.add_real_file(os.path.join(base, fileEntry), read_only)
+        parent_path = os.path.split(dir_path)[0]
+        if self.Exists(parent_path):
+            parent_dir = self.GetObject(parent_path)
+        else:
+            parent_dir = self.CreateDirectory(parent_path)
+        new_dir = FakeDirectoryFromRealDirectory(dir_path, filesystem=self, read_only=read_only)
+        parent_dir.AddEntry(new_dir)
+        self.last_ino += 1
+        new_dir.SetIno(self.last_ino)
+        return new_dir
 
     def add_real_paths(self, path_list, read_only=True):
         """Convenience method to add several files and directories from the real file system
@@ -1697,8 +1794,8 @@ class FakeFilesystem(object):
     def _CreateFile(self, file_path, st_mode=stat.S_IFREG | PERM_DEF_FILE,
                     contents='', st_size=None, create_missing_dirs=True,
                     apply_umask=False, encoding=None, errors=None,
-                    read_from_real_fs=False, real_stat=None):
-        """Create file_path, including all the parent directories along the way.
+                    read_from_real_fs=False, read_only=True):
+        """Internal fake file creation, supports both normal fake files and fake files from real files.
 
         Args:
             file_path: path to the file to create.
@@ -1708,12 +1805,10 @@ class FakeFilesystem(object):
             create_missing_dirs: if True, auto create missing directories.
             apply_umask: whether or not the current umask must be applied on st_mode.
             encoding: if contents is a unicode string, the encoding used for serialization.
-                New in pyfakefs 2.9.
             errors: the error mode used for encoding/decoding errors
-                New in pyfakefs 3.2.
             read_from_real_fs: if True, the contents are reaf from the real file system on demand.
-                New in pyfakefs 3.2.
-            real_stat: used in combination with read_from_real_fs; stat result of the real file
+            read_only: if set, the file is treated as read-only, e.g. a write access raises an exception;
+                otherwise, writing to the file changes the fake file only as usually.
         """
         file_path = self.NormalizePath(file_path)
         if self.Exists(file_path):
@@ -1732,22 +1827,16 @@ class FakeFilesystem(object):
             parent_directory = self.NormalizeCase(parent_directory)
         if apply_umask:
             st_mode &= ~self.umask
-        file_object = FakeFile(new_file, st_mode, filesystem=self, encoding=encoding, errors=errors)
         if read_from_real_fs:
-            file_object.st_ctime = real_stat.st_ctime
-            file_object.st_atime = real_stat.st_atime
-            file_object.st_mtime = real_stat.st_mtime
-            file_object.st_gid = real_stat.st_gid
-            file_object.st_uid = real_stat.st_uid
-            file_object.st_size = real_stat.st_size
-            file_object.read_from_real_fs = True
-            file_object.file_path = file_path
+            file_object = FakeFileFromRealFile(file_path, filesystem=self, read_only=read_only)
+        else:
+            file_object = FakeFile(new_file, st_mode, filesystem=self, encoding=encoding, errors=errors)
 
         self.last_ino += 1
         file_object.SetIno(self.last_ino)
         self.AddObject(parent_directory, file_object)
 
-        if contents is not None or st_size is not None:
+        if not read_from_real_fs and (contents is not None or st_size is not None):
             try:
                 if st_size is not None:
                     file_object.SetLargeFileSize(st_size)
