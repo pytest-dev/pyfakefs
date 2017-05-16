@@ -179,7 +179,7 @@ class FakeFile(object):
     """
 
     def __init__(self, name, st_mode=stat.S_IFREG | PERM_DEF_FILE,
-                 contents=None, filesystem=None, encoding=None):
+                 contents=None, filesystem=None, encoding=None, errors=None):
         """init.
 
         Args:
@@ -189,17 +189,20 @@ class FakeFile(object):
           contents:  the contents of the filesystem object; should be a string or byte object for
             regular files, and a list of other FakeFile or FakeDirectory objects
             for FakeDirectory objects
-          encoding: if contents is a unicode string, the encoding used for serialization
           filesystem: if set, the fake filesystem where the file is created.
-          New in pyfakefs 2.9.
+            New in pyfakefs 2.9.
+          encoding: if contents is a unicode string, the encoding used for serialization
+          errors: the error mode used for encoding/decoding errors
+            New in pyfakefs 3.2.
         """
         self.name = name
         self.st_mode = st_mode
-        self._byte_contents = self._EncodeContents(contents, encoding)
+        self.encoding = encoding
+        self.errors = errors or 'strict'
+        self._byte_contents = self._encode_contents(contents)
         self.st_size = len(self._byte_contents) if self._byte_contents is not None else 0
         self.filesystem = filesystem
         self.epoch = 0
-        self.encoding = encoding
         self._st_ctime = time.time()  # times are accessed through properties
         self._st_atime = self._st_ctime
         self._st_mtime = self._st_ctime
@@ -226,7 +229,9 @@ class FakeFile(object):
     def contents(self):
         """Return the contents as string with the original encoding."""
         if sys.version_info >= (3, 0) and isinstance(self.byte_contents, bytes):
-            return self.byte_contents.decode(self.encoding or locale.getpreferredencoding(False))
+            return self.byte_contents.decode(
+                self.encoding or locale.getpreferredencoding(False),
+                errors=self.errors)
         return self.byte_contents
 
     @property
@@ -294,27 +299,25 @@ class FakeFile(object):
         """Return True if this file was initialized with size but no contents."""
         return self._byte_contents is None and not self.read_from_real_fs
 
-    @staticmethod
-    def _EncodeContents(contents, encoding=None):
+    def _encode_contents(self, contents):
         # pylint: disable=undefined-variable
         if sys.version_info >= (3, 0) and isinstance(contents, str):
-            contents = bytes(contents, encoding or locale.getpreferredencoding(False))
+            contents = bytes(contents, self.encoding or locale.getpreferredencoding(False), self.errors)
         elif sys.version_info < (3, 0) and isinstance(contents, unicode):
-            contents = contents.encode(encoding or locale.getpreferredencoding(False))
+            contents = contents.encode(self.encoding or locale.getpreferredencoding(False), self.errors)
         return contents
 
-    def _SetInitialContents(self, contents, encoding):
+    def _set_initial_contents(self, contents):
         """Sets the file contents and size.
            Called internally after initial file creation.
 
         Args:
           contents: string, new content of file.
-          encoding: the encoding to be used for writing the contents if they are a unicode string
         Raises:
           IOError: if the st_size is not a non-negative integer,
                    or if st_size exceeds the available file system space
         """
-        contents = self._EncodeContents(contents, encoding)
+        contents = self._encode_contents(contents)
         st_size = len(contents)
 
         if self._byte_contents:
@@ -340,7 +343,8 @@ class FakeFile(object):
           IOError: if the st_size is not a non-negative integer,
                    or if st_size exceeds the available file system space.
         """
-        self._SetInitialContents(contents, encoding)
+        self.encoding = encoding
+        self._set_initial_contents(contents)
         self.st_ctime = time.time()
         self.st_mtime = self._st_ctime
 
@@ -1594,7 +1598,7 @@ class FakeFilesystem(object):
 
     def CreateFile(self, file_path, st_mode=stat.S_IFREG | PERM_DEF_FILE,
                    contents='', st_size=None, create_missing_dirs=True,
-                   apply_umask=False, encoding=None):
+                   apply_umask=False, encoding=None, errors=None):
         """Create file_path, including all the parent directories along the way.
 
         This helper method can be used to set up tests more easily.
@@ -1608,6 +1612,8 @@ class FakeFilesystem(object):
             apply_umask: whether or not the current umask must be applied on st_mode.
             encoding: if contents is a unicode string, the encoding used for serialization.
                 New in pyfakefs 2.9.
+            errors: the error mode used for encoding/decoding errors
+                New in pyfakefs 3.2.
 
         Returns:
             the newly created FakeFile object.
@@ -1616,7 +1622,8 @@ class FakeFilesystem(object):
             IOError: if the file already exists.
             IOError: if the containing directory is required and missing.
         """
-        return self._CreateFile(file_path, st_mode, contents, st_size, create_missing_dirs, apply_umask, encoding)
+        return self._CreateFile(
+            file_path, st_mode, contents, st_size, create_missing_dirs, apply_umask, encoding, errors)
 
     def add_real_file(self, file_path, read_only=True):
         """Create file_path, including all the parent directories along the way, for a file
@@ -1689,7 +1696,8 @@ class FakeFilesystem(object):
 
     def _CreateFile(self, file_path, st_mode=stat.S_IFREG | PERM_DEF_FILE,
                     contents='', st_size=None, create_missing_dirs=True,
-                    apply_umask=False, encoding=None, read_from_real_fs=False, real_stat=None):
+                    apply_umask=False, encoding=None, errors=None,
+                    read_from_real_fs=False, real_stat=None):
         """Create file_path, including all the parent directories along the way.
 
         Args:
@@ -1701,6 +1709,8 @@ class FakeFilesystem(object):
             apply_umask: whether or not the current umask must be applied on st_mode.
             encoding: if contents is a unicode string, the encoding used for serialization.
                 New in pyfakefs 2.9.
+            errors: the error mode used for encoding/decoding errors
+                New in pyfakefs 3.2.
             read_from_real_fs: if True, the contents are reaf from the real file system on demand.
                 New in pyfakefs 3.2.
             real_stat: used in combination with read_from_real_fs; stat result of the real file
@@ -1722,7 +1732,7 @@ class FakeFilesystem(object):
             parent_directory = self.NormalizeCase(parent_directory)
         if apply_umask:
             st_mode &= ~self.umask
-        file_object = FakeFile(new_file, st_mode, filesystem=self)
+        file_object = FakeFile(new_file, st_mode, filesystem=self, encoding=encoding, errors=errors)
         if read_from_real_fs:
             file_object.st_ctime = real_stat.st_ctime
             file_object.st_atime = real_stat.st_atime
@@ -1742,7 +1752,7 @@ class FakeFilesystem(object):
                 if st_size is not None:
                     file_object.SetLargeFileSize(st_size)
                 else:
-                    file_object._SetInitialContents(contents, encoding)
+                    file_object._set_initial_contents(contents)
             except IOError:
                 self.RemoveObject(file_path)
                 raise
@@ -3378,7 +3388,7 @@ class FakeFileWrapper(object):
 
     def __init__(self, file_object, file_path, update=False, read=False, append=False,
                  delete_on_close=False, filesystem=None, newline=None,
-                 binary=True, closefd=True, encoding=None):
+                 binary=True, closefd=True, encoding=None, errors=None):
         self._file_object = file_object
         self._file_path = file_path
         self._append = append
@@ -3388,13 +3398,14 @@ class FakeFileWrapper(object):
         self._file_epoch = file_object.epoch
         contents = file_object.byte_contents
         self._encoding = encoding
+        errors = errors or 'strict'
         if encoding:
             file_wrapper = FakeFileWrapper(file_object, file_path, update, read,
                                            append, delete_on_close=False, filesystem=filesystem,
                                            newline=None, binary=True, closefd=closefd)
             codec_info = codecs.lookup(encoding)
             self._io = codecs.StreamReaderWriter(file_wrapper, codec_info.streamreader,
-                                                 codec_info.streamwriter)
+                                                 codec_info.streamwriter, errors)
         else:
             if sys.version_info >= (3, 0):
                 io_class = io.BytesIO if binary else io.StringIO
@@ -3402,7 +3413,8 @@ class FakeFileWrapper(object):
                 io_class = cStringIO.StringIO
             io_args = {} if binary else {'newline': newline}
             if contents and not binary:
-                contents = contents.decode(encoding or locale.getpreferredencoding(False))
+                contents = contents.decode(encoding or locale.getpreferredencoding(False),
+                                           errors=errors)
             if contents and not update:
                 self._io = io_class(contents, **io_args)
             else:
@@ -3738,7 +3750,8 @@ class FakeFileOpen(object):
                                    newline=newline,
                                    binary=binary,
                                    closefd=closefd,
-                                   encoding=encoding)
+                                   encoding=encoding,
+                                   errors=errors)
         if filedes is not None:
             fakefile.filedes = filedes
         else:

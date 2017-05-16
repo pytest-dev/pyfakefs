@@ -4,6 +4,7 @@ The release versions are PyPi releases.
 ## Version 3.2 (as yet unreleased)
 
 #### New Features
+  * `io.open`, `os.open`: support for `errors` argument
   * Added new methods to `fake_filesystem.FakeFilesystem` that make real files 
     and directories appear within the fake file system: 
     `add_real_file()`, `add_real_directory()` and `add_real_paths()`.
