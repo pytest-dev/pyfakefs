@@ -609,7 +609,7 @@ class FakeDirectoryFromRealDirectory(FakeDirectory):
         # we cannot get the size until the contents are loaded
         if not self.contents_read:
             return 0
-        return FakeDirectory.GetSize()
+        return super(FakeDirectoryFromRealDirectory, self).GetSize()
 
 
 class FakeFilesystem(object):
@@ -1739,7 +1739,7 @@ class FakeFilesystem(object):
                                 read_from_real_fs=True,
                                 read_only=read_only)
 
-    def add_real_directory(self, dir_path, read_only=True):
+    def add_real_directory(self, dir_path, read_only=True, lazy_read=True):
         """Create fake directory for the existing directory at path, and entries for all contained
         files in the real file system.
         New in pyfakefs 3.2.
@@ -1749,6 +1749,11 @@ class FakeFilesystem(object):
             read_only: if set, all files under the directory are treated as read-only,
                 e.g. a write access raises an exception;
                 otherwise, writing to the files changes the fake files only as usually.
+            lazy_read: if set (default), directory contents are only read when accessed,
+                and only until the needed subdirectory level
+                Note: this means that the file system size is only updated at the time
+                      the directory contents are read; set this to False only if you
+                      are dependent on accurate file system size in your test
 
         Returns:
             the newly created FakeDirectory object.
@@ -1759,18 +1764,24 @@ class FakeFilesystem(object):
         """
         if not os.path.exists(dir_path):
             raise IOError(errno.ENOENT, 'No such directory', dir_path)
-        parent_path = os.path.split(dir_path)[0]
-        if self.Exists(parent_path):
-            parent_dir = self.GetObject(parent_path)
+        if lazy_read:
+            parent_path = os.path.split(dir_path)[0]
+            if self.Exists(parent_path):
+                parent_dir = self.GetObject(parent_path)
+            else:
+                parent_dir = self.CreateDirectory(parent_path)
+            new_dir = FakeDirectoryFromRealDirectory(dir_path, filesystem=self, read_only=read_only)
+            parent_dir.AddEntry(new_dir)
+            self.last_ino += 1
+            new_dir.SetIno(self.last_ino)
         else:
-            parent_dir = self.CreateDirectory(parent_path)
-        new_dir = FakeDirectoryFromRealDirectory(dir_path, filesystem=self, read_only=read_only)
-        parent_dir.AddEntry(new_dir)
-        self.last_ino += 1
-        new_dir.SetIno(self.last_ino)
+            new_dir = self.CreateDirectory(dir_path)
+            for base, _, files in os.walk(dir_path):
+                for fileEntry in files:
+                    self.add_real_file(os.path.join(base, fileEntry), read_only)
         return new_dir
 
-    def add_real_paths(self, path_list, read_only=True):
+    def add_real_paths(self, path_list, read_only=True, lazy_dir_read=True):
         """Convenience method to add several files and directories from the real file system
         in the fake file system. See `add_real_file()` and `add_real_directory()`.
         New in pyfakefs 3.2.
@@ -1780,6 +1791,8 @@ class FakeFilesystem(object):
             read_only: if set, all files and files under under the directories are treated as read-only,
                 e.g. a write access raises an exception;
                 otherwise, writing to the files changes the fake files only as usually.
+            lazy_dir_read: uses lazy reading of directory contents if set
+                (see `add_real_directory`)
 
         Raises:
             OSError: if any of the files and directories in the list does not exist in the real file system.
@@ -1787,7 +1800,7 @@ class FakeFilesystem(object):
         """
         for path in path_list:
             if os.path.isdir(path):
-                self.add_real_directory(path, read_only)
+                self.add_real_directory(path, read_only, lazy_dir_read)
             else:
                 self.add_real_file(path, read_only)
 

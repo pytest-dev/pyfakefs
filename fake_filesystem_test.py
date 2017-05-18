@@ -4630,6 +4630,28 @@ class RealFileSystemAccessTest(TestCase):
         self.assertTrue(self.filesystem.GetObject(os.path.join(real_dir_path, 'pyfakefs', 'fake_filesystem.py')))
         self.assertTrue(self.filesystem.GetObject(os.path.join(real_dir_path, 'pyfakefs', '__init__.py')))
 
+    def testAddExistingRealDirectoryLazily(self):
+        disk_size = 1024*1024*1024
+        real_dir_path = os.path.join(os.path.dirname(__file__), 'pyfakefs')
+        self.filesystem.SetDiskUsage(disk_size, real_dir_path)
+        self.filesystem.add_real_directory(real_dir_path)
+
+        # the directory contents have not been read, the the disk usage has not changed
+        self.assertEqual(disk_size, self.filesystem.GetDiskUsage(real_dir_path).free)
+        # checking for existence shall read the directory contents
+        self.assertTrue(self.filesystem.GetObject(os.path.join(real_dir_path, 'fake_filesystem.py')))
+        # so now the free disk space shall have decreased
+        self.assertGreater(disk_size, self.filesystem.GetDiskUsage(real_dir_path).free)
+
+    def testAddExistingRealDirectoryNotLazily(self):
+        disk_size = 1024*1024*1024
+        real_dir_path = os.path.join(os.path.dirname(__file__), 'pyfakefs')
+        self.filesystem.SetDiskUsage(disk_size, real_dir_path)
+        self.filesystem.add_real_directory(real_dir_path, lazy_read=False)
+
+        # the directory has been read, so the file sizes have been subtracted from the free space
+        self.assertGreater(disk_size, self.filesystem.GetDiskUsage(real_dir_path).free)
+
     def testAddExistingRealDirectoryReadWrite(self):
         real_dir_path = os.path.join(os.path.dirname(__file__), 'pyfakefs')
         self.filesystem.add_real_directory(real_dir_path, read_only=False)
