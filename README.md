@@ -10,7 +10,7 @@ pyfakefs works with Linux, Windows and MacOS.
 
 This file provides general usage instructions for pyfakefs.  There is more:
 
-* The [pyfakfs API Reference](http://jmcgeheeiv.github.io/pyfakefs/)
+* The [pyfakefs API Reference](http://jmcgeheeiv.github.io/pyfakefs/)
   contains documentation for each pyfakefs class, method and function
 * The [pyfakefs Wiki](https://github.com/jmcgeheeiv/pyfakefs/wiki/Home) provides more detailed information on
   specific topics
@@ -136,5 +136,5 @@ Google released pyfakefs to the public in 2011 as Google Code project
 
 After the [shutdown of Google Code](http://google-opensource.blogspot.com/2015/03/farewell-to-google-code.html)
 was announced, [John McGehee](https://github.com/jmcgeheeiv) merged all three Google Code projects together
-[here on GitHub](https://github.com/jmcgeheeiv/pyfakefs) where an enthusiastic community actively maintains
+[here on GitHub](https://github.com/jmcgeheeiv/pyfakefs) where an enthusiastic community actively supports, maintains
 and extends pyfakefs.
