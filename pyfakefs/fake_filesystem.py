@@ -486,7 +486,8 @@ class FakeDirectory(FakeFile):
     @property
     def ordered_dirs(self):
         """Return the list of contained directory entry names ordered by creation order."""
-        return [item[0] for item in sorted(self.byte_contents.items(), key=lambda entry: entry[1].st_ino)]
+        return [item[0] for item in sorted(
+            self.byte_contents.items(), key=lambda entry: entry[1].st_ino)]
 
     def AddEntry(self, path_object):
         """Adds a child FakeFile to this directory.
@@ -656,6 +657,32 @@ class FakeFilesystem(object):
         self.mount_points = {}
         self.AddMountPoint(self.root.name, total_size)
 
+    @staticmethod
+    def _matching_string(matched, string):
+        """Return the string as byte or unicode depending 
+        on the type of matched, assuming string is an ASCII string.
+        """
+        if string is None:
+            return string
+        if sys.version_info < (3, ):
+            if isinstance(matched, unicode):
+                return unicode(string)
+            else:
+                return string
+        else:
+            if isinstance(matched, bytes):
+                return bytes(string, 'ascii')
+            else:
+                return string
+
+    def _path_separator(self, path):
+        """Return the path separator as the same type as path"""
+        return self._matching_string(path, self.path_separator)
+
+    def _alternative_path_separator(self, path):
+        """Return the alternative path separator as the same type as path"""
+        return self._matching_string(path, self.alternative_path_separator)
+
     def _IsLinkSupported(self):
         # Python 3.2 supports links in Windows
         return not self.is_windows_fs or sys.version_info >= (3, 2)
@@ -696,18 +723,28 @@ class FakeFilesystem(object):
                 return self.AddMountPoint(path=drive)
 
     def _MountPointForPath(self, path):
+        def to_str(string):
+            """Convert the str, unicode or byte object to a str using the default encoding."""
+            if string is None or isinstance(string, str):
+                return string
+            if sys.version_info < (3, 0):
+                return string.encode(locale.getpreferredencoding(False))
+            else:
+                return string.decode(locale.getpreferredencoding(False))
+
         path = self.NormalizePath(self.NormalizeCase(path))
         if path in self.mount_points:
             return self.mount_points[path]
-        mount_path = ''
-        drive = self.SplitDrive(path)[0]
+        mount_path = self._matching_string(path, '')
+        drive = self.SplitDrive(path)[:1]
         for root_path in self.mount_points:
+            root_path = self._matching_string(path, root_path)
             if drive and not root_path.startswith(drive):
                 continue
             if path.startswith(root_path) and len(root_path) > len(mount_path):
                 mount_path = root_path
         if mount_path:
-            return self.mount_points[mount_path]
+            return self.mount_points[to_str(mount_path)]
         mount_point = self._AutoMountDriveIfNeeded(path, force=True)
         assert mount_point
         return mount_point
@@ -957,7 +994,7 @@ class FakeFilesystem(object):
             path = os.fspath(path)
         if self.alternative_path_separator is None or not path:
             return path
-        return path.replace(self.alternative_path_separator, self.path_separator)
+        return path.replace(self._alternative_path_separator(path), self._path_separator(path))
 
     def CollapsePath(self, path):
         """Mimic os.path.normpath using the specified path_separator.
@@ -981,15 +1018,18 @@ class FakeFilesystem(object):
         """
         path = self.NormalizePathSeparator(path)
         drive, path = self.SplitDrive(path)
-        is_absolute_path = path.startswith(self.path_separator)
-        path_components = path.split(self.path_separator)
+        sep = self._path_separator(path)
+        is_absolute_path = path.startswith(sep)
+        path_components = path.split(sep)
         collapsed_path_components = []
+        dot = self._matching_string(path, '.')
+        dotdot = self._matching_string(path, '..')
         for component in path_components:
-            if (not component) or (component == '.'):
+            if (not component) or (component == dot):
                 continue
-            if component == '..':
+            if component == dotdot:
                 if collapsed_path_components and (
-                        collapsed_path_components[-1] != '..'):
+                        collapsed_path_components[-1] != dotdot):
                     # Remove an up-reference: directory/..
                     collapsed_path_components.pop()
                     continue
@@ -997,10 +1037,10 @@ class FakeFilesystem(object):
                     # Ignore leading .. components if starting from the root directory.
                     continue
             collapsed_path_components.append(component)
-        collapsed_path = self.path_separator.join(collapsed_path_components)
+        collapsed_path = sep.join(collapsed_path_components)
         if is_absolute_path:
-            collapsed_path = self.path_separator + collapsed_path
-        return drive + collapsed_path or '.'
+            collapsed_path = sep + collapsed_path
+        return drive + collapsed_path or dot
 
     def NormalizeCase(self, path):
         """Return a normalized case version of the given path for case-insensitive
@@ -1028,10 +1068,10 @@ class FakeFilesystem(object):
                             current_dir.st_size == 0):
                 return path
             normalized_components.append(dir_name)
-        normalized_path = self.path_separator.join(normalized_components)
-        if path.startswith(self.path_separator) and not normalized_path.startswith(
-                self.path_separator):
-            normalized_path = self.path_separator + normalized_path
+        sep = self._path_separator(path)
+        normalized_path = sep.join(normalized_components)
+        if path.startswith(sep) and not normalized_path.startswith(sep):
+            normalized_path = sep + normalized_path
         return normalized_path
 
     def NormalizePath(self, path):
@@ -1052,10 +1092,11 @@ class FakeFilesystem(object):
             path = self.path_separator
         elif not self._StartsWithRootPath(path):
             # Prefix relative paths with cwd, if cwd is not root.
-            path = self.path_separator.join(
-                (self.cwd != self.root.name and self.cwd or '',
-                 path))
-        if path == '.':
+            root_name = self._matching_string(path, self.root.name)
+            empty = self._matching_string(path, '')
+            path = self._path_separator(path).join(
+                (self.cwd != root_name and self.cwd or empty, path))
+        if path == self._matching_string(path, '.'):
             path = self.cwd
         return self.CollapsePath(path)
 
@@ -1074,7 +1115,8 @@ class FakeFilesystem(object):
         """
         drive, path = self.SplitDrive(path)
         path = self.NormalizePathSeparator(path)
-        path_components = path.split(self.path_separator)
+        sep = self._path_separator(path)
+        path_components = path.split(sep)
         if not path_components:
             return ('', '')
         basename = path_components.pop()
@@ -1086,9 +1128,9 @@ class FakeFilesystem(object):
                 # Strip all trailing separators.
                 while not path_components[-1]:
                     path_components.pop()
-                return (drive + self.path_separator.join(path_components), basename)
+                return (drive + sep.join(path_components), basename)
         # Root path.  Collapse all leading separators.
-        return (drive or self.path_separator, basename)
+        return (drive or sep, basename)
 
     def SplitDrive(self, path):
         """Splits the path into the drive part and the rest of the path.
@@ -1107,21 +1149,22 @@ class FakeFilesystem(object):
         if self.is_windows_fs:
             if len(path) >= 2:
                 path = self.NormalizePathSeparator(path)
+                sep = self._path_separator(path)
                 # UNC path handling is here since Python 2.7.8, back-ported from Python 3
                 if sys.version_info >= (2, 7, 8):
-                    if (path[0:2] == self.path_separator * 2) and (
-                            path[2:3] != self.path_separator):
+                    if (path[0:2] == sep * 2) and (
+                            path[2:3] != sep):
                         # UNC path handling - splits off the mount point instead of the drive
-                        sep_index = path.find(self.path_separator, 2)
+                        sep_index = path.find(sep, 2)
                         if sep_index == -1:
                             return path[:0], path
-                        sep_index2 = path.find(self.path_separator, sep_index + 1)
+                        sep_index2 = path.find(sep, sep_index + 1)
                         if sep_index2 == sep_index + 1:
                             return path[:0], path
                         if sep_index2 == -1:
                             sep_index2 = len(path)
                         return path[:sep_index2], path[sep_index2:]
-                if path[1] == ':':
+                if path[1:2] == self._matching_string(path, ':'):
                     return path[:2], path[2:]
         return path[:0], path
 
@@ -1129,11 +1172,12 @@ class FakeFilesystem(object):
         """Taken from Python 3.5 os.path.join() code in ntpath.py and slightly adapted"""
         base_path = all_paths[0]
         paths_to_add = all_paths[1:]
-        seps = [self.path_separator, self.alternative_path_separator]
+        sep = self._path_separator(base_path)
+        seps = [sep, self._alternative_path_separator(base_path)]
         result_drive, result_path = self.SplitDrive(base_path)
         for path in paths_to_add:
             drive_part, path_part = self.SplitDrive(path)
-            if path_part and path_part[0] in seps:
+            if path_part and path_part[:1] in seps:
                 # Second path is absolute
                 if drive_part or not result_drive:
                     result_drive = drive_part
@@ -1148,13 +1192,14 @@ class FakeFilesystem(object):
                 # Same drive in different case
                 result_drive = drive_part
             # Second path is relative to the first
-            if result_path and result_path[-1] not in seps:
-                result_path = result_path + self.path_separator
+            if result_path and result_path[-1:] not in seps:
+                result_path = result_path + sep
             result_path = result_path + path_part
         # add separator between UNC and non-absolute path
-        if (result_path and result_path[0] not in seps and
-                result_drive and result_drive[-1:] != ':'):
-            return result_drive + self.path_separator + result_path
+        colon = self._matching_string(base_path, ':')
+        if (result_path and result_path[:1] not in seps and
+                result_drive and result_drive[-1:] != colon):
+            return result_drive + sep + result_path
         return result_drive + result_path
 
     def JoinPaths(self, *paths):
@@ -1174,17 +1219,18 @@ class FakeFilesystem(object):
         if self.is_windows_fs:
             return self._JoinPathsWithDriveSupport(*paths)
         joined_path_segments = []
+        sep = self._path_separator(paths[0])
         for path_segment in paths:
             if self._StartsWithRootPath(path_segment):
                 # An absolute path
                 joined_path_segments = [path_segment]
             else:
                 if (joined_path_segments and
-                        not joined_path_segments[-1].endswith(self.path_separator)):
-                    joined_path_segments.append(self.path_separator)
+                        not joined_path_segments[-1].endswith(sep)):
+                    joined_path_segments.append(sep)
                 if path_segment:
                     joined_path_segments.append(path_segment)
-        return ''.join(joined_path_segments)
+        return self._matching_string(paths[0], '').join(joined_path_segments)
 
     def GetPathComponents(self, path):
         """Breaks the path into a list of component names.
@@ -1208,10 +1254,10 @@ class FakeFilesystem(object):
         Returns:
             The list of names split from path
         """
-        if not path or path == self.path_separator:
+        if not path or path == self._path_separator(path):
             return []
         drive, path = self.SplitDrive(path)
-        path_components = path.split(self.path_separator)
+        path_components = path.split(self._path_separator(path))
         assert drive or path_components
         if not path_components[0]:
             # This is an absolute path.
@@ -1231,24 +1277,27 @@ class FakeFilesystem(object):
             True if drive letter support is enabled in the filesystem and
             the path starts with a drive letter.
         """
+        colon = self._matching_string(file_path, ':')
         return (self.is_windows_fs and len(file_path) >= 2 and
-                file_path[0].isalpha and file_path[1] == ':')
+                file_path[:1].isalpha and (file_path[1:2]) == colon)
 
     def _StartsWithRootPath(self, file_path):
-        return (file_path.startswith(self.root.name) or
+        root_name = self._matching_string(file_path, self.root.name)
+        return (file_path.startswith(root_name) or
                 not self.is_case_sensitive and file_path.lower().startswith(
-                    self.root.name.lower()) or
+                    root_name.lower()) or
                 self.StartsWithDriveLetter(file_path))
 
     def _IsRootPath(self, file_path):
-        return (file_path == self.root.name or
-                not self.is_case_sensitive and file_path.lower() == self.root.name.lower() or
+        root_name = self._matching_string(file_path, self.root.name)
+        return (file_path == root_name or
+                not self.is_case_sensitive and file_path.lower() == root_name.lower() or
                 len(file_path) == 2 and self.StartsWithDriveLetter(file_path))
 
     def _EndsWithPathSeparator(self, file_path):
-        return file_path and (file_path.endswith(self.path_separator)
+        return file_path and (file_path.endswith(self._path_separator(file_path))
                               or self.alternative_path_separator is not None
-                              and file_path.endswith(self.alternative_path_separator))
+                              and file_path.endswith(self._alternative_path_separator(file_path)))
 
     def _DirectoryContent(self, directory, component):
         if component in directory.contents:
@@ -1331,14 +1380,17 @@ class FakeFilesystem(object):
         """
 
         def _ComponentsToPath(component_folders):
-            path = self.path_separator.join(component_folders)
+            sep = self._path_separator(
+                component_folders[0]) if component_folders else self.path_separator
+            path = sep.join(component_folders)
             if not self._StartsWithRootPath(path):
-                path = self.path_separator + path
+                path = sep + path
             return path
 
         def _ValidRelativePath(file_path):
-            while file_path and '/..' in file_path:
-                file_path = file_path[:file_path.rfind('/..')]
+            slash_dotdot = self._matching_string(file_path, '/..')
+            while file_path and slash_dotdot in file_path:
+                file_path = file_path[:file_path.rfind(slash_dotdot)]
                 if not self.Exists(self.NormalizePath(file_path)):
                     return False
             return True
@@ -1365,17 +1417,18 @@ class FakeFilesystem(object):
               IOError: if there are too many levels of symbolic link
             """
             link_path = link.contents
+            sep = self._path_separator(link_path)
             # For links to absolute paths, we want to throw out everything in the
             # path built so far and replace with the link.  For relative links, we
             # have to append the link to what we have so far,
-            if not link_path.startswith(self.path_separator):
+            if not link_path.startswith(sep):
                 # Relative path.  Append remainder of path to what we have processed
                 # so far, excluding the name of the link itself.
                 # /a/b => ../c   should yield /a/../c (which will normalize to /c)
                 # /a/b => d should yield a/d
                 components = link_path_components[:-1]
                 components.append(link_path)
-                link_path = self.path_separator.join(components)
+                link_path = sep.join(components)
             # Don't call self.NormalizePath(), as we don't want to prepend self.cwd.
             return self.CollapsePath(link_path)
 
@@ -1979,8 +2032,9 @@ class FakeFilesystem(object):
         parent_dir, _ = self.SplitPath(dir_name)
         if parent_dir:
             base_dir = self.CollapsePath(parent_dir)
-            if parent_dir.endswith(self.path_separator + '..'):
-                base_dir, dummy_dotdot, _ = parent_dir.partition(self.path_separator + '..')
+            ellipsis = self._matching_string(parent_dir, self.path_separator + '..')
+            if parent_dir.endswith(ellipsis):
+                base_dir, dummy_dotdot, _ = parent_dir.partition(ellipsis)
             if not self.Exists(base_dir):
                 raise OSError(errno.ENOENT, 'No such fake directory', base_dir)
 
@@ -2174,7 +2228,7 @@ class FakeFilesystem(object):
           OSError: if target_directory does not point to a directory.
           OSError: if removal failed per FakeFilesystem.RemoveObject. Cannot remove '.'.
         """
-        if target_directory == '.':
+        if target_directory in (b'.', u'.'):
             raise OSError(errno.EINVAL, 'Invalid argument: \'.\'')
         target_directory = self.NormalizePath(target_directory)
         if self.ConfirmDir(target_directory):
@@ -2421,11 +2475,12 @@ class FakePathModule(object):
             path = self.splitdrive(path)[1]
         if sys.version_info >= (3, 6):
             path = os.fspath(path)
+        sep = self.filesystem._path_separator(path)
+        altsep = self.filesystem._alternative_path_separator(path)
         if self.filesystem.is_windows_fs:
-            return len(path) > 0 and path[0] in (self.sep, self.altsep)
+            return len(path) > 0 and path[:1] in (sep, altsep)
         else:
-            return path.startswith(self.sep) or self.altsep is not None and path.startswith(
-                self.altsep)
+            return path.startswith(sep) or altsep is not None and path.startswith(altsep)
 
     def isdir(self, path):
         """Determine if path identifies a directory."""
@@ -2512,18 +2567,23 @@ class FakePathModule(object):
         def getcwd():
             """Return the current working directory."""
             # pylint: disable=undefined-variable
-            if sys.version_info < (3, 0) and isinstance(path, unicode):
+            if sys.version_info < (3, ) and isinstance(path, unicode):
                 return self.os.getcwdu()
+            elif sys.version_info >= (3, ) and isinstance(path, bytes):
+                return self.os.getcwdb()
             else:
                 return self.os.getcwd()
 
         if sys.version_info >= (3, 6):
             path = os.fspath(path)
+
+        sep = self.filesystem._path_separator(path)
+        altsep = self.filesystem._alternative_path_separator(path)
         if not self.isabs(path):
             path = self.join(getcwd(), path)
         elif (self.filesystem.is_windows_fs and
-              path.startswith(self.sep) or self.altsep is not None and
-              path.startswith(self.altsep)):
+              path.startswith(sep) or altsep is not None and
+              path.startswith(altsep)):
             cwd = getcwd()
             if self.filesystem.StartsWithDriveLetter(cwd):
                 path = self.join(cwd[:2], path)
@@ -2593,15 +2653,16 @@ class FakePathModule(object):
         encountered in the second path.
         Taken from Python source and adapted.
         """
-        curdir = '.'
-        pardir = '..'
+        curdir = self.filesystem._matching_string(path, '.')
+        pardir = self.filesystem._matching_string(path, '..')
 
+        sep = self.filesystem._path_separator(path)
         if self.isabs(rest):
             rest = rest[1:]
-            path = self.sep
+            path = sep
 
         while rest:
-            name, _, rest = rest.partition(self.sep)
+            name, _, rest = rest.partition(sep)
             if not name or name == curdir:
                 # current dir
                 continue
@@ -2663,22 +2724,21 @@ class FakePathModule(object):
         if not path:
             return False
         normed_path = self.filesystem.NormalizePath(path)
+        sep = self.filesystem._path_separator(path)
         if self.filesystem.is_windows_fs:
             if self.filesystem.alternative_path_separator is not None:
                 path_seps = (
-                    self.filesystem.path_separator,
-                    self.filesystem.alternative_path_separator
+                    sep, self.filesystem._alternative_path_separator(path)
                 )
             else:
-                path_seps = (self.filesystem.path_separator,)
+                path_seps = (sep,)
             drive, rest = self.filesystem.SplitDrive(normed_path)
-            if drive and drive[0] in path_seps:
+            if drive and drive[:1] in path_seps:
                 return (not rest) or (rest in path_seps)
             if rest in path_seps:
                 return True
         for mount_point in self.filesystem.mount_points:
-            if (normed_path.rstrip(self.filesystem.path_separator) ==
-                    mount_point.rstrip(self.filesystem.path_separator)):
+            if (normed_path.rstrip(sep) == mount_point.rstrip(sep)):
                 return True
         return False
 
@@ -2946,11 +3006,15 @@ class FakeOsModule(object):
         """Return current working directory."""
         return self.filesystem.cwd
 
-    def getcwdu(self):
-        """Return current working directory as unicode. Python 2 only."""
-        if sys.version_info >= (3, 0):
-            raise AttributeError('no attribute getcwdu')
-        return unicode(self.filesystem.cwd)  # pylint: disable=undefined-variable
+    if sys.version_info < (3, ):
+        def getcwdu(self):
+            """Return current working directory as unicode. Python 2 only."""
+            return unicode(self.filesystem.cwd)  # pylint: disable=undefined-variable
+
+    else:
+        def getcwdb(self):
+            """Return current working directory as bytes. Python 3 only."""
+            return bytes(self.filesystem.cwd, locale.getpreferredencoding(False))
 
     def listdir(self, target_directory):
         """Return a list of file names in target_directory.
@@ -3369,7 +3433,7 @@ class FakeOsModule(object):
                     os.strerror(errno.EEXIST), filename))
             raise OSError(errno.ENOENT, 'Fake filesystem: %s: %s' % (
                 os.strerror(errno.ENOENT), filename))
-        if tail == '.' or tail == '..' or self.filesystem.Exists(filename):
+        if tail in (b'.', u'.', b'..', u'..') or self.filesystem.Exists(filename):
             raise OSError(errno.EEXIST, 'Fake fileystem: %s: %s' % (
                 os.strerror(errno.EEXIST), filename))
         try:
