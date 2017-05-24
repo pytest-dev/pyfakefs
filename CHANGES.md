@@ -15,6 +15,7 @@ The release versions are PyPi releases.
   * `mox3` is no longer required - the relevant part has been integrated into pyfakefs ([#182](../../issues/182))
   
 #### Fixes
+ * Corrected handling of byte/unicode paths in several functions ([#187](../../issues/187))
  * `FakeShutilModule.rmtree` failed for directory ending with path separator ([#177](../../issues/177))
  * Case incorrectly handled for added Windows drives 
  * `pathlib.glob()` incorrectly handled case under MacOS ([#167](../../issues/167))

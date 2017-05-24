@@ -2548,14 +2548,38 @@ class FakePathModuleTest(TestCase):
     def tearDown(self):
         time.time = self.orig_time
 
-    def testAbspath(self):
-        """abspath should return a consistent representation of a file."""
-        filename = 'foo'
-        abspath = '!%s' % filename
+    def checkAbspath(self, is_windows):
+        # the implementation differs in Windows and Posix, so test both
+        self.filesystem.is_windows_fs = is_windows
+        filename = u'foo'
+        abspath = u'!%s' % filename
         self.filesystem.CreateFile(abspath)
         self.assertEqual(abspath, self.path.abspath(abspath))
         self.assertEqual(abspath, self.path.abspath(filename))
-        self.assertEqual(abspath, self.path.abspath('..!%s' % filename))
+        self.assertEqual(abspath, self.path.abspath(u'..!%s' % filename))
+
+    def testAbspathWindows(self):
+        self.checkAbspath(is_windows=True)
+
+    def testAbspathPosix(self):
+        """abspath should return a consistent representation of a file."""
+        self.checkAbspath(is_windows=False)
+
+    def checkAbspathBytes(self, is_windows):
+        """abspath should return a consistent representation of a file."""
+        self.filesystem.is_windows_fs = is_windows
+        filename = b'foo'
+        abspath = b'!' + filename
+        self.filesystem.CreateFile(abspath)
+        self.assertEqual(abspath, self.path.abspath(abspath))
+        self.assertEqual(abspath, self.path.abspath(filename))
+        self.assertEqual(abspath, self.path.abspath(b'..!' + filename))
+
+    def testAbspathBytesWindows(self):
+        self.checkAbspathBytes(is_windows=True)
+
+    def testAbspathBytesPosix(self):
+        self.checkAbspathBytes(is_windows=False)
 
     def testAbspathDealsWithRelativeNonRootPath(self):
         """abspath should correctly handle relative paths from a non-! directory.
@@ -2640,9 +2664,13 @@ class FakePathModuleTest(TestCase):
         dirname = 'foo!bar'
         self.assertEqual(dirname, self.path.dirname('%s!baz' % dirname))
 
-    def testJoin(self):
-        components = ['foo', 'bar', 'baz']
-        self.assertEqual('foo!bar!baz', self.path.join(*components))
+    def testJoinStrings(self):
+        components = [u'foo', u'bar', u'baz']
+        self.assertEqual(u'foo!bar!baz', self.path.join(*components))
+
+    def testJoinBytes(self):
+        components = [b'foo', b'bar', b'baz']
+        self.assertEqual(b'foo!bar!baz', self.path.join(*components))
 
     def testExpandUser(self):
         if self.is_windows:
@@ -4232,14 +4260,25 @@ class DriveLetterSupportTest(TestCase):
     def testCollapseUncPath(self):
         self.assertEqual('!!foo!bar!baz', self.filesystem.CollapsePath('!!foo!bar!!baz!!'))
 
-    def testNormalizePath(self):
-        self.assertEqual('c:!foo!bar', self.filesystem.NormalizePath('c:!foo!!bar'))
-        self.filesystem.cwd = 'c:!foo'
-        self.assertEqual('c:!foo!bar', self.filesystem.NormalizePath('bar'))
+    def testNormalizePathStr(self):
+        self.filesystem.cwd = u''
+        self.assertEqual(u'c:!foo!bar', self.filesystem.NormalizePath(u'c:!foo!!bar'))
+        self.filesystem.cwd = u'c:!foo'
+        self.assertEqual(u'c:!foo!bar', self.filesystem.NormalizePath(u'bar'))
 
-    def testSplitPath(self):
-        self.assertEqual(('c:!foo', 'bar'), self.filesystem.SplitPath('c:!foo!bar'))
-        self.assertEqual(('c:', 'foo'), self.filesystem.SplitPath('c:!foo'))
+    def testNormalizePathBytes(self):
+        self.filesystem.cwd = b''
+        self.assertEqual(b'c:!foo!bar', self.filesystem.NormalizePath(b'c:!foo!!bar'))
+        self.filesystem.cwd = b'c:!foo'
+        self.assertEqual(b'c:!foo!bar', self.filesystem.NormalizePath(b'bar'))
+
+    def testSplitPathStr(self):
+        self.assertEqual((u'c:!foo', u'bar'), self.filesystem.SplitPath(u'c:!foo!bar'))
+        self.assertEqual((u'c:', u'foo'), self.filesystem.SplitPath(u'c:!foo'))
+
+    def testSplitPathBytes(self):
+        self.assertEqual((b'c:!foo', b'bar'), self.filesystem.SplitPath(b'c:!foo!bar'))
+        self.assertEqual((b'c:', b'foo'), self.filesystem.SplitPath(b'c:!foo'))
 
     def testCharactersBeforeRootIgnoredInJoinPaths(self):
         self.assertEqual('c:d', self.filesystem.JoinPaths('b', 'c:', 'd'))
@@ -4251,11 +4290,15 @@ class DriveLetterSupportTest(TestCase):
         self.assertEqual(['c:', 'foo', 'bar'], self.filesystem.GetPathComponents('c:!foo!bar'))
         self.assertEqual(['c:'], self.filesystem.GetPathComponents('c:'))
 
-    def testSplitDrive(self):
-        self.assertEqual(('c:', '!foo!bar'), self.filesystem.SplitDrive('c:!foo!bar'))
-        self.assertEqual(('', '!foo!bar'), self.filesystem.SplitDrive('!foo!bar'))
-        self.assertEqual(('c:', 'foo!bar'), self.filesystem.SplitDrive('c:foo!bar'))
-        self.assertEqual(('', 'foo!bar'), self.filesystem.SplitDrive('foo!bar'))
+    def testSplitDriveStr(self):
+        self.assertEqual((u'c:', u'!foo!bar'), self.filesystem.SplitDrive(u'c:!foo!bar'))
+        self.assertEqual((u'', u'!foo!bar'), self.filesystem.SplitDrive(u'!foo!bar'))
+        self.assertEqual((u'c:', u'foo!bar'), self.filesystem.SplitDrive(u'c:foo!bar'))
+        self.assertEqual((u'', u'foo!bar'), self.filesystem.SplitDrive(u'foo!bar'))
+
+    def testSplitDriveBytes(self):
+        self.assertEqual((b'c:', b'!foo!bar'), self.filesystem.SplitDrive(b'c:!foo!bar'))
+        self.assertEqual((b'', b'!foo!bar'), self.filesystem.SplitDrive(b'!foo!bar'))
 
     @unittest.skipIf(sys.version_info < (2, 7, 8), 'UNC path support since Python 2.7.8')
     def testSplitDriveWithUncPath(self):
