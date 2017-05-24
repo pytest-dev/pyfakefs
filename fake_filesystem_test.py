@@ -4693,5 +4693,22 @@ class RealFileSystemAccessTest(TestCase):
         self.checkWritableFile(fake_file, real_file_path)
 
 
+  def setUp(self):
+    self.filesystem = fake_filesystem.FakeFilesystem(path_separator='!', alt_path_separator='?')
+
+  def testCollapsePathWithMixedSeparators(self):
+    self.assertEqual('!foo!bar', self.filesystem.CollapsePath('!foo??bar'))
+
+  def testNormalizePathWithMixedSeparators(self):
+    path = 'foo?..?bar'
+    self.assertEqual('!bar', self.filesystem.NormalizePath(path))
+
+  def testExistsWithMixedSeparators(self):
+    self.filesystem.CreateFile('?foo?bar?baz')
+    self.filesystem.CreateFile('!foo!bar!xyzzy!plugh')
+    self.assertTrue(self.filesystem.Exists('!foo!bar!baz'))
+    self.assertTrue(self.filesystem.Exists('?foo?bar?xyzzy?plugh'))
+
+
 if __name__ == '__main__':
     unittest.main()
