@@ -61,11 +61,6 @@ if sys.version_info < (3,):
 else:
     import builtins
 
-REAL_OPEN = builtins.open
-"""The real (not faked) `open` builtin."""
-REAL_OS = os
-"""The real (not faked) `os` module."""
-
 
 def load_doctests(loader, tests, ignore, module,
                   additional_skip_names=None, patch_path=True):  # pylint: disable=unused-argument
@@ -134,53 +129,39 @@ class TestCase(unittest.TestCase):
 
     def copyRealFile(self, real_file_path, fake_file_path=None,
                      create_missing_dirs=True):
-        """Copy the file `real_file_path` from the real file system to the fake
-        file system file `fake_file_path`.  The permissions, gid, uid, ctime,
-        mtime and atime of the real file are copied to the fake file.
+        """Add the file `real_file_path` in the real file system to the same
+        path in the fake file system.
 
-        This is a helper method you can use to set up your test more easily.
-
-        This method is available in Python 2.7 and above.
+        **This method is deprecated** in favor of :py:meth:`FakeFilesystem..add_real_file`.
+        `copyRealFile()` is retained with limited functionality for backward
+        compatability only.
 
         Args:
-          real_file_path: Path to the source file in the real file system.
-          fake_file_path: path to the destination file in the fake file system.
-            Defaults to real_file_path.
-          create_missing_dirs: if True, auto create missing directories.
+          real_file_path: Path to the file in both the real and fake file systems
+          fake_file_path: Deprecated.  Use the default, which is `real_file_path`.
+            If a value other than `real_file_path` is specified, an `ValueError`
+            exception will be raised.  
+          create_missing_dirs: Deprecated.  Use the default, which creates missing
+            directories in the fake file system.  If `False` is specified, an
+            `ValueError` exception is raised.
 
         Returns:
-          the newly created FakeFile object.
+          The newly created FakeFile object.
 
         Raises:
-          IOError: if the file already exists.
-          IOError: if the containing directory is required and missing.
+          IOError: If the file already exists in the fake file system.
+          ValueError: If deprecated argument values are specified
 
-        .. note:: The fake file's atime is the access time of the real file \
-                  before it accessed by `copyRealFile()`.  Then, the real file \
-                  is opened in order to copy its contents, whereupon \
-                  **MacOS and BSD update the real file's atime** to the time \
-                  at which your test used `copyRealFile()`. \
-                  \
-                  Thus on these platforms atime is subject to Heisenberg's \
-                  uncertainty principle--by merely accessing the real file, \
-                  your test changes the real file's atime.  Further, Windows \
-                  offers the option to enable atime, and older versions of \
-                  Linux may also modify atime.
+        See:
+          :py:meth:`FakeFileSystem.add_real_file`
         """
-        if fake_file_path is None:
-            fake_file_path = real_file_path
-        real_stat = REAL_OS.stat(real_file_path)
-        with REAL_OPEN(real_file_path, 'rb') as real_file:
-            real_contents = real_file.read()
-        fake_file = self.fs.CreateFile(fake_file_path, st_mode=real_stat.st_mode,
-                                       contents=real_contents,
-                                       create_missing_dirs=create_missing_dirs)
-        fake_file.st_ctime = real_stat.st_ctime
-        fake_file.st_atime = real_stat.st_atime
-        fake_file.st_mtime = real_stat.st_mtime
-        fake_file.st_gid = real_stat.st_gid
-        fake_file.st_uid = real_stat.st_uid
-        return fake_file
+        if fake_file_path is not None and real_file_path != fake_file_path:
+            raise ValueError("CopyRealFile() is deprecated and no longer supports "
+                                "different real and fake file paths") 
+        if not create_missing_dirs:
+            raise ValueError("CopyRealFile() is deprecated and no longer supports "
+                                "NOT creating missing directories")
+        return self._stubber.fs.add_real_file(real_file_path, read_only=False)
 
     def setUpPyfakefs(self):
         """Bind the file-related modules to the :py:class:`pyfakefs` fake file

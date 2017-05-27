@@ -191,22 +191,20 @@ class TestPatchPathUnittestPassing(TestPyfakefsUnittestBase):
 
 @unittest.skipIf(sys.version_info < (2, 7), "No byte strings in Python 2.6")
 class TestCopyOrAddRealFile(TestPyfakefsUnittestBase):
-    """Tests the `fake_filesystem_unittest.TestCase.copyRealFile()` method."""
+    """Tests the `fake_filesystem_unittest.TestCase.copyRealFile()` method.
+    Note that `copyRealFile()` is deprecated in favor of `FakeFilesystem.add_real_file()`.
+    """
     with open(__file__) as f:
         real_string_contents = f.read()
     with open(__file__, 'rb') as f:
         real_byte_contents = f.read()
-    # It is essential to do os.stat() after opening the real file, not before.
-    # This is because opening the file on MacOS and BSD updates access time
-    # st_atime.  Windows offers the option to enable this behavior as well.
     real_stat = os.stat(__file__)
 
     def testCopyRealFile(self):
-        '''Copy a real file to the fake file system'''
+        '''Typical usage of deprecated copyRealFile()'''
         # Use this file as the file to be copied to the fake file system
         real_file_path = __file__
-        fake_file_path = 'foo/bar/baz'
-        fake_file = self.copyRealFile(real_file_path, fake_file_path)
+        fake_file = self.copyRealFile(real_file_path)
 
         self.assertTrue('class TestCopyRealFile(TestPyfakefsUnittestBase)' in self.real_string_contents,
                         'Verify real file string contents')
@@ -216,24 +214,28 @@ class TestCopyOrAddRealFile(TestPyfakefsUnittestBase):
         # note that real_string_contents may differ to fake_file.contents due to newline conversions in open()
         self.assertEqual(fake_file.byte_contents, self.real_byte_contents)
 
-        self.assertEqual(fake_file.st_mode, self.real_stat.st_mode)
+        self.assertEqual(oct(fake_file.st_mode), oct(self.real_stat.st_mode))
         self.assertEqual(fake_file.st_size, self.real_stat.st_size)
         self.assertEqual(fake_file.st_ctime, self.real_stat.st_ctime)
-        self.assertEqual(fake_file.st_atime, self.real_stat.st_atime)
+        self.assertGreaterEqual(fake_file.st_atime, self.real_stat.st_atime)
+        self.assertLess(fake_file.st_atime, self.real_stat.st_atime + 10)
         self.assertEqual(fake_file.st_mtime, self.real_stat.st_mtime)
         self.assertEqual(fake_file.st_uid, self.real_stat.st_uid)
         self.assertEqual(fake_file.st_gid, self.real_stat.st_gid)
 
-        fake_file_path = '/nonexistent/directory/file'
-        with self.assertRaises(IOError):
-            self.copyRealFile(real_file_path, fake_file_path,
-                              create_missing_dirs=False)
-
-    def testCopyRealFileNoDestination(self):
+    def testCopyRealFileDeprecatedArguments(self):
+        '''Deprecated copyRealFile() arguments'''
         real_file_path = __file__
         self.assertFalse(self.fs.Exists(real_file_path))
-        self.copyRealFile(real_file_path)
+        # Specify redundant fake file path
+        self.copyRealFile(real_file_path, real_file_path)
         self.assertTrue(self.fs.Exists(real_file_path))
+
+        # Test deprecated argument values
+        with self.assertRaises(ValueError):
+            self.copyRealFile(real_file_path, '/different/filename')
+        with self.assertRaises(ValueError):
+            self.copyRealFile(real_file_path, create_missing_dirs=False)
 
     def testAddRealFile(self):
         '''Add a real file to the fake file system to be read on demand'''
