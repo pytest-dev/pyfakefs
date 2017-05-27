@@ -1774,14 +1774,15 @@ class FakeFilesystem(object):
             file_path, st_mode, contents, st_size, create_missing_dirs, apply_umask, encoding, errors)
 
     def add_real_file(self, file_path, read_only=True):
-        """Create file_path, including all the parent directories along the way, for a file
-        existing in the real file system without reading the contents, which will be read on demand.
+        """Create file_path, including all the parent directories along the way, for an existing
+        real file.  The contents of the real file are read only on demand.
         New in pyfakefs 3.2.
 
         Args:
-            file_path: path to the existing file.
-            read_only: if set, the file is treated as read-only, e.g. a write access raises an exception;
-                otherwise, writing to the file changes the fake file only as usually.
+            file_path: Path to an existing file in the real file system
+            read_only: If `True` (the default), writing to the fake file
+                raises an exception.  Otherwise, writing to the file changes
+                the fake file only.
 
         Returns:
             the newly created FakeFile object.
@@ -1789,14 +1790,23 @@ class FakeFilesystem(object):
         Raises:
             OSError: if the file does not exist in the real file system.
             IOError: if the file already exists in the fake file system.
+
+        .. note:: On MacOS and BSD, accessing the fake file's contents will update \
+                  both the real and fake files' `atime.` (access time).  In this \
+                  particular case, `add_real_file()` violates the rule that `pyfakefs` \
+                  must not modify the real file system. \
+                  \
+                  Further, Windows offers the option to enable atime, and older \
+                  versions of Linux may also modify atime.
         """
         return self._CreateFile(file_path,
                                 read_from_real_fs=True,
                                 read_only=read_only)
 
     def add_real_directory(self, dir_path, read_only=True, lazy_read=True):
-        """Create fake directory for the existing directory at path, and entries for all contained
-        files in the real file system.
+        """Create a fake directory corresponding to the real directory at the specified
+        path.  Add entries in the fake directory corresponding to the entries in the
+        real directory.
         New in pyfakefs 3.2.
 
         Args:
@@ -1837,8 +1847,9 @@ class FakeFilesystem(object):
         return new_dir
 
     def add_real_paths(self, path_list, read_only=True, lazy_dir_read=True):
-        """Convenience method to add several files and directories from the real file system
-        in the fake file system. See `add_real_file()` and `add_real_directory()`.
+        """This convenience method adds multiple files and/or directories from the
+        real file system to the fake file system. See `add_real_file()` and
+        `add_real_directory()`.
         New in pyfakefs 3.2.
 
         Args:
@@ -1863,7 +1874,8 @@ class FakeFilesystem(object):
                     contents='', st_size=None, create_missing_dirs=True,
                     apply_umask=False, encoding=None, errors=None,
                     read_from_real_fs=False, read_only=True):
-        """Internal fake file creation, supports both normal fake files and fake files from real files.
+        """Internal fake file creator that supports both normal fake files and fake
+        files based on real files.
 
         Args:
             file_path: path to the file to create.

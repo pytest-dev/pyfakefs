@@ -27,10 +27,9 @@ these functions can make the test code shorter and more readable.
 and allows you to specify the contents or the size of the file.
 """
 
+import io
 import os
 import sys
-
-from pyfakefs.fake_filesystem_unittest import REAL_OPEN
 
 if sys.version_info < (2, 7):
     import unittest2 as unittest
@@ -65,6 +64,11 @@ class TestExample(fake_filesystem_unittest.TestCase):  # pylint: disable=R0904
           :py:class:`pyfakefs.mox3_stubout.StubOutForTesting`.  Use this if you need to
           define additional stubs.
         """
+
+        # This is before setUpPyfakefs(), so still using the real file system
+        with io.open(__file__, 'rb') as f:
+            self.real_contents = f.read()
+ 
         self.setUpPyfakefs()
 
     def tearDown(self):
@@ -146,12 +150,11 @@ class TestExample(fake_filesystem_unittest.TestCase):  # pylint: disable=R0904
 
     def test_real_file_access(self):
         """Test `example.file_contents()` for a real file after adding it using `add_real_file()`."""
-        real_file = __file__
-        with REAL_OPEN(real_file, 'rb') as f:
-            real_contents = f.read()
-        self.assertRaises(IOError, example.file_contents, real_file)
-        self.fs.add_real_file(real_file)
-        self.assertEqual(example.file_contents(real_file), real_contents)
+        filename = __file__
+        with self.assertRaises(IOError):
+            example.file_contents(filename)
+        self.fs.add_real_file(filename)
+        self.assertEqual(example.file_contents(filename), self.real_contents)
 
 
 if __name__ == "__main__":
