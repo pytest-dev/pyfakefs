@@ -103,7 +103,7 @@ class FakeFilesystemVsRealTest(TestCase):
         self.assertTrue(os.access(self.real_base, os.W_OK))
 
         self.fake_filesystem = fake_filesystem.FakeFilesystem()
-        self.fake_filesystem.CreateDirectory(self.fake_base)
+        self.fake_filesystem.create_dir(self.fake_base)
         self.fake_os = fake_filesystem.FakeOsModule(self.fake_filesystem)
         self.fake_open = fake_filesystem.FakeFileOpen(self.fake_filesystem)
         self._created_files = []

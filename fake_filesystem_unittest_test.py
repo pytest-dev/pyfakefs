@@ -59,7 +59,7 @@ class TestPyfakefsUnittest(TestPyfakefsUnittestBase):  # pylint: disable=R0904
         self.assertFalse(os.path.exists('/fake_file.txt'))
         with file('/fake_file.txt', 'w') as f:
             f.write("This test file was created using the file() function.\n")
-        self.assertTrue(self.fs.Exists('/fake_file.txt'))
+        self.assertTrue(self.fs.exists('/fake_file.txt'))
         with file('/fake_file.txt') as f:
             content = f.read()
         self.assertEqual(content,
@@ -70,7 +70,7 @@ class TestPyfakefsUnittest(TestPyfakefsUnittestBase):  # pylint: disable=R0904
         self.assertFalse(os.path.exists('/fake_file.txt'))
         with open('/fake_file.txt', 'w') as f:
             f.write("This test file was created using the open() function.\n")
-        self.assertTrue(self.fs.Exists('/fake_file.txt'))
+        self.assertTrue(self.fs.exists('/fake_file.txt'))
         with open('/fake_file.txt') as f:
             content = f.read()
         self.assertEqual(content,
@@ -81,7 +81,7 @@ class TestPyfakefsUnittest(TestPyfakefsUnittestBase):  # pylint: disable=R0904
         self.assertFalse(os.path.exists('/fake_file.txt'))
         with io.open('/fake_file.txt', 'w') as f:
             f.write("This test file was created using the io.open() function.\n")
-        self.assertTrue(self.fs.Exists('/fake_file.txt'))
+        self.assertTrue(self.fs.exists('/fake_file.txt'))
         with open('/fake_file.txt') as f:
             content = f.read()
         self.assertEqual(content,
@@ -89,22 +89,22 @@ class TestPyfakefsUnittest(TestPyfakefsUnittestBase):  # pylint: disable=R0904
 
     def test_os(self):
         """Fake os module is bound"""
-        self.assertFalse(self.fs.Exists('/test/dir1/dir2'))
+        self.assertFalse(self.fs.exists('/test/dir1/dir2'))
         os.makedirs('/test/dir1/dir2')
-        self.assertTrue(self.fs.Exists('/test/dir1/dir2'))
+        self.assertTrue(self.fs.exists('/test/dir1/dir2'))
 
     def test_glob(self):
         """Fake glob module is bound"""
         is_windows = sys.platform.startswith('win')
         self.assertEqual(glob.glob('/test/dir1/dir*'),
                          [])
-        self.fs.CreateDirectory('/test/dir1/dir2a')
+        self.fs.create_dir('/test/dir1/dir2a')
         matching_paths = glob.glob('/test/dir1/dir*')
         if is_windows:
             self.assertEqual(matching_paths, [r'\test\dir1\dir2a'])
         else:
             self.assertEqual(matching_paths, ['/test/dir1/dir2a'])
-        self.fs.CreateDirectory('/test/dir1/dir2b')
+        self.fs.create_dir('/test/dir1/dir2b')
         matching_paths = sorted(glob.glob('/test/dir1/dir*'))
         if is_windows:
             self.assertEqual(matching_paths, [r'\test\dir1\dir2a', r'\test\dir1\dir2b'])
@@ -113,13 +113,13 @@ class TestPyfakefsUnittest(TestPyfakefsUnittestBase):  # pylint: disable=R0904
 
     def test_shutil(self):
         """Fake shutil module is bound"""
-        self.fs.CreateDirectory('/test/dir1/dir2a')
-        self.fs.CreateDirectory('/test/dir1/dir2b')
-        self.assertTrue(self.fs.Exists('/test/dir1/dir2b'))
-        self.assertTrue(self.fs.Exists('/test/dir1/dir2a'))
+        self.fs.create_dir('/test/dir1/dir2a')
+        self.fs.create_dir('/test/dir1/dir2b')
+        self.assertTrue(self.fs.exists('/test/dir1/dir2b'))
+        self.assertTrue(self.fs.exists('/test/dir1/dir2a'))
 
         shutil.rmtree('/test/dir1')
-        self.assertFalse(self.fs.Exists('/test/dir1'))
+        self.assertFalse(self.fs.exists('/test/dir1'))
 
     @unittest.skipIf(sys.version_info < (3, 4), "pathlib new in Python 3.4")
     def test_fakepathlib(self):
@@ -128,9 +128,9 @@ class TestPyfakefsUnittest(TestPyfakefsUnittestBase):  # pylint: disable=R0904
                 f.write('text')
         is_windows = sys.platform.startswith('win')
         if is_windows:
-            self.assertTrue(self.fs.Exists(r'\fake_file.txt'))
+            self.assertTrue(self.fs.exists(r'\fake_file.txt'))
         else:
-            self.assertTrue(self.fs.Exists('/fake_file.txt'))
+            self.assertTrue(self.fs.exists('/fake_file.txt'))
 
 
 class TestImportAsOtherName(fake_filesystem_unittest.TestCase):
@@ -144,8 +144,8 @@ class TestImportAsOtherName(fake_filesystem_unittest.TestCase):
 
     def testFileExists(self):
         file_path = '/foo/bar/baz'
-        self.fs.CreateFile(file_path)
-        self.assertTrue(self.fs.Exists(file_path))
+        self.fs.create_file(file_path)
+        self.assertTrue(self.fs.exists(file_path))
         self.assertTrue(check_if_exists(file_path))
 
 
@@ -242,10 +242,10 @@ class TestCopyOrAddRealFile(TestPyfakefsUnittestBase):
     def testCopyRealFileDeprecatedArguments(self):
         '''Deprecated copyRealFile() arguments'''
         real_file_path = __file__
-        self.assertFalse(self.fs.Exists(real_file_path))
+        self.assertFalse(self.fs.exists(real_file_path))
         # Specify redundant fake file path
         self.copyRealFile(real_file_path, real_file_path)
-        self.assertTrue(self.fs.Exists(real_file_path))
+        self.assertTrue(self.fs.exists(real_file_path))
 
         # Test deprecated argument values
         with self.assertRaises(ValueError):
@@ -260,7 +260,7 @@ class TestCopyOrAddRealFile(TestPyfakefsUnittestBase):
         # are done in fake_filesystem_test.RealFileSystemAccessTest
         real_file_path = __file__
         fake_file = self.fs.add_real_file(real_file_path)
-        self.assertTrue(self.fs.Exists(real_file_path))
+        self.assertTrue(self.fs.exists(real_file_path))
         self.assertIsNone(fake_file._byte_contents)
         self.assertEqual(self.real_byte_contents, fake_file.byte_contents)
 
@@ -272,8 +272,8 @@ class TestCopyOrAddRealFile(TestPyfakefsUnittestBase):
         # Note: this test fails (add_real_directory raises) if 'genericpath' is not added to SKIPNAMES
         real_dir_path = os.path.join(os.path.dirname(__file__), 'pyfakefs')
         self.fs.add_real_directory(real_dir_path)
-        self.assertTrue(self.fs.Exists(real_dir_path))
-        self.assertTrue(self.fs.Exists(os.path.join(real_dir_path, 'fake_filesystem.py')))
+        self.assertTrue(self.fs.exists(real_dir_path))
+        self.assertTrue(self.fs.exists(os.path.join(real_dir_path, 'fake_filesystem.py')))
 
 
 if __name__ == "__main__":

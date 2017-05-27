@@ -4,10 +4,6 @@ Public Modules and Classes
 are shown. Methods that mimic the behavior of standard Python
 functions are not listed - you may always use the standard functions.
 
-*Style note:* most method names conform to the original Google style that does
-not match PEP-8. In the next version, we plan to change the API to conform
-to PEP-8 (maintaining upwards compatibility).
-
 Fake filesystem module
 ----------------------
 .. automodule:: pyfakefs.fake_filesystem
@@ -15,17 +11,17 @@ Fake filesystem module
 Fake filesystem classes
 -----------------------
 .. autoclass:: pyfakefs.fake_filesystem.FakeFilesystem
-    :members: AddMountPoint,
-        GetDiskUsage, SetDiskUsage, ChangeDiskUsage,
+    :members: add_mount_point,
+        get_disk_usage, set_disk_usage, change_disk_usage,
         add_real_directory, add_real_file, add_real_paths,
-        CreateDirectory, CreateFile
+        create_dir, create_file, create_symlink
 
 .. autoclass:: pyfakefs.fake_filesystem.FakeFile
-    :members: byte_contents, contents, GetPath, GetSize,
-        IsLargeFile, SetContents, SetSize
+    :members: byte_contents, contents, path, size,
+        is_large_file, set_contents
 
 .. autoclass:: pyfakefs.fake_filesystem.FakeDirectory
-    :members: contents, GetEntry, GetSize, RemoveEntry
+    :members: contents, get_entry, size, remove_entry
 
 Unittest module classes
 -----------------------

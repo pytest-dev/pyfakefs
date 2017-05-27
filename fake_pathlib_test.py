@@ -721,23 +721,23 @@ class FakePathlibUsageInOsFunctionsTest(RealPathlibTestCase):
     def test_getmtime(self):
         self.skipRealFs()
         dir1 = self.makePath('foo', 'bar1.txt')
-        path_obj = self.filesystem.CreateFile(dir1)
-        path_obj.SetMTime(24)
+        path_obj = self.filesystem.create_file(dir1)
+        path_obj._st_mtime = 24
         self.assertEqual(self.os.path.getmtime(dir1),
                          self.os.path.getmtime(self.path(dir1)))
 
     def test_getctime(self):
         self.skipRealFs()
         dir1 = self.makePath('foo', 'bar1.txt')
-        path_obj = self.filesystem.CreateFile(dir1)
-        path_obj.SetCTime(42)
+        path_obj = self.filesystem.create_file(dir1)
+        path_obj.st_ctime = 42
         self.assertEqual(self.os.path.getctime(dir1),
                          self.os.path.getctime(self.path(dir1)))
 
     def test_getatime(self):
         self.skipRealFs()
         dir1 = self.makePath('foo', 'bar1.txt')
-        path_obj = self.filesystem.CreateFile(dir1)
+        path_obj = self.filesystem.create_file(dir1)
         path_obj.SetATime(11)
         self.assertEqual(self.os.path.getatime(dir1),
                          self.os.path.getatime(self.path(dir1)))
