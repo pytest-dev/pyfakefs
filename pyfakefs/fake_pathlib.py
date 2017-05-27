@@ -78,43 +78,43 @@ def _wrap_binary_strfunc_reverse(strfunc):
 class _FakeAccessor(pathlib._Accessor):  # pylint: disable=protected-access
     """Accessor which forwards some of the functions to FakeFilesystem methods."""
 
-    stat = _wrap_strfunc(FakeFilesystem.GetStat)
+    stat = _wrap_strfunc(FakeFilesystem.stat)
 
-    lstat = _wrap_strfunc(lambda fs, path: FakeFilesystem.GetStat(fs, path, follow_symlinks=False))
+    lstat = _wrap_strfunc(lambda fs, path: FakeFilesystem.stat(fs, path, follow_symlinks=False))
 
-    listdir = _wrap_strfunc(FakeFilesystem.ListDir)
+    listdir = _wrap_strfunc(FakeFilesystem.listdir)
 
-    chmod = _wrap_strfunc(FakeFilesystem.ChangeMode)
+    chmod = _wrap_strfunc(FakeFilesystem.chmod)
 
     if sys.version_info >= (3, 6):
         scandir = _wrap_strfunc(fake_scandir.scandir)
 
     if hasattr(os, "lchmod"):
-        lchmod = _wrap_strfunc(lambda fs, path, mode: FakeFilesystem.ChangeMode(
+        lchmod = _wrap_strfunc(lambda fs, path, mode: FakeFilesystem.chmod(
             fs, path, mode, follow_symlinks=False))
     else:
         def lchmod(self, pathobj, mode):
             """Raises not implemented for Windows systems."""
             raise NotImplementedError("lchmod() not available on this system")
 
-    mkdir = _wrap_strfunc(FakeFilesystem.MakeDirectory)
+    mkdir = _wrap_strfunc(FakeFilesystem.makedir)
 
-    unlink = _wrap_strfunc(FakeFilesystem.RemoveFile)
+    unlink = _wrap_strfunc(FakeFilesystem.remove)
 
-    rmdir = _wrap_strfunc(FakeFilesystem.RemoveDirectory)
+    rmdir = _wrap_strfunc(FakeFilesystem.rmdir)
 
-    rename = _wrap_binary_strfunc(FakeFilesystem.RenameObject)
+    rename = _wrap_binary_strfunc(FakeFilesystem.rename)
 
     replace = _wrap_binary_strfunc(lambda fs, old_path, new_path:
-                                   FakeFilesystem.RenameObject(
+                                   FakeFilesystem.rename(
                                        fs, old_path, new_path, force_replace=True))
 
     symlink = _wrap_binary_strfunc_reverse(
         lambda fs, file_path, link_target, target_is_directory:
-        FakeFilesystem.CreateLink(fs, file_path, link_target,
-                                  create_missing_dirs=False))
+        FakeFilesystem.create_symlink(fs, file_path, link_target,
+                                      create_missing_dirs=False))
 
-    utime = _wrap_strfunc(FakeFilesystem.UpdateTime)
+    utime = _wrap_strfunc(FakeFilesystem.utime)
 
 
 _fake_accessor = _FakeAccessor()
@@ -251,7 +251,7 @@ class _FakeFlavour(pathlib._Flavour):
                     raise RuntimeError("Symlink loop from %r" % newpath)
                 # Resolve the symbolic link
                 try:
-                    target = self.filesystem.ReadLink(newpath)
+                    target = self.filesystem.readlink(newpath)
                 except OSError as e:
                     if e.errno != errno.EINVAL:
                         if strict:
@@ -278,21 +278,21 @@ class _FakeFlavour(pathlib._Flavour):
             return os.getcwd()
         previous_s = None
         if strict:
-            if not self.filesystem.Exists(s):
+            if not self.filesystem.exists(s):
                 raise FileNotFoundError(s)
-            return self.filesystem.ResolvePath(s)
+            return self.filesystem.resolve_path(s)
         else:
             while True:
                 try:
-                    s = self.filesystem.ResolvePath(s)
+                    s = self.filesystem.resolve_path(s)
                 except FileNotFoundError:
                     previous_s = s
-                    s = self.filesystem.SplitPath(s)[0]
+                    s = self.filesystem.splitpath(s)[0]
                 else:
                     if previous_s is None:
                         return s
                     else:
-                        return self.filesystem.JoinPaths(s, os.path.basename(previous_s))
+                        return self.filesystem.joinpaths(s, os.path.basename(previous_s))
 
     def resolve(self, path, strict):
         """Make the path absolute, resolving any symlinks."""
@@ -477,7 +477,7 @@ class FakePath(pathlib.Path):
         if path is None:
             self.stat()
             path = str(self.absolute())
-        path = self.filesystem.NormalizePath(path)
+        path = self.filesystem.absnormpath(path)
         return FakePath(path)
 
     def open(self, mode='r', buffering=-1, encoding=None,
@@ -567,7 +567,7 @@ class FakePath(pathlib.Path):
             try:
                 other_st = other_path.stat()
             except AttributeError:
-                other_st = self.filesystem.GetStat(other_path)
+                other_st = self.filesystem.stat(other_path)
             return st.st_ino == other_st.st_ino and st.st_dev == other_st.st_dev
 
         def expanduser(self):
@@ -592,7 +592,7 @@ class FakePath(pathlib.Path):
             self._raise_closed()
         if self.exists():
             if exist_ok:
-                self.filesystem.UpdateTime(self._path(), None)
+                self.filesystem.utime(self._path(), None)
             else:
                 raise FileExistsError
         else:

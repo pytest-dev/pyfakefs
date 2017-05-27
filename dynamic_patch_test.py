@@ -36,28 +36,28 @@ class DynamicImportPatchTest(TestPyfakefsUnittestBase):
         import os
 
         os.mkdir('test')
-        self.assertTrue(self.fs.Exists('test'))
+        self.assertTrue(self.fs.exists('test'))
         self.assertTrue(os.path.exists('test'))
 
     def testOsImportAsPatch(self):
         import os as _os
 
         _os.mkdir('test')
-        self.assertTrue(self.fs.Exists('test'))
+        self.assertTrue(self.fs.exists('test'))
         self.assertTrue(_os.path.exists('test'))
 
     def testOsPathPatch(self):
         import os.path
 
         os.mkdir('test')
-        self.assertTrue(self.fs.Exists('test'))
+        self.assertTrue(self.fs.exists('test'))
         self.assertTrue(os.path.exists('test'))
 
     @unittest.skipIf(sys.version_info < (3, 3), 'disk_usage new in Python 3.3')
     def testShutilPatch(self):
         import shutil
 
-        self.fs.SetDiskUsage(100)
+        self.fs.set_disk_usage(100)
         self.assertEqual(100, shutil.disk_usage('/').total)
 
     @unittest.skipIf(sys.version_info < (3, 4), 'pathlib new in Python 3.4')
@@ -69,8 +69,8 @@ class DynamicImportPatchTest(TestPyfakefsUnittestBase):
         with path.open('w') as f:
             f.write('test')
 
-        self.assertTrue(self.fs.Exists(file_path))
-        file_object = self.fs.GetObject(file_path)
+        self.assertTrue(self.fs.exists(file_path))
+        file_object = self.fs.get_object(file_path)
         self.assertEqual('test', file_object.contents)
 
 

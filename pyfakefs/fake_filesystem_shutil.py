@@ -52,7 +52,7 @@ class FakeShutilModule(object):
             Args:
               path: defines the filesystem device which is queried
             """
-            return self.filesystem.GetDiskUsage(path)
+            return self.filesystem.get_disk_usage(path)
 
     def __getattr__(self, name):
         """Forwards any non-faked calls to the standard shutil module."""

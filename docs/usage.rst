@@ -24,7 +24,7 @@ The PyTest plugin provides the ``fs`` fixture for use in your test. For example:
 
    def my_fakefs_test(fs):
        # "fs" is the reference to the fake file system
-       fs.CreateFile('/var/data/xx1.txt')
+       fs.create_file('/var/data/xx1.txt')
        assert os.path.exists('/var/data/xx1.txt')
 
 Patch using fake_filesystem_unittest.Patcher
@@ -83,7 +83,7 @@ The following modules and functions can be patched:
    fs = fake_fs.FakeFilesystem()
 
    # Do some setup on the faked file system
-   fs.CreateFile('/foo/bar', contents='test')
+   fs.create_file('/foo/bar', contents='test')
 
    # Replace some built-in file system related modules you use with faked ones
 

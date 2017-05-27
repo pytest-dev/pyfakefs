@@ -35,21 +35,21 @@ class FakeTempfileModuleTest(fake_filesystem_unittest.TestCase):
 
     def testNamedTemporaryFile(self):
         obj = tempfile.NamedTemporaryFile()
-        self.assertTrue(self.fs.GetObject(obj.name))
+        self.assertTrue(self.fs.get_object(obj.name))
         obj.close()
-        self.assertRaises(IOError, self.fs.GetObject, obj.name)
+        self.assertRaises(IOError, self.fs.get_object, obj.name)
 
     def testNamedTemporaryFileNoDelete(self):
         obj = tempfile.NamedTemporaryFile(delete=False)
         obj.write(b'foo')
         obj.close()
-        file_obj = self.fs.GetObject(obj.name)
+        file_obj = self.fs.get_object(obj.name)
         contents = file_obj.contents
         self.assertEqual('foo', contents)
         obj = tempfile.NamedTemporaryFile(mode='w', delete=False)
         obj.write('foo')
         obj.close()
-        file_obj = self.fs.GetObject(obj.name)
+        file_obj = self.fs.get_object(obj.name)
         self.assertEqual('foo', file_obj.contents)
 
     def testMkstemp(self):
@@ -58,9 +58,9 @@ class FakeTempfileModuleTest(fake_filesystem_unittest.TestCase):
         self.assertEqual(2, len(temporary))
         self.assertTrue(temporary[1].startswith(os.path.join(tempfile.gettempdir(), 'tmp')))
         self.assertEqual(next_fd, temporary[0])
-        self.assertTrue(self.fs.Exists(temporary[1]))
+        self.assertTrue(self.fs.exists(temporary[1]))
         mode = 0o666 if self.fs.is_windows_fs else 0o600
-        self.assertEqual(self.fs.GetObject(temporary[1]).st_mode,
+        self.assertEqual(self.fs.get_object(temporary[1]).st_mode,
                          stat.S_IFREG | mode)
         fh = os.fdopen(temporary[0], 'w+b')
         self.assertEqual(temporary[0], fh.fileno())
@@ -70,30 +70,30 @@ class FakeTempfileModuleTest(fake_filesystem_unittest.TestCase):
         # expect fail: /dir does not exist
         self.assertRaises(OSError, tempfile.mkstemp, dir='/dir')
         # expect pass: /dir exists
-        self.fs.CreateDirectory('/dir')
+        self.fs.create_dir('/dir')
         next_fd = len(self.fs.open_files)
         temporary = tempfile.mkstemp(dir='/dir')
         self.assertEqual(2, len(temporary))
         self.assertEqual(next_fd, temporary[0])
         self.assertTrue(temporary[1].startswith(os.path.join(os.sep, 'dir', 'tmp')))
-        self.assertTrue(self.fs.Exists(temporary[1]))
+        self.assertTrue(self.fs.exists(temporary[1]))
         mode = 0o666 if self.fs.is_windows_fs else 0o600
-        self.assertEqual(self.fs.GetObject(temporary[1]).st_mode,
+        self.assertEqual(self.fs.get_object(temporary[1]).st_mode,
                          stat.S_IFREG | mode)
 
     def testMkdtemp(self):
         dirname = tempfile.mkdtemp()
         self.assertTrue(dirname)
-        self.assertTrue(self.fs.Exists(dirname))
-        self.assertEqual(self.fs.GetObject(dirname).st_mode,
+        self.assertTrue(self.fs.exists(dirname))
+        self.assertEqual(self.fs.get_object(dirname).st_mode,
                          stat.S_IFDIR | 0o700)
 
     @unittest.skipIf(sys.version_info < (3, 0), "TemporaryDirectory showed up in 3")
     def testTemporaryDirectory(self):
         with tempfile.TemporaryDirectory() as tmpdir:
             self.assertTrue(tmpdir)
-            self.assertTrue(self.fs.Exists(tmpdir))
-            self.assertEqual(self.fs.GetObject(tmpdir).st_mode,
+            self.assertTrue(self.fs.exists(tmpdir))
+            self.assertEqual(self.fs.get_object(tmpdir).st_mode,
                              stat.S_IFDIR | 0o700)
 
 

@@ -5,7 +5,7 @@ When pyfakefs is installed, the "fs" fixture becomes avaialable.
 :Usage:
 
 def my_fakefs_test(fs):
-    fs.CreateFile('/var/data/xx1.txt')
+    fs.create_file('/var/data/xx1.txt')
     assert os.path.exists('/var/data/xx1.txt')
 """
 import py

@@ -3,5 +3,5 @@ import os
 
 
 def test_fs_fixture(fs):
-    fs.CreateFile('/var/data/xx1.txt')
+    fs.create_file('/var/data/xx1.txt')
     assert os.path.exists('/var/data/xx1.txt')

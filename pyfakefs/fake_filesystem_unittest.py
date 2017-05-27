@@ -43,6 +43,8 @@ import shutil
 import sys
 import tempfile
 
+from pyfakefs.deprecator import Deprecator
+
 try:
     from importlib.machinery import ModuleSpec
 except ImportError:
@@ -178,6 +180,7 @@ class TestCase(unittest.TestCase):
     def patches(self):
         return self._stubber.patches
 
+    @Deprecator('add_real_file')
     def copyRealFile(self, real_file_path, fake_file_path=None,
                      create_missing_dirs=True):
         """Add the file `real_file_path` in the real file system to the same
@@ -234,6 +237,7 @@ class TestCase(unittest.TestCase):
         else:
             sys.meta_path.pop(0)
 
+    @DeprecationWarning
     def tearDownPyfakefs(self):
         """This method is deprecated and exists only for backward compatibility.
         It does nothing.
@@ -407,7 +411,7 @@ class Patcher(object):
 
         # the temp directory is assumed to exist at least in `tempfile1,
         # so we create it here for convenience
-        self.fs.CreateDirectory(temp_dir)
+        self.fs.create_dir(temp_dir)
 
 
     def replaceGlobs(self, globs_):

@@ -39,8 +39,8 @@ class RealFsTestCase(fake_filesystem_unittest.TestCase, RealFsTestMixin):
             self.filesystem = self.fs
             self.os = os
             self.open = open
-            self.fs.SetDiskUsage(1000)
-            self.fs.CreateDirectory(self.base_path)
+            self.fs.set_disk_usage(1000)
+            self.fs.create_dir(self.base_path)
 
     def tearDown(self):
         if self.useRealFs():
@@ -257,7 +257,7 @@ class FakeShutilModuleTest(RealFsTestCase):
         self.skipRealFs()
         src_file = '/original_xyzzy'
         dst_file = '/moved_xyzzy'
-        src_object = self.fs.CreateFile(src_file)
+        src_object = self.fs.create_file(src_file)
         src_ino = src_object.st_ino
         src_dev = src_object.st_dev
 
@@ -267,16 +267,16 @@ class FakeShutilModuleTest(RealFsTestCase):
         self.assertTrue(os.path.exists(dst_file))
         self.assertFalse(os.path.exists(src_file))
 
-        dst_object = self.fs.GetObject(dst_file)
+        dst_object = self.fs.get_object(dst_file)
         self.assertEqual(src_ino, dst_object.st_ino)
         self.assertEqual(src_dev, dst_object.st_dev)
 
     def testMoveFileIntoOtherFilesystem(self):
         self.skipRealFs()
-        self.fs.AddMountPoint('/mount')
+        self.fs.add_mount_point('/mount')
         src_file = '/original_xyzzy'
         dst_file = '/mount/moved_xyzzy'
-        src_object = self.fs.CreateFile(src_file)
+        src_object = self.fs.create_file(src_file)
         src_ino = src_object.st_ino
         src_dev = src_object.st_dev
 
@@ -284,7 +284,7 @@ class FakeShutilModuleTest(RealFsTestCase):
         self.assertTrue(os.path.exists(dst_file))
         self.assertFalse(os.path.exists(src_file))
 
-        dst_object = self.fs.GetObject(dst_file)
+        dst_object = self.fs.get_object(dst_file)
         self.assertNotEqual(src_ino, dst_object.st_ino)
         self.assertNotEqual(src_dev, dst_object.st_dev)
 
@@ -317,15 +317,15 @@ class FakeShutilModuleTest(RealFsTestCase):
     @unittest.skipIf(sys.version_info < (3, 3), 'New in Python 3.3')
     def testDiskUsage(self):
         self.skipRealFs()
-        self.fs.CreateFile('/foo/bar', st_size=400)
+        self.fs.create_file('/foo/bar', st_size=400)
         disk_usage = shutil.disk_usage('/')
         self.assertEqual(1000, disk_usage.total)
         self.assertEqual(400, disk_usage.used)
         self.assertEqual(600, disk_usage.free)
         self.assertEqual((1000, 400, 600), disk_usage)
 
-        self.fs.AddMountPoint('/mount', total_size=500)
-        self.fs.CreateFile('/mount/foo/bar', st_size=400)
+        self.fs.add_mount_point('/mount', total_size=500)
+        self.fs.create_file('/mount/foo/bar', st_size=400)
         disk_usage = shutil.disk_usage('/mount/foo/')
         self.assertEqual((500, 400, 100), disk_usage)
 
