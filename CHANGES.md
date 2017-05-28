@@ -4,13 +4,15 @@ The release versions are PyPi releases.
 ## Version 3.3 (as yet unreleased)
 
 #### New Features
+  * Added support for `ns` argument in `os.utime()` (Python >= 3.3) ([#192](../../issues/192)).
+  * Added nanosecond time members in `os.stat_result` (Python >= 3.3) ([#196](../../issues/196)).
 
 #### Infrastructure
 
 #### Fixes
 
 
-## Version 3.2
+## [Version 3.2](https://pypi.python.org/pypi/pyfakefs/3.2)
 
 #### New Features
   * The `errors` argument is supported for `io.open()` and `os.open()`
