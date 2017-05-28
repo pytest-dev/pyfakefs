@@ -871,22 +871,36 @@ class FakeFilesystem(object):
                                (mode & PERM_ALL))
         file_object.st_ctime = time.time()
 
-    def UpdateTime(self, path, times, follow_symlinks=True):
+    def UpdateTime(self, path, times=None, ns=None, follow_symlinks=True):
         """Change the access and modified times of a file.
         New in pyfakefs 3.0.
 
         Args:
-          path: (str) Path to the file.
-          times: 2-tuple of numbers, of the form (atime, mtime) which is used to set
-              the access and modified times, respectively. If None, file's access
-              and modified times are set to the current time.
-          follow_symlinks: if False and entry_path points to a symlink, the link itself is queried
-              instead of the linked object.
-
-        Raises:
-          TypeError: If anything other than integers is specified in passed tuple or
-              number of elements in the tuple is not equal to 2.
+            path: (str) Path to the file.
+            times: 2-tuple of int or float numbers, of the form (atime, mtime) 
+                which is used to set the access and modified times in seconds. 
+                If None, both times are set to the current time.
+            ns: 2-tuple of int numbers, of the form (atime, mtime)  which is 
+                used to set the access and modified times in nanoseconds. 
+                If None, both times are set to the current time.
+                New in Python 3.3. New in pyfakefs 3.3.
+            follow_symlinks: If `False` and entry_path points to a symlink, 
+                the link itself is queried instead of the linked object. 
+                New in Python 3.3. New in pyfakefs 3.0.
+    
+            Raises:
+                TypeError: If anything other than the expected types is 
+                    specified in the passed `times` or `ns` tuple, 
+                    or if the tuple length is not equal to 2.
+                ValueError: If both times and ns are specified.
         """
+        if times is not None and ns is not None:
+            raise ValueError("utime: you may specify either 'times' or 'ns' but not both")
+        if times is not None and len(times) != 2:
+            raise TypeError("utime: 'times' must be either a tuple of two ints or None")
+        if ns is not None and len(ns) != 2:
+            raise TypeError("utime: 'ns' must be a tuple of two ints")
+
         try:
             file_object = self.ResolveObject(path, follow_symlinks)
         except IOError as io_error:
@@ -895,18 +909,23 @@ class FakeFilesystem(object):
                               'No such file or directory in fake filesystem',
                               path)
             raise
-        if times is None:
-            file_object.st_atime = time.time()
-            file_object.st_mtime = time.time()
-        else:
-            if len(times) != 2:
-                raise TypeError('utime() arg 2 must be a tuple (atime, mtime)')
+        if times is not None:
             for file_time in times:
                 if not isinstance(file_time, (int, float)):
                     raise TypeError('atime and mtime must be numbers')
 
             file_object.st_atime = times[0]
             file_object.st_mtime = times[1]
+        elif ns is not None:
+            for file_time in ns:
+                if not isinstance(file_time, int):
+                    raise TypeError('atime and mtime must be ints')
+
+            file_object.st_atime = ns[0] / 1e9
+            file_object.st_mtime = ns[1] / 1e9
+        else:
+            file_object.st_atime = time.time()
+            file_object.st_mtime = time.time()
 
     def SetIno(self, path, st_ino):
         """Set the self.st_ino attribute of file at 'path'.
@@ -3359,26 +3378,36 @@ class FakeOsModule(object):
             raise (NameError, "name 'lchmod' is not defined")
         self.filesystem.ChangeMode(path, mode, follow_symlinks=False)
 
-    def utime(self, path, times, follow_symlinks=None):
+    def utime(self, path, times=None, ns=None, follow_symlinks=None):
         """Change the access and modified times of a file.
 
         Args:
-          path: (str) Path to the file.
-          times: 2-tuple of numbers, of the form (atime, mtime) which is used to set
-              the access and modified times, respectively. If None, file's access
-              and modified times are set to the current time.
-          follow_symlinks: if False and entry_path points to a symlink, the link itself is queried
-              instead of the linked object. New in Python 3.3. New in pyfakefs 3.0.
-
-        Raises:
-          TypeError: If anything other than integers is specified in passed tuple or
-              number of elements in the tuple is not equal to 2.
+            path: (str) Path to the file.
+            times: 2-tuple of int or float numbers, of the form (atime, mtime) 
+                which is used to set the access and modified times in seconds. 
+                If None, both times are set to the current time.
+            ns: 2-tuple of int numbers, of the form (atime, mtime)  which is 
+                used to set the access and modified times in nanoseconds. 
+                If None, both times are set to the current time.
+                New in Python 3.3. New in pyfakefs 3.3.
+            follow_symlinks: If `False` and entry_path points to a symlink, 
+                the link itself is queried instead of the linked object. 
+                New in Python 3.3. New in pyfakefs 3.0.
+    
+            Raises:
+                TypeError: If anything other than the expected types is 
+                    specified in the passed `times` or `ns` tuple, 
+                    or if the tuple length is not equal to 2.
+                ValueError: If both times and ns are specified.
         """
         if follow_symlinks is None:
             follow_symlinks = True
         elif sys.version_info < (3, 3):
             raise TypeError("utime() got an unexpected keyword argument 'follow_symlinks'")
-        self.filesystem.UpdateTime(path, times, follow_symlinks)
+        if sys.version_info < (3, 3) and ns is not None:
+            raise TypeError("utime() got an unexpected keyword argument 'ns'")
+
+        self.filesystem.UpdateTime(path, times, ns, follow_symlinks)
 
     def chown(self, path, uid, gid, follow_symlinks=None):
         """Set ownership of a faked file.
