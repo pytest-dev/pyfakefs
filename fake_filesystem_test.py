@@ -1879,7 +1879,7 @@ class FakeOsModuleTest(FakeOsModuleTestBase):
 
         self.assertRaises(TypeError, self.os.utime, file_path, ns=(200000000))
         self.assertRaises(TypeError, self.os.utime, file_path, ns=('a', 'b'))
-        self.assertRaises(ValueError, self.os.utime, file_path, (1, 2), ns=(100, 200))
+        self.assertRaises(ValueError, self.os.utime, file_path, times=(1, 2), ns=(100, 200))
 
     def testChownExistingFile(self):
         # set up

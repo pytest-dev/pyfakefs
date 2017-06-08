@@ -3404,7 +3404,7 @@ class FakeOsModule(object):
             follow_symlinks = True
         elif sys.version_info < (3, 3):
             raise TypeError("utime() got an unexpected keyword argument 'follow_symlinks'")
-        if sys.version_info < (3, 3) and ns is not None:
+        if ns is not None and sys.version_info < (3, 3):
             raise TypeError("utime() got an unexpected keyword argument 'ns'")
 
         self.filesystem.UpdateTime(path, times, ns, follow_symlinks)
