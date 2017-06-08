@@ -681,28 +681,6 @@ class FakeOsModuleTest(FakeOsModuleTestBase):
     def tearDown(self):
         time.time = self.orig_time
 
-    def assertRaisesWithRegexpMatch(self, expected_exception, regexp_string,
-                                    callable_obj, *args, **kwargs):
-        """Asserts that the message in a raised exception matches the given regexp.
-
-    Args:
-      expected_exception: Exception class expected to be raised.
-      regexp_string: Regexp (re pattern string) expected to be
-        found in error message.
-      callable_obj: Function to be called.
-      *args: Extra args.
-      **kwargs: Extra kwargs.
-    """
-        try:
-            callable_obj(*args, **kwargs)
-        except expected_exception as err:
-            expected_regexp = re.compile(regexp_string)
-            self.assertTrue(
-                expected_regexp.search(str(err)),
-                '"%s" does not match "%s"' % (expected_regexp.pattern, str(err)))
-        else:
-            self.fail(expected_exception.__name__ + ' not raised')
-
     def testChdir(self):
         """chdir should work on a directory."""
         directory = '/foo'
@@ -1869,35 +1847,39 @@ class FakeOsModuleTest(FakeOsModuleTestBase):
         self.assertEqual(2, st.st_mtime)
 
     def testUtimeNonExistent(self):
-        # set up
         path = '/non/existent/file'
         self.assertFalse(self.filesystem.Exists(path))
-        # actual tests
-        try:
-            # Use try-catch to check exception attributes.
-            self.os.utime(path, (1, 2))
-            self.fail('Exception is expected.')  # COV_NF_LINE
-        except OSError as os_error:
-            self.assertEqual(errno.ENOENT, os_error.errno)
-            self.assertEqual(path, os_error.filename)
+        self.assertRaisesOSError(errno.ENOENT, self.os.utime, path, (1, 2))
 
-    def testUtimeTupleArgIsOfIncorrectLength(self):
-        # set up
+    def testUtimeInvalidTimesArgRaises(self):
         path = '/some_dir'
         self._CreateTestDirectory(path)
-        # actual tests
-        self.assertRaisesWithRegexpMatch(
-            TypeError, r'utime\(\) arg 2 must be a tuple \(atime, mtime\)',
-            self.os.utime, path, (1, 2, 3))
 
-    def testUtimeTupleArgContainsIncorrectType(self):
+        # the error message differs with different Python versions
+        # we don't expect the same message here
+        self.assertRaises(TypeError, self.os.utime, path, (1, 2, 3))
+        self.assertRaises(TypeError, self.os.utime, path, (1, 'str'))
+
+    @unittest.skipIf(sys.version_info < (3, 3), 'ns new in Python 3.3')
+    def testUtimeSetsSpecifiedTimeInNs(self):
         # set up
-        path = '/some_dir'
-        self._CreateTestDirectory(path)
+        path = '/some_file'
+        self._CreateTestFile(path)
+        st = self.os.stat(path)
         # actual tests
-        self.assertRaisesWithRegexpMatch(
-            TypeError, 'atime and mtime must be numbers',
-            self.os.utime, path, (1, 'str'))
+        self.os.utime(path, ns=(200000000, 400000000))
+        st = self.os.stat(path)
+        self.assertEqual(0.2, st.st_atime)
+        self.assertEqual(0.4, st.st_mtime)
+
+    @unittest.skipIf(sys.version_info < (3, 3), 'ns new in Python 3.3')
+    def testUtimeIncorrectNsArgumentRaises(self):
+        file_path = 'some_file'
+        self.filesystem.CreateFile(file_path)
+
+        self.assertRaises(TypeError, self.os.utime, file_path, ns=(200000000))
+        self.assertRaises(TypeError, self.os.utime, file_path, ns=('a', 'b'))
+        self.assertRaises(ValueError, self.os.utime, file_path, times=(1, 2), ns=(100, 200))
 
     def testChownExistingFile(self):
         # set up
