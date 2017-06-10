@@ -1592,7 +1592,8 @@ class FakeFilesystem(object):
             # For links to absolute paths, we want to throw out everything in the
             # path built so far and replace with the link.  For relative links, we
             # have to append the link to what we have so far,
-            if not link_path.startswith(sep):
+            if (not link_path.startswith(sep) and
+                    (alt_sep is None or not link_path.startswith(alt_sep))):
                 # Relative path.  Append remainder of path to what we have processed
                 # so far, excluding the name of the link itself.
                 # /a/b => ../c   should yield /a/../c (which will normalize to /c)
@@ -1755,6 +1756,13 @@ class FakeFilesystem(object):
         if path == self.root.name:
             # The root directory will never be a link
             return self.root
+
+        # remove trailing separator
+        sep = self._path_separator(path)
+        alt_sep = self._alternative_path_separator(path)
+        if path.endswith(sep) or (alt_sep and path.endswith(alt_sep)):
+            path = path[:-1]
+
         parent_directory, child_name = self.SplitPath(path)
         if not parent_directory:
             parent_directory = self.cwd
@@ -3263,6 +3271,11 @@ class FakeOsModule(object):
           OSError:  if the target is not a directory.
         """
         return self.filesystem.ListDir(target_directory)
+
+    if sys.platform.startswith('linux') and sys.version_info >= (3, 3):
+        def listxattr(self, path=None, follow_symlinks=True):
+            """Dummy implementation that returns an empty list - used by shutil."""
+            return []
 
     if sys.version_info >= (3, 5):
         def scandir(self, path=''):

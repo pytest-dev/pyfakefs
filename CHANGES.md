@@ -14,6 +14,7 @@ The release versions are PyPi releases.
   * Added nanosecond time members in `os.stat_result` (Python >= 3.3) ([#196](../../issues/196)).
 
 #### Infrastructure
+  * Remove most of `fake_filesystem_shutil` implementation, relying on the patched `os` module instead ([#194](../../issues/194)).
 
 #### Fixes
   * Incorrect handling of symlinks in `os.path.size` and other functions ([#210](../../issues/210)).
