@@ -4,6 +4,7 @@ The release versions are PyPi releases.
 ## Version 3.3 (as yet unreleased)
 
 #### New Features
+  * Added support for basic modes in fake `os.open()` ([#204](../../issues/204)). 
 
 #### Infrastructure
 

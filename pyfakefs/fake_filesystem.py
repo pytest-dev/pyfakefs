@@ -126,9 +126,12 @@ _OPEN_MODE_MAP = {
     'r+': (True, True, True, False, False, False),
     'w+': (False, True, True, True, False, False),
     'a+': (False, True, True, False, True, False),
+    'w!': (False, False, True, False, False, False),
+    'w!+': (False, True, True, False, False, False),
 }
 if sys.version_info >= (3, 3):
     _OPEN_MODE_MAP['x'] = (False, False, True, False, False, True)
+    _OPEN_MODE_MAP['x+'] = (False, True, True, False, False, True)
 
 _MAX_LINK_DEPTH = 20
 
@@ -2889,29 +2892,53 @@ class FakeOsModule(object):
     def open(self, file_path, flags, mode=None):
         """Return the file descriptor for a FakeFile.
 
-        WARNING: This implementation only implements creating a file. Please fill
-        out the remainder for your needs.
-
         Args:
-          file_path: the path to the file
-          flags: low-level bits to indicate io operation
-          mode: bits to define default permissions
+            file_path: the path to the file
+            flags: low-level bits to indicate io operation
+            mode: bits to define default permissions
+                Note: only basic modes are supported, OS-specific modes are ignored
 
         Returns:
-          A file descriptor.
+            A file descriptor.
 
         Raises:
-          OSError: if the path cannot be found
-          ValueError: if invalid mode is given
-          NotImplementedError: if an unsupported flag is passed in
+            IOError: if the path cannot be found
+            ValueError: if invalid mode is given
         """
-        if flags & os.O_CREAT:
-            fake_file = FakeFileOpen(self.filesystem)(file_path, 'w')
-            if mode:
-                self.chmod(file_path, mode)
-            return fake_file.fileno()
-        else:
-            raise NotImplementedError('FakeOsModule.open')
+        str_flags = 'r'
+        if flags & os.O_WRONLY or flags & os.O_RDWR:
+            if not flags & (os.O_CREAT | os.O_EXCL):
+                if not self.filesystem.Exists(file_path):
+                    raise IOError(errno.ENOENT,
+                                  'File does not exist in fake filesystem',
+                                  file_path)
+            if flags & os.O_EXCL:
+                str_flags = 'x'
+            elif flags & os.O_APPEND:
+                str_flags = 'a'
+            elif flags & os.O_TRUNC:
+                str_flags = 'w'
+            else:
+                # non-existing mode to map the behavior of O_WRONLY
+                # this is the same as 'r+', but without read permission
+                str_flags = 'w!'
+            if flags & os.O_RDWR:
+                str_flags += '+'
+        elif not self.filesystem.is_windows_fs and self.filesystem.Exists(file_path):
+            # handle opening directory - only allowed under Posix with read-only mode
+            obj = self.filesystem.ResolveObject(file_path)
+            if isinstance(obj, FakeDirectory):
+                dir_wrapper = FakeDirWrapper(obj, file_path, self.filesystem)
+                file_des = self.filesystem.AddOpenFile(dir_wrapper)
+                dir_wrapper.filedes = file_des
+                return file_des
+
+        # low level open is always binary
+        str_flags += 'b'
+        fake_file = FakeFileOpen(self.filesystem)(file_path, str_flags)
+        if mode:
+            self.chmod(file_path, mode)
+        return fake_file.fileno()
 
     def close(self, file_des):
         """Close a file descriptor.
@@ -3842,6 +3869,28 @@ class FakeFileWrapper(object):
         return self._io.__iter__()
 
 
+class FakeDirWrapper(object):
+    """Wrapper for a FakeDirectory object to be used in open files list.
+    """
+    def __init__(self, file_object, file_path, filesystem):
+        self._file_object = file_object
+        self._file_path = file_path
+        self._filesystem = filesystem
+        self.filedes = None
+
+    def GetObject(self):
+        """Return the FakeFile object that is wrapped by the current instance."""
+        return self._file_object
+
+    def fileno(self):
+        """Return the file descriptor of the file object."""
+        return self.filedes
+
+    def close(self):
+        """Close the directory."""
+        self._filesystem.CloseOpenFile(self.filedes)
+
+
 class FakeFileOpen(object):
     """Faked `file()` and `open()` function replacements.
 
@@ -3943,7 +3992,10 @@ class FakeFileOpen(object):
                 real_path, create_missing_dirs=False, apply_umask=True)
 
         if stat.S_ISDIR(file_object.st_mode):
-            raise IOError(errno.EISDIR, 'Fake file object: is a directory', file_path)
+            if self.filesystem.is_windows_fs:
+                raise OSError(errno.EPERM, 'Fake file object: is a directory', file_path)
+            else:
+                raise IOError(errno.EISDIR, 'Fake file object: is a directory', file_path)
 
         # if you print obj.name, the argument to open() must be printed. Not the
         # abspath, not the filename, but the actual argument.
