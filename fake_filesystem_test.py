@@ -2657,6 +2657,17 @@ class FakePathModuleTest(TestCase):
         self.assertEqual('!george!washington!bridge',
                          self.os.path.realpath('bridge'))
 
+    @unittest.skipIf(TestCase.is_windows and sys.version_info < (3,2),
+                     'No Windows support before 3.2')
+    def testSamefile(self):
+        file_path1 = '!foo!bar!baz'
+        file_path2 = '!foo!bar!boo'
+        self.filesystem.CreateFile(file_path1)
+        self.filesystem.CreateFile(file_path2)
+        self.assertTrue(self.path.samefile(file_path1, file_path1))
+        self.assertFalse(self.path.samefile(file_path1, file_path2))
+        self.assertTrue(self.path.samefile(file_path1, '!foo!..!foo!bar!..!bar!baz'))
+
     def testExists(self):
         file_path = 'foo!bar!baz'
         self.filesystem.CreateFile(file_path)

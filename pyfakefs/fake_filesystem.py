@@ -2792,6 +2792,23 @@ class FakePathModule(object):
         path, ok = self._joinrealpath(filename[:0], filename, {})
         return self.abspath(path)
 
+    if sys.platform != 'win32' or sys.version_info >= (3, 2):
+        def samefile(self, path1, path2):
+            """Return whether path1 and path2 point to the same file.
+            Windows support new in Python 3.2.
+            New in pyfakefs 3.3.
+
+            Args:
+                path1: first file path or path object (Python >=3.6)
+                path2: second file path or path object (Python >=3.6)
+
+            Raises:
+              OSError: if one of the paths does not point to an existing file system object.
+            """
+            stat1 = self.filesystem.GetStat(path1)
+            stat2 = self.filesystem.GetStat(path2)
+            return stat1.st_ino == stat2.st_ino and stat1.st_dev == stat2.st_dev
+
     def _joinrealpath(self, path, rest, seen):
         """Join two paths, normalizing and eliminating any symbolic links
         encountered in the second path.

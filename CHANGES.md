@@ -4,6 +4,7 @@ The release versions are PyPi releases.
 ## Version 3.3 (as yet unreleased)
 
 #### New Features
+  * Added fake `os.path.samefile` implementation ([#193](../../issues/193))
   * Added support for `ns` argument in `os.utime()` (Python >= 3.3) ([#192](../../issues/192)).
   * Added nanosecond time members in `os.stat_result` (Python >= 3.3) ([#196](../../issues/196)).
 
