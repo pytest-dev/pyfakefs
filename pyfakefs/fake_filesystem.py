@@ -363,6 +363,7 @@ class FakeFile(object):
             len(self._byte_contents) if self._byte_contents is not None else 0)
         self.filesystem = filesystem
         self.epoch = 0
+        self.parent_dir = None
 
     @property
     def byte_contents(self):
@@ -464,6 +465,18 @@ class FakeFile(object):
         New in pyfakefs 2.9.
         """
         return self.st_size
+
+    def GetPath(self):
+        """Return the full path of the current object."""
+        names = []
+        obj = self
+        while obj:
+            names.insert(0, obj.name)
+            obj = obj.parent_dir
+        if self.filesystem:
+            sep = self.filesystem._path_separator(self.name)
+            return self.filesystem.NormalizePath(sep.join(names[1:]))
+        return os.sep.join(names)
 
     def SetSize(self, st_size):
         """Resizes file content, padding with nulls if new size exceeds the old.
@@ -616,13 +629,29 @@ class FakeDirectory(FakeFile):
         return [item[0] for item in sorted(
             self.byte_contents.items(), key=lambda entry: entry[1].st_ino)]
 
+    def _is_windows(self):
+        return  self.filesystem.is_windows_fs if self.filesystem else sys.platform == 'win32'
+
     def AddEntry(self, path_object):
         """Adds a child FakeFile to this directory.
 
         Args:
-          path_object:  FakeFile instance to add as a child of this directory.
+            path_object:  FakeFile instance to add as a child of this directory.
+
+        Raises:
+            OSError: if the directory has no write permission (Posix only)
+            OSError: if the file or directory to be added already exists
         """
+        if not self.st_mode & PERM_WRITE and not self._is_windows():
+            raise OSError(errno.EACCES, 'Permission Denied', self.GetPath())
+
+        if path_object.name in self.contents:
+            raise OSError(errno.EEXIST,
+                          'Object already exists in fake filesystem',
+                          self.GetPath())
+
         self.contents[path_object.name] = path_object
+        path_object.parent_dir = self
         path_object.st_nlink += 1
         path_object.st_dev = self.st_dev
         if self.filesystem and path_object.st_nlink == 1:
@@ -1872,14 +1901,21 @@ class FakeFilesystem(object):
         path_components = self.GetPathComponents(directory_path)
         current_dir = self.root
 
+        new_dirs = []
         for component in path_components:
             directory = self._DirectoryContent(current_dir, component)[1]
             if not directory:
-                new_dir = FakeDirectory(component, perm_bits, filesystem=self)
+                new_dir = FakeDirectory(component, filesystem=self)
+                new_dirs.append(new_dir)
                 current_dir.AddEntry(new_dir)
                 current_dir = new_dir
             else:
                 current_dir = directory
+
+        # set the permission after creating the directories
+        # to allow directory creation inside a read-only directory
+        for new_dir in new_dirs:
+            new_dir.st_mode = stat.S_IFDIR | perm_bits
 
         self.last_ino += 1
         current_dir.SetIno(self.last_ino)
@@ -2197,12 +2233,9 @@ class FakeFilesystem(object):
         if self.Exists(dir_name):
             raise OSError(errno.EEXIST, 'Fake object already exists', dir_name)
         head, tail = self.SplitPath(dir_name)
-        directory_object = self.GetObject(head)
-        if not directory_object.st_mode & PERM_WRITE:
-            raise OSError(errno.EACCES, 'Permission Denied', dir_name)
 
         self.AddObject(
-            head, FakeDirectory(tail, mode & ~self.umask))
+            head, FakeDirectory(tail, mode & ~self.umask, filesystem=self))
 
     def MakeDirectories(self, dir_name, mode=PERM_DEF, exist_ok=False):
         """Create a leaf Fake directory and create any non-existent parent dirs.
@@ -2228,10 +2261,7 @@ class FakeFilesystem(object):
         current_dir = self.root
         for component in path_components:
             if component not in current_dir.contents:
-                if not current_dir.st_mode & PERM_WRITE:
-                    raise OSError(errno.EACCES, 'Permission Denied', dir_name)
-                else:
-                    break
+                break
             else:
                 current_dir = current_dir.contents[component]
         try:

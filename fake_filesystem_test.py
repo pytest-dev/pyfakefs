@@ -59,12 +59,14 @@ class TestCase(unittest.TestCase):
     def assertRaisesIOError(self, subtype, expression, *args, **kwargs):
         try:
             expression(*args, **kwargs)
+            self.fail('No exception was raised, IOError expected')
         except IOError as exc:
             self.assertEqual(exc.errno, subtype)
 
     def assertRaisesOSError(self, subtype, expression, *args, **kwargs):
         try:
             expression(*args, **kwargs)
+            self.fail('No exception was raised, OSError expected')
         except OSError as exc:
             if self.is_windows and sys.version_info < (3, 0):
                 self.assertEqual(exc.winerror, subtype)
@@ -95,6 +97,17 @@ class FakeDirectoryUnitTest(TestCase):
     def testGetEntry(self):
         self.fake_dir.AddEntry(self.fake_file)
         self.assertEqual(self.fake_file, self.fake_dir.GetEntry('foobar'))
+
+    def testGetPath(self):
+        self.fake_dir.AddEntry(self.fake_file)
+        self.assertEqual('somedir' + os.sep + 'foobar', self.fake_file.GetPath())
+
+    def testGetPathWithFilesystem(self):
+        filesystem = fake_filesystem.FakeFilesystem(path_separator='/')
+        fake_dir = filesystem.CreateDirectory('somedir')
+        self.fake_file.filesystem = filesystem
+        fake_dir.AddEntry(self.fake_file)
+        self.assertEqual('/somedir/foobar', self.fake_file.GetPath())
 
     def testRemoveEntry(self):
         self.fake_dir.AddEntry(self.fake_file)
@@ -426,6 +439,21 @@ class FakeFilesystemUnitTest(TestCase):
         path = 'foo/bar/baz'
         self.filesystem.CreateDirectory(path)
         self.assertRaisesOSError(errno.EEXIST, self.filesystem.CreateDirectory, path)
+
+    def testCreateFileInReadOnlyDirectoryRaisesInPosix(self):
+        self.filesystem.is_windows_fs = False
+        dir_path = '/foo/bar'
+        self.filesystem.CreateDirectory(dir_path, perm_bits=0o555)
+        file_path = dir_path + '/baz'
+        self.assertRaisesOSError(errno.EACCES, self.filesystem.CreateFile, file_path)
+
+    def testCreateFileInReadOnlyDirectoryPossibleInWindows(self):
+        self.filesystem.is_windows_fs = True
+        dir_path = 'C:/foo/bar'
+        self.filesystem.CreateDirectory(dir_path, perm_bits=0o555)
+        file_path = dir_path + '/baz'
+        self.filesystem.CreateFile(file_path)
+        self.assertTrue(self.filesystem.Exists(file_path))
 
     def testCreateFileInCurrentDirectory(self):
         path = 'foo'
@@ -1418,6 +1446,7 @@ class FakeOsModuleTest(FakeOsModuleTestBase):
 
     def testMkdirRaisesIfParentIsReadOnly(self):
         """mkdir raises exception if parent is read only."""
+        self.filesystem.is_windows_fs = False
         directory = '/a'
         self.os.mkdir(directory)
 
@@ -1446,6 +1475,7 @@ class FakeOsModuleTest(FakeOsModuleTestBase):
     def testMakedirsRaisesIfAccessDenied(self):
         """makedirs raises exception if access denied."""
         directory = '/a'
+        self.filesystem.is_windows_fs = False
         self.os.mkdir(directory)
 
         # Change directory permissions to be read only.
