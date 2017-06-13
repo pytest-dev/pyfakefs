@@ -102,6 +102,7 @@ import warnings
 from collections import namedtuple
 
 import stat
+from copy import copy
 
 if sys.version_info < (3, 0):
     import cStringIO  # pylint: disable=import-error
@@ -160,6 +161,160 @@ def CopyModule(old):
     return new
 
 
+class _FakeStatResult(object):
+    """Mimics os.stat_result for use as return type of `stat()` and similar.
+    This is needed as `os.stat_result` has no possibility to set
+    nanosecond times directly.
+    """
+    long_type = long if sys.version_info < (3,) else int
+
+    def __init__(self, initial_time=None):
+        self.use_float = FakeOsModule.stat_float_times
+        self.st_mode = None
+        self.st_ino = None
+        self.st_dev = None
+        self.st_nlink = 0
+        self.st_uid = None
+        self.st_gid = None
+        self.st_size = None
+        if initial_time is not None:
+            self._st_atime_ns = self.long_type(initial_time * 1e9)
+        else:
+            self._st_atime_ns = None
+        self._st_mtime_ns = self._st_atime_ns
+        self._st_ctime_ns = self._st_atime_ns
+
+    def __eq__(self, other):
+        return (
+            self._st_atime_ns == other._st_atime_ns and
+            self._st_ctime_ns == other._st_ctime_ns and
+            self._st_mtime_ns == other._st_mtime_ns and
+            self.st_size == other.st_size and
+            self.st_gid == other.st_gid and
+            self.st_uid == other.st_uid and
+            self.st_nlink == other.st_nlink and
+            self.st_dev == other.st_dev and
+            self.st_ino == other.st_ino and
+            self.st_mode == other.st_mode
+        )
+
+    def copy(self):
+        """Return a copy where the float usage is hard-coded to mimic the behavior
+        of the real os.stat_result.
+        """
+        use_float = self.use_float()
+        stat_result = copy(self)
+        stat_result.use_float = lambda: use_float
+        return stat_result
+
+    def set_from_stat_result(self, stat_result):
+        """Set values from a real os.stat_result.
+        Note: values that are controlled by the fake filesystem are not set.
+        This includes st_ino, st_dev and st_nlink.
+        """
+        self.st_mode = stat_result.st_mode
+        self.st_uid = stat_result.st_uid
+        self.st_gid = stat_result.st_gid
+        self.st_size = stat_result.st_size
+        if sys.version_info < (3, 3):
+            self._st_atime_ns = self.long_type(stat_result.st_atime * 1e9)
+            self._st_mtime_ns = self.long_type(stat_result.st_mtime * 1e9)
+            self._st_ctime_ns = self.long_type(stat_result.st_ctime * 1e9)
+        else:
+            self._st_atime_ns = stat_result.st_atime_ns
+            self._st_mtime_ns = stat_result.st_mtime_ns
+            self._st_ctime_ns = stat_result.st_ctime_ns
+
+    @property
+    def st_ctime(self):
+        """Return the creation time in seconds."""
+        ctime = self._st_ctime_ns / 1e9
+        return ctime if self.use_float() else int(ctime)
+
+    @property
+    def st_atime(self):
+        """Return the access time in seconds."""
+        atime = self._st_atime_ns / 1e9
+        return atime if self.use_float() else int(atime)
+
+    @property
+    def st_mtime(self):
+        """Return the modification time in seconds."""
+        mtime = self._st_mtime_ns / 1e9
+        return mtime if self.use_float() else int(mtime)
+
+    @st_ctime.setter
+    def st_ctime(self, val):
+        """Set the creation time in seconds."""
+        self._st_ctime_ns = self.long_type(val * 1e9)
+
+    @st_atime.setter
+    def st_atime(self, val):
+        """Set the access time in seconds."""
+        self._st_atime_ns = self.long_type(val * 1e9)
+
+    @st_mtime.setter
+    def st_mtime(self, val):
+        """Set the modification time in seconds."""
+        self._st_mtime_ns = self.long_type(val * 1e9)
+
+    def __getitem__(self, item):
+        """Implement item access to mimic `os.stat_result` behavior."""
+        if item == stat.ST_MODE:
+            return self.st_mode
+        if item == stat.ST_INO:
+            return self.st_ino
+        if item == stat.ST_DEV:
+            return self.st_dev
+        if item == stat.ST_NLINK:
+            return self.st_nlink
+        if item == stat.ST_UID:
+            return self.st_uid
+        if item == stat.ST_GID:
+            return self.st_gid
+        if item == stat.ST_SIZE:
+            return self.st_size
+        if item == stat.ST_ATIME:
+            # item access always returns int for backward compatibility
+            return int(self.st_atime)
+        if item == stat.ST_MTIME:
+            return int(self.st_mtime)
+        if item == stat.ST_CTIME:
+            return int(self.st_ctime)
+
+    if sys.version_info >= (3, 3):
+
+        @property
+        def st_atime_ns(self):
+            """Return the access time in nanoseconds."""
+            return self._st_atime_ns
+
+        @property
+        def st_mtime_ns(self):
+            """Return the modification time in nanoseconds."""
+            return self._st_mtime_ns
+
+        @property
+        def st_ctime_ns(self):
+            """Return the creation time in nanoseconds."""
+            return self._st_ctime_ns
+
+        @st_atime_ns.setter
+        def st_atime_ns(self, val):
+            """Set the access time in nanoseconds."""
+            self._st_atime_ns = val
+
+        @st_mtime_ns.setter
+        def st_mtime_ns(self, val):
+            """Set the modification time of the fake file in nanoseconds."""
+            self._st_mtime_ns = val
+
+        @st_ctime_ns.setter
+        def st_ctime_ns(self, val):
+            """Set the creation time of the fake file in nanoseconds."""
+            self._st_ctime_ns = val
+
+
 class FakeFile(object):
     """Provides the appearance of a real file.
 
@@ -196,23 +351,15 @@ class FakeFile(object):
             New in pyfakefs 3.2.
         """
         self.name = name
-        self.st_mode = st_mode
+        self.stat_result = _FakeStatResult(time.time())
+        self.stat_result.st_mode = st_mode
         self.encoding = encoding
         self.errors = errors or 'strict'
         self._byte_contents = self._encode_contents(contents)
-        self.st_size = len(self._byte_contents) if self._byte_contents is not None else 0
+        self.stat_result.st_size = (
+            len(self._byte_contents) if self._byte_contents is not None else 0)
         self.filesystem = filesystem
         self.epoch = 0
-        self._st_ctime = time.time()  # times are accessed through properties
-        self._st_atime = self._st_ctime
-        self._st_mtime = self._st_ctime
-        self.st_nlink = 0
-        self.st_ino = None
-        self.st_dev = None
-
-        # Non faked features, write setter methods for faking them
-        self.st_uid = None
-        self.st_gid = None
 
     @property
     def byte_contents(self):
@@ -226,39 +373,6 @@ class FakeFile(object):
                 self.encoding or locale.getpreferredencoding(False),
                 errors=self.errors)
         return self.byte_contents
-
-    @property
-    def st_ctime(self):
-        """Return the creation time of the fake file."""
-        return (self._st_ctime if FakeOsModule.stat_float_times()
-                else int(self._st_ctime))
-
-    @property
-    def st_atime(self):
-        """Return the access time of the fake file."""
-        return (self._st_atime if FakeOsModule.stat_float_times()
-                else int(self._st_atime))
-
-    @property
-    def st_mtime(self):
-        """Return the modification time of the fake file."""
-        return (self._st_mtime if FakeOsModule.stat_float_times()
-                else int(self._st_mtime))
-
-    @st_ctime.setter
-    def st_ctime(self, val):
-        """Set the creation time of the fake file."""
-        self._st_ctime = val
-
-    @st_atime.setter
-    def st_atime(self, val):
-        """Set the access time of the fake file."""
-        self._st_atime = val
-
-    @st_mtime.setter
-    def st_mtime(self, val):
-        """Set the modification time of the fake file."""
-        self._st_mtime = val
 
     def SetLargeFileSize(self, st_size):
         """Sets the self.st_size attribute and replaces self.content with None.
@@ -338,8 +452,9 @@ class FakeFile(object):
         """
         self.encoding = encoding
         self._set_initial_contents(contents)
-        self.st_ctime = time.time()
-        self.st_mtime = self._st_ctime
+        current_time = time.time()
+        self.st_ctime = current_time
+        self.st_mtime = current_time
 
     def GetSize(self):
         """Returns the size in bytes of the file contents.
@@ -404,6 +519,18 @@ class FakeFile(object):
         """
         self.st_ctime = st_ctime
 
+    def __getattr__(self, item):
+        """Forward some properties to stat_result."""
+        return getattr(self.stat_result, item)
+
+    def __setattr__(self, key, value):
+        """Forward some properties to stat_result."""
+        if key in ('st_mode', 'st_ino', 'st_dev', 'st_nlink', 'st_uid', 'st_gid',
+                   'st_size', 'st_atime', 'st_mtime', 'st_ctime',
+                   'st_atime_ns', 'st_mtime_ns', 'st_ctime_ns'):
+            return setattr(self.stat_result, key, value)
+        return super(FakeFile, self).__setattr__(key, value)
+
     def __str__(self):
         return '%s(%o)' % (self.name, self.st_mode)
 
@@ -439,16 +566,11 @@ class FakeFileFromRealFile(FakeFile):
         """
         real_stat = os.stat(file_path)
         # for read-only mode, remove the write/executable permission bits
-        mode = real_stat.st_mode & 0o777444 if read_only else real_stat.st_mode
         super(FakeFileFromRealFile, self).__init__(name=os.path.basename(file_path),
-                                                   st_mode=mode,
                                                    filesystem=filesystem)
-        self.st_ctime = real_stat.st_ctime
-        self.st_atime = real_stat.st_atime
-        self.st_mtime = real_stat.st_mtime
-        self.st_gid = real_stat.st_gid
-        self.st_uid = real_stat.st_uid
-        self.st_size = real_stat.st_size
+        self.stat_result.set_from_stat_result(real_stat)
+        if read_only:
+            self.st_mode &= 0o777444
         self.file_path = file_path
         self.contents_read = False
 
@@ -833,19 +955,15 @@ class FakeFilesystem(object):
               instead of the linked object.
 
         Returns:
-          the os.stat_result object corresponding to entry_path.
+          the FakeStatResult object corresponding to entry_path.
 
         Raises:
           OSError: if the filesystem object doesn't exist.
         """
         # stat should return the tuple representing return value of os.stat
         try:
-            stats = self.ResolveObject(entry_path, follow_symlinks)
-            st_obj = os.stat_result((stats.st_mode, stats.st_ino, stats.st_dev,
-                                     stats.st_nlink, stats.st_uid, stats.st_gid,
-                                     stats.st_size, stats.st_atime,
-                                     stats.st_mtime, stats.st_ctime))
-            return st_obj
+            file_object = self.ResolveObject(entry_path, follow_symlinks)
+            return file_object.stat_result.copy()
         except IOError as io_error:
             raise OSError(io_error.errno, io_error.strerror, entry_path)
 
@@ -921,11 +1039,12 @@ class FakeFilesystem(object):
                 if not isinstance(file_time, int):
                     raise TypeError('atime and mtime must be ints')
 
-            file_object.st_atime = ns[0] / 1e9
-            file_object.st_mtime = ns[1] / 1e9
+            file_object.st_atime_ns = ns[0]
+            file_object.st_mtime_ns = ns[1]
         else:
-            file_object.st_atime = time.time()
-            file_object.st_mtime = time.time()
+            current_time = time.time()
+            file_object.st_atime = current_time
+            file_object.st_mtime = current_time
 
     def SetIno(self, path, st_ino):
         """Set the self.st_ino attribute of file at 'path'.
@@ -2356,32 +2475,24 @@ class FakeFilesystem(object):
                 """
                 if follow_symlinks:
                     if self._statresult_symlink is None:
-                        stats = self._filesystem.ResolveObject(self.path)
+                        file_object = self._filesystem.ResolveObject(self.path)
                         if self._filesystem.is_windows_fs:
                             # under Windows, some properties are 0
                             # probably due to performance reasons
-                            stats.st_ino = 0
-                            stats.st_dev = 0
-                            stats.st_nlink = 0
-                        self._statresult_symlink = os.stat_result(
-                            (stats.st_mode, stats.st_ino, stats.st_dev,
-                             stats.st_nlink, stats.st_uid, stats.st_gid,
-                             stats.st_size, stats.st_atime,
-                             stats.st_mtime, stats.st_ctime))
+                            file_object.st_ino = 0
+                            file_object.st_dev = 0
+                            file_object.st_nlink = 0
+                        self._statresult_symlink = file_object.stat_result.copy()
                     return self._statresult_symlink
 
                 if self._statresult is None:
-                    stats = self._filesystem.LResolveObject(self.path)
-                    self._inode = stats.st_ino
+                    file_object = self._filesystem.LResolveObject(self.path)
+                    self._inode = file_object.st_ino
                     if self._filesystem.is_windows_fs:
-                        stats.st_ino = 0
-                        stats.st_dev = 0
-                        stats.st_nlink = 0
-                    self._statresult = os.stat_result(
-                        (stats.st_mode, stats.st_ino, stats.st_dev,
-                         stats.st_nlink, stats.st_uid, stats.st_gid,
-                         stats.st_size, stats.st_atime,
-                         stats.st_mtime, stats.st_ctime))
+                        file_object.st_ino = 0
+                        file_object.st_dev = 0
+                        file_object.st_nlink = 0
+                    self._statresult = file_object.stat_result.copy()
                 return self._statresult
 
         class ScanDirIter:
@@ -3002,18 +3113,14 @@ class FakeOsModule(object):
           file_des:  file descriptor of filesystem object to retrieve.
 
         Returns:
-          the os.stat_result object corresponding to entry_path.
+          the FakeStatResult object corresponding to entry_path.
 
         Raises:
           OSError: if the filesystem object doesn't exist.
         """
         # stat should return the tuple representing return value of os.stat
-        stats = self.filesystem.GetOpenFile(file_des).GetObject()
-        st_obj = os.stat_result((stats.st_mode, stats.st_ino, stats.st_dev,
-                                 stats.st_nlink, stats.st_uid, stats.st_gid,
-                                 stats.st_size, stats.st_atime,
-                                 stats.st_mtime, stats.st_ctime))
-        return st_obj
+        file_object = self.filesystem.GetOpenFile(file_des).GetObject()
+        return file_object.stat_result.copy()
 
     def umask(self, new_mask):
         """Change the current umask.
@@ -3189,7 +3296,7 @@ class FakeOsModule(object):
               instead of the linked object. New in Python 3.3. New in pyfakefs 3.0.
 
         Returns:
-          the os.stat_result object corresponding to entry_path.
+          the FakeStatResult object corresponding to entry_path.
 
         Raises:
           OSError: if the filesystem object doesn't exist.
@@ -3207,7 +3314,7 @@ class FakeOsModule(object):
           entry_path:  path to filesystem object to retrieve.
 
         Returns:
-          the os.stat_result object corresponding to entry_path.
+          the FakeStatResult object corresponding to entry_path.
 
         Raises:
           OSError: if the filesystem object doesn't exist.

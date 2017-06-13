@@ -235,21 +235,22 @@ class FakePathlibFileObjectPropertyTest(unittest.TestCase):
         file_object = self.filesystem.ResolveObject('/home/jane/test.py')
 
         stat_result = self.path('/test.py').stat()
-        self.assertFalse(stat_result[stat.ST_MODE] & stat.S_IFDIR)
-        self.assertTrue(stat_result[stat.ST_MODE] & stat.S_IFREG)
-        self.assertEqual(stat_result[stat.ST_INO], file_object.st_ino)
-        self.assertEqual(stat_result[stat.ST_SIZE], 100)
-        self.assertEqual(stat_result[stat.ST_MTIME], file_object.st_mtime)
+        self.assertFalse(stat_result.st_mode & stat.S_IFDIR)
+        self.assertTrue(stat_result.st_mode & stat.S_IFREG)
+        self.assertEqual(stat_result.st_ino, file_object.st_ino)
+        self.assertEqual(stat_result.st_size, 100)
+        self.assertEqual(stat_result.st_mtime, file_object.st_mtime)
+        self.assertEqual(stat_result[stat.ST_MTIME], int(file_object.st_mtime))
 
     def test_lstat(self):
         link_object = self.filesystem.LResolveObject('/test.py')
 
         stat_result = self.path('/test.py').lstat()
-        self.assertTrue(stat_result[stat.ST_MODE] & stat.S_IFREG)
-        self.assertTrue(stat_result[stat.ST_MODE] & stat.S_IFLNK)
-        self.assertEqual(stat_result[stat.ST_INO], link_object.st_ino)
-        self.assertEqual(stat_result[stat.ST_SIZE], len('/home/jane/test.py'))
-        self.assertEqual(stat_result[stat.ST_MTIME], link_object.st_mtime)
+        self.assertTrue(stat_result.st_mode & stat.S_IFREG)
+        self.assertTrue(stat_result.st_mode & stat.S_IFLNK)
+        self.assertEqual(stat_result.st_ino, link_object.st_ino)
+        self.assertEqual(stat_result.st_size, len('/home/jane/test.py'))
+        self.assertEqual(stat_result.st_mtime, link_object.st_mtime)
 
     def test_chmod(self):
         file_object = self.filesystem.ResolveObject('/home/jane/test.py')
