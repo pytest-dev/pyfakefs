@@ -216,10 +216,10 @@ class TestCopyOrAddRealFile(TestPyfakefsUnittestBase):
 
         self.assertEqual(oct(fake_file.st_mode), oct(self.real_stat.st_mode))
         self.assertEqual(fake_file.st_size, self.real_stat.st_size)
-        self.assertEqual(fake_file.st_ctime, self.real_stat.st_ctime)
-        self.assertGreaterEqual(fake_file.st_atime, self.real_stat.st_atime)
+        self.assertAlmostEqual(fake_file.st_ctime, self.real_stat.st_ctime, places=5)
+        self.assertAlmostEqual(fake_file.st_atime, self.real_stat.st_atime, places=5)
         self.assertLess(fake_file.st_atime, self.real_stat.st_atime + 10)
-        self.assertEqual(fake_file.st_mtime, self.real_stat.st_mtime)
+        self.assertAlmostEqual(fake_file.st_mtime, self.real_stat.st_mtime, places=5)
         self.assertEqual(fake_file.st_uid, self.real_stat.st_uid)
         self.assertEqual(fake_file.st_gid, self.real_stat.st_gid)
 

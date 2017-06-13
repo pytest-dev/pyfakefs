@@ -5,13 +5,16 @@ The release versions are PyPi releases.
 
 #### New Features
   * Added support for basic modes in fake `os.open()` ([#204](../../issues/204)). 
+  * Added fake `os.path.samefile` implementation ([#193](../../issues/193))
+  * Added support for `ns` argument in `os.utime()` (Python >= 3.3) ([#192](../../issues/192)).
+  * Added nanosecond time members in `os.stat_result` (Python >= 3.3) ([#196](../../issues/196)).
 
 #### Infrastructure
 
 #### Fixes
 
 
-## Version 3.2
+## [Version 3.2](https://pypi.python.org/pypi/pyfakefs/3.2)
 
 #### New Features
   * The `errors` argument is supported for `io.open()` and `os.open()`
