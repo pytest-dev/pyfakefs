@@ -24,6 +24,8 @@ import stat
 import sys
 import time
 
+from pyfakefs.fake_filesystem import FakeFileOpen
+
 if sys.version_info < (2, 7):
     import unittest2 as unittest
 else:
@@ -706,17 +708,29 @@ class FakeOsModuleTestBase(TestCase):
         self.filesystem = fake_filesystem.FakeFilesystem(path_separator='/')
         self.os = fake_filesystem.FakeOsModule(self.filesystem)
 
+    def _CreateTestFile(self, path):
+        test_file = self.filesystem.CreateFile(path)
+        self.assertTrue(self.filesystem.Exists(path))
+        st = self.os.stat(path)
+        self.assertEqual(0o666, stat.S_IMODE(st.st_mode))
+        self.assertTrue(st.st_mode & stat.S_IFREG)
+        self.assertFalse(st.st_mode & stat.S_IFDIR)
+        return test_file
+
+    def _CreateTestDirectory(self, path):
+        self.filesystem.CreateDirectory(path)
+        self.assertTrue(self.filesystem.Exists(path))
+        st = self.os.stat(path)
+        self.assertEqual(0o777, stat.S_IMODE(st.st_mode))
+        self.assertFalse(st.st_mode & stat.S_IFREG)
+        self.assertTrue(st.st_mode & stat.S_IFDIR)
+
 
 class FakeOsModuleTest(FakeOsModuleTestBase):
     def setUp(self):
         super(FakeOsModuleTest, self).setUp()
         self.rwx = self.os.R_OK | self.os.W_OK | self.os.X_OK
         self.rw = self.os.R_OK | self.os.W_OK
-        self.orig_time = time.time
-        time.time = _DummyTime(200, 20)
-
-    def tearDown(self):
-        time.time = self.orig_time
 
     def testChdir(self):
         """chdir should work on a directory."""
@@ -772,6 +786,20 @@ class FakeOsModuleTest(FakeOsModuleTestBase):
             self.filesystem.CreateFile('%s/%s' % (directory, f))
         files.sort()
         self.assertEqual(files, sorted(self.os.listdir(directory)))
+
+    @unittest.skipIf(sys.version_info < (3, 3),
+                     'file descriptor as path new in Python 3.3')
+    def testListdirUsesOpenFdAsPath(self):
+        self.filesystem.is_windows_fs = False
+        self.assertRaisesOSError(errno.EBADF, self.os.listdir, 5)
+        dir_path = 'xyzzy/plugh'
+        files = ['foo', 'bar', 'baz']
+        for f in files:
+            self.filesystem.CreateFile('%s/%s' % (dir_path, f))
+        files.sort()
+
+        path_des = self.os.open(dir_path, os.O_RDONLY)
+        self.assertEqual(files, sorted(self.os.listdir(path_des)))
 
     def testListdirReturnsList(self):
         directory_root = 'xyzzy'
@@ -882,6 +910,16 @@ class FakeOsModuleTest(FakeOsModuleTestBase):
         self.assertTrue(stat.S_IFREG & self.os.stat(file_path).st_mode)
         self.assertEqual(5, self.os.stat(file_path)[stat.ST_SIZE])
 
+    @unittest.skipIf(sys.version_info < (3, 3),
+                     'file descriptor as path new in Python 3.3')
+    def testStatUsesOpenFdAsPath(self):
+        self.assertRaisesOSError(errno.EBADF, self.os.stat, 5)
+        file_path = '/foo/bar'
+        self.filesystem.CreateFile(file_path)
+
+        with FakeFileOpen(self.filesystem)(file_path) as f:
+            self.assertTrue(stat.S_IFREG & self.os.stat(f.filedes)[stat.ST_MODE])
+
     @unittest.skipIf(sys.version_info < (3, 3), 'follow_symlinks new in Python 3.3')
     def testStatNoFollowSymlinks(self):
         """Test that stat with follow_symlinks=False behaves like lstat."""
@@ -913,6 +951,19 @@ class FakeOsModuleTest(FakeOsModuleTestBase):
         self.filesystem.CreateLink(link_path, base_name)
         self.assertEqual(len(file_contents), self.os.lstat(file_path)[stat.ST_SIZE])
         self.assertEqual(len(base_name), self.os.lstat(link_path)[stat.ST_SIZE])
+
+    @unittest.skipIf(sys.version_info < (3, 3),
+                     'file descriptor as path new in Python 3.3')
+    def testLstatUsesOpenFdAsPath(self):
+        self.assertRaisesOSError(errno.EBADF, self.os.lstat, 5)
+        file_path = '/foo/bar'
+        link_path = '/foo/link'
+        file_contents = b'contents'
+        self.filesystem.CreateFile(file_path, contents=file_contents)
+        self.filesystem.CreateLink(link_path, file_path)
+
+        with FakeFileOpen(self.filesystem)(file_path) as f:
+            self.assertEqual(len(file_contents), self.os.lstat(f.filedes)[stat.ST_SIZE])
 
     def testStatNonExistentFile(self):
         # set up
@@ -1537,23 +1588,6 @@ class FakeOsModuleTest(FakeOsModuleTestBase):
         # And just for sanity, double-check that this still raises
         self.assertRaisesOSError(errno.EBADF, self.os.fdatasync, test_fd + 1)
 
-    def _CreateTestFile(self, path):
-        test_file = self.filesystem.CreateFile(path)
-        self.assertTrue(self.filesystem.Exists(path))
-        st = self.os.stat(path)
-        self.assertEqual(0o666, stat.S_IMODE(st.st_mode))
-        self.assertTrue(st.st_mode & stat.S_IFREG)
-        self.assertFalse(st.st_mode & stat.S_IFDIR)
-        return test_file
-
-    def _CreateTestDirectory(self, path):
-        self.filesystem.CreateDirectory(path)
-        self.assertTrue(self.filesystem.Exists(path))
-        st = self.os.stat(path)
-        self.assertEqual(0o777, stat.S_IMODE(st.st_mode))
-        self.assertFalse(st.st_mode & stat.S_IFREG)
-        self.assertTrue(st.st_mode & stat.S_IFDIR)
-
     def testAccess700(self):
         # set up
         path = '/some_file'
@@ -1642,6 +1676,18 @@ class FakeOsModuleTest(FakeOsModuleTestBase):
         self.assertTrue(st.st_mode & stat.S_IFREG)
         self.assertFalse(st.st_mode & stat.S_IFDIR)
 
+    @unittest.skipIf(sys.version_info < (3, 3),
+                     'file descriptor as path new in Python 3.3')
+    def testChmodUsesOpenFdAsPath(self):
+        self.assertRaisesOSError(errno.EBADF, self.os.chmod, 5, 0o6543)
+        path = '/some_file'
+        self._CreateTestFile(path)
+
+        with FakeFileOpen(self.filesystem)(path) as f:
+            self.os.chmod(f.filedes, 0o6543)
+            st = self.os.stat(path)
+            self.assertModeEqual(0o6543, st.st_mode)
+
     @unittest.skipIf(sys.version_info < (3, 3), 'follow_symlinks new in Python 3.3')
     def testChmodFollowSymlink(self):
         path = '/some_file'
@@ -1706,193 +1752,6 @@ class FakeOsModuleTest(FakeOsModuleTestBase):
             self.assertEqual(errno.ENOENT, os_error.errno)
             self.assertEqual(path, os_error.filename)
 
-    def testChmodStCtime(self):
-        # set up
-        file_path = 'some_file'
-        self.filesystem.CreateFile(file_path)
-        self.assertTrue(self.filesystem.Exists(file_path))
-        time.time.start()
-
-        st = self.os.stat(file_path)
-        self.assertEqual(200, st.st_ctime)
-        # tests
-        self.os.chmod(file_path, 0o765)
-        st = self.os.stat(file_path)
-        self.assertEqual(220, st.st_ctime)
-
-    def testUtimeSetsCurrentTimeIfArgsIsNone(self):
-        # set up
-        path = '/some_file'
-        self._CreateTestFile(path)
-        time.time.start()
-
-        st = self.os.stat(path)
-        # 200 is the current time established in setUp().
-        self.assertEqual(200, st.st_atime)
-        self.assertEqual(200, st.st_mtime)
-        # actual tests
-        self.os.utime(path, None)
-        st = self.os.stat(path)
-        self.assertEqual(220, st.st_atime)
-        self.assertEqual(220, st.st_mtime)
-
-    def testUtimeSetsCurrentTimeIfArgsIsNoneWithFloats(self):
-        # set up
-        # we set os.stat_float_times() to False, so atime/ctime/mtime
-        # are converted as ints (seconds since epoch)
-        time.time = _DummyTime(200.9123, 20)
-        path = '/some_file'
-        fake_filesystem.FakeOsModule.stat_float_times(False)
-        self._CreateTestFile(path)
-        time.time.start()
-
-        st = self.os.stat(path)
-        # 200 is the current time established above (if converted to int).
-        self.assertEqual(200, st.st_atime)
-        self.assertTrue(isinstance(st.st_atime, int))
-        self.assertEqual(200, st.st_mtime)
-        self.assertTrue(isinstance(st.st_mtime, int))
-
-        if sys.version_info >= (3, 3):
-            self.assertEqual(200912300000, st.st_atime_ns)
-            self.assertEqual(200912300000, st.st_mtime_ns)
-
-        self.assertEqual(200, st.st_mtime)
-        # actual tests
-        self.os.utime(path, None)
-        st = self.os.stat(path)
-        self.assertEqual(220, st.st_atime)
-        self.assertTrue(isinstance(st.st_atime, int))
-        self.assertEqual(220, st.st_mtime)
-        self.assertTrue(isinstance(st.st_mtime, int))
-        if sys.version_info >= (3, 3):
-            self.assertEqual(220912300000, st.st_atime_ns)
-            self.assertEqual(220912300000, st.st_mtime_ns)
-
-    def testUtimeSetsCurrentTimeIfArgsIsNoneWithFloatsNSec(self):
-        self.filesystem = fake_filesystem.FakeFilesystem(path_separator='/')
-        self.os = fake_filesystem.FakeOsModule(self.filesystem)
-        fake_filesystem.FakeOsModule.stat_float_times(False)
-
-        time.time = _DummyTime(200.9123, 20)
-        path = '/some_file'
-        test_file = self._CreateTestFile(path)
-
-        time.time.start()
-        st = self.os.stat(path)
-        self.assertEqual(200, st.st_ctime)
-        self.assertEqual(200, test_file.st_ctime)
-        self.assertTrue(isinstance(st.st_ctime, int))
-        self.assertTrue(isinstance(test_file.st_ctime, int))
-
-        self.os.stat_float_times(True)  # first time float time
-        self.assertEqual(200, st.st_ctime)  # st does not change
-        self.assertEqual(200.9123, test_file.st_ctime)  # but the file does
-        self.assertTrue(isinstance(st.st_ctime, int))
-        self.assertTrue(isinstance(test_file.st_ctime, float))
-
-        self.os.stat_float_times(False)  # reverting to int
-        self.assertEqual(200, test_file.st_ctime)
-        self.assertTrue(isinstance(test_file.st_ctime, int))
-
-        self.assertEqual(200, st.st_ctime)
-        self.assertTrue(isinstance(st.st_ctime, int))
-
-        self.os.stat_float_times(True)
-        st = self.os.stat(path)
-        # 200.9123 not converted to int
-        self.assertEqual(200.9123, test_file.st_atime, test_file.st_mtime)
-        self.assertEqual(200.9123, st.st_atime, st.st_mtime)
-        self.os.utime(path, None)
-        st = self.os.stat(path)
-        self.assertEqual(220.9123, st.st_atime)
-        self.assertEqual(220.9123, st.st_mtime)
-
-    def testUtimeSetsSpecifiedTime(self):
-        # set up
-        path = '/some_file'
-        self._CreateTestFile(path)
-        st = self.os.stat(path)
-        # actual tests
-        self.os.utime(path, (1, 2))
-        st = self.os.stat(path)
-        self.assertEqual(1, st.st_atime)
-        self.assertEqual(2, st.st_mtime)
-
-    def testUtimeDir(self):
-        # set up
-        path = '/some_dir'
-        self._CreateTestDirectory(path)
-        # actual tests
-        self.os.utime(path, (1.0, 2.0))
-        st = self.os.stat(path)
-        self.assertEqual(1.0, st.st_atime)
-        self.assertEqual(2.0, st.st_mtime)
-
-    @unittest.skipIf(sys.version_info < (3, 3), 'follow_symlinks new in Python 3.3')
-    def testUtimeFollowSymlinks(self):
-        path = '/some_file'
-        self._CreateTestFile(path)
-        link_path = '/link_to_some_file'
-        self.filesystem.CreateLink(link_path, path)
-
-        self.os.utime(link_path, (1, 2))
-        st = self.os.stat(link_path)
-        self.assertEqual(1, st.st_atime)
-        self.assertEqual(2, st.st_mtime)
-
-    @unittest.skipIf(sys.version_info < (3, 3), 'follow_symlinks new in Python 3.3')
-    def testUtimeNoFollowSymlinks(self):
-        path = '/some_file'
-        self._CreateTestFile(path)
-        link_path = '/link_to_some_file'
-        self.filesystem.CreateLink(link_path, path)
-
-        self.os.utime(link_path, (1, 2), follow_symlinks=False)
-        st = self.os.stat(link_path)
-        self.assertNotEqual(1, st.st_atime)
-        self.assertNotEqual(2, st.st_mtime)
-        st = self.os.stat(link_path, follow_symlinks=False)
-        self.assertEqual(1, st.st_atime)
-        self.assertEqual(2, st.st_mtime)
-
-    def testUtimeNonExistent(self):
-        path = '/non/existent/file'
-        self.assertFalse(self.filesystem.Exists(path))
-        self.assertRaisesOSError(errno.ENOENT, self.os.utime, path, (1, 2))
-
-    def testUtimeInvalidTimesArgRaises(self):
-        path = '/some_dir'
-        self._CreateTestDirectory(path)
-
-        # the error message differs with different Python versions
-        # we don't expect the same message here
-        self.assertRaises(TypeError, self.os.utime, path, (1, 2, 3))
-        self.assertRaises(TypeError, self.os.utime, path, (1, 'str'))
-
-    @unittest.skipIf(sys.version_info < (3, 3), 'ns new in Python 3.3')
-    def testUtimeSetsSpecifiedTimeInNs(self):
-        # set up
-        path = '/some_file'
-        self._CreateTestFile(path)
-        time.time.start()
-
-        st = self.os.stat(path)
-        # actual tests
-        self.os.utime(path, ns=(200000000, 400000000))
-        st = self.os.stat(path)
-        self.assertEqual(0.2, st.st_atime)
-        self.assertEqual(0.4, st.st_mtime)
-
-    @unittest.skipIf(sys.version_info < (3, 3), 'ns new in Python 3.3')
-    def testUtimeIncorrectNsArgumentRaises(self):
-        file_path = 'some_file'
-        self.filesystem.CreateFile(file_path)
-
-        self.assertRaises(TypeError, self.os.utime, file_path, ns=(200000000))
-        self.assertRaises(TypeError, self.os.utime, file_path, ns=('a', 'b'))
-        self.assertRaises(ValueError, self.os.utime, file_path, times=(1, 2), ns=(100, 200))
-
     def testChownExistingFile(self):
         # set up
         file_path = 'some_file'
@@ -1912,6 +1771,18 @@ class FakeOsModuleTest(FakeOsModuleTestBase):
         st = self.os.stat(file_path)
         self.assertEqual(st[stat.ST_UID], 200)
         self.assertEqual(st[stat.ST_GID], 201)
+
+    @unittest.skipIf(sys.version_info < (3, 3),
+                     'file descriptor as path new in Python 3.3')
+    def testChownUsesOpenFdAsPath(self):
+        self.assertRaisesOSError(errno.EBADF, self.os.chown, 5, 100, 101)
+        file_path = '/foo/bar'
+        self.filesystem.CreateFile(file_path)
+
+        with FakeFileOpen(self.filesystem)(file_path) as f:
+            self.os.chown(f.filedes, 100, 101)
+            st = self.os.stat(file_path)
+            self.assertEqual(st[stat.ST_UID], 100)
 
     @unittest.skipIf(sys.version_info < (3, 3), 'follow_symlinks new in Python 3.3')
     def testChownFollowSymlink(self):
@@ -2301,12 +2172,227 @@ class FakeOsModuleTest(FakeOsModuleTestBase):
         self.assertModeEqual(0o640, self.os.stat('file2').st_mode)
 
 
+class FakeOsModuleTimeTest(FakeOsModuleTestBase):
+    def setUp(self):
+        super(FakeOsModuleTimeTest, self).setUp()
+        self.orig_time = time.time
+        self.dummy_time = None
+        self.setDummyTime(200)
+
+    def tearDown(self):
+        time.time = self.orig_time
+
+    def setDummyTime(self, start):
+        self.dummy_time = _DummyTime(start, 20)
+        time.time = self.dummy_time
+
+    def testChmodStCtime(self):
+        # set up
+        file_path = 'some_file'
+        self.filesystem.CreateFile(file_path)
+        self.assertTrue(self.filesystem.Exists(file_path))
+        self.dummy_time.start()
+
+        st = self.os.stat(file_path)
+        self.assertEqual(200, st.st_ctime)
+        # tests
+        self.os.chmod(file_path, 0o765)
+        st = self.os.stat(file_path)
+        self.assertEqual(220, st.st_ctime)
+
+    def testUtimeSetsCurrentTimeIfArgsIsNone(self):
+        # set up
+        path = '/some_file'
+        self._CreateTestFile(path)
+        self.dummy_time.start()
+
+        st = self.os.stat(path)
+        # 200 is the current time established in setUp().
+        self.assertEqual(200, st.st_atime)
+        self.assertEqual(200, st.st_mtime)
+        # actual tests
+        self.os.utime(path, None)
+        st = self.os.stat(path)
+        self.assertEqual(220, st.st_atime)
+        self.assertEqual(220, st.st_mtime)
+
+    def testUtimeSetsCurrentTimeIfArgsIsNoneWithFloats(self):
+        # set up
+        # we set os.stat_float_times() to False, so atime/ctime/mtime
+        # are converted as ints (seconds since epoch)
+        self.setDummyTime(200.9123)
+        path = '/some_file'
+        fake_filesystem.FakeOsModule.stat_float_times(False)
+        self._CreateTestFile(path)
+        self.dummy_time.start()
+
+        st = self.os.stat(path)
+        # 200 is the current time established above (if converted to int).
+        self.assertEqual(200, st.st_atime)
+        self.assertTrue(isinstance(st.st_atime, int))
+        self.assertEqual(200, st.st_mtime)
+        self.assertTrue(isinstance(st.st_mtime, int))
+
+        if sys.version_info >= (3, 3):
+            self.assertEqual(200912300000, st.st_atime_ns)
+            self.assertEqual(200912300000, st.st_mtime_ns)
+
+        self.assertEqual(200, st.st_mtime)
+        # actual tests
+        self.os.utime(path, None)
+        st = self.os.stat(path)
+        self.assertEqual(220, st.st_atime)
+        self.assertTrue(isinstance(st.st_atime, int))
+        self.assertEqual(220, st.st_mtime)
+        self.assertTrue(isinstance(st.st_mtime, int))
+        if sys.version_info >= (3, 3):
+            self.assertEqual(220912300000, st.st_atime_ns)
+            self.assertEqual(220912300000, st.st_mtime_ns)
+
+    def testUtimeSetsCurrentTimeIfArgsIsNoneWithFloatsNSec(self):
+        self.filesystem = fake_filesystem.FakeFilesystem(path_separator='/')
+        self.os = fake_filesystem.FakeOsModule(self.filesystem)
+        fake_filesystem.FakeOsModule.stat_float_times(False)
+
+        self.setDummyTime(200.9123)
+        path = '/some_file'
+        test_file = self._CreateTestFile(path)
+
+        self.dummy_time.start()
+        st = self.os.stat(path)
+        self.assertEqual(200, st.st_ctime)
+        self.assertEqual(200, test_file.st_ctime)
+        self.assertTrue(isinstance(st.st_ctime, int))
+        self.assertTrue(isinstance(test_file.st_ctime, int))
+
+        self.os.stat_float_times(True)  # first time float time
+        self.assertEqual(200, st.st_ctime)  # st does not change
+        self.assertEqual(200.9123, test_file.st_ctime)  # but the file does
+        self.assertTrue(isinstance(st.st_ctime, int))
+        self.assertTrue(isinstance(test_file.st_ctime, float))
+
+        self.os.stat_float_times(False)  # reverting to int
+        self.assertEqual(200, test_file.st_ctime)
+        self.assertTrue(isinstance(test_file.st_ctime, int))
+
+        self.assertEqual(200, st.st_ctime)
+        self.assertTrue(isinstance(st.st_ctime, int))
+
+        self.os.stat_float_times(True)
+        st = self.os.stat(path)
+        # 200.9123 not converted to int
+        self.assertEqual(200.9123, test_file.st_atime, test_file.st_mtime)
+        self.assertEqual(200.9123, st.st_atime, st.st_mtime)
+        self.os.utime(path, None)
+        st = self.os.stat(path)
+        self.assertEqual(220.9123, st.st_atime)
+        self.assertEqual(220.9123, st.st_mtime)
+
+    def testUtimeSetsSpecifiedTime(self):
+        # set up
+        path = '/some_file'
+        self._CreateTestFile(path)
+        st = self.os.stat(path)
+        # actual tests
+        self.os.utime(path, (1, 2))
+        st = self.os.stat(path)
+        self.assertEqual(1, st.st_atime)
+        self.assertEqual(2, st.st_mtime)
+
+    def testUtimeDir(self):
+        # set up
+        path = '/some_dir'
+        self._CreateTestDirectory(path)
+        # actual tests
+        self.os.utime(path, (1.0, 2.0))
+        st = self.os.stat(path)
+        self.assertEqual(1.0, st.st_atime)
+        self.assertEqual(2.0, st.st_mtime)
+
+    @unittest.skipIf(sys.version_info < (3, 3), 'follow_symlinks new in Python 3.3')
+    def testUtimeFollowSymlinks(self):
+        path = '/some_file'
+        self._CreateTestFile(path)
+        link_path = '/link_to_some_file'
+        self.filesystem.CreateLink(link_path, path)
+
+        self.os.utime(link_path, (1, 2))
+        st = self.os.stat(link_path)
+        self.assertEqual(1, st.st_atime)
+        self.assertEqual(2, st.st_mtime)
+
+    @unittest.skipIf(sys.version_info < (3, 3), 'follow_symlinks new in Python 3.3')
+    def testUtimeNoFollowSymlinks(self):
+        path = '/some_file'
+        self._CreateTestFile(path)
+        link_path = '/link_to_some_file'
+        self.filesystem.CreateLink(link_path, path)
+
+        self.os.utime(link_path, (1, 2), follow_symlinks=False)
+        st = self.os.stat(link_path)
+        self.assertNotEqual(1, st.st_atime)
+        self.assertNotEqual(2, st.st_mtime)
+        st = self.os.stat(link_path, follow_symlinks=False)
+        self.assertEqual(1, st.st_atime)
+        self.assertEqual(2, st.st_mtime)
+
+    def testUtimeNonExistent(self):
+        path = '/non/existent/file'
+        self.assertFalse(self.filesystem.Exists(path))
+        self.assertRaisesOSError(errno.ENOENT, self.os.utime, path, (1, 2))
+
+    def testUtimeInvalidTimesArgRaises(self):
+        path = '/some_dir'
+        self._CreateTestDirectory(path)
+
+        # the error message differs with different Python versions
+        # we don't expect the same message here
+        self.assertRaises(TypeError, self.os.utime, path, (1, 2, 3))
+        self.assertRaises(TypeError, self.os.utime, path, (1, 'str'))
+
+    @unittest.skipIf(sys.version_info < (3, 3), 'ns new in Python 3.3')
+    def testUtimeSetsSpecifiedTimeInNs(self):
+        # set up
+        path = '/some_file'
+        self._CreateTestFile(path)
+        self.dummy_time.start()
+
+        st = self.os.stat(path)
+        # actual tests
+        self.os.utime(path, ns=(200000000, 400000000))
+        st = self.os.stat(path)
+        self.assertEqual(0.2, st.st_atime)
+        self.assertEqual(0.4, st.st_mtime)
+
+    @unittest.skipIf(sys.version_info < (3, 3), 'ns new in Python 3.3')
+    def testUtimeIncorrectNsArgumentRaises(self):
+        file_path = 'some_file'
+        self.filesystem.CreateFile(file_path)
+
+        self.assertRaises(TypeError, self.os.utime, file_path, ns=(200000000))
+        self.assertRaises(TypeError, self.os.utime, file_path, ns=('a', 'b'))
+        self.assertRaises(ValueError, self.os.utime, file_path, times=(1, 2), ns=(100, 200))
+
+    @unittest.skipIf(sys.version_info < (3, 3),
+                     'file descriptor as path new in Python 3.3')
+    def testUtimeUsesOpenFdAsPath(self):
+        self.assertRaisesOSError(errno.EBADF, self.os.utime, 5, (1, 2))
+        path = '/some_file'
+        self._CreateTestFile(path)
+
+        with FakeFileOpen(self.filesystem)(path) as f:
+            self.os.utime(f.filedes, times=(1, 2))
+            st = self.os.stat(path)
+            self.assertEqual(1, st.st_atime)
+            self.assertEqual(2, st.st_mtime)
+
+
 class FakeOsModuleLowLevelFileOpTest(FakeOsModuleTestBase):
     """Test low level functions `os.open()`, `os.read()` and `os.write()`."""
 
     def setUp(self):
         super(FakeOsModuleLowLevelFileOpTest, self).setUp()
-        if sys.version_info < (3, ):
+        if sys.version_info < (3,):
             self.operation_error = IOError
         else:
             self.operation_error = io.UnsupportedOperation
@@ -2793,7 +2879,7 @@ class FakePathModuleTest(TestCase):
         self.assertEqual('!george!washington!bridge',
                          self.os.path.realpath('bridge'))
 
-    @unittest.skipIf(TestCase.is_windows and sys.version_info < (3,2),
+    @unittest.skipIf(TestCase.is_windows and sys.version_info < (3, 2),
                      'No Windows support before 3.2')
     def testSamefile(self):
         file_path1 = '!foo!bar!baz'
@@ -3075,7 +3161,6 @@ class FakeFileOpenTestBase(TestCase):
         self.open = self.file
         self.os = fake_filesystem.FakeOsModule(self.filesystem)
         self.orig_time = time.time
-        time.time = _DummyTime(100, 10)
 
     def tearDown(self):
         time.time = self.orig_time
@@ -3453,6 +3538,7 @@ class FakeFileOpenTest(FakeFileOpenTestBase):
 
     def testOpenStCtime(self):
         # set up
+        time.time = _DummyTime(100, 10)
         file_path = 'some_file'
         self.assertFalse(self.filesystem.Exists(file_path))
         # tests
@@ -4095,11 +4181,10 @@ class ResolvePathTest(FakeFileOpenTestBase):
         self.assertEqual(final_target,
                          self.filesystem.ResolvePath('!foo!bar'))
 
-        os_module = fake_filesystem.FakeOsModule(self.filesystem)
-        self.assertTrue(os_module.path.islink('!foo!bar'))
-        os_module.chdir('!foo')
-        self.assertEqual('!foo', os_module.getcwd())
-        self.assertTrue(os_module.path.islink('bar'))
+        self.assertTrue(self.os.path.islink('!foo!bar'))
+        self.os.chdir('!foo')
+        self.assertEqual('!foo', self.os.getcwd())
+        self.assertTrue(self.os.path.islink('bar'))
 
         self.assertEqual('!foo!baz!bip',
                          self.filesystem.ResolvePath('bar'))
@@ -4136,13 +4221,25 @@ class ResolvePathTest(FakeFileOpenTestBase):
         self.filesystem.CreateLink('!x!foo!bar', '..!bar')
         self.assertEqual('!x!bar', self.filesystem.ResolvePath('!x!foo!bar'))
 
-        os_module = fake_filesystem.FakeOsModule(self.filesystem)
-        os_module.chdir('!x!foo')
-        self.assertEqual('!x!foo', os_module.getcwd())
+        self.os.chdir('!x!foo')
+        self.assertEqual('!x!foo', self.os.getcwd())
         self.assertEqual('!x!bar', self.filesystem.ResolvePath('bar'))
 
-        os_module.chdir('bar')
-        self.assertEqual('!x!bar', os_module.getcwd())
+        self.os.chdir('bar')
+        self.assertEqual('!x!bar', self.os.getcwd())
+
+    @unittest.skipIf(sys.version_info < (3, 3),
+                     'file descriptor as path new in Python 3.3')
+    def testChdirUsesOpenFdAsPath(self):
+        self.filesystem.is_windows_fs = False
+        self.assertRaisesOSError(errno.EBADF, self.os.chdir, 5)
+        dir_path = '!foo!bar'
+        self.filesystem.CreateDirectory(dir_path)
+
+        path_des = self.os.open(dir_path, os.O_RDONLY)
+        self.os.chdir(path_des)
+        self.os.close(path_des)
+        self.assertEqual(dir_path, self.os.getcwd())
 
     @unittest.skipIf(TestCase.is_windows and sys.version_info < (3, 3),
                      'Links are not supported under Windows before Python 3.3')
