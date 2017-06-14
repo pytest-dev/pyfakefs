@@ -989,7 +989,7 @@ class FakeFilesystem(object):
         """
         # stat should return the tuple representing return value of os.stat
         try:
-            file_object = self.ResolveObject(entry_path, follow_symlinks)
+            file_object = self.ResolveObject(entry_path, follow_symlinks, allow_fd=True)
             return file_object.stat_result.copy()
         except IOError as io_error:
             raise OSError(io_error.errno, io_error.strerror, entry_path)
@@ -1005,7 +1005,7 @@ class FakeFilesystem(object):
               instead of the linked object.
         """
         try:
-            file_object = self.ResolveObject(path, follow_symlinks)
+            file_object = self.ResolveObject(path, follow_symlinks, allow_fd=True)
         except IOError as io_error:
             if io_error.errno == errno.ENOENT:
                 raise OSError(errno.ENOENT,
@@ -1047,7 +1047,7 @@ class FakeFilesystem(object):
             raise TypeError("utime: 'ns' must be a tuple of two ints")
 
         try:
-            file_object = self.ResolveObject(path, follow_symlinks)
+            file_object = self.ResolveObject(path, follow_symlinks, allow_fd=True)
         except IOError as io_error:
             if io_error.errno == errno.ENOENT:
                 raise OSError(errno.ENOENT,
@@ -1510,7 +1510,7 @@ class FakeFilesystem(object):
                 return False
         return True
 
-    def ResolvePath(self, file_path):
+    def ResolvePath(self, file_path, allow_fd=False):
         """Follow a path, resolving symlinks.
 
         ResolvePath traverses the filesystem along the specified file path,
@@ -1536,14 +1536,15 @@ class FakeFilesystem(object):
               /a/b/c/d/e  =>  /a/b2/d/e
 
         Args:
-          file_path:  path to examine.
+            file_path:  path to examine.
+            allow_fd: If `True`, `file_path` may be open file descriptor
 
         Returns:
-          resolved_path (string) or None.
+            resolved_path (string) or None.
 
         Raises:
-          TypeError: if file_path is None.
-          IOError: if file_path is '' or a part of the path doesn't exist.
+            TypeError: if file_path is None.
+            IOError: if file_path is '' or a part of the path doesn't exist.
         """
 
         def _ComponentsToPath(component_folders):
@@ -1598,6 +1599,9 @@ class FakeFilesystem(object):
                 link_path = sep.join(components)
             # Don't call self.NormalizePath(), as we don't want to prepend self.cwd.
             return self.CollapsePath(link_path)
+
+        if allow_fd and sys.version_info >= (3, 3) and isinstance(file_path, int):
+            return self.GetOpenFile(file_path).GetObject().GetPath()
 
         if sys.version_info >= (3, 6):
             file_path = os.fspath(file_path)
@@ -1704,12 +1708,14 @@ class FakeFilesystem(object):
         file_path = self.NormalizePath(self.NormalizeCase(file_path))
         return self.GetObjectFromNormalizedPath(file_path)
 
-    def ResolveObject(self, file_path, follow_symlinks=True):
+    def ResolveObject(self, file_path, follow_symlinks=True, allow_fd=False):
         """Search for the specified filesystem object, resolving all links.
 
         Args:
-          file_path: specifies target FakeFile object to retrieve.
-          follow_symlinks: if False, the link itself is resolved, otherwise the object linked to.
+            file_path: Specifies target FakeFile object to retrieve.
+            follow_symlinks: If `False`, the link itself is resolved,
+                otherwise the object linked to.
+            allow_fd: If `True`, `file_path` may be open file descriptor
 
         Returns:
           the FakeFile object corresponding to file_path.
@@ -1717,6 +1723,9 @@ class FakeFilesystem(object):
         Raises:
           IOError: if the object is not found.
         """
+        if allow_fd and sys.version_info >= (3, 3) and isinstance(file_path, int):
+            return self.GetOpenFile(file_path).GetObject()
+
         if follow_symlinks:
             if sys.version_info >= (3, 6):
                 file_path = os.fspath(file_path)
@@ -2442,7 +2451,7 @@ class FakeFilesystem(object):
         Raises:
           OSError:  if the target is not a directory.
         """
-        target_directory = self.ResolvePath(target_directory)
+        target_directory = self.ResolvePath(target_directory, allow_fd=True)
         directory = self.ConfirmDir(target_directory)
         directory_contents = directory.contents
         return list(directory_contents.keys())
@@ -3210,7 +3219,7 @@ class FakeOsModule(object):
           OSError: if user lacks permission to enter the argument directory or if
                    the target is not a directory
         """
-        target_directory = self.filesystem.ResolvePath(target_directory)
+        target_directory = self.filesystem.ResolvePath(target_directory, allow_fd=True)
         self.filesystem.ConfirmDir(target_directory)
         directory = self.filesystem.GetObject(target_directory)
         # A full implementation would check permissions all the way up the tree.
@@ -3614,12 +3623,13 @@ class FakeOsModule(object):
         elif sys.version_info < (3, 3):
             raise TypeError("chown() got an unexpected keyword argument 'follow_symlinks'")
         try:
-            file_object = self.filesystem.ResolveObject(path, follow_symlinks)
+            file_object = self.filesystem.ResolveObject(path, follow_symlinks, allow_fd=True)
         except IOError as io_error:
             if io_error.errno == errno.ENOENT:
                 raise OSError(errno.ENOENT,
                               'No such file or directory in fake filesystem',
                               path)
+            raise
         if not ((isinstance(uid, int) or uid is None) and
                 (isinstance(gid, int) or gid is None)):
             raise TypeError("An integer is required")
