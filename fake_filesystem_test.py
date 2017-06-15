@@ -78,8 +78,11 @@ class FakeDirectoryUnitTest(TestCase):
     def setUp(self):
         self.orig_time = time.time
         time.time = _DummyTime(10, 1)
-        self.fake_file = fake_filesystem.FakeFile('foobar', contents='dummy_file')
-        self.fake_dir = fake_filesystem.FakeDirectory('somedir')
+        self.filesystem = fake_filesystem.FakeFilesystem(path_separator='/')
+        self.fake_file = fake_filesystem.FakeFile(
+            'foobar', contents='dummy_file', filesystem=self.filesystem)
+        self.fake_dir = fake_filesystem.FakeDirectory(
+            'somedir', filesystem=self.filesystem)
 
     def tearDown(self):
         time.time = self.orig_time
@@ -99,14 +102,8 @@ class FakeDirectoryUnitTest(TestCase):
         self.assertEqual(self.fake_file, self.fake_dir.GetEntry('foobar'))
 
     def testGetPath(self):
+        self.filesystem.root.AddEntry(self.fake_dir)
         self.fake_dir.AddEntry(self.fake_file)
-        self.assertEqual('somedir' + os.sep + 'foobar', self.fake_file.GetPath())
-
-    def testGetPathWithFilesystem(self):
-        filesystem = fake_filesystem.FakeFilesystem(path_separator='/')
-        fake_dir = filesystem.CreateDirectory('somedir')
-        self.fake_file.filesystem = filesystem
-        fake_dir.AddEntry(self.fake_file)
         self.assertEqual('/somedir/foobar', self.fake_file.GetPath())
 
     def testRemoveEntry(self):
@@ -183,7 +180,8 @@ class FakeDirectoryUnitTest(TestCase):
 
 class SetLargeFileSizeTest(TestCase):
     def setUp(self):
-        self.fake_file = fake_filesystem.FakeFile('foobar')
+        filesystem = fake_filesystem.FakeFilesystem()
+        self.fake_file = fake_filesystem.FakeFile('foobar', filesystem=filesystem)
 
     def testShouldThrowIfSizeIsNotInteger(self):
         self.assertRaisesIOError(errno.ENOSPC, self.fake_file.SetLargeFileSize, 0.1)
@@ -259,9 +257,12 @@ class FakeFilesystemUnitTest(TestCase):
     def setUp(self):
         self.filesystem = fake_filesystem.FakeFilesystem(path_separator='/')
         self.root_name = '/'
-        self.fake_file = fake_filesystem.FakeFile('foobar')
-        self.fake_child = fake_filesystem.FakeDirectory('foobaz')
-        self.fake_grandchild = fake_filesystem.FakeDirectory('quux')
+        self.fake_file = fake_filesystem.FakeFile(
+            'foobar', filesystem=self.filesystem)
+        self.fake_child = fake_filesystem.FakeDirectory(
+            'foobaz', filesystem=self.filesystem)
+        self.fake_grandchild = fake_filesystem.FakeDirectory(
+            'quux', filesystem=self.filesystem)
 
     def testNewFilesystem(self):
         self.assertEqual('/', self.filesystem.path_separator)
