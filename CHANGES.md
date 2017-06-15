@@ -4,6 +4,7 @@ The release versions are PyPi releases.
 ## Version 3.3 (as yet unreleased)
 
 #### New Features
+  * Added support for `dir_fd` argument in several `os` functions ([#206](../../issues/206)). 
   * Added support for open file descriptor as path argument
     in `os.utime`, `os.chmod`, `os.chdir`, `os.chown`, `os.listdir`, `os.stat` and `os.lstat` 
     (Python >= 3.3) ([#205](../../issues/205)).

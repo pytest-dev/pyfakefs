@@ -3059,7 +3059,7 @@ class FakeOsModule(object):
         except IOError as exc:
             raise OSError(exc)
 
-    def open(self, file_path, flags, mode=None):
+    def open(self, file_path, flags, mode=None, dir_fd=None):
         """Return the file descriptor for a FakeFile.
 
         Args:
@@ -3067,6 +3067,9 @@ class FakeOsModule(object):
             flags: low-level bits to indicate io operation
             mode: bits to define default permissions
                 Note: only basic modes are supported, OS-specific modes are ignored
+            dir_fd: If not `None`, the file descriptor of a directory,
+                with `file_path` being relative to this directory.
+                New in Python 3.3. New in pyfakefs 3.3.
 
         Returns:
             A file descriptor.
@@ -3075,6 +3078,7 @@ class FakeOsModule(object):
             IOError: if the path cannot be found
             ValueError: if invalid mode is given
         """
+        file_path = self._path_with_dir_fd(file_path, self.open, dir_fd)
         str_flags = 'r'
         if flags & os.O_WRONLY or flags & os.O_RDWR:
             if not flags & (os.O_CREAT | os.O_EXCL):
@@ -3340,29 +3344,37 @@ class FakeOsModule(object):
             if not topdown:
                 yield top_contents
 
-    def readlink(self, path):
+    def readlink(self, path, dir_fd=None):
         """Read the target of a symlink.
 
         Args:
-          path:  symlink to read the target of.
+            path:  Symlink to read the target of.
+            dir_fd: If not `None`, the file descriptor of a directory,
+                with `path` being relative to this directory.
+                New in Python 3.3. New in pyfakefs 3.3.
 
         Returns:
-          the string representing the path to which the symbolic link points.
+            the string representing the path to which the symbolic link points.
 
         Raises:
-          TypeError: if path is None
-          OSError: (with errno=ENOENT) if path is not a valid path, or
-                   (with errno=EINVAL) if path is valid, but is not a symlink.
+            TypeError: if `path` is None
+            OSError: (with errno=ENOENT) if path is not a valid path, or
+                     (with errno=EINVAL) if path is valid, but is not a symlink.
         """
+        path = self._path_with_dir_fd(path, self.readlink, dir_fd)
         return self.filesystem.ReadLink(path)
 
-    def stat(self, entry_path, follow_symlinks=None):
+    def stat(self, entry_path, dir_fd=None, follow_symlinks=None):
         """Return the os.stat-like tuple for the FakeFile object of entry_path.
 
         Args:
-          entry_path:  path to filesystem object to retrieve.
-          follow_symlinks: if False and entry_path points to a symlink, the link itself is inspected
-              instead of the linked object. New in Python 3.3. New in pyfakefs 3.0.
+            entry_path:  path to filesystem object to retrieve.
+            dir_fd: (int) If not `None`, the file descriptor of a directory,
+                with `entry_path` being relative to this directory.
+                New in Python 3.3. New in pyfakefs 3.3.
+            follow_symlinks: (bool) If `False` and `entry_path` points to a symlink,
+                the link itself is changed instead of the linked object.
+                New in Python 3.3. New in pyfakefs 3.0.
 
         Returns:
           the FakeStatResult object corresponding to entry_path.
@@ -3374,56 +3386,69 @@ class FakeOsModule(object):
             follow_symlinks = True
         elif sys.version_info < (3, 3):
             raise TypeError("stat() got an unexpected keyword argument 'follow_symlinks'")
+        entry_path = self._path_with_dir_fd(entry_path, self.stat, dir_fd)
         return self.filesystem.GetStat(entry_path, follow_symlinks)
 
-    def lstat(self, entry_path):
+    def lstat(self, entry_path, dir_fd=None):
         """Return the os.stat-like tuple for entry_path, not following symlinks.
 
         Args:
-          entry_path:  path to filesystem object to retrieve.
+            entry_path:  path to filesystem object to retrieve.
+            dir_fd: If not `None`, the file descriptor of a directory, with `entry_path`
+                being relative to this directory.
+                New in Python 3.3. New in pyfakefs 3.3.
 
         Returns:
-          the FakeStatResult object corresponding to entry_path.
+            the FakeStatResult object corresponding to `entry_path`.
 
         Raises:
-          OSError: if the filesystem object doesn't exist.
+            OSError: if the filesystem object doesn't exist.
         """
         # stat should return the tuple representing return value of os.stat
+        entry_path = self._path_with_dir_fd(entry_path, self.lstat, dir_fd)
         return self.filesystem.GetStat(entry_path, follow_symlinks=False)
 
-    def remove(self, path):
+    def remove(self, path, dir_fd=None):
         """Remove the FakeFile object at the specified file path.
 
         Args:
-          path:  path to file to be removed.
+            path: Path to file to be removed.
+            dir_fd: If not `None`, the file descriptor of a directory,
+                with `path` being relative to this directory.
+                New in Python 3.3. New in pyfakefs 3.3.
 
         Raises:
-          OSError: if path points to a directory.
-          OSError: if path does not exist.
-          OSError: if removal failed.
+            OSError: if path points to a directory.
+            OSError: if path does not exist.
+            OSError: if removal failed.
         """
+        path = self._path_with_dir_fd(path, self.remove, dir_fd)
         self.filesystem.RemoveFile(path)
 
     # As per the documentation unlink = remove.
     unlink = remove
 
-    def rename(self, old_file_path, new_file_path):
+    def rename(self, old_file_path, new_file_path, dir_fd=None):
         """Rename a FakeFile object at old_file_path to new_file_path,
         preserving all properties.
         Also replaces existing new_file_path object, if one existed (Unix only).
 
         Args:
-          old_file_path:  path to filesystem object to rename.
-          new_file_path:  path to where the filesystem object will live after this call.
+            old_file_path:  Path to filesystem object to rename.
+            new_file_path:  Path to where the filesystem object will live after this call.
+            dir_fd: If not `None`, the file descriptor of a directory,
+                with `old_file_path` being relative to this directory.
+                New in Python 3.3. New in pyfakefs 3.3.
 
         Raises:
-          OSError: if old_file_path does not exist.
-          OSError: if new_file_path is an existing directory.
-          OSError: if new_file_path is an existing file (Windows only)
-          OSError: if new_file_path is an existing file and could not be removed (Unix)
-          OSError: if `dirname(new_file)` does not exist
-          OSError: if the file would be moved to another filesystem (e.g. mount point)
+            OSError: if old_file_path does not exist.
+            OSError: if new_file_path is an existing directory.
+            OSError: if new_file_path is an existing file (Windows only)
+            OSError: if new_file_path is an existing file and could not be removed (Unix)
+            OSError: if `dirname(new_file)` does not exist
+            OSError: if the file would be moved to another filesystem (e.g. mount point)
         """
+        old_file_path = self._path_with_dir_fd(old_file_path, self.rename, dir_fd)
         self.filesystem.RenameObject(old_file_path, new_file_path)
 
     if sys.version_info >= (3, 3):
@@ -3446,16 +3471,20 @@ class FakeOsModule(object):
             """
             self.filesystem.RenameObject(old_file_path, new_file_path, force_replace=True)
 
-    def rmdir(self, target_directory):
+    def rmdir(self, target_directory, dir_fd=None):
         """Remove a leaf Fake directory.
 
         Args:
-          target_directory: (str) Name of directory to remove.
+            target_directory: (str) Name of directory to remove.
+            dir_fd: If not `None`, the file descriptor of a directory,
+                with `target_directory` being relative to this directory.
+                New in Python 3.3. New in pyfakefs 3.3.
 
         Raises:
-          OSError: if target_directory does not exist or is not a directory,
-          or as per FakeFilesystem.RemoveObject. Cannot remove '.'.
+            OSError: if target_directory does not exist or is not a directory,
+            or as per FakeFilesystem.RemoveObject. Cannot remove '.'.
         """
+        target_directory= self._path_with_dir_fd(target_directory, self.rmdir, dir_fd)
         self.filesystem.RemoveDirectory(target_directory)
 
     def removedirs(self, target_directory):
@@ -3485,19 +3514,23 @@ class FakeOsModule(object):
             self.rmdir(head)
             head, tail = self.path.split(head)
 
-    def mkdir(self, dir_name, mode=PERM_DEF):
+    def mkdir(self, dir_name, mode=PERM_DEF, dir_fd=None):
         """Create a leaf Fake directory.
 
         Args:
-          dir_name: (str) Name of directory to create.  Relative paths are assumed
-            to be relative to '/'.
-          mode: (int) Mode to create directory with.  This argument defaults to
-            0o777.  The umask is applied to this mode.
+            dir_name: (str) Name of directory to create.
+                Relative paths are assumed to be relative to '/'.
+            mode: (int) Mode to create directory with.  This argument defaults to
+                0o777.  The umask is applied to this mode.
+            dir_fd: If not `None`, the file descriptor of a directory,
+                with `dir_name` being relative to this directory.
+                New in Python 3.3. New in pyfakefs 3.3.
 
         Raises:
-          OSError: if the directory name is invalid or parent directory is read only
-          or as per FakeFilesystem.AddObject.
+            OSError: if the directory name is invalid or parent directory is read only
+                or as per FakeFilesystem.AddObject.
         """
+        dir_name = self._path_with_dir_fd(dir_name, self.mkdir, dir_fd)
         self.filesystem.MakeDirectory(dir_name, mode)
 
     def makedirs(self, dir_name, mode=PERM_DEF, exist_ok=None):
@@ -3522,41 +3555,68 @@ class FakeOsModule(object):
             raise TypeError("makedir() got an unexpected keyword argument 'exist_ok'")
         self.filesystem.MakeDirectories(dir_name, mode, exist_ok)
 
-    def access(self, path, mode, follow_symlinks=None):
+    def _path_with_dir_fd(self, path, fct, dir_fd):
+        """Return the path considering dir_fd. Raise on nmvalid parameters."""
+        if dir_fd is not None:
+            if sys.version_info < (3, 3):
+                raise TypeError(
+                    "%s() got an unexpected keyword argument 'dir_fd'" % fct.__name__)
+            if fct not in self.supports_dir_fd:
+                raise NotImplementedError('dir_fd unavailable on this platform')
+            if isinstance(path, int):
+                raise ValueError(
+                    "%s: Can't specify dir_fd without matching path" % fct.__name__)
+            if not self.path.isabs(path):
+                return self.path.join(
+                    self.filesystem.GetOpenFile(dir_fd).GetObject().GetPath(), path)
+        return path
+
+    def access(self, path, mode, dir_fd=None, follow_symlinks=None):
         """Check if a file exists and has the specified permissions.
 
         Args:
-          path: (str) Path to the file.
-          mode: (int) Permissions represented as a bitwise-OR combination of
-              os.F_OK, os.R_OK, os.W_OK, and os.X_OK.
-          follow_symlinks: if False and entry_path points to a symlink, the link itself is queried
-              instead of the linked object. New in Python 3.3. New in pyfakefs 3.0.
+            path: (str) Path to the file.
+            mode: (int) Permissions represented as a bitwise-OR combination of
+                os.F_OK, os.R_OK, os.W_OK, and os.X_OK.
+            dir_fd: If not `None`, the file descriptor of a directory, with `path`
+                being relative to this directory.
+                New in Python 3.3. New in pyfakefs 3.3.
+            follow_symlinks: (bool) If `False` and `path` points to a symlink,
+                the link itself is queried instead of the linked object.
+                New in Python 3.3. New in pyfakefs 3.0.
+
         Returns:
-          boolean, True if file is accessible, False otherwise.
+            bool, `True` if file is accessible, `False` otherwise.
         """
         if follow_symlinks is not None and sys.version_info < (3, 3):
             raise TypeError("access() got an unexpected keyword argument 'follow_symlinks'")
+        path = self._path_with_dir_fd(path, self.access, dir_fd)
         try:
-            stat_result = self.stat(path, follow_symlinks)
+            stat_result = self.stat(path, follow_symlinks=follow_symlinks)
         except OSError as os_error:
             if os_error.errno == errno.ENOENT:
                 return False
             raise
         return (mode & ((stat_result.st_mode >> 6) & 7)) == mode
 
-    def chmod(self, path, mode, follow_symlinks=None):
+    def chmod(self, path, mode, dir_fd=None, follow_symlinks=None):
         """Change the permissions of a file as encoded in integer mode.
 
         Args:
-          path: (str) Path to the file.
-          mode: (int) Permissions.
-          follow_symlinks: if False and entry_path points to a symlink, the link itself is changed
-              instead of the linked object. New in Python 3.3. New in pyfakefs 3.0.
+            path: (str) Path to the file.
+            mode: (int) Permissions.
+            dir_fd: If not `None`, the file descriptor of a directory, with `path`
+                being relative to this directory.
+                New in Python 3.3. New in pyfakefs 3.3.
+            follow_symlinks: (bool) If `False` and `path` points to a symlink,
+                the link itself is queried instead of the linked object.
+                New in Python 3.3. New in pyfakefs 3.0.
         """
         if follow_symlinks is None:
             follow_symlinks = True
         elif sys.version_info < (3, 3):
             raise TypeError("chmod() got an unexpected keyword argument 'follow_symlinks'")
+        path = self._path_with_dir_fd(path, self.chmod, dir_fd)
         self.filesystem.ChangeMode(path, mode, follow_symlinks)
 
     def lchmod(self, path, mode):
@@ -3571,7 +3631,7 @@ class FakeOsModule(object):
             raise (NameError, "name 'lchmod' is not defined")
         self.filesystem.ChangeMode(path, mode, follow_symlinks=False)
 
-    def utime(self, path, times=None, ns=None, follow_symlinks=None):
+    def utime(self, path, times=None, ns=None, dir_fd=None, follow_symlinks=None):
         """Change the access and modified times of a file.
 
         Args:
@@ -3583,8 +3643,11 @@ class FakeOsModule(object):
                 used to set the access and modified times in nanoseconds. 
                 If None, both times are set to the current time.
                 New in Python 3.3. New in pyfakefs 3.3.
-            follow_symlinks: If `False` and entry_path points to a symlink, 
-                the link itself is queried instead of the linked object. 
+            dir_fd: If not `None`, the file descriptor of a directory, with `path`
+                being relative to this directory.
+                New in Python 3.3. New in pyfakefs 3.3.
+            follow_symlinks: (bool) If `False` and `path` points to a symlink,
+                the link itself is queried instead of the linked object.
                 New in Python 3.3. New in pyfakefs 3.0.
     
             Raises:
@@ -3597,20 +3660,25 @@ class FakeOsModule(object):
             follow_symlinks = True
         elif sys.version_info < (3, 3):
             raise TypeError("utime() got an unexpected keyword argument 'follow_symlinks'")
+        path = self._path_with_dir_fd(path, self.utime, dir_fd)
         if ns is not None and sys.version_info < (3, 3):
             raise TypeError("utime() got an unexpected keyword argument 'ns'")
 
         self.filesystem.UpdateTime(path, times, ns, follow_symlinks)
 
-    def chown(self, path, uid, gid, follow_symlinks=None):
+    def chown(self, path, uid, gid, dir_fd=None, follow_symlinks=None):
         """Set ownership of a faked file.
 
         Args:
-          path: (str) Path to the file or directory.
-          uid: (int) Numeric uid to set the file or directory to.
-          gid: (int) Numeric gid to set the file or directory to.
-          follow_symlinks: if False and entry_path points to a symlink, the link itself is changed
-              instead of the linked object. New in Python 3.3. New in pyfakefs 3.0.
+            path: (str) Path to the file or directory.
+            uid: (int) Numeric uid to set the file or directory to.
+            gid: (int) Numeric gid to set the file or directory to.
+            dir_fd: (int) If not `None`, the file descriptor of a directory,
+                with `path` being relative to this directory.
+                New in Python 3.3. New in pyfakefs 3.3.
+            follow_symlinks: (bool) If `False` and path points to a symlink,
+                the link itself is changed instead of the linked object.
+                New in Python 3.3. New in pyfakefs 3.0.
 
         Raises:
           OSError: if path does not exist.
@@ -3622,6 +3690,7 @@ class FakeOsModule(object):
             follow_symlinks = True
         elif sys.version_info < (3, 3):
             raise TypeError("chown() got an unexpected keyword argument 'follow_symlinks'")
+        path = self._path_with_dir_fd(path, self.chown, dir_fd)
         try:
             file_object = self.filesystem.ResolveObject(path, follow_symlinks, allow_fd=True)
         except IOError as io_error:
@@ -3638,19 +3707,22 @@ class FakeOsModule(object):
         if gid != -1:
             file_object.st_gid = gid
 
-    def mknod(self, filename, mode=None, device=None):
+    def mknod(self, filename, mode=None, device=None, dir_fd=None):
         """Create a filesystem node named 'filename'.
 
         Does not support device special files or named pipes as the real os
         module does.
 
         Args:
-          filename: (str) Name of the file to create
-          mode: (int) permissions to use and type of file to be created.
-            Default permissions are 0o666.  Only the stat.S_IFREG file type
-            is supported by the fake implementation.  The umask is applied
-            to this mode.
-          device: not supported in fake implementation
+            filename: (str) Name of the file to create
+            mode: (int) Permissions to use and type of file to be created.
+                Default permissions are 0o666.  Only the stat.S_IFREG file type
+                is supported by the fake implementation.  The umask is applied
+                to this mode.
+            device: not supported in fake implementation
+            dir_fd: If not `None`, the file descriptor of a directory,
+                with `filename` being relative to this directory.
+                New in Python 3.3. New in pyfakefs 3.3.
 
         Raises:
           OSError: if called with unsupported options or the file can not be
@@ -3663,6 +3735,7 @@ class FakeOsModule(object):
                           'Fake os mknod implementation only supports '
                           'regular files.')
 
+        filename = self._path_with_dir_fd(filename, self.mknod, dir_fd)
         head, tail = self.path.split(filename)
         if not tail:
             if self.filesystem.Exists(head):
@@ -3681,34 +3754,42 @@ class FakeOsModule(object):
             raise OSError(errno.ENOTDIR, 'Fake filesystem: %s: %s' % (
                 os.strerror(errno.ENOTDIR), filename))
 
-    def symlink(self, link_target, path):
+    def symlink(self, link_target, path, dir_fd=None):
         """Creates the specified symlink, pointed at the specified link target.
 
         Args:
-          link_target:  the target of the symlink.
-          path:  path to the symlink to create.
+            link_target: The target of the symlink.
+            path: Path to the symlink to create.
+            dir_fd: If not `None`, the file descriptor of a directory,
+                with `link_target` being relative to this directory.
+                New in Python 3.3. New in pyfakefs 3.3.
 
         Raises:
-          OSError:  if the file already exists.
+            OSError:  if the file already exists.
         """
+        link_target = self._path_with_dir_fd(link_target, self.symlink, dir_fd)
         self.filesystem.CreateLink(path, link_target)
 
-    def link(self, oldpath, newpath):
+    def link(self, oldpath, newpath, dir_fd=None):
         """Create a hard link at new_path, pointing at old_path.
         New in pyfakefs 2.9.
 
         Args:
-          old_path: an existing link to the target file.
-          new_path: the destination path to create a new link at.
+            old_path: An existing link to the target file.
+            new_path: The destination path to create a new link at.
+            dir_fd: If not `None`, the file descriptor of a directory, with `oldpath`
+                being relative to this directory.
+                New in Python 3.3. New in pyfakefs 3.3.
 
         Returns:
-          the FakeFile object referred to by old_path.
+            the FakeFile object referred to by `oldpath`.
 
         Raises:
-          OSError:  if something already exists at new_path.
-          OSError:  if the parent directory doesn't exist.
-          OSError:  if on Windows before Python 3.2.
+            OSError:  if something already exists at new_path.
+            OSError:  if the parent directory doesn't exist.
+            OSError:  if on Windows before Python 3.2.
         """
+        oldpath = self._path_with_dir_fd(oldpath, self.link, dir_fd)
         self.filesystem.CreateHardLink(oldpath, newpath)
 
     def fsync(self, file_des):

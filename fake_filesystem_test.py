@@ -2573,6 +2573,129 @@ class FakeOsModuleLowLevelFileOpTest(FakeOsModuleTestBase):
         self.assertRaisesOSError(errno.EBADF, self.os.read, fileno, 10)
 
 
+@unittest.skipIf(sys.version_info < (3, 3),
+                 'dir_fd argument was introduced in Python 3.3')
+class FakeOsModuleDirFdTest(FakeOsModuleTestBase):
+    def setUp(self):
+        super(FakeOsModuleDirFdTest, self).setUp()
+        self.os.supports_dir_fd = set()
+        self.filesystem.is_windows_fs = False
+        self.filesystem.CreateDirectory('/foo/bar')
+        self.dir_fd = self.os.open('/foo', os.O_RDONLY)
+        self.filesystem.CreateFile('/foo/baz')
+
+    def testAccess(self):
+        self.assertRaises(
+            NotImplementedError, self.os.access, 'baz', self.os.F_OK, dir_fd=self.dir_fd)
+        self.os.supports_dir_fd.add(self.os.access)
+        self.assertTrue(self.os.access('baz', self.os.F_OK, dir_fd=self.dir_fd))
+
+    def testChmod(self):
+        self.assertRaises(
+            NotImplementedError, self.os.chmod, 'baz', 0o6543, dir_fd=self.dir_fd)
+        self.os.supports_dir_fd.add(self.os.chmod)
+        self.os.chmod('baz', 0o6543, dir_fd=self.dir_fd)
+        st = self.os.stat('/foo/baz')
+        self.assertModeEqual(0o6543, st.st_mode)
+
+    def testChown(self):
+        self.assertRaises(
+            NotImplementedError, self.os.chown, 'baz', 100, 101, dir_fd=self.dir_fd)
+        self.os.supports_dir_fd.add(self.os.chown)
+        self.os.chown('baz', 100, 101, dir_fd=self.dir_fd)
+        st = self.os.stat('/foo/baz')
+        self.assertEqual(st[stat.ST_UID], 100)
+        self.assertEqual(st[stat.ST_GID], 101)
+
+    def testLink(self):
+        self.assertRaises(
+            NotImplementedError, self.os.link, 'baz', '/bat', dir_fd=self.dir_fd)
+        self.os.supports_dir_fd.add(self.os.link)
+        self.os.link('baz', '/bat', dir_fd=self.dir_fd)
+        self.assertTrue(self.filesystem.Exists('/bat'))
+
+    def testSymlink(self):
+        self.assertRaises(
+            NotImplementedError, self.os.symlink, 'baz', '/bat', dir_fd=self.dir_fd)
+        self.os.supports_dir_fd.add(self.os.symlink)
+        self.os.symlink('baz', '/bat', dir_fd=self.dir_fd)
+        self.assertTrue(self.filesystem.Exists('/bat'))
+
+    def testReadlink(self):
+        self.filesystem.CreateLink('/meyer/lemon/pie', '/foo/baz')
+        self.filesystem.CreateLink('/geo/metro', '/meyer')
+        self.assertRaises(
+            NotImplementedError, self.os.readlink, '/geo/metro/lemon/pie', dir_fd=self.dir_fd)
+        self.os.supports_dir_fd.add(self.os.readlink)
+        self.assertEqual('/foo/baz', self.os.readlink(
+            '/geo/metro/lemon/pie', dir_fd=self.dir_fd))
+
+    def testStat(self):
+        self.assertRaises(
+            NotImplementedError, self.os.stat, 'baz', dir_fd=self.dir_fd)
+        self.os.supports_dir_fd.add(self.os.stat)
+        st = self.os.stat('baz', dir_fd=self.dir_fd)
+        self.assertEqual(st.st_mode, 0o100666)
+
+    def testLstat(self):
+        self.assertRaises(
+            NotImplementedError, self.os.lstat, 'baz', dir_fd=self.dir_fd)
+        self.os.supports_dir_fd.add(self.os.lstat)
+        st = self.os.lstat('baz', dir_fd=self.dir_fd)
+        self.assertEqual(st.st_mode, 0o100666)
+
+    def testMkdir(self):
+        self.assertRaises(
+            NotImplementedError, self.os.mkdir, 'newdir', dir_fd=self.dir_fd)
+        self.os.supports_dir_fd.add(self.os.mkdir)
+        self.os.mkdir('newdir', dir_fd=self.dir_fd)
+        self.assertTrue(self.filesystem.Exists('/foo/newdir'))
+
+    def testRmdir(self):
+        self.assertRaises(
+            NotImplementedError, self.os.rmdir, 'bar', dir_fd=self.dir_fd)
+        self.os.supports_dir_fd.add(self.os.rmdir)
+        self.os.rmdir('bar', dir_fd=self.dir_fd)
+        self.assertFalse(self.filesystem.Exists('/foo/bar'))
+
+    def testMknod(self):
+        self.assertRaises(
+            NotImplementedError, self.os.mknod, 'newdir', dir_fd=self.dir_fd)
+        self.os.supports_dir_fd.add(self.os.mknod)
+        self.os.mknod('newdir', dir_fd=self.dir_fd)
+        self.assertTrue(self.filesystem.Exists('/foo/newdir'))
+
+    def testRename(self):
+        self.assertRaises(
+            NotImplementedError, self.os.rename, 'baz', '/foo/batz', dir_fd=self.dir_fd)
+        self.os.supports_dir_fd.add(self.os.rename)
+        self.os.rename('bar', '/foo/batz', dir_fd=self.dir_fd)
+        self.assertTrue(self.filesystem.Exists('/foo/batz'))
+
+    def testRemove(self):
+        self.assertRaises(
+            NotImplementedError, self.os.remove, 'baz', dir_fd=self.dir_fd)
+        self.os.supports_dir_fd.add(self.os.remove)
+        self.os.remove('baz', dir_fd=self.dir_fd)
+        self.assertFalse(self.filesystem.Exists('/foo/baz'))
+
+    def testUtime(self):
+        self.assertRaises(
+            NotImplementedError, self.os.utime, 'baz', (1, 2), dir_fd=self.dir_fd)
+        self.os.supports_dir_fd.add(self.os.utime)
+        self.os.utime('baz', (1, 2), dir_fd=self.dir_fd)
+        st = self.os.stat('/foo/baz')
+        self.assertEqual(1, st.st_atime)
+        self.assertEqual(2, st.st_mtime)
+
+    def testOpen(self):
+        self.assertRaises(
+            NotImplementedError, self.os.open, 'baz', os.O_RDONLY, dir_fd=self.dir_fd)
+        self.os.supports_dir_fd.add(self.os.open)
+        fd = self.os.open('baz', os.O_RDONLY, dir_fd=self.dir_fd)
+        self.assertLess(0, fd)
+
+
 @unittest.skipIf(sys.version_info < (3, 5), 'os.scandir was introduced in Python 3.5')
 class FakeScandirTest(FakeOsModuleTestBase):
     def setUp(self):
