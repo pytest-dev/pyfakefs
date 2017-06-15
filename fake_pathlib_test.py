@@ -718,7 +718,7 @@ class FakePathlibUsageInOsFunctionsTest(unittest.TestCase):
     def test_stat(self):
         path = 'foo!bar!baz'
         self.filesystem.CreateFile(path, contents='1234567')
-        self.assertEqual(self.os.stat(path, os.R_OK), self.os.stat(self.path(path), os.R_OK))
+        self.assertEqual(self.os.stat(path), self.os.stat(self.path(path)))
 
     def test_utime(self):
         path = '!some_file'
