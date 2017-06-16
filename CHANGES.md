@@ -12,7 +12,7 @@ The release versions are PyPi releases.
 #### Infrastructure
 
 #### Fixes
-
+  * Creating files in read-only directory was possible ([#203](../../issues/203))
 
 ## [Version 3.2](https://pypi.python.org/pypi/pyfakefs/3.2)
 

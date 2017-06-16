@@ -347,7 +347,7 @@ class FakeFile(object):
           contents:  the contents of the filesystem object; should be a string or byte object for
             regular files, and a list of other FakeFile or FakeDirectory objects
             for FakeDirectory objects
-          filesystem: if set, the fake filesystem where the file is created.
+          filesystem: the fake filesystem where the file is created.
             New in pyfakefs 2.9.
           encoding: if contents is a unicode string, the encoding used for serialization
           errors: the error mode used for encoding/decoding errors
@@ -361,8 +361,12 @@ class FakeFile(object):
         self._byte_contents = self._encode_contents(contents)
         self.stat_result.st_size = (
             len(self._byte_contents) if self._byte_contents is not None else 0)
+        # to be backwards compatible regarding argument order, we raise on None
+        if filesystem is None:
+            raise ValueError('filesystem shall not be None')
         self.filesystem = filesystem
         self.epoch = 0
+        self.parent_dir = None
 
     @property
     def byte_contents(self):
@@ -400,8 +404,7 @@ class FakeFile(object):
                           self.name)
         if self.st_size:
             self.SetSize(0)
-        if self.filesystem:
-            self.filesystem.ChangeDiskUsage(st_size, self.name, self.st_dev)
+        self.filesystem.ChangeDiskUsage(st_size, self.name, self.st_dev)
         self.st_size = st_size
         self._byte_contents = None
 
@@ -433,8 +436,7 @@ class FakeFile(object):
         if self._byte_contents:
             self.SetSize(0)
         current_size = self.st_size or 0
-        if self.filesystem:
-            self.filesystem.ChangeDiskUsage(st_size - current_size, self.name, self.st_dev)
+        self.filesystem.ChangeDiskUsage(st_size - current_size, self.name, self.st_dev)
         self._byte_contents = contents
         self.st_size = st_size
         self.epoch += 1
@@ -465,6 +467,16 @@ class FakeFile(object):
         """
         return self.st_size
 
+    def GetPath(self):
+        """Return the full path of the current object."""
+        names = []
+        obj = self
+        while obj:
+            names.insert(0, obj.name)
+            obj = obj.parent_dir
+        sep = self.filesystem._path_separator(self.name)
+        return self.filesystem.NormalizePath(sep.join(names[1:]))
+
     def SetSize(self, st_size):
         """Resizes file content, padding with nulls if new size exceeds the old.
 
@@ -483,8 +495,7 @@ class FakeFile(object):
                           self.name)
 
         current_size = self.st_size or 0
-        if self.filesystem:
-            self.filesystem.ChangeDiskUsage(st_size - current_size, self.name, self.st_dev)
+        self.filesystem.ChangeDiskUsage(st_size - current_size, self.name, self.st_dev)
         if self._byte_contents:
             if st_size < current_size:
                 self._byte_contents = self._byte_contents[:st_size]
@@ -620,12 +631,25 @@ class FakeDirectory(FakeFile):
         """Adds a child FakeFile to this directory.
 
         Args:
-          path_object:  FakeFile instance to add as a child of this directory.
+            path_object:  FakeFile instance to add as a child of this directory.
+
+        Raises:
+            OSError: if the directory has no write permission (Posix only)
+            OSError: if the file or directory to be added already exists
         """
+        if not self.st_mode & PERM_WRITE and not self.filesystem.is_windows_fs:
+            raise OSError(errno.EACCES, 'Permission Denied', self.GetPath())
+
+        if path_object.name in self.contents:
+            raise OSError(errno.EEXIST,
+                          'Object already exists in fake filesystem',
+                          self.GetPath())
+
         self.contents[path_object.name] = path_object
+        path_object.parent_dir = self
         path_object.st_nlink += 1
         path_object.st_dev = self.st_dev
-        if self.filesystem and path_object.st_nlink == 1:
+        if path_object.st_nlink == 1:
             self.filesystem.ChangeDiskUsage(path_object.GetSize(), path_object.name, self.st_dev)
 
     def GetEntry(self, pathname_name):
@@ -659,12 +683,12 @@ class FakeDirectory(FakeFile):
         if entry.st_mode & PERM_WRITE == 0:
             raise OSError(errno.EACCES, 'Trying to remove object without write permission',
                           pathname_name)
-        if self.filesystem and self.filesystem.is_windows_fs and self.filesystem.HasOpenFile(entry):
+        if self.filesystem.is_windows_fs and self.filesystem.HasOpenFile(entry):
             raise OSError(errno.EACCES, 'Trying to remove an open file', pathname_name)
         if recursive and isinstance(entry, FakeDirectory):
             while entry.contents:
                 entry.RemoveEntry(list(entry.contents)[0])
-        elif self.filesystem and entry.st_nlink == 1:
+        elif entry.st_nlink == 1:
             self.filesystem.ChangeDiskUsage(-entry.GetSize(), pathname_name, entry.st_dev)
 
         entry.st_nlink -= 1
@@ -1872,14 +1896,21 @@ class FakeFilesystem(object):
         path_components = self.GetPathComponents(directory_path)
         current_dir = self.root
 
+        new_dirs = []
         for component in path_components:
             directory = self._DirectoryContent(current_dir, component)[1]
             if not directory:
-                new_dir = FakeDirectory(component, perm_bits, filesystem=self)
+                new_dir = FakeDirectory(component, filesystem=self)
+                new_dirs.append(new_dir)
                 current_dir.AddEntry(new_dir)
                 current_dir = new_dir
             else:
                 current_dir = directory
+
+        # set the permission after creating the directories
+        # to allow directory creation inside a read-only directory
+        for new_dir in new_dirs:
+            new_dir.st_mode = stat.S_IFDIR | perm_bits
 
         self.last_ino += 1
         current_dir.SetIno(self.last_ino)
@@ -2197,12 +2228,9 @@ class FakeFilesystem(object):
         if self.Exists(dir_name):
             raise OSError(errno.EEXIST, 'Fake object already exists', dir_name)
         head, tail = self.SplitPath(dir_name)
-        directory_object = self.GetObject(head)
-        if not directory_object.st_mode & PERM_WRITE:
-            raise OSError(errno.EACCES, 'Permission Denied', dir_name)
 
         self.AddObject(
-            head, FakeDirectory(tail, mode & ~self.umask))
+            head, FakeDirectory(tail, mode & ~self.umask, filesystem=self))
 
     def MakeDirectories(self, dir_name, mode=PERM_DEF, exist_ok=False):
         """Create a leaf Fake directory and create any non-existent parent dirs.
@@ -2228,10 +2256,7 @@ class FakeFilesystem(object):
         current_dir = self.root
         for component in path_components:
             if component not in current_dir.contents:
-                if not current_dir.st_mode & PERM_WRITE:
-                    raise OSError(errno.EACCES, 'Permission Denied', dir_name)
-                else:
-                    break
+                break
             else:
                 current_dir = current_dir.contents[component]
         try:
