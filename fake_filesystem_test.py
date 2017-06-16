@@ -1471,7 +1471,24 @@ class FakeOsModuleTest(FakeOsModuleTestBase):
         directory = '%s/plugh' % file_path
         self.filesystem.CreateFile(file_path)
         self.assertTrue(self.filesystem.Exists(file_path))
-        self.assertRaises(Exception, self.os.makedirs, directory)
+        self.assertRaisesOSError(errno.ENOTDIR, self.os.makedirs, directory)
+
+    @unittest.skipIf(TestCase.is_windows and sys.version_info < (3, 3),
+                     'Links are not supported under Windows before Python 3.3')
+    def testMakedirsRaisesIfParentIsBrokenLink(self):
+        link_path = '/broken_link'
+        self.os.symlink('bogus', link_path)
+        self.assertRaisesIOError(errno.ENOENT, self.os.makedirs, link_path + '/newdir')
+
+    @unittest.skipIf(TestCase.is_windows and sys.version_info < (3, 3),
+                     'Links are not supported under Windows before Python 3.3')
+    def testMakedirsRaisesIfParentIsLoopingLink(self):
+        dir_path = '/foo/bar'
+        self.filesystem.CreateDirectory(dir_path)
+        link_target = dir_path + "/link"
+        link_path = link_target + "/link"
+        self.os.symlink(link_path, link_target)
+        self.assertRaisesOSError(errno.ELOOP, self.os.makedirs, link_path)
 
     def testMakedirsRaisesIfAccessDenied(self):
         """makedirs raises exception if access denied."""
@@ -4201,9 +4218,8 @@ class ResolvePathTest(FakeFileOpenTestBase):
         self.assertEqual(3, st.st_atime)
         self.assertEqual(4, st.st_mtime)
 
-    @unittest.skipIf(TestCase.is_windows and sys.version_info < (3, 3),
-                     'Links are not supported under Windows before Python 3.3')
     def testTooManyLinks(self):
+        self.filesystem.is_windows_fs = False
         self.filesystem.CreateLink('!a!loop', 'loop')
         self.assertFalse(self.filesystem.Exists('!a!loop'))
 
