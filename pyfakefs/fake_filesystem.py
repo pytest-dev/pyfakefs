@@ -1498,7 +1498,7 @@ class FakeFilesystem(object):
             return False
         try:
             file_path = self.ResolvePath(file_path)
-        except IOError:
+        except (IOError, OSError):
             return False
         if file_path == self.root.name:
             return True
@@ -1638,7 +1638,7 @@ class FakeFilesystem(object):
                 # cycles.
                 link_depth += 1
                 if link_depth > _MAX_LINK_DEPTH:
-                    raise IOError(errno.EMLINK,
+                    raise OSError(errno.ELOOP,
                                   'Too many levels of symbolic links: \'%s\'' %
                                   _ComponentsToPath(resolved_components))
                 link_path = _FollowLink(resolved_components, current_dir)
@@ -1906,6 +1906,10 @@ class FakeFilesystem(object):
                 current_dir = new_dir
             else:
                 current_dir = directory
+                if directory.st_mode & stat.S_IFLNK == stat.S_IFLNK:
+                    current_dir = self.ResolveObject(directory.contents)
+                if directory.st_mode & stat.S_IFDIR != stat.S_IFDIR:
+                    raise OSError(errno.ENOTDIR, 'Not a directory', current_dir.GetPath())
 
         # set the permission after creating the directories
         # to allow directory creation inside a read-only directory
@@ -2255,7 +2259,8 @@ class FakeFilesystem(object):
         # writeable.
         current_dir = self.root
         for component in path_components:
-            if component not in current_dir.contents:
+            if (component not in current_dir.contents
+                or not isinstance(current_dir.contents, list)):
                 break
             else:
                 current_dir = current_dir.contents[component]
