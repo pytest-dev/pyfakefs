@@ -1773,7 +1773,10 @@ class FakeFilesystem(object):
           IOError: if file_path does not correspond to a directory.
         """
         try:
-            target_directory = self.GetObject(file_path)
+            if not file_path:
+                target_directory = self.root
+            else:
+                target_directory = self.ResolveObject(file_path)
             target_directory.AddEntry(file_object)
         except AttributeError:
             raise IOError(errno.ENOTDIR,
