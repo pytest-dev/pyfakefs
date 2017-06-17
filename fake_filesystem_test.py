@@ -1457,6 +1457,15 @@ class FakeOsModuleTest(FakeOsModuleTestBase):
         directory = '/a/b'
         self.assertRaises(Exception, self.os.mkdir, directory)
 
+    def testMkdirWithWithSymlinkParent(self):
+        dir_path = '/foo/bar'
+        self.filesystem.CreateDirectory(dir_path)
+        link_path = '/foo/link'
+        self.os.symlink(dir_path, link_path)
+        new_dir = link_path + '/new_dir'
+        self.os.mkdir(new_dir)
+        self.assertTrue(self.filesystem.Exists(new_dir))
+
     def testMakedirs(self):
         """makedirs can create a directory even if parent does not exist."""
         parent = 'xyzzy'
