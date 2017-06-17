@@ -632,6 +632,15 @@ class CaseInsensitiveFakeFilesystemTest(TestCase):
         self.filesystem.CreateFile(file_path, contents='1234567')
         self.assertEqual(7, self.path.getsize('FOO/BAR/BAZ'))
 
+    def testGetsizeWithLoopingSymlink(self):
+        self.filesystem.is_windows_fs = False
+        dir_path = '/foo/bar'
+        self.filesystem.CreateDirectory(dir_path)
+        link_path = dir_path + "/link"
+        link_target = link_path + "/link"
+        self.os.symlink(link_target, link_path)
+        self.assertRaisesOSError(errno.ELOOP, self.os.path.getsize, link_path)
+
     def testGetMtime(self):
         test_file = self.filesystem.CreateFile('foo/bar1.txt')
         test_file.SetMTime(24)
@@ -1458,6 +1467,7 @@ class FakeOsModuleTest(FakeOsModuleTestBase):
         self.assertRaises(Exception, self.os.mkdir, directory)
 
     def testMkdirWithWithSymlinkParent(self):
+        self.filesystem.is_windows_fs = False
         dir_path = '/foo/bar'
         self.filesystem.CreateDirectory(dir_path)
         link_path = '/foo/link'
@@ -1494,9 +1504,9 @@ class FakeOsModuleTest(FakeOsModuleTestBase):
     def testMakedirsRaisesIfParentIsLoopingLink(self):
         dir_path = '/foo/bar'
         self.filesystem.CreateDirectory(dir_path)
-        link_target = dir_path + "/link"
-        link_path = link_target + "/link"
-        self.os.symlink(link_path, link_target)
+        link_path = dir_path + "/link"
+        link_target = link_path + "/link"
+        self.os.symlink(link_target, link_path)
         self.assertRaisesOSError(errno.ELOOP, self.os.makedirs, link_path)
 
     def testMakedirsRaisesIfAccessDenied(self):

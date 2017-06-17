@@ -2644,7 +2644,7 @@ class FakePathModule(object):
           file size in bytes.
         """
         try:
-            file_obj = self.filesystem.GetObject(path)
+            file_obj = self.filesystem.ResolveObject(path)
             return file_obj.st_size
         except IOError as exc:
             raise os.error(exc.errno, exc.strerror)
@@ -2698,7 +2698,7 @@ class FakePathModule(object):
             OSError: if the file does not exist.
         """
         try:
-            file_obj = self.filesystem.GetObject(path)
+            file_obj = self.filesystem.ResolveObject(path)
         except IOError as exc:
             raise OSError(errno.ENOENT, str(exc))
         return file_obj.st_mtime
@@ -2718,7 +2718,7 @@ class FakePathModule(object):
             OSError: if the file does not exist.
         """
         try:
-            file_obj = self.filesystem.GetObject(path)
+            file_obj = self.filesystem.ResolveObject(path)
         except IOError as exc:
             raise OSError(errno.ENOENT, str(exc))
         return file_obj.st_atime
@@ -2736,7 +2736,7 @@ class FakePathModule(object):
             OSError: if the file does not exist.
         """
         try:
-            file_obj = self.filesystem.GetObject(path)
+            file_obj = self.filesystem.ResolveObject(path)
         except IOError as exc:
             raise OSError(errno.ENOENT, str(exc))
         return file_obj.st_ctime

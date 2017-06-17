@@ -12,6 +12,7 @@ The release versions are PyPi releases.
 #### Infrastructure
 
 #### Fixes
+  * Incorrect handling of symlinks in `os.path.size` and other functions ([#210](../../issues/210)).
   * Failed to create directory with symlink as parent ([#215](../../issues/215)).
   * Incorrect error handling during directory creation ([#209](../../issues/209)). 
   * Creating files in read-only directory was possible ([#203](../../issues/203)).
