@@ -106,6 +106,8 @@ from copy import copy
 
 if sys.version_info < (3, 0):
     import cStringIO  # pylint: disable=import-error
+else:
+    import builtins
 
 __pychecker__ = 'no-reimportself'
 
@@ -1586,6 +1588,7 @@ class FakeFilesystem(object):
             """
             link_path = link.contents
             sep = self._path_separator(link_path)
+            alt_sep = self._alternative_path_separator(link_path)
             # For links to absolute paths, we want to throw out everything in the
             # path built so far and replace with the link.  For relative links, we
             # have to append the link to what we have so far,
@@ -3425,8 +3428,22 @@ class FakeOsModule(object):
         path = self._path_with_dir_fd(path, self.remove, dir_fd)
         self.filesystem.RemoveFile(path)
 
-    # As per the documentation unlink = remove.
-    unlink = remove
+    def unlink(self, path, dir_fd=None):
+        """Remove the FakeFile object at the specified file path.
+
+        Args:
+            path: Path to file to be removed.
+            dir_fd: If not `None`, the file descriptor of a directory,
+                with `path` being relative to this directory.
+                New in Python 3.3. New in pyfakefs 3.3.
+
+        Raises:
+            OSError: if path points to a directory.
+            OSError: if path does not exist.
+            OSError: if removal failed.
+        """
+        path = self._path_with_dir_fd(path, self.unlink, dir_fd)
+        self.filesystem.RemoveFile(path)
 
     def rename(self, old_file_path, new_file_path, dir_fd=None):
         """Rename a FakeFile object at old_file_path to new_file_path,
@@ -3561,7 +3578,9 @@ class FakeOsModule(object):
             if sys.version_info < (3, 3):
                 raise TypeError(
                     "%s() got an unexpected keyword argument 'dir_fd'" % fct.__name__)
-            if fct not in self.supports_dir_fd:
+            # check if fd is supported for the built-in real function
+            real_fct = getattr(os, fct.__name__)
+            if real_fct not in self.supports_dir_fd:
                 raise NotImplementedError('dir_fd unavailable on this platform')
             if isinstance(path, int):
                 raise ValueError(
