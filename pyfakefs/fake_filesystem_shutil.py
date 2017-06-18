@@ -47,7 +47,7 @@ class FakeShutilModule(object):
         def disk_usage(self, path):
             """Return the total, used and free disk space in bytes as named tuple
             or placeholder holder values simulating unlimited space if not set.
-            New in Python 3.3. New in pyfakefs 2.9.
+            New in Python 3.3.
 
             Args:
               path: defines the filesystem device which is queried
