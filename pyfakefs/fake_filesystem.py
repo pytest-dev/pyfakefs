@@ -1228,8 +1228,6 @@ class FakeFilesystem(object):
         normalized_components = []
         current_dir = self.root
         for component in path_components:
-            if not isinstance(current_dir, FakeDirectory):
-                return path
             dir_name, current_dir = self._DirectoryContent(current_dir, component)
             if current_dir is None or (
                             isinstance(current_dir, FakeDirectory) and
@@ -1469,6 +1467,8 @@ class FakeFilesystem(object):
                               and file_path.endswith(self._alternative_path_separator(file_path)))
 
     def _DirectoryContent(self, directory, component):
+        if not isinstance(directory, FakeDirectory):
+            return None, None
         if component in directory.contents:
             return component, directory.contents[component]
         if not self.is_case_sensitive:

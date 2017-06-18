@@ -284,6 +284,12 @@ class FakeFilesystemUnitTest(TestCase):
     def testExistsUnaddedFile(self):
         self.assertFalse(self.filesystem.Exists(self.fake_file.name))
 
+    def testNotExistsSubpathNamedLikeFileContents(self):
+        # regression test for #219
+        file_path = "/foo/bar"
+        self.filesystem.CreateFile(file_path, contents='baz')
+        self.assertFalse(self.filesystem.Exists(file_path + "/baz"))
+
     def testGetRootObject(self):
         self.assertEqual(self.filesystem.root,
                          self.filesystem.GetObject(self.root_name))
