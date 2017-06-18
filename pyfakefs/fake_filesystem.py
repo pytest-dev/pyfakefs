@@ -1877,6 +1877,10 @@ class FakeFilesystem(object):
             raise OSError(errno.EXDEV,
                           'Fake filesystem object: cannot rename across file systems',
                           old_file_path)
+        if not stat.S_ISDIR(new_dir_object.st_mode):
+            raise OSError(errno.EACCES if self.is_windows_fs else errno.ENOTDIR,
+                          'Fake filesystem object: target parent is not a directory',
+                          new_file_path)
 
         object_to_rename = old_dir_object.GetEntry(old_name)
         old_dir_object.RemoveEntry(old_name, recursive=False)

@@ -1166,6 +1166,18 @@ class FakeOsModuleTest(FakeOsModuleTestBase):
         self.assertEqual('test contents',
                          self.filesystem.GetObject(new_file_path).contents)
 
+    def testRenameWithTargetParentFileRaisesPosix(self):
+        self.filesystem.is_windows_fs = False
+        file_path = "/foo/baz"
+        self.filesystem.CreateFile(file_path)
+        self.assertRaisesOSError(errno.ENOTDIR, self.os.rename, file_path, file_path + '/new')
+
+    def testRenameWithTargetParentFileRaisesWindows(self):
+        self.filesystem.is_windows_fs = True
+        file_path = "/foo/baz"
+        self.filesystem.CreateFile(file_path)
+        self.assertRaisesOSError(errno.EACCES, self.os.rename, file_path, file_path + '/new')
+
     def testChangeCaseInCaseInsensitiveFileSystem(self):
         """Can use `rename()` to change filename case in a case-insensitive file system."""
         self.filesystem.is_case_sensitive = False
