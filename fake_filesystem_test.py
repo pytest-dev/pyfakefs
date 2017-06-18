@@ -1426,6 +1426,16 @@ class FakeOsModuleTest(FakeOsModuleTestBase):
         self.assertFalse(self.filesystem.Exists(directory))
         self.assertRaisesOSError(errno.ENOENT, self.os.rmdir, directory)
 
+    def testRmdirViaSymlink(self):
+        self.filesystem.is_windows_fs = False
+        base_path = '/foo/bar'
+        dir_path = base_path + '/alpha'
+        self.filesystem.CreateDirectory(dir_path)
+        link_path = base_path + '/beta'
+        self.os.symlink(base_path, link_path)
+        self.os.rmdir(link_path + '/alpha')
+        self.assertFalse(self.filesystem.Exists(dir_path))
+
     def RemovedirsCheck(self, directory):
         self.assertTrue(self.filesystem.Exists(directory))
         self.os.removedirs(directory)

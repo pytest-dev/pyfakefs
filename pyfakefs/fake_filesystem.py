@@ -1907,7 +1907,7 @@ class FakeFilesystem(object):
                           file_path)
         try:
             dirname, basename = self.SplitPath(file_path)
-            target_directory = self.GetObject(dirname)
+            target_directory = self.ResolveObject(dirname)
             target_directory.RemoveEntry(basename)
         except KeyError:
             raise IOError(errno.ENOENT,
@@ -2413,7 +2413,7 @@ class FakeFilesystem(object):
           OSError:  if the target is not a directory.
         """
         try:
-            directory = self.GetObject(target_directory)
+            directory = self.ResolveObject(target_directory)
         except IOError as exc:
             raise OSError(exc.errno, exc.strerror, target_directory)
         if not directory.st_mode & stat.S_IFDIR:
@@ -3259,7 +3259,7 @@ class FakeOsModule(object):
         """
         target_directory = self.filesystem.ResolvePath(target_directory, allow_fd=True)
         self.filesystem.ConfirmDir(target_directory)
-        directory = self.filesystem.GetObject(target_directory)
+        directory = self.filesystem.ResolveObject(target_directory)
         # A full implementation would check permissions all the way up the tree.
         if not directory.st_mode | PERM_EXE:
             raise OSError(errno.EACCES, 'Fake os module: permission denied',
