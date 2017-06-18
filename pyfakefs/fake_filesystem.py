@@ -1920,9 +1920,9 @@ class FakeFilesystem(object):
                 current_dir.AddEntry(new_dir)
                 current_dir = new_dir
             else:
-                current_dir = directory
                 if directory.st_mode & stat.S_IFLNK == stat.S_IFLNK:
-                    current_dir = self.ResolveObject(directory.contents)
+                    directory = self.ResolveObject(directory.contents)
+                current_dir = directory
                 if directory.st_mode & stat.S_IFDIR != stat.S_IFDIR:
                     raise OSError(errno.ENOTDIR, 'Not a directory', current_dir.GetPath())
 
@@ -2275,7 +2275,7 @@ class FakeFilesystem(object):
         current_dir = self.root
         for component in path_components:
             if (component not in current_dir.contents
-                or not isinstance(current_dir.contents, list)):
+                or not isinstance(current_dir.contents, dict)):
                 break
             else:
                 current_dir = current_dir.contents[component]

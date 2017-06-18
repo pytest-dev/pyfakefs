@@ -1557,6 +1557,16 @@ class FakeOsModuleTest(FakeOsModuleTestBase):
         self.os.symlink(link_target, link_path)
         self.assertRaisesOSError(errno.ELOOP, self.os.makedirs, link_path)
 
+    def testMakedirsIfParentIsSymlink(self):
+        self.filesystem.is_windows_fs = False
+        base_dir = "/foo/bar"
+        self.filesystem.CreateDirectory(base_dir)
+        link_dir = base_dir + "/linked"
+        self.os.symlink(base_dir, link_dir)
+        new_dir = link_dir + '/f'
+        self.os.makedirs(new_dir)
+        self.assertTrue(self.filesystem.Exists(new_dir))
+
     def testMakedirsRaisesIfAccessDenied(self):
         """makedirs raises exception if access denied."""
         directory = '/a'
