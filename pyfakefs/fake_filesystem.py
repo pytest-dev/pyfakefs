@@ -1807,20 +1807,22 @@ class FakeFilesystem(object):
         """Renames a FakeFile object at old_file_path to new_file_path, preserving all properties.
 
         Args:
-          old_file_path:  path to filesystem object to rename.
-          new_file_path:  path to where the filesystem object will live after this call.
-          force_replace: if set and destination is an existing file, it will be replaced
+            old_file_path: Path to filesystem object to rename.
+            new_file_path: Path to where the filesystem object will live after this call.
+            force_replace: If set and destination is an existing file, it will be replaced
                      even under Windows if the user has permissions, otherwise replacement
                      happens under Unix only.
 
         Raises:
-          OSError: if old_file_path does not exist.
-          OSError: if new_file_path is an existing directory.
-          OSError: if new_file_path is an existing file and force_replace not set (Windows).
-          OSError: if new_file_path is an existing file and could not be removed (Unix,
-                      or Windows with force_replace set).
-          OSError: if dirname(new_file_path) does not exist.
-          OSError: if the file would be moved to another filesystem (e.g. mount point).
+            OSError: if old_file_path does not exist.
+            OSError: if new_file_path is an existing directory
+                (Windows, or Posix if old_file_path points to a regular file)
+            OSError: if new_file_path is an existing file and force_replace not set
+                (Windows only).
+            OSError: if new_file_path is an existing file and could not be removed
+                (Posix, or Windows with force_replace set).
+            OSError: if dirname(new_file_path) does not exist.
+            OSError: if the file would be moved to another filesystem (e.g. mount point).
         """
         old_file_path = self.NormalizePath(old_file_path)
         new_file_path = self.NormalizePath(new_file_path)
@@ -1838,9 +1840,23 @@ class FakeFilesystem(object):
                 # can happen in case-insensitive file system if only case is changed
                 pass
             elif stat.S_ISDIR(new_obj.st_mode):
-                raise OSError(errno.EEXIST,
-                              'Fake filesystem object: can not rename to existing directory',
-                              new_file_path)
+                if self.is_windows_fs:
+                    if force_replace:
+                        raise OSError(errno.EACCES,
+                                      'Fake filesystem object: can not replace existing directory',
+                                      new_file_path)
+                    else:
+                        raise OSError(errno.EEXIST,
+                                      'Fake filesystem object: can not rename to existing directory',
+                                      new_file_path)
+                if new_obj.contents:
+                    raise OSError(errno.ENOTEMPTY,
+                                  'Fake filesystem object: can not rename to non-empty directory',
+                                  new_file_path)
+                if not stat.S_ISDIR(old_obj.st_mode):
+                        raise OSError(errno.EISDIR,
+                                      'Fake filesystem object: cannot rename file to directory',
+                                      new_file_path)
             elif self.is_windows_fs and not force_replace:
                 raise OSError(errno.EEXIST,
                               'Fake filesystem object: can not rename to existing file',
@@ -1865,6 +1881,9 @@ class FakeFilesystem(object):
         object_to_rename = old_dir_object.GetEntry(old_name)
         old_dir_object.RemoveEntry(old_name, recursive=False)
         object_to_rename.name = new_name
+        if new_name in new_dir_object.contents:
+            # in case of overwriting remove the old entry first
+            new_dir_object.RemoveEntry(new_name)
         new_dir_object.AddEntry(object_to_rename)
 
     def RemoveObject(self, file_path):

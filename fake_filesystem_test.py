@@ -1192,13 +1192,52 @@ class FakeOsModuleTest(FakeOsModuleTestBase):
                 'test', self.filesystem.GetObject('%s/plugh' % new_path).contents)
             self.assertEqual(1, self.filesystem.GetObject(new_path).st_nlink)
 
-    def testRenameToExistingDirectoryShouldRaise(self):
-        """Renaming to an existing directory raises OSError."""
+    def testRenameToExistingDirectoryShouldRaiseUnderWindows(self):
+        """Renaming to an existing directory raises OSError under Windows."""
+        self.filesystem.is_windows_fs = True
         old_path = '/foo/bar'
         new_path = '/foo/baz'
         self.filesystem.CreateDirectory(old_path)
         self.filesystem.CreateDirectory(new_path)
         self.assertRaisesOSError(errno.EEXIST, self.os.rename, old_path, new_path)
+
+    @unittest.skipIf(sys.version_info < (3, 3), 'replace is new in Python 3.3')
+    def testReplaceExistingDirectoryShouldRaiseUnderWindows(self):
+        """Renaming to an existing directory raises OSError under Windows."""
+        self.filesystem.is_windows_fs = True
+        old_path = '/foo/bar'
+        new_path = '/foo/baz'
+        self.filesystem.CreateDirectory(old_path)
+        self.filesystem.CreateDirectory(new_path)
+        self.assertRaisesOSError(errno.EACCES, self.os.replace, old_path, new_path)
+
+    def testRenameToExistingDirectoryUnderPosix(self):
+        """Renaming to an existing directory changes the existing directory under Posix."""
+        self.filesystem.is_windows_fs = False
+        old_path = '/foo/bar'
+        new_path = '/xyzzy'
+        self.filesystem.CreateDirectory(old_path + '/sub')
+        self.filesystem.CreateDirectory(new_path)
+        self.os.rename(old_path, new_path)
+        self.assertTrue(self.filesystem.Exists(new_path + '/sub'))
+        self.assertFalse(self.filesystem.Exists(old_path))
+
+    def testRenameFileToExistingDirectoryRaisesUnderPosix(self):
+        self.filesystem.is_windows_fs = False
+        file_path = '/foo/bar/baz'
+        new_path = '/xyzzy'
+        self.filesystem.CreateFile(file_path)
+        self.filesystem.CreateDirectory(new_path)
+        self.assertRaisesOSError(errno.EISDIR, self.os.rename, file_path, new_path)
+
+    def testRenameToExistingDirectoryUnderPosixRaisesIfNotEmpty(self):
+        """Renaming to an existing directory changes the existing directory under Posix."""
+        self.filesystem.is_windows_fs = False
+        old_path = '/foo/bar'
+        new_path = '/foo/baz'
+        self.filesystem.CreateDirectory(old_path + '/sub')
+        self.filesystem.CreateDirectory(new_path + '/sub')
+        self.assertRaisesOSError(errno.ENOTEMPTY, self.os.rename, old_path, new_path)
 
     def testRenameToAnotherDeviceShouldRaise(self):
         """Renaming to another filesystem device raises OSError."""
