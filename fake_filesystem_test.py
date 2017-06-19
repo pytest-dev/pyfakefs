@@ -1166,6 +1166,13 @@ class FakeOsModuleTest(FakeOsModuleTestBase):
         self.assertEqual('test contents',
                          self.filesystem.GetObject(new_file_path).contents)
 
+    def testRecursiveRenameRaises(self):
+        self.filesystem.is_windows_fs = False
+        base_path = '/foo/bar'
+        self.filesystem.CreateDirectory(base_path)
+        new_path = base_path + "/new_dir"
+        self.assertRaisesOSError(errno.EINVAL, self.os.rename, base_path, new_path)
+
     def testRenameWithTargetParentFileRaisesPosix(self):
         self.filesystem.is_windows_fs = False
         file_path = "/foo/baz"

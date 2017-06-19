@@ -704,6 +704,15 @@ class FakeDirectory(FakeFile):
         """
         return sum([item[1].GetSize() for item in self.contents.items()])
 
+    def HasParentObject(self, dir_object):
+        """Return `True` if dir_object is a direct or indirect parent directory."""
+        obj = self
+        while obj:
+            obj = obj.parent_dir
+            if obj == dir_object:
+                return True
+        return False
+
     def __str__(self):
         description = super(FakeDirectory, self).__str__() + ':\n'
         for item in self.contents:
@@ -1880,6 +1889,10 @@ class FakeFilesystem(object):
         if not stat.S_ISDIR(new_dir_object.st_mode):
             raise OSError(errno.EACCES if self.is_windows_fs else errno.ENOTDIR,
                           'Fake filesystem object: target parent is not a directory',
+                          new_file_path)
+        if new_dir_object.HasParentObject(old_dir_object):
+            raise OSError(errno.EINVAL,
+                          'Fake filesystem object: invalid target for rename',
                           new_file_path)
 
         object_to_rename = old_dir_object.GetEntry(old_name)
