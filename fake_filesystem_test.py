@@ -1220,6 +1220,17 @@ class FakeOsModuleTest(FakeOsModuleTestBase):
         self.filesystem.CreateDirectory(new_path)
         self.assertRaisesOSError(errno.EEXIST, self.os.rename, old_path, new_path)
 
+    def testRenameToAHardlinkOfSameFileShouldDoNothing(self):
+        self.filesystem.is_windows_fs = False
+        base_path = '/foo/bar'
+        file_path = base_path + '/dir/file'
+        self.filesystem.CreateFile(file_path)
+        link_path = base_path + "/link"
+        self.os.link(file_path, link_path)
+        self.os.rename(file_path, link_path)
+        self.assertTrue(self.filesystem.Exists(file_path))
+        self.assertTrue(self.filesystem.Exists(link_path))
+
     @unittest.skipIf(sys.version_info < (3, 3), 'replace is new in Python 3.3')
     def testReplaceExistingDirectoryShouldRaiseUnderWindows(self):
         """Renaming to an existing directory raises OSError under Windows."""

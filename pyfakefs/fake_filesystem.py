@@ -1843,11 +1843,18 @@ class FakeFilesystem(object):
         if self.Exists(new_file_path):
             if old_file_path == new_file_path:
                 return  # Nothing to do here.
+
             old_obj = self.GetObject(old_file_path)
             new_obj = self.GetObject(new_file_path)
             if old_obj == new_obj:
-                # can happen in case-insensitive file system if only case is changed
-                pass
+                if old_file_path.lower() == new_file_path.lower():
+                    # only case is changed in case-insensitive file system - do the rename
+                    pass
+                else:
+                    # hard links to the same file - nothing to do
+                    return
+
+            # if old_obj.contents
             elif stat.S_ISDIR(new_obj.st_mode):
                 if self.is_windows_fs:
                     if force_replace:
