@@ -2549,13 +2549,6 @@ class FakeOsModuleTimeTest(FakeOsModuleTestBase):
 class FakeOsModuleLowLevelFileOpTest(FakeOsModuleTestBase):
     """Test low level functions `os.open()`, `os.read()` and `os.write()`."""
 
-    def setUp(self):
-        super(FakeOsModuleLowLevelFileOpTest, self).setUp()
-        if sys.version_info < (3,):
-            self.operation_error = IOError
-        else:
-            self.operation_error = io.UnsupportedOperation
-
     def testLowLevelOpenReadOnly(self):
         file_path = 'file1'
         self.filesystem.CreateFile(file_path, contents=b'contents',
@@ -2564,7 +2557,20 @@ class FakeOsModuleLowLevelFileOpTest(FakeOsModuleTestBase):
         file_des = self.os.open(file_path, os.O_RDONLY)
         self.assertEqual(0, file_des)
         self.assertEqual(b'contents', self.os.read(file_des, 8))
-        self.assertRaises(self.operation_error, self.os.write, file_des, b'test')
+        self.assertRaisesOSError(errno.EBADF, self.os.write, file_des, b'test')
+
+    def testLowLevelOpenReadOnlyWriteZeroBytes(self):
+        # under Windows, writing an empty string to a read only file is not an error
+        file_path = 'file1'
+        self.filesystem.CreateFile(file_path, contents=b'contents',
+                                   st_mode=(stat.S_IFREG | 0o666))
+
+        file_des = self.os.open(file_path, os.O_RDONLY)
+        self.filesystem.is_windows_fs = False
+        self.assertRaisesOSError(errno.EBADF, self.os.write, file_des, b'test')
+        self.filesystem.is_windows_fs = True
+        self.assertEqual(0, self.os.write(file_des, b''))
+
 
     def testLowLevelOpenWriteOnly(self):
         file_path = 'file1'
@@ -2573,9 +2579,32 @@ class FakeOsModuleLowLevelFileOpTest(FakeOsModuleTestBase):
 
         file_des = self.os.open(file_path, os.O_WRONLY)
         self.assertEqual(0, file_des)
-        self.assertRaises(self.operation_error, self.os.read, file_des, 5)
         self.assertEqual(4, self.os.write(file_des, b'test'))
         self.assertEqual(b'testents', file_obj.byte_contents)
+
+    def testLowLevelOpenWriteOnlyRaisesOnRead(self):
+        file_path = 'file1'
+        self.filesystem.CreateFile(file_path, contents=b'contents',
+                                   st_mode=(stat.S_IFREG | 0o666))
+
+        file_des = self.os.open(file_path, os.O_WRONLY)
+        self.assertRaisesOSError(errno.EBADF, self.os.read, file_des, 5)
+        self.os.close(file_des)
+        file_des = self.os.open(file_path, os.O_WRONLY | os.O_TRUNC)
+        self.assertRaisesOSError(errno.EBADF, self.os.read, file_des, 5)
+        self.os.close(file_des)
+        file_des = self.os.open('file2', os.O_CREAT | os.O_WRONLY)
+        self.assertRaisesOSError(errno.EBADF, self.os.read, file_des, 5)
+        file_des = self.os.open('file2', os.O_CREAT | os.O_WRONLY | os.O_TRUNC)
+        self.assertRaisesOSError(errno.EBADF, self.os.read, file_des, 5)
+
+    def testLowLevelOpenWriteOnlyReadZeroBytes(self):
+        # under Windows, reading 0 bytes from a write only file is not an error
+        file_des = self.os.open('file1', os.O_CREAT | os.O_WRONLY)
+        self.filesystem.is_windows_fs = False
+        self.assertRaisesOSError(errno.EBADF, self.os.read, file_des, 0)
+        self.filesystem.is_windows_fs = True
+        self.assertEqual(b'', self.os.read(file_des, 0))
 
     def testLowLevelOpenReadWrite(self):
         file_path = 'file1'
@@ -2628,7 +2657,7 @@ class FakeOsModuleLowLevelFileOpTest(FakeOsModuleTestBase):
         file_des = self.os.open(file_path, os.O_WRONLY | os.O_CREAT, 0o700)
         self.assertEqual(0, file_des)
         self.assertTrue(self.os.path.exists(file_path))
-        self.assertRaises(self.operation_error, self.os.read, file_des, 5)
+        self.assertRaisesOSError(errno.EBADF, self.os.read, file_des, 5)
         self.assertEqual(4, self.os.write(file_des, b'test'))
         self.assertModeEqual(0o700, self.os.stat(file_path).st_mode)
 

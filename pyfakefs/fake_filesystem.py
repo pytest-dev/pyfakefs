@@ -3201,6 +3201,7 @@ class FakeOsModule(object):
           TypeError: if file descriptor is not an integer.
         """
         file_handle = self.filesystem.GetOpenFile(file_des)
+        file_handle.raw_io = True
         return file_handle.read(num_bytes)
 
     def write(self, file_des, contents):
@@ -3218,6 +3219,7 @@ class FakeOsModule(object):
           TypeError: if file descriptor is not an integer.
         """
         file_handle = self.filesystem.GetOpenFile(file_des)
+        file_handle.raw_io = True
         file_handle.write(contents)
         file_handle.flush()
         return len(contents)
@@ -3945,14 +3947,9 @@ class FakeFileWrapper(object):
     If the wrapper has any data written to it, it will propagate to
     the FakeFile object on close() or flush().
     """
-    if sys.version_info < (3, 0):
-        _OPERATION_ERROR = IOError
-    else:
-        _OPERATION_ERROR = io.UnsupportedOperation
-
     def __init__(self, file_object, file_path, update=False, read=False, append=False,
                  delete_on_close=False, filesystem=None, newline=None,
-                 binary=True, closefd=True, encoding=None, errors=None):
+                 binary=True, closefd=True, encoding=None, errors=None, raw_io=False):
         self._file_object = file_object
         self._file_path = file_path
         self._append = append
@@ -3960,6 +3957,8 @@ class FakeFileWrapper(object):
         self.allow_update = update
         self._closefd = closefd
         self._file_epoch = file_object.epoch
+        self.raw_io = raw_io
+        self._binary = binary
         contents = file_object.byte_contents
         self._encoding = encoding
         errors = errors or 'strict'
@@ -4016,6 +4015,13 @@ class FakeFileWrapper(object):
     def __exit__(self, type, value, traceback):  # pylint: disable=redefined-builtin
         """To support usage of this fake file with the 'with' statement."""
         self.close()
+
+    def _raise(self, message):
+        if self.raw_io:
+            raise OSError(errno.EBADF, message)
+        if sys.version_info < (3, 0):
+            raise IOError(message)
+        raise io.UnsupportedOperation(message)
 
     def GetObject(self):
         """Return the FakeFile object that is wrapped by the current instance."""
@@ -4170,15 +4176,20 @@ class FakeFileWrapper(object):
             def read_error(*args, **kwargs):
                 """Throw an error unless the argument is zero."""
                 if args and args[0] == 0:
-                    return ''
-                raise self._OPERATION_ERROR('File is not open for reading.')
+                    if self._filesystem.is_windows_fs or not self.raw_io :
+                        return b'' if self._binary else u''
+                self._raise('File is not open for reading.')
 
             return read_error
+
         if not self.allow_update and (name.startswith('write')
                                  or name == 'truncate'):
             def write_error(*args, **kwargs):
                 """Throw an error."""
-                raise self._OPERATION_ERROR('File is not open for writing.')
+                if self.raw_io:
+                    if self._filesystem.is_windows_fs and args and len(args[0]) == 0:
+                        return 0
+                self._raise('File is not open for writing.')
 
             return write_error
 
@@ -4193,7 +4204,7 @@ class FakeFileWrapper(object):
 
     def __iter__(self):
         if not self._read:
-            raise self._OPERATION_ERROR('File is not open for reading')
+            self._raise('File is not open for reading')
         return self._io.__iter__()
 
 
