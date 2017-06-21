@@ -1173,6 +1173,16 @@ class FakeOsModuleTest(FakeOsModuleTestBase):
         new_path = base_path + "/new_dir"
         self.assertRaisesOSError(errno.EINVAL, self.os.rename, base_path, new_path)
 
+    def testRenameFileToParentDirFile(self):
+        """Regression test for issue 230."""
+        base_path = '/foo'
+        dir_path = base_path + "/dir"
+        self.filesystem.CreateDirectory(dir_path)
+        file_path = base_path + "/old_file"
+        new_file_path = dir_path + "/new_file"
+        self.filesystem.CreateFile(file_path)
+        self.os.rename(file_path, new_file_path)
+
     def testRenameWithTargetParentFileRaisesPosix(self):
         self.filesystem.is_windows_fs = False
         file_path = "/foo/baz"

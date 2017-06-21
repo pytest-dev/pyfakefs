@@ -705,12 +705,13 @@ class FakeDirectory(FakeFile):
         return sum([item[1].GetSize() for item in self.contents.items()])
 
     def HasParentObject(self, dir_object):
-        """Return `True` if dir_object is a direct or indirect parent directory."""
+        """Return `True` if dir_object is a direct or indirect parent directory,
+        or if both are the same object."""
         obj = self
         while obj:
-            obj = obj.parent_dir
             if obj == dir_object:
                 return True
+            obj = obj.parent_dir
         return False
 
     def __str__(self):
@@ -1840,13 +1841,13 @@ class FakeFilesystem(object):
                           'Fake filesystem object: can not rename nonexistent file',
                           old_file_path)
 
+        old_object = self.GetObject(old_file_path)
         if self.Exists(new_file_path):
             if old_file_path == new_file_path:
                 return  # Nothing to do here.
 
-            old_obj = self.GetObject(old_file_path)
-            new_obj = self.GetObject(new_file_path)
-            if old_obj == new_obj:
+            new_object = self.GetObject(new_file_path)
+            if old_object == new_object:
                 if old_file_path.lower() == new_file_path.lower():
                     # only case is changed in case-insensitive file system - do the rename
                     pass
@@ -1855,7 +1856,7 @@ class FakeFilesystem(object):
                     return
 
             # if old_obj.contents
-            elif stat.S_ISDIR(new_obj.st_mode):
+            elif stat.S_ISDIR(new_object.st_mode):
                 if self.is_windows_fs:
                     if force_replace:
                         raise OSError(errno.EACCES,
@@ -1865,11 +1866,11 @@ class FakeFilesystem(object):
                         raise OSError(errno.EEXIST,
                                       'Fake filesystem object: can not rename to existing directory',
                                       new_file_path)
-                if new_obj.contents:
+                if new_object.contents:
                     raise OSError(errno.ENOTEMPTY,
                                   'Fake filesystem object: can not rename to non-empty directory',
                                   new_file_path)
-                if not stat.S_ISDIR(old_obj.st_mode):
+                if not stat.S_ISDIR(old_object.st_mode):
                         raise OSError(errno.EISDIR,
                                       'Fake filesystem object: cannot rename file to directory',
                                       new_file_path)
@@ -1897,7 +1898,7 @@ class FakeFilesystem(object):
             raise OSError(errno.EACCES if self.is_windows_fs else errno.ENOTDIR,
                           'Fake filesystem object: target parent is not a directory',
                           new_file_path)
-        if new_dir_object.HasParentObject(old_dir_object):
+        if new_dir_object.HasParentObject(old_object):
             raise OSError(errno.EINVAL,
                           'Fake filesystem object: invalid target for rename',
                           new_file_path)
