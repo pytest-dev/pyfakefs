@@ -19,10 +19,8 @@ The release versions are PyPi releases.
 #### Fixes
   * Incorrect behavior of low-level IO operations ([#235](../../issues/235), [#237](../../issues/237))
   * Fake `rename` did not behave like `os.rename` ([#217](../../issues/217), [#224](../../issues/224), [#216](../../issues/216), [#227](../../issues/227), [#232](../../issues/232), [#233](../../issues/233))
-  * `os.rmdir` failed with symlink ([#226](../../issues/226)).
+  * Symlinks have not been considered in several functions ([#215](../../issues/215), [#210](../../issues/210), [#226](../../issues/226), [#234](../../issues/234))
   * A non-existing file that has the same as the content of the parent object was seen as existent ([#219](../../issues/219)).
-  * Incorrect handling of symlinks in `os.path.size` and other functions ([#210](../../issues/210)).
-  * Failed to create directory with symlink as parent ([#215](../../issues/215)).
   * Incorrect error handling during directory creation ([#209](../../issues/209)). 
   * Creating files in read-only directory was possible ([#203](../../issues/203)).
 

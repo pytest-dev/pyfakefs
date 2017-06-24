@@ -2233,7 +2233,7 @@ class FakeFilesystem(object):
 
         # Retrieve the target file
         try:
-            old_file = self.GetObject(old_path)
+            old_file = self.ResolveObject(old_path)
         except:
             raise OSError(errno.ENOENT,
                           'No such file or directory in fake filesystem',

@@ -1249,6 +1249,18 @@ class FakeOsModuleTest(FakeOsModuleTestBase):
         self.assertTrue(self.filesystem.Exists(file_path))
         self.assertTrue(self.filesystem.Exists(link_path))
 
+    def testHardlinkWorksWithSymlink(self):
+        self.filesystem.is_windows_fs = False
+        base_path = "/foo"
+        self.filesystem.CreateDirectory(base_path)
+        symlink_path = base_path + "/slink"
+        self.os.symlink(base_path, symlink_path)
+        file_path = base_path + "/slink/beta"
+        self.filesystem.CreateFile(file_path)
+        link_path = base_path + "/slink/gamma"
+        self.os.link(file_path, link_path)
+        self.assertTrue(self.filesystem.Exists(link_path))
+
     @unittest.skipIf(sys.version_info < (3, 3), 'replace is new in Python 3.3')
     def testReplaceExistingDirectoryShouldRaiseUnderWindows(self):
         """Renaming to an existing directory raises OSError under Windows."""
