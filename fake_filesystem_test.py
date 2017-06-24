@@ -2618,9 +2618,9 @@ class FakeOsModuleLowLevelFileOpTest(FakeOsModuleTestBase):
 
     def testLowLevelOpenRaisesIfDoesNotExist(self):
         file_path = 'file1'
-        self.assertRaisesIOError(errno.ENOENT, self.os.open, file_path, os.O_RDONLY)
-        self.assertRaisesIOError(errno.ENOENT, self.os.open, file_path, os.O_WRONLY)
-        self.assertRaisesIOError(errno.ENOENT, self.os.open, file_path, os.O_RDWR)
+        self.assertRaisesOSError(errno.ENOENT, self.os.open, file_path, os.O_RDONLY)
+        self.assertRaisesOSError(errno.ENOENT, self.os.open, file_path, os.O_WRONLY)
+        self.assertRaisesOSError(errno.ENOENT, self.os.open, file_path, os.O_RDWR)
 
     def testLowLevelOpenTruncate(self):
         file_path = 'file1'
@@ -2688,8 +2688,8 @@ class FakeOsModuleLowLevelFileOpTest(FakeOsModuleTestBase):
         self.filesystem.is_windows_fs = False
         dir_path = '/dir'
         self.filesystem.CreateDirectory(dir_path)
-        self.assertRaisesIOError(errno.EISDIR, self.os.open, dir_path, os.O_WRONLY)
-        self.assertRaisesIOError(errno.EISDIR, self.os.open, dir_path, os.O_RDWR)
+        self.assertRaisesOSError(errno.EISDIR, self.os.open, dir_path, os.O_WRONLY)
+        self.assertRaisesOSError(errno.EISDIR, self.os.open, dir_path, os.O_RDWR)
 
     def testOpenDirectoryReadOnlyUnderPosix(self):
         self.filesystem.is_windows_fs = False

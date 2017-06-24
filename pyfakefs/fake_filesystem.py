@@ -3142,7 +3142,7 @@ class FakeOsModule(object):
         if flags & os.O_WRONLY or flags & os.O_RDWR:
             if not flags & (os.O_CREAT | os.O_EXCL):
                 if not self.filesystem.Exists(file_path):
-                    raise IOError(errno.ENOENT,
+                    raise OSError(errno.ENOENT,
                                   'File does not exist in fake filesystem',
                                   file_path)
             if flags & os.O_EXCL:
@@ -3168,7 +3168,7 @@ class FakeOsModule(object):
 
         # low level open is always binary
         str_flags += 'b'
-        fake_file = FakeFileOpen(self.filesystem)(file_path, str_flags)
+        fake_file = FakeFileOpen(self.filesystem, low_level=True)(file_path, str_flags)
         if mode:
             self.chmod(file_path, mode)
         return fake_file.fileno()
@@ -4238,7 +4238,7 @@ class FakeFileOpen(object):
     """
     __name__ = 'FakeFileOpen'
 
-    def __init__(self, filesystem, delete_on_close=False, use_io=False):
+    def __init__(self, filesystem, delete_on_close=False, use_io=False, low_level=False):
         """init.
 
         Args:
@@ -4250,6 +4250,7 @@ class FakeFileOpen(object):
         self.filesystem = filesystem
         self._delete_on_close = delete_on_close
         self._use_io = use_io or sys.version_info >= (3, 0)
+        self.low_level = low_level
 
     def __call__(self, *args, **kwargs):
         """Redirects calls to file() or open() to appropriate method."""
@@ -4315,18 +4316,19 @@ class FakeFileOpen(object):
                 file_object = self.filesystem.GetObjectFromNormalizedPath(real_path)
             closefd = True
 
+        error_class = OSError if self.low_level else IOError
         if file_object:
             if ((need_read and not file_object.st_mode & PERM_READ) or
                     (need_write and not file_object.st_mode & PERM_WRITE)):
-                raise IOError(errno.EACCES, 'Permission denied', file_path)
+                raise error_class(errno.EACCES, 'Permission denied', file_path)
             if must_not_exist:
-                raise IOError(errno.EEXIST, 'File exists', file_path)
+                raise error_class(errno.EEXIST, 'File exists', file_path)
             if need_write:
                 if truncate:
                     file_object.SetContents('')
         else:
             if must_exist:
-                raise IOError(errno.ENOENT, 'No such file or directory', file_path)
+                raise error_class(errno.ENOENT, 'No such file or directory', file_path)
             file_object = self.filesystem.CreateFile(
                 real_path, create_missing_dirs=False, apply_umask=True)
 
@@ -4334,7 +4336,7 @@ class FakeFileOpen(object):
             if self.filesystem.is_windows_fs:
                 raise OSError(errno.EPERM, 'Fake file object: is a directory', file_path)
             else:
-                raise IOError(errno.EISDIR, 'Fake file object: is a directory', file_path)
+                raise error_class(errno.EISDIR, 'Fake file object: is a directory', file_path)
 
         # if you print obj.name, the argument to open() must be printed. Not the
         # abspath, not the filename, but the actual argument.
