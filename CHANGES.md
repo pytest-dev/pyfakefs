@@ -17,11 +17,8 @@ The release versions are PyPi releases.
   * Remove most of `fake_filesystem_shutil` implementation, relying on the patched `os` module instead ([#194](../../issues/194)).
 
 #### Fixes
-  * Renaming file to a hard link of itself did remove the destination ([#227](../../issues/227)).
-  * Recursive rename was not prevented and caused invalid state ([#216](../../issues/216)).
+  * Fake `rename` did not behave like `os.rename` ([#217](../../issues/217), [#224](../../issues/224), [#216](../../issues/216), [#227](../../issues/227), [#232](../../issues/232))
   * `os.rmdir` failed with symlink ([#226](../../issues/226)).
-  * Renaming with a target that has a regular file as parent raised incorrect exception ([#224](../../issues/224)).
-  * Renaming a directory to an existing directory was not possible (Posix only, [#217](../../issues/217)).
   * A non-existing file that has the same as the content of the parent object was seen as existent ([#219](../../issues/219)).
   * Incorrect handling of symlinks in `os.path.size` and other functions ([#210](../../issues/210)).
   * Failed to create directory with symlink as parent ([#215](../../issues/215)).

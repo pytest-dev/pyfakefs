@@ -1827,6 +1827,7 @@ class FakeFilesystem(object):
             OSError: if old_file_path does not exist.
             OSError: if new_file_path is an existing directory
                 (Windows, or Posix if old_file_path points to a regular file)
+            OSError: if old_file_path is a directory and new_file_path a file
             OSError: if new_file_path is an existing file and force_replace not set
                 (Windows only).
             OSError: if new_file_path is an existing file and could not be removed
@@ -1855,7 +1856,6 @@ class FakeFilesystem(object):
                     # hard links to the same file - nothing to do
                     return
 
-            # if old_obj.contents
             elif stat.S_ISDIR(new_object.st_mode):
                 if self.is_windows_fs:
                     if force_replace:
@@ -1873,6 +1873,10 @@ class FakeFilesystem(object):
                 if not stat.S_ISDIR(old_object.st_mode):
                         raise OSError(errno.EISDIR,
                                       'Fake filesystem object: cannot rename file to directory',
+                                      new_file_path)
+            elif stat.S_ISDIR(old_object.st_mode):
+                        raise OSError(errno.ENOTDIR,
+                                      'Fake filesystem object: cannot rename directory to file',
                                       new_file_path)
             elif self.is_windows_fs and not force_replace:
                 raise OSError(errno.EEXIST,

@@ -1221,6 +1221,14 @@ class FakeOsModuleTest(FakeOsModuleTestBase):
                 'test', self.filesystem.GetObject('%s/plugh' % new_path).contents)
             self.assertEqual(1, self.filesystem.GetObject(new_path).st_nlink)
 
+    def testRenameDirectoryToExistingFileRaises(self):
+        base_path = '/foo/bar'
+        dir_path = base_path + "/dir"
+        file_path = base_path + "/file"
+        self.filesystem.CreateDirectory(dir_path)
+        self.filesystem.CreateFile(file_path)
+        self.assertRaisesOSError(errno.ENOTDIR, self.os.rename, dir_path, file_path)
+
     def testRenameToExistingDirectoryShouldRaiseUnderWindows(self):
         """Renaming to an existing directory raises OSError under Windows."""
         self.filesystem.is_windows_fs = True
