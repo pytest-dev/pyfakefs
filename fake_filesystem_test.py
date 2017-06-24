@@ -1371,6 +1371,19 @@ class FakeOsModuleTest(FakeOsModuleTestBase):
         self.assertFalse(self.filesystem.Exists(before_dir))
         self.assertTrue(self.filesystem.Exists('%s/.' % after_dir))
 
+    def testRenameSymlink(self):
+        self.filesystem.is_windows_fs = False
+        base_path = '/foo/bar/'
+        link_path = base_path + "/link"
+        self.os.symlink(base_path, link_path)
+        file_path = link_path + "/file"
+        new_file_path = link_path + "/new"
+        self.filesystem.CreateFile(file_path)
+        self.os.rename(file_path, new_file_path)
+        self.assertFalse(self.filesystem.Exists(file_path))
+        self.assertTrue(self.filesystem.Exists(new_file_path))
+
+
     def testRenameDir(self):
         """Test a rename of a directory."""
         directory = 'xyzzy'

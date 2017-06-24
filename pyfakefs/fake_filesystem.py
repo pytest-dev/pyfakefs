@@ -1842,7 +1842,7 @@ class FakeFilesystem(object):
                           'Fake filesystem object: can not rename nonexistent file',
                           old_file_path)
 
-        old_object = self.GetObject(old_file_path)
+        old_object = self.ResolveObject(old_file_path)
         if self.Exists(new_file_path):
             if old_file_path == new_file_path:
                 return  # Nothing to do here.
