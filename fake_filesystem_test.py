@@ -1195,6 +1195,16 @@ class FakeOsModuleTest(FakeOsModuleTestBase):
         self.filesystem.CreateFile(file_path)
         self.assertRaisesOSError(errno.EACCES, self.os.rename, file_path, file_path + '/new')
 
+    def testRenameSymlinkToSource(self):
+        self.filesystem.is_windows_fs = False
+        base_path = "/foo"
+        link_path = base_path + "/slink"
+        file_path = base_path + "/file"
+        self.filesystem.CreateFile(file_path)
+        self.os.symlink(file_path, link_path)
+        self.os.rename(link_path, file_path)
+        self.assertFalse(self.os.path.exists(file_path))
+
     def testChangeCaseInCaseInsensitiveFileSystem(self):
         """Can use `rename()` to change filename case in a case-insensitive file system."""
         self.filesystem.is_case_sensitive = False
