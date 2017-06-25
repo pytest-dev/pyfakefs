@@ -136,7 +136,13 @@ if sys.version_info >= (3, 3):
     _OPEN_MODE_MAP['x'] = (False, False, True, False, False, True)
     _OPEN_MODE_MAP['x+'] = (False, True, True, False, False, True)
 
-_MAX_LINK_DEPTH = 20
+if sys.platform.startswith('linux'):
+    # on newer Linux system, the default maximum recursion depth is 40
+    # we ignore older systems here
+    _MAX_LINK_DEPTH = 40
+else:
+    # on MacOS and Windows, the maximum recursion depth is 32
+    _MAX_LINK_DEPTH = 32
 
 FAKE_PATH_MODULE_DEPRECATION = ('Do not instantiate a FakePathModule directly; '
                                 'let FakeOsModule instantiate it.  See the '
