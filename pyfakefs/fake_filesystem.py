@@ -131,10 +131,9 @@ _OPEN_MODE_MAP = {
     'a+': (False, True, True, False, True, False),
     'w!': (False, False, True, False, False, False),
     'w!+': (False, True, True, False, False, False),
+    'x': (False, False, True, False, False, True),
+    'x+': (False, True, True, False, False, True),
 }
-if sys.version_info >= (3, 3):
-    _OPEN_MODE_MAP['x'] = (False, False, True, False, False, True)
-    _OPEN_MODE_MAP['x+'] = (False, True, True, False, False, True)
 
 if sys.platform.startswith('linux'):
     # on newer Linux system, the default maximum recursion depth is 40
@@ -3190,7 +3189,12 @@ class FakeOsModule(object):
 
         # low level open is always binary
         str_flags += 'b'
-        fake_file = FakeFileOpen(self.filesystem, low_level=True)(file_path, str_flags)
+        delete_on_close = False
+        if hasattr(os, 'O_TEMPORARY'):
+            delete_on_close = flags & os.O_TEMPORARY == os.O_TEMPORARY
+        fake_file = FakeFileOpen(self.filesystem,
+                                 delete_on_close=delete_on_close,
+                                 low_level=True)(file_path, str_flags)
         if mode:
             self.chmod(file_path, mode)
         return fake_file.fileno()
@@ -4026,7 +4030,7 @@ class FakeFileWrapper(object):
         if delete_on_close:
             assert filesystem, 'delete_on_close=True requires filesystem'
         self._filesystem = filesystem
-        self._delete_on_close = delete_on_close
+        self.delete_on_close = delete_on_close
         # override, don't modify FakeFile.name, as FakeFilesystem expects
         # it to be the file name only, no directories.
         self.name = file_object.opened_as
@@ -4061,8 +4065,8 @@ class FakeFileWrapper(object):
             self._file_object.SetContents(self._io.getvalue(), self._encoding)
         if self._closefd:
             self._filesystem.CloseOpenFile(self.filedes)
-        if self._delete_on_close:
-            self._filesystem.RemoveObject(self.name)
+        if self.delete_on_close:
+            self._filesystem.RemoveObject(self.GetObject().GetPath())
 
     def flush(self):
         """Flush file contents to 'disk'."""
@@ -4323,6 +4327,8 @@ class FakeFileOpen(object):
 
         if mode not in _OPEN_MODE_MAP:
             raise ValueError('Invalid mode: %r' % orig_modes)
+        if 'x' in mode and not self.low_level and sys.version_info < (3, 3):
+            raise ValueError('Exclusive mode not supported before Python 3.3')
 
         must_exist, need_read, need_write, truncate, append, must_not_exist = _OPEN_MODE_MAP[mode]
 
@@ -4331,6 +4337,8 @@ class FakeFileOpen(object):
         # opening a file descriptor
         if isinstance(file_, int):
             filedes = file_
+            wrapper = self.filesystem.GetOpenFile(filedes)
+            self._delete_on_close = wrapper.delete_on_close
             file_object = self.filesystem.GetOpenFile(filedes).GetObject()
             file_path = file_object.name
         else:

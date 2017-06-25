@@ -17,8 +17,7 @@
 for unit tests using the :py:class:`pyfakefs` module.
 
 `fake_filesystem_unittest.TestCase` searches `sys.modules` for modules
-that import the `os`, `io`, `path` `shutil`, `pathlib`, and `tempfile`
-modules.
+that import the `os`, `io`, `path` `shutil`, and `pathlib` modules.
 
 The `setUpPyfakefs()` method binds these modules to the corresponding fake
 modules from `pyfakefs`.  Further, the `open()` built-in is bound to a fake
@@ -42,10 +41,12 @@ import os
 import sys
 import doctest
 import inspect
+import tempfile
+
+import shutil
 
 from pyfakefs import fake_filesystem
 from pyfakefs import fake_filesystem_shutil
-from pyfakefs import fake_tempfile
 from pyfakefs import mox3_stubout
 
 if sys.version_info >= (3, 4):
@@ -172,10 +173,10 @@ class TestCase(unittest.TestCase):
         """
         if fake_file_path is not None and real_file_path != fake_file_path:
             raise ValueError("CopyRealFile() is deprecated and no longer supports "
-                                "different real and fake file paths") 
+                             "different real and fake file paths")
         if not create_missing_dirs:
             raise ValueError("CopyRealFile() is deprecated and no longer supports "
-                                "NOT creating missing directories")
+                             "NOT creating missing directories")
         return self._stubber.fs.add_real_file(real_file_path, read_only=False)
 
     def setUpPyfakefs(self):
@@ -186,8 +187,11 @@ class TestCase(unittest.TestCase):
         Invoke this at the beginning of the `setUp()` method in your unit test
         class.
         """
+        # create the temp dir in the fake file system to be able to use tempfile
+        temp_dir = tempfile.gettempdir()
         self._stubber.setUp()
         self.addCleanup(self._stubber.tearDown)
+        self.fs.CreateDirectory(temp_dir)
 
     def tearDownPyfakefs(self):
         """This method is deprecated and exists only for backward compatibility.
@@ -209,8 +213,7 @@ class Patcher(object):
         with Patcher():
             doStuff()
     """
-    SKIPMODULES = set([None, fake_filesystem, fake_filesystem_shutil,
-                       fake_tempfile, sys])
+    SKIPMODULES = set([None, fake_filesystem, fake_filesystem_shutil, sys])
     '''Stub nothing that is imported within these modules.
     `sys` is included to prevent `sys.path` from being stubbed with the fake
     `os.path`.
@@ -218,10 +221,11 @@ class Patcher(object):
     assert None in SKIPMODULES, "sys.modules contains 'None' values; must skip them."
 
     HAS_PATHLIB = sys.version_info >= (3, 4)
+    IS_WINDOWS = sys.platform in ('win32', 'cygwin')
 
     # To add py.test support per issue https://github.com/jmcgeheeiv/pyfakefs/issues/43,
     # it appears that adding  'py', 'pytest', '_pytest' to SKIPNAMES will help
-    SKIPNAMES = set(['os', 'path', 'tempfile', 'io', 'genericpath'])
+    SKIPNAMES = set(['os', 'path', 'io', 'genericpath'])
     if HAS_PATHLIB:
         SKIPNAMES.add('pathlib')
 
@@ -230,6 +234,8 @@ class Patcher(object):
 
         self._skipNames = self.SKIPNAMES.copy()
         self._special_names = special_names or {}
+        self._special_names['tempfile'] = {'os': '_os', 'io': '_io'}
+
         if additional_skip_names is not None:
             self._skipNames.update(additional_skip_names)
         self._patchPath = patch_path
@@ -243,7 +249,6 @@ class Patcher(object):
         if self.HAS_PATHLIB:
             self._pathlib_modules = None
         self._shutil_modules = None
-        self._tempfile_modules = None
         self._io_modules = None
         self._findModules()
         assert None not in vars(self).values(), \
@@ -257,7 +262,6 @@ class Patcher(object):
         if self.HAS_PATHLIB:
             self.fake_pathlib = None
         self.fake_shutil = None
-        self.fake_tempfile_ = None
         self.fake_open = None
         self.fake_io = None
         # _isStale is set by tearDown(), reset by _refresh()
@@ -286,7 +290,6 @@ class Patcher(object):
         if self.HAS_PATHLIB:
             self._pathlib_modules = set()
         self._shutil_modules = set()
-        self._tempfile_modules = set()
         self._io_modules = set()
         for name, module in set(sys.modules.items()):
             if (module in self.SKIPMODULES or
@@ -305,20 +308,22 @@ class Patcher(object):
                 self._pathlib_modules.add((module, 'pathlib'))
             if inspect.ismodule(module.__dict__.get('shutil')):
                 self._shutil_modules.add((module, 'shutil'))
-            if inspect.ismodule(module.__dict__.get('tempfile')):
-                self._tempfile_modules.add((module, 'tempfile'))
             if inspect.ismodule(module.__dict__.get('io')):
                 self._io_modules.add((module, 'io'))
             if '__name__' in module.__dict__ and module.__name__ in self._special_names:
                 module_names = self._special_names[module.__name__]
                 if 'os' in module_names:
-                    self._os_modules.add((module, module_names['os']))
+                    if inspect.ismodule(module.__dict__.get(module_names['os'])):
+                        self._os_modules.add((module, module_names['os']))
                 if self._patchPath and 'path' in module_names:
-                    self._path_modules.add((module, module_names['path']))
+                    if inspect.ismodule(module.__dict__.get(module_names['path'])):
+                        self._path_modules.add((module, module_names['path']))
                 if self.HAS_PATHLIB and 'pathlib' in module_names:
-                    self._pathlib_modules.add((module, module_names['pathlib']))
+                    if inspect.ismodule(module.__dict__.get(module_names['pathlib'])):
+                        self._pathlib_modules.add((module, module_names['pathlib']))
                 if 'io' in module_names:
-                    self._io_modules.add((module, module_names['io']))
+                    if inspect.ismodule(module.__dict__.get(module_names['io'])):
+                        self._io_modules.add((module, module_names['io']))
 
     def _refresh(self):
         """Renew the fake file system and set the _isStale flag to `False`."""
@@ -332,11 +337,30 @@ class Patcher(object):
         if self.HAS_PATHLIB:
             self.fake_pathlib = fake_pathlib.FakePathlibModule(self.fs)
         self.fake_shutil = fake_filesystem_shutil.FakeShutilModule(self.fs)
-        self.fake_tempfile_ = fake_tempfile.FakeTempfileModule(self.fs)
         self.fake_open = fake_filesystem.FakeFileOpen(self.fs)
         self.fake_io = fake_filesystem.FakeIoModule(self.fs)
 
+        if not self.IS_WINDOWS and 'tempfile' in sys.modules:
+            self._patch_tempfile()
+
         self._isStale = False
+
+    def _patch_tempfile(self):
+        """Hack to work around cached `os` functions in `tempfile`.
+         Shall be replaced by a more generic mechanism.
+        """
+        if 'unlink' in tempfile._TemporaryFileWrapper.__dict__:
+            # Python 2.6 to 3.2: unlink is a class method of _TemporaryFileWrapper
+            tempfile._TemporaryFileWrapper.unlink = self.fake_os.unlink
+
+            #  Python 3.0 to 3.2 (and PyPy3 based on Python 3.2):
+            # `TemporaryDirectory._rmtree` is used instead of `shutil.rmtree`
+            # which uses several cached os functions - replace it with `shutil.rmtree`
+            if 'TemporaryDirectory' in tempfile.__dict__:
+                tempfile.TemporaryDirectory._rmtree = lambda o, path: shutil.rmtree(path)
+        else:
+            # Python > 3.2 - unlink is a default parameter of _TemporaryFileCloser
+            tempfile._TemporaryFileCloser.close.__defaults__ = (self.fake_os.unlink,)
 
     def setUp(self, doctester=None):
         """Bind the file-related modules to the :py:mod:`pyfakefs` fake
@@ -361,8 +385,6 @@ class Patcher(object):
                 self._stubs.SmartSet(module, attr, self.fake_pathlib)
         for module, attr in self._shutil_modules:
             self._stubs.SmartSet(module, attr, self.fake_shutil)
-        for module, attr in self._tempfile_modules:
-            self._stubs.SmartSet(module, attr, self.fake_tempfile_)
         for module, attr in self._io_modules:
             self._stubs.SmartSet(module, attr, self.fake_io)
 
@@ -378,8 +400,6 @@ class Patcher(object):
             globs['path'] = fake_os.path
         if 'shutil' in globs:
             globs['shutil'] = fake_filesystem_shutil.FakeShutilModule(self.fs)
-        if 'tempfile' in globs:
-            globs['tempfile'] = fake_tempfile.FakeTempfileModule(self.fs)
         if 'io' in globs:
             globs['io'] = fake_filesystem.FakeIoModule(self.fs)
         return globs

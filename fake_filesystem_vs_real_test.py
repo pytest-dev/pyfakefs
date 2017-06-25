@@ -21,7 +21,6 @@
 import os  # @UnusedImport
 import os.path
 import shutil
-import sys
 import tempfile
 import time
 import sys

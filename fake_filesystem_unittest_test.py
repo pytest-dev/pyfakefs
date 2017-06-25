@@ -23,7 +23,6 @@ import io
 import os
 import glob
 import shutil
-import tempfile
 import sys
 
 from import_as_example import check_if_exists
@@ -115,20 +114,6 @@ class TestPyfakefsUnittest(TestPyfakefsUnittestBase):  # pylint: disable=R0904
         shutil.rmtree('/test/dir1')
         self.assertFalse(self.fs.Exists('/test/dir1'))
 
-    def test_tempfile(self):
-        """Fake tempfile module is bound"""
-        with tempfile.NamedTemporaryFile() as tf:
-            tf.write(b'Temporary file contents\n')
-            name = tf.name
-            self.assertTrue(self.fs.Exists(tf.name))
-
-    @unittest.skipIf(sys.version_info < (3, 0), "TemporaryDirectory new in Python3")
-    def test_tempdirectory(self):
-        """Fake TemporaryDirectory class is bound"""
-        with tempfile.TemporaryDirectory() as td:
-            with open('%s/fake_file.txt' % td, 'w') as f:
-                self.assertTrue(self.fs.Exists(td))
-
     @unittest.skipIf(sys.version_info < (3, 4), "pathlib new in Python 3.4")
     def test_fakepathlib(self):
         with pathlib.Path('/fake_file.txt') as p:
@@ -174,7 +159,6 @@ class TestAttributesWithFakeModuleNames(TestPyfakefsUnittestBase):
         self.assertEqual(module_with_attributes.path, 'path attribute value')
         self.assertEqual(module_with_attributes.pathlib, 'pathlib attribute value')
         self.assertEqual(module_with_attributes.shutil, 'shutil attribute value')
-        self.assertEqual(module_with_attributes.tempfile, 'tempfile attribute value')
         self.assertEqual(module_with_attributes.io, 'io attribute value')
 
 
@@ -226,9 +210,9 @@ class TestCopyOrAddRealFile(TestPyfakefsUnittestBase):
         real_file_path = __file__
         fake_file = self.copyRealFile(real_file_path)
 
-        self.assertTrue('class TestCopyRealFile(TestPyfakefsUnittestBase)' in self.real_string_contents,
+        self.assertTrue('class TestCopyOrAddRealFile(TestPyfakefsUnittestBase)' in self.real_string_contents,
                         'Verify real file string contents')
-        self.assertTrue(b'class TestCopyRealFile(TestPyfakefsUnittestBase)' in self.real_byte_contents,
+        self.assertTrue(b'class TestCopyOrAddRealFile(TestPyfakefsUnittestBase)' in self.real_byte_contents,
                         'Verify real file byte contents')
 
         # note that real_string_contents may differ to fake_file.contents due to newline conversions in open()

@@ -2571,6 +2571,14 @@ class FakeOsModuleLowLevelFileOpTest(FakeOsModuleTestBase):
         self.assertEqual(4, self.os.write(file_des, b'test'))
         self.assertEqual(b'test', file_obj.byte_contents)
 
+    @unittest.skipIf(not TestCase.is_windows, 'O_TEMPORARY only present in Windows')
+    def testLowLevelTempFile(self):
+        file_name = 'foo'
+        fd = self.os.open(file_name, os.O_CREAT | os.O_RDWR | os.O_TEMPORARY)
+        self.assertTrue(self.filesystem.Exists(file_name))
+        self.os.close(fd)
+        self.assertFalse(self.filesystem.Exists(file_name))
+
     def testLowLevelOpenAppend(self):
         file_path = 'file1'
         file_obj = self.filesystem.CreateFile(file_path, contents=b'contents',
@@ -5278,7 +5286,7 @@ class RealFileSystemAccessTest(TestCase):
         self.assertTrue(self.filesystem.Exists(os.path.join(real_dir_path, 'fake_filesystem.py')))
         self.assertTrue(self.filesystem.Exists(os.path.join(real_dir_path, 'fake_pathlib.py')))
 
-        file_path = os.path.join(real_dir_path, 'fake_tempfile.py')
+        file_path = os.path.join(real_dir_path, 'fake_filesystem_shutil.py')
         fake_file = self.filesystem.ResolveObject(file_path)
         self.checkFakeFileStat(fake_file, file_path)
         self.checkReadOnlyFile(fake_file, file_path)
