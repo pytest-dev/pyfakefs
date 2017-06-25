@@ -26,6 +26,8 @@ import shutil
 import tempfile
 import sys
 
+from import_as_example import check_if_exists
+
 if sys.version_info >= (3, 4):
     import pathlib
 
@@ -139,6 +141,22 @@ class TestPyfakefsUnittest(TestPyfakefsUnittestBase):  # pylint: disable=R0904
             self.assertTrue(self.fs.Exists('/fake_file.txt'))
 
 
+class TestImportAsOtherName(fake_filesystem_unittest.TestCase):
+    def __init__(self, methodName='RunTest'):
+        special_names = {'import_as_example': {'os': '_os'}}
+        super(TestImportAsOtherName, self).__init__(methodName,
+                                                    special_names=special_names)
+
+    def setUp(self):
+        self.setUpPyfakefs()
+
+    def testFileExists(self):
+        file_path = '/foo/bar/baz'
+        self.fs.CreateFile(file_path)
+        self.assertTrue(self.fs.Exists(file_path))
+        self.assertTrue(check_if_exists(file_path))
+
+
 sys.path.append(os.path.join(os.path.dirname(__file__), 'fixtures'))
 import module_with_attributes
 
@@ -161,6 +179,8 @@ class TestAttributesWithFakeModuleNames(TestPyfakefsUnittestBase):
 
 
 import math as path
+
+
 class TestPatchPathUnittestFailing(TestPyfakefsUnittestBase):
     """Tests the default behavior regarding the argument patch_path:
        An own path module (in this case an alias to math) cannot be imported,

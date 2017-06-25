@@ -63,7 +63,8 @@ else:
 
 
 def load_doctests(loader, tests, ignore, module,
-                  additional_skip_names=None, patch_path=True):  # pylint: disable=unused-argument
+                  additional_skip_names=None,
+                  patch_path=True, special_names=None):  # pylint: disable=unused-argument
     """Load the doctest tests for the specified module into unittest.
         Args:
             loader, tests, ignore : arguments passed in from `load_tests()`
@@ -74,7 +75,7 @@ def load_doctests(loader, tests, ignore, module,
     File `example_test.py` in the pyfakefs release provides a usage example.
     """
     _patcher = Patcher(additional_skip_names=additional_skip_names,
-                       patch_path=patch_path)
+                       patch_path=patch_path, special_names=special_names)
     globs = _patcher.replaceGlobs(vars(module))
     tests.addTests(doctest.DocTestSuite(module,
                                         globs=globs,
@@ -88,7 +89,8 @@ class TestCase(unittest.TestCase):
     modules by fake implementations.
     """
 
-    def __init__(self, methodName='runTest', additional_skip_names=None, patch_path=True):
+    def __init__(self, methodName='runTest', additional_skip_names=None,
+                 patch_path=True, special_names=None):
         """Creates the test class instance and the stubber used to stub out
         file system related modules.
 
@@ -103,21 +105,34 @@ class TestCase(unittest.TestCase):
                         from my_module import path
                 Irrespective of patch_path, module 'os.path' is still correctly faked
                 if imported the usual way using `import os` or `import os.path`.
+            special_names: A dictionary with module names as key and a dictionary as
+                value, where the key is the original name of the module to be patched,
+                and the value is the name as it is imported.
+                This allows to patch modules where some of the file system modules are
+                imported as another name (e.g. `import os as _os`).
 
         If you specify arguments `additional_skip_names` or `patch_path` here
         and you have DocTests, consider also specifying the same arguments to
         :py:func:`load_doctests`.
         
-        Example usage in a derived test class::
+        Example usage in derived test classes::
 
-          class MyTestCase(fake_filesystem_unittest.TestCase):
-            def __init__(self, methodName='runTest'):
-              super(MyTestCase, self).__init__(
-                    methodName=methodName, additional_skip_names=['posixpath'])
+            class MyTestCase(fake_filesystem_unittest.TestCase):
+                def __init__(self, methodName='runTest'):
+                    super(MyTestCase, self).__init__(
+                        methodName=methodName, additional_skip_names=['posixpath'])
+
+
+            class AnotherTestCase(fake_filesystem_unittest.TestCase):
+                def __init__(self, methodName='runTest'):
+                    # allow patching a module that imports `os` as `my_os`
+                    special_names = {'amodule': {'os': 'my_os'}}
+                    super(MyTestCase, self).__init__(
+                        methodName=methodName, special_names=special_names)
         """
         super(TestCase, self).__init__(methodName)
         self._stubber = Patcher(additional_skip_names=additional_skip_names,
-                                patch_path=patch_path)
+                                patch_path=patch_path, special_names=special_names)
 
     @property
     def fs(self):
@@ -210,10 +225,11 @@ class Patcher(object):
     if HAS_PATHLIB:
         SKIPNAMES.add('pathlib')
 
-    def __init__(self, additional_skip_names=None, patch_path=True):
+    def __init__(self, additional_skip_names=None, patch_path=True, special_names=None):
         """For a description of the arguments, see TestCase.__init__"""
 
         self._skipNames = self.SKIPNAMES.copy()
+        self._special_names = special_names or {}
         if additional_skip_names is not None:
             self._skipNames.update(additional_skip_names)
         self._patchPath = patch_path
@@ -282,17 +298,28 @@ class Patcher(object):
             # and a test in fake_filesystem_unittest_test.py, class
             # TestAttributesWithFakeModuleNames.
             if inspect.ismodule(module.__dict__.get('os')):
-                self._os_modules.add(module)
+                self._os_modules.add((module, 'os'))
             if self._patchPath and inspect.ismodule(module.__dict__.get('path')):
-                self._path_modules.add(module)
+                self._path_modules.add((module, 'path'))
             if self.HAS_PATHLIB and inspect.ismodule(module.__dict__.get('pathlib')):
-                self._pathlib_modules.add(module)
+                self._pathlib_modules.add((module, 'pathlib'))
             if inspect.ismodule(module.__dict__.get('shutil')):
-                self._shutil_modules.add(module)
+                self._shutil_modules.add((module, 'shutil'))
             if inspect.ismodule(module.__dict__.get('tempfile')):
-                self._tempfile_modules.add(module)
+                self._tempfile_modules.add((module, 'tempfile'))
             if inspect.ismodule(module.__dict__.get('io')):
-                self._io_modules.add(module)
+                self._io_modules.add((module, 'io'))
+            print(module, type(module))
+            if '__name__' in module.__dict__ and module.__name__ in self._special_names:
+                module_names = self._special_names[module.__name__]
+                if 'os' in module_names:
+                    self._os_modules.add((module, module_names['os']))
+                if self._patchPath and 'path' in module_names:
+                    self._path_modules.add((module, module_names['path']))
+                if self.HAS_PATHLIB and 'pathlib' in module_names:
+                    self._pathlib_modules.add((module, module_names['pathlib']))
+                if 'io' in module_names:
+                    self._io_modules.add((module, module_names['io']))
 
     def _refresh(self):
         """Renew the fake file system and set the _isStale flag to `False`."""
@@ -326,19 +353,19 @@ class Patcher(object):
             self._stubs.SmartSet(builtins, 'file', self.fake_open)
         self._stubs.SmartSet(builtins, 'open', self.fake_open)
 
-        for module in self._os_modules:
-            self._stubs.SmartSet(module, 'os', self.fake_os)
-        for module in self._path_modules:
-            self._stubs.SmartSet(module, 'path', self.fake_path)
+        for module, attr in self._os_modules:
+            self._stubs.SmartSet(module, attr, self.fake_os)
+        for module, attr in self._path_modules:
+            self._stubs.SmartSet(module, attr, self.fake_path)
         if self.HAS_PATHLIB:
-            for module in self._pathlib_modules:
-                self._stubs.SmartSet(module, 'pathlib', self.fake_pathlib)
-        for module in self._shutil_modules:
-            self._stubs.SmartSet(module, 'shutil', self.fake_shutil)
-        for module in self._tempfile_modules:
-            self._stubs.SmartSet(module, 'tempfile', self.fake_tempfile_)
-        for module in self._io_modules:
-            self._stubs.SmartSet(module, 'io', self.fake_io)
+            for module, attr in self._pathlib_modules:
+                self._stubs.SmartSet(module, attr, self.fake_pathlib)
+        for module, attr in self._shutil_modules:
+            self._stubs.SmartSet(module, attr, self.fake_shutil)
+        for module, attr in self._tempfile_modules:
+            self._stubs.SmartSet(module, attr, self.fake_tempfile_)
+        for module, attr in self._io_modules:
+            self._stubs.SmartSet(module, attr, self.fake_io)
 
     def replaceGlobs(self, globs_):
         globs = globs_.copy()
