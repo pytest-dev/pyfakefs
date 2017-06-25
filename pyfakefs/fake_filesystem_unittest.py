@@ -309,7 +309,6 @@ class Patcher(object):
                 self._tempfile_modules.add((module, 'tempfile'))
             if inspect.ismodule(module.__dict__.get('io')):
                 self._io_modules.add((module, 'io'))
-            print(module, type(module))
             if '__name__' in module.__dict__ and module.__name__ in self._special_names:
                 module_names = self._special_names[module.__name__]
                 if 'os' in module_names:
