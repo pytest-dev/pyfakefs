@@ -19,7 +19,7 @@ The release versions are PyPi releases.
   * Remove most of `fake_filesystem_shutil` implementation, relying on the patched `os` module instead ([#194](../../issues/194)).
 
 #### Fixes
-  * Incorrect behavior of low-level IO operations ([#235](../../issues/235), [#237](../../issues/237))
+  * Incorrect behavior of low-level IO operations ([#235](../../issues/235), [#237](../../issues/237), [#238](../../issues/238))
   * Fake `rename` did not behave like `os.rename` ([#217](../../issues/217), [#224](../../issues/224), [#216](../../issues/216), [#227](../../issues/227), [#232](../../issues/232), [#233](../../issues/233), [#239](../../issues/239))
   * Symlinks have not been considered in several functions ([#215](../../issues/215), [#210](../../issues/210), [#226](../../issues/226), [#234](../../issues/234))
   * A non-existing file that has the same as the content of the parent object was seen as existent ([#219](../../issues/219)).

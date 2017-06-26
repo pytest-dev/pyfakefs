@@ -1999,7 +1999,7 @@ class FakeFilesystem(object):
 
     def CreateFile(self, file_path, st_mode=stat.S_IFREG | PERM_DEF_FILE,
                    contents='', st_size=None, create_missing_dirs=True,
-                   apply_umask=False, encoding=None, errors=None):
+                   apply_umask=False, encoding=None, errors=None, low_level=False):
         """Create file_path, including all the parent directories along the way.
 
         This helper method can be used to set up tests more easily.
@@ -2015,6 +2015,7 @@ class FakeFilesystem(object):
                 New in pyfakefs 2.9.
             errors: the error mode used for encoding/decoding errors
                 New in pyfakefs 3.2.
+            low_level: `True` if called from low-level API (`os.open`)
 
         Returns:
             the newly created FakeFile object.
@@ -2024,7 +2025,8 @@ class FakeFilesystem(object):
             IOError: if the containing directory is required and missing.
         """
         return self._CreateFile(
-            file_path, st_mode, contents, st_size, create_missing_dirs, apply_umask, encoding, errors)
+            file_path, st_mode, contents, st_size, create_missing_dirs,
+            apply_umask, encoding, errors, low_level=low_level)
 
     def add_real_file(self, file_path, read_only=True):
         """Create file_path, including all the parent directories along the way, for an existing
@@ -2126,7 +2128,7 @@ class FakeFilesystem(object):
     def _CreateFile(self, file_path, st_mode=stat.S_IFREG | PERM_DEF_FILE,
                     contents='', st_size=None, create_missing_dirs=True,
                     apply_umask=False, encoding=None, errors=None,
-                    read_from_real_fs=False, read_only=True):
+                    read_from_real_fs=False, read_only=True, low_level=False):
         """Internal fake file creator that supports both normal fake files and fake
         files based on real files.
 
@@ -2142,19 +2144,21 @@ class FakeFilesystem(object):
             read_from_real_fs: if True, the contents are reaf from the real file system on demand.
             read_only: if set, the file is treated as read-only, e.g. a write access raises an exception;
                 otherwise, writing to the file changes the fake file only as usually.
+            low_level: `True` if called from low-level API (`os.open`)
         """
+        error_class = OSError if low_level else IOError
         file_path = self.NormalizePath(file_path)
         if self.Exists(file_path):
-            raise IOError(errno.EEXIST,
-                          'File already exists in fake filesystem',
-                          file_path)
+            raise error_class(errno.EEXIST,
+                              'File already exists in fake filesystem',
+                              file_path)
         parent_directory, new_file = self.SplitPath(file_path)
         if not parent_directory:
             parent_directory = self.cwd
         self._AutoMountDriveIfNeeded(parent_directory)
         if not self.Exists(parent_directory):
             if not create_missing_dirs:
-                raise IOError(errno.ENOENT, 'No such fake directory', parent_directory)
+                raise error_class(errno.ENOENT, 'No such fake directory', parent_directory)
             self.CreateDirectory(parent_directory)
         else:
             parent_directory = self.NormalizeCase(parent_directory)
@@ -4336,7 +4340,7 @@ class FakeFileOpen(object):
             if must_exist:
                 raise error_class(errno.ENOENT, 'No such file or directory', file_path)
             file_object = self.filesystem.CreateFile(
-                real_path, create_missing_dirs=False, apply_umask=True)
+                real_path, create_missing_dirs=False, apply_umask=True, low_level=self.low_level)
 
         if stat.S_ISDIR(file_object.st_mode):
             if self.filesystem.is_windows_fs:

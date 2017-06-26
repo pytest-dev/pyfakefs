@@ -2644,6 +2644,13 @@ class FakeOsModuleLowLevelFileOpTest(FakeOsModuleTestBase):
         self.assertRaisesOSError(errno.ENOENT, self.os.open, file_path, os.O_WRONLY)
         self.assertRaisesOSError(errno.ENOENT, self.os.open, file_path, os.O_RDWR)
 
+    def LowLevelOpenRaisesIfParentDoesNotExist(self):
+        base_path = '/foo/bar'
+        self.filesystem.CreateDirectory(base_path)
+        path1 = base_path + '/alpha/alpha'
+        self.assertRaisesOSError(errno.ENOENT, self.os.open, path1,
+                                 os.O_CREAT | os.O_WRONLY | os.O_TRUNC)
+
     def testLowLevelOpenTruncate(self):
         file_path = 'file1'
         file_obj = self.filesystem.CreateFile(file_path, contents=b'contents',
