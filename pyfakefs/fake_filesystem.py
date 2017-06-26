@@ -1660,7 +1660,6 @@ class FakeFilesystem(object):
                 # This link_depth check is not really meant to be an accurate check.
                 # It is just a quick hack to prevent us from looping forever on
                 # cycles.
-                link_depth += 1
                 if link_depth > _MAX_LINK_DEPTH:
                     raise OSError(errno.ELOOP,
                                   'Too many levels of symbolic links: \'%s\'' %
@@ -1673,6 +1672,7 @@ class FakeFilesystem(object):
                 path_components = target_components + path_components
                 resolved_components = []
                 current_dir = self.root
+                link_depth += 1
         return _ComponentsToPath(resolved_components)
 
     def GetObjectFromNormalizedPath(self, file_path):
