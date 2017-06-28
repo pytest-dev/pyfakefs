@@ -3395,30 +3395,32 @@ class FakeOsModule(object):
           subdirectories.  See the documentation for the builtin os module for
           further details.
         """
-        top = self.path.normpath(top)
-        if not followlinks and self.path.islink(top):
-            return
-        try:
-            top_contents = self._ClassifyDirectoryContents(top)
-        except OSError as exc:
-            top_contents = None
-            if onerror is not None:
-                onerror(exc)
+        def do_walk(top, topMost=False):
+            top = self.path.normpath(top)
+            if not topMost and not followlinks and self.path.islink(top):
+                return
+            try:
+                top_contents = self._ClassifyDirectoryContents(top)
+            except OSError as exc:
+                top_contents = None
+                if onerror is not None:
+                    onerror(exc)
 
-        if top_contents is not None:
-            if topdown:
-                yield top_contents
+            if top_contents is not None:
+                if topdown:
+                    yield top_contents
 
-            for directory in top_contents[1]:
-                if not followlinks and self.path.islink(directory):
-                    continue
-                for contents in self.walk(self.path.join(top, directory),
-                                          topdown=topdown, onerror=onerror,
-                                          followlinks=followlinks):
-                    yield contents
+                for directory in top_contents[1]:
+                    if not followlinks and self.path.islink(directory):
+                        continue
+                    for contents in do_walk(self.path.join(top, directory)):
+                        yield contents
 
-            if not topdown:
-                yield top_contents
+                if not topdown:
+                    yield top_contents
+
+        return do_walk(top, topMost=True)
+
 
     def readlink(self, path, dir_fd=None):
         """Read the target of a symlink.

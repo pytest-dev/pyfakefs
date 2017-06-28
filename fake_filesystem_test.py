@@ -1405,7 +1405,6 @@ class FakeOsModuleTest(FakeOsModuleTestBase):
         self.assertFalse(self.filesystem.Exists(file_path))
         self.assertTrue(self.filesystem.Exists(new_file_path))
 
-
     def testRenameDir(self):
         """Test a rename of a directory."""
         directory = 'xyzzy'
@@ -2036,60 +2035,6 @@ class FakeOsModuleTest(FakeOsModuleTestBase):
         self.assertEqual(False, self.filesystem.Exists(directory))
         self.assertRaisesOSError(errno.ENOENT, self.os._ClassifyDirectoryContents, directory)
 
-    def assertWalkResults(self, expected, result):
-        # as the result of walk is unsorted, we have to check against sorted results
-        result = sorted(result, key=lambda lst: lst[0])
-        expected = sorted(expected, key=lambda lst: lst[0])
-        self.assertEqual(len(expected), len(result))
-        for entry, expected_entry in zip(result, expected):
-            self.assertEqual(expected_entry[0], entry[0])
-            self.assertEqual(expected_entry[1], sorted(entry[1]))
-            self.assertEqual(expected_entry[2], sorted(entry[2]))
-
-    def testWalkTopDown(self):
-        """Walk down ordering is correct."""
-        self.filesystem.CreateFile('foo/1.txt')
-        self.filesystem.CreateFile('foo/bar1/2.txt')
-        self.filesystem.CreateFile('foo/bar1/baz/3.txt')
-        self.filesystem.CreateFile('foo/bar2/4.txt')
-        expected = [
-            ('foo', ['bar1', 'bar2'], ['1.txt']),
-            ('foo/bar1', ['baz'], ['2.txt']),
-            ('foo/bar1/baz', [], ['3.txt']),
-            ('foo/bar2', [], ['4.txt']),
-        ]
-        self.assertWalkResults(expected, [step for step in self.os.walk('foo')])
-
-    def testWalkBottomUp(self):
-        """Walk up ordering is correct."""
-        self.filesystem.CreateFile('foo/bar1/baz/1.txt')
-        self.filesystem.CreateFile('foo/bar1/2.txt')
-        self.filesystem.CreateFile('foo/bar2/3.txt')
-        self.filesystem.CreateFile('foo/4.txt')
-
-        expected = [
-            ('foo/bar1/baz', [], ['1.txt']),
-            ('foo/bar1', ['baz'], ['2.txt']),
-            ('foo/bar2', [], ['3.txt']),
-            ('foo', ['bar1', 'bar2'], ['4.txt']),
-        ]
-        self.assertWalkResults(expected,
-                               [step for step in self.os.walk('foo', topdown=False)])
-
-    def testWalkRaisesIfNonExistent(self):
-        """Raises an exception when attempting to walk non-existent directory."""
-        directory = '/foo/bar'
-        self.assertEqual(False, self.filesystem.Exists(directory))
-        generator = self.os.walk(directory)
-        self.assertRaises(StopIteration, next, generator)
-
-    def testWalkRaisesIfNotDirectory(self):
-        """Raises an exception when attempting to walk a non-directory."""
-        filename = '/foo/bar'
-        self.filesystem.CreateFile(filename)
-        generator = self.os.walk(filename)
-        self.assertRaises(StopIteration, next, generator)
-
     def testMkNodeCanCreateAFile(self):
         filename = 'foo'
         self.assertFalse(self.filesystem.Exists(filename))
@@ -2145,65 +2090,6 @@ class FakeOsModuleTest(FakeOsModuleTestBase):
         self.assertTrue(self.filesystem.Exists(filename1))
         filename2 = '/tmp/foo/bar'
         self.assertRaisesOSError(errno.ENOTDIR, self.os.mknod, filename2)
-
-    def ResetErrno(self):
-        """Reset the last seen errno."""
-        self.last_errno = False
-
-    def StoreErrno(self, os_error):
-        """Store the last errno we saw."""
-        self.last_errno = os_error.errno
-
-    def GetErrno(self):
-        """Return the last errno we saw."""
-        return self.last_errno
-
-    def testWalkCallsOnErrorIfNonExistent(self):
-        """Calls onerror with correct errno when walking non-existent directory."""
-        self.ResetErrno()
-        directory = '/foo/bar'
-        self.assertEqual(False, self.filesystem.Exists(directory))
-        # Calling os.walk on a non-existent directory should trigger a call to the
-        # onerror method.  We do not actually care what, if anything, is returned.
-        for unused_entry in self.os.walk(directory, onerror=self.StoreErrno):
-            pass
-        self.assertTrue(self.GetErrno() in (errno.ENOTDIR, errno.ENOENT))
-
-    def testWalkCallsOnErrorIfNotDirectory(self):
-        """Calls onerror with correct errno when walking non-directory."""
-        self.ResetErrno()
-        filename = '/foo/bar'
-        self.filesystem.CreateFile(filename)
-        self.assertEqual(True, self.filesystem.Exists(filename))
-        # Calling os.walk on a file should trigger a call to the onerror method.
-        # We do not actually care what, if anything, is returned.
-        for unused_entry in self.os.walk(filename, onerror=self.StoreErrno):
-            pass
-        self.assertTrue(self.GetErrno() in (errno.ENOTDIR, errno.EACCES))
-
-    def testWalkSkipsRemovedDirectories(self):
-        """Caller can modify list of directories to visit while walking."""
-        root = '/foo'
-        visit = 'visit'
-        no_visit = 'no_visit'
-        self.filesystem.CreateFile('%s/bar' % (root,))
-        self.filesystem.CreateFile('%s/%s/1.txt' % (root, visit))
-        self.filesystem.CreateFile('%s/%s/2.txt' % (root, visit))
-        self.filesystem.CreateFile('%s/%s/3.txt' % (root, no_visit))
-        self.filesystem.CreateFile('%s/%s/4.txt' % (root, no_visit))
-
-        generator = self.os.walk('/foo')
-        root_contents = next(generator)
-        root_contents[1].remove(no_visit)
-
-        visited_visit_directory = False
-
-        for root, unused_dirs, unused_files in iter(generator):
-            self.assertEqual(False, root.endswith('/%s' % (no_visit)))
-            if root.endswith('/%s' % (visit)):
-                visited_visit_directory = True
-
-        self.assertEqual(True, visited_visit_directory)
 
     @unittest.skipIf(TestCase.is_windows and sys.version_info < (3, 3),
                      'Links are not supported under Windows before Python 3.3')
@@ -2593,7 +2479,6 @@ class FakeOsModuleLowLevelFileOpTest(FakeOsModuleTestBase):
         self.filesystem.is_windows_fs = True
         self.assertEqual(0, self.os.write(file_des, b''))
 
-
     def testLowLevelOpenWriteOnly(self):
         file_path = 'file1'
         file_obj = self.filesystem.CreateFile(file_path, contents=b'contents',
@@ -2752,6 +2637,157 @@ class FakeOsModuleLowLevelFileOpTest(FakeOsModuleTestBase):
 
         self.assertRaisesOSError(errno.EBADF, self.os.write, fileno, new_contents)
         self.assertRaisesOSError(errno.EBADF, self.os.read, fileno, 10)
+
+
+class FakeOsModuleWalkTest(FakeOsModuleTestBase):
+    def assertWalkResults(self, expected, top, topdown=True, followlinks=False):
+        # as the result of walk is unsorted, we have to check against sorted results
+        result = [step for step in self.os.walk(
+            top, topdown=topdown, followlinks=followlinks)]
+        result = sorted(result, key=lambda lst: lst[0])
+        expected = sorted(expected, key=lambda lst: lst[0])
+        self.assertEqual(len(expected), len(result))
+        for entry, expected_entry in zip(result, expected):
+            self.assertEqual(expected_entry[0], entry[0])
+            self.assertEqual(expected_entry[1], sorted(entry[1]))
+            self.assertEqual(expected_entry[2], sorted(entry[2]))
+
+    def ResetErrno(self):
+        """Reset the last seen errno."""
+        self.last_errno = False
+
+    def StoreErrno(self, os_error):
+        """Store the last errno we saw."""
+        self.last_errno = os_error.errno
+
+    def GetErrno(self):
+        """Return the last errno we saw."""
+        return self.last_errno
+
+    def testWalkTopDown(self):
+        """Walk down ordering is correct."""
+        self.filesystem.CreateFile('foo/1.txt')
+        self.filesystem.CreateFile('foo/bar1/2.txt')
+        self.filesystem.CreateFile('foo/bar1/baz/3.txt')
+        self.filesystem.CreateFile('foo/bar2/4.txt')
+        expected = [
+            ('foo', ['bar1', 'bar2'], ['1.txt']),
+            ('foo/bar1', ['baz'], ['2.txt']),
+            ('foo/bar1/baz', [], ['3.txt']),
+            ('foo/bar2', [], ['4.txt']),
+        ]
+        self.assertWalkResults(expected, 'foo')
+
+    def testWalkBottomUp(self):
+        """Walk up ordering is correct."""
+        self.filesystem.CreateFile('foo/bar1/baz/1.txt')
+        self.filesystem.CreateFile('foo/bar1/2.txt')
+        self.filesystem.CreateFile('foo/bar2/3.txt')
+        self.filesystem.CreateFile('foo/4.txt')
+
+        expected = [
+            ('foo/bar1/baz', [], ['1.txt']),
+            ('foo/bar1', ['baz'], ['2.txt']),
+            ('foo/bar2', [], ['3.txt']),
+            ('foo', ['bar1', 'bar2'], ['4.txt']),
+        ]
+        self.assertWalkResults(expected, 'foo', topdown=False)
+
+    def testWalkRaisesIfNonExistent(self):
+        """Raises an exception when attempting to walk non-existent directory."""
+        directory = '/foo/bar'
+        self.assertEqual(False, self.filesystem.Exists(directory))
+        generator = self.os.walk(directory)
+        self.assertRaises(StopIteration, next, generator)
+
+    def testWalkRaisesIfNotDirectory(self):
+        """Raises an exception when attempting to walk a non-directory."""
+        filename = '/foo/bar'
+        self.filesystem.CreateFile(filename)
+        generator = self.os.walk(filename)
+        self.assertRaises(StopIteration, next, generator)
+
+    def testWalkCallsOnErrorIfNonExistent(self):
+        """Calls onerror with correct errno when walking non-existent directory."""
+        self.ResetErrno()
+        directory = '/foo/bar'
+        self.assertEqual(False, self.filesystem.Exists(directory))
+        # Calling os.walk on a non-existent directory should trigger a call to the
+        # onerror method.  We do not actually care what, if anything, is returned.
+        for unused_entry in self.os.walk(directory, onerror=self.StoreErrno):
+            pass
+        self.assertTrue(self.GetErrno() in (errno.ENOTDIR, errno.ENOENT))
+
+    def testWalkCallsOnErrorIfNotDirectory(self):
+        """Calls onerror with correct errno when walking non-directory."""
+        self.ResetErrno()
+        filename = '/foo/bar'
+        self.filesystem.CreateFile(filename)
+        self.assertEqual(True, self.filesystem.Exists(filename))
+        # Calling os.walk on a file should trigger a call to the onerror method.
+        # We do not actually care what, if anything, is returned.
+        for unused_entry in self.os.walk(filename, onerror=self.StoreErrno):
+            pass
+        self.assertTrue(self.GetErrno() in (errno.ENOTDIR, errno.EACCES))
+
+    def testWalkSkipsRemovedDirectories(self):
+        """Caller can modify list of directories to visit while walking."""
+        root = '/foo'
+        visit = 'visit'
+        no_visit = 'no_visit'
+        self.filesystem.CreateFile('%s/bar' % (root,))
+        self.filesystem.CreateFile('%s/%s/1.txt' % (root, visit))
+        self.filesystem.CreateFile('%s/%s/2.txt' % (root, visit))
+        self.filesystem.CreateFile('%s/%s/3.txt' % (root, no_visit))
+        self.filesystem.CreateFile('%s/%s/4.txt' % (root, no_visit))
+
+        generator = self.os.walk('/foo')
+        root_contents = next(generator)
+        root_contents[1].remove(no_visit)
+
+        visited_visit_directory = False
+
+        for root, unused_dirs, unused_files in iter(generator):
+            self.assertEqual(False, root.endswith('/%s' % (no_visit)))
+            if root.endswith('/%s' % (visit)):
+                visited_visit_directory = True
+
+        self.assertEqual(True, visited_visit_directory)
+
+    def testWalkFollowsymlinkDisabled(self):
+        self.filesystem.is_windows_fs = False
+        self.filesystem.CreateFile('/linked/subfile')
+        self.filesystem.CreateFile('/foo/bar/baz')
+        self.filesystem.CreateFile('/foo/bar/xyzzy/plugh')
+        self.filesystem.CreateLink('/foo/created_link', '/linked')
+
+        expected = [
+            ('/foo', ['bar', 'created_link'], []),
+            ('/foo/bar', ['xyzzy'], ['baz']),
+            ('/foo/bar/xyzzy', [], ['plugh']),
+        ]
+        self.assertWalkResults(expected, '/foo', followlinks=False)
+
+        expected = [('/foo/created_link', [], ['subfile'])]
+        self.assertWalkResults(expected, '/foo/created_link', followlinks=False)
+
+    def testWalkFollowsymlinkEnabled(self):
+        self.filesystem.is_windows_fs = False
+        self.filesystem.CreateFile('/linked/subfile')
+        self.filesystem.CreateFile('/foo/bar/baz')
+        self.filesystem.CreateFile('/foo/bar/xyzzy/plugh')
+        self.filesystem.CreateLink('/foo/created_link', '/linked')
+
+        expected = [
+            ('/foo', ['bar', 'created_link'], []),
+            ('/foo/bar', ['xyzzy'], ['baz']),
+            ('/foo/bar/xyzzy', [], ['plugh']),
+            ('/foo/created_link', [], ['subfile']),
+        ]
+        self.assertWalkResults(expected, '/foo', followlinks=True)
+
+        expected = [('/foo/created_link', [], ['subfile'])]
+        self.assertWalkResults(expected, '/foo/created_link', followlinks=True)
 
 
 @unittest.skipIf(sys.version_info < (3, 3),
@@ -3418,60 +3454,6 @@ class FakePathModuleTest(TestCase):
                     ('!foo!bar', 'xyzzy'),
                     ('!foo!bar!xyzzy', 'plugh')]
         self.assertEqual(expected, sorted(visited_nodes))
-
-    @unittest.skipIf(TestCase.is_windows and sys.version_info < (3, 3),
-                     'Links are not supported under Windows before Python 3.3')
-    def testWalkFollowsymlinkDisabled(self):
-        self.filesystem.CreateFile('!linkerStrinkter!sublink!')
-        self.filesystem.CreateFile('!foo!bar!baz')
-        self.filesystem.CreateFile('!foo!bar!xyzzy!plugh')
-        self.filesystem.CreateLink('!foo!linkedMeh', '!linkerStrinkter')
-
-        visited_nodes = []
-        for root, dirs, files in self.os.walk('!foo', followlinks=False):
-            for dir in dirs:
-                visited_nodes.append(self.os.path.join(root, dir))
-            for file in files:
-                visited_nodes.append(self.os.path.join(root, file))
-        expected = ['!foo!bar', '!foo!bar!baz', '!foo!bar!xyzzy',
-                    '!foo!bar!xyzzy!plugh', '!foo!linkedMeh']
-        self.assertEqual(expected, sorted(visited_nodes))
-
-        visited_nodes = []
-        for root, dirs, files in self.os.walk('!foo!created_link', followlinks=True):
-            for dir in dirs:
-                visited_nodes.append(self.os.path.join(root, dir))
-            for file in files:
-                visited_nodes.append(self.os.path.join(root, file))
-        expected = []
-        self.assertEqual(expected, visited_nodes)
-
-    @unittest.skipIf(TestCase.is_windows and sys.version_info < (3, 3),
-                     'Links are not supported under Windows before Python 3.3')
-    def testWalkFollowsymlinkEnabled(self):
-        self.filesystem.CreateFile('!linked!subfile')
-        self.filesystem.CreateFile('!foo!bar!baz')
-        self.filesystem.CreateFile('!foo!bar!xyzzy!plugh')
-        self.filesystem.CreateLink('!foo!created_link', '!linked')
-
-        visited_nodes = []
-        for root, dirs, files in self.os.walk('!foo', followlinks=True):
-            for dir in dirs:
-                visited_nodes.append(self.os.path.join(root, dir))
-            for file in files:
-                visited_nodes.append(self.os.path.join(root, file))
-        expected = ['!foo!bar', '!foo!bar!baz', '!foo!bar!xyzzy', '!foo!bar!xyzzy!plugh',
-                    '!foo!created_link', '!foo!created_link!subfile']
-        self.assertEqual(expected, sorted(visited_nodes))
-
-        visited_nodes = []
-        for root, dirs, files in self.os.walk('!foo!created_link', followlinks=True):
-            for dir in dirs:
-                visited_nodes.append(self.os.path.join(root, dir))
-            for file in files:
-                visited_nodes.append(self.os.path.join(root, file))
-        expected = ['!foo!created_link!subfile']
-        self.assertEqual(expected, visited_nodes)
 
     @unittest.skipIf(sys.version_info >= (3, 0) or TestCase.is_windows,
                      'os.path.walk deprecrated in Python 3, cannot be properly '
