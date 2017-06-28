@@ -4794,8 +4794,8 @@ class NormalizeCaseTest(TestCase):
 
     def testNormalizeCaseForNonExistingFile(self):
         self.filesystem.CreateDirectory('/Foo/Bar')
-        self.assertEqual('/foo/bar/baz', self.filesystem.NormalizeCase('/foo/bar/baz'))
-        self.assertEqual('/FOO/BAR/BAZ', self.filesystem.NormalizeCase('/FOO/BAR/BAZ'))
+        self.assertEqual('/Foo/Bar/baz', self.filesystem.NormalizeCase('/foo/bar/baz'))
+        self.assertEqual('/Foo/Bar/BAZ', self.filesystem.NormalizeCase('/FOO/BAR/BAZ'))
 
     @unittest.skipIf(not TestCase.is_windows, 'Regression test for Windows problem only')
     def testNormalizeCaseForLazilyAddedEmptyFile(self):

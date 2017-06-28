@@ -1238,24 +1238,31 @@ class FakeFilesystem(object):
         Returns:
             A version of path matching the case of existing path elements.
         """
+        def components_to_path():
+            if len(path_components) > len(normalized_components):
+                normalized_components.extend(path_components[len(normalized_components):])
+            sep = self._path_separator(path)
+            normalized_path = sep.join(normalized_components)
+            if path.startswith(sep) and not normalized_path.startswith(sep):
+                normalized_path = sep + normalized_path
+            return normalized_path
+
         if self.is_case_sensitive or not path:
             return path
         path_components = self.GetPathComponents(path)
         normalized_components = []
         current_dir = self.root
         for component in path_components:
+            if not isinstance(current_dir, FakeDirectory):
+                return components_to_path()
             dir_name, current_dir = self._DirectoryContent(current_dir, component)
             if current_dir is None or (
                             isinstance(current_dir, FakeDirectory) and
                             current_dir._byte_contents is None and
                             current_dir.st_size == 0):
-                return path
+                return components_to_path()
             normalized_components.append(dir_name)
-        sep = self._path_separator(path)
-        normalized_path = sep.join(normalized_components)
-        if path.startswith(sep) and not normalized_path.startswith(sep):
-            normalized_path = sep + normalized_path
-        return normalized_path
+        return components_to_path()
 
     def NormalizePath(self, path):
         """Absolutize and minimalize the given path.
