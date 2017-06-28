@@ -2229,6 +2229,7 @@ class FakeFilesystem(object):
 
         Raises:
           OSError:  if something already exists at new_path.
+          OSError:  if old_path is a directory.
           OSError:  if the parent directory doesn't exist.
           OSError:  if on Windows before Python 3.2.
         """
@@ -2236,7 +2237,7 @@ class FakeFilesystem(object):
             raise OSError("Links are not supported on Windows before Python 3.2")
         new_path_normalized = self.NormalizePath(new_path)
         if self.Exists(new_path_normalized):
-            raise IOError(errno.EEXIST,
+            raise OSError(errno.EEXIST,
                           'File already exists in fake filesystem',
                           new_path)
 
@@ -2254,6 +2255,11 @@ class FakeFilesystem(object):
         except:
             raise OSError(errno.ENOENT,
                           'No such file or directory in fake filesystem',
+                          old_path)
+
+        if old_file.st_mode & stat.S_IFDIR:
+            raise OSError(errno.EACCES if self.is_windows_fs else errno.EPERM,
+                          'Cannot create hard link to directory',
                           old_path)
 
         # abuse the name field to control the filename of the newly created link

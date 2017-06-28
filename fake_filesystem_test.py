@@ -2169,6 +2169,24 @@ class FakeOsModuleTest(FakeOsModuleTestBase):
 
     @unittest.skipIf(TestCase.is_windows and sys.version_info < (3, 3),
                      'Links are not supported under Windows before Python 3.3')
+    def testLinkIsExistingFile(self):
+        file_path = '/foo/bar'
+        self.filesystem.CreateFile(file_path)
+        self.assertRaisesOSError(errno.EEXIST, self.os.link, file_path, file_path)
+
+    @unittest.skipIf(sys.version_info < (3, 3),
+                     'Links are not supported under Windows before Python 3.3')
+    def testLinkTargetIsDir(self):
+        dir_path = '/foo/bar'
+        link_path = dir_path + '/link'
+        self.filesystem.CreateDirectory(dir_path)
+        self.filesystem.is_windows_fs = True
+        self.assertRaisesOSError(errno.EACCES, self.os.link, dir_path, link_path)
+        self.filesystem.is_windows_fs = False
+        self.assertRaisesOSError(errno.EPERM, self.os.link, dir_path, link_path)
+
+    @unittest.skipIf(TestCase.is_windows and sys.version_info < (3, 3),
+                     'Links are not supported under Windows before Python 3.3')
     def testLinkCount1(self):
         """Test that hard link counts are updated correctly."""
         file1_path = 'test_file1'
