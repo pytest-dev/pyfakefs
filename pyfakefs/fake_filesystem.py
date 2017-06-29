@@ -1815,16 +1815,15 @@ class FakeFilesystem(object):
         Raises:
           IOError: if file_path does not correspond to a directory.
         """
-        try:
-            if not file_path:
-                target_directory = self.root
-            else:
-                target_directory = self.ResolveObject(file_path)
-            target_directory.AddEntry(file_object)
-        except AttributeError:
-            raise IOError(errno.ENOTDIR,
-                          'Not a directory in the fake filesystem',
-                          file_path)
+        if not file_path:
+            target_directory = self.root
+        else:
+            target_directory = self.ResolveObject(file_path)
+            if not target_directory.st_mode & stat.S_IFDIR:
+                raise OSError(errno.ENOTDIR,
+                              'Not a directory in the fake filesystem',
+                              file_path)
+        target_directory.AddEntry(file_object)
 
     def RenameObject(self, old_file_path, new_file_path, force_replace=False):
         """Renames a FakeFile object at old_file_path to new_file_path, preserving all properties.

@@ -348,7 +348,7 @@ class FakeFilesystemUnitTest(TestCase):
 
     def testAddObjectToRegularFileError(self):
         self.filesystem.AddObject(self.root_name, self.fake_file)
-        self.assertRaisesIOError(errno.ENOTDIR,
+        self.assertRaisesOSError(errno.ENOTDIR,
                                  self.filesystem.AddObject, self.fake_file.name, self.fake_file)
 
     def testExistsFileAddedToChild(self):
@@ -1599,14 +1599,14 @@ class FakeOsModuleTest(FakeOsModuleTestBase):
         parent = 'xyzzy'
         directory = '%s/foo' % (parent,)
         self.assertFalse(self.filesystem.Exists(parent))
-        self.assertRaises(Exception, self.os.mkdir, directory)
+        self.assertRaisesOSError(errno.ENOENT, self.os.mkdir, directory)
 
     def testMkdirRaisesIfDirectoryExists(self):
         """mkdir raises exception if directory already exists."""
         directory = 'xyzzy'
         self.filesystem.CreateDirectory(directory)
         self.assertTrue(self.filesystem.Exists(directory))
-        self.assertRaises(Exception, self.os.mkdir, directory)
+        self.assertRaisesOSError(errno.EEXIST, self.os.mkdir, directory)
 
     def testMkdirRaisesIfFileExists(self):
         """mkdir raises exception if name already exists as a file."""
@@ -1614,30 +1614,37 @@ class FakeOsModuleTest(FakeOsModuleTestBase):
         file_path = '%s/plugh' % directory
         self.filesystem.CreateFile(file_path)
         self.assertTrue(self.filesystem.Exists(file_path))
-        self.assertRaises(Exception, self.os.mkdir, file_path)
+        self.assertRaisesOSError(errno.EEXIST, self.os.mkdir, file_path)
+
+    def testMkdirRaisesIfParentIsFile(self):
+        """mkdir raises exception if name already exists as a file."""
+        directory = 'xyzzy'
+        file_path = '%s/plugh' % directory
+        self.filesystem.CreateFile(file_path)
+        self.assertRaisesOSError(errno.ENOTDIR, self.os.mkdir, file_path + '/ff')
 
     def testMkdirRaisesWithSlashDot(self):
         """mkdir raises exception if mkdir foo/. (trailing /.)."""
-        self.assertRaises(Exception, self.os.mkdir, '/.')
+        self.assertRaisesOSError(errno.EEXIST, self.os.mkdir, '/.')
         directory = '/xyzzy/.'
-        self.assertRaises(Exception, self.os.mkdir, directory)
+        self.assertRaisesOSError(errno.ENOENT, self.os.mkdir, directory)
         self.filesystem.CreateDirectory('/xyzzy')
-        self.assertRaises(Exception, self.os.mkdir, directory)
+        self.assertRaisesOSError(errno.EEXIST, self.os.mkdir, directory)
 
     def testMkdirRaisesWithDoubleDots(self):
         """mkdir raises exception if mkdir foo/foo2/../foo3."""
-        self.assertRaises(Exception, self.os.mkdir, '/..')
+        self.assertRaisesOSError(errno.EEXIST, self.os.mkdir, '/..')
         directory = '/xyzzy/dir1/dir2/../../dir3'
-        self.assertRaises(Exception, self.os.mkdir, directory)
+        self.assertRaisesOSError(errno.ENOENT, self.os.mkdir, directory)
         self.filesystem.CreateDirectory('/xyzzy')
-        self.assertRaises(Exception, self.os.mkdir, directory)
+        self.assertRaisesOSError(errno.ENOENT, self.os.mkdir, directory)
         self.filesystem.CreateDirectory('/xyzzy/dir1')
-        self.assertRaises(Exception, self.os.mkdir, directory)
+        self.assertRaisesOSError(errno.ENOENT, self.os.mkdir, directory)
         self.filesystem.CreateDirectory('/xyzzy/dir1/dir2')
         self.os.mkdir(directory)
         self.assertTrue(self.filesystem.Exists(directory))
         directory = '/xyzzy/dir1/..'
-        self.assertRaises(Exception, self.os.mkdir, directory)
+        self.assertRaisesOSError(errno.EEXIST, self.os.mkdir, directory)
 
     def testMkdirRaisesIfParentIsReadOnly(self):
         """mkdir raises exception if parent is read only."""
@@ -1649,7 +1656,7 @@ class FakeOsModuleTest(FakeOsModuleTestBase):
         self.os.chmod(directory, 0o400)
 
         directory = '/a/b'
-        self.assertRaises(Exception, self.os.mkdir, directory)
+        self.assertRaisesOSError(errno.EACCES, self.os.mkdir, directory)
 
     def testMkdirWithWithSymlinkParent(self):
         self.filesystem.is_windows_fs = False
