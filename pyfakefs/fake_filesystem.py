@@ -2155,7 +2155,7 @@ class FakeFilesystem(object):
         error_class = OSError if low_level else IOError
         file_path = self.NormalizePath(file_path)
         if self.Exists(file_path):
-            raise error_class(errno.EEXIST,
+            raise OSError(errno.EEXIST,
                               'File already exists in fake filesystem',
                               file_path)
         parent_directory, new_file = self.SplitPath(file_path)
@@ -2359,10 +2359,10 @@ class FakeFilesystem(object):
                 current_dir = current_dir.contents[component]
         try:
             self.CreateDirectory(dir_name, mode & ~self.umask)
-        except OSError:
+        except IOError as e:
             if (not exist_ok or
                     not isinstance(self.ResolveObject(dir_name), FakeDirectory)):
-                raise
+                raise OSError(e.errno, e.strerror, e.filename)
 
     def _IsType(self, path, st_flag):
         """Helper function to implement isdir(), islink(), etc.

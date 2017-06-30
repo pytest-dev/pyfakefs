@@ -494,7 +494,7 @@ class FakeFilesystemUnitTest(TestCase):
     def testCreateFileInRootDirectoryAlreadyExistsError(self):
         path = 'foo'
         self.filesystem.CreateFile(path)
-        self.assertRaises(IOError, self.filesystem.CreateFile, path)
+        self.assertRaisesOSError(errno.EEXIST, self.filesystem.CreateFile, path)
 
     def testCreateFile(self):
         path = 'foo/bar/baz'
@@ -509,7 +509,7 @@ class FakeFilesystemUnitTest(TestCase):
     def testCreateFileAlreadyExistsError(self):
         path = 'foo/bar/baz'
         self.filesystem.CreateFile(path, contents='dummy_data')
-        self.assertRaises(IOError, self.filesystem.CreateFile, path)
+        self.assertRaisesOSError(errno.EEXIST, self.filesystem.CreateFile, path)
 
     @unittest.skipIf(TestCase.is_windows and sys.version_info < (3, 3),
                      'Links are not supported under Windows before Python 3.3')
@@ -1684,12 +1684,11 @@ class FakeOsModuleTest(FakeOsModuleTestBase):
         self.assertTrue(self.filesystem.Exists(file_path))
         self.assertRaisesOSError(errno.ENOTDIR, self.os.makedirs, directory)
 
-    @unittest.skipIf(TestCase.is_windows and sys.version_info < (3, 3),
-                     'Links are not supported under Windows before Python 3.3')
     def testMakedirsRaisesIfParentIsBrokenLink(self):
+        self.filesystem.is_windows_fs = False
         link_path = '/broken_link'
         self.os.symlink('bogus', link_path)
-        self.assertRaisesIOError(errno.ENOENT, self.os.makedirs, link_path + '/newdir')
+        self.assertRaisesOSError(errno.ENOENT, self.os.makedirs, link_path + '/newdir')
 
     @unittest.skipIf(TestCase.is_windows and sys.version_info < (3, 3),
                      'Links are not supported under Windows before Python 3.3')
@@ -5220,7 +5219,7 @@ class RealFileSystemAccessTest(TestCase):
     def testExistingFakeFileRaises(self):
         real_file_path = __file__
         self.filesystem.CreateFile(real_file_path)
-        self.assertRaisesIOError(errno.EEXIST, self.filesystem.add_real_file, real_file_path)
+        self.assertRaisesOSError(errno.EEXIST, self.filesystem.add_real_file, real_file_path)
 
     def testExistingFakeDirectoryRaises(self):
         real_dir_path = os.path.dirname(__file__)
