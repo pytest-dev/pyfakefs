@@ -1396,6 +1396,7 @@ class FakeOsModuleTest(FakeOsModuleTestBase):
     def testRenameSymlink(self):
         self.filesystem.is_windows_fs = False
         base_path = '/foo/bar/'
+        self.filesystem.CreateDirectory(base_path)
         link_path = base_path + "/link"
         self.os.symlink(base_path, link_path)
         file_path = link_path + "/file"
@@ -2101,12 +2102,22 @@ class FakeOsModuleTest(FakeOsModuleTestBase):
                      'Links are not supported under Windows before Python 3.3')
     def testSymlink(self):
         file_path = 'foo/bar/baz'
+        self.filesystem.CreateDirectory('foo/bar')
         self.os.symlink('bogus', file_path)
         self.assertTrue(self.os.path.lexists(file_path))
         self.assertFalse(self.os.path.exists(file_path))
         self.filesystem.CreateFile('foo/bar/bogus')
         self.assertTrue(self.os.path.lexists(file_path))
         self.assertTrue(self.os.path.exists(file_path))
+
+    def testSymlinkOnNonexistingPathRaises(self):
+        self.filesystem.is_windows_fs = False
+        base_path = '/foo'
+        self.filesystem.CreateDirectory(base_path)
+        dir_path = base_path + "/bar"
+        link_path = dir_path + "/bar"
+        self.assertRaisesOSError(errno.ENOENT, self.os.symlink, link_path, link_path)
+        self.assertRaisesOSError(errno.ENOENT, self.os.symlink, dir_path, link_path)
 
     # hard link related tests
 

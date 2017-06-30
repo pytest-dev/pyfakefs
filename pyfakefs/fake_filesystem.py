@@ -2191,19 +2191,20 @@ class FakeFilesystem(object):
         return file_object
 
     # pylint: disable=unused-argument
-    def CreateLink(self, file_path, link_target, target_is_directory=False):
+    def CreateLink(self, file_path, link_target, create_missing_dirs=True):
         """Create the specified symlink, pointed at the specified link target.
 
         Args:
-          file_path:  path to the symlink to create
-          link_target:  the target of the symlink
-          target_is_directory: ignored, here to satisfy pathlib API
+            file_path:  path to the symlink to create
+            link_target:  the target of the symlink
+            create_missing_dirs: If `True`, any missing parent directories of
+                file_path will be created
 
         Returns:
           the newly created FakeFile object.
 
         Raises:
-          IOError:  if the file already exists.
+          OSError:  if the symlink could not be created (see `CreateFile`).
           OSError:  if on Windows before Python 3.2.
         """
         if not self._IsLinkSupported():
@@ -2212,7 +2213,8 @@ class FakeFilesystem(object):
         if sys.version_info >= (3, 6):
             link_target = os.fspath(link_target)
         return self.CreateFile(resolved_file_path, st_mode=stat.S_IFLNK | PERM_DEF,
-                               contents=link_target)
+                               contents=link_target, create_missing_dirs=create_missing_dirs,
+                               low_level=True)
 
     def CreateHardLink(self, old_path, new_path):
         """Create a hard link at new_path, pointing at old_path.
@@ -2361,6 +2363,8 @@ class FakeFilesystem(object):
         except (IOError, OSError) as e:
             if (not exist_ok or
                     not isinstance(self.ResolveObject(dir_name), FakeDirectory)):
+                if isinstance(e, OSError):
+                    raise
                 raise OSError(e.errno, e.strerror, e.filename)
 
     def _IsType(self, path, st_flag):
@@ -3878,7 +3882,7 @@ class FakeOsModule(object):
             OSError:  if the file already exists.
         """
         link_target = self._path_with_dir_fd(link_target, self.symlink, dir_fd)
-        self.filesystem.CreateLink(path, link_target)
+        self.filesystem.CreateLink(path, link_target, create_missing_dirs=False)
 
     def link(self, oldpath, newpath, dir_fd=None):
         """Create a hard link at new_path, pointing at old_path.

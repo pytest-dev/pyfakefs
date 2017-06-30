@@ -108,7 +108,10 @@ class _FakeAccessor(pathlib._Accessor):  # pylint: disable=protected-access
                                    FakeFilesystem.RenameObject(
                                        fs, old_path, new_path, force_replace=True))
 
-    symlink = _wrap_binary_strfunc_reverse(FakeFilesystem.CreateLink)
+    symlink = _wrap_binary_strfunc_reverse(
+        lambda fs, file_path, link_target, target_is_directory:
+        FakeFilesystem.CreateLink(fs, file_path, link_target,
+                                  create_missing_dirs=False))
 
     utime = _wrap_strfunc(FakeFilesystem.UpdateTime)
 

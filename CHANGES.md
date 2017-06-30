@@ -17,9 +17,10 @@ The release versions are PyPi releases.
 
 #### Infrastructure
   * Removed most of `fake_filesystem_shutil` implementation, relying on the patched `os` module instead ([#194](../../issues/194)).
-  * Removed `fake_tempfile` and `fake_filesystem_glob`, relying on the patched `os` module instead ([#189](../../issues/191), [#189](../../issues/191)).
+  * Removed `fake_tempfile` and `fake_filesystem_glob`, relying on the patched `os` module instead ([#189](../../issues/189), [#191](../../issues/191)).
 
 #### Fixes
+  * `os.symlink` incorrectly created missing parent directories ([#247](../../issues/247))
   * Incorrect `os.walk` behavior if top dir is a symlink ([#240](../../issues/240).
   * `IOError` instead of `OSError` raised in several cases ([#235](../../issues/235), [#237](../../issues/237), [#238](../../issues/238), [#241](../../issues/241), [#243](../../issues/243), [#246](../../issues/246))
   * Fake `rename` did not behave like `os.rename` ([#217](../../issues/217), [#224](../../issues/224), [#216](../../issues/216), [#227](../../issues/227), [#232](../../issues/232), [#233](../../issues/233), [#239](../../issues/239))
