@@ -2359,7 +2359,7 @@ class FakeFilesystem(object):
                 current_dir = current_dir.contents[component]
         try:
             self.CreateDirectory(dir_name, mode & ~self.umask)
-        except IOError as e:
+        except (IOError, OSError) as e:
             if (not exist_ok or
                     not isinstance(self.ResolveObject(dir_name), FakeDirectory)):
                 raise OSError(e.errno, e.strerror, e.filename)
