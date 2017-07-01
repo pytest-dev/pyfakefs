@@ -5368,7 +5368,7 @@ class RealFileSystemAccessTest(TestCase):
         self.checkFakeFileStat(fake_file, real_file_path)
         self.checkWritableFile(fake_file, real_file_path)
 
-        real_file_path = os.path.join(real_dir_path, 'fake_filesystem_glob.py')
+        real_file_path = os.path.join(real_dir_path, 'fake_pathlib.py')
         fake_file = self.filesystem.ResolveObject(real_file_path)
         self.checkFakeFileStat(fake_file, real_file_path)
         self.checkWritableFile(fake_file, real_file_path)

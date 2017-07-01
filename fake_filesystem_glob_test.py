@@ -14,9 +14,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""Test for fake_filesystem_glob."""
+"""Test for glob using fake_filesystem."""
 
 import doctest
+import glob
+import os
 import sys
 
 if sys.version_info < (2, 7):
@@ -24,58 +26,56 @@ if sys.version_info < (2, 7):
 else:
     import unittest
 
-from pyfakefs import fake_filesystem
-from pyfakefs import fake_filesystem_glob
+from pyfakefs import fake_filesystem_unittest
 
 
-class FakeGlobUnitTest(unittest.TestCase):
+class FakeGlobUnitTest(fake_filesystem_unittest.TestCase):
     def setUp(self):
-        self.filesystem = fake_filesystem.FakeFilesystem(path_separator='/')
-        self.glob = fake_filesystem_glob.FakeGlobModule(self.filesystem)
+        self.setUpPyfakefs()
         directory = './xyzzy'
-        self.filesystem.CreateDirectory(directory)
-        self.filesystem.CreateDirectory('%s/subdir' % directory)
-        self.filesystem.CreateDirectory('%s/subdir2' % directory)
-        self.filesystem.CreateFile('%s/subfile' % directory)
-        self.filesystem.CreateFile('[Temp]')
+        self.fs.CreateDirectory(directory)
+        self.fs.CreateDirectory('%s/subdir' % directory)
+        self.fs.CreateDirectory('%s/subdir2' % directory)
+        self.fs.CreateFile('%s/subfile' % directory)
+        self.fs.CreateFile('[Temp]')
 
     def testGlobEmpty(self):
-        self.assertEqual(self.glob.glob(''), [])
+        self.assertEqual(glob.glob(''), [])
 
     def testGlobStar(self):
-        self.assertEqual(['/xyzzy/subdir', '/xyzzy/subdir2', '/xyzzy/subfile'],
-                         sorted(self.glob.glob('/xyzzy/*')))
+        basedir = os.sep + 'xyzzy'
+        self.assertEqual([os.path.join(basedir, 'subdir'),
+                          os.path.join(basedir, 'subdir2'),
+                          os.path.join(basedir, 'subfile')],
+                         sorted(glob.glob('/xyzzy/*')))
 
     def testGlobExact(self):
-        self.assertEqual(['/xyzzy'], self.glob.glob('/xyzzy'))
-        self.assertEqual(['/xyzzy/subfile'], self.glob.glob('/xyzzy/subfile'))
+        self.assertEqual(['/xyzzy'], glob.glob('/xyzzy'))
+        self.assertEqual(['/xyzzy/subfile'], glob.glob('/xyzzy/subfile'))
 
     def testGlobQuestion(self):
-        self.assertEqual(['/xyzzy/subdir', '/xyzzy/subdir2', '/xyzzy/subfile'],
-                         sorted(self.glob.glob('/x?zz?/*')))
+        basedir = os.sep + 'xyzzy'
+        self.assertEqual([os.path.join(basedir, 'subdir'),
+                          os.path.join(basedir, 'subdir2'),
+                          os.path.join(basedir, 'subfile')],
+                         sorted(glob.glob('/x?zz?/*')))
 
     def testGlobNoMagic(self):
-        self.assertEqual(['/xyzzy'], self.glob.glob('/xyzzy'))
-        self.assertEqual(['/xyzzy/subdir'], self.glob.glob('/xyzzy/subdir'))
+        self.assertEqual(['/xyzzy'], glob.glob('/xyzzy'))
+        self.assertEqual(['/xyzzy/subdir'], glob.glob('/xyzzy/subdir'))
 
     def testNonExistentPath(self):
-        self.assertEqual([], self.glob.glob('nonexistent'))
-
-    def testDocTest(self):
-        self.assertFalse(doctest.testmod(fake_filesystem_glob)[0])
+        self.assertEqual([], glob.glob('nonexistent'))
 
     def testMagicDir(self):
-        self.assertEqual(['/[Temp]'], self.glob.glob('/*emp*'))
-
-    def testRootGlob(self):
-        self.assertEqual(['[Temp]', 'xyzzy'], sorted(self.glob.glob('*')))
+        self.assertEqual([os.sep + '[Temp]'], glob.glob('/*emp*'))
 
     def testGlob1(self):
-        self.assertEqual(['[Temp]'], self.glob.glob1('/', '*Tem*'))
+        self.assertEqual(['[Temp]'], glob.glob1('/', '*Tem*'))
 
     def testHasMagic(self):
-        self.assertTrue(self.glob.has_magic('['))
-        self.assertFalse(self.glob.has_magic('a'))
+        self.assertTrue(glob.has_magic('['))
+        self.assertFalse(glob.has_magic('a'))
 
 
 if __name__ == '__main__':

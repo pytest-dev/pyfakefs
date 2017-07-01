@@ -16,7 +16,8 @@ The release versions are PyPi releases.
   * Added nanosecond time members in `os.stat_result` (Python >= 3.3) ([#196](../../issues/196)).
 
 #### Infrastructure
-  * Remove most of `fake_filesystem_shutil` implementation, relying on the patched `os` module instead ([#194](../../issues/194)).
+  * Removed most of `fake_filesystem_shutil` implementation, relying on the patched `os` module instead ([#194](../../issues/194)).
+  * Removed `fake_tempfile` and `fake_filesystem_glob`, relying on the patched `os` module instead ([#189](../../issues/191), [#189](../../issues/191)).
 
 #### Fixes
   * Incorrect `os.walk` behavior if top dir is a symlink ([#240](../../issues/240).

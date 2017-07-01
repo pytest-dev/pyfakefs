@@ -67,12 +67,12 @@ try:
 except ImportError:
     from mock import patch  # Python 2
 
-import pyfakefs.fake_filesystem_glob as fake_glob
+import pyfakefs.fake_filesystem_shutil as fake_shutil
 
 # Note that this fake module is based on the fake fs you just created
-glob = fake_glob.FakeGlobModule(fs)
-with patch('mymodule.glob', glob):
-    print(glob.glob('/var/data/xx*'))
+shutil = fake_shutil.FakeShutilModule(fs)
+with patch('mymodule.shutil', shutil):
+    print(shutil.disk_usage('/var/data/'))
 ```
 
 ## Installation
