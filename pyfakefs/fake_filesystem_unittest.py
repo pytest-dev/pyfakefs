@@ -187,11 +187,8 @@ class TestCase(unittest.TestCase):
         Invoke this at the beginning of the `setUp()` method in your unit test
         class.
         """
-        # create the temp dir in the fake file system to be able to use tempfile
-        temp_dir = tempfile.gettempdir()
         self._stubber.setUp()
         self.addCleanup(self._stubber.tearDown)
-        self.fs.CreateDirectory(temp_dir)
 
     def tearDownPyfakefs(self):
         """This method is deprecated and exists only for backward compatibility.
@@ -366,6 +363,7 @@ class Patcher(object):
         """Bind the file-related modules to the :py:mod:`pyfakefs` fake
         modules real ones.  Also bind the fake `file()` and `open()` functions.
         """
+        temp_dir = tempfile.gettempdir()
         self._refresh()
 
         if doctester is not None:
@@ -387,6 +385,11 @@ class Patcher(object):
             self._stubs.SmartSet(module, attr, self.fake_shutil)
         for module, attr in self._io_modules:
             self._stubs.SmartSet(module, attr, self.fake_io)
+
+        # the temp directory is assumed to exist at least in `tempfile1,
+        # so we create it here for convenience
+        self.fs.CreateDirectory(temp_dir)
+
 
     def replaceGlobs(self, globs_):
         globs = globs_.copy()

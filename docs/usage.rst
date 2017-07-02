@@ -33,21 +33,47 @@ If you are using other means of testing like `nose <http://nose2.readthedocs.io>
 patching using ``fake_filesystem_unittest.Patcher`` - the class doing the the actual work
 of replacing the filesystem modules with the fake modules in the first two approaches.
 
+The easiest way is to just use ``Patcher`` as a context manager:
+
+.. code:: python
+
+   from fake_filesystem_unittest import Patcher
+
+   with Patcher() as patcher:
+       # access the fake_filesystem object via patcher.fs
+       patcher.fs.CreateFile('/foo/bar', contents='test')
+
+       # the following code works on the fake filesystem
+       with open('/foo/bar') as f:
+           contents = f.read()
+
+You can also initialize ``Patcher`` manually:
+
+.. code:: python
+
+   from fake_filesystem_unittest import Patcher
+
+   patcher = Patcher()
+   patcher.setUp()     # called in the initialization code
+   ...
+   patcher.tearDown()  # somewhere in the cleanup code
+
 
 Patch using unittest.mock (deprecated)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 You can also use ``mock.patch()`` to patch the modules manually. This approach will
-only work for the directly imported modules
+only work for the directly imported modules, therefore it is not suited for testing
+larger code bases. As the other approaches are more convenient, this one is considered
+deprecated.
 You have to create a fake filesystem object, and afterwards fake modules based on this file system
 for the modules you want to patch.
 
 The following modules and functions can be patched:
-- os by fake_filessystem.FakeOsModule
-- os.path by fake_filessystem.FakePathModule
-- io by fake_filessystem.FakeIoModule
-- pathlib by fake_pathlib.FakePathlibModule
-- build-in open() by fake_filessystem.FakeFileOpen
 
+* ``os`` and ``os.path`` by ``fake_filessystem.FakeOsModule``
+* ``io`` by ``fake_filessystem.FakeIoModule``
+* ``pathlib`` by ``fake_pathlib.FakePathlibModule``
+* build-in ``open()`` by ``fake_filessystem.FakeFileOpen``
 
 .. code:: python
 
@@ -57,8 +83,7 @@ The following modules and functions can be patched:
    fs = fake_fs.FakeFilesystem()
 
    # Do some setup on the faked file system
-   fs.CreateFile('/var/data/xx1.txt')
-   fs.CreateFile('/var/data/xx2.txt')
+   fs.CreateFile('/foo/bar', contents='test')
 
    # Replace some built-in file system related modules you use with faked ones
 
@@ -68,9 +93,8 @@ The following modules and functions can be patched:
    except ImportError:
        from mock import patch  # Python 2
 
-   import pyfakefs.fake_filesystem_shutil as fake_shutil
-
    # Note that this fake module is based on the fake fs you just created
-   os = fake_filesystem.FakeOsModule(fs)
+   os = fake_fs.FakeOsModule(fs)
    with patch('mymodule.os', os):
-       os.makedirs('/foo/bar')
+       fd = os.open('/foo/bar', os.O_RDONLY)
+       contents = os.read(fd, 4)

@@ -9,14 +9,6 @@ pyfakefs.fake_filesystem module
     :undoc-members:
     :show-inheritance:
 
-pyfakefs.fake_filesystem_glob module
-------------------------------------
-
-.. automodule:: pyfakefs.fake_filesystem_glob
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
 pyfakefs.fake_filesystem_shutil module
 --------------------------------------
 
@@ -25,26 +17,18 @@ pyfakefs.fake_filesystem_shutil module
     :undoc-members:
     :show-inheritance:
 
-pyfakefs.fake_filesystem_unittest module
-----------------------------------------
-
-.. automodule:: pyfakefs.fake_filesystem_unittest
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
-pyfakefs.fake_tempfile module
------------------------------
-
-.. automodule:: pyfakefs.fake_tempfile
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
 pyfakefs.fake_pathlib module
 ----------------------------
 
 .. automodule:: pyfakefs.fake_pathlib
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+pyfakefs.fake_filesystem_unittest module
+----------------------------------------
+
+.. automodule:: pyfakefs.fake_filesystem_unittest
     :members:
     :undoc-members:
     :show-inheritance:
