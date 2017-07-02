@@ -2153,7 +2153,9 @@ class FakeFilesystem(object):
         """
         error_class = OSError if low_level else IOError
         file_path = self.NormalizePath(file_path)
-        if self.Exists(file_path):
+
+        # also consider broken links
+        if self.Exists(file_path) or self.IsLink(file_path):
             raise OSError(errno.EEXIST,
                               'File already exists in fake filesystem',
                               file_path)
@@ -2209,10 +2211,12 @@ class FakeFilesystem(object):
         """
         if not self._IsLinkSupported():
             raise OSError("Symbolic links are not supported on Windows before Python 3.2")
-        resolved_file_path = self.ResolvePath(file_path)
+        # resolve the link path only if it is not a link itself
+        if not self.IsLink(file_path):
+            file_path = self.ResolvePath(file_path)
         if sys.version_info >= (3, 6):
             link_target = os.fspath(link_target)
-        return self.CreateFile(resolved_file_path, st_mode=stat.S_IFLNK | PERM_DEF,
+        return self.CreateFile(file_path, st_mode=stat.S_IFLNK | PERM_DEF,
                                contents=link_target, create_missing_dirs=create_missing_dirs,
                                low_level=True)
 
