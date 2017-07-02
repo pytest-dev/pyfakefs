@@ -1848,7 +1848,7 @@ class FakeFilesystem(object):
         """
         old_file_path = self.NormalizePath(old_file_path)
         new_file_path = self.NormalizePath(new_file_path)
-        if not self.Exists(old_file_path):
+        if not self.Exists(old_file_path) and not self.IsLink(old_file_path):
             raise OSError(errno.ENOENT,
                           'Fake filesystem object: can not rename nonexistent file',
                           old_file_path)

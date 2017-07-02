@@ -6,7 +6,7 @@ Automatically find and patch using fake_filesystem_unittest
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 The first approach is to allow pyfakefs to automatically find all real file functions and modules,
 and stub these out with the fake file system functions and modules.
-This is the simplest approch if you are using separate unit tests.
+This is the simplest approach if you are using separate unit tests.
 The usage is explained in the pyfakefs wiki page
 `Automatically find and patch file functions and modules <https://github.com/jmcgeheeiv/pyfakefs/wiki/Automatically-find-and-patch-file-functions-and-modules>`__
 and demonstrated in files ``example.py`` and ``example_test.py``.
@@ -27,10 +27,27 @@ The PyTest plugin provides the ``fs`` fixture for use in your test. For example:
        fs.CreateFile('/var/data/xx1.txt')
        assert os.path.exists('/var/data/xx1.txt')
 
-Patch using unittest.mock
-~~~~~~~~~~~~~~~~~~~~~~~~~
-If you are using other means of testing like `nose <http://nose2.readthedocs.io>`__, you can do the patching yourself using
-``mock.patch()``:
+Patch using fake_filesystem_unittest.Patcher
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+If you are using other means of testing like `nose <http://nose2.readthedocs.io>`__, you can do the
+patching using ``fake_filesystem_unittest.Patcher`` - the class doing the the actual work
+of replacing the filesystem modules with the fake modules in the first two approaches.
+
+
+Patch using unittest.mock (deprecated)
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+You can also use ``mock.patch()`` to patch the modules manually. This approach will
+only work for the directly imported modules
+You have to create a fake filesystem object, and afterwards fake modules based on this file system
+for the modules you want to patch.
+
+The following modules and functions can be patched:
+- os by fake_filessystem.FakeOsModule
+- os.path by fake_filessystem.FakePathModule
+- io by fake_filessystem.FakeIoModule
+- pathlib by fake_pathlib.FakePathlibModule
+- build-in open() by fake_filessystem.FakeFileOpen
+
 
 .. code:: python
 
@@ -51,9 +68,9 @@ If you are using other means of testing like `nose <http://nose2.readthedocs.io>
    except ImportError:
        from mock import patch  # Python 2
 
-   import pyfakefs.fake_filesystem_glob as fake_glob
+   import pyfakefs.fake_filesystem_shutil as fake_shutil
 
    # Note that this fake module is based on the fake fs you just created
-   glob = fake_glob.FakeGlobModule(fs)
-   with patch('mymodule.glob', glob):
-       print(glob.glob('/var/data/xx*'))
+   os = fake_filesystem.FakeOsModule(fs)
+   with patch('mymodule.os', os):
+       os.makedirs('/foo/bar')
