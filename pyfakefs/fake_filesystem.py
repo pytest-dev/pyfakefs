@@ -2517,6 +2517,9 @@ class FakeFilesystem(object):
             raise OSError(errno.EINVAL, 'Invalid argument: \'.\'')
         target_directory = self.NormalizePath(target_directory)
         if self.ConfirmDir(target_directory):
+            if not self.is_windows_fs and self.IsLink(target_directory):
+                raise OSError(errno.ENOTDIR, 'Cannot remove symlink', target_directory)
+
             dir_object = self.ResolveObject(target_directory)
             if dir_object.contents:
                 raise OSError(errno.ENOTEMPTY, 'Fake Directory not empty',

@@ -1614,6 +1614,28 @@ class FakeOsModuleTest(FakeOsModuleTestBase):
         self.assertFalse(self.filesystem.Exists(parent))
         self.assertRaisesOSError(errno.ENOENT, self.os.mkdir, directory)
 
+    def testMkdirRaisesOnSymlinkInPosix(self):
+        self.filesystem.is_windows_fs = False
+        base_path = '/foo/bar'
+        link_path = base_path + '/link_to_dir'
+        dir_path = base_path + '/dir'
+        self.filesystem.CreateDirectory(dir_path)
+        self.os.symlink(dir_path, link_path)
+        self.assertRaisesOSError(errno.ENOTDIR, self.os.rmdir, link_path)
+
+    @unittest.skipIf(sys.version_info < (3, 3),
+                     'Links are not supported under Windows before Python 3.3')
+    def testMkdirRemovesSymlinkInWindows(self):
+        self.filesystem.is_windows_fs = True
+        base_path = '/foo/bar'
+        link_path = base_path + '/link_to_dir'
+        dir_path = base_path + '/dir'
+        self.filesystem.CreateDirectory(dir_path)
+        self.os.symlink(dir_path, link_path)
+        self.os.rmdir(link_path)
+        self.assertFalse(self.filesystem.Exists(link_path))
+        self.assertTrue(self.filesystem.Exists(dir_path))
+
     def testMkdirRaisesIfDirectoryExists(self):
         """mkdir raises exception if directory already exists."""
         directory = 'xyzzy'
