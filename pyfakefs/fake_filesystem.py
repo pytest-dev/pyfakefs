@@ -196,6 +196,7 @@ class _FakeStatResult(object):
 
     def __eq__(self, other):
         return (
+            isinstance(other, _FakeStatResult) and
             self._st_atime_ns == other._st_atime_ns and
             self._st_ctime_ns == other._st_ctime_ns and
             self._st_mtime_ns == other._st_mtime_ns and
@@ -207,6 +208,9 @@ class _FakeStatResult(object):
             self.st_ino == other.st_ino and
             self.st_mode == other.st_mode
         )
+
+    def __ne__(self, other):
+        return not self == other
 
     def copy(self):
         """Return a copy where the float usage is hard-coded to mimic the behavior
