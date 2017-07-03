@@ -127,6 +127,7 @@ _OPEN_MODE_MAP = {
     'w': (False, False, True, True, False, False),
     'a': (False, False, True, False, True, False),
     'r+': (True, True, True, False, False, False),
+    'r!': (False, True, False, False, False, False),
     'w+': (False, True, True, True, False, False),
     'a+': (False, True, True, False, True, False),
     'w!': (False, False, True, False, False, False),
@@ -3175,7 +3176,7 @@ class FakeOsModule(object):
         """
         file_path = self._path_with_dir_fd(file_path, self.open, dir_fd)
         str_flags = 'r'
-        if flags & os.O_WRONLY or flags & os.O_RDWR:
+        if flags & os.O_WRONLY or flags & os.O_RDWR or flags & os.O_CREAT:
             if not flags & (os.O_CREAT | os.O_EXCL):
                 if not self.filesystem.Exists(file_path):
                     raise OSError(errno.ENOENT,
@@ -3187,6 +3188,10 @@ class FakeOsModule(object):
                 str_flags = 'a'
             elif flags & os.O_TRUNC:
                 str_flags = 'w'
+            elif flags == os.O_CREAT:
+                # non-existing mode to map the behavior of O_CREAT only
+                # file can be created and read, but not written
+                str_flags = 'r!'
             else:
                 # non-existing mode to map the behavior of O_WRONLY
                 # this is the same as 'r+', but without read permission

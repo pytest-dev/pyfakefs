@@ -2592,6 +2592,13 @@ class FakeOsModuleLowLevelFileOpTest(FakeOsModuleTestBase):
         self.assertEqual(4, self.os.write(file_des, b'test'))
         self.assertEqual(b'testents', file_obj.byte_contents)
 
+    def testLowLevelOpenCreateIsReadOnly(self):
+        file_path = 'file1'
+        file_des = self.os.open(file_path, os.O_CREAT)
+        self.assertEqual(0, file_des)
+        self.assertEqual(b'', self.os.read(file_des, 1))
+        self.assertRaisesOSError(errno.EBADF, self.os.write, file_des, 'foo')
+
     def testLowLevelOpenRaisesIfDoesNotExist(self):
         file_path = 'file1'
         self.assertRaisesOSError(errno.ENOENT, self.os.open, file_path, os.O_RDONLY)
