@@ -1166,6 +1166,28 @@ class FakeOsModuleTest(FakeOsModuleTestBase):
         self.assertEqual('test contents',
                          self.filesystem.GetObject(new_file_path).contents)
 
+    def testRenameToSymlinkPosix(self):
+        self.filesystem.is_windows_fs = False
+        base_path = '/foo/bar'
+        link_path = base_path + "/link"
+        dir_path = base_path + "/dir"
+        link_target = dir_path + "/link_target"
+        self.filesystem.CreateDirectory(dir_path)
+        self.os.symlink(link_target, link_path)
+        self.assertRaisesOSError(errno.ENOTDIR, self.os.rename, dir_path, link_path)
+
+    @unittest.skipIf(sys.version_info < (3, 3),
+                     'Links are not supported under Windows before Python 3.3')
+    def testRenameToSymlinkWindows(self):
+        self.filesystem.is_windows_fs = True
+        base_path = '/foo/bar'
+        link_path = base_path + "/link"
+        dir_path = base_path + "/dir"
+        link_target = dir_path + "/link_target"
+        self.filesystem.CreateDirectory(dir_path)
+        self.os.symlink(link_target, link_path)
+        self.assertRaisesOSError(errno.EEXIST, self.os.rename, dir_path, link_path)
+
     def testRecursiveRenameRaises(self):
         self.filesystem.is_windows_fs = False
         base_path = '/foo/bar'

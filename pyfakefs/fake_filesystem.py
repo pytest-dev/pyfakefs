@@ -1859,7 +1859,10 @@ class FakeFilesystem(object):
                           old_file_path)
 
         old_object = self.LResolveObject(old_file_path)
-        if self.Exists(new_file_path):
+        if not self.is_windows_fs and self.IsLink(new_file_path):
+            raise OSError(errno.ENOTDIR, 'Cannot rename to symlink', new_file_path)
+
+        if self.Exists(new_file_path) or self.IsLink(new_file_path):
             if old_file_path == new_file_path:
                 return  # Nothing to do here.
 
@@ -1872,7 +1875,7 @@ class FakeFilesystem(object):
                     # hard links to the same file - nothing to do
                     return
 
-            elif stat.S_ISDIR(new_object.st_mode):
+            elif stat.S_ISDIR(new_object.st_mode) or stat.S_ISLNK(new_object.st_mode):
                 if self.is_windows_fs:
                     if force_replace:
                         raise OSError(errno.EACCES,
