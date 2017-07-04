@@ -3179,9 +3179,13 @@ class FakeOsModule(object):
         Raises:
             IOError: if the path cannot be found
             ValueError: if invalid mode is given
+            NotImplementedError: if `os.O_EXCL` is used without `os.O_CREAT`
         """
         file_path = self._path_with_dir_fd(file_path, self.open, dir_fd)
         str_flags = 'r'
+        if flags & os.O_EXCL and not flags & os.O_CREAT:
+            raise NotImplementedError('O_EXCL without O_CREAT mode is not supported')
+
         if flags & os.O_WRONLY or flags & os.O_RDWR or flags & os.O_CREAT:
             if not flags & (os.O_CREAT | os.O_EXCL):
                 if not self.filesystem.Exists(file_path):

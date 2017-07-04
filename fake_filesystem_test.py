@@ -2656,6 +2656,13 @@ class FakeOsModuleLowLevelFileOpTest(FakeOsModuleTestBase):
         self.assertRaisesOSError(errno.ENOENT, self.os.open, file_path, os.O_WRONLY)
         self.assertRaisesOSError(errno.ENOENT, self.os.open, file_path, os.O_RDWR)
 
+    def testLowLevelExclusiveOpenRaisesWithoutCreateMode(self):
+        file_path = 'file1'
+        self.assertRaises(NotImplementedError, self.os.open, file_path, os.O_EXCL)
+        self.assertRaises(NotImplementedError, self.os.open, file_path, os.O_EXCL | os.O_WRONLY)
+        self.assertRaises(NotImplementedError, self.os.open, file_path, os.O_EXCL | os.O_RDWR)
+        self.assertRaises(NotImplementedError, self.os.open, file_path, os.O_EXCL | os.O_TRUNC | os.O_APPEND)
+
     def LowLevelOpenRaisesIfParentDoesNotExist(self):
         base_path = '/foo/bar'
         self.filesystem.CreateDirectory(base_path)
@@ -2713,7 +2720,7 @@ class FakeOsModuleLowLevelFileOpTest(FakeOsModuleTestBase):
     @unittest.skipIf(sys.version_info < (3, 3), 'Exclusive mode new in Python 3.3')
     def testLowLevelOpenExclusive(self):
         file_path = 'file1'
-        fileno = self.os.open(file_path, os.O_RDWR | os.O_EXCL)
+        fileno = self.os.open(file_path, os.O_RDWR | os.O_EXCL | os.O_CREAT)
         self.assertEqual(0, fileno)
         self.assertTrue(self.os.path.exists(file_path))
 
@@ -2722,8 +2729,10 @@ class FakeOsModuleLowLevelFileOpTest(FakeOsModuleTestBase):
         file_path = 'file1'
         self.filesystem.CreateFile(file_path, contents=b'contents',
                                    st_mode=(stat.S_IFREG | 0o666))
-        self.assertRaisesIOError(errno.EEXIST, self.os.open, file_path, os.O_RDWR | os.O_EXCL)
-        self.assertRaisesIOError(errno.EEXIST, self.os.open, file_path, os.O_RDWR | os.O_EXCL)
+        self.assertRaisesIOError(errno.EEXIST, self.os.open, file_path,
+                                 os.O_RDWR | os.O_EXCL | os.O_CREAT)
+        self.assertRaisesIOError(errno.EEXIST, self.os.open, file_path,
+                                 os.O_RDWR | os.O_EXCL | os.O_CREAT)
 
     def testOpenDirectoryRaisesUnderWindows(self):
         self.filesystem.is_windows_fs = True
