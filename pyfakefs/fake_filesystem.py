@@ -122,12 +122,13 @@ PERM_ALL = 0o7777  # All permission bits.
 
 _OPEN_MODE_MAP = {
     # mode name:(file must exist, need read, need write,
-    #            truncate [implies need write], append, must must not exist)
+    #            truncate, append, must must not exist)
     'r': (True, True, False, False, False, False),
     'w': (False, False, True, True, False, False),
     'a': (False, False, True, False, True, False),
     'r+': (True, True, True, False, False, False),
     'r!': (False, True, False, False, False, False),
+    'r!!': (False, True, False, True, False, False),
     'w+': (False, True, True, True, False, False),
     'a+': (False, True, True, False, True, False),
     'w!': (False, False, True, False, False, False),
@@ -3191,12 +3192,14 @@ class FakeOsModule(object):
                 str_flags = 'x'
             elif flags & os.O_APPEND:
                 str_flags = 'a'
-            elif flags & os.O_TRUNC:
-                str_flags = 'w'
-            elif flags == os.O_CREAT:
+            elif flags & os.O_CREAT and not flags & (os.O_RDWR | os.O_WRONLY):
                 # non-existing mode to map the behavior of O_CREAT only
                 # file can be created and read, but not written
                 str_flags = 'r!'
+                if flags & os.O_TRUNC:
+                    str_flags = 'r!!'
+            elif flags & os.O_TRUNC:
+                str_flags = 'w'
             else:
                 # non-existing mode to map the behavior of O_WRONLY
                 # this is the same as 'r+', but without read permission
