@@ -3275,6 +3275,7 @@ class FakeOsModule(object):
         """
         file_handle = self.filesystem.GetOpenFile(file_des)
         file_handle.raw_io = True
+        file_handle.sync()
         file_handle.write(contents)
         file_handle.flush()
         return len(contents)
@@ -4091,7 +4092,8 @@ class FakeFileWrapper(object):
 
     def close(self):
         """Close the file."""
-        if self.allow_update:
+        # for raw io, all writes are flushed immediately
+        if self.allow_update and not self.raw_io:
             self._file_object.SetContents(self._io.getvalue(), self._encoding)
         if self._closefd:
             self._filesystem.CloseOpenFile(self.filedes)
@@ -4103,6 +4105,15 @@ class FakeFileWrapper(object):
         if self.allow_update:
             self._file_object.SetContents(self._io.getvalue(), self._encoding)
             self._file_epoch = self._file_object.epoch
+
+    def sync(self):
+        """Synchronize buffer with file contents."""
+        if self.allow_update:
+            position = self._io.tell()
+            self._io.truncate(0)
+            self._io.seek(0)
+            self._io.write(self._file_object.byte_contents)
+            self._io.seek(position)
 
     def seek(self, offset, whence=0):
         """Move read/write pointer in 'file'."""

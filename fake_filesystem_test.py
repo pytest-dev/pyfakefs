@@ -2717,7 +2717,8 @@ class FakeOsModuleLowLevelFileOpTest(FakeOsModuleTestBase):
         self.assertRaises(NotImplementedError, self.os.open, file_path, os.O_EXCL)
         self.assertRaises(NotImplementedError, self.os.open, file_path, os.O_EXCL | os.O_WRONLY)
         self.assertRaises(NotImplementedError, self.os.open, file_path, os.O_EXCL | os.O_RDWR)
-        self.assertRaises(NotImplementedError, self.os.open, file_path, os.O_EXCL | os.O_TRUNC | os.O_APPEND)
+        self.assertRaises(NotImplementedError, self.os.open, file_path,
+                          os.O_EXCL | os.O_TRUNC | os.O_APPEND)
 
     def testOpenRaisesIfParentDoesNotExist(self):
         base_path = '/foo/bar'
@@ -2856,6 +2857,18 @@ class FakeOsModuleLowLevelFileOpTest(FakeOsModuleTestBase):
 
         self.assertRaisesOSError(errno.EBADF, self.os.write, fileno, new_contents)
         self.assertRaisesOSError(errno.EBADF, self.os.read, fileno, 10)
+
+    def testWriteFromDifferentFDs(self):
+        self.filesystem.is_windows_fs = False
+        base_path = '/foo/bar'
+        self.filesystem.CreateDirectory(base_path)
+        file_path = base_path + "/baz"
+        fd0 = self.os.open(file_path, os.O_CREAT | os.O_WRONLY | os.O_TRUNC)
+        fd1 = self.os.open(file_path, os.O_CREAT | os.O_WRONLY | os.O_TRUNC)
+        self.os.write(fd0, b'aaaa')
+        self.os.write(fd1, b'bb')
+        self.assertEqual(4, self.os.path.getsize(file_path))
+        self.assertEqual(b'bbaa', self.filesystem.GetObject(file_path).byte_contents)
 
 
 class FakeOsModuleWalkTest(FakeOsModuleTestBase):
