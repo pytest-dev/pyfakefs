@@ -1603,6 +1603,28 @@ class FakeOsModuleTest(FakeOsModuleTestBase):
         self.os.removedirs(directory)
         self.assertFalse(self.filesystem.Exists(directory))
 
+    def testRemoveDirsWithTopSymlinkFails(self):
+        self.filesystem.is_windows_fs = False
+        base_path = '/foo/bar'
+        dir_path = base_path + "/dir"
+        dir_link = base_path + "/dir_link"
+        self.filesystem.CreateDirectory(dir_path)
+        self.os.symlink(dir_path, dir_link)
+        self.assertRaisesOSError(errno.ENOTDIR, self.os.removedirs, dir_link)
+
+    def testRemoveDirsWithNonTopSymlinkSucceeds(self):
+        self.filesystem.is_windows_fs = False
+        base_path = '/foo/bar'
+        dir_path = base_path + "/dir"
+        dir_link = base_path + "/dir_link"
+        self.filesystem.CreateDirectory(dir_path)
+        self.os.symlink(dir_path, dir_link)
+        dir_in_link = dir_link + "/dir2"
+        self.filesystem.CreateDirectory(dir_in_link)
+        self.os.removedirs(dir_in_link)
+        self.assertFalse(self.filesystem.Exists(dir_in_link))
+        self.assertFalse(self.filesystem.Exists(dir_link))
+
     def testMkdir(self):
         """mkdir can create a relative directory."""
         directory = 'xyzzy'

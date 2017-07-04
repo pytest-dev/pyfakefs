@@ -2509,12 +2509,14 @@ class FakeFilesystem(object):
         except IOError as exc:
             raise OSError(exc.errno, exc.strerror, exc.filename)
 
-    def RemoveDirectory(self, target_directory):
+    def RemoveDirectory(self, target_directory, allow_symlink=False):
         """Remove a leaf Fake directory.
         New in pyfakefs 3.0.
 
         Args:
           target_directory: (str) Name of directory to remove.
+          allow_symlink: (bool) if False, `target_directory` cannot be a symlink
+            (Posix only)
 
         Raises:
           OSError: if target_directory does not exist.
@@ -2525,7 +2527,7 @@ class FakeFilesystem(object):
             raise OSError(errno.EINVAL, 'Invalid argument: \'.\'')
         target_directory = self.NormalizePath(target_directory)
         if self.ConfirmDir(target_directory):
-            if not self.is_windows_fs and self.IsLink(target_directory):
+            if not self.is_windows_fs and not allow_symlink and self.IsLink(target_directory):
                 raise OSError(errno.ENOTDIR, 'Cannot remove symlink', target_directory)
 
             dir_object = self.ResolveObject(target_directory)
@@ -3642,7 +3644,8 @@ class FakeOsModule(object):
             head_dir = self.filesystem.ConfirmDir(head)
             if head_dir.contents:
                 break
-            self.rmdir(head)
+            # only the top-level dir may not be a symlink
+            self.filesystem.RemoveDirectory(head, allow_symlink=True)
             head, tail = self.path.split(head)
 
     def mkdir(self, dir_name, mode=PERM_DEF, dir_fd=None):
