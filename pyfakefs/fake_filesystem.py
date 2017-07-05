@@ -120,6 +120,10 @@ PERM_DEF = 0o777  # Default permission bits.
 PERM_DEF_FILE = 0o666  # Default permission bits (regular file)
 PERM_ALL = 0o7777  # All permission bits.
 
+_OpenModes = namedtuple('open_modes',
+                        'must_exist can_read can_write truncate append must_not_exist')
+
+
 _OPEN_MODE_MAP = {
     # mode name:(file must exist, need read, need write,
     #            truncate, append, must must not exist)
@@ -127,15 +131,13 @@ _OPEN_MODE_MAP = {
     'w': (False, False, True, True, False, False),
     'a': (False, False, True, False, True, False),
     'r+': (True, True, True, False, False, False),
-    'r!': (False, True, False, False, False, False),
-    'r!!': (False, True, False, True, False, False),
     'w+': (False, True, True, True, False, False),
     'a+': (False, True, True, False, True, False),
-    'w!': (False, False, True, False, False, False),
-    'w!+': (False, True, True, False, False, False),
-    'x': (False, False, True, False, False, True),
-    'x+': (False, True, True, False, False, True),
 }
+
+if sys.version_info >= (3, 3):
+    _OPEN_MODE_MAP['x'] = (False, False, True, False, False, True)
+    _OPEN_MODE_MAP['x+'] = (False, True, True, False, False, True)
 
 if sys.platform.startswith('linux'):
     # on newer Linux system, the default maximum recursion depth is 40
@@ -3175,35 +3177,21 @@ class FakeOsModule(object):
             NotImplementedError: if `os.O_EXCL` is used without `os.O_CREAT`
         """
         file_path = self._path_with_dir_fd(file_path, self.open, dir_fd)
-        str_flags = 'r'
-        if flags & os.O_EXCL and not flags & os.O_CREAT:
+
+        open_modes = _OpenModes(
+            must_exist=not flags & os.O_CREAT,
+            can_read=not flags & os.O_WRONLY,
+            can_write=flags & (os.O_RDWR | os.O_WRONLY),
+            truncate=flags & os.O_TRUNC,
+            append=flags & os.O_APPEND,
+            must_not_exist=flags & os.O_EXCL
+        )
+        if open_modes.must_not_exist and open_modes.must_exist:
             raise NotImplementedError('O_EXCL without O_CREAT mode is not supported')
 
-        if flags & os.O_WRONLY or flags & os.O_RDWR or flags & os.O_CREAT:
-            if not flags & (os.O_CREAT | os.O_EXCL):
-                if not self.filesystem.Exists(file_path):
-                    raise OSError(errno.ENOENT,
-                                  'File does not exist in fake filesystem',
-                                  file_path)
-            if flags & os.O_EXCL:
-                str_flags = 'x'
-            elif flags & os.O_APPEND:
-                str_flags = 'a'
-            elif flags & os.O_CREAT and not flags & (os.O_RDWR | os.O_WRONLY):
-                # non-existing mode to map the behavior of O_CREAT only
-                # file can be created and read, but not written
-                str_flags = 'r!'
-                if flags & os.O_TRUNC:
-                    str_flags = 'r!!'
-            elif flags & os.O_TRUNC:
-                str_flags = 'w'
-            else:
-                # non-existing mode to map the behavior of O_WRONLY
-                # this is the same as 'r+', but without read permission
-                str_flags = 'w!'
-            if flags & os.O_RDWR:
-                str_flags += '+'
-        elif not self.filesystem.is_windows_fs and self.filesystem.Exists(file_path):
+        if (not self.filesystem.is_windows_fs and
+                not open_modes.can_write and
+                self.filesystem.Exists(file_path)):
             # handle opening directory - only allowed under Posix with read-only mode
             obj = self.filesystem.ResolveObject(file_path)
             if isinstance(obj, FakeDirectory):
@@ -3213,13 +3201,13 @@ class FakeOsModule(object):
                 return file_des
 
         # low level open is always binary
-        str_flags += 'b'
+        str_flags = 'b'
         delete_on_close = False
         if hasattr(os, 'O_TEMPORARY'):
             delete_on_close = flags & os.O_TEMPORARY == os.O_TEMPORARY
         fake_file = FakeFileOpen(self.filesystem,
                                  delete_on_close=delete_on_close,
-                                 low_level=True)(file_path, str_flags)
+                                 low_level=True)(file_path, str_flags, open_modes=open_modes)
         if mode:
             self.chmod(file_path, mode)
         return fake_file.fileno()
@@ -4313,14 +4301,15 @@ class FakeFileOpen(object):
         else:
             return self._call_ver2(*args, **kwargs)
 
-    def _call_ver2(self, file_path, mode='r', buffering=-1, flags=None):
+    def _call_ver2(self, file_path, mode='r', buffering=-1, flags=None, open_modes=None):
         """Limits args of open() or file() for Python 2.x versions."""
         # Backwards compatibility, mode arg used to be named flags
         mode = flags or mode
-        return self.Call(file_path, mode, buffering)
+        return self.Call(file_path, mode, buffering, open_modes=open_modes)
 
     def Call(self, file_, mode='r', buffering=-1, encoding=None,
-             errors=None, newline=None, closefd=True, opener=None):
+             errors=None, newline=None, closefd=True, opener=None,
+             open_modes=None):
         """Return a file-like object with the contents of the target file object.
 
         Args:
@@ -4336,6 +4325,7 @@ class FakeFileOpen(object):
           closefd: if a file descriptor rather than file name is passed, and set
             to false, then the file descriptor is kept open when file is closed.
           opener: not supported.
+          open_modes: Modes for opening files if called from low-level API
 
         Returns:
           a file-like object containing the contents of the target file.
@@ -4351,12 +4341,10 @@ class FakeFileOpen(object):
         mode = mode.replace('t', '').replace('b', '')
         mode = mode.replace('rU', 'r').replace('U', 'r')
 
-        if mode not in _OPEN_MODE_MAP:
-            raise ValueError('Invalid mode: %r' % orig_modes)
-        if 'x' in mode and not self.low_level and sys.version_info < (3, 3):
-            raise ValueError('Exclusive mode not supported before Python 3.3')
-
-        must_exist, need_read, need_write, truncate, append, must_not_exist = _OPEN_MODE_MAP[mode]
+        if not self.low_level:
+            if mode not in _OPEN_MODE_MAP:
+                raise ValueError('Invalid mode: %r' % orig_modes)
+            open_modes = _OpenModes(*_OPEN_MODE_MAP[mode])
 
         file_object = None
         filedes = None
@@ -4375,17 +4363,17 @@ class FakeFileOpen(object):
             closefd = True
 
         error_class = OSError if self.low_level else IOError
-        if must_not_exist and (file_object or self.filesystem.IsLink(file_path)):
+        if open_modes.must_not_exist and (file_object or self.filesystem.IsLink(file_path)):
             raise error_class(errno.EEXIST, 'File exists', file_path)
         if file_object:
-            if ((need_read and not file_object.st_mode & PERM_READ) or
-                    (need_write and not file_object.st_mode & PERM_WRITE)):
+            if ((open_modes.can_read and not file_object.st_mode & PERM_READ) or
+                    (open_modes.can_write and not file_object.st_mode & PERM_WRITE)):
                 raise error_class(errno.EACCES, 'Permission denied', file_path)
-            if need_write:
-                if truncate:
+            if open_modes.can_write:
+                if open_modes.truncate:
                     file_object.SetContents('')
         else:
-            if must_exist:
+            if open_modes.must_exist:
                 raise error_class(errno.ENOENT, 'No such file or directory', file_path)
             file_object = self.filesystem.CreateFile(
                 real_path, create_missing_dirs=False, apply_umask=True, low_level=self.low_level)
@@ -4402,9 +4390,9 @@ class FakeFileOpen(object):
 
         fakefile = FakeFileWrapper(file_object,
                                    file_path,
-                                   update=need_write,
-                                   read=need_read,
-                                   append=append,
+                                   update=open_modes.can_write,
+                                   read=open_modes.can_read,
+                                   append=open_modes.append,
                                    delete_on_close=self._delete_on_close,
                                    filesystem=self.filesystem,
                                    newline=newline,
