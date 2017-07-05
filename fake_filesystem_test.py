@@ -2759,6 +2759,16 @@ class FakeOsModuleLowLevelFileOpTest(FakeOsModuleTestBase):
         self.assertRaisesIOError(errno.EEXIST, self.os.open, file_path,
                                  os.O_RDWR | os.O_EXCL | os.O_CREAT)
 
+    @unittest.skipIf(sys.version_info < (3, 3), 'Exclusive mode new in Python 3.3')
+    def testLowLevelOpenExclusiveRaisesIfSymlinkExists(self):
+        base_path = '/foo/bar'
+        self.filesystem.CreateDirectory(base_path)
+        link_path = base_path + '/link'
+        link_target = base_path + '/link_target'
+        self.os.symlink(link_target, link_path)
+        self.assertRaisesOSError(errno.EEXIST, self.os.open, link_path,
+                                 os.O_CREAT | os.O_WRONLY | os.O_TRUNC | os.O_EXCL)
+
     def testOpenDirectoryRaisesUnderWindows(self):
         self.filesystem.is_windows_fs = True
         dir_path = '/dir'

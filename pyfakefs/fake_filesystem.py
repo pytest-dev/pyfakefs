@@ -4375,12 +4375,12 @@ class FakeFileOpen(object):
             closefd = True
 
         error_class = OSError if self.low_level else IOError
+        if must_not_exist and (file_object or self.filesystem.IsLink(file_path)):
+            raise error_class(errno.EEXIST, 'File exists', file_path)
         if file_object:
             if ((need_read and not file_object.st_mode & PERM_READ) or
                     (need_write and not file_object.st_mode & PERM_WRITE)):
                 raise error_class(errno.EACCES, 'Permission denied', file_path)
-            if must_not_exist:
-                raise error_class(errno.EEXIST, 'File exists', file_path)
             if need_write:
                 if truncate:
                     file_object.SetContents('')
