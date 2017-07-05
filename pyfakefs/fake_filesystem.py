@@ -1710,7 +1710,9 @@ class FakeFilesystem(object):
         target_object = self.root
         try:
             for component in path_components:
-                if not isinstance(target_object, FakeDirectory):
+                if stat.S_ISLNK(target_object.st_mode):
+                    target_object = self.ResolveObject(target_object.contents)
+                if not stat.S_ISDIR(target_object.st_mode):
                     if not self.is_windows_fs:
                         raise IOError(errno.ENOTDIR,
                                       'Not a directory in fake filesystem',
@@ -1826,7 +1828,7 @@ class FakeFilesystem(object):
             target_directory = self.root
         else:
             target_directory = self.ResolveObject(file_path)
-            if not target_directory.st_mode & stat.S_IFDIR:
+            if not stat.S_ISDIR(target_directory.st_mode):
                 raise OSError(errno.ENOTDIR,
                               'Not a directory in the fake filesystem',
                               file_path)
@@ -2001,7 +2003,7 @@ class FakeFilesystem(object):
                 current_dir.AddEntry(new_dir)
                 current_dir = new_dir
             else:
-                if directory.st_mode & stat.S_IFLNK == stat.S_IFLNK:
+                if stat.S_ISLNK(directory.st_mode):
                     directory = self.ResolveObject(directory.contents)
                 current_dir = directory
                 if directory.st_mode & stat.S_IFDIR != stat.S_IFDIR:

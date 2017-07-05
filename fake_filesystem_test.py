@@ -1213,6 +1213,17 @@ class FakeOsModuleTest(FakeOsModuleTestBase):
         self.assertFalse(self.filesystem.Exists(link_path1))
         self.assertTrue(self.filesystem.Exists(link_path2))
 
+    def testRenameSymlinkToSymlinkForParentRaises(self):
+        self.filesystem.is_windows_fs = False
+        base_path = '/foo/bar'
+        dir_link = base_path + "/dir_link"
+        dir_path = base_path + "/dir"
+        dir_in_dir_path = dir_link + "/inner_dir"
+        self.filesystem.CreateDirectory(dir_path)
+        self.os.symlink(dir_path, dir_link)
+        self.filesystem.CreateDirectory(dir_in_dir_path)
+        self.assertRaisesOSError(errno.EINVAL, self.os.rename, dir_path, dir_in_dir_path)
+
     def testRecursiveRenameRaises(self):
         self.filesystem.is_windows_fs = False
         base_path = '/foo/bar'
