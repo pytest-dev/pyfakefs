@@ -1860,7 +1860,9 @@ class FakeFilesystem(object):
                           old_file_path)
 
         old_object = self.LResolveObject(old_file_path)
-        if not self.is_windows_fs and self.IsLink(new_file_path):
+        if (not self.is_windows_fs and
+                self.IsDir(old_file_path, follow_symlinks=False) and
+                self.IsLink(new_file_path)):
             raise OSError(errno.ENOTDIR, 'Cannot rename to symlink', new_file_path)
 
         if self.Exists(new_file_path) or self.IsLink(new_file_path):
@@ -1886,11 +1888,12 @@ class FakeFilesystem(object):
                         raise OSError(errno.EEXIST,
                                       'Fake filesystem object: can not rename to existing directory',
                                       new_file_path)
-                if new_object.contents:
-                    raise OSError(errno.ENOTEMPTY,
-                                  'Fake filesystem object: can not rename to non-empty directory',
-                                  new_file_path)
-                if not stat.S_ISDIR(old_object.st_mode):
+                if not stat.S_ISLNK(new_object.st_mode):
+                    if new_object.contents:
+                        raise OSError(errno.ENOTEMPTY,
+                                      'Fake filesystem object: can not rename to non-empty directory',
+                                      new_file_path)
+                    if stat.S_ISREG(old_object.st_mode):
                         raise OSError(errno.EISDIR,
                                       'Fake filesystem object: cannot rename file to directory',
                                       new_file_path)
@@ -2380,7 +2383,7 @@ class FakeFilesystem(object):
                     raise
                 raise OSError(e.errno, e.strerror, e.filename)
 
-    def _IsType(self, path, st_flag):
+    def _IsType(self, path, st_flag, follow_symlinks=True):
         """Helper function to implement isdir(), islink(), etc.
 
         See the stat(2) man page for valid stat.S_I* flag values
@@ -2400,14 +2403,14 @@ class FakeFilesystem(object):
         if path is None:
             raise TypeError
         try:
-            obj = self.ResolveObject(path)
+            obj = self.ResolveObject(path, follow_symlinks)
             if obj:
                 return stat.S_IFMT(obj.st_mode) == st_flag
         except IOError:
             return False
         return False
 
-    def IsDir(self, path):
+    def IsDir(self, path, follow_symlinks=True):
         """Determine if path identifies a directory.
         New in pyfakefs 3.0.
 
@@ -2420,9 +2423,9 @@ class FakeFilesystem(object):
         Raises:
           TypeError: if path is None.
         """
-        return self._IsType(path, stat.S_IFDIR)
+        return self._IsType(path, stat.S_IFDIR, follow_symlinks)
 
-    def IsFile(self, path):
+    def IsFile(self, path, follow_symlinks=True):
         """Determine if path identifies a regular file.
         New in pyfakefs 3.0.
 
@@ -2435,7 +2438,7 @@ class FakeFilesystem(object):
         Raises:
           TypeError: if path is None.
         """
-        return self._IsType(path, stat.S_IFREG)
+        return self._IsType(path, stat.S_IFREG, follow_symlinks)
 
     def IsLink(self, path):
         """Determine if path identifies a symbolic link.
@@ -2450,17 +2453,7 @@ class FakeFilesystem(object):
         Raises:
           TypeError: if path is None.
         """
-        if sys.version_info >= (3, 6):
-            path = os.fspath(path)
-        if path is None:
-            raise TypeError
-        try:
-            link_obj = self.LResolveObject(path)
-            return stat.S_IFMT(link_obj.st_mode) == stat.S_IFLNK
-        except IOError:
-            return False
-        except KeyError:
-            return False
+        return self._IsType(path, stat.S_IFLNK, follow_symlinks=False)
 
     def ConfirmDir(self, target_directory):
         """Test that the target is actually a directory, raising OSError if not.

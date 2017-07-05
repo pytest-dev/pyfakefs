@@ -1166,7 +1166,7 @@ class FakeOsModuleTest(FakeOsModuleTestBase):
         self.assertEqual('test contents',
                          self.filesystem.GetObject(new_file_path).contents)
 
-    def testRenameToSymlinkPosix(self):
+    def testRenameDirToSymlinkPosix(self):
         self.filesystem.is_windows_fs = False
         base_path = '/foo/bar'
         link_path = base_path + "/link"
@@ -1178,7 +1178,7 @@ class FakeOsModuleTest(FakeOsModuleTestBase):
 
     @unittest.skipIf(sys.version_info < (3, 3),
                      'Links are not supported under Windows before Python 3.3')
-    def testRenameToSymlinkWindows(self):
+    def testRenameDirToSymlinkWindows(self):
         self.filesystem.is_windows_fs = True
         base_path = '/foo/bar'
         link_path = base_path + "/link"
@@ -1187,6 +1187,31 @@ class FakeOsModuleTest(FakeOsModuleTestBase):
         self.filesystem.CreateDirectory(dir_path)
         self.os.symlink(link_target, link_path)
         self.assertRaisesOSError(errno.EEXIST, self.os.rename, dir_path, link_path)
+
+    def testRenameFileToSymlink(self):
+        self.filesystem.is_windows_fs = False
+        base_path = '/foo/bar'
+        self.filesystem.CreateDirectory(base_path)
+        link_path = base_path + '/file_link'
+        file_path = base_path + '/file'
+        self.os.symlink(file_path, link_path)
+        self.filesystem.CreateFile(file_path)
+        self.os.rename(file_path, link_path)
+        self.assertFalse(self.filesystem.Exists(file_path))
+        self.assertTrue(self.filesystem.Exists(link_path))
+        self.assertTrue(self.os.path.isfile(link_path))
+
+    def testRenameSymlinkToSymlink(self):
+        self.filesystem.is_windows_fs = False
+        base_path = '/foo/bar'
+        self.filesystem.CreateDirectory(base_path)
+        link_path1 = base_path + '/link1'
+        link_path2 = base_path + '/link2'
+        self.os.symlink(base_path, link_path1)
+        self.os.symlink(base_path, link_path2)
+        self.os.rename(link_path1, link_path2)
+        self.assertFalse(self.filesystem.Exists(link_path1))
+        self.assertTrue(self.filesystem.Exists(link_path2))
 
     def testRecursiveRenameRaises(self):
         self.filesystem.is_windows_fs = False
