@@ -1308,7 +1308,7 @@ class FakeOsModuleTest(FakeOsModuleTestBase):
             self.assertTrue(self.filesystem.Exists(new_path))
             self.assertEqual(
                 'test', self.filesystem.GetObject('%s/plugh' % new_path).contents)
-            self.assertEqual(1, self.filesystem.GetObject(new_path).st_nlink)
+            self.assertEqual(3, self.filesystem.GetObject(new_path).st_nlink)
 
     def testRenameDirectoryToExistingFileRaises(self):
         base_path = '/foo/bar'
@@ -2351,6 +2351,16 @@ class FakeOsModuleTest(FakeOsModuleTestBase):
         # check that it gets decremented correctly again
         self.os.unlink(file1_path)
         self.assertEqual(self.os.stat(file2_path).st_nlink, 1)
+
+    def testNLinkForDirectories(self):
+        self.filesystem.CreateDirectory('/foo/bar')
+        self.filesystem.CreateFile('/foo/baz')
+        self.assertEqual(2, self.filesystem.GetObject('/foo/bar').st_nlink)
+        self.assertEqual(4, self.filesystem.GetObject('/foo').st_nlink)
+        self.filesystem.CreateFile('/foo/baz2')
+        self.assertEqual(5, self.filesystem.GetObject('/foo').st_nlink)
+
+        self.filesystem.CreateFile('/foo/bar/baz')
 
     def testUMask(self):
         umask = os.umask(0o22)

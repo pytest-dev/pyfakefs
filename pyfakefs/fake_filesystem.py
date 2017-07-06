@@ -630,6 +630,8 @@ class FakeDirectory(FakeFile):
           filesystem: if set, the fake filesystem where the directory is created
         """
         FakeFile.__init__(self, name, stat.S_IFDIR | perm_bits, {}, filesystem=filesystem)
+        # directories have the link count of contained entries, inclusing '.' and '..'
+        self.st_nlink += 1
 
     @property
     def contents(self):
@@ -662,6 +664,7 @@ class FakeDirectory(FakeFile):
 
         self.contents[path_object.name] = path_object
         path_object.parent_dir = self
+        self.st_nlink += 1
         path_object.st_nlink += 1
         path_object.st_dev = self.st_dev
         if path_object.st_nlink == 1:
@@ -706,6 +709,7 @@ class FakeDirectory(FakeFile):
         elif entry.st_nlink == 1:
             self.filesystem.ChangeDiskUsage(-entry.GetSize(), pathname_name, entry.st_dev)
 
+        self.st_nlink -= 1
         entry.st_nlink -= 1
         assert entry.st_nlink >= 0
 
