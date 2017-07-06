@@ -3190,6 +3190,8 @@ class FakeOsModule(object):
             NotImplementedError: if `os.O_EXCL` is used without `os.O_CREAT`
         """
         file_path = self._path_with_dir_fd(file_path, self.open, dir_fd)
+        if mode is None:
+            mode = 0o777
 
         open_modes = _OpenModes(
             must_exist=not flags & os.O_CREAT,
@@ -3221,8 +3223,7 @@ class FakeOsModule(object):
         fake_file = FakeFileOpen(self.filesystem,
                                  delete_on_close=delete_on_close,
                                  low_level=True)(file_path, str_flags, open_modes=open_modes)
-        if mode:
-            self.chmod(file_path, mode)
+        self.chmod(file_path, mode)
         return fake_file.fileno()
 
     def close(self, file_des):
