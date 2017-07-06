@@ -1263,6 +1263,15 @@ class FakeOsModuleTest(FakeOsModuleTestBase):
         self.os.rename(link_path, file_path)
         self.assertFalse(self.os.path.exists(file_path))
 
+    def testRenameSymlinkToDirRaises(self):
+        self.filesystem.is_windows_fs = False
+        base_path = '/foo/bar'
+        link_path = base_path + '/dir_link'
+        dir_path = base_path + '/dir'
+        self.filesystem.CreateDirectory(dir_path)
+        self.os.symlink(dir_path, link_path)
+        self.assertRaisesOSError(errno.ENOTDIR, self.os.rename, link_path, dir_path)
+
     def testRenameBrokenSymlink(self):
         self.filesystem.is_windows_fs = False
         base_path = "/foo"
