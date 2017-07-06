@@ -2410,7 +2410,7 @@ class FakeFilesystem(object):
             obj = self.ResolveObject(path, follow_symlinks)
             if obj:
                 return stat.S_IFMT(obj.st_mode) == st_flag
-        except IOError:
+        except (IOError, OSError):
             return False
         return False
 
