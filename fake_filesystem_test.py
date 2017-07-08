@@ -1664,11 +1664,12 @@ class FakeOsModuleTest(FakeOsModuleTestBase):
         dir_link = base_path + "/dir_link"
         self.filesystem.CreateDirectory(dir_path)
         self.os.symlink(dir_path, dir_link)
-        dir_in_link = dir_link + "/dir2"
-        self.filesystem.CreateDirectory(dir_in_link)
-        self.os.removedirs(dir_in_link)
-        self.assertFalse(self.filesystem.Exists(dir_in_link))
-        self.assertFalse(self.filesystem.Exists(dir_link))
+        dir_in_dir = dir_link + "/dir2"
+        self.filesystem.CreateDirectory(dir_in_dir)
+        self.os.removedirs(dir_in_dir)
+        self.assertFalse(self.filesystem.Exists(dir_in_dir))
+        # ensure that the symlink is not removed
+        self.assertTrue(self.filesystem.Exists(dir_link))
 
     def testMkdir(self):
         """mkdir can create a relative directory."""
