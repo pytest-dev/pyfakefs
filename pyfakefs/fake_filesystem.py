@@ -4113,7 +4113,10 @@ class FakeFileWrapper(object):
             self._io.truncate(0)
             self._io.seek(0)
             self._io.write(self._file_object.byte_contents)
-            self._io.seek(position)
+            if self._append:
+                self._io.seek(0, os.SEEK_END)
+            else:
+                self._io.seek(position)
 
     def seek(self, offset, whence=0):
         """Move read/write pointer in 'file'."""
