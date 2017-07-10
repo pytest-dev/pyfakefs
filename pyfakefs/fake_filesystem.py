@@ -3171,6 +3171,23 @@ class FakeOsModule(object):
         except IOError as exc:
             raise OSError(exc)
 
+    def _umask(self):
+        """Return the current umask."""
+        if self.filesystem.is_windows_fs:
+            # windows always returns 0 - it has no real notion of umask
+            return 0
+        if sys.platform == 'win32':
+            # if we are testing Unix under Windows we assume a default mask
+            return 0o002
+        else:
+            # under Unix, we return the real umask;
+            # as there is no pure getter for umask, so we have to first
+            # set a mode to get the previous one and then re-set that
+            mask = os.umask(0)
+            os.umask(mask)
+            return mask
+
+
     def open(self, file_path, flags, mode=None, dir_fd=None):
         """Return the file descriptor for a FakeFile.
 
@@ -3193,7 +3210,10 @@ class FakeOsModule(object):
         """
         file_path = self._path_with_dir_fd(file_path, self.open, dir_fd)
         if mode is None:
-            mode = 0o777
+            if self.filesystem.is_windows_fs:
+                mode = 0o666
+            else:
+                mode = 0o777 & ~self._umask()
 
         open_modes = _OpenModes(
             must_exist=not flags & os.O_CREAT,

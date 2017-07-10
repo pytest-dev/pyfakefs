@@ -2832,6 +2832,26 @@ class FakeOsModuleLowLevelFileOpTest(FakeOsModuleTestBase):
         file_des = self.os.open(dir_path, os.O_RDONLY)
         self.assertEqual(0, file_des)
 
+    def testOpenModePosix(self):
+        self.filesystem.is_windows_fs = False
+        base_path = '/foo/bar'
+        self.filesystem.CreateDirectory(base_path)
+        file_path = base_path + "/baz"
+        fd0 = self.os.open(file_path, os.O_CREAT | os.O_WRONLY | os.O_TRUNC)
+        stat0 = self.os.fstat(fd0)
+        # not a really good test as this replicates the code,
+        # but we don't know the umask at the test system
+        self.assertEqual(0o100777 & ~self.os._umask(), stat0.st_mode)
+
+    def testOpenModeWindows(self):
+        self.filesystem.is_windows_fs = True
+        base_path = '/foo/bar'
+        self.filesystem.CreateDirectory(base_path)
+        file_path = base_path + "/baz"
+        fd0 = self.os.open(file_path, os.O_CREAT | os.O_WRONLY | os.O_TRUNC)
+        stat0 = self.os.fstat(fd0)
+        self.assertEqual(0o100666, stat0.st_mode)
+
     def testWriteRead(self):
         file_path = 'file1'
         self.filesystem.CreateFile(file_path, contents=b'orig contents')
