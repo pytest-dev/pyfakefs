@@ -2900,6 +2900,14 @@ class FakeOsModuleLowLevelFileOpTest(FakeOsModuleTestBase):
         self.assertEqual(6, self.os.path.getsize(file_path))
         self.assertEqual(b'aaabbb', self.filesystem.GetObject(file_path).byte_contents)
 
+    def testReadOnlyReadAfterWrite(self):
+        self.filesystem.is_windows_fs = False
+        file_path = '/foo/bar/baz'
+        self.filesystem.CreateFile(file_path, contents=b'test')
+        fd = self.os.open(file_path, os.O_CREAT)
+        self.os.open(file_path, os.O_CREAT | os.O_WRONLY | os.O_TRUNC)
+        self.assertEqual(b'', self.os.read(fd, 0))
+
 
 class FakeOsModuleWalkTest(FakeOsModuleTestBase):
     def assertWalkResults(self, expected, top, topdown=True, followlinks=False):

@@ -105,7 +105,7 @@ import stat
 from copy import copy
 
 if sys.version_info < (3, 0):
-    import cStringIO  # pylint: disable=import-error
+    import StringIO  # pylint: disable=import-error
 else:
     import builtins
 
@@ -3295,7 +3295,7 @@ class FakeOsModule(object):
         """
         file_handle = self.filesystem.GetOpenFile(file_des)
         file_handle.raw_io = True
-        file_handle.sync()
+        file_handle._sync_io()
         file_handle.write(contents)
         file_handle.flush()
         return len(contents)
@@ -4052,7 +4052,7 @@ class FakeFileWrapper(object):
             if sys.version_info >= (3, 0):
                 io_class = io.BytesIO if binary else io.StringIO
             else:
-                io_class = cStringIO.StringIO
+                io_class = StringIO.StringIO
             io_args = {} if binary else {'newline': newline}
             if contents and not binary:
                 contents = contents.decode(encoding or locale.getpreferredencoding(False),
@@ -4126,18 +4126,6 @@ class FakeFileWrapper(object):
             self._file_object.SetContents(self._io.getvalue(), self._encoding)
             self._file_epoch = self._file_object.epoch
 
-    def sync(self):
-        """Synchronize buffer with file contents."""
-        if self.allow_update:
-            position = self._io.tell()
-            self._io.truncate(0)
-            self._io.seek(0)
-            self._io.write(self._file_object.byte_contents)
-            if self._append:
-                self._io.seek(0, os.SEEK_END)
-            else:
-                self._io.seek(position)
-
     def seek(self, offset, whence=0):
         """Move read/write pointer in 'file'."""
         if not self._append:
@@ -4162,7 +4150,7 @@ class FakeFileWrapper(object):
             self._io.seek(write_seek)
         return self._read_seek
 
-    def _UpdateStringIO(self):
+    def _sync_io(self):
         """Update the StringIO with changes to the file object contents."""
         if self._file_epoch == self._file_object.epoch:
             return
@@ -4179,7 +4167,10 @@ class FakeFileWrapper(object):
         self._io.seek(0)
         self._io.truncate()
         self._io.write(contents)
-        self._io.seek(whence)
+        if self._append:
+            self._io.seek(0, os.SEEK_END)
+        else:
+            self._io.seek(whence)
 
         if is_stream_reader_writer:
             self._io.stream.allow_update = False
@@ -4286,7 +4277,7 @@ class FakeFileWrapper(object):
             return write_error
 
         if name.startswith('read'):
-            self._UpdateStringIO()
+            self._sync_io()
         if self._append:
             if name.startswith('read'):
                 return self._ReadWrappers(name)

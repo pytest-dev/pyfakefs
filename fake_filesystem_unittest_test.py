@@ -207,12 +207,14 @@ class TestCopyOrAddRealFile(TestPyfakefsUnittestBase):
     def testCopyRealFile(self):
         '''Typical usage of deprecated copyRealFile()'''
         # Use this file as the file to be copied to the fake file system
-        real_file_path = __file__
+        real_file_path = os.path.realpath(__file__)
         fake_file = self.copyRealFile(real_file_path)
 
-        self.assertTrue('class TestCopyOrAddRealFile(TestPyfakefsUnittestBase)' in self.real_string_contents,
+        self.assertTrue('class TestCopyOrAddRealFile(TestPyfakefsUnittestBase)'
+                        in self.real_string_contents,
                         'Verify real file string contents')
-        self.assertTrue(b'class TestCopyOrAddRealFile(TestPyfakefsUnittestBase)' in self.real_byte_contents,
+        self.assertTrue(b'class TestCopyOrAddRealFile(TestPyfakefsUnittestBase)'
+                        in self.real_byte_contents,
                         'Verify real file byte contents')
 
         # note that real_string_contents may differ to fake_file.contents due to newline conversions in open()
