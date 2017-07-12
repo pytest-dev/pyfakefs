@@ -2031,7 +2031,7 @@ class FakeFilesystem(object):
 
     def CreateFile(self, file_path, st_mode=stat.S_IFREG | PERM_DEF_FILE,
                    contents='', st_size=None, create_missing_dirs=True,
-                   apply_umask=False, encoding=None, errors=None, low_level=False):
+                   apply_umask=False, encoding=None, errors=None, raw_io=False):
         """Create file_path, including all the parent directories along the way.
 
         This helper method can be used to set up tests more easily.
@@ -2047,7 +2047,7 @@ class FakeFilesystem(object):
                 New in pyfakefs 2.9.
             errors: the error mode used for encoding/decoding errors
                 New in pyfakefs 3.2.
-            low_level: `True` if called from low-level API (`os.open`)
+            raw_io: `True` if called from low-level API (`os.open`)
 
         Returns:
             the newly created FakeFile object.
@@ -2058,7 +2058,7 @@ class FakeFilesystem(object):
         """
         return self._CreateFile(
             file_path, st_mode, contents, st_size, create_missing_dirs,
-            apply_umask, encoding, errors, low_level=low_level)
+            apply_umask, encoding, errors, raw_io=raw_io)
 
     def add_real_file(self, file_path, read_only=True):
         """Create file_path, including all the parent directories along the way, for an existing
@@ -2160,7 +2160,7 @@ class FakeFilesystem(object):
     def _CreateFile(self, file_path, st_mode=stat.S_IFREG | PERM_DEF_FILE,
                     contents='', st_size=None, create_missing_dirs=True,
                     apply_umask=False, encoding=None, errors=None,
-                    read_from_real_fs=False, read_only=True, low_level=False):
+                    read_from_real_fs=False, read_only=True, raw_io=False):
         """Internal fake file creator that supports both normal fake files and fake
         files based on real files.
 
@@ -2176,9 +2176,9 @@ class FakeFilesystem(object):
             read_from_real_fs: if True, the contents are reaf from the real file system on demand.
             read_only: if set, the file is treated as read-only, e.g. a write access raises an exception;
                 otherwise, writing to the file changes the fake file only as usually.
-            low_level: `True` if called from low-level API (`os.open`)
+            raw_io: `True` if called from low-level API (`os.open`)
         """
-        error_class = OSError if low_level else IOError
+        error_class = OSError if raw_io else IOError
         file_path = self.NormalizePath(file_path)
 
         # also consider broken links
@@ -2245,7 +2245,7 @@ class FakeFilesystem(object):
             link_target = os.fspath(link_target)
         return self.CreateFile(file_path, st_mode=stat.S_IFLNK | PERM_DEF,
                                contents=link_target, create_missing_dirs=create_missing_dirs,
-                               low_level=True)
+                               raw_io=True)
 
     def CreateHardLink(self, old_path, new_path):
         """Create a hard link at new_path, pointing at old_path.
@@ -3244,7 +3244,7 @@ class FakeOsModule(object):
             delete_on_close = flags & os.O_TEMPORARY == os.O_TEMPORARY
         fake_file = FakeFileOpen(self.filesystem,
                                  delete_on_close=delete_on_close,
-                                 low_level=True)(file_path, str_flags, open_modes=open_modes)
+                                 raw_io=True)(file_path, str_flags, open_modes=open_modes)
         self.chmod(file_path, mode)
         return fake_file.fileno()
 
@@ -4321,7 +4321,7 @@ class FakeFileOpen(object):
     """
     __name__ = 'FakeFileOpen'
 
-    def __init__(self, filesystem, delete_on_close=False, use_io=False, low_level=False):
+    def __init__(self, filesystem, delete_on_close=False, use_io=False, raw_io=False):
         """init.
 
         Args:
@@ -4333,7 +4333,7 @@ class FakeFileOpen(object):
         self.filesystem = filesystem
         self._delete_on_close = delete_on_close
         self._use_io = use_io or sys.version_info >= (3, 0)
-        self.low_level = low_level
+        self.raw_io = raw_io
 
     def __call__(self, *args, **kwargs):
         """Redirects calls to file() or open() to appropriate method."""
@@ -4382,7 +4382,7 @@ class FakeFileOpen(object):
         mode = mode.replace('t', '').replace('b', '')
         mode = mode.replace('rU', 'r').replace('U', 'r')
 
-        if not self.low_level:
+        if not self.raw_io:
             if mode not in _OPEN_MODE_MAP:
                 raise ValueError('Invalid mode: %r' % orig_modes)
             open_modes = _OpenModes(*_OPEN_MODE_MAP[mode])
@@ -4403,7 +4403,7 @@ class FakeFileOpen(object):
                 file_object = self.filesystem.GetObjectFromNormalizedPath(real_path)
             closefd = True
 
-        error_class = OSError if self.low_level else IOError
+        error_class = OSError if self.raw_io else IOError
         if open_modes.must_not_exist and (file_object or self.filesystem.IsLink(file_path)):
             raise error_class(errno.EEXIST, 'File exists', file_path)
         if file_object:
@@ -4417,7 +4417,7 @@ class FakeFileOpen(object):
             if open_modes.must_exist:
                 raise error_class(errno.ENOENT, 'No such file or directory', file_path)
             file_object = self.filesystem.CreateFile(
-                real_path, create_missing_dirs=False, apply_umask=True, low_level=self.low_level)
+                real_path, create_missing_dirs=False, apply_umask=True, raw_io=self.raw_io)
 
         if stat.S_ISDIR(file_object.st_mode):
             if self.filesystem.is_windows_fs:
@@ -4440,7 +4440,8 @@ class FakeFileOpen(object):
                                    binary=binary,
                                    closefd=closefd,
                                    encoding=encoding,
-                                   errors=errors)
+                                   errors=errors,
+                                   raw_io=self.raw_io)
         if filedes is not None:
             fakefile.filedes = filedes
         else:

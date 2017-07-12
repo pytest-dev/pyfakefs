@@ -2908,6 +2908,17 @@ class FakeOsModuleLowLevelFileOpTest(FakeOsModuleTestBase):
         self.os.open(file_path, os.O_CREAT | os.O_WRONLY | os.O_TRUNC)
         self.assertEqual(b'', self.os.read(fd, 0))
 
+    def testReadAfterClosingWriteDescriptor(self):
+        base_path = '/foo/bar'
+        self.filesystem.CreateDirectory(base_path)
+        file_path = base_path + '/baz'
+        fd0 = self.os.open(file_path, os.O_CREAT | os.O_WRONLY | os.O_TRUNC)
+        fd1 = self.os.open(file_path, os.O_CREAT | os.O_WRONLY | os.O_TRUNC)
+        fd2 = self.os.open(file_path, os.O_CREAT)
+        self.os.write(fd1, b'abc')
+        self.os.close(fd0)
+        self.assertEqual(b'abc', self.os.read(fd2, 3))
+
 
 class FakeOsModuleWalkTest(FakeOsModuleTestBase):
     def assertWalkResults(self, expected, top, topdown=True, followlinks=False):
