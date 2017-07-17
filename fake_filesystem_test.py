@@ -136,6 +136,12 @@ class FakeDirectoryUnitTest(TestCase):
         self.fake_file.SetSize(10)
         self.assertEqual('dummy_file', self.fake_file.contents)
 
+    def testSetContentsToDirRaises(self):
+        self.filesystem.is_windows_fs = True
+        self.assertRaisesOSError(errno.EISDIR, self.fake_dir.SetContents, 'a')
+        self.filesystem.is_windows_fs = False
+        self.assertRaisesIOError(errno.EISDIR, self.fake_dir.SetContents, 'a')
+
     def testPadsFileContentWithNullBytesIfSizeIsGreaterThanCurrentSize(self):
         self.fake_file.SetSize(13)
         self.assertEqual('dummy_file\0\0\0', self.fake_file.contents)

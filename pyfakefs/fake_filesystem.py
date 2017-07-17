@@ -633,6 +633,10 @@ class FakeDirectory(FakeFile):
         # directories have the link count of contained entries, inclusing '.' and '..'
         self.st_nlink += 1
 
+    def SetContents(self, contents, encoding=None):
+        error_class = OSError if self.filesystem.is_windows_fs else IOError
+        raise error_class(errno.EISDIR, 'Trying to write to directory')
+
     @property
     def contents(self):
         """Return the list of contained directory entries."""
