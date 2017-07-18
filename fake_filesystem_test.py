@@ -4587,6 +4587,16 @@ class OpenFileWithEncodingTest(TestCase):
         self.assertEqual(u'новое  содержание здесь', fake_file.read())
         fake_file.close()
 
+    def testAccessingClosedFileRaises(self):
+        self.filesystem.is_windows_fs = False
+        self.filesystem.CreateFile(self.file_path, contents=b'test')
+        fake_file = self.open(self.file_path, 'r')
+        fake_file.close()
+        self.assertRaises(ValueError, lambda: fake_file.read(1))
+        self.assertRaises(ValueError, lambda: fake_file.write(1))
+        self.assertRaises(ValueError, lambda: fake_file.readline())
+        self.assertRaises(ValueError, lambda: fake_file.truncate())
+
 
 class OpenWithFileDescriptorTest(FakeFileOpenTestBase):
     @unittest.skipIf(sys.version_info < (3, 0), 'only tested on 3.0 or greater')

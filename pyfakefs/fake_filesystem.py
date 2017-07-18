@@ -4030,9 +4030,10 @@ class FakeFileWrapper(object):
     If the wrapper has any data written to it, it will propagate to
     the FakeFile object on close() or flush().
     """
-    def __init__(self, file_object, file_path, update=False, read=False, append=False,
-                 delete_on_close=False, filesystem=None, newline=None,
-                 binary=True, closefd=True, encoding=None, errors=None, raw_io=False):
+    def __init__(self, file_object, file_path, update=False, read=False,
+                 append=False, delete_on_close=False, filesystem=None,
+                 newline=None, binary=True, closefd=True, encoding=None,
+                 errors=None, raw_io=False, is_stream=False):
         self._file_object = file_object
         self._file_path = file_path
         self._append = append
@@ -4042,13 +4043,15 @@ class FakeFileWrapper(object):
         self._file_epoch = file_object.epoch
         self.raw_io = raw_io
         self._binary = binary
+        self._is_stream = is_stream
         contents = file_object.byte_contents
         self._encoding = encoding
         errors = errors or 'strict'
         if encoding:
-            file_wrapper = FakeFileWrapper(file_object, file_path, update, read,
-                                           append, delete_on_close=False, filesystem=filesystem,
-                                           newline=None, binary=True, closefd=closefd)
+            file_wrapper = FakeFileWrapper(
+                file_object, file_path, update, read, append,
+                delete_on_close=False, filesystem=filesystem,
+                newline=None, binary=True, closefd=closefd, is_stream=True)
             codec_info = codecs.lookup(encoding)
             self._io = codecs.StreamReaderWriter(file_wrapper, codec_info.streamreader,
                                                  codec_info.streamwriter, errors)
@@ -4258,8 +4261,16 @@ class FakeFileWrapper(object):
         if self._file_object.IsLargeFile():
             raise FakeLargeFileIoException(self._file_path)
 
+        reading = name.startswith('read')
+        writing = name.startswith('write') or name == 'truncate'
+        open_files = [wrapper.GetObject() for wrapper
+                      in self._filesystem.open_files if wrapper]
+        is_open = self._file_object in open_files
+        if not self._is_stream and (reading or writing) and not is_open:
+            raise ValueError('I/O operation on closed file')
+
         # errors on called method vs. open mode
-        if not self._read and name.startswith('read'):
+        if not self._read and reading:
             def read_error(*args, **kwargs):
                 """Throw an error unless the argument is zero."""
                 if args and args[0] == 0:
@@ -4269,8 +4280,7 @@ class FakeFileWrapper(object):
 
             return read_error
 
-        if not self.allow_update and (name.startswith('write')
-                                 or name == 'truncate'):
+        if not self.allow_update and writing:
             def write_error(*args, **kwargs):
                 """Throw an error."""
                 if self.raw_io:
@@ -4280,10 +4290,10 @@ class FakeFileWrapper(object):
 
             return write_error
 
-        if name.startswith('read'):
+        if reading:
             self._sync_io()
         if self._append:
-            if name.startswith('read'):
+            if reading:
                 return self._ReadWrappers(name)
             else:
                 return self._OtherWrapper(name)
