@@ -1550,7 +1550,7 @@ class FakeFilesystem(object):
                 return False
         return True
 
-    def ResolvePath(self, file_path, allow_fd=False):
+    def ResolvePath(self, file_path, allow_fd=False, raw_io=True):
         """Follow a path, resolving symlinks.
 
         ResolvePath traverses the filesystem along the specified file path,
@@ -1578,6 +1578,7 @@ class FakeFilesystem(object):
         Args:
             file_path:  path to examine.
             allow_fd: If `True`, `file_path` may be open file descriptor
+            raw_io: `True` if called from low-level I/O functions
 
         Returns:
             resolved_path (string) or None.
@@ -1679,17 +1680,19 @@ class FakeFilesystem(object):
 
             # Resolve any possible symlinks in the current path component.
             if stat.S_ISLNK(current_dir.st_mode):
-                # This link_depth check is not really meant to be an accurate check.
-                # It is just a quick hack to prevent us from looping forever on
-                # cycles.
+                # This link_depth check is not really meant to be an accurate
+                # check. It is just a quick hack to prevent us from looping
+                # forever on cycles.
                 if link_depth > _MAX_LINK_DEPTH:
-                    raise OSError(errno.ELOOP,
-                                  'Too many levels of symbolic links: \'%s\'' %
-                                  _ComponentsToPath(resolved_components))
+                    error_class = OSError if raw_io else IOError
+                    raise error_class(
+                        errno.ELOOP,
+                        'Too many levels of symbolic links: \'%s\'' %
+                        _ComponentsToPath(resolved_components))
                 link_path = _FollowLink(resolved_components, current_dir)
 
-                # Following the link might result in the complete replacement of the
-                # current_dir, so we evaluate the entire resulting path.
+                # Following the link might result in the complete replacement
+                # of the current_dir, so we evaluate the entire resulting path.
                 target_components = self.GetPathComponents(link_path)
                 path_components = target_components + path_components
                 resolved_components = []
@@ -4412,7 +4415,7 @@ class FakeFileOpen(object):
             file_path = file_object.name
         else:
             file_path = file_
-            real_path = self.filesystem.ResolvePath(file_path)
+            real_path = self.filesystem.ResolvePath(file_path, raw_io=self.raw_io)
             if self.filesystem.Exists(file_path):
                 file_object = self.filesystem.GetObjectFromNormalizedPath(real_path)
             closefd = True

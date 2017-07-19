@@ -4304,6 +4304,14 @@ class FakeFileOpenTest(FakeFileOpenTestBase):
         fh.close()
         self.assertEqual(target_contents, got_contents)
 
+    def testOpenRaisesOnSymlinkLoop(self):
+        self.filesystem.is_windows_fs = False
+        base_path = '/foo/bar'
+        self.filesystem.CreateDirectory(base_path)
+        file_path = base_path + '/baz'
+        self.os.symlink(file_path, file_path)
+        self.assertRaisesIOError(errno.ELOOP, self.open, file_path)
+
     def testFileDescriptorsForDifferentFiles(self):
         first_path = 'some_file1'
         second_path = 'some_file2'
