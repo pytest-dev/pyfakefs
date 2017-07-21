@@ -4085,9 +4085,10 @@ class FakeFileOpenTest(FakeFileOpenTestBase):
         file_path = 'append!this!file'
         self.filesystem.CreateFile(file_path, contents=''.join(contents))
         fake_file = self.file(file_path, 'a')
-        self.assertRaisesIOError(None, fake_file.read)
-        self.assertEqual('', fake_file.read(0))
-        self.assertEqual('', fake_file.readline(0))
+        expected_error = (IOError if sys.version_info < (3, )
+                          else io.UnsupportedOperation)
+        self.assertRaises(expected_error, fake_file.read, 0)
+        self.assertRaises(expected_error, fake_file.readline)
         self.assertEqual(len(''.join(contents)), fake_file.tell())
         fake_file.seek(0)
         self.assertEqual(0, fake_file.tell())
@@ -4553,11 +4554,13 @@ class OpenFileWithEncodingTest(TestCase):
             u'В саду ягода-малинка,\n',
             u'малинка моя.\n'
         ]
-        self.filesystem.CreateFile(self.file_path, contents=''.join(contents), encoding='cyrillic')
+        self.filesystem.CreateFile(self.file_path, contents=''.join(contents),
+                                   encoding='cyrillic')
         fake_file = self.open(self.file_path, 'a', encoding='cyrillic')
-        self.assertRaises(IOError, fake_file.read)
-        self.assertEqual('', fake_file.read(0))
-        self.assertEqual('', fake_file.readline(0))
+        expected_error = (IOError if sys.version_info < (3, )
+                          else io.UnsupportedOperation)
+        self.assertRaises(expected_error, fake_file.read, 0)
+        self.assertRaises(expected_error, fake_file.readline)
         self.assertEqual(len(''.join(contents)), fake_file.tell())
         fake_file.seek(0)
         self.assertEqual(0, fake_file.tell())

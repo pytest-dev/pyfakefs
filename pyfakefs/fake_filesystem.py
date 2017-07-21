@@ -120,13 +120,15 @@ PERM_DEF = 0o777  # Default permission bits.
 PERM_DEF_FILE = 0o666  # Default permission bits (regular file)
 PERM_ALL = 0o7777  # All permission bits.
 
-_OpenModes = namedtuple('open_modes',
-                        'must_exist can_read can_write truncate append must_not_exist')
+_OpenModes = namedtuple(
+    'open_modes',
+    'must_exist can_read can_write truncate append must_not_exist'
+)
 
 
 _OPEN_MODE_MAP = {
-    # mode name:(file must exist, need read, need write,
-    #            truncate, append, must must not exist)
+    # mode name:(file must exist, can read, can write,
+    #            truncate, append, must not exist)
     'r': (True, True, False, False, False, False),
     'w': (False, False, True, True, False, False),
     'a': (False, False, True, False, True, False),
@@ -4277,7 +4279,7 @@ class FakeFileWrapper(object):
             def read_error(*args, **kwargs):
                 """Throw an error unless the argument is zero."""
                 if args and args[0] == 0:
-                    if self._filesystem.is_windows_fs or not self.raw_io :
+                    if self._filesystem.is_windows_fs and self.raw_io:
                         return b'' if self._binary else u''
                 self._raise('File is not open for reading.')
 
