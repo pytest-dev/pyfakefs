@@ -19,6 +19,7 @@
 import unittest
 import sys
 
+import dynamic_patch_test
 import fake_filesystem_glob_test
 import fake_filesystem_shutil_test
 import fake_filesystem_test
@@ -46,6 +47,7 @@ class AllTests(unittest.TestSuite):
             loader.loadTestsFromModule(fake_filesystem_unittest_test),
             loader.loadTestsFromModule(example_test),
             loader.loadTestsFromModule(mox3_stubout_test),
+            loader.loadTestsFromModule(dynamic_patch_test),
         ])
         if sys.version_info >= (3, 4):
             self.addTests([
