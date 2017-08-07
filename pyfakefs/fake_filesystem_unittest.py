@@ -258,12 +258,12 @@ class Patcher(object):
             self._skipNames.discard('genericpath')
 
         # Attributes set by _findModules()
-        self._os_modules = None
-        self._path_modules = None
+        self._os_modules = set()
+        self._path_modules = set()
         if self.HAS_PATHLIB:
-            self._pathlib_modules = None
-        self._shutil_modules = None
-        self._io_modules = None
+            self._pathlib_modules = set()
+        self._shutil_modules = set()
+        self._io_modules = set()
         self._findModules()
         assert None not in vars(self).values(), \
             "_findModules() missed the initialization of an instance variable"
@@ -278,12 +278,9 @@ class Patcher(object):
         self.fake_shutil = None
         self.fake_open = None
         self.fake_io = None
+
         # _isStale is set by tearDown(), reset by _refresh()
         self._isStale = True
-        self._refresh()
-        assert None not in vars(self).values(), \
-            "_refresh() missed the initialization of an instance variable"
-        assert self._isStale == False, "_refresh() did not reset _isStale"
 
     def __enter__(self):
         """Context manager for usage outside of fake_filesystem_unittest.TestCase.
@@ -299,12 +296,6 @@ class Patcher(object):
         Later, `setUp()` will stub these with the fake file system
         modules.
         """
-        self._os_modules = set()
-        self._path_modules = set()
-        if self.HAS_PATHLIB:
-            self._pathlib_modules = set()
-        self._shutil_modules = set()
-        self._io_modules = set()
         for name, module in set(sys.modules.items()):
             if (module in self.SKIPMODULES or
                     (not inspect.ismodule(module)) or
@@ -347,7 +338,10 @@ class Patcher(object):
         modules real ones.  Also bind the fake `file()` and `open()` functions.
         """
         temp_dir = tempfile.gettempdir()
+        self._findModules()
         self._refresh()
+        assert None not in vars(self).values(), \
+            "_findModules() missed the initialization of an instance variable"
 
         if doctester is not None:
             doctester.globs = self.replaceGlobs(doctester.globs)
