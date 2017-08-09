@@ -28,7 +28,13 @@ class TestPyfakefsUnittestBase(fake_filesystem_unittest.TestCase):
         self.setUpPyfakefs()
 
 
+@unittest.skipIf((3, ) < sys.version_info < (3, 3),
+                 'Does not work with Python 3 < 3.3, including Pypy3 2.4')
 class DynamicImportPatchTest(TestPyfakefsUnittestBase):
+    def __init__(self, methodName='runTest'):
+        super(DynamicImportPatchTest, self).__init__(methodName,
+            use_dynamic_patch=True)
+
     def testOsPatch(self):
         import os
 

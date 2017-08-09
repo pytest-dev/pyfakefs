@@ -79,7 +79,7 @@ else:
 
 def load_doctests(loader, tests, ignore, module,
                   additional_skip_names=None,
-                  patch_path=True):  # pylint: disable=unused-argument
+                  patch_path=True, special_names=None):  # pylint: disable=unused-argument
     """Load the doctest tests for the specified module into unittest.
         Args:
             loader, tests, ignore : arguments passed in from `load_tests()`
@@ -90,7 +90,7 @@ def load_doctests(loader, tests, ignore, module,
     File `example_test.py` in the pyfakefs release provides a usage example.
     """
     _patcher = Patcher(additional_skip_names=additional_skip_names,
-                       patch_path=patch_path)
+                       patch_path=patch_path, special_names=special_names)
     globs = _patcher.replaceGlobs(vars(module))
     tests.addTests(doctest.DocTestSuite(module,
                                         globs=globs,
@@ -105,8 +105,9 @@ class TestCase(unittest.TestCase):
     """
 
     def __init__(self, methodName='runTest', additional_skip_names=None,
-                 patch_path=True, modules_to_reload=None,
-                 use_dynamic_patch=True):
+                 patch_path=True, special_names=None,
+                 modules_to_reload=None,
+                 use_dynamic_patch=False):
         """Creates the test class instance and the stubber used to stub out
         file system related modules.
 
@@ -121,11 +122,22 @@ class TestCase(unittest.TestCase):
                         from my_module import path
                 Irrespective of patch_path, module 'os.path' is still correctly faked
                 if imported the usual way using `import os` or `import os.path`.
-            modules_to_reload: A list of modules that need to be reloaded
+            special_names: A dictionary with module names as key and a dictionary as
+                value, where the key is the original name of the module to be patched,
+                and the value is the name as it is imported.
+                This allows to patch modules where some of the file system modules are
+                imported as another name (e.g. `import os as _os`).
+            modules_to_reload (experimental): A list of modules that need to be reloaded
                 to be patched dynamically; may be needed if the module
                 imports file system modules under an alias
                 Note: this is done independently of `use_dynamic_patch'
-            use_dynamic_patch: If `True`, dynamic patching after setup is used
+                Caution: this may not work with some Python versions
+                or have unwanted side effects.
+            use_dynamic_patch (experimental): If `True`, dynamic patching
+                after setup is used (for example for modules loaded locally
+                inside of functions).
+                Caution: this may not work with some Python versions
+                or have unwanted side effects.
 
         If you specify arguments `additional_skip_names` or `patch_path` here
         and you have DocTests, consider also specifying the same arguments to
@@ -137,13 +149,20 @@ class TestCase(unittest.TestCase):
                 def __init__(self, methodName='runTest'):
                     super(MyTestCase, self).__init__(
                         methodName=methodName, additional_skip_names=['posixpath'])
+
+
+            class AnotherTestCase(fake_filesystem_unittest.TestCase):
+                def __init__(self, methodName='runTest'):
+                    # allow patching a module that imports `os` as `my_os`
+                    special_names = {'amodule': {'os': 'my_os'}}
+                    super(MyTestCase, self).__init__(
+                        methodName=methodName, special_names=special_names)
         """
         super(TestCase, self).__init__(methodName)
         self._stubber = Patcher(additional_skip_names=additional_skip_names,
-                                patch_path=patch_path)
-        self._modules_to_reload = [tempfile]
-        if modules_to_reload is not None:
-            self._modules_to_reload.extend(modules_to_reload)
+                                patch_path=patch_path,
+                                special_names=special_names)
+        self._modules_to_reload = modules_to_reload or []
         self._use_dynamic_patch = use_dynamic_patch
 
     @property
@@ -246,10 +265,14 @@ class Patcher(object):
     if HAS_PATHLIB:
         SKIPNAMES.add('pathlib')
 
-    def __init__(self, additional_skip_names=None, patch_path=True):
+    def __init__(self, additional_skip_names=None, patch_path=True,
+                 special_names=None):
         """For a description of the arguments, see TestCase.__init__"""
 
         self._skipNames = self.SKIPNAMES.copy()
+        self._special_names = special_names or {}
+        self._special_names['tempfile'] = {'os': '_os', 'io': '_io'}
+
         if additional_skip_names is not None:
             self._skipNames.update(additional_skip_names)
         self._patchPath = patch_path
@@ -315,6 +338,20 @@ class Patcher(object):
                 self._shutil_modules.add((module, 'shutil'))
             if inspect.ismodule(module.__dict__.get('io')):
                 self._io_modules.add((module, 'io'))
+            if '__name__' in module.__dict__ and module.__name__ in self._special_names:
+                module_names = self._special_names[module.__name__]
+                if 'os' in module_names:
+                    if inspect.ismodule(module.__dict__.get(module_names['os'])):
+                        self._os_modules.add((module, module_names['os']))
+                if self._patchPath and 'path' in module_names:
+                    if inspect.ismodule(module.__dict__.get(module_names['path'])):
+                        self._path_modules.add((module, module_names['path']))
+                if self.HAS_PATHLIB and 'pathlib' in module_names:
+                    if inspect.ismodule(module.__dict__.get(module_names['pathlib'])):
+                        self._pathlib_modules.add((module, module_names['pathlib']))
+                if 'io' in module_names:
+                    if inspect.ismodule(module.__dict__.get(module_names['io'])):
+                        self._io_modules.add((module, module_names['io']))
 
     def _refresh(self):
         """Renew the fake file system and set the _isStale flag to `False`."""
@@ -331,7 +368,27 @@ class Patcher(object):
         self.fake_open = fake_filesystem.FakeFileOpen(self.fs)
         self.fake_io = fake_filesystem.FakeIoModule(self.fs)
 
+        if not self.IS_WINDOWS and 'tempfile' in sys.modules:
+            self._patch_tempfile()
+
         self._isStale = False
+
+    def _patch_tempfile(self):
+        """Hack to work around cached `os` functions in `tempfile`.
+         Shall be replaced by a more generic mechanism.
+        """
+        if 'unlink' in tempfile._TemporaryFileWrapper.__dict__:
+            # Python 2.6 to 3.2: unlink is a class method of _TemporaryFileWrapper
+            tempfile._TemporaryFileWrapper.unlink = self.fake_os.unlink
+
+            #  Python 3.0 to 3.2 (and PyPy3 based on Python 3.2):
+            # `TemporaryDirectory._rmtree` is used instead of `shutil.rmtree`
+            # which uses several cached os functions - replace it with `shutil.rmtree`
+            if 'TemporaryDirectory' in tempfile.__dict__:
+                tempfile.TemporaryDirectory._rmtree = lambda o, path: shutil.rmtree(path)
+        else:
+            # Python > 3.2 - unlink is a default parameter of _TemporaryFileCloser
+            tempfile._TemporaryFileCloser.close.__defaults__ = (self.fake_os.unlink,)
 
     def setUp(self, doctester=None):
         """Bind the file-related modules to the :py:mod:`pyfakefs` fake

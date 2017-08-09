@@ -4,7 +4,9 @@ The release versions are PyPi releases.
 ## Version 3.3 (as yet unreleased)
 
 #### New Features
-  * Added possibility to reload modules to ensure correct patching ([#248](../../issues/248)).
+  * Added possibility to reload modules and switch on dynamic loading of modules after setup (experimental, see [#248](../../issues/248))
+  * Added possibility to patch modules that import file system modules under another name, 
+  e.g. `import os as '_os` ([#231](../../issues/231)).
   * Added support for `dir_fd` argument in several `os` functions ([#206](../../issues/206)). 
   * Added support for open file descriptor as path argument
     in `os.utime`, `os.chmod`, `os.chdir`, `os.chown`, `os.listdir`, `os.stat` and `os.lstat` 
