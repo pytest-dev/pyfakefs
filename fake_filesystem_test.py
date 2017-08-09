@@ -4607,6 +4607,8 @@ class OpenFileWithEncodingTest(TestCase):
         self.assertRaises(ValueError, lambda: fake_file.write(1))
         self.assertRaises(ValueError, lambda: fake_file.readline())
         self.assertRaises(ValueError, lambda: fake_file.truncate())
+        self.assertRaises(ValueError, lambda: fake_file.tell())
+        self.assertRaises(ValueError, lambda: fake_file.seek(1))
 
 
 class OpenWithFileDescriptorTest(FakeFileOpenTestBase):

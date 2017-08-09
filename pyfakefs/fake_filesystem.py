@@ -4140,6 +4140,7 @@ class FakeFileWrapper(object):
 
     def seek(self, offset, whence=0):
         """Move read/write pointer in 'file'."""
+        self._check_open_file()
         if not self._append:
             self._io.seek(offset, whence)
         else:
@@ -4152,6 +4153,7 @@ class FakeFileWrapper(object):
         Returns:
           int, file's current position in bytes.
         """
+        self._check_open_file()
         if not self._append:
             return self._io.tell()
         if self._read_whence:
@@ -4268,13 +4270,8 @@ class FakeFileWrapper(object):
 
         reading = name.startswith('read')
         writing = name.startswith('write') or name == 'truncate'
-        open_files = [wrapper.GetObject() for wrapper
-                      in self._filesystem.open_files if wrapper]
-        is_open = self._file_object in open_files
-        if not self._is_stream and (reading or writing) and not is_open:
-            raise ValueError('I/O operation on closed file')
-
-        # errors on called method vs. open mode
+        if reading or writing:
+            self._check_open_file()
         if not self._read and reading:
             def read_error(*args, **kwargs):
                 """Throw an error unless the argument is zero."""
@@ -4303,6 +4300,13 @@ class FakeFileWrapper(object):
             else:
                 return self._OtherWrapper(name)
         return getattr(self._io, name)
+
+    def _check_open_file(self):
+        open_files = [wrapper.GetObject() for wrapper
+                      in self._filesystem.open_files if wrapper]
+        is_open = self._file_object in open_files
+        if not self._is_stream and not is_open:
+            raise ValueError('I/O operation on closed file')
 
     def __iter__(self):
         if not self._read:
