@@ -4302,10 +4302,7 @@ class FakeFileWrapper(object):
         return getattr(self._io, name)
 
     def _check_open_file(self):
-        open_files = [wrapper.GetObject() for wrapper
-                      in self._filesystem.open_files if wrapper]
-        is_open = self._file_object in open_files
-        if not self._is_stream and not is_open:
+        if not self._is_stream and not self in self._filesystem.open_files:
             raise ValueError('I/O operation on closed file')
 
     def __iter__(self):
@@ -4467,6 +4464,8 @@ class FakeFileOpen(object):
                                    raw_io=self.raw_io)
         if filedes is not None:
             fakefile.filedes = filedes
+            # replace the file wrapper
+            self.filesystem.open_files[filedes] = fakefile
         else:
             fakefile.filedes = self.filesystem.AddOpenFile(fakefile)
         return fakefile

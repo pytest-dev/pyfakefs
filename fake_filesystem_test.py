@@ -4599,7 +4599,7 @@ class OpenFileWithEncodingTest(TestCase):
         fake_file.close()
 
     def testAccessingClosedFileRaises(self):
-        self.filesystem.is_windows_fs = False
+        # self.filesystem.is_windows_fs = False
         self.filesystem.CreateFile(self.file_path, contents=b'test')
         fake_file = self.open(self.file_path, 'r')
         fake_file.close()
@@ -4610,6 +4610,12 @@ class OpenFileWithEncodingTest(TestCase):
         self.assertRaises(ValueError, lambda: fake_file.tell())
         self.assertRaises(ValueError, lambda: fake_file.seek(1))
 
+    def testAccessingOpenFileWithAnotherHandleRaises(self):
+        self.os.open(self.file_path, os.O_CREAT | os.O_WRONLY | os.O_TRUNC)
+        fake_file = self.open(self.file_path, 'r')
+        fake_file.close()
+        self.assertRaises(ValueError, lambda: fake_file.read(1))
+        self.assertRaises(ValueError, lambda: fake_file.write(1))
 
 class OpenWithFileDescriptorTest(FakeFileOpenTestBase):
     @unittest.skipIf(sys.version_info < (3, 0), 'only tested on 3.0 or greater')
