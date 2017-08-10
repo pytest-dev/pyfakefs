@@ -4268,7 +4268,7 @@ class FakeFileWrapper(object):
         if self._file_object.IsLargeFile():
             raise FakeLargeFileIoException(self._file_path)
 
-        reading = name.startswith('read')
+        reading = name.startswith('read') or name == 'next'
         writing = name.startswith('write') or name == 'truncate'
         if reading or writing:
             self._check_open_file()
