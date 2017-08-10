@@ -3462,7 +3462,7 @@ class StatPropagationTest(TestCase):
         expected_size = original_size + len(added_content)
         fh = self.open(file_path, 'a')
         fh.write(added_content)
-        self.assertEqual(expected_size, fh.Size())
+        self.assertEqual(original_size, fh.Size())
         fh.close()
         self.assertEqual(expected_size, self.open(file_path, 'r').Size())
 
@@ -3473,13 +3473,8 @@ class StatPropagationTest(TestCase):
         self.filesystem.CreateFile(file_path, st_size=original_size)
         added_content = 'foo bar'
         fh = self.open(file_path, 'a')
-        # We can't use assertRaises, because the exception is thrown
-        # in __getattr__, so just saying 'fh.write' causes the exception.
-        try:
-            fh.write(added_content)
-        except fake_filesystem.FakeLargeFileIoException:
-            return
-        self.fail('Writing to a large file should not be allowed')
+        self.assertRaises(fake_filesystem.FakeLargeFileIoException,
+                          lambda: fh.write(added_content))
 
     def testFileSizeUpdatedViaFlush(self):
         """test that file size gets updated via flush()."""

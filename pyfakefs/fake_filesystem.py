@@ -4255,7 +4255,6 @@ class FakeFileWrapper(object):
             if write_seek != self._io.tell():
                 self._read_seek = self._io.tell()
                 self._read_whence = 0
-                self._file_object.st_size += (self._read_seek - write_seek)
             return ret_value
 
         return other_wrapper
