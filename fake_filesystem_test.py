@@ -2982,6 +2982,7 @@ class FakeOsModuleLowLevelFileOpTest(FakeOsModuleTestBase):
         self.assertRaisesOSError(errno.EBADF, self.os.read, fileno, 10)
 
     def testWriteFromDifferentFDs(self):
+        """Regression test for #211."""
         base_path = '/foo/bar'
         self.filesystem.CreateDirectory(base_path)
         file_path = base_path + "/baz"
@@ -2994,6 +2995,7 @@ class FakeOsModuleLowLevelFileOpTest(FakeOsModuleTestBase):
                          self.filesystem.GetObject(file_path).byte_contents)
 
     def testWriteFromDifferentFDsWithAppend(self):
+        """Regression test for #268."""
         base_path = '/foo/bar'
         self.filesystem.CreateDirectory(base_path)
         file_path = base_path + '/baz'
@@ -3025,6 +3027,19 @@ class FakeOsModuleLowLevelFileOpTest(FakeOsModuleTestBase):
         self.os.write(fd1, b'abc')
         self.os.close(fd0)
         self.assertEqual(b'abc', self.os.read(fd2, 3))
+
+    def testWritingBehindEndOfFile(self):
+        """Regression test for #273."""
+        base_path = '/foo/bar'
+        self.filesystem.CreateDirectory(base_path)
+        file_path = base_path + '/baz'
+        fd1 = self.os.open(file_path, os.O_CREAT)
+        fd2 = self.os.open(file_path, os.O_RDWR)
+        self.os.write(fd2, b'm')
+        self.os.open(file_path, os.O_CREAT | os.O_WRONLY | os.O_TRUNC)
+        self.assertEqual(b'', self.os.read(fd2, 1))
+        self.os.write(fd2, b'm')
+        self.assertEqual(b'\x00m', self.os.read(fd1, 2))
 
 
 class FakeOsModuleWalkTest(FakeOsModuleTestBase):

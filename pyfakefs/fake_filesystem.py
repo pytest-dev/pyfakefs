@@ -4056,10 +4056,10 @@ class FakeFileWrapper(object):
             self._io = codecs.StreamReaderWriter(file_wrapper, codec_info.streamreader,
                                                  codec_info.streamwriter, errors)
         else:
-            if sys.version_info >= (3, 0):
-                io_class = io.BytesIO if binary else io.StringIO
+            if not binary and sys.version_info >= (3, 0):
+                io_class = io.StringIO
             else:
-                io_class = io.BytesIO  # StringIO.StringIO
+                io_class = io.BytesIO
             io_args = {} if binary else {'newline': newline}
             if contents and not binary:
                 contents = contents.decode(encoding or locale.getpreferredencoding(False),
