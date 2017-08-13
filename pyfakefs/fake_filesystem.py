@@ -104,11 +104,6 @@ from collections import namedtuple
 import stat
 from copy import copy
 
-if sys.version_info < (3, 0):
-    import StringIO  # pylint: disable=import-error
-else:
-    import builtins
-
 __pychecker__ = 'no-reimportself'
 
 __version__ = '3.3'
@@ -4030,7 +4025,7 @@ class FakeIoModule(object):
 
 
 class FakeFileWrapper(object):
-    """Wrapper for a StringIO object for use by a FakeFile object.
+    """Wrapper for a stream object for use by a FakeFile object.
 
     If the wrapper has any data written to it, it will propagate to
     the FakeFile object on close() or flush().
@@ -4064,7 +4059,7 @@ class FakeFileWrapper(object):
             if sys.version_info >= (3, 0):
                 io_class = io.BytesIO if binary else io.StringIO
             else:
-                io_class = StringIO.StringIO
+                io_class = io.BytesIO  # StringIO.StringIO
             io_args = {} if binary else {'newline': newline}
             if contents and not binary:
                 contents = contents.decode(encoding or locale.getpreferredencoding(False),
@@ -4165,7 +4160,7 @@ class FakeFileWrapper(object):
         return self._read_seek
 
     def _sync_io(self):
-        """Update the StringIO with changes to the file object contents."""
+        """Update the stream with changes to the file object contents."""
         if self._file_epoch == self._file_object.epoch:
             return
 
@@ -4190,14 +4185,14 @@ class FakeFileWrapper(object):
             self._io.stream.allow_update = False
         self._file_epoch = self._file_object.epoch
 
-    def _ReadWrappers(self, name):
-        """Wrap a StringIO attribute in a read wrapper.
+    def _ReadWrapper(self, name):
+        """Wrap a stream attribute in a read wrapper.
 
         Returns a read_wrapper which tracks our own read pointer since the
-        StringIO object has no concept of a different read and write pointer.
+        stream object has no concept of a different read and write pointer.
 
         Args:
-          name: the name StringIO attribute to wrap.  Should be a read call.
+          name: the name of the attribute to wrap.  Should be a read call.
 
         Returns:
           either a read_error or read_wrapper function.
@@ -4205,17 +4200,17 @@ class FakeFileWrapper(object):
         io_attr = getattr(self._io, name)
 
         def read_wrapper(*args, **kwargs):
-            """Wrap all read calls to the StringIO Object.
+            """Wrap all read calls to the stream object.
 
             We do this to track the read pointer separate from the write
-            pointer.  Anything that wants to read from the StringIO object
+            pointer.  Anything that wants to read from the stream object
             while we're in append mode goes through this.
 
             Args:
               *args: pass through args
               **kwargs: pass through kwargs
             Returns:
-              Wrapped StringIO object method
+              Wrapped stream object method
             """
             self._io.seek(self._read_seek, self._read_whence)
             ret_value = io_attr(*args, **kwargs)
@@ -4226,11 +4221,11 @@ class FakeFileWrapper(object):
 
         return read_wrapper
 
-    def _OtherWrapper(self, name):
-        """Wrap a StringIO attribute in an other_wrapper.
+    def _OtherWrapper(self, name, writing):
+        """Wrap a stream attribute in an other_wrapper.
 
         Args:
-          name: the name of the StringIO attribute to wrap.
+          name: the name of the stream attribute to wrap.
 
         Returns:
           other_wrapper which is described below.
@@ -4238,7 +4233,7 @@ class FakeFileWrapper(object):
         io_attr = getattr(self._io, name)
 
         def other_wrapper(*args, **kwargs):
-            """Wrap all other calls to the StringIO Object.
+            """Wrap all other calls to the stream Object.
 
             We do this to track changes to the write pointer.  Anything that
             moves the write pointer in a file open for appending should move
@@ -4248,14 +4243,15 @@ class FakeFileWrapper(object):
               *args: pass through args
               **kwargs: pass through kwargs
             Returns:
-              Wrapped StringIO object method
+              Wrapped stream object method
             """
             write_seek = self._io.tell()
             ret_value = io_attr(*args, **kwargs)
             if write_seek != self._io.tell():
                 self._read_seek = self._io.tell()
                 self._read_whence = 0
-            return ret_value
+            if not writing or sys.version_info >= (3, ):
+                return ret_value
 
         return other_wrapper
 
@@ -4271,9 +4267,26 @@ class FakeFileWrapper(object):
             """Wrap trunctae call to call flush after truncate."""
             ret_value = io_attr(*args, **kwargs)
             self.flush()
-            return ret_value
+            if sys.version_info >= (3, ):
+                return ret_value
 
         return truncate_wrapper
+
+    def _WriteWrapper(self, name):
+        """Wrap write() to adapt return value for Python 2.
+
+        Returns:
+          wrapper which is described below.
+        """
+        io_attr = getattr(self._io, name)
+
+        def write_wrapper(*args, **kwargs):
+            """Wrap trunctae call to call flush after truncate."""
+            ret_value = io_attr(*args, **kwargs)
+            if sys.version_info >= (3, ):
+                return ret_value
+
+        return write_wrapper
 
     def Size(self):
         """Return the content size in bytes of the wrapped file."""
@@ -4284,7 +4297,8 @@ class FakeFileWrapper(object):
             raise FakeLargeFileIoException(self._file_path)
 
         reading = name.startswith('read') or name == 'next'
-        writing = name.startswith('write') or name == 'truncate'
+        truncate = name == 'truncate'
+        writing = name.startswith('write') or truncate
         if reading or writing:
             self._check_open_file()
         if not self._read and reading:
@@ -4311,11 +4325,13 @@ class FakeFileWrapper(object):
             self._sync_io()
         if self._append:
             if reading:
-                return self._ReadWrappers(name)
+                return self._ReadWrapper(name)
             else:
-                return self._OtherWrapper(name)
-        elif name == 'truncate':
+                return self._OtherWrapper(name, writing)
+        elif truncate:
             return self._TruncateWrapper()
+        elif writing:
+            return self._WriteWrapper(name)
 
         return getattr(self._io, name)
 
@@ -4400,7 +4416,7 @@ class FakeFileOpen(object):
           encoding: the encoding used to encode unicode strings / decode bytes.
           New in pyfakefs 2.9.
           errors: ignored, this relates to encoding.
-          newline: controls universal newlines, passed to StringIO object.
+          newline: controls universal newlines, passed to stream object.
           closefd: if a file descriptor rather than file name is passed, and set
             to false, then the file descriptor is kept open when file is closed.
           opener: not supported.

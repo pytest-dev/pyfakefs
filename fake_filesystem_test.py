@@ -137,6 +137,7 @@ class FakeDirectoryUnitTest(TestCase):
         self.assertEqual('dummy_file', self.fake_file.contents)
 
     def testSetContentsToDirRaises(self):
+        """Regression test for #276."""
         self.filesystem.is_windows_fs = True
         self.assertRaisesOSError(errno.EISDIR, self.fake_dir.SetContents, 'a')
         self.filesystem.is_windows_fs = False
@@ -294,7 +295,7 @@ class FakeFilesystemUnitTest(TestCase):
         self.assertFalse(self.filesystem.Exists(self.fake_file.name))
 
     def testNotExistsSubpathNamedLikeFileContents(self):
-        # regression test for #219
+        """Regression test for #219."""
         file_path = "/foo/bar"
         self.filesystem.CreateFile(file_path, contents='baz')
         self.assertFalse(self.filesystem.Exists(file_path + "/baz"))
@@ -3005,6 +3006,7 @@ class FakeOsModuleLowLevelFileOpTest(FakeOsModuleTestBase):
                          self.filesystem.GetObject(file_path).byte_contents)
 
     def testReadOnlyReadAfterWrite(self):
+        """Regression test for #269."""
         self.filesystem.is_windows_fs = False
         file_path = '/foo/bar/baz'
         self.filesystem.CreateFile(file_path, contents=b'test')
@@ -3013,6 +3015,7 @@ class FakeOsModuleLowLevelFileOpTest(FakeOsModuleTestBase):
         self.assertEqual(b'', self.os.read(fd, 0))
 
     def testReadAfterClosingWriteDescriptor(self):
+        """Regression test for #271."""
         base_path = '/foo/bar'
         self.filesystem.CreateDirectory(base_path)
         file_path = base_path + '/baz'
@@ -4440,6 +4443,7 @@ class FakeFileOpenTest(FakeFileOpenTestBase):
         self.assertEqual(target_contents, got_contents)
 
     def testOpenRaisesOnSymlinkLoop(self):
+        """Regression test for #274."""
         self.filesystem.is_windows_fs = False
         base_path = '/foo/bar'
         self.filesystem.CreateDirectory(base_path)
@@ -4578,14 +4582,26 @@ class FakeFileOpenTest(FakeFileOpenTestBase):
             self.assertEqual('', fh.read())
 
     def testTruncateFlushesContents(self):
+        """Regression test for #285."""
         base_path = '/foo/bar'
         self.filesystem.CreateDirectory(base_path)
         file_path = base_path + "/baz"
-        f0 = self.open(file_path,'w')
+        f0 = self.open(file_path, 'w')
         f0.write('test')
         f0.truncate()
         self.assertEqual(4, self.os.path.getsize(file_path))
 
+    def testThatReadOverEndDoesNotResetPosition(self):
+        """Regression test for #286."""
+        base_path = '/foo/bar'
+        self.filesystem.CreateDirectory(base_path)
+        file_path = base_path + "/baz"
+        f0 = self.open(file_path, 'w')
+        f0.close()
+        f0 = self.open(file_path)
+        f0.seek(2)
+        f0.read()
+        self.assertEqual(2, f0.tell())
 
 class OpenFileWithEncodingTest(TestCase):
     """Tests that are similar to some open file tests above but using an explicit text encoding."""
@@ -4757,7 +4773,7 @@ class OpenFileWithEncodingTest(TestCase):
         fake_file.close()
 
     def testAccessingClosedFileRaises(self):
-        # self.filesystem.is_windows_fs = False
+        """Regression test for #275, #280."""
         self.filesystem.CreateFile(self.file_path, contents=b'test')
         fake_file = self.open(self.file_path, 'r')
         fake_file.close()
@@ -4770,7 +4786,8 @@ class OpenFileWithEncodingTest(TestCase):
 
     @unittest.skipIf(sys.version_info >= (3,),
                      'file.next() not available in Python 3')
-    def test284(self):
+    def testNextRaisesOnClosedFile(self):
+        """Regression test for #284."""
         base_path = '/foo/bar'
         self.filesystem.CreateDirectory(base_path)
         file_path = base_path + "/baz"
@@ -4780,6 +4797,7 @@ class OpenFileWithEncodingTest(TestCase):
         self.assertRaises(IOError, lambda: f0.next())
 
     def testAccessingOpenFileWithAnotherHandleRaises(self):
+        """Regression test for #282."""
         self.os.open(self.file_path, os.O_CREAT | os.O_WRONLY | os.O_TRUNC)
         fake_file = self.open(self.file_path, 'r')
         fake_file.close()
