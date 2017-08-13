@@ -4259,6 +4259,22 @@ class FakeFileWrapper(object):
 
         return other_wrapper
 
+    def _TruncateWrapper(self):
+        """Wrap truncate() to allow flush after truncate.
+
+        Returns:
+          wrapper which is described below.
+        """
+        io_attr = getattr(self._io, 'truncate')
+
+        def truncate_wrapper(*args, **kwargs):
+            """Wrap trunctae call to call flush after truncate."""
+            ret_value = io_attr(*args, **kwargs)
+            self.flush()
+            return ret_value
+
+        return truncate_wrapper
+
     def Size(self):
         """Return the content size in bytes of the wrapped file."""
         return self._file_object.st_size
@@ -4298,6 +4314,9 @@ class FakeFileWrapper(object):
                 return self._ReadWrappers(name)
             else:
                 return self._OtherWrapper(name)
+        elif name == 'truncate':
+            return self._TruncateWrapper()
+
         return getattr(self._io, name)
 
     def _check_open_file(self):

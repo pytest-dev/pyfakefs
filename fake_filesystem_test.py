@@ -4577,6 +4577,15 @@ class FakeFileOpenTest(FakeFileOpenTestBase):
         with self.open(device_path, 'r') as fh:
             self.assertEqual('', fh.read())
 
+    def testTruncateFlushesContents(self):
+        base_path = '/foo/bar'
+        self.filesystem.CreateDirectory(base_path)
+        file_path = base_path + "/baz"
+        f0 = self.open(file_path,'w')
+        f0.write('test')
+        f0.truncate()
+        self.assertEqual(4, self.os.path.getsize(file_path))
+
 
 class OpenFileWithEncodingTest(TestCase):
     """Tests that are similar to some open file tests above but using an explicit text encoding."""
