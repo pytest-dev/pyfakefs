@@ -4651,6 +4651,24 @@ class FakeFileOpenTest(FakeFileOpenTestBase):
         self.assertRaises(ValueError, lambda: fake_file.read(1))
         self.assertRaises(ValueError, lambda: fake_file.write(1))
 
+    def testTellFlushesUnderPosix(self):
+        """Regression test for #288."""
+        self.filesystem.is_windows_fs = False
+        file_path = 'foo'
+        f0 = self.open(file_path, 'w')
+        f0.write('test')
+        self.assertEqual(4, f0.tell())
+        self.assertEqual(4, self.os.path.getsize(file_path))
+
+    def testTellFlushUnderWindowsInPython3(self):
+        """Regression test for #288."""
+        self.filesystem.is_windows_fs = True
+        file_path = 'foo'
+        f0 = self.open(file_path, 'w')
+        f0.write('test')
+        self.assertEqual(4, f0.tell())
+        expected = 0 if sys.version_info < (3, ) else 4
+        self.assertEqual(expected, self.os.path.getsize(file_path))
 
 class OpenFileWithEncodingTest(TestCase):
     """Tests that are similar to some open file tests above but using an explicit text encoding."""

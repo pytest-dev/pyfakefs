@@ -4150,6 +4150,9 @@ class FakeFileWrapper(object):
           int, file's current position in bytes.
         """
         self._check_open_file()
+        if not self._is_stream:
+            if not self._filesystem.is_windows_fs or sys.version_info >= (3, ):
+                self.flush()
         if not self._append:
             return self._io.tell()
         if self._read_whence:
