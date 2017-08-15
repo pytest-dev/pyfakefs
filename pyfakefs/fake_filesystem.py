@@ -4129,6 +4129,7 @@ class FakeFileWrapper(object):
 
     def flush(self):
         """Flush file contents to 'disk'."""
+        self._check_open_file()
         if self.allow_update:
             self._file_object.SetContents(self._io.getvalue(), self._encoding)
             self._file_epoch = self._file_object.epoch

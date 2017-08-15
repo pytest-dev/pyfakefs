@@ -4618,6 +4618,40 @@ class FakeFileOpenTest(FakeFileOpenTestBase):
         f0.read()
         self.assertEqual(2, f0.tell())
 
+    def testAccessingClosedFileRaises(self):
+        """Regression test for #275, #280."""
+        file_path = 'foo'
+        self.filesystem.CreateFile(file_path, contents=b'test')
+        fake_file = self.open(file_path, 'r')
+        fake_file.close()
+        self.assertRaises(ValueError, lambda: fake_file.read(1))
+        self.assertRaises(ValueError, lambda: fake_file.write(1))
+        self.assertRaises(ValueError, lambda: fake_file.readline())
+        self.assertRaises(ValueError, lambda: fake_file.truncate())
+        self.assertRaises(ValueError, lambda: fake_file.tell())
+        self.assertRaises(ValueError, lambda: fake_file.seek(1))
+        self.assertRaises(ValueError, lambda: fake_file.flush())
+
+    @unittest.skipIf(sys.version_info >= (3,),
+                     'file.next() not available in Python 3')
+    def testNextRaisesOnClosedFile(self):
+        """Regression test for #284."""
+        file_path = 'foo'
+        f0 = self.open(file_path, 'w')
+        f0.write('test')
+        f0.seek(0)
+        self.assertRaises(IOError, lambda: f0.next())
+
+    def testAccessingOpenFileWithAnotherHandleRaises(self):
+        """Regression test for #282."""
+        file_path = 'foo'
+        self.os.open(file_path, os.O_CREAT | os.O_WRONLY | os.O_TRUNC)
+        fake_file = self.open(file_path, 'r')
+        fake_file.close()
+        self.assertRaises(ValueError, lambda: fake_file.read(1))
+        self.assertRaises(ValueError, lambda: fake_file.write(1))
+
+
 class OpenFileWithEncodingTest(TestCase):
     """Tests that are similar to some open file tests above but using an explicit text encoding."""
 
@@ -4786,38 +4820,6 @@ class OpenFileWithEncodingTest(TestCase):
         fake_file.seek(0)
         self.assertEqual(u'новое  содержание здесь', fake_file.read())
         fake_file.close()
-
-    def testAccessingClosedFileRaises(self):
-        """Regression test for #275, #280."""
-        self.filesystem.CreateFile(self.file_path, contents=b'test')
-        fake_file = self.open(self.file_path, 'r')
-        fake_file.close()
-        self.assertRaises(ValueError, lambda: fake_file.read(1))
-        self.assertRaises(ValueError, lambda: fake_file.write(1))
-        self.assertRaises(ValueError, lambda: fake_file.readline())
-        self.assertRaises(ValueError, lambda: fake_file.truncate())
-        self.assertRaises(ValueError, lambda: fake_file.tell())
-        self.assertRaises(ValueError, lambda: fake_file.seek(1))
-
-    @unittest.skipIf(sys.version_info >= (3,),
-                     'file.next() not available in Python 3')
-    def testNextRaisesOnClosedFile(self):
-        """Regression test for #284."""
-        base_path = '/foo/bar'
-        self.filesystem.CreateDirectory(base_path)
-        file_path = base_path + "/baz"
-        f0 = self.open(file_path, 'w')
-        f0.write('test')
-        f0.seek(0)
-        self.assertRaises(IOError, lambda: f0.next())
-
-    def testAccessingOpenFileWithAnotherHandleRaises(self):
-        """Regression test for #282."""
-        self.os.open(self.file_path, os.O_CREAT | os.O_WRONLY | os.O_TRUNC)
-        fake_file = self.open(self.file_path, 'r')
-        fake_file.close()
-        self.assertRaises(ValueError, lambda: fake_file.read(1))
-        self.assertRaises(ValueError, lambda: fake_file.write(1))
 
 
 class OpenWithFileDescriptorTest(FakeFileOpenTestBase):
