@@ -1822,22 +1822,24 @@ class FakeFilesystem(object):
                           'No such file or directory in the fake filesystem',
                           path)
 
-    def AddObject(self, file_path, file_object):
+    def AddObject(self, file_path, file_object, error_class=OSError):
         """Add a fake file or directory into the filesystem at file_path.
 
         Args:
           file_path: the path to the file to be added relative to self.
           file_object: file or directory to add.
+          error_class: the error class to be thrown if file_path does
+            not correspond to a directory (used internally(
 
         Raises:
-          IOError: if file_path does not correspond to a directory.
+          IOError or OSError: if file_path does not correspond to a directory.
         """
         if not file_path:
             target_directory = self.root
         else:
             target_directory = self.ResolveObject(file_path)
             if not stat.S_ISDIR(target_directory.st_mode):
-                raise OSError(errno.ENOTDIR,
+                raise error_class(errno.ENOTDIR,
                               'Not a directory in the fake filesystem',
                               file_path)
         target_directory.AddEntry(file_object)
@@ -2209,7 +2211,7 @@ class FakeFilesystem(object):
 
         self.last_ino += 1
         file_object.SetIno(self.last_ino)
-        self.AddObject(parent_directory, file_object)
+        self.AddObject(parent_directory, file_object, error_class)
 
         if not read_from_real_fs and (contents is not None or st_size is not None):
             try:

@@ -4589,6 +4589,12 @@ class FakeFileOpenTest(FakeFileOpenTestBase):
         self.assertRaises(IOError, _IteratorOpen, file_path, 'w')
         self.assertRaises(IOError, _IteratorOpen, file_path, 'a')
 
+    def testOpenRaisesIOErrorIfParentIsFile(self):
+        file_path = '!foo!bar'
+        self.filesystem.CreateFile(file_path)
+        file_path += '!baz'
+        self.assertRaisesIOError(errno.ENOTDIR, self.open, file_path, 'w')
+
     def testCanReadFromBlockDevice(self):
         device_path = 'device'
         self.filesystem.CreateFile(device_path, stat.S_IFBLK
@@ -4598,9 +4604,9 @@ class FakeFileOpenTest(FakeFileOpenTestBase):
 
     def testTruncateFlushesContents(self):
         """Regression test for #285."""
-        base_path = '/foo/bar'
+        base_path = '!foo!bar'
         self.filesystem.CreateDirectory(base_path)
-        file_path = base_path + "/baz"
+        file_path = base_path + "!baz"
         f0 = self.open(file_path, 'w')
         f0.write('test')
         f0.truncate()
@@ -4608,9 +4614,9 @@ class FakeFileOpenTest(FakeFileOpenTestBase):
 
     def testThatReadOverEndDoesNotResetPosition(self):
         """Regression test for #286."""
-        base_path = '/foo/bar'
+        base_path = '!foo!bar'
         self.filesystem.CreateDirectory(base_path)
-        file_path = base_path + "/baz"
+        file_path = base_path + "!baz"
         f0 = self.open(file_path, 'w')
         f0.close()
         f0 = self.open(file_path)
