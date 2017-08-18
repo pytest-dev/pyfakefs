@@ -4144,6 +4144,8 @@ class FakeFileWrapper(object):
         else:
             self._read_seek = offset
             self._read_whence = whence
+        if not self._is_stream:
+            self.flush()
 
     def tell(self):
         """Return the file's current position.

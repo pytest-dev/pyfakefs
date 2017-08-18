@@ -4676,6 +4676,15 @@ class FakeFileOpenTest(FakeFileOpenTestBase):
         expected = 0 if sys.version_info < (3, ) else 4
         self.assertEqual(expected, self.os.path.getsize(file_path))
 
+    def testSeekFlushes(self):
+        file_path = 'foo'
+        f0 = self.open(file_path, 'w')
+        f0.write('test')
+        self.assertEqual(0, self.os.path.getsize(file_path))
+        f0.seek(3)
+        self.assertEqual(4, self.os.path.getsize(file_path))
+
+
 class OpenFileWithEncodingTest(TestCase):
     """Tests that are similar to some open file tests above but using an explicit text encoding."""
 
