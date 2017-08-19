@@ -4272,7 +4272,7 @@ class FakeFileWrapper(object):
         io_attr = getattr(self._io, 'truncate')
 
         def truncate_wrapper(*args, **kwargs):
-            """Wrap trunctae call to call flush after truncate."""
+            """Wrap truncate call to call flush after truncate."""
             ret_value = io_attr(*args, **kwargs)
             self.flush()
             if sys.version_info >= (3, ):
@@ -4331,14 +4331,14 @@ class FakeFileWrapper(object):
 
         if reading:
             self._sync_io()
+        if truncate:
+            return self._TruncateWrapper()
         if self._append:
             if reading:
                 return self._ReadWrapper(name)
             else:
                 return self._OtherWrapper(name, writing)
-        elif truncate:
-            return self._TruncateWrapper()
-        elif writing:
+        if writing:
             return self._WriteWrapper(name)
 
         return getattr(self._io, name)
