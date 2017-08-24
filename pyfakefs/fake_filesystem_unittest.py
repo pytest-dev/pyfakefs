@@ -119,7 +119,8 @@ class TestCase(unittest.TestCase):
             patch_path: if False, modules named 'path' will not be patched with the
                 fake 'os.path' module. Set this to False when you need to import
                 some other module named 'path', for example::
-                        from my_module import path
+                    from my_module import path
+
                 Irrespective of patch_path, module 'os.path' is still correctly faked
                 if imported the usual way using `import os` or `import os.path`.
             special_names: A dictionary with module names as key and a dictionary as
@@ -130,7 +131,7 @@ class TestCase(unittest.TestCase):
             modules_to_reload (experimental): A list of modules that need to be reloaded
                 to be patched dynamically; may be needed if the module
                 imports file system modules under an alias
-                Note: this is done independently of `use_dynamic_patch'
+                Note: this is done independently of `use_dynamic_patch`
                 Caution: this may not work with some Python versions
                 or have unwanted side effects.
             use_dynamic_patch (experimental): If `True`, dynamic patching

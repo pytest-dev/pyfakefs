@@ -1,34 +1,43 @@
-Modules
-=======
+Public Classes
+==============
 
-pyfakefs.fake_filesystem module
--------------------------------
+Fake filesystem classes
+-----------------------
 
-.. automodule:: pyfakefs.fake_filesystem
-    :members:
-    :undoc-members:
-    :show-inheritance:
+.. autoclass:: pyfakefs.fake_filesystem.FakeFilesystem
+    :members: AddMountPoint,
+        GetDiskUsage, SetDiskUsage, ChangeDiskUsage,
+        add_real_directory, add_real_file, add_real_paths,
+        CreateDirectory, CreateFile
 
-pyfakefs.fake_filesystem_shutil module
---------------------------------------
+.. autoclass:: pyfakefs.fake_filesystem.FakeFile
+    :members: byte_contents, contents, GetPath, GetSize,
+        IsLargeFile, SetContents, SetSize
 
-.. automodule:: pyfakefs.fake_filesystem_shutil
-    :members:
-    :undoc-members:
-    :show-inheritance:
+.. autoclass:: pyfakefs.fake_filesystem.FakeDirectory
+    :members: contents, GetEntry, GetSize, RemoveEntry
 
-pyfakefs.fake_pathlib module
-----------------------------
+Unittest module classes
+-----------------------
 
-.. automodule:: pyfakefs.fake_pathlib
-    :members:
-    :undoc-members:
-    :show-inheritance:
+.. autoclass:: pyfakefs.fake_filesystem_unittest.TestCase
+    :members: fs, patches, setUpPyfakefs
 
-pyfakefs.fake_filesystem_unittest module
-----------------------------------------
+.. autoclass:: pyfakefs.fake_filesystem_unittest.Patcher
+    :members: setUp, tearDown
 
-.. automodule:: pyfakefs.fake_filesystem_unittest
-    :members:
-    :undoc-members:
-    :show-inheritance:
+Faked module classes
+--------------------
+
+.. autoclass:: pyfakefs.fake_filesystem.FakeOsModule
+
+.. autoclass:: pyfakefs.fake_filesystem.FakePathModule
+
+.. autoclass:: pyfakefs.fake_filesystem.FakeFileOpen
+
+.. autoclass:: pyfakefs.fake_filesystem.FakeIoModule
+
+.. autoclass:: pyfakefs.fake_filesystem_shutil.FakeShutilModule
+
+.. autoclass:: pyfakefs.fake_pathlib.FakePathlibModule
+

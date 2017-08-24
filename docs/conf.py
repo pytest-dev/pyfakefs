@@ -107,6 +107,10 @@ exclude_patterns = ['_build', 'Thumbs.db', '.DS_Store']
 #
 # show_authors = False
 
+autoclass_content = 'both'
+
+autodoc_member_order = 'bysource'
+
 # The name of the Pygments (syntax highlighting) style to use.
 pygments_style = 'sphinx'
 
