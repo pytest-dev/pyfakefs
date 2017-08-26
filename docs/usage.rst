@@ -30,7 +30,7 @@ The PyTest plugin provides the ``fs`` fixture for use in your test. For example:
 Patch using fake_filesystem_unittest.Patcher
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 If you are using other means of testing like `nose <http://nose2.readthedocs.io>`__, you can do the
-patching using ``fake_filesystem_unittest.Patcher`` - the class doing the the actual work
+patching using ``fake_filesystem_unittest.Patcher`` - the class doing the actual work
 of replacing the filesystem modules with the fake modules in the first two approaches.
 
 The easiest way is to just use ``Patcher`` as a context manager:

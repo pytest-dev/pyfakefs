@@ -1,9 +1,19 @@
-Public Classes
-==============
+Public Modules and Classes
+==========================
+*Note:* only public classes and methods interesting to the pyfakfs user
+are shown. Methods that mimic the behavior of standard Python
+functions are not listed - you may always use the standard functions.
+
+*Style note:* most method names conform to the original Google style that does
+not match PEP-8. In the next version, we plan to change the API to conform
+to PEP-8 (maintaining upwards compatibility).
+
+Fake filesystem module
+----------------------
+.. automodule:: pyfakefs.fake_filesystem
 
 Fake filesystem classes
 -----------------------
-
 .. autoclass:: pyfakefs.fake_filesystem.FakeFilesystem
     :members: AddMountPoint,
         GetDiskUsage, SetDiskUsage, ChangeDiskUsage,

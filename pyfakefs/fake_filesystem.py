@@ -63,7 +63,7 @@ Use the FakeFileOpen class to read fake file objects:
 
 >>> file_module = fake_filesystem.FakeFileOpen(filesystem)
 >>> for line in file_module(pathname):
-...     print line.rstrip()
+...     print(line.rstrip())
 ...
 Dear Prudence
 Won't you come out to play?
@@ -795,18 +795,30 @@ class FakeDirectoryFromRealDirectory(FakeDirectory):
 
 
 class FakeFilesystem(object):
-    """Provides the appearance of a real directory tree for unit testing."""
+    """Provides the appearance of a real directory tree for unit testing.
+
+    Attributes:
+        path_separator: The path separator, corresponds to `os.path.sep`.
+        alternative_path_separator: Corresponds to `os.path.altsep`.
+        is_windows_fs: `True` in a Windows file system, `False` otherwise.
+        is_case_sensitive: `True` if a case-sensitive file system is assumed.
+        root: The root `FakeDirectory` entry of the file system.
+        cwd: The current working directory path.
+        umask: The umask used for newly created files, see `os.umask`.
+    """
 
     def __init__(self, path_separator=os.path.sep, total_size=None):
         """init.
 
         Args:
-          path_separator:  optional substitute for os.path.sep
-          total_size: if not None, the total size in bytes of the root filesystem.
-          New in pyfakefs 2.9.
+            path_separator:  optional substitute for os.path.sep
+            total_size: if not None, the total size in bytes of the root filesystem.
+                New in pyfakefs 2.9.
 
-          Example usage to emulate real file systems:
-             filesystem = FakeFilesystem(alt_path_separator='/' if _is_windows else None)
+        Example usage to emulate real file systems:
+            filesystem = FakeFilesystem(
+                alt_path_separator='/' if _is_windows else None)
+
         """
         self.path_separator = path_separator
         self.alternative_path_separator = os.path.altsep
@@ -831,10 +843,10 @@ class FakeFilesystem(object):
         # file descriptor number
         self.open_files = []
         # A heap containing all free positions in self.open_files list
-        self.free_fd_heap = []
+        self._free_fd_heap = []
         # last used numbers for inodes (st_ino) and devices (st_dev)
-        self.last_ino = 0
-        self.last_dev = 0
+        self._last_ino = 0
+        self._last_dev = 0
         self.mount_points = {}
         self.AddMountPoint(self.root.name, total_size)
 
@@ -874,27 +886,27 @@ class FakeFilesystem(object):
         New in pyfakefs 2.9.
 
         Args:
-          path: The root path for the new mount path.
+            path: The root path for the new mount path.
 
-          total_size: the new total size of the added filesystem device in bytes.
-                      Defaults to infinite size.
+            total_size: The new total size of the added filesystem device
+                in bytes. Defaults to infinite size.
 
         Returns:
             The newly created mount point dict.
 
         Raises:
-          OSError: if trying to mount an existing mount point again.
+            OSError: if trying to mount an existing mount point again.
         """
         path = self.NormalizePath(path)
         if path in self.mount_points:
             raise OSError(errno.EEXIST, 'Mount point cannot be added twice', path)
-        self.last_dev += 1
+        self._last_dev += 1
         self.mount_points[path] = {
-            'idev': self.last_dev, 'total_size': total_size, 'used_size': 0
+            'idev': self._last_dev, 'total_size': total_size, 'used_size': 0
         }
         # special handling for root path: has been created before
         root_dir = self.root if path == self.root.name else self.CreateDirectory(path)
-        root_dir.st_dev = self.last_dev
+        root_dir.st_dev = self._last_dev
         return self.mount_points[path]
 
     def _AutoMountDriveIfNeeded(self, path, force=False):
@@ -942,8 +954,9 @@ class FakeFilesystem(object):
         New in pyfakefs 2.9.
 
         Args:
-          path: The disk space is returned for the file system device where path resides.
-                Defaults to the root path (e.g. '/' on Unix systems)
+            path: The disk space is returned for the file system device where
+                path resides.
+                Defaults to the root path (e.g. '/' on Unix systems).
         """
         DiskUsage = namedtuple('usage', 'total, used, free')
         if path is None:
@@ -961,13 +974,14 @@ class FakeFilesystem(object):
         New in pyfakefs 2.9.
 
         Args:
-          total_size: the new total size of the filesystem in bytes
+            total_size: The new total size of the filesystem in bytes.
 
-          path: The disk space is changed for the file system device where path resides.
-                Defaults to the root path (e.g. '/' on Unix systems)
+            path: The disk space is changed for the file system device where
+                path resides.
+                Defaults to the root path (e.g. '/' on Unix systems).
 
         Raises:
-          IOError: if the new space is smaller than the used size.
+            IOError: if the new space is smaller than the used size.
         """
         if path is None:
             path = self.root.name
@@ -983,15 +997,15 @@ class FakeFilesystem(object):
         New in pyfakefs 2.9.
 
         Args:
-          usage_change: number of bytes added to the used space.
-                        If negative, the used space will be decreased.
+            usage_change: Number of bytes added to the used space.
+                If negative, the used space will be decreased.
 
-          file_path: the path of the object needing the disk space.
+          file_path: The path of the object needing the disk space.
 
-          st_dev: the device ID for the respective file system.
+          st_dev: The device ID for the respective file system.
 
         Raises:
-          IOError: if usage_change exceeds the free file system space
+            IOError: if usage_change exceeds the free file system space
         """
         mount_point = self._MountPointForDevice(st_dev)
         if mount_point:
@@ -1125,8 +1139,8 @@ class FakeFilesystem(object):
         Returns:
           File descriptor number for the file object.
         """
-        if self.free_fd_heap:
-            open_fd = heapq.heappop(self.free_fd_heap)
+        if self._free_fd_heap:
+            open_fd = heapq.heappop(self._free_fd_heap)
             self.open_files[open_fd] = file_obj
             return open_fd
 
@@ -1142,7 +1156,7 @@ class FakeFilesystem(object):
           file_des:  descriptor of file object to be removed from open files list.
         """
         self.open_files[file_des] = None
-        heapq.heappush(self.free_fd_heap, file_des)
+        heapq.heappush(self._free_fd_heap, file_des)
 
     def GetOpenFile(self, file_des):
         """Return an open file.
@@ -1993,14 +2007,14 @@ class FakeFilesystem(object):
         Helper method to set up your test faster.
 
         Args:
-          directory_path:  full directory path to create.
-          perm_bits: permission bits.
+            directory_path:  The full directory path to create.
+            perm_bits: The permission bits as set by `chmod`.
 
         Returns:
-          the newly created FakeDirectory object.
+            the newly created FakeDirectory object.
 
         Raises:
-          OSError:  if the directory already exists.
+            OSError:  if the directory already exists.
         """
         directory_path = self.NormalizePath(directory_path)
         self._AutoMountDriveIfNeeded(directory_path)
@@ -2031,29 +2045,29 @@ class FakeFilesystem(object):
         for new_dir in new_dirs:
             new_dir.st_mode = stat.S_IFDIR | perm_bits
 
-        self.last_ino += 1
-        current_dir.SetIno(self.last_ino)
+        self._last_ino += 1
+        current_dir.SetIno(self._last_ino)
         return current_dir
 
     def CreateFile(self, file_path, st_mode=stat.S_IFREG | PERM_DEF_FILE,
                    contents='', st_size=None, create_missing_dirs=True,
-                   apply_umask=False, encoding=None, errors=None, raw_io=False):
+                   apply_umask=False, encoding=None, errors=None):
         """Create file_path, including all the parent directories along the way.
 
         This helper method can be used to set up tests more easily.
 
         Args:
-            file_path: path to the file to create.
-            st_mode: the stat.S_IF constant representing the file type.
-            contents: the contents of the file.
-            st_size: file size; only valid if contents not given.
-            create_missing_dirs: if True, auto create missing directories.
-            apply_umask: whether or not the current umask must be applied on st_mode.
-            encoding: if contents is a unicode string, the encoding used for serialization.
+            file_path: The path to the file to create.
+            st_mode: The stat constant representing the file type.
+            contents: The contents of the file.
+            st_size: The file size; only valid if contents not given.
+            create_missing_dirs: If `True`, auto create missing directories.
+            apply_umask: `True` if the current umask must be applied on st_mode.
+            encoding: Ff contents is a unicode string, the encoding used
+                for serialization.
                 New in pyfakefs 2.9.
-            errors: the error mode used for encoding/decoding errors
+            errors: The error mode used for encoding/decoding errors.
                 New in pyfakefs 3.2.
-            raw_io: `True` if called from low-level API (`os.open`)
 
         Returns:
             the newly created FakeFile object.
@@ -2062,9 +2076,9 @@ class FakeFilesystem(object):
             IOError: if the file already exists.
             IOError: if the containing directory is required and missing.
         """
-        return self._CreateFile(
+        return self.CreateFileInternally(
             file_path, st_mode, contents, st_size, create_missing_dirs,
-            apply_umask, encoding, errors, raw_io=raw_io)
+            apply_umask, encoding, errors)
 
     def add_real_file(self, file_path, read_only=True):
         """Create file_path, including all the parent directories along the way, for an existing
@@ -2092,9 +2106,9 @@ class FakeFilesystem(object):
                   Further, Windows offers the option to enable atime, and older \
                   versions of Linux may also modify atime.
         """
-        return self._CreateFile(file_path,
-                                read_from_real_fs=True,
-                                read_only=read_only)
+        return self.CreateFileInternally(file_path,
+                                         read_from_real_fs=True,
+                                         read_only=read_only)
 
     def add_real_directory(self, dir_path, read_only=True, lazy_read=True):
         """Create a fake directory corresponding to the real directory at the specified
@@ -2103,15 +2117,17 @@ class FakeFilesystem(object):
         New in pyfakefs 3.2.
 
         Args:
-            dir_path: path to the existing directory.
-            read_only: if set, all files under the directory are treated as read-only,
-                e.g. a write access raises an exception;
-                otherwise, writing to the files changes the fake files only as usually.
-            lazy_read: if set (default), directory contents are only read when accessed,
-                and only until the needed subdirectory level
-                Note: this means that the file system size is only updated at the time
-                      the directory contents are read; set this to False only if you
-                      are dependent on accurate file system size in your test
+            dir_path: The path to the existing directory.
+            read_only: If set, all files under the directory are treated as
+                read-only, e.g. a write access raises an exception;
+                otherwise, writing to the files changes the fake files only
+                as usually.
+            lazy_read: If set (default), directory contents are only read when
+                accessed, and only until the needed subdirectory level.
+                *Note:* this means that the file system size is only updated
+                at the time the directory contents are read; set this to
+                `False` only if you are dependent on accurate file system
+                size in your test
 
         Returns:
             the newly created FakeDirectory object.
@@ -2130,8 +2146,8 @@ class FakeFilesystem(object):
                 parent_dir = self.CreateDirectory(parent_path)
             new_dir = FakeDirectoryFromRealDirectory(dir_path, filesystem=self, read_only=read_only)
             parent_dir.AddEntry(new_dir)
-            self.last_ino += 1
-            new_dir.SetIno(self.last_ino)
+            self._last_ino += 1
+            new_dir.SetIno(self._last_ino)
         else:
             new_dir = self.CreateDirectory(dir_path)
             for base, _, files in os.walk(dir_path):
@@ -2146,11 +2162,11 @@ class FakeFilesystem(object):
         New in pyfakefs 3.2.
 
         Args:
-            path_list: list of file and directory paths in the real file system.
-            read_only: if set, all files and files under under the directories are treated as read-only,
+            path_list: List of file and directory paths in the real file system.
+            read_only: If set, all files and files under under the directories are treated as read-only,
                 e.g. a write access raises an exception;
                 otherwise, writing to the files changes the fake files only as usually.
-            lazy_dir_read: uses lazy reading of directory contents if set
+            lazy_dir_read: Uses lazy reading of directory contents if set
                 (see `add_real_directory`)
 
         Raises:
@@ -2163,10 +2179,10 @@ class FakeFilesystem(object):
             else:
                 self.add_real_file(path, read_only)
 
-    def _CreateFile(self, file_path, st_mode=stat.S_IFREG | PERM_DEF_FILE,
-                    contents='', st_size=None, create_missing_dirs=True,
-                    apply_umask=False, encoding=None, errors=None,
-                    read_from_real_fs=False, read_only=True, raw_io=False):
+    def CreateFileInternally(self, file_path, st_mode=stat.S_IFREG | PERM_DEF_FILE,
+                             contents='', st_size=None, create_missing_dirs=True,
+                             apply_umask=False, encoding=None, errors=None,
+                             read_from_real_fs=False, read_only=True, raw_io=False):
         """Internal fake file creator that supports both normal fake files and fake
         files based on real files.
 
@@ -2209,8 +2225,8 @@ class FakeFilesystem(object):
         else:
             file_object = FakeFile(new_file, st_mode, filesystem=self, encoding=encoding, errors=errors)
 
-        self.last_ino += 1
-        file_object.SetIno(self.last_ino)
+        self._last_ino += 1
+        file_object.SetIno(self._last_ino)
         self.AddObject(parent_directory, file_object, error_class)
 
         if not read_from_real_fs and (contents is not None or st_size is not None):
@@ -2249,7 +2265,7 @@ class FakeFilesystem(object):
             file_path = self.ResolvePath(file_path)
         if sys.version_info >= (3, 6):
             link_target = os.fspath(link_target)
-        return self.CreateFile(file_path, st_mode=stat.S_IFLNK | PERM_DEF,
+        return self.CreateFileInternally(file_path, st_mode=stat.S_IFLNK | PERM_DEF,
                                contents=link_target, create_missing_dirs=create_missing_dirs,
                                raw_io=True)
 
@@ -4478,7 +4494,7 @@ class FakeFileOpen(object):
         else:
             if open_modes.must_exist:
                 raise error_class(errno.ENOENT, 'No such file or directory', file_path)
-            file_object = self.filesystem.CreateFile(
+            file_object = self.filesystem.CreateFileInternally(
                 real_path, create_missing_dirs=False, apply_umask=True, raw_io=self.raw_io)
 
         if stat.S_ISDIR(file_object.st_mode):
