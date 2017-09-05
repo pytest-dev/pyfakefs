@@ -407,18 +407,20 @@ class FakeFile(object):
           IOError: if the st_size is not a non-negative integer,
                    or if st_size exceeds the available file system space
         """
-        # the st_size should be an positive integer value
-        int_types = (int, long) if sys.version_info < (3, 0) else int  # pylint: disable=undefined-variable
-        if not isinstance(st_size, int_types) or st_size < 0:
-            raise IOError(errno.ENOSPC,
-                          'Fake file object: can not create non negative integer '
-                          'size=%r fake file' % st_size,
-                          self.name)
+        self._check_positive_int(st_size)
         if self.st_size:
             self.SetSize(0)
         self.filesystem.ChangeDiskUsage(st_size, self.name, self.st_dev)
         self.st_size = st_size
         self._byte_contents = None
+
+    def _check_positive_int(self, size):
+        # the size should be an positive integer value
+        int_types = (int, long) if sys.version_info < (3, 0) else int  # pylint: disable=undefined-variable
+        if not isinstance(size, int_types) or size < 0:
+            raise IOError(errno.ENOSPC,
+                          'Fake file object: size must be a non-negative integer, but is %s'
+                          % size, self.name)
 
     def IsLargeFile(self):
         """Return True if this file was initialized with size but no contents."""
@@ -500,12 +502,7 @@ class FakeFile(object):
                    or if st_size exceeds the available file system space
         """
 
-        if not isinstance(st_size, int) or st_size < 0:
-            raise IOError(errno.ENOSPC,
-                          'Fake file object: can not create non negative integer '
-                          'size=%r fake file' % st_size,
-                          self.name)
-
+        self._check_positive_int(st_size)
         current_size = self.st_size or 0
         self.filesystem.ChangeDiskUsage(st_size - current_size, self.name, self.st_dev)
         if self._byte_contents:
@@ -4061,7 +4058,7 @@ class FakeFileWrapper(object):
         self._file_epoch = file_object.epoch
         self.raw_io = raw_io
         self._binary = binary
-        self._is_stream = is_stream
+        self.is_stream = is_stream
         contents = file_object.byte_contents
         self._encoding = encoding
         errors = errors or 'strict'
@@ -4160,7 +4157,7 @@ class FakeFileWrapper(object):
         else:
             self._read_seek = offset
             self._read_whence = whence
-        if not self._is_stream:
+        if not self.is_stream:
             self.flush()
 
     def tell(self):
@@ -4170,7 +4167,7 @@ class FakeFileWrapper(object):
           int, file's current position in bytes.
         """
         self._check_open_file()
-        if not self._is_stream:
+        if not self.is_stream:
             if not self._filesystem.is_windows_fs or sys.version_info >= (3, ):
                 self.flush()
         if not self._append:
@@ -4285,14 +4282,17 @@ class FakeFileWrapper(object):
         Returns:
           wrapper which is described below.
         """
+        wrapper = self
         io_attr = getattr(self._io, 'truncate')
 
         def truncate_wrapper(*args, **kwargs):
             """Wrap truncate call to call flush after truncate."""
-            ret_value = io_attr(*args, **kwargs)
+            size = io_attr(*args, **kwargs)
             self.flush()
+            if not wrapper.is_stream:
+                wrapper._file_object.SetSize(size)
             if sys.version_info >= (3, ):
-                return ret_value
+                return size
 
         return truncate_wrapper
 
@@ -4360,7 +4360,7 @@ class FakeFileWrapper(object):
         return getattr(self._io, name)
 
     def _check_open_file(self):
-        if not self._is_stream and not self in self._filesystem.open_files:
+        if not self.is_stream and not self in self._filesystem.open_files:
             raise ValueError('I/O operation on closed file')
 
     def __iter__(self):

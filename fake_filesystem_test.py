@@ -4677,6 +4677,7 @@ class FakeFileOpenTest(FakeFileOpenTestBase):
         self.assertEqual(expected, self.os.path.getsize(file_path))
 
     def testSeekFlushes(self):
+        """Regression test for #290."""
         file_path = 'foo'
         f0 = self.open(file_path, 'w')
         f0.write('test')
@@ -4685,12 +4686,24 @@ class FakeFileOpenTest(FakeFileOpenTestBase):
         self.assertEqual(4, self.os.path.getsize(file_path))
 
     def testTruncateFlushes(self):
+        """Regression test for #291."""
         file_path = 'foo'
         f0 = self.open(file_path, 'a')
         f0.write('test')
         self.assertEqual(0, self.os.path.getsize(file_path))
         f0.truncate()
         self.assertEqual(4, self.os.path.getsize(file_path))
+
+    def testSeekOutsideAndTruncateSetsSize(self):
+        """Regression test for #294."""
+        base_path = '/foo/bar'
+        self.filesystem.CreateDirectory(base_path)
+        file_path = base_path + "/baz"
+        f0 = self.open(file_path, 'w')
+        f0.seek(1)
+        f0.truncate()
+        self.assertEqual(1, self.os.path.getsize(file_path))
+
 
 
 class OpenFileWithEncodingTest(TestCase):
