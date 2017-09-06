@@ -4287,6 +4287,8 @@ class FakeFileWrapper(object):
 
         def truncate_wrapper(*args, **kwargs):
             """Wrap truncate call to call flush after truncate."""
+            if self._append:
+                self._io.seek(wrapper._read_seek, wrapper._read_whence)
             size = io_attr(*args, **kwargs)
             self.flush()
             if not wrapper.is_stream:

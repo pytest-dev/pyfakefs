@@ -4694,16 +4694,23 @@ class FakeFileOpenTest(FakeFileOpenTestBase):
         f0.truncate()
         self.assertEqual(4, self.os.path.getsize(file_path))
 
-    def testSeekOutsideAndTruncateSetsSize(self):
+    def checkSeekOutsideAndTruncateSetsSize(self, mode):
         """Regression test for #294."""
         base_path = '/foo/bar'
         self.filesystem.CreateDirectory(base_path)
         file_path = base_path + "/baz"
-        f0 = self.open(file_path, 'w')
+        f0 = self.open(file_path, mode)
         f0.seek(1)
         f0.truncate()
         self.assertEqual(1, self.os.path.getsize(file_path))
 
+    def testSeekOutsideAndTruncateSetsSizeInWriteMode(self):
+        """Regression test for #294."""
+        self.checkSeekOutsideAndTruncateSetsSize('w')
+
+    def testSeekOutsideAndTruncateSetsSizeInAppendMode(self):
+        """Regression test for #295."""
+        self.checkSeekOutsideAndTruncateSetsSize('a')
 
 
 class OpenFileWithEncodingTest(TestCase):
