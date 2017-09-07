@@ -121,7 +121,7 @@ The following modules and functions can be patched:
 ### Compatibility
 pyfakefs works with Python 2.6 and above, on Linux, Windows and OSX (MacOS).
 
-pyfakefs works with [PyTest](doc.pytest.org) version 2.8.6 or above.
+pyfakefs works with [PyTest](http://doc.pytest.org) version 2.8.6 or above.
 
 pyfakefs will not work with Python libraries that use C libraries to access the
 file system.  This is because pyfakefs cannot patch the underlying C libraries'
