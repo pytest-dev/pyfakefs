@@ -4059,6 +4059,7 @@ class FakeFileWrapper(object):
         self.raw_io = raw_io
         self._binary = binary
         self.is_stream = is_stream
+        self.is_dirty = False
         contents = file_object.byte_contents
         self._encoding = encoding
         errors = errors or 'strict'
@@ -4145,9 +4146,10 @@ class FakeFileWrapper(object):
     def flush(self):
         """Flush file contents to 'disk'."""
         self._check_open_file()
-        if self.allow_update:
+        if self.is_dirty and self.allow_update:
             self._file_object.SetContents(self._io.getvalue(), self._encoding)
             self._file_epoch = self._file_object.epoch
+            self.is_dirty = False
 
     def seek(self, offset, whence=0):
         """Move read/write pointer in 'file'."""
@@ -4251,6 +4253,7 @@ class FakeFileWrapper(object):
         Returns:
           other_wrapper which is described below.
         """
+        file_wrapper = self
         io_attr = getattr(self._io, name)
 
         def other_wrapper(*args, **kwargs):
@@ -4268,6 +4271,7 @@ class FakeFileWrapper(object):
             """
             write_seek = self._io.tell()
             ret_value = io_attr(*args, **kwargs)
+            file_wrapper.is_dirty = True
             if write_seek != self._io.tell():
                 self._read_seek = self._io.tell()
                 self._read_whence = 0
@@ -4282,17 +4286,18 @@ class FakeFileWrapper(object):
         Returns:
           wrapper which is described below.
         """
-        wrapper = self
+        file_wrapper = self
         io_attr = getattr(self._io, 'truncate')
 
         def truncate_wrapper(*args, **kwargs):
             """Wrap truncate call to call flush after truncate."""
             if self._append:
-                self._io.seek(wrapper._read_seek, wrapper._read_whence)
+                self._io.seek(file_wrapper._read_seek, file_wrapper._read_whence)
             size = io_attr(*args, **kwargs)
+            file_wrapper.is_dirty = True
             self.flush()
-            if not wrapper.is_stream:
-                wrapper._file_object.SetSize(size)
+            if not file_wrapper.is_stream:
+                file_wrapper._file_object.SetSize(size)
             if sys.version_info >= (3, ):
                 return size
 
@@ -4304,11 +4309,13 @@ class FakeFileWrapper(object):
         Returns:
           wrapper which is described below.
         """
+        file_wrapper = self
         io_attr = getattr(self._io, name)
 
         def write_wrapper(*args, **kwargs):
             """Wrap trunctae call to call flush after truncate."""
             ret_value = io_attr(*args, **kwargs)
+            file_wrapper.is_dirty = True
             if sys.version_info >= (3, ):
                 return ret_value
 
