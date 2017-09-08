@@ -21,15 +21,16 @@ The release versions are PyPi releases.
   * Removed `fake_tempfile` and `fake_filesystem_glob`, relying on the patched `os` module instead ([#189](../../issues/189), [#191](../../issues/191)).
 
 #### Fixes
-  * Multiple fixes of bugs found using TSTL by agroce
+  * Multiple fixes of bugs found using TSTL by agroce (see issues with `TSTL` label)
+    * several problems with buffer handling in high-level i/o functions
+    * several problems with multiple handles on the same file
     * several problems with low-level i/o functions
-    * `os.symlink` incorrectly created missing parent directories
-    * Incorrect `os.walk` behavior if top dir is a symlink
-    * `IOError` instead of `OSError` raised in several cases
+    * incorrect exception (`IOError` vs `OSError`) raised in several cases
     * Fake `rename` did not behave like `os.rename` in many cases
-    * Symlinks have not been considered in several functions
-    * A non-existing file that has the same as the content of the parent object was seen as existent
+    * Symlinks have not been considered or incorrectly handled in several functions 
+    * A non-existing file that has the same name as the content of the parent object was seen as existent
     * Incorrect error handling during directory creation 
+  * Also patch modules that are loaded between `__init__()` and `setUp()` ([#199](../../issues/199)).
   * Creating files in read-only directory was possible ([#203](../../issues/203)).
 
 ## [Version 3.2](https://pypi.python.org/pypi/pyfakefs/3.2)

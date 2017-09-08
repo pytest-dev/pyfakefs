@@ -4253,7 +4253,6 @@ class FakeFileWrapper(object):
         Returns:
           other_wrapper which is described below.
         """
-        file_wrapper = self
         io_attr = getattr(self._io, name)
 
         def other_wrapper(*args, **kwargs):
@@ -4271,7 +4270,7 @@ class FakeFileWrapper(object):
             """
             write_seek = self._io.tell()
             ret_value = io_attr(*args, **kwargs)
-            file_wrapper.is_dirty = True
+            self.is_dirty = True
             if write_seek != self._io.tell():
                 self._read_seek = self._io.tell()
                 self._read_whence = 0
@@ -4286,18 +4285,17 @@ class FakeFileWrapper(object):
         Returns:
           wrapper which is described below.
         """
-        file_wrapper = self
         io_attr = getattr(self._io, 'truncate')
 
         def truncate_wrapper(*args, **kwargs):
             """Wrap truncate call to call flush after truncate."""
             if self._append:
-                self._io.seek(file_wrapper._read_seek, file_wrapper._read_whence)
+                self._io.seek(self._read_seek, self._read_whence)
             size = io_attr(*args, **kwargs)
-            file_wrapper.is_dirty = True
+            self.is_dirty = True
             self.flush()
-            if not file_wrapper.is_stream:
-                file_wrapper._file_object.SetSize(size)
+            if not self.is_stream:
+                self._file_object.SetSize(size)
             if sys.version_info >= (3, ):
                 return size
 
@@ -4309,13 +4307,12 @@ class FakeFileWrapper(object):
         Returns:
           wrapper which is described below.
         """
-        file_wrapper = self
         io_attr = getattr(self._io, name)
 
         def write_wrapper(*args, **kwargs):
             """Wrap trunctae call to call flush after truncate."""
             ret_value = io_attr(*args, **kwargs)
-            file_wrapper.is_dirty = True
+            self.is_dirty = True
             if sys.version_info >= (3, ):
                 return ret_value
 
