@@ -4059,7 +4059,6 @@ class FakeFileWrapper(object):
         self.raw_io = raw_io
         self._binary = binary
         self.is_stream = is_stream
-        self.is_dirty = False
         contents = file_object.byte_contents
         self._encoding = encoding
         errors = errors or 'strict'
@@ -4146,10 +4145,10 @@ class FakeFileWrapper(object):
     def flush(self):
         """Flush file contents to 'disk'."""
         self._check_open_file()
-        if self.is_dirty and self.allow_update:
+        if self.allow_update:
+            self._io.flush()
             self._file_object.SetContents(self._io.getvalue(), self._encoding)
             self._file_epoch = self._file_object.epoch
-            self.is_dirty = False
 
     def seek(self, offset, whence=0):
         """Move read/write pointer in 'file'."""
@@ -4270,7 +4269,6 @@ class FakeFileWrapper(object):
             """
             write_seek = self._io.tell()
             ret_value = io_attr(*args, **kwargs)
-            self.is_dirty = True
             if write_seek != self._io.tell():
                 self._read_seek = self._io.tell()
                 self._read_whence = 0
@@ -4292,10 +4290,13 @@ class FakeFileWrapper(object):
             if self._append:
                 self._io.seek(self._read_seek, self._read_whence)
             size = io_attr(*args, **kwargs)
-            self.is_dirty = True
             self.flush()
             if not self.is_stream:
                 self._file_object.SetSize(size)
+                buffer_size = len(self._io.getvalue())
+                if buffer_size < size:
+                    self._io.write('\0' * (size - buffer_size))
+                    self._io.truncate(size)
             if sys.version_info >= (3, ):
                 return size
 
@@ -4312,7 +4313,6 @@ class FakeFileWrapper(object):
         def write_wrapper(*args, **kwargs):
             """Wrap trunctae call to call flush after truncate."""
             ret_value = io_attr(*args, **kwargs)
-            self.is_dirty = True
             if sys.version_info >= (3, ):
                 return ret_value
 

@@ -4705,6 +4705,8 @@ class FakeFileOpenTest(FakeFileOpenTestBase):
         self.assertEqual(1, self.os.path.getsize(file_path))
         f0.seek(1)
         self.assertEqual(1, self.os.path.getsize(file_path))
+        f0.close()
+        self.assertEqual(1, self.os.path.getsize(file_path))
 
     def testSeekOutsideAndTruncateSetsSizeInWriteMode(self):
         """Regression test for #294."""
