@@ -4702,6 +4702,7 @@ class FakeFileOpenTest(FakeFileOpenTestBase):
         f0 = self.open(file_path, mode)
         f0.seek(1)
         f0.truncate()
+        self.assertEqual(1, f0.tell())
         self.assertEqual(1, self.os.path.getsize(file_path))
         f0.seek(1)
         self.assertEqual(1, self.os.path.getsize(file_path))

@@ -4295,8 +4295,8 @@ class FakeFileWrapper(object):
                 self._file_object.SetSize(size)
                 buffer_size = len(self._io.getvalue())
                 if buffer_size < size:
+                    self._io.seek(buffer_size)
                     self._io.write('\0' * (size - buffer_size))
-                    self._io.truncate(size)
             if sys.version_info >= (3, ):
                 return size
 
