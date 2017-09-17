@@ -4168,9 +4168,7 @@ class FakeFileWrapper(object):
           int, file's current position in bytes.
         """
         self._check_open_file()
-        if not self.is_stream:
-            if not self._filesystem.is_windows_fs or sys.version_info >= (3, ):
-                self.flush()
+        self._flush_for_read()
         if not self._append:
             return self._io.tell()
         if self._read_whence:
@@ -4180,6 +4178,13 @@ class FakeFileWrapper(object):
             self._read_whence = 0
             self._io.seek(write_seek)
         return self._read_seek
+
+    def _flush_for_read(self):
+        # reads do not flush under Windows and Python 2
+        if (not self.is_stream and
+                (not self._filesystem.is_windows_fs or
+                         sys.version_info[0] > 2)):
+            self.flush()
 
     def _sync_io(self):
         """Update the stream with changes to the file object contents."""
@@ -4353,6 +4358,7 @@ class FakeFileWrapper(object):
 
         if reading:
             self._sync_io()
+            self._flush_for_read()
         if truncate:
             return self._TruncateWrapper()
         if self._append:

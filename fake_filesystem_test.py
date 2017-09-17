@@ -4666,7 +4666,7 @@ class FakeFileOpenTest(FakeFileOpenTestBase):
         self.assertEqual(4, f0.tell())
         self.assertEqual(4, self.os.path.getsize(file_path))
 
-    def testTellFlushUnderWindowsInPython3(self):
+    def testTellFlushesUnderWindowsInPython3(self):
         """Regression test for #288."""
         self.filesystem.is_windows_fs = True
         file_path = 'foo'
@@ -4674,6 +4674,25 @@ class FakeFileOpenTest(FakeFileOpenTestBase):
         f0.write('test')
         self.assertEqual(4, f0.tell())
         expected = 0 if sys.version_info < (3, ) else 4
+        self.assertEqual(expected, self.os.path.getsize(file_path))
+
+    def testReadFlushesUnderPosix(self):
+        """Regression test for #278."""
+        self.filesystem.is_windows_fs = False
+        file_path = 'foo'
+        f0 = self.open(file_path, 'a+')
+        f0.write('test')
+        self.assertEqual('', f0.read())
+        self.assertEqual(4, self.os.path.getsize(file_path))
+
+    def testReadFlushesUnderWindowsInPython3(self):
+        """Regression test for #278."""
+        self.filesystem.is_windows_fs = True
+        file_path = 'foo'
+        f0 = self.open(file_path, 'w+')
+        f0.write('test')
+        self.assertEqual('', f0.read())
+        expected = 0 if sys.version_info[0] < 3 else 4
         self.assertEqual(expected, self.os.path.getsize(file_path))
 
     def testSeekFlushes(self):
