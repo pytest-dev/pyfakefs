@@ -4736,6 +4736,16 @@ class FakeFileOpenTest(FakeFileOpenTestBase):
         """Regression test for #295."""
         self.checkSeekOutsideAndTruncateSetsSize('a')
 
+    def testClosingClosedFileDoesNothing(self):
+        """Regression test for #299."""
+        file_path = "baz"
+        f0 = self.open(file_path, 'w')
+        f0.close()
+        f1 = self.open(file_path)
+        # would close f1 if not handled
+        f0.close()
+        self.assertEqual('', f1.read())
+
 
 class OpenFileWithEncodingTest(TestCase):
     """Tests that are similar to some open file tests above but using an explicit text encoding."""

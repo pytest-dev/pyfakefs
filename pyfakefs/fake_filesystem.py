@@ -4134,6 +4134,9 @@ class FakeFileWrapper(object):
 
     def close(self):
         """Close the file."""
+        # ignore closing a closed file
+        if self not in self._filesystem.open_files:
+            return
         # for raw io, all writes are flushed immediately
         if self.allow_update and not self.raw_io:
             self._file_object.SetContents(self._io.getvalue(), self._encoding)
