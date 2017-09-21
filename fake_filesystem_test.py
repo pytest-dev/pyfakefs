@@ -4738,13 +4738,22 @@ class FakeFileOpenTest(FakeFileOpenTestBase):
 
     def testClosingClosedFileDoesNothing(self):
         """Regression test for #299."""
-        file_path = "baz"
+        file_path = 'baz'
         f0 = self.open(file_path, 'w')
         f0.close()
         f1 = self.open(file_path)
         # would close f1 if not handled
         f0.close()
         self.assertEqual('', f1.read())
+
+    def testTruncateFlushesZeros(self):
+        """Regression test for #301."""
+        file_path = 'baz'
+        f0 = self.open(file_path, 'w')
+        f1 = self.open(file_path)
+        f0.seek(1)
+        f0.truncate()
+        self.assertEqual('\0', f1.read())
 
 
 class OpenFileWithEncodingTest(TestCase):
