@@ -3993,11 +3993,16 @@ class FakeFileOpenTestBase(TestCase):
             existing_path = self.os.path.join(existing_path, component)
             self.os.mkdir(existing_path)
 
-    def createFile(self, file_path, contents=None):
+    def createFile(self, file_path, contents=None, encoding=None):
         self.createDirectory(self.os.path.dirname(file_path))
         mode = ('wb' if not self.is_python2 and isinstance(contents, bytes)
                 else 'w')
-        with self.open(file_path, mode) as f:
+
+        if encoding is not None:
+            open_fct = lambda: self.open(file_path, mode, encoding=encoding)
+        else:
+            open_fct = lambda: self.open(file_path, mode)
+        with open_fct() as f:
             if contents is not None:
                 f.write(contents)
 
@@ -4751,11 +4756,12 @@ class FakeFileOpenTest(FakeFileOpenTestBase):
         if platform.python_implementation() == 'PyPy':
             raise unittest.SkipTest('Different exceptions with PyPy')
         file_path = self.os.path.join(self.base_path, 'foo')
-        self.os.open(file_path, os.O_CREAT | os.O_WRONLY | os.O_TRUNC)
+        f0 = self.os.open(file_path, os.O_CREAT | os.O_WRONLY | os.O_TRUNC)
         fake_file = self.open(file_path, 'r')
         fake_file.close()
         self.assertRaises(ValueError, lambda: fake_file.read(1))
         self.assertRaises(ValueError, lambda: fake_file.write('a'))
+        self.os.close(f0)
 
     def testTellFlushesUnderPosix(self):
         """Regression test for #288."""
@@ -4862,14 +4868,16 @@ class RealFileOpenTest(FakeFileOpenTest):
         return True
 
 
-class OpenFileWithEncodingTest(TestCase):
+class OpenFileWithEncodingTest(FakeFileOpenTestBase):
     """Tests that are similar to some open file tests above but using an explicit text encoding."""
 
     def setUp(self):
-        self.filesystem = fake_filesystem.FakeFilesystem(path_separator='!')
-        self.open = fake_filesystem.FakeFileOpen(self.filesystem, use_io=True)
-        self.file_path = 'foo'
-        self.os = fake_filesystem.FakeOsModule(self.filesystem)
+        super(OpenFileWithEncodingTest, self).setUp()
+        if self.useRealFs():
+            self.open = io.open
+        else:
+            self.open = fake_filesystem.FakeFileOpen(self.filesystem, use_io=True)
+        self.file_path = self.os.path.join(self.base_path, 'foo')
 
     def testWriteStrReadBytes(self):
         str_contents = u'علي بابا'
@@ -4950,8 +4958,8 @@ class OpenFileWithEncodingTest(TestCase):
             u'Оригинальное содержание'
             u'Дополнительное содержание',
         ]
-        self.filesystem.CreateFile(self.file_path, contents=contents[0],
-                                   encoding='cyrillic')
+        self.createFile(self.file_path, contents=contents[0],
+                        encoding='cyrillic')
         fake_file = self.open(self.file_path, 'a', encoding='cyrillic')
         for line in contents[1:]:
             fake_file.write(line + '\n')
@@ -4961,9 +4969,9 @@ class OpenFileWithEncodingTest(TestCase):
         self.assertEqual(contents, result)
 
     def testOpenWithWplus(self):
-        self.filesystem.CreateFile(self.file_path,
-                                   contents=u'старое содержание',
-                                   encoding='cyrillic')
+        self.createFile(self.file_path,
+                        contents=u'старое содержание',
+                        encoding='cyrillic')
         fake_file = self.open(self.file_path, 'r', encoding='cyrillic')
         self.assertEqual(u'старое содержание', fake_file.read())
         fake_file.close()
@@ -4975,6 +4983,9 @@ class OpenFileWithEncodingTest(TestCase):
         fake_file.close()
 
     def testOpenWithAppendFlag(self):
+        self.skipRealFsFailure(skipPosix=False)
+        if self.useRealFs() and sys.version_info < (2, 7):
+            raise unittest.SkipTest('Python 2.6 behaving differently here')
         contents = [
             u'Калинка,\n',
             u'калинка,\n',
@@ -4984,8 +4995,8 @@ class OpenFileWithEncodingTest(TestCase):
             u'В саду ягода-малинка,\n',
             u'малинка моя.\n'
         ]
-        self.filesystem.CreateFile(self.file_path, contents=''.join(contents),
-                                   encoding='cyrillic')
+        self.createFile(self.file_path, contents=''.join(contents),
+                        encoding='cyrillic')
         fake_file = self.open(self.file_path, 'a', encoding='cyrillic')
         expected_error = (IOError if sys.version_info < (3,)
                           else io.UnsupportedOperation)
@@ -5000,9 +5011,10 @@ class OpenFileWithEncodingTest(TestCase):
         self.assertEqual(contents + additional_contents, result)
 
     def testAppendWithAplus(self):
-        self.filesystem.CreateFile(self.file_path,
-                                   contents=u'старое содержание',
-                                   encoding='cyrillic')
+        self.skipRealFsFailure()
+        self.createFile(self.file_path,
+                        contents=u'старое содержание',
+                        encoding='cyrillic')
         fake_file = self.open(self.file_path, 'r', encoding='cyrillic')
         fake_file.close()
 
@@ -5017,9 +5029,9 @@ class OpenFileWithEncodingTest(TestCase):
         fake_file.close()
 
     def testReadWithRplus(self):
-        self.filesystem.CreateFile(self.file_path,
-                                   contents=u'старое содержание здесь',
-                                   encoding='cyrillic')
+        self.createFile(self.file_path,
+                        contents=u'старое содержание здесь',
+                        encoding='cyrillic')
         fake_file = self.open(self.file_path, 'r', encoding='cyrillic')
         fake_file.close()
 
@@ -5031,6 +5043,10 @@ class OpenFileWithEncodingTest(TestCase):
         self.assertEqual(u'новое  содержание здесь', fake_file.read())
         fake_file.close()
 
+
+class OpenRealFileWithEncodingTest(OpenFileWithEncodingTest):
+    def useRealFs(self):
+        return True
 
 class OpenWithFileDescriptorTest(FakeFileOpenTestBase):
     @unittest.skipIf(sys.version_info < (3, 0),
