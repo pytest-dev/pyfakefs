@@ -94,6 +94,7 @@ import errno
 import heapq
 import io
 import locale
+import platform
 import os
 import sys
 import time
@@ -131,6 +132,9 @@ _OPEN_MODE_MAP = {
     'w+': (False, True, True, True, False, False),
     'a+': (False, True, True, False, True, False),
 }
+
+if sys.version_info[0] < 3 and sys.platform != 'win32':
+    _OPEN_MODE_MAP['rw'] = (True, True, True, False, False, False)
 
 if sys.version_info >= (3, 3):
     _OPEN_MODE_MAP['x'] = (False, False, True, False, False, True)
@@ -4048,7 +4052,7 @@ class FakeFileWrapper(object):
     def __init__(self, file_object, file_path, update=False, read=False,
                  append=False, delete_on_close=False, filesystem=None,
                  newline=None, binary=True, closefd=True, encoding=None,
-                 errors=None, raw_io=False, is_stream=False):
+                 errors=None, raw_io=False, is_stream=False, use_io=True):
         self._file_object = file_object
         self._file_path = file_path
         self._append = append
@@ -4092,7 +4096,7 @@ class FakeFileWrapper(object):
                     self._io.seek(0)
                 else:
                     self._read_whence = 0
-                    if read:
+                    if read and not use_io:
                         self._read_seek = 0
                     else:
                         self._read_seek = self._io.tell()
@@ -4429,7 +4433,8 @@ class FakeFileOpen(object):
         """
         self.filesystem = filesystem
         self._delete_on_close = delete_on_close
-        self._use_io = use_io or sys.version_info >= (3, 0)
+        self._use_io = (use_io or sys.version_info >= (3, 0) or
+                        platform.python_implementation() == 'PyPy')
         self.raw_io = raw_io
 
     def __call__(self, *args, **kwargs):
@@ -4538,7 +4543,8 @@ class FakeFileOpen(object):
                                    closefd=closefd,
                                    encoding=encoding,
                                    errors=errors,
-                                   raw_io=self.raw_io)
+                                   raw_io=self.raw_io,
+                                   use_io=self._use_io)
         if filedes is not None:
             fakefile.filedes = filedes
             # replace the file wrapper

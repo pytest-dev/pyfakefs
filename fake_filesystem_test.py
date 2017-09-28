@@ -129,13 +129,14 @@ class RealFsTestCase(TestCase):
 
     def skipRealFsFailure(self, skipWindows=True, skipPosix=True,
                           skipPython2=True, skipPython3=True):
-        if (self.useRealFs() and
-                (self.is_windows and skipWindows or
-                         not self.is_windows and skipPosix) and
-                (self.is_python2 and skipPython2 or
-                         not self.is_python2 and skipPython3)):
-            raise unittest.SkipTest(
-                'Skipping because FakeFS does not match real FS')
+        if True:
+            if (self.useRealFs() and
+                    (self.is_windows and skipWindows or
+                             not self.is_windows and skipPosix) and
+                    (self.is_python2 and skipPython2 or
+                             not self.is_python2 and skipPython3)):
+                raise unittest.SkipTest(
+                    'Skipping because FakeFS does not match real FS')
 
     def skipIfSymlinkNotSupported(self):
         if self.useRealFs():
@@ -4463,7 +4464,6 @@ class FakeFileOpenTest(FakeFileOpenTestBase):
 
     def testAppendWithAplus(self):
         # set up
-        self.skipRealFsFailure()
         file_path = self.makePath('aplus_file')
         self.createFile(file_path, contents='old contents')
         self.assertTrue(self.os.path.exists(file_path))
@@ -4472,8 +4472,11 @@ class FakeFileOpenTest(FakeFileOpenTestBase):
         fake_file.close()
         # actual tests
         fake_file = self.open(file_path, 'a+')
-        self.assertEqual(0, fake_file.tell())
-        fake_file.seek(6, 1)
+        if self.is_python2 and platform.python_implementation() != 'PyPy':
+            self.assertEqual(0, fake_file.tell())
+            fake_file.seek(12)
+        else:
+            self.assertEqual(12, fake_file.tell())
         fake_file.write('new contents')
         self.assertEqual(24, fake_file.tell())
         fake_file.seek(0)
@@ -5133,7 +5136,6 @@ class OpenFileWithEncodingTest(FakeFileOpenTestBase):
         self.assertEqual(contents + additional_contents, result)
 
     def testAppendWithAplus(self):
-        self.skipRealFsFailure()
         self.createFile(self.file_path,
                         contents=u'старое содержание',
                         encoding='cyrillic')
@@ -5141,8 +5143,7 @@ class OpenFileWithEncodingTest(FakeFileOpenTestBase):
         fake_file.close()
 
         fake_file = self.open(self.file_path, 'a+', encoding='cyrillic')
-        self.assertEqual(0, fake_file.tell())
-        fake_file.seek(6, 1)
+        self.assertEqual(17, fake_file.tell())
         fake_file.write(u'новое содержание')
         self.assertEqual(33, fake_file.tell())
         fake_file.seek(0)
@@ -5318,8 +5319,11 @@ class OpenWithInvalidFlagsTest(FakeFileOpenTestBase):
         self.assertRaises(ValueError, self.open, 'some_file', 'u')
 
     def testLowerRw(self):
-        self.skipRealFsFailure(skipWindows=False, skipPython3=False)
-        self.assertRaises(ValueError, self.open, 'some_file', 'rw')
+        if self.is_python2 and sys.platform != 'win32':
+            self.assertRaisesIOError(
+                errno.ENOENT, self.open, 'some_file', 'rw')
+        else:
+            self.assertRaises(ValueError, self.open, 'some_file', 'rw')
 
 
 class OpenWithInvalidFlagsRealFsTest(OpenWithInvalidFlagsTest):
