@@ -2031,7 +2031,7 @@ class FakeOsModuleTest(FakeOsModuleTestBase):
     def testMakedirsRaisesIfParentIsLoopingLink(self):
         self.skipIfSymlinkNotSupported()
         # raises EEXIST under Linux
-        self.skipRealFsFailure(skipWindows=False)
+        self.skipRealFsFailure()
         link_path = self.makePath('link')
         link_target = self.os.path.join(link_path, 'link')
         self.os.symlink(link_target, link_path)
@@ -2433,35 +2433,29 @@ class FakeOsModuleTest(FakeOsModuleTestBase):
         filename = ''
         self.assertRaisesOSError(errno.ENOENT, self.os.mknod, filename)
 
-    def testMkNodeRaisesIfParentDirDoesntExist(self):
+    def testMkNodRaisesIfParentDirDoesntExist(self):
         self.skipWindows()
-        # raises ENOENT under Linux
-        self.skipRealFsFailure()
         parent = self.makePath('xyzzy')
         filename = self.os.path.join(parent, 'foo')
         self.assertFalse(self.os.path.exists(parent))
-        self.assertRaisesOSError(errno.ENOTDIR, self.os.mknod, filename)
+        self.assertRaisesOSError(errno.ENOENT, self.os.mknod, filename)
 
-    def testMkNodeRaisesIfFileExists(self):
+    def testMkNodRaisesIfFileExists(self):
         self.skipWindows()
         filename = self.makePath('tmp', 'foo')
         self.createFile(filename)
         self.assertTrue(self.os.path.exists(filename))
         self.assertRaisesOSError(errno.EEXIST, self.os.mknod, filename)
 
-    def testMkNodeRaisesIfFilenameIsDot(self):
+    def testMkNodRaisesIfFilenameIsDot(self):
         self.skipWindows()
         filename = self.makePath('tmp', '.')
-        # raises ENOENT under Linux
-        self.skipRealFsFailure()
-        self.assertRaisesOSError(errno.EEXIST, self.os.mknod, filename)
+        self.assertRaisesOSError(errno.ENOENT, self.os.mknod, filename)
 
-    def testMkNodeRaisesIfFilenameIsDoubleDot(self):
+    def testMkNodRaisesIfFilenameIsDoubleDot(self):
         self.skipWindows()
-        # raises ENOENT under Linux
-        self.skipRealFsFailure()
         filename = self.makePath('tmp', '..')
-        self.assertRaisesOSError(errno.EEXIST, self.os.mknod, filename)
+        self.assertRaisesOSError(errno.ENOENT, self.os.mknod, filename)
 
     def testMknodEmptyTailForExistingFileRaises(self):
         self.skipWindows()
@@ -2472,10 +2466,8 @@ class FakeOsModuleTest(FakeOsModuleTestBase):
 
     def testMknodEmptyTailForNonexistentFileRaises(self):
         self.skipWindows()
-        # raises ENOENT under Linux
-        self.skipRealFsFailure()
         filename = self.makePath('tmp', 'foo')
-        self.assertRaisesOSError(errno.ENOTDIR, self.os.mknod, filename)
+        self.assertRaisesOSError(errno.ENOENT, self.os.mknod, filename)
 
     def testMknodRaisesIfFilenameIsEmptyString(self):
         self.skipWindows()
@@ -2485,9 +2477,7 @@ class FakeOsModuleTest(FakeOsModuleTestBase):
     def testMknodRaisesIfUnsupportedOptions(self):
         self.skipWindows()
         filename = 'abcde'
-        # raises ENOENT under Linux
-        self.skipRealFsFailure()
-        self.assertRaisesOSError(errno.EINVAL, self.os.mknod, filename,
+        self.assertRaisesOSError(errno.ENOENT, self.os.mknod, filename,
                                  stat.S_IFCHR)
 
     def testMknodRaisesIfParentIsNotADirectory(self):

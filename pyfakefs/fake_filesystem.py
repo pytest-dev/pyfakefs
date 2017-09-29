@@ -3912,10 +3912,12 @@ class FakeOsModule(object):
           OSError: if called with unsupported options or the file can not be
           created.
         """
+        if self.filesystem.is_windows_fs:
+            raise(AttributeError, "module 'os' has no attribute 'mknode'")
         if mode is None:
             mode = stat.S_IFREG | PERM_DEF_FILE
         if device or not mode & stat.S_IFREG:
-            raise OSError(errno.EINVAL,
+            raise OSError(errno.ENOENT,
                           'Fake os mknod implementation only supports '
                           'regular files.')
 
@@ -3927,16 +3929,19 @@ class FakeOsModule(object):
                     os.strerror(errno.EEXIST), filename))
             raise OSError(errno.ENOENT, 'Fake filesystem: %s: %s' % (
                 os.strerror(errno.ENOENT), filename))
-        if tail in (b'.', u'.', b'..', u'..') or self.filesystem.Exists(filename):
+        if tail in (b'.', u'.', b'..', u'..'):
+            raise OSError(errno.ENOENT, 'Fake fileystem: %s: %s' % (
+                os.strerror(errno.ENOENT), filename))
+        if self.filesystem.Exists(filename):
             raise OSError(errno.EEXIST, 'Fake fileystem: %s: %s' % (
                 os.strerror(errno.EEXIST), filename))
         try:
-            self.filesystem.AddObject(head, FakeFile(tail,
-                                                     mode & ~self.filesystem.umask,
-                                                     filesystem=self.filesystem))
-        except IOError:
-            raise OSError(errno.ENOTDIR, 'Fake filesystem: %s: %s' % (
-                os.strerror(errno.ENOTDIR), filename))
+            self.filesystem.AddObject(head, FakeFile(
+                tail, mode & ~self.filesystem.umask,
+                filesystem=self.filesystem))
+        except IOError as e:
+            raise OSError(e.errno, 'Fake filesystem: %s: %s' % (
+                os.strerror(e.errno), filename))
 
     def symlink(self, link_target, path, dir_fd=None):
         """Creates the specified symlink, pointed at the specified link target.
