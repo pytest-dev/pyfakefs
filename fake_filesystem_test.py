@@ -1439,7 +1439,7 @@ class FakeOsModuleTest(FakeOsModuleTestBase):
         dir_path = self.os.path.join(base_path, 'dir')
         self.createDirectory(dir_path)
         self.os.symlink(dir_path, link_path)
-        self.assertRaisesOSError(errno.ENOTDIR, self.os.rename, link_path,
+        self.assertRaisesOSError(errno.EISDIR, self.os.rename, link_path,
                                  dir_path)
 
     def testRenameBrokenSymlink(self):
@@ -1564,13 +1564,11 @@ class FakeOsModuleTest(FakeOsModuleTestBase):
     def testRenameToExistingDirectoryUnderPosixRaisesIfNotEmpty(self):
         """Renaming to an existing directory changes the existing directory under Posix."""
         self.skipWindows()
-        # raises EEXIST under Linux
-        self.skipRealFsFailure()
         old_path = self.makePath('foo', 'bar')
         new_path = self.makePath('foo', 'baz')
         self.createDirectory(self.os.path.join(old_path, 'sub'))
         self.createDirectory(self.os.path.join(new_path, 'sub'))
-        self.assertRaisesOSError(errno.ENOTEMPTY, self.os.rename,
+        self.assertRaisesOSError(errno.EEXIST, self.os.rename,
                                  old_path, new_path)
 
     def testRenameToAnotherDeviceShouldRaise(self):
@@ -1788,7 +1786,7 @@ class FakeOsModuleTest(FakeOsModuleTestBase):
 
     def testRemovedirs(self):
         # no exception raised
-        self.skipRealFsFailure()
+        self.skipRealFs()
         data = ['test1', ('test1', 'test2'), ('test1', 'extra'),
                 ('test1', 'test2', 'test3')]
         for directory in data:

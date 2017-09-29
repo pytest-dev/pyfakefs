@@ -1897,7 +1897,7 @@ class FakeFilesystem(object):
                               new_file_path)
             if (self.IsDir(new_file_path, follow_symlinks=False) and
                     self.IsLink(old_file_path)):
-                raise OSError(errno.ENOTDIR,
+                raise OSError(errno.EISDIR,
                               'Cannot rename symlink to directory',
                               new_file_path)
 
@@ -1926,7 +1926,7 @@ class FakeFilesystem(object):
                                       new_file_path)
                 if not stat.S_ISLNK(new_object.st_mode):
                     if new_object.contents:
-                        raise OSError(errno.ENOTEMPTY,
+                        raise OSError(errno.EEXIST,
                                       'Fake filesystem object: can not rename to non-empty directory',
                                       new_file_path)
                     if stat.S_ISREG(old_object.st_mode):
