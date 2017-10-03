@@ -152,9 +152,11 @@ FAKE_PATH_MODULE_DEPRECATION = ('Do not instantiate a FakePathModule directly; '
                                 'let FakeOsModule instantiate it.  See the '
                                 'FakeOsModule docstring for details.')
 
-if sys.platform == 'win32':
-    # On native Windows, raise WindowsError instead of OSError if available
-    OSError = WindowsError  # pylint: disable=undefined-variable,redefined-builtin
+
+def raise_os_error(errno, winerror, message, filename=''):
+    if sys.platform == 'win32' and sys.version_info[0] < 3:
+        raise WindowsError(winerror, message, filename)
+    raise OSError(errno, message, filename)
 
 
 class FakeLargeFileIoException(Exception):
@@ -1037,7 +1039,8 @@ class FakeFilesystem(object):
             file_object = self.ResolveObject(entry_path, follow_symlinks, allow_fd=True)
             return file_object.stat_result.copy()
         except IOError as io_error:
-            raise OSError(io_error.errno, io_error.strerror, entry_path)
+            raise_os_error(io_error.errno, io_error.errno,
+                           io_error.strerror, entry_path)
 
     def ChangeMode(self, path, mode, follow_symlinks=True):
         """Change the permissions of a file as encoded in integer mode.
@@ -1884,7 +1887,7 @@ class FakeFilesystem(object):
         old_file_path = self.NormalizePath(old_file_path)
         new_file_path = self.NormalizePath(new_file_path)
         if not self.Exists(old_file_path) and not self.IsLink(old_file_path):
-            raise OSError(errno.ENOENT,
+            raise_os_error(errno.ENOENT, 2,
                           'Fake filesystem object: can not rename nonexistent file',
                           old_file_path)
 
@@ -2511,9 +2514,9 @@ class FakeFilesystem(object):
         except IOError as exc:
             raise OSError(exc.errno, exc.strerror, target_directory)
         if not directory.st_mode & stat.S_IFDIR:
-            raise OSError(errno.ENOTDIR,
-                          'Fake os module: not a directory',
-                          target_directory)
+            raise_os_error(errno.ENOTDIR, 267,
+                           'Fake os module: not a directory',
+                           target_directory)
         return directory
 
     def RemoveFile(self, path):
@@ -2844,7 +2847,7 @@ class FakePathModule(object):
         try:
             file_obj = self.filesystem.ResolveObject(path)
         except IOError as exc:
-            raise OSError(errno.ENOENT, str(exc))
+            raise_os_error(errno.ENOENT, 3, str(exc))
         return file_obj.st_mtime
 
     def getatime(self, path):

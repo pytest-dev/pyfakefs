@@ -75,11 +75,7 @@ class TestCase(unittest.TestCase):
             expression(*args, **kwargs)
             self.fail('No exception was raised, OSError expected')
         except OSError as exc:
-            if (self.is_windows and self.is_python2 and
-                    hasattr(exc, 'winerror')):
-                self.assertEqual(exc.winerror, subtype)
-            else:
-                self.assertEqual(exc.errno, subtype)
+            self.assertEqual(exc.errno, subtype)
 
 
 class RealFsTestCase(TestCase):
@@ -96,6 +92,12 @@ class RealFsTestCase(TestCase):
             self.os = fake_filesystem.FakeOsModule(self.filesystem)
             self.base_path = self.pathSeparator() + 'basepath'
             self.filesystem.CreateDirectory(self.base_path)
+
+    @property
+    def is_windows_fs(self):
+        if self.useRealFs():
+            return self.is_windows
+        return self.filesystem.is_windows_fs
 
     def tearDown(self):
         if self.useRealFs():
@@ -190,6 +192,12 @@ class RealFsTestCase(TestCase):
                 else 'r')
         with self.open(file_path, mode) as f:
             self.assertEqual(contents, f.read())
+
+    def not_dir_error(self):
+        error = errno.ENOTDIR
+        if self.is_windows_fs and self.is_python2:
+            error = errno.EINVAL
+        return error
 
 
 class FakeDirectoryUnitTest(TestCase):
@@ -895,16 +903,14 @@ class FakeOsModuleTest(FakeOsModuleTestBase):
 
     def testChdirFailsNonExist(self):
         """chdir should raise OSError if the target does not exist."""
-        self.skipRealFsFailure(skipPosix=False, skipPython3=False)
         directory = self.makePath('no', 'such', 'directory')
         self.assertRaisesOSError(errno.ENOENT, self.os.chdir, directory)
 
     def testChdirFailsNonDirectory(self):
         """chdir should raise OSError if the target is not a directory."""
-        self.skipRealFsFailure(skipPosix=False, skipPython3=False)
         filename = self.makePath('foo', 'bar')
         self.createFile(filename)
-        self.assertRaisesOSError(errno.ENOTDIR, self.os.chdir, filename)
+        self.assertRaisesOSError(self.not_dir_error(), self.os.chdir, filename)
 
     def testConsecutiveChdir(self):
         """Consecutive relative chdir calls should work."""
@@ -984,10 +990,10 @@ class FakeOsModuleTest(FakeOsModuleTestBase):
                          sorted(self.os.listdir(self.makePath('symlink'))))
 
     def testListdirError(self):
-        self.skipRealFsFailure(skipPosix=False, skipPython3=False)
         file_path = self.makePath('foo', 'bar', 'baz')
         self.createFile(file_path)
-        self.assertRaisesOSError(errno.ENOTDIR, self.os.listdir, file_path)
+        self.assertRaisesOSError(self.not_dir_error(),
+                                 self.os.listdir, file_path)
 
     def testExistsCurrentDir(self):
         self.assertTrue(self.os.path.exists('.'))
@@ -1315,7 +1321,6 @@ class FakeOsModuleTest(FakeOsModuleTestBase):
         self.assertFalse(self.os.path.exists(link))
 
     def testUnlinkRaisesIfNotExist(self):
-        self.skipRealFsFailure(skipPosix=False, skipPython3=False)
         file_path = self.makePath('file', 'does', 'not', 'exist')
         self.assertFalse(self.os.path.exists(file_path))
         self.assertRaisesOSError(errno.ENOENT, self.os.unlink, file_path)
@@ -1414,7 +1419,6 @@ class FakeOsModuleTest(FakeOsModuleTestBase):
 
     def testRenameWithTargetParentFileRaisesWindows(self):
         self.skipPosix()
-        self.skipRealFsFailure(skipPosix=False, skipPython3=False)
         file_path = self.makePath('foo', 'baz')
         self.createFile(file_path)
         self.assertRaisesOSError(errno.EACCES, self.os.rename, file_path,
@@ -1499,7 +1503,6 @@ class FakeOsModuleTest(FakeOsModuleTestBase):
     def testRenameToExistingDirectoryShouldRaiseUnderWindows(self):
         """Renaming to an existing directory raises OSError under Windows."""
         self.skipPosix()
-        self.skipRealFsFailure(skipPosix=False, skipPython3=False)
         old_path = self.makePath('foo', 'bar')
         new_path = self.makePath('foo', 'baz')
         self.createDirectory(old_path)
@@ -1599,7 +1602,6 @@ class FakeOsModuleTest(FakeOsModuleTestBase):
     def testRenameToExistentFileWindows(self):
         """Renaming a file to a used name raises OSError under Windows."""
         self.skipPosix()
-        self.skipRealFsFailure(skipPosix=False, skipPython3=False)
         directory = self.makePath('xyzzy')
         old_file_path = self.os.path.join(directory, 'plugh_old')
         new_file_path = self.os.path.join(directory, 'plugh_new')
@@ -1759,7 +1761,8 @@ class FakeOsModuleTest(FakeOsModuleTestBase):
         file_path = self.os.path.join(directory, 'plugh')
         self.createFile(file_path)
         self.assertTrue(self.os.path.exists(file_path))
-        self.assertRaisesOSError(errno.ENOTDIR, self.os.rmdir, file_path)
+        self.assertRaisesOSError(self.not_dir_error(),
+                                 self.os.rmdir, file_path)
         self.assertRaisesOSError(errno.EINVAL, self.os.rmdir, '.')
 
     def testRmdirRaisesIfNotExist(self):
@@ -1896,13 +1899,11 @@ class FakeOsModuleTest(FakeOsModuleTestBase):
 
     def testMkdirRaisesIfEmptyDirectoryName(self):
         """mkdir raises exeption if creating directory named ''."""
-        self.skipRealFsFailure(skipPosix=False, skipPython3=False)
         directory = ''
         self.assertRaisesOSError(errno.ENOENT, self.os.mkdir, directory)
 
     def testMkdirRaisesIfNoParent(self):
         """mkdir raises exception if parent directory does not exist."""
-        self.skipRealFsFailure(skipPosix=False, skipPython3=False)
         parent = 'xyzzy'
         directory = '%s/foo' % (parent,)
         self.assertFalse(self.os.path.exists(parent))
@@ -1931,7 +1932,6 @@ class FakeOsModuleTest(FakeOsModuleTestBase):
 
     def testMkdirRaisesIfDirectoryExists(self):
         """mkdir raises exception if directory already exists."""
-        self.skipRealFsFailure(skipPosix=False, skipPython3=False)
         directory = self.makePath('xyzzy')
         self.createDirectory(directory)
         self.assertTrue(self.os.path.exists(directory))
@@ -1939,7 +1939,6 @@ class FakeOsModuleTest(FakeOsModuleTestBase):
 
     def testMkdirRaisesIfFileExists(self):
         """mkdir raises exception if name already exists as a file."""
-        self.skipRealFsFailure(skipPosix=False, skipPython3=False)
         directory = self.makePath('xyzzy')
         file_path = self.os.path.join(directory, 'plugh')
         self.createFile(file_path)
@@ -3322,7 +3321,7 @@ class FakeOsModuleWalkTest(FakeOsModuleTestBase):
         # We do not actually care what, if anything, is returned.
         for unused_entry in self.os.walk(filename, onerror=self.StoreErrno):
             pass
-        self.assertTrue(self.GetErrno() in (errno.ENOTDIR, errno.EACCES))
+        self.assertTrue(self.GetErrno() in (self.not_dir_error(), errno.EACCES))
 
     def testWalkSkipsRemovedDirectories(self):
         """Caller can modify list of directories to visit while walking."""
