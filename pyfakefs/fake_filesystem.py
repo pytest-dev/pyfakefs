@@ -4531,7 +4531,7 @@ class FakeFileOpen(object):
 
         if stat.S_ISDIR(file_object.st_mode):
             if self.filesystem.is_windows_fs:
-                raise OSError(errno.EPERM, 'Fake file object: is a directory', file_path)
+                raise error_class(errno.EACCES, 'Fake file object: is a directory', file_path)
             else:
                 raise error_class(errno.EISDIR, 'Fake file object: is a directory', file_path)
 

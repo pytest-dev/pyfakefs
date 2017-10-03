@@ -1630,7 +1630,6 @@ class FakeOsModuleTest(FakeOsModuleTestBase):
 
     def testRenameToNonexistentDir(self):
         """Can rename a file to a name in a nonexistent dir."""
-        # self.skipRealFsFailure(skipPosix=False, skipPython2=False)
         self.skipRealFsFailure(skipPosix=False, skipPython3=False)
         directory = self.makePath('xyzzy')
         old_file_path = self.os.path.join(directory, 'plugh_old')
@@ -3101,15 +3100,13 @@ class FakeOsModuleLowLevelFileOpTest(FakeOsModuleTestBase):
 
     def testOpenDirectoryRaisesUnderWindows(self):
         self.skipPosix()
-        # raises EACCES instead of EPERM
-        self.skipRealFsFailure(skipPosix=False)
         dir_path = self.makePath('dir')
         self.createDirectory(dir_path)
-        self.assertRaisesOSError(errno.EPERM, self.os.open, dir_path,
+        self.assertRaisesOSError(errno.EACCES, self.os.open, dir_path,
                                  os.O_RDONLY)
-        self.assertRaisesOSError(errno.EPERM, self.os.open, dir_path,
+        self.assertRaisesOSError(errno.EACCES, self.os.open, dir_path,
                                  os.O_WRONLY)
-        self.assertRaisesOSError(errno.EPERM, self.os.open, dir_path,
+        self.assertRaisesOSError(errno.EACCES, self.os.open, dir_path,
                                  os.O_RDWR)
 
     def testOpenDirectoryForWritingRaisesUnderPosix(self):
@@ -4283,12 +4280,15 @@ class FakeFileOpenTest(FakeFileOpenTestBase):
         self.assertEqual(contents, result)
 
     def testOpenDirectoryError(self):
-        self.skipRealFsFailure(skipPosix=False)
         directory_path = self.makePath('foo')
         self.os.mkdir(directory_path)
         if self.is_windows:
-            self.assertRaisesOSError(errno.EPERM, self.open.__call__,
-                                     directory_path)
+            if self.is_python2:
+                self.assertRaisesIOError(errno.EACCES, self.open.__call__,
+                                         directory_path)
+            else:
+                self.assertRaisesOSError(errno.EACCES, self.open.__call__,
+                                         directory_path)
         else:
             self.assertRaisesIOError(errno.EISDIR, self.open.__call__,
                                      directory_path)

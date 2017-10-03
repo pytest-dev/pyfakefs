@@ -390,7 +390,7 @@ class CopyFileTest(fake_filesystem_unittest.TestCase):
         dst_file = 'xyzzy_copy'
         self.fs.CreateDirectory(src_file)
         self.assertTrue(self.fs.Exists(src_file))
-        if self.fs.is_windows_fs:
+        if self.fs.is_windows_fs and sys.version_info[0] > 2:
             self.assertRaises(OSError, shutil.copyfile, src_file, dst_file)
         else:
             self.assertRaises(IOError, shutil.copyfile, src_file, dst_file)
