@@ -634,7 +634,10 @@ class FakeDirectory(FakeFile):
         self.st_nlink += 1
 
     def SetContents(self, contents, encoding=None):
-        error_class = OSError if self.filesystem.is_windows_fs else IOError
+        if self.filesystem.is_windows_fs and sys.version_info[0] > 2:
+            error_class = OSError
+        else:
+            error_class = IOError
         raise error_class(errno.EISDIR, 'Trying to write to directory')
 
     @property

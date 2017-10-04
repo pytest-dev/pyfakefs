@@ -78,30 +78,20 @@ class TestCase(unittest.TestCase):
             self.assertEqual(exc.errno, subtype)
 
 
-class RealFsTestCase(TestCase):
-    def setUp(self):
+class RealFsTestMixin(object):
+    def __init__(self):
+        self.filesystem = None
+        self.open = open
+        self.os = os
+        self.is_python2 = sys.version_info[0] == 2
         if self.useRealFs():
-            self.filesystem = None
-            self.open = open
-            self.os = os
             self.base_path = tempfile.mkdtemp()
         else:
-            self.filesystem = fake_filesystem.FakeFilesystem(
-                path_separator=self.pathSeparator())
-            self.open = fake_filesystem.FakeFileOpen(self.filesystem)
-            self.os = fake_filesystem.FakeOsModule(self.filesystem)
             self.base_path = self.pathSeparator() + 'basepath'
-            self.filesystem.CreateDirectory(self.base_path)
 
     @property
     def is_windows_fs(self):
-        if self.useRealFs():
-            return self.is_windows
-        return self.filesystem.is_windows_fs
-
-    def tearDown(self):
-        if self.useRealFs():
-            shutil.rmtree(self.base_path, ignore_errors=True)
+        return TestCase.is_windows
 
     def useRealFs(self):
         return False
@@ -111,7 +101,7 @@ class RealFsTestCase(TestCase):
 
     def skipPosix(self):
         if self.useRealFs():
-            if not self.is_windows:
+            if not TestCase.is_windows:
                 raise unittest.SkipTest(
                     'Testing Windows specific functionality')
         else:
@@ -119,7 +109,7 @@ class RealFsTestCase(TestCase):
 
     def skipWindows(self):
         if self.useRealFs():
-            if self.is_windows:
+            if TestCase.is_windows:
                 raise unittest.SkipTest(
                     'Testing Posix specific functionality')
         else:
@@ -133,16 +123,16 @@ class RealFsTestCase(TestCase):
                           skipPython2=True, skipPython3=True):
         if True:
             if (self.useRealFs() and
-                    (self.is_windows and skipWindows or
-                             not self.is_windows and skipPosix) and
-                    (self.is_python2 and skipPython2 or
-                             not self.is_python2 and skipPython3)):
+                    (TestCase.is_windows and skipWindows or
+                             not TestCase.is_windows and skipPosix) and
+                    (TestCase.is_python2 and skipPython2 or
+                             not TestCase.is_python2 and skipPython3)):
                 raise unittest.SkipTest(
                     'Skipping because FakeFS does not match real FS')
 
     def skipIfSymlinkNotSupported(self):
         if self.useRealFs():
-            if self.is_windows:
+            if TestCase.is_windows:
                 raise unittest.SkipTest(
                     'Symlinks under Windows need admin privileges')
         else:
@@ -198,6 +188,30 @@ class RealFsTestCase(TestCase):
         if self.is_windows_fs and self.is_python2:
             error = errno.EINVAL
         return error
+
+
+class RealFsTestCase(TestCase, RealFsTestMixin):
+    def __init__(self, methodName='runTest'):
+        TestCase.__init__(self, methodName)
+        RealFsTestMixin.__init__(self)
+
+    def setUp(self):
+        if not self.useRealFs():
+            self.filesystem = fake_filesystem.FakeFilesystem(
+                path_separator=self.pathSeparator())
+            self.open = fake_filesystem.FakeFileOpen(self.filesystem)
+            self.os = fake_filesystem.FakeOsModule(self.filesystem)
+            self.filesystem.CreateDirectory(self.base_path)
+
+    @property
+    def is_windows_fs(self):
+        if self.useRealFs():
+            return self.is_windows
+        return self.filesystem.is_windows_fs
+
+    def tearDown(self):
+        if self.useRealFs():
+            shutil.rmtree(self.base_path, ignore_errors=True)
 
 
 class FakeDirectoryUnitTest(TestCase):
@@ -263,7 +277,9 @@ class FakeDirectoryUnitTest(TestCase):
     def testSetContentsToDirRaises(self):
         """Regression test for #276."""
         self.filesystem.is_windows_fs = True
-        self.assertRaisesOSError(errno.EISDIR, self.fake_dir.SetContents, 'a')
+        error_check = (self.assertRaisesIOError if self.is_python2
+                       else self.assertRaisesOSError)
+        error_check(errno.EISDIR, self.fake_dir.SetContents, 'a')
         self.filesystem.is_windows_fs = False
         self.assertRaisesIOError(errno.EISDIR, self.fake_dir.SetContents, 'a')
 
