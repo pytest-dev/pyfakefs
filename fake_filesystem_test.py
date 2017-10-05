@@ -3272,51 +3272,53 @@ class FakeOsModuleWalkTest(FakeOsModuleTestBase):
 
     def testWalkTopDown(self):
         """Walk down ordering is correct."""
-        self.filesystem.CreateFile('foo/1.txt')
-        self.filesystem.CreateFile('foo/bar1/2.txt')
-        self.filesystem.CreateFile('foo/bar1/baz/3.txt')
-        self.filesystem.CreateFile('foo/bar2/4.txt')
+        base_dir = self.makePath('foo')
+        self.createFile(self.os.path.join(base_dir, '1.txt'))
+        self.createFile(self.os.path.join(base_dir, 'bar1', '2.txt'))
+        self.createFile(self.os.path.join(base_dir, 'bar1', 'baz', '3.txt'))
+        self.createFile(self.os.path.join(base_dir, 'bar2', '4.txt'))
         expected = [
-            ('foo', ['bar1', 'bar2'], ['1.txt']),
-            ('foo/bar1', ['baz'], ['2.txt']),
-            ('foo/bar1/baz', [], ['3.txt']),
-            ('foo/bar2', [], ['4.txt']),
+            (base_dir, ['bar1', 'bar2'], ['1.txt']),
+            (self.os.path.join(base_dir, 'bar1'), ['baz'], ['2.txt']),
+            (self.os.path.join(base_dir, 'bar1', 'baz'), [], ['3.txt']),
+            (self.os.path.join(base_dir, 'bar2'), [], ['4.txt']),
         ]
-        self.assertWalkResults(expected, 'foo')
+        self.assertWalkResults(expected, base_dir)
 
     def testWalkBottomUp(self):
         """Walk up ordering is correct."""
-        self.filesystem.CreateFile('foo/bar1/baz/1.txt')
-        self.filesystem.CreateFile('foo/bar1/2.txt')
-        self.filesystem.CreateFile('foo/bar2/3.txt')
-        self.filesystem.CreateFile('foo/4.txt')
+        base_dir = self.makePath('foo')
+        self.createFile(self.os.path.join(base_dir, 'bar1', 'baz', '1.txt'))
+        self.createFile(self.os.path.join(base_dir, 'bar1', '2.txt'))
+        self.createFile(self.os.path.join(base_dir, 'bar2', '3.txt'))
+        self.createFile(self.os.path.join(base_dir, '4.txt'))
 
         expected = [
-            ('foo/bar1/baz', [], ['1.txt']),
-            ('foo/bar1', ['baz'], ['2.txt']),
-            ('foo/bar2', [], ['3.txt']),
-            ('foo', ['bar1', 'bar2'], ['4.txt']),
+            (self.os.path.join(base_dir, 'bar1', 'baz'), [], ['1.txt']),
+            (self.os.path.join(base_dir, 'bar1'), ['baz'], ['2.txt']),
+            (self.os.path.join(base_dir, 'bar2'), [], ['3.txt']),
+            (base_dir, ['bar1', 'bar2'], ['4.txt']),
         ]
-        self.assertWalkResults(expected, 'foo', topdown=False)
+        self.assertWalkResults(expected, self.makePath('foo'), topdown=False)
 
     def testWalkRaisesIfNonExistent(self):
         """Raises an exception when attempting to walk non-existent directory."""
-        directory = '/foo/bar'
+        directory = self.makePath('foo', 'bar')
         self.assertEqual(False, self.os.path.exists(directory))
         generator = self.os.walk(directory)
         self.assertRaises(StopIteration, next, generator)
 
     def testWalkRaisesIfNotDirectory(self):
         """Raises an exception when attempting to walk a non-directory."""
-        filename = '/foo/bar'
-        self.filesystem.CreateFile(filename)
+        filename = self.makePath('foo', 'bar')
+        self.createFile(filename)
         generator = self.os.walk(filename)
         self.assertRaises(StopIteration, next, generator)
 
     def testWalkCallsOnErrorIfNonExistent(self):
         """Calls onerror with correct errno when walking non-existent directory."""
         self.ResetErrno()
-        directory = '/foo/bar'
+        directory = self.makePath('foo', 'bar')
         self.assertEqual(False, self.os.path.exists(directory))
         # Calling os.walk on a non-existent directory should trigger a call to the
         # onerror method.  We do not actually care what, if anything, is returned.
@@ -3327,8 +3329,8 @@ class FakeOsModuleWalkTest(FakeOsModuleTestBase):
     def testWalkCallsOnErrorIfNotDirectory(self):
         """Calls onerror with correct errno when walking non-directory."""
         self.ResetErrno()
-        filename = '/foo/bar'
-        self.filesystem.CreateFile(filename)
+        filename = self.makePath('foo' 'bar')
+        self.createFile(filename)
         self.assertEqual(True, self.os.path.exists(filename))
         # Calling os.walk on a file should trigger a call to the onerror method.
         # We do not actually care what, if anything, is returned.
@@ -3338,64 +3340,77 @@ class FakeOsModuleWalkTest(FakeOsModuleTestBase):
 
     def testWalkSkipsRemovedDirectories(self):
         """Caller can modify list of directories to visit while walking."""
-        root = '/foo'
+        root = self.makePath('foo')
         visit = 'visit'
         no_visit = 'no_visit'
-        self.filesystem.CreateFile('%s/bar' % (root,))
-        self.filesystem.CreateFile('%s/%s/1.txt' % (root, visit))
-        self.filesystem.CreateFile('%s/%s/2.txt' % (root, visit))
-        self.filesystem.CreateFile('%s/%s/3.txt' % (root, no_visit))
-        self.filesystem.CreateFile('%s/%s/4.txt' % (root, no_visit))
+        self.createFile(self.os.path.join(root, 'bar'))
+        self.createFile(self.os.path.join(root, visit, '1.txt'))
+        self.createFile(self.os.path.join(root, visit, '2.txt'))
+        self.createFile(self.os.path.join(root, no_visit, '3.txt'))
+        self.createFile(self.os.path.join(root, no_visit, '4.txt'))
 
-        generator = self.os.walk('/foo')
+        generator = self.os.walk(self.makePath('foo'))
         root_contents = next(generator)
         root_contents[1].remove(no_visit)
 
         visited_visit_directory = False
 
-        for root, unused_dirs, unused_files in iter(generator):
-            self.assertEqual(False, root.endswith('/%s' % (no_visit)))
-            if root.endswith('/%s' % (visit)):
+        for root, _dirs, _files in iter(generator):
+            self.assertEqual(False, root.endswith(self.os.path.sep + no_visit))
+            if root.endswith(self.os.path.sep + visit):
                 visited_visit_directory = True
 
         self.assertEqual(True, visited_visit_directory)
 
     def testWalkFollowsymlinkDisabled(self):
-        self.filesystem.is_windows_fs = False
-        self.filesystem.CreateFile('/linked/subfile')
-        self.filesystem.CreateFile('/foo/bar/baz')
-        self.filesystem.CreateFile('/foo/bar/xyzzy/plugh')
-        self.filesystem.CreateLink('/foo/created_link', '/linked')
+        self.skipWindows()
+        base_dir = self.makePath('foo')
+        link_dir = self.makePath('linked')
+        self.createFile(self.os.path.join(link_dir, 'subfile'))
+        self.createFile(self.os.path.join(base_dir, 'bar', 'baz'))
+        self.createFile(self.os.path.join(base_dir, 'bar', 'xyzzy', 'plugh'))
+        self.createLink(self.os.path.join(base_dir, 'created_link'), link_dir)
 
         expected = [
-            ('/foo', ['bar', 'created_link'], []),
-            ('/foo/bar', ['xyzzy'], ['baz']),
-            ('/foo/bar/xyzzy', [], ['plugh']),
+            (base_dir, ['bar', 'created_link'], []),
+            (self.os.path.join(base_dir, 'bar'), ['xyzzy'], ['baz']),
+            (self.os.path.join(base_dir, 'bar', 'xyzzy'), [], ['plugh']),
         ]
-        self.assertWalkResults(expected, '/foo', followlinks=False)
+        self.assertWalkResults(expected, base_dir, followlinks=False)
 
-        expected = [('/foo/created_link', [], ['subfile'])]
-        self.assertWalkResults(expected, '/foo/created_link',
+        expected = [(self.os.path.join(base_dir, 'created_link'),
+                     [], ['subfile'])]
+        self.assertWalkResults(expected,
+                               self.os.path.join(base_dir, 'created_link'),
                                followlinks=False)
 
     def testWalkFollowsymlinkEnabled(self):
-        self.filesystem.is_windows_fs = False
-        self.filesystem.CreateFile('/linked/subfile')
-        self.filesystem.CreateFile('/foo/bar/baz')
-        self.filesystem.CreateFile('/foo/bar/xyzzy/plugh')
-        self.filesystem.CreateLink('/foo/created_link', '/linked')
+        self.skipWindows()
+        base_dir = self.makePath('foo')
+        link_dir = self.makePath('linked')
+        self.createFile(self.os.path.join(link_dir, 'subfile'))
+        self.createFile(self.os.path.join(base_dir, 'bar', 'baz'))
+        self.createFile(self.os.path.join(base_dir, 'bar', 'xyzzy', 'plugh'))
+        self.createLink(self.os.path.join(base_dir, 'created_link'),
+                        self.os.path.join(link_dir))
 
         expected = [
-            ('/foo', ['bar', 'created_link'], []),
-            ('/foo/bar', ['xyzzy'], ['baz']),
-            ('/foo/bar/xyzzy', [], ['plugh']),
-            ('/foo/created_link', [], ['subfile']),
+            (base_dir, ['bar', 'created_link'], []),
+            (self.os.path.join(base_dir, 'bar'), ['xyzzy'], ['baz']),
+            (self.os.path.join(base_dir, 'bar', 'xyzzy'), [], ['plugh']),
+            (self.os.path.join(base_dir, 'created_link'), [], ['subfile']),
         ]
-        self.assertWalkResults(expected, '/foo', followlinks=True)
+        self.assertWalkResults(expected, base_dir, followlinks=True)
 
-        expected = [('/foo/created_link', [], ['subfile'])]
-        self.assertWalkResults(expected, '/foo/created_link', followlinks=True)
+        expected = [(self.os.path.join(base_dir, 'created_link'),
+                     [], ['subfile'])]
+        self.assertWalkResults(expected, 
+                               self.os.path.join(base_dir, 'created_link'),
+                               followlinks=True)
 
+class RealOsModuleWalkTest(FakeOsModuleWalkTest):
+    def useRealFs(self):
+        return True
 
 @unittest.skipIf(sys.version_info < (3, 3),
                  'dir_fd argument was introduced in Python 3.3')
