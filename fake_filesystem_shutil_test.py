@@ -23,6 +23,8 @@ import os
 import shutil
 import sys
 
+import time
+
 from fake_filesystem_test import RealFsTestMixin
 from pyfakefs import fake_filesystem_unittest
 
@@ -48,6 +50,7 @@ class RealFsTestCase(fake_filesystem_unittest.TestCase, RealFsTestMixin):
 
     def tearDown(self):
         if self.useRealFs():
+            self.os.chdir(os.path.dirname(self.base_path))
             shutil.rmtree(self.base_path, ignore_errors=True)
 
     @property
@@ -90,6 +93,7 @@ class FakeShutilModuleTest(RealFsTestCase):
         self.os.chmod(file_path, 0o444)
         self.assertRaises(OSError, shutil.rmtree, dir_path)
         self.assertTrue(os.path.exists(file_path))
+        self.os.chmod(file_path, 0o666)
 
     def testRmtreeWithOpenFilePosix(self):
         self.skipWindows()
@@ -382,6 +386,7 @@ class FakeCopyFileTest(RealFsTestCase):
         self.assertTrue(os.path.exists(src_file))
         self.assertTrue(os.path.exists(dst_file))
         self.assertRaises(IOError, shutil.copyfile, src_file, dst_file)
+        os.chmod(dst_file, 0o666)
 
     def testRaisesIfDestDirIsNotWritableUnderPosix(self):
         self.skipWindows()

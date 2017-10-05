@@ -211,6 +211,7 @@ class RealFsTestCase(TestCase, RealFsTestMixin):
 
     def tearDown(self):
         if self.useRealFs():
+            self.os.chdir(os.path.dirname(self.base_path))
             shutil.rmtree(self.base_path, ignore_errors=True)
 
 
@@ -1475,7 +1476,8 @@ class FakeOsModuleTest(FakeOsModuleTestBase):
         self.assertFalse(self.os.path.exists(link_path))
 
     def testChangeCaseInCaseInsensitiveFileSystem(self):
-        """Can use `rename()` to change filename case in a case-insensitive file system."""
+        """Can use `rename()` to change filename case in a case-insensitive
+         file system."""
         self.skipRealFs()
         self.filesystem.is_case_sensitive = False
         directory = 'xyzzy'
@@ -1560,7 +1562,8 @@ class FakeOsModuleTest(FakeOsModuleTestBase):
                                  new_path)
 
     def testRenameToExistingDirectoryUnderPosix(self):
-        """Renaming to an existing directory changes the existing directory under Posix."""
+        """Renaming to an existing directory changes the existing directory
+        under Posix."""
         self.skipWindows()
         old_path = self.makePath('foo', 'bar')
         new_path = self.makePath('xyzzy')
@@ -1581,7 +1584,8 @@ class FakeOsModuleTest(FakeOsModuleTestBase):
                                  new_path)
 
     def testRenameToExistingDirectoryUnderPosixRaisesIfNotEmpty(self):
-        """Renaming to an existing directory changes the existing directory under Posix."""
+        """Renaming to an existing directory changes the existing directory
+        under Posix."""
         self.skipWindows()
         old_path = self.makePath('foo', 'bar')
         new_path = self.makePath('foo', 'baz')
@@ -1630,8 +1634,8 @@ class FakeOsModuleTest(FakeOsModuleTestBase):
 
     @unittest.skipIf(sys.version_info < (3, 3), 'replace is new in Python 3.3')
     def testReplaceToExistentFile(self):
-        """Replaces an existing file (does not work with `rename()` under Windows).
-        """
+        """Replaces an existing file (does not work with `rename()` under
+        Windows)."""
         directory = self.makePath('xyzzy')
         old_file_path = self.os.path.join(directory, 'plugh_old')
         new_file_path = self.os.path.join(directory, 'plugh_new')
@@ -1844,10 +1848,11 @@ class FakeOsModuleTest(FakeOsModuleTestBase):
         self.assertRaisesOSError(errno.EBUSY, self.os.removedirs, directory)
 
     def testRemovedirsRaisesIfCascadeRemovingRoot(self):
-        """Raises exception if asked to remove '/' as part of a larger operation.
+        """Raises exception if asked to remove '/' as part of a
+        larger operation.
 
-    All of other directories should still be removed, though.
-    """
+        All of other directories should still be removed, though.
+        """
         self.skipRealFs()
         directory = self.makePath('foo', 'bar')
         self.createDirectory(directory)
@@ -2279,7 +2284,8 @@ class FakeOsModuleTest(FakeOsModuleTestBase):
         self.assertModeEqual(0o6543, st.st_mode)
 
     def testLchmod(self):
-        """lchmod shall behave like chmod with follow_symlinks=True since Python 3.3"""
+        """lchmod shall behave like chmod with follow_symlinks=True
+        since Python 3.3"""
         self.skipWindows()
         self.skipRealFs()
         path = self.makePath('some_file')
@@ -2489,7 +2495,7 @@ class FakeOsModuleTest(FakeOsModuleTestBase):
     def testMknodRaisesIfUnsupportedOptions(self):
         self.skipWindows()
         filename = 'abcde'
-        self.assertRaisesOSError(errno.ENOENT, self.os.mknod, filename,
+        self.assertRaisesOSError(errno.EPERM, self.os.mknod, filename,
                                  stat.S_IFCHR)
 
     def testMknodRaisesIfParentIsNotADirectory(self):
@@ -2934,6 +2940,7 @@ class FakeOsModuleLowLevelFileOpTest(FakeOsModuleTestBase):
         file_des = self.os.open(file_path, os.O_RDONLY)
         self.assertEqual(b'contents', self.os.read(file_des, 8))
         self.assertRaisesOSError(errno.EBADF, self.os.write, file_des, b'test')
+        self.os.close(file_des)
 
     def testOpenReadOnlyWriteZeroBytesPosix(self):
         self.skipWindows()
@@ -2942,6 +2949,7 @@ class FakeOsModuleLowLevelFileOpTest(FakeOsModuleTestBase):
 
         file_des = self.os.open(file_path, os.O_RDONLY)
         self.assertRaisesOSError(errno.EBADF, self.os.write, file_des, b'test')
+        self.os.close(file_des)
 
     def testOpenReadOnlyWriteZeroBytesWindows(self):
         # under Windows, writing an empty string to a read only file
@@ -2951,6 +2959,7 @@ class FakeOsModuleLowLevelFileOpTest(FakeOsModuleTestBase):
         self.createFile(file_path, contents=b'contents')
         file_des = self.os.open(file_path, os.O_RDONLY)
         self.assertEqual(0, self.os.write(file_des, b''))
+        self.os.close(file_des)
 
     def testOpenWriteOnly(self):
         file_path = self.makePath('file1')
@@ -2959,6 +2968,7 @@ class FakeOsModuleLowLevelFileOpTest(FakeOsModuleTestBase):
         file_des = self.os.open(file_path, os.O_WRONLY)
         self.assertEqual(4, self.os.write(file_des, b'test'))
         self.checkContents(file_path, b'testents')
+        self.os.close(file_des)
 
     def testOpenWriteOnlyRaisesOnRead(self):
         file_path = self.makePath('file1')
@@ -2973,15 +2983,18 @@ class FakeOsModuleLowLevelFileOpTest(FakeOsModuleTestBase):
         file_path2 = self.makePath('file2')
         file_des = self.os.open(file_path2, os.O_CREAT | os.O_WRONLY)
         self.assertRaisesOSError(errno.EBADF, self.os.read, file_des, 5)
+        self.os.close(file_des)
         file_des = self.os.open(file_path2,
                                 os.O_CREAT | os.O_WRONLY | os.O_TRUNC)
         self.assertRaisesOSError(errno.EBADF, self.os.read, file_des, 5)
+        self.os.close(file_des)
 
     def testOpenWriteOnlyReadZeroBytesPosix(self):
         self.skipWindows()
         file_path = self.makePath('file1')
         file_des = self.os.open(file_path, os.O_CREAT | os.O_WRONLY)
         self.assertRaisesOSError(errno.EBADF, self.os.read, file_des, 0)
+        self.os.close(file_des)
 
     def testOpenWriteOnlyReadZeroBytesWindows(self):
         # under Windows, reading 0 bytes from a write only file is not an error
@@ -2989,26 +3002,30 @@ class FakeOsModuleLowLevelFileOpTest(FakeOsModuleTestBase):
         file_path = self.makePath('file1')
         file_des = self.os.open(file_path, os.O_CREAT | os.O_WRONLY)
         self.assertEqual(b'', self.os.read(file_des, 0))
+        self.os.close(file_des)
 
     def testOpenReadWrite(self):
         file_path = self.makePath('file1')
-        file_obj = self.createFile(file_path, contents=b'contents')
+        self.createFile(file_path, contents=b'contents')
 
         file_des = self.os.open(file_path, os.O_RDWR)
         self.assertEqual(4, self.os.write(file_des, b'test'))
         self.checkContents(file_path, b'testents')
+        self.os.close(file_des)
 
     def testOpenCreateIsReadOnly(self):
         file_path = self.makePath('file1')
         file_des = self.os.open(file_path, os.O_CREAT)
         self.assertEqual(b'', self.os.read(file_des, 1))
         self.assertRaisesOSError(errno.EBADF, self.os.write, file_des, b'foo')
+        self.os.close(file_des)
 
     def testOpenCreateTruncateIsReadOnly(self):
         file_path = self.makePath('file1')
         file_des = self.os.open(file_path, os.O_CREAT | os.O_TRUNC)
         self.assertEqual(b'', self.os.read(file_des, 1))
         self.assertRaisesOSError(errno.EBADF, self.os.write, file_des, b'foo')
+        self.os.close(file_des)
 
     def testOpenRaisesIfDoesNotExist(self):
         file_path = self.makePath('file1')
@@ -3038,12 +3055,13 @@ class FakeOsModuleLowLevelFileOpTest(FakeOsModuleTestBase):
 
     def testOpenTruncate(self):
         file_path = self.makePath('file1')
-        file_obj = self.createFile(file_path, contents=b'contents')
+        self.createFile(file_path, contents=b'contents')
 
         file_des = self.os.open(file_path, os.O_RDWR | os.O_TRUNC)
         self.assertEqual(b'', self.os.read(file_des, 8))
         self.assertEqual(4, self.os.write(file_des, b'test'))
         self.checkContents(file_path, b'test')
+        self.os.close(file_des)
 
     @unittest.skipIf(not TestCase.is_windows,
                      'O_TEMPORARY only present in Windows')
@@ -3056,11 +3074,12 @@ class FakeOsModuleLowLevelFileOpTest(FakeOsModuleTestBase):
 
     def testOpenAppend(self):
         file_path = self.makePath('file1')
-        file_obj = self.createFile(file_path, contents=b'contents')
+        self.createFile(file_path, contents=b'contents')
 
         file_des = self.os.open(file_path, os.O_WRONLY | os.O_APPEND)
         self.assertEqual(4, self.os.write(file_des, b'test'))
         self.checkContents(file_path, b'contentstest')
+        self.os.close(file_des)
 
     def testOpenCreate(self):
         file_path = self.makePath('file1')
@@ -3068,13 +3087,15 @@ class FakeOsModuleLowLevelFileOpTest(FakeOsModuleTestBase):
         self.assertTrue(self.os.path.exists(file_path))
         self.assertEqual(4, self.os.write(file_des, b'test'))
         self.checkContents(file_path, 'test')
+        self.os.close(file_des)
 
     def testCanReadAfterCreateExclusive(self):
         self.skipWindows()
         path1 = self.makePath('alpha')
-        fd0 = self.os.open(path1, os.O_CREAT | os.O_EXCL)
-        self.assertEqual(b'', self.os.read(fd0, 0))
-        self.assertRaisesOSError(errno.EBADF, self.os.write, fd0, b'')
+        file_des = self.os.open(path1, os.O_CREAT | os.O_EXCL)
+        self.assertEqual(b'', self.os.read(file_des, 0))
+        self.assertRaisesOSError(errno.EBADF, self.os.write, file_des, b'')
+        self.os.close(file_des)
 
     def testOpenCreateMode(self):
         # under Windows, mode is 0o666 instead of 0o700
@@ -3085,13 +3106,15 @@ class FakeOsModuleLowLevelFileOpTest(FakeOsModuleTestBase):
         self.assertRaisesOSError(errno.EBADF, self.os.read, file_des, 5)
         self.assertEqual(4, self.os.write(file_des, b'test'))
         self.assertModeEqual(0o700, self.os.stat(file_path).st_mode)
+        self.os.close(file_des)
 
     @unittest.skipIf(sys.version_info < (3, 3),
                      'Exclusive mode new in Python 3.3')
     def testOpenExclusive(self):
         file_path = self.makePath('file1')
-        fileno = self.os.open(file_path, os.O_RDWR | os.O_EXCL | os.O_CREAT)
+        file_des = self.os.open(file_path, os.O_RDWR | os.O_EXCL | os.O_CREAT)
         self.assertTrue(self.os.path.exists(file_path))
+        self.os.close(file_des)
 
     @unittest.skipIf(sys.version_info < (3, 3),
                      'Exclusive mode new in Python 3.3')
@@ -3146,18 +3169,21 @@ class FakeOsModuleLowLevelFileOpTest(FakeOsModuleTestBase):
         self.skipWindows()
         self.skipRealFs()
         file_path = self.makePath('baz')
-        fd0 = self.os.open(file_path, os.O_CREAT | os.O_WRONLY | os.O_TRUNC)
-        stat0 = self.os.fstat(fd0)
+        file_des = self.os.open(file_path, os.O_CREAT | os.O_WRONLY | os.O_TRUNC)
+        stat0 = self.os.fstat(file_des)
         # not a really good test as this replicates the code,
         # but we don't know the umask at the test system
         self.assertEqual(0o100777 & ~self.os._umask(), stat0.st_mode)
+        self.os.close(file_des)
 
     def testOpenModeWindows(self):
         self.skipPosix()
         file_path = self.makePath('baz')
-        fd0 = self.os.open(file_path, os.O_CREAT | os.O_WRONLY | os.O_TRUNC)
-        stat0 = self.os.fstat(fd0)
+        file_des = self.os.open(file_path,
+                                os.O_CREAT | os.O_WRONLY | os.O_TRUNC)
+        stat0 = self.os.fstat(file_des)
         self.assertEqual(0o100666, stat0.st_mode)
+        self.os.close(file_des)
 
     def testWriteRead(self):
         # raises OSError EBADF, see below
@@ -3197,6 +3223,8 @@ class FakeOsModuleLowLevelFileOpTest(FakeOsModuleTestBase):
         self.os.write(fd1, b'bb')
         self.assertEqual(4, self.os.path.getsize(file_path))
         self.checkContents(file_path, b'bbaa')
+        self.os.close(fd1)
+        self.os.close(fd0)
 
     def testWriteFromDifferentFDsWithAppend(self):
         """Regression test for #268."""
@@ -3207,15 +3235,19 @@ class FakeOsModuleLowLevelFileOpTest(FakeOsModuleTestBase):
         self.os.write(fd1, b'bbb')
         self.assertEqual(6, self.os.path.getsize(file_path))
         self.checkContents(file_path, b'aaabbb')
+        self.os.close(fd1)
+        self.os.close(fd0)
 
     def testReadOnlyReadAfterWrite(self):
         """Regression test for #269."""
         self.skipWindows()
         file_path = self.makePath('foo', 'bar', 'baz')
         self.createFile(file_path, contents=b'test')
-        fd = self.os.open(file_path, os.O_CREAT)
-        self.os.open(file_path, os.O_CREAT | os.O_WRONLY | os.O_TRUNC)
-        self.assertEqual(b'', self.os.read(fd, 0))
+        fd0 = self.os.open(file_path, os.O_CREAT)
+        fd1 = self.os.open(file_path, os.O_CREAT | os.O_WRONLY | os.O_TRUNC)
+        self.assertEqual(b'', self.os.read(fd0, 0))
+        self.os.close(fd1)
+        self.os.close(fd0)
 
     def testReadAfterClosingWriteDescriptor(self):
         """Regression test for #271."""
@@ -3226,6 +3258,8 @@ class FakeOsModuleLowLevelFileOpTest(FakeOsModuleTestBase):
         self.os.write(fd1, b'abc')
         self.os.close(fd0)
         self.assertEqual(b'abc', self.os.read(fd2, 3))
+        self.os.close(fd2)
+        self.os.close(fd1)
 
     def testWritingBehindEndOfFile(self):
         """Regression test for #273."""
@@ -3233,10 +3267,13 @@ class FakeOsModuleLowLevelFileOpTest(FakeOsModuleTestBase):
         fd1 = self.os.open(file_path, os.O_CREAT)
         fd2 = self.os.open(file_path, os.O_RDWR)
         self.os.write(fd2, b'm')
-        self.os.open(file_path, os.O_CREAT | os.O_WRONLY | os.O_TRUNC)
+        fd3 = self.os.open(file_path, os.O_CREAT | os.O_WRONLY | os.O_TRUNC)
         self.assertEqual(b'', self.os.read(fd2, 1))
         self.os.write(fd2, b'm')
         self.assertEqual(b'\x00m', self.os.read(fd1, 2))
+        self.os.close(fd1)
+        self.os.close(fd2)
+        self.os.close(fd3)
 
 
 class RealOsModuleLowLevelFileOpTest(FakeOsModuleLowLevelFileOpTest):
@@ -3302,7 +3339,8 @@ class FakeOsModuleWalkTest(FakeOsModuleTestBase):
         self.assertWalkResults(expected, self.makePath('foo'), topdown=False)
 
     def testWalkRaisesIfNonExistent(self):
-        """Raises an exception when attempting to walk non-existent directory."""
+        """Raises an exception when attempting to walk
+         non-existent directory."""
         directory = self.makePath('foo', 'bar')
         self.assertEqual(False, self.os.path.exists(directory))
         generator = self.os.walk(directory)
@@ -3316,12 +3354,14 @@ class FakeOsModuleWalkTest(FakeOsModuleTestBase):
         self.assertRaises(StopIteration, next, generator)
 
     def testWalkCallsOnErrorIfNonExistent(self):
-        """Calls onerror with correct errno when walking non-existent directory."""
+        """Calls onerror with correct errno when walking
+        non-existent directory."""
         self.ResetErrno()
         directory = self.makePath('foo', 'bar')
         self.assertEqual(False, self.os.path.exists(directory))
-        # Calling os.walk on a non-existent directory should trigger a call to the
-        # onerror method.  We do not actually care what, if anything, is returned.
+        # Calling os.walk on a non-existent directory should trigger
+        # a call to the onerror method.
+        # We do not actually care what, if anything, is returned.
         for unused_entry in self.os.walk(directory, onerror=self.StoreErrno):
             pass
         self.assertTrue(self.GetErrno() in (errno.ENOTDIR, errno.ENOENT))
@@ -3332,11 +3372,13 @@ class FakeOsModuleWalkTest(FakeOsModuleTestBase):
         filename = self.makePath('foo' 'bar')
         self.createFile(filename)
         self.assertEqual(True, self.os.path.exists(filename))
-        # Calling os.walk on a file should trigger a call to the onerror method.
+        # Calling `os.walk` on a file should trigger a call to the
+        # `onerror` method.
         # We do not actually care what, if anything, is returned.
         for unused_entry in self.os.walk(filename, onerror=self.StoreErrno):
             pass
-        self.assertTrue(self.GetErrno() in (self.not_dir_error(), errno.EACCES))
+        self.assertTrue(self.GetErrno() in (self.not_dir_error(),
+                                            errno.EACCES))
 
     def testWalkSkipsRemovedDirectories(self):
         """Caller can modify list of directories to visit while walking."""
@@ -3681,8 +3723,8 @@ class StatPropagationTest(TestCase):
         file_path = 'xyzzy/close'
         self.os.mkdir(file_dir)
         size = 1234
-        # The file has size, but no content. When the file is opened for reading,
-        # its size should be preserved.
+        # The file has size, but no content. When the file is opened
+        # for reading, its size should be preserved.
         self.filesystem.CreateFile(file_path, st_size=size)
         fh = self.open(file_path, 'r')
         fh.close()
@@ -4130,7 +4172,8 @@ class FakePathModuleTest(TestCase):
                 private_path_function = '_joinrealpath'
         if private_path_function:
             self.assertTrue(hasattr(self.path, private_path_function),
-                            'Get a real os.path function not implemented in fake os.path')
+                            'Get a real os.path function '
+                            'not implemented in fake os.path')
         self.assertFalse(hasattr(self.path, 'nonexistent'))
 
 
@@ -4213,8 +4256,8 @@ class FakeFileOpenTest(FakeFileOpenTestBase):
         byte_fractions = b'\xe2\x85\x93 \xe2\x85\x94 \xe2\x85\x95 \xe2\x85\x96'
         with self.open(file_path, 'wb') as f:
             f.write(byte_fractions)
-        # the encoding has to be specified, otherwise the locale default is used which
-        # can be different on different systems
+        # the encoding has to be specified, otherwise the locale default
+        # is used which can be different on different systems
         with self.open(file_path, encoding='utf-8') as f:
             contents = f.read()
         self.assertEqual(contents, byte_fractions.decode('utf-8'))
@@ -4780,7 +4823,8 @@ class FakeFileOpenTest(FakeFileOpenTestBase):
                 self.assertEqual(writes, reads)
                 writes = ['nothing', 'to\nsee', 'here']
                 reads = []
-                # when writes are not flushed, the reader doesn't read anything new
+                # when writes are not flushed, the reader doesn't read
+                # anything new
                 for write in writes:
                     writer.write(write)
                     reads.append(reader.read())
@@ -4805,7 +4849,8 @@ class FakeFileOpenTest(FakeFileOpenTestBase):
                 self.assertEqual(writes, reads)
                 writes = ['ничего', 'не\nвидно']
                 reads = []
-                # when writes are not flushed, the reader doesn't read anything new
+                # when writes are not flushed, the reader doesn't
+                # read anything new
                 for write in writes:
                     writer.write(write)
                     reads.append(reader.read())
@@ -5011,7 +5056,8 @@ class RealFileOpenTest(FakeFileOpenTest):
 
 
 class OpenFileWithEncodingTest(FakeFileOpenTestBase):
-    """Tests that are similar to some open file tests above but using an explicit text encoding."""
+    """Tests that are similar to some open file tests above but using
+    an explicit text encoding."""
 
     def setUp(self):
         super(OpenFileWithEncodingTest, self).setUp()
@@ -5547,7 +5593,8 @@ class PathManipulationTestBase(TestCase):
 
 
 class CollapsePathPipeSeparatorTest(PathManipulationTestBase):
-    """Tests CollapsePath (mimics os.path.normpath) using | as path separator."""
+    """Tests CollapsePath (mimics os.path.normpath) using |
+    as path separator."""
 
     def testEmptyPathBecomesDotPath(self):
         self.assertEqual('.', self.filesystem.CollapsePath(''))
@@ -5556,7 +5603,8 @@ class CollapsePathPipeSeparatorTest(PathManipulationTestBase):
         self.assertEqual('.', self.filesystem.CollapsePath('.'))
 
     def testSlashesAreNotCollapsed(self):
-        """Tests that '/' is not treated specially if the path separator is '|'.
+        """Tests that '/' is not treated specially if the
+        path separator is '|'.
 
     In particular, multiple slashes should not be collapsed.
     """
@@ -5581,7 +5629,8 @@ class CollapsePathPipeSeparatorTest(PathManipulationTestBase):
         self.assertEqual('|', self.filesystem.CollapsePath('|..|..|..|'))
         self.assertEqual(
             '|', self.filesystem.CollapsePath('|..|..|foo|bar|..|..|'))
-        self.filesystem.is_windows_fs = False  # shall not be handled as UNC path
+        # shall not be handled as UNC path
+        self.filesystem.is_windows_fs = False
         self.assertEqual('|', self.filesystem.CollapsePath('||..|.|..||'))
 
     def testConservesUpLevelReferencesStartingFromCurrentDirectory(self):
@@ -5600,7 +5649,8 @@ class CollapsePathPipeSeparatorTest(PathManipulationTestBase):
 
 
 class SplitPathTest(PathManipulationTestBase):
-    """Tests SplitPath (which mimics os.path.split) using | as path separator."""
+    """Tests SplitPath (which mimics os.path.split)
+    using | as path separator."""
 
     def testEmptyPath(self):
         self.assertEqual(('', ''), self.filesystem.SplitPath(''))
@@ -5609,7 +5659,8 @@ class SplitPathTest(PathManipulationTestBase):
         self.assertEqual(('', 'ab'), self.filesystem.SplitPath('ab'))
 
     def testSlashesDoNotSplit(self):
-        """Tests that '/' is not treated specially if the path separator is '|'."""
+        """Tests that '/' is not treated specially if the
+        path separator is '|'."""
         self.assertEqual(('', 'a/b'), self.filesystem.SplitPath('a/b'))
 
     def testEliminateTrailingSeparatorsFromHead(self):
@@ -5978,7 +6029,8 @@ class DiskSpaceTest(TestCase):
         # creating a hard link shall not increase used space
         self.os.link(file1_path, file2_path)
         self.assertEqual(20, self.filesystem.GetDiskUsage().used)
-        # removing a file shall not decrease used space if a hard link still exists
+        # removing a file shall not decrease used space
+        # if a hard link still exists
         self.os.unlink(file1_path)
         self.assertEqual(20, self.filesystem.GetDiskUsage().used)
         self.os.unlink(file2_path)
@@ -5999,8 +6051,8 @@ class DiskSpaceTest(TestCase):
             self.filesystem.CreateFile('!mount_limited!foo', st_size=40)
             self.filesystem.CreateFile('!mount_unlimited!foo', st_size=1000000)
         except IOError:
-            self.fail(
-                'File with contents fitting into disk space could not be written.')
+            self.fail('File with contents fitting into '
+                      'disk space could not be written.')
 
     def testThatDiskUsageOfCorrectMountPointIsUsed(self):
         self.filesystem.AddMountPoint('!mount1', total_size=20)
@@ -6252,7 +6304,8 @@ class RealFileSystemAccessTest(TestCase):
         self.filesystem.SetDiskUsage(disk_size, real_dir_path)
         self.filesystem.add_real_directory(real_dir_path)
 
-        # the directory contents have not been read, the the disk usage has not changed
+        # the directory contents have not been read, the the disk usage
+        # has not changed
         self.assertEqual(disk_size,
                          self.filesystem.GetDiskUsage(real_dir_path).free)
         # checking for existence shall read the directory contents
@@ -6269,7 +6322,8 @@ class RealFileSystemAccessTest(TestCase):
         self.filesystem.SetDiskUsage(disk_size, real_dir_path)
         self.filesystem.add_real_directory(real_dir_path, lazy_read=False)
 
-        # the directory has been read, so the file sizes have been subtracted from the free space
+        # the directory has been read, so the file sizes have
+        # been subtracted from the free space
         self.assertGreater(disk_size,
                            self.filesystem.GetDiskUsage(real_dir_path).free)
 
