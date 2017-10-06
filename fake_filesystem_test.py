@@ -56,8 +56,9 @@ class _DummyTime(object):
 
 
 class TestCase(unittest.TestCase):
-    is_windows = sys.platform.startswith('win')
+    is_windows = sys.platform == 'win32'
     is_cygwin = sys.platform == 'cygwin'
+    is_macos = sys.platform == 'darwin'
     is_python2 = sys.version_info[0] < 3
 
     def assertModeEqual(self, expected, actual):
@@ -120,11 +121,15 @@ class RealFsTestMixin(object):
             raise unittest.SkipTest('Only tests fake FS')
 
     def skipRealFsFailure(self, skipWindows=True, skipPosix=True,
+                          skipMacOs=True, skipLinux=True,
                           skipPython2=True, skipPython3=True):
         if True:
             if (self.useRealFs() and
                     (TestCase.is_windows and skipWindows or
-                             not TestCase.is_windows and skipPosix) and
+                             not TestCase.is_windows and skipPosix or
+                             TestCase.is_macos and skipMacOs or
+                                 not TestCase.is_windows and
+                                 not TestCase.is_macos and skipLinux) and
                     (TestCase.is_python2 and skipPython2 or
                              not TestCase.is_python2 and skipPython3)):
                 raise unittest.SkipTest(
@@ -931,6 +936,7 @@ class FakeOsModuleTest(FakeOsModuleTestBase):
 
     def testConsecutiveChdir(self):
         """Consecutive relative chdir calls should work."""
+        self.skipRealFsFailure(skipWindows=False, skipLinux=False)
         dir1 = self.makePath('foo')
         dir2 = 'bar'
         full_dirname = self.os.path.join(dir1, dir2)
@@ -1246,7 +1252,7 @@ class FakeOsModuleTest(FakeOsModuleTestBase):
                          self.os.readlink(self.makePath('dogs', 'chase')))
 
     def testRemoveDir(self):
-        self.skipRealFsFailure(skipPosix=False)
+        self.skipRealFsFailure(skipLinux=False)
         directory = self.makePath('xyzzy')
         dir_path = self.os.path.join(directory, 'plugh')
         self.createDirectory(dir_path)
@@ -1320,7 +1326,7 @@ class FakeOsModuleTest(FakeOsModuleTestBase):
         self.assertFalse(self.os.path.exists(file_path))
 
     def testRemoveDirRaisesError(self):
-        self.skipRealFsFailure(skipPosix=False)
+        self.skipRealFsFailure(skipLinux=False)
         directory = self.makePath('zzy')
         self.createDirectory(directory)
         self.assertRaisesOSError(errno.EISDIR, self.os.remove, directory)
@@ -1454,7 +1460,7 @@ class FakeOsModuleTest(FakeOsModuleTestBase):
     def testRenameSymlinkToDirRaises(self):
         self.skipWindows()
         # raises EISDIR under Linux
-        self.skipRealFsFailure()
+        self.skipRealFsFailure(skipMacOs=False)
         base_path = self.makePath('foo', 'bar')
         link_path = self.os.path.join(base_path, 'dir_link')
         dir_path = self.os.path.join(base_path, 'dir')
@@ -1587,6 +1593,7 @@ class FakeOsModuleTest(FakeOsModuleTestBase):
         """Renaming to an existing directory changes the existing directory
         under Posix."""
         self.skipWindows()
+        self.skipRealFsFailure(skipLinux=False)
         old_path = self.makePath('foo', 'bar')
         new_path = self.makePath('foo', 'baz')
         self.createDirectory(self.os.path.join(old_path, 'sub'))
@@ -2093,6 +2100,7 @@ class FakeOsModuleTest(FakeOsModuleTestBase):
     def testFsyncRaisesOnNonInt(self):
         self.assertRaises(TypeError, self.os.fsync, "zero")
 
+    @unittest.skipIf(TestCase.is_macos, 'os.fdatasync not available in MacOS')
     def testFdatasyncRaisesOnNonInt(self):
         self.skipWindows()
         self.skipRealFsFailure()
@@ -2104,6 +2112,7 @@ class FakeOsModuleTest(FakeOsModuleTestBase):
         self.skipRealFsFailure(skipWindows=False)
         self.assertRaisesOSError(errno.EBADF, self.os.fsync, 0)
 
+    @unittest.skipIf(TestCase.is_macos, 'os.fdatasync not available in MacOS')
     def testFdatasyncRaisesOnInvalidFd(self):
         # No open files yet, so even 0 is invalid
         self.skipWindows()
@@ -2123,6 +2132,7 @@ class FakeOsModuleTest(FakeOsModuleTestBase):
         # And just for sanity, double-check that this still raises
         self.assertRaisesOSError(errno.EBADF, self.os.fsync, test_fd + 1)
 
+    @unittest.skipIf(TestCase.is_macos, 'os.fdatasync not available in MacOS')
     def testFdatasyncPass(self):
         # setup
         self.skipWindows()
@@ -2439,20 +2449,23 @@ class FakeOsModuleTest(FakeOsModuleTestBase):
         self.assertRaisesOSError(errno.ENOENT,
                                  self.os._ClassifyDirectoryContents, directory)
 
-    def testMkNodeCanCreateAFile(self):
+    def testMkNodCanCreateAFile(self):
         self.skipWindows()
+        self.skipRealFsFailure(skipLinux=False)
         filename = self.makePath('foo')
         self.assertFalse(self.os.path.exists(filename))
         self.os.mknod(filename)
         self.assertTrue(self.os.path.exists(filename))
 
-    def testMkNodeRaisesIfEmptyFileName(self):
+    def testMkNodRaisesIfEmptyFileName(self):
         self.skipWindows()
+        self.skipRealFsFailure(skipLinux=False)
         filename = ''
         self.assertRaisesOSError(errno.ENOENT, self.os.mknod, filename)
 
     def testMkNodRaisesIfParentDirDoesntExist(self):
         self.skipWindows()
+        self.skipRealFsFailure(skipLinux=False)
         parent = self.makePath('xyzzy')
         filename = self.os.path.join(parent, 'foo')
         self.assertFalse(self.os.path.exists(parent))
@@ -2460,6 +2473,7 @@ class FakeOsModuleTest(FakeOsModuleTestBase):
 
     def testMkNodRaisesIfFileExists(self):
         self.skipWindows()
+        self.skipRealFsFailure(skipLinux=False)
         filename = self.makePath('tmp', 'foo')
         self.createFile(filename)
         self.assertTrue(self.os.path.exists(filename))
@@ -2467,16 +2481,19 @@ class FakeOsModuleTest(FakeOsModuleTestBase):
 
     def testMkNodRaisesIfFilenameIsDot(self):
         self.skipWindows()
+        self.skipRealFsFailure(skipLinux=False)
         filename = self.makePath('tmp', '.')
         self.assertRaisesOSError(errno.ENOENT, self.os.mknod, filename)
 
     def testMkNodRaisesIfFilenameIsDoubleDot(self):
         self.skipWindows()
+        self.skipRealFsFailure(skipLinux=False)
         filename = self.makePath('tmp', '..')
         self.assertRaisesOSError(errno.ENOENT, self.os.mknod, filename)
 
     def testMknodEmptyTailForExistingFileRaises(self):
         self.skipWindows()
+        self.skipRealFsFailure(skipLinux=False)
         filename = self.makePath('foo')
         self.createFile(filename)
         self.assertTrue(self.os.path.exists(filename))
@@ -2484,11 +2501,13 @@ class FakeOsModuleTest(FakeOsModuleTestBase):
 
     def testMknodEmptyTailForNonexistentFileRaises(self):
         self.skipWindows()
+        self.skipRealFsFailure(skipLinux=False)
         filename = self.makePath('tmp', 'foo')
         self.assertRaisesOSError(errno.ENOENT, self.os.mknod, filename)
 
     def testMknodRaisesIfFilenameIsEmptyString(self):
         self.skipWindows()
+        self.skipRealFsFailure(skipLinux=False)
         filename = ''
         self.assertRaisesOSError(errno.ENOENT, self.os.mknod, filename)
 
@@ -2500,6 +2519,7 @@ class FakeOsModuleTest(FakeOsModuleTestBase):
 
     def testMknodRaisesIfParentIsNotADirectory(self):
         self.skipWindows()
+        self.skipRealFsFailure(skipLinux=False)
         filename1 = self.makePath('foo')
         self.createFile(filename1)
         self.assertTrue(self.os.path.exists(filename1))
@@ -4524,7 +4544,8 @@ class FakeFileOpenTest(FakeFileOpenTestBase):
         self.assertEqual(contents + additional_contents, result)
 
     def testAppendWithAplus(self):
-        # set up
+        # MacOS in Python2 behaves like PyPy
+        self.skipRealFsFailure(skipWindows=False, skipLinux=False)
         file_path = self.makePath('aplus_file')
         self.createFile(file_path, contents='old contents')
         self.assertTrue(self.os.path.exists(file_path))
@@ -4953,7 +4974,7 @@ class FakeFileOpenTest(FakeFileOpenTestBase):
     def testTellFlushesUnderPosix(self):
         """Regression test for #288."""
         self.skipWindows()
-        self.skipRealFsFailure(skipPython3=False)
+        self.skipRealFsFailure(skipPython3=False, skipMacOs=False)
         file_path = self.makePath('foo')
         f0 = self.open(file_path, 'w')
         f0.write('test')

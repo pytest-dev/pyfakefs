@@ -831,9 +831,12 @@ class FakeFilesystem(object):
         # is it used to support drive letters, UNC path and some other Windows-specific features
         self.is_windows_fs = sys.platform == 'win32'
 
-        # is_case_sensitive can be used to test pyfakefs for case-sensitive filesystems
-        # on non-case-sensitive systems and vice verse
-        self.is_case_sensitive = sys.platform not in ['win32', 'cygwin', 'darwin']
+        # can be used to test some Darwin-specific behavior under other systems
+        self.is_macos = sys.platform == 'darwin'
+
+        # is_case_sensitive can be used to test pyfakefs for case-sensitive
+        # file systems on non-case-sensitive systems and vice verse
+        self.is_case_sensitive = not (self.is_windows_fs or self.is_macos)
 
         self.root = FakeDirectory(self.path_separator, filesystem=self)
         self.cwd = self.root.name

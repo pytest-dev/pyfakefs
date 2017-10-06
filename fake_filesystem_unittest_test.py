@@ -204,6 +204,7 @@ class TestCopyOrAddRealFile(TestPyfakefsUnittestBase):
         real_byte_contents = f.read()
     real_stat = os.stat(__file__)
 
+    @unittest.skipIf(sys.platform == 'darwin', 'Different copy behavior')
     def testCopyRealFile(self):
         '''Typical usage of deprecated copyRealFile()'''
         # Use this file as the file to be copied to the fake file system
