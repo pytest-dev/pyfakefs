@@ -100,7 +100,7 @@ class RealFsTestMixin(object):
     def pathSeparator(self):
         return '/'
 
-    def skipPosix(self):
+    def testWindowsOnly(self):
         if self.useRealFs():
             if not TestCase.is_windows:
                 raise unittest.SkipTest(
@@ -108,7 +108,25 @@ class RealFsTestMixin(object):
         else:
             self.filesystem.is_windows_fs = True
 
-    def skipWindows(self):
+    def testLinuxOnly(self):
+        if self.useRealFs():
+            if TestCase.is_macos or TestCase.is_windows:
+                raise unittest.SkipTest(
+                    'Testing Linux specific functionality')
+        else:
+            self.filesystem.is_windows_fs = False
+            self.filesystem.is_macos = False
+
+    def testMacOsOnly(self):
+        if self.useRealFs():
+            if not TestCase.is_macos:
+                raise unittest.SkipTest(
+                    'Testing MacOS specific functionality')
+        else:
+            self.filesystem.is_windows_fs = False
+            self.filesystem.is_macos = True
+
+    def testPosixOnly(self):
         if self.useRealFs():
             if TestCase.is_windows:
                 raise unittest.SkipTest(
@@ -978,7 +996,7 @@ class FakeOsModuleTest(FakeOsModuleTestBase):
     @unittest.skipIf(sys.version_info < (3, 3),
                      'file descriptor as path new in Python 3.3')
     def testListdirUsesOpenFdAsPath(self):
-        self.skipWindows()
+        self.testPosixOnly()
         if self.useRealFs() and platform.python_implementation() == 'PyPy':
             raise unittest.SkipTest('Different exceptions with PyPy')
         self.assertRaisesOSError(errno.EBADF, self.os.listdir, 500)
@@ -1196,12 +1214,12 @@ class FakeOsModuleTest(FakeOsModuleTestBase):
         self.assertRaisesOSError(errno.EINVAL, self.os.readlink, file_path)
 
     def testReadlinkRaisesIfPathIsNotALinkWindows(self):
-        self.skipPosix()
+        self.testWindowsOnly()
         self.skipIfSymlinkNotSupported()
         self.checkReadlinkRaisesIfPathIsNotALink()
 
     def testReadlinkRaisesIfPathIsNotALinkPosix(self):
-        self.skipWindows()
+        self.testPosixOnly()
         self.checkReadlinkRaisesIfPathIsNotALink()
 
     def checkReadlinkRaisesIfPathHasFile(self, error_subtype):
@@ -1212,12 +1230,12 @@ class FakeOsModuleTest(FakeOsModuleTestBase):
         self.assertRaisesOSError(error_subtype, self.os.readlink, file_path)
 
     def testReadlinkRaisesIfPathHasFileWindows(self):
-        self.skipPosix()
+        self.testWindowsOnly()
         self.skipIfSymlinkNotSupported()
         self.checkReadlinkRaisesIfPathHasFile(errno.ENOENT)
 
     def testReadlinkRaisesIfPathHasFilePosix(self):
-        self.skipWindows()
+        self.testPosixOnly()
         self.checkReadlinkRaisesIfPathHasFile(errno.ENOTDIR)
 
     def testReadlinkRaisesIfPathDoesNotExist(self):
@@ -1291,7 +1309,7 @@ class FakeOsModuleTest(FakeOsModuleTestBase):
         self.assertRaisesOSError(errno.EACCES, self.os.remove, path)
 
     def testRemoveOpenFileFailsUnderWindows(self):
-        self.skipPosix()
+        self.testWindowsOnly()
         self.skipRealFsFailure()
         path = self.makePath('foo', 'bar')
         self.createFile(path)
@@ -1300,7 +1318,7 @@ class FakeOsModuleTest(FakeOsModuleTestBase):
         self.assertTrue(self.os.path.exists(path))
 
     def testRemoveOpenFilePossibleUnderPosix(self):
-        self.skipWindows()
+        self.testPosixOnly()
         path = self.makePath('foo', 'bar')
         self.createFile(path)
         self.open(path, 'r')
@@ -1362,7 +1380,7 @@ class FakeOsModuleTest(FakeOsModuleTestBase):
         self.checkContents(new_file_path, 'test contents')
 
     def testRenameDirToSymlinkPosix(self):
-        self.skipWindows()
+        self.testPosixOnly()
         link_path = self.makePath('link')
         dir_path = self.makePath('dir')
         link_target = self.os.path.join(dir_path, 'link_target')
@@ -1372,7 +1390,7 @@ class FakeOsModuleTest(FakeOsModuleTestBase):
                                  link_path)
 
     def testRenameDirToSymlinkWindows(self):
-        self.skipPosix()
+        self.testWindowsOnly()
         self.skipIfSymlinkNotSupported()
         link_path = self.makePath('link')
         dir_path = self.makePath('dir')
@@ -1383,7 +1401,7 @@ class FakeOsModuleTest(FakeOsModuleTestBase):
                                  link_path)
 
     def testRenameFileToSymlink(self):
-        self.skipWindows()
+        self.testPosixOnly()
         link_path = self.makePath('file_link')
         file_path = self.makePath('file')
         self.os.symlink(file_path, link_path)
@@ -1394,7 +1412,7 @@ class FakeOsModuleTest(FakeOsModuleTestBase):
         self.assertTrue(self.os.path.isfile(link_path))
 
     def testRenameSymlinkToSymlink(self):
-        self.skipWindows()
+        self.testPosixOnly()
         base_path = self.makePath('foo', 'bar')
         self.createDirectory(base_path)
         link_path1 = self.os.path.join(base_path, 'link1')
@@ -1406,7 +1424,7 @@ class FakeOsModuleTest(FakeOsModuleTestBase):
         self.assertTrue(self.os.path.exists(link_path2))
 
     def testRenameSymlinkToSymlinkForParentRaises(self):
-        self.skipWindows()
+        self.testPosixOnly()
         dir_link = self.makePath('dir_link')
         dir_path = self.makePath('dir')
         dir_in_dir_path = self.os.path.join(dir_link, 'inner_dir')
@@ -1417,7 +1435,7 @@ class FakeOsModuleTest(FakeOsModuleTestBase):
                                  dir_in_dir_path)
 
     def testRecursiveRenameRaises(self):
-        self.skipWindows()
+        self.testPosixOnly()
         base_path = self.makePath('foo', 'bar')
         self.createDirectory(base_path)
         new_path = self.os.path.join(base_path, 'new_dir')
@@ -1434,21 +1452,21 @@ class FakeOsModuleTest(FakeOsModuleTestBase):
         self.os.rename(file_path, new_file_path)
 
     def testRenameWithTargetParentFileRaisesPosix(self):
-        self.skipWindows()
+        self.testPosixOnly()
         file_path = self.makePath('foo', 'baz')
         self.createFile(file_path)
         self.assertRaisesOSError(errno.ENOTDIR, self.os.rename, file_path,
                                  file_path + '/new')
 
     def testRenameWithTargetParentFileRaisesWindows(self):
-        self.skipPosix()
+        self.testWindowsOnly()
         file_path = self.makePath('foo', 'baz')
         self.createFile(file_path)
         self.assertRaisesOSError(errno.EACCES, self.os.rename, file_path,
                                  self.os.path.join(file_path, 'new'))
 
     def testRenameSymlinkToSource(self):
-        self.skipWindows()
+        self.testPosixOnly()
         base_path = self.makePath('foo')
         link_path = self.os.path.join(base_path, 'slink')
         file_path = self.os.path.join(base_path, 'file')
@@ -1458,7 +1476,7 @@ class FakeOsModuleTest(FakeOsModuleTestBase):
         self.assertFalse(self.os.path.exists(file_path))
 
     def testRenameSymlinkToDirRaises(self):
-        self.skipWindows()
+        self.testPosixOnly()
         # raises EISDIR under Linux
         self.skipRealFsFailure(skipMacOs=False)
         base_path = self.makePath('foo', 'bar')
@@ -1470,7 +1488,7 @@ class FakeOsModuleTest(FakeOsModuleTestBase):
                                  dir_path)
 
     def testRenameBrokenSymlink(self):
-        self.skipWindows()
+        self.testPosixOnly()
         base_path = self.makePath('foo')
         self.createDirectory(base_path)
         link_path = self.os.path.join(base_path, 'slink')
@@ -1526,7 +1544,7 @@ class FakeOsModuleTest(FakeOsModuleTestBase):
 
     def testRenameToExistingDirectoryShouldRaiseUnderWindows(self):
         """Renaming to an existing directory raises OSError under Windows."""
-        self.skipPosix()
+        self.testWindowsOnly()
         old_path = self.makePath('foo', 'bar')
         new_path = self.makePath('foo', 'baz')
         self.createDirectory(old_path)
@@ -1535,7 +1553,7 @@ class FakeOsModuleTest(FakeOsModuleTestBase):
                                  new_path)
 
     def testRenameToAHardlinkOfSameFileShouldDoNothing(self):
-        self.skipWindows()
+        self.testPosixOnly()
         file_path = self.makePath('dir', 'file')
         self.createFile(file_path)
         link_path = self.makePath('link')
@@ -1545,7 +1563,7 @@ class FakeOsModuleTest(FakeOsModuleTestBase):
         self.assertTrue(self.os.path.exists(link_path))
 
     def testHardlinkWorksWithSymlink(self):
-        self.skipWindows()
+        self.testPosixOnly()
         base_path = self.makePath('foo')
         self.createDirectory(base_path)
         symlink_path = self.os.path.join(base_path, 'slink')
@@ -1559,7 +1577,7 @@ class FakeOsModuleTest(FakeOsModuleTestBase):
     @unittest.skipIf(sys.version_info < (3, 3), 'replace is new in Python 3.3')
     def testReplaceExistingDirectoryShouldRaiseUnderWindows(self):
         """Renaming to an existing directory raises OSError under Windows."""
-        self.skipPosix()
+        self.testWindowsOnly()
         old_path = self.makePath('foo', 'bar')
         new_path = self.makePath('foo', 'baz')
         self.createDirectory(old_path)
@@ -1570,7 +1588,7 @@ class FakeOsModuleTest(FakeOsModuleTestBase):
     def testRenameToExistingDirectoryUnderPosix(self):
         """Renaming to an existing directory changes the existing directory
         under Posix."""
-        self.skipWindows()
+        self.testPosixOnly()
         old_path = self.makePath('foo', 'bar')
         new_path = self.makePath('xyzzy')
         self.createDirectory(self.os.path.join(old_path, 'sub'))
@@ -1581,7 +1599,7 @@ class FakeOsModuleTest(FakeOsModuleTestBase):
         self.assertFalse(self.os.path.exists(old_path))
 
     def testRenameFileToExistingDirectoryRaisesUnderPosix(self):
-        self.skipWindows()
+        self.testPosixOnly()
         file_path = self.makePath('foo', 'bar', 'baz')
         new_path = self.makePath('xyzzy')
         self.createFile(file_path)
@@ -1592,7 +1610,7 @@ class FakeOsModuleTest(FakeOsModuleTestBase):
     def testRenameToExistingDirectoryUnderPosixRaisesIfNotEmpty(self):
         """Renaming to an existing directory changes the existing directory
         under Posix."""
-        self.skipWindows()
+        self.testPosixOnly()
         self.skipRealFsFailure(skipLinux=False)
         old_path = self.makePath('foo', 'bar')
         new_path = self.makePath('foo', 'baz')
@@ -1613,7 +1631,7 @@ class FakeOsModuleTest(FakeOsModuleTestBase):
 
     def testRenameToExistentFilePosix(self):
         """Can rename a file to a used name under Unix."""
-        self.skipWindows()
+        self.testPosixOnly()
         directory = self.makePath('xyzzy')
         old_file_path = self.os.path.join(directory, 'plugh_old')
         new_file_path = self.os.path.join(directory, 'plugh_new')
@@ -1628,7 +1646,7 @@ class FakeOsModuleTest(FakeOsModuleTestBase):
 
     def testRenameToExistentFileWindows(self):
         """Renaming a file to a used name raises OSError under Windows."""
-        self.skipPosix()
+        self.testWindowsOnly()
         directory = self.makePath('xyzzy')
         old_file_path = self.os.path.join(directory, 'plugh_old')
         new_file_path = self.os.path.join(directory, 'plugh_new')
@@ -1690,7 +1708,7 @@ class FakeOsModuleTest(FakeOsModuleTestBase):
         self.assertTrue(self.os.path.exists(self.os.path.join(after_dir, '.')))
 
     def testRenameSymlink(self):
-        self.skipWindows()
+        self.testPosixOnly()
         base_path = self.makePath('foo', 'bar')
         self.createDirectory(base_path)
         link_path = self.os.path.join(base_path, 'link')
@@ -1724,7 +1742,7 @@ class FakeOsModuleTest(FakeOsModuleTestBase):
 
     def testRenamePreservesStat(self):
         """Test if rename preserves mtime."""
-        self.skipWindows()
+        self.testPosixOnly()
         self.skipRealFs()
         directory = self.makePath('xyzzy')
         old_file_path = self.os.path.join(directory, 'plugh_old')
@@ -1798,7 +1816,7 @@ class FakeOsModuleTest(FakeOsModuleTestBase):
         self.assertRaisesOSError(errno.ENOENT, self.os.rmdir, directory)
 
     def testRmdirViaSymlink(self):
-        self.skipPosix()
+        self.testWindowsOnly()
         self.skipIfSymlinkNotSupported()
         base_path = self.makePath('foo', 'bar')
         dir_path = self.os.path.join(base_path, 'alpha')
@@ -1881,7 +1899,7 @@ class FakeOsModuleTest(FakeOsModuleTestBase):
         self.assertFalse(self.os.path.exists(directory))
 
     def testRemoveDirsWithTopSymlinkFails(self):
-        self.skipWindows()
+        self.testPosixOnly()
         dir_path = self.makePath('dir')
         dir_link = self.makePath('dir_link')
         self.createDirectory(dir_path)
@@ -1889,7 +1907,7 @@ class FakeOsModuleTest(FakeOsModuleTestBase):
         self.assertRaisesOSError(errno.ENOTDIR, self.os.removedirs, dir_link)
 
     def testRemoveDirsWithNonTopSymlinkSucceeds(self):
-        self.skipWindows()
+        self.testPosixOnly()
         dir_path = self.makePath('dir')
         dir_link = self.makePath('dir_link')
         self.createDirectory(dir_path)
@@ -1937,7 +1955,7 @@ class FakeOsModuleTest(FakeOsModuleTestBase):
         self.assertRaisesOSError(errno.ENOENT, self.os.mkdir, directory)
 
     def testMkdirRaisesOnSymlinkInPosix(self):
-        self.skipWindows()
+        self.testPosixOnly()
         base_path = self.makePath('foo', 'bar')
         link_path = self.os.path.join(base_path, 'link_to_dir')
         dir_path = self.os.path.join(base_path, 'dir')
@@ -1946,7 +1964,7 @@ class FakeOsModuleTest(FakeOsModuleTestBase):
         self.assertRaisesOSError(errno.ENOTDIR, self.os.rmdir, link_path)
 
     def testMkdirRemovesSymlinkInWindows(self):
-        self.skipPosix()
+        self.testWindowsOnly()
         self.skipIfSymlinkNotSupported()
         base_path = self.makePath('foo', 'bar')
         link_path = self.os.path.join(base_path, 'link_to_dir')
@@ -2008,7 +2026,7 @@ class FakeOsModuleTest(FakeOsModuleTestBase):
 
     def testMkdirRaisesIfParentIsReadOnly(self):
         """mkdir raises exception if parent is read only."""
-        self.skipWindows()
+        self.testPosixOnly()
         directory = self.makePath('a')
         self.os.mkdir(directory)
 
@@ -2019,7 +2037,7 @@ class FakeOsModuleTest(FakeOsModuleTestBase):
         self.assertRaisesOSError(errno.EACCES, self.os.mkdir, directory)
 
     def testMkdirWithWithSymlinkParent(self):
-        self.skipWindows()
+        self.testPosixOnly()
         dir_path = self.makePath('foo', 'bar')
         self.createDirectory(dir_path)
         link_path = self.makePath('foo', 'link')
@@ -2046,7 +2064,7 @@ class FakeOsModuleTest(FakeOsModuleTestBase):
         self.assertRaisesOSError(errno.ENOTDIR, self.os.makedirs, directory)
 
     def testMakedirsRaisesIfParentIsBrokenLink(self):
-        self.skipWindows()
+        self.testPosixOnly()
         link_path = self.makePath('broken_link')
         self.os.symlink(self.makePath('bogus'), link_path)
         self.assertRaisesOSError(errno.ENOENT, self.os.makedirs,
@@ -2062,7 +2080,7 @@ class FakeOsModuleTest(FakeOsModuleTestBase):
         self.assertRaisesOSError(errno.ELOOP, self.os.makedirs, link_path)
 
     def testMakedirsIfParentIsSymlink(self):
-        self.skipWindows()
+        self.testPosixOnly()
         base_dir = self.makePath('foo', 'bar')
         self.createDirectory(base_dir)
         link_dir = self.os.path.join(base_dir, 'linked')
@@ -2073,7 +2091,7 @@ class FakeOsModuleTest(FakeOsModuleTestBase):
 
     def testMakedirsRaisesIfAccessDenied(self):
         """makedirs raises exception if access denied."""
-        self.skipWindows()
+        self.testPosixOnly()
         directory = self.makePath('a')
         self.os.mkdir(directory)
 
@@ -2100,9 +2118,8 @@ class FakeOsModuleTest(FakeOsModuleTestBase):
     def testFsyncRaisesOnNonInt(self):
         self.assertRaises(TypeError, self.os.fsync, "zero")
 
-    @unittest.skipIf(TestCase.is_macos, 'os.fdatasync not available in MacOS')
     def testFdatasyncRaisesOnNonInt(self):
-        self.skipWindows()
+        self.testLinuxOnly()
         self.skipRealFsFailure()
         self.assertRaises(TypeError, self.os.fdatasync, "zero")
 
@@ -2112,12 +2129,11 @@ class FakeOsModuleTest(FakeOsModuleTestBase):
         self.skipRealFsFailure(skipWindows=False)
         self.assertRaisesOSError(errno.EBADF, self.os.fsync, 0)
 
-    @unittest.skipIf(TestCase.is_macos, 'os.fdatasync not available in MacOS')
     def testFdatasyncRaisesOnInvalidFd(self):
         # No open files yet, so even 0 is invalid
-        self.skipWindows()
+        self.testLinuxOnly()
         # raises EINVAL under Linux
-        self.skipRealFsFailure(skipWindows=False)
+        self.skipRealFsFailure()
         self.assertRaisesOSError(errno.EBADF, self.os.fdatasync, 0)
 
     def testFsyncPass(self):
@@ -2132,10 +2148,9 @@ class FakeOsModuleTest(FakeOsModuleTestBase):
         # And just for sanity, double-check that this still raises
         self.assertRaisesOSError(errno.EBADF, self.os.fsync, test_fd + 1)
 
-    @unittest.skipIf(TestCase.is_macos, 'os.fdatasync not available in MacOS')
     def testFdatasyncPass(self):
         # setup
-        self.skipWindows()
+        self.testLinuxOnly()
         test_file_path = self.makePath('test_file')
         self.createFile(test_file_path, contents='dummy file contents')
         test_file = self.open(test_file_path, 'r')
@@ -2147,7 +2162,7 @@ class FakeOsModuleTest(FakeOsModuleTestBase):
 
     def testAccess700(self):
         # set up
-        self.skipWindows()
+        self.testPosixOnly()
         path = self.makePath('some_file')
         self.createTestFile(path)
         self.os.chmod(path, 0o700)
@@ -2161,7 +2176,7 @@ class FakeOsModuleTest(FakeOsModuleTestBase):
 
     def testAccess600(self):
         # set up
-        self.skipWindows()
+        self.testPosixOnly()
         path = self.makePath('some_file')
         self.createTestFile(path)
         self.os.chmod(path, 0o600)
@@ -2176,7 +2191,7 @@ class FakeOsModuleTest(FakeOsModuleTestBase):
 
     def testAccess400(self):
         # set up
-        self.skipWindows()
+        self.testPosixOnly()
         path = self.makePath('some_file')
         self.createTestFile(path)
         self.os.chmod(path, 0o400)
@@ -2236,7 +2251,7 @@ class FakeOsModuleTest(FakeOsModuleTestBase):
 
     def testChmod(self):
         # set up
-        self.skipWindows()
+        self.testPosixOnly()
         self.skipRealFs()
         path = self.makePath('some_file')
         self.createTestFile(path)
@@ -2250,7 +2265,7 @@ class FakeOsModuleTest(FakeOsModuleTestBase):
     @unittest.skipIf(sys.version_info < (3, 3),
                      'file descriptor as path new in Python 3.3')
     def testChmodUsesOpenFdAsPath(self):
-        self.skipWindows()
+        self.testPosixOnly()
         self.skipRealFs()
         self.assertRaisesOSError(errno.EBADF, self.os.chmod, 5, 0o6543)
         path = self.makePath('some_file')
@@ -2296,7 +2311,7 @@ class FakeOsModuleTest(FakeOsModuleTestBase):
     def testLchmod(self):
         """lchmod shall behave like chmod with follow_symlinks=True
         since Python 3.3"""
-        self.skipWindows()
+        self.testPosixOnly()
         self.skipRealFs()
         path = self.makePath('some_file')
         self.createTestFile(path)
@@ -2311,7 +2326,7 @@ class FakeOsModuleTest(FakeOsModuleTestBase):
 
     def testChmodDir(self):
         # set up
-        self.skipWindows()
+        self.testPosixOnly()
         self.skipRealFs()
         path = self.makePath('some_dir')
         self.createTestDirectory(path)
@@ -2405,14 +2420,14 @@ class FakeOsModuleTest(FakeOsModuleTestBase):
 
     def testChownBadArguments(self):
         """os.chown() with bad args (Issue #30)"""
-        self.skipWindows()
+        self.testPosixOnly()
         file_path = self.makePath('some_file')
         self.createFile(file_path)
         self.assertRaises(TypeError, self.os.chown, file_path, 'username', -1)
         self.assertRaises(TypeError, self.os.chown, file_path, -1, 'groupname')
 
     def testChownNonexistingFileShouldRaiseOsError(self):
-        self.skipWindows()
+        self.testPosixOnly()
         file_path = self.makePath('some_file')
         self.assertFalse(self.os.path.exists(file_path))
         self.assertRaisesOSError(errno.ENOENT, self.os.chown, file_path, 100,
@@ -2449,77 +2464,70 @@ class FakeOsModuleTest(FakeOsModuleTestBase):
         self.assertRaisesOSError(errno.ENOENT,
                                  self.os._ClassifyDirectoryContents, directory)
 
+    # os.mknod does not work under MacOS due to permission issues
+    # so we test it under Linux only
+
     def testMkNodCanCreateAFile(self):
-        self.skipWindows()
-        self.skipRealFsFailure(skipLinux=False)
+        self.testLinuxOnly()
         filename = self.makePath('foo')
         self.assertFalse(self.os.path.exists(filename))
         self.os.mknod(filename)
         self.assertTrue(self.os.path.exists(filename))
 
     def testMkNodRaisesIfEmptyFileName(self):
-        self.skipWindows()
-        self.skipRealFsFailure(skipLinux=False)
+        self.testLinuxOnly()
         filename = ''
         self.assertRaisesOSError(errno.ENOENT, self.os.mknod, filename)
 
     def testMkNodRaisesIfParentDirDoesntExist(self):
-        self.skipWindows()
-        self.skipRealFsFailure(skipLinux=False)
+        self.testLinuxOnly()
         parent = self.makePath('xyzzy')
         filename = self.os.path.join(parent, 'foo')
         self.assertFalse(self.os.path.exists(parent))
         self.assertRaisesOSError(errno.ENOENT, self.os.mknod, filename)
 
     def testMkNodRaisesIfFileExists(self):
-        self.skipWindows()
-        self.skipRealFsFailure(skipLinux=False)
+        self.testLinuxOnly()
         filename = self.makePath('tmp', 'foo')
         self.createFile(filename)
         self.assertTrue(self.os.path.exists(filename))
         self.assertRaisesOSError(errno.EEXIST, self.os.mknod, filename)
 
     def testMkNodRaisesIfFilenameIsDot(self):
-        self.skipWindows()
-        self.skipRealFsFailure(skipLinux=False)
+        self.testLinuxOnly()
         filename = self.makePath('tmp', '.')
         self.assertRaisesOSError(errno.ENOENT, self.os.mknod, filename)
 
     def testMkNodRaisesIfFilenameIsDoubleDot(self):
-        self.skipWindows()
-        self.skipRealFsFailure(skipLinux=False)
+        self.testLinuxOnly()
         filename = self.makePath('tmp', '..')
         self.assertRaisesOSError(errno.ENOENT, self.os.mknod, filename)
 
     def testMknodEmptyTailForExistingFileRaises(self):
-        self.skipWindows()
-        self.skipRealFsFailure(skipLinux=False)
+        self.testLinuxOnly()
         filename = self.makePath('foo')
         self.createFile(filename)
         self.assertTrue(self.os.path.exists(filename))
         self.assertRaisesOSError(errno.EEXIST, self.os.mknod, filename)
 
     def testMknodEmptyTailForNonexistentFileRaises(self):
-        self.skipWindows()
-        self.skipRealFsFailure(skipLinux=False)
+        self.testLinuxOnly()
         filename = self.makePath('tmp', 'foo')
         self.assertRaisesOSError(errno.ENOENT, self.os.mknod, filename)
 
     def testMknodRaisesIfFilenameIsEmptyString(self):
-        self.skipWindows()
-        self.skipRealFsFailure(skipLinux=False)
+        self.testLinuxOnly()
         filename = ''
         self.assertRaisesOSError(errno.ENOENT, self.os.mknod, filename)
 
     def testMknodRaisesIfUnsupportedOptions(self):
-        self.skipWindows()
+        self.testPosixOnly()
         filename = 'abcde'
         self.assertRaisesOSError(errno.EPERM, self.os.mknod, filename,
                                  stat.S_IFCHR)
 
     def testMknodRaisesIfParentIsNotADirectory(self):
-        self.skipWindows()
-        self.skipRealFsFailure(skipLinux=False)
+        self.testLinuxOnly()
         filename1 = self.makePath('foo')
         self.createFile(filename1)
         self.assertTrue(self.os.path.exists(filename1))
@@ -2538,7 +2546,7 @@ class FakeOsModuleTest(FakeOsModuleTestBase):
         self.assertTrue(self.os.path.exists(file_path))
 
     def testSymlinkOnNonexistingPathRaises(self):
-        self.skipWindows()
+        self.testPosixOnly()
         dir_path = self.makePath('bar')
         link_path = self.os.path.join(dir_path, 'bar')
         self.assertRaisesOSError(errno.ENOENT, self.os.symlink, link_path,
@@ -2614,7 +2622,7 @@ class FakeOsModuleTest(FakeOsModuleTestBase):
                                  file_path)
 
     def testLinkTargetIsDirWindows(self):
-        self.skipPosix()
+        self.testWindowsOnly()
         self.skipIfSymlinkNotSupported()
         dir_path = self.makePath('foo', 'bar')
         link_path = self.os.path.join(dir_path, 'link')
@@ -2623,7 +2631,7 @@ class FakeOsModuleTest(FakeOsModuleTestBase):
                                  link_path)
 
     def testLinkTargetIsDirPosix(self):
-        self.skipWindows()
+        self.testPosixOnly()
         dir_path = self.makePath('foo', 'bar')
         link_path = self.os.path.join(dir_path, 'link')
         self.createDirectory(dir_path)
@@ -2669,14 +2677,14 @@ class FakeOsModuleTest(FakeOsModuleTestBase):
             self.makePath('foo')).st_nlink)
 
     def testUMask(self):
-        self.skipWindows()
+        self.testPosixOnly()
         umask = os.umask(0o22)
         os.umask(umask)
         self.assertEqual(umask, self.os.umask(0o22))
 
     def testMkdirUmaskApplied(self):
         """mkdir creates a directory with umask applied."""
-        self.skipWindows()
+        self.testPosixOnly()
         self.os.umask(0o22)
         dir1 = self.makePath('dir1')
         self.os.mkdir(dir1)
@@ -2688,7 +2696,7 @@ class FakeOsModuleTest(FakeOsModuleTestBase):
 
     def testMakedirsUmaskApplied(self):
         """makedirs creates a directories with umask applied."""
-        self.skipWindows()
+        self.testPosixOnly()
         self.os.umask(0o22)
         self.os.makedirs(self.makePath('p1', 'dir1'))
         self.assertModeEqual(0o755, self.os.stat(self.makePath('p1')).st_mode)
@@ -2702,7 +2710,7 @@ class FakeOsModuleTest(FakeOsModuleTestBase):
 
     def testMknodeUmaskApplied(self):
         """mkdir creates a device with umask applied."""
-        self.skipWindows()
+        self.testPosixOnly()
         # gets 0o600 instead of 0o644
         self.skipRealFsFailure()
         self.os.umask(0o22)
@@ -2716,7 +2724,7 @@ class FakeOsModuleTest(FakeOsModuleTestBase):
 
     def testOpenUmaskApplied(self):
         """open creates a file with umask applied."""
-        self.skipWindows()
+        self.testPosixOnly()
         self.os.umask(0o22)
         file1 = self.makePath('file1')
         self.open(file1, 'w').close()
@@ -2963,7 +2971,7 @@ class FakeOsModuleLowLevelFileOpTest(FakeOsModuleTestBase):
         self.os.close(file_des)
 
     def testOpenReadOnlyWriteZeroBytesPosix(self):
-        self.skipWindows()
+        self.testPosixOnly()
         file_path = self.makePath('file1')
         self.createFile(file_path, contents=b'contents')
 
@@ -2974,7 +2982,7 @@ class FakeOsModuleLowLevelFileOpTest(FakeOsModuleTestBase):
     def testOpenReadOnlyWriteZeroBytesWindows(self):
         # under Windows, writing an empty string to a read only file
         # is not an error
-        self.skipPosix()
+        self.testWindowsOnly()
         file_path = self.makePath('file1')
         self.createFile(file_path, contents=b'contents')
         file_des = self.os.open(file_path, os.O_RDONLY)
@@ -3010,7 +3018,7 @@ class FakeOsModuleLowLevelFileOpTest(FakeOsModuleTestBase):
         self.os.close(file_des)
 
     def testOpenWriteOnlyReadZeroBytesPosix(self):
-        self.skipWindows()
+        self.testPosixOnly()
         file_path = self.makePath('file1')
         file_des = self.os.open(file_path, os.O_CREAT | os.O_WRONLY)
         self.assertRaisesOSError(errno.EBADF, self.os.read, file_des, 0)
@@ -3018,7 +3026,7 @@ class FakeOsModuleLowLevelFileOpTest(FakeOsModuleTestBase):
 
     def testOpenWriteOnlyReadZeroBytesWindows(self):
         # under Windows, reading 0 bytes from a write only file is not an error
-        self.skipPosix()
+        self.testWindowsOnly()
         file_path = self.makePath('file1')
         file_des = self.os.open(file_path, os.O_CREAT | os.O_WRONLY)
         self.assertEqual(b'', self.os.read(file_des, 0))
@@ -3110,7 +3118,7 @@ class FakeOsModuleLowLevelFileOpTest(FakeOsModuleTestBase):
         self.os.close(file_des)
 
     def testCanReadAfterCreateExclusive(self):
-        self.skipWindows()
+        self.testPosixOnly()
         path1 = self.makePath('alpha')
         file_des = self.os.open(path1, os.O_CREAT | os.O_EXCL)
         self.assertEqual(b'', self.os.read(file_des, 0))
@@ -3158,7 +3166,7 @@ class FakeOsModuleLowLevelFileOpTest(FakeOsModuleTestBase):
             os.O_CREAT | os.O_WRONLY | os.O_TRUNC | os.O_EXCL)
 
     def testOpenDirectoryRaisesUnderWindows(self):
-        self.skipPosix()
+        self.testWindowsOnly()
         dir_path = self.makePath('dir')
         self.createDirectory(dir_path)
         self.assertRaisesOSError(errno.EACCES, self.os.open, dir_path,
@@ -3169,7 +3177,7 @@ class FakeOsModuleLowLevelFileOpTest(FakeOsModuleTestBase):
                                  os.O_RDWR)
 
     def testOpenDirectoryForWritingRaisesUnderPosix(self):
-        self.skipWindows()
+        self.testPosixOnly()
         dir_path = self.makePath('dir')
         self.createDirectory(dir_path)
         self.assertRaisesOSError(errno.EISDIR, self.os.open, dir_path,
@@ -3178,7 +3186,7 @@ class FakeOsModuleLowLevelFileOpTest(FakeOsModuleTestBase):
                                  os.O_RDWR)
 
     def testOpenDirectoryReadOnlyUnderPosix(self):
-        self.skipWindows()
+        self.testPosixOnly()
         self.skipRealFs()
         dir_path = self.makePath('dir')
         self.createDirectory(dir_path)
@@ -3186,7 +3194,7 @@ class FakeOsModuleLowLevelFileOpTest(FakeOsModuleTestBase):
         self.assertEqual(0, file_des)
 
     def testOpenModePosix(self):
-        self.skipWindows()
+        self.testPosixOnly()
         self.skipRealFs()
         file_path = self.makePath('baz')
         file_des = self.os.open(file_path, os.O_CREAT | os.O_WRONLY | os.O_TRUNC)
@@ -3197,7 +3205,7 @@ class FakeOsModuleLowLevelFileOpTest(FakeOsModuleTestBase):
         self.os.close(file_des)
 
     def testOpenModeWindows(self):
-        self.skipPosix()
+        self.testWindowsOnly()
         file_path = self.makePath('baz')
         file_des = self.os.open(file_path,
                                 os.O_CREAT | os.O_WRONLY | os.O_TRUNC)
@@ -3260,7 +3268,7 @@ class FakeOsModuleLowLevelFileOpTest(FakeOsModuleTestBase):
 
     def testReadOnlyReadAfterWrite(self):
         """Regression test for #269."""
-        self.skipWindows()
+        self.testPosixOnly()
         file_path = self.makePath('foo', 'bar', 'baz')
         self.createFile(file_path, contents=b'test')
         fd0 = self.os.open(file_path, os.O_CREAT)
@@ -3425,7 +3433,7 @@ class FakeOsModuleWalkTest(FakeOsModuleTestBase):
         self.assertEqual(True, visited_visit_directory)
 
     def testWalkFollowsymlinkDisabled(self):
-        self.skipWindows()
+        self.testPosixOnly()
         base_dir = self.makePath('foo')
         link_dir = self.makePath('linked')
         self.createFile(self.os.path.join(link_dir, 'subfile'))
@@ -3447,7 +3455,7 @@ class FakeOsModuleWalkTest(FakeOsModuleTestBase):
                                followlinks=False)
 
     def testWalkFollowsymlinkEnabled(self):
-        self.skipWindows()
+        self.testPosixOnly()
         base_dir = self.makePath('foo')
         link_dir = self.makePath('linked')
         self.createFile(self.os.path.join(link_dir, 'subfile'))
@@ -4670,7 +4678,7 @@ class FakeFileOpenTest(FakeFileOpenTestBase):
 
     def testOpenFlags700(self):
         # set up
-        self.skipWindows()
+        self.testPosixOnly()
         file_path = self.makePath('target_file')
         self._CreateWithPermission(file_path, 0o700)
         # actual tests
@@ -4681,7 +4689,7 @@ class FakeFileOpenTest(FakeFileOpenTestBase):
 
     def testOpenFlags400(self):
         # set up
-        self.skipWindows()
+        self.testPosixOnly()
         file_path = self.makePath('target_file')
         self._CreateWithPermission(file_path, 0o400)
         # actual tests
@@ -4691,7 +4699,7 @@ class FakeFileOpenTest(FakeFileOpenTestBase):
 
     def testOpenFlags200(self):
         # set up
-        self.skipWindows()
+        self.testPosixOnly()
         file_path = self.makePath('target_file')
         self._CreateWithPermission(file_path, 0o200)
         # actual tests
@@ -4701,7 +4709,7 @@ class FakeFileOpenTest(FakeFileOpenTestBase):
 
     def testOpenFlags100(self):
         # set up
-        self.skipWindows()
+        self.testPosixOnly()
         file_path = self.makePath('target_file')
         self._CreateWithPermission(file_path, 0o100)
         # actual tests 4
@@ -4763,7 +4771,7 @@ class FakeFileOpenTest(FakeFileOpenTestBase):
 
     def testOpenRaisesOnSymlinkLoop(self):
         """Regression test for #274."""
-        self.skipWindows()
+        self.testPosixOnly()
         file_dir = self.makePath('foo')
         self.os.mkdir(file_dir)
         file_path = self.os.path.join(file_dir, 'baz')
@@ -4973,7 +4981,7 @@ class FakeFileOpenTest(FakeFileOpenTestBase):
 
     def testTellFlushesUnderPosix(self):
         """Regression test for #288."""
-        self.skipWindows()
+        self.testPosixOnly()
         self.skipRealFsFailure(skipPython3=False, skipMacOs=False)
         file_path = self.makePath('foo')
         f0 = self.open(file_path, 'w')
@@ -4983,7 +4991,7 @@ class FakeFileOpenTest(FakeFileOpenTestBase):
 
     def testTellFlushesUnderWindowsInPython3(self):
         """Regression test for #288."""
-        self.skipPosix()
+        self.testWindowsOnly()
         file_path = self.makePath('foo')
         f0 = self.open(file_path, 'w')
         f0.write('test')
@@ -4995,7 +5003,7 @@ class FakeFileOpenTest(FakeFileOpenTestBase):
                      'Python 2.6 behaves differently')
     def testReadFlushesUnderPosix(self):
         """Regression test for #278."""
-        self.skipWindows()
+        self.testPosixOnly()
         file_path = self.makePath('foo')
         f0 = self.open(file_path, 'a+')
         f0.write('test')
@@ -5004,7 +5012,7 @@ class FakeFileOpenTest(FakeFileOpenTestBase):
 
     def testReadFlushesUnderWindowsInPython3(self):
         """Regression test for #278."""
-        self.skipPosix()
+        self.testWindowsOnly()
         file_path = self.makePath('foo')
         f0 = self.open(file_path, 'w+')
         f0.write('test')

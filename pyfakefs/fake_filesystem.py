@@ -4028,6 +4028,8 @@ class FakeOsModule(object):
             TypeError: file_des is not an integer.
         """
         # Throw an error if file_des isn't valid
+        if self.filesystem.is_windows_fs or self.filesystem.is_macos:
+            raise AttributeError("module 'os' has no attribute 'fdatasync'")
         self.filesystem.GetOpenFile(file_des)
 
     def __getattr__(self, name):

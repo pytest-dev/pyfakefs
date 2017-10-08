@@ -1,4 +1,7 @@
 #!/bin/bash
+# script to install Python versions under MacOS, as Travis.IO
+# does not have explicit Python support for MacOS
+# Taken from https://github.com/pyca/cryptography and adapted.
 
 if [[ $TRAVIS_OS_NAME == 'osx' ]]; then
     sw_vers
