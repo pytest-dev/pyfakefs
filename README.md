@@ -10,8 +10,10 @@ pyfakefs works with Linux, Windows and MacOS.
 
 This file provides general usage instructions for pyfakefs.  There is more:
 
-* The [pyfakefs API Reference](http://jmcgeheeiv.github.io/pyfakefs/)
-  contains documentation for each pyfakefs class, method and function
+* The [Release pyfakefs API Reference](http://jmcgeheeiv.github.io/pyfakefs/release)
+  contains documentation for each pyfakefs class, method and function for the last version released on PyPi
+* The [Development pyfakefs API Reference](http://jmcgeheeiv.github.io/pyfakefs/master)
+  contains the same documentation for the current master branch
 * The [pyfakefs Wiki](https://github.com/jmcgeheeiv/pyfakefs/wiki/Home) provides more detailed information on
   specific topics
 * The [Release Notes](https://github.com/jmcgeheeiv/pyfakefs/blob/master/CHANGES.md) shows a list of changes in the latest versions
@@ -119,7 +121,7 @@ The following modules and functions can be patched:
 ## Installation
 
 ### Compatibility
-pyfakefs works with Python 2.6 and above, on Linux, Windows and OSX (MacOS).
+pyfakefs works with CPython 2.6, 2.7, 3.3 and above, on Linux, Windows and OSX (MacOS), and with PyPy2 and PyPy3.
 
 pyfakefs works with [PyTest](http://doc.pytest.org) version 2.8.6 or above.
 
@@ -137,8 +139,8 @@ For example, pyfakefs will not work with [`lxml`](http://lxml.de/).  In this cas
 
 ### Continuous integration
 
-pyfakefs is automatically tested with Python 2.6 and above, and it is currently
-[![Build Status](https://travis-ci.org/jmcgeheeiv/pyfakefs.svg)](https://travis-ci.org/jmcgeheeiv/pyfakefs).
+pyfakefs is automatically tested with Python 2.6 and above under Linux, and with Python 2.7 and Python 3.6 under MacOSX. 
+It is currently [![Build Status](https://travis-ci.org/jmcgeheeiv/pyfakefs.svg)](https://travis-ci.org/jmcgeheeiv/pyfakefs).
 
 See [Travis-CI](http://travis-ci.org) for
 [test results for each Python version](https://travis-ci.org/jmcgeheeiv/pyfakefs).

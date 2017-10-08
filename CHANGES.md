@@ -17,6 +17,8 @@ The release versions are PyPi releases.
   * Added nanosecond time members in `os.stat_result` (Python >= 3.3) ([#196](../../issues/196)).
 
 #### Infrastructure
+  * Added Travis CI tests for MacOSX (Python 2.7 and 3.6).
+  * Added auto-generated documentation for development version on GitHub Pages.
   * Removed most of `fake_filesystem_shutil` implementation, relying on the patched `os` module instead ([#194](../../issues/194)).
   * Removed `fake_tempfile` and `fake_filesystem_glob`, relying on the patched `os` module instead ([#189](../../issues/189), [#191](../../issues/191)).
 

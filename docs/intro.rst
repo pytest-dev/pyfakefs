@@ -8,7 +8,8 @@ The software under test requires no modification to work with pyfakefs.
 Note that pyfakefs will not work with Python libraries that use C libraries to access the
 file system, because it cannot patch the underlying C libraries' file access functions.
 
-pyfakefs works with Python 2.6 and above, on Linux, Windows and MacOS.
+pyfakefs works with CPython 2.6, 2.7, 3.3 and above, on Linux, Windows and OSX (MacOS), and with PyPy2 and PyPy3.
+Note that Python 2.6 support will be removed in the next version.
 
 pyfakefs works with `PyTest <doc.pytest.org>`__ version 2.8.6 or above.
 
