@@ -1796,7 +1796,7 @@ class FakeFilesystem(object):
             file_path: Specifies target FakeFile object to retrieve.
             follow_symlinks: If `False`, the link itself is resolved,
                 otherwise the object linked to.
-            allow_fd: If `True`, `file_path` may be open file descriptor
+            allow_fd: If `True`, `file_path` may be an open file descriptor
 
         Returns:
           The FakeFile object corresponding to file_path.
@@ -1804,8 +1804,11 @@ class FakeFilesystem(object):
         Raises:
             IOError: if the object is not found.
         """
-        if allow_fd and sys.version_info >= (3, 3) and isinstance(file_path, int):
-            return self.GetOpenFile(file_path).GetObject()
+        if isinstance(file_path, int):
+            if allow_fd and sys.version_info >= (3, 3):
+                return self.GetOpenFile(file_path).GetObject()
+            raise TypeError('path should be string, bytes or '
+                            'os.PathLike (if supported), not int')
 
         if follow_symlinks:
             if sys.version_info >= (3, 6):

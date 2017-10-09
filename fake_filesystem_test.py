@@ -954,14 +954,15 @@ class FakeOsModuleTest(FakeOsModuleTestBase):
 
     def testConsecutiveChdir(self):
         """Consecutive relative chdir calls should work."""
-        self.skipRealFsFailure(skipWindows=False, skipLinux=False)
         dir1 = self.makePath('foo')
         dir2 = 'bar'
         full_dirname = self.os.path.join(dir1, dir2)
         self.createDirectory(full_dirname)
         self.os.chdir(dir1)
         self.os.chdir(dir2)
-        self.assertEqual(self.os.getcwd(), full_dirname)
+        # use real path to handle symlink /var to /private/var in MacOs
+        self.assertEqual(os.path.realpath(self.os.getcwd()),
+                         os.path.realpath(full_dirname))
 
     def testBackwardsChdir(self):
         """chdir into '..' should behave appropriately."""
@@ -997,8 +998,10 @@ class FakeOsModuleTest(FakeOsModuleTestBase):
                      'file descriptor as path new in Python 3.3')
     def testListdirUsesOpenFdAsPath(self):
         self.testPosixOnly()
-        if self.useRealFs() and platform.python_implementation() == 'PyPy':
-            raise unittest.SkipTest('Different exceptions with PyPy')
+        if os.listdir not in os.supports_fd:
+            self.skipRealFs()
+        # if self.useRealFs() and platform.python_implementation() == 'PyPy':
+        #     raise unittest.SkipTest('Different exceptions with PyPy')
         self.assertRaisesOSError(errno.EBADF, self.os.listdir, 500)
         dir_path = self.makePath('xyzzy', 'plugh')
         files = ['foo', 'bar', 'baz']
@@ -1047,13 +1050,14 @@ class FakeOsModuleTest(FakeOsModuleTestBase):
         self.assertEqual(files, sorted(self.os.listdir(self.base_path)))
 
     def testFdopen(self):
+        # under Windows and Python2, hangs in closing file
         self.skipRealFsFailure(skipPosix=False, skipPython3=False)
         file_path1 = self.makePath('some_file1')
         self.createFile(file_path1, contents='contents here1')
-        fake_file1 = self.open(file_path1, 'r')
-        fileno = fake_file1.fileno()
-
-        self.assertFalse(self.os.fdopen(fileno) is fake_file1)
+        with self.open(file_path1, 'r') as fake_file1:
+            fileno = fake_file1.fileno()
+            fake_file2 = self.os.fdopen(fileno)
+            self.assertNotEqual(fake_file2, fake_file1)
 
         self.assertRaises(TypeError, self.os.fdopen, None)
         self.assertRaises(TypeError, self.os.fdopen, 'a string')
@@ -1064,6 +1068,7 @@ class FakeOsModuleTest(FakeOsModuleTestBase):
         self.assertRaisesOSError(errno.EBADF, self.os.fdopen, 0)
 
     def testClosedFileDescriptor(self):
+        # under Windows and Python2, hangs in tearDown
         self.skipRealFsFailure(skipPosix=False, skipPython3=False)
         first_path = self.makePath('some_file1')
         second_path = self.makePath('some_file2')
@@ -1176,7 +1181,9 @@ class FakeOsModuleTest(FakeOsModuleTestBase):
     @unittest.skipIf(sys.version_info < (3, 3),
                      'file descriptor as path new in Python 3.3')
     def testLstatUsesOpenFdAsPath(self):
-        self.skipRealFsFailure()
+        self.skipIfSymlinkNotSupported()
+        if os.lstat not in os.supports_fd:
+            self.skipRealFs()
         self.assertRaisesOSError(errno.EBADF, self.os.lstat, 5)
         file_path = self.makePath('foo', 'bar')
         link_path = self.makePath('foo', 'link')
@@ -2374,6 +2381,7 @@ class FakeOsModuleTest(FakeOsModuleTestBase):
     @unittest.skipIf(sys.version_info < (3, 3),
                      'file descriptor as path new in Python 3.3')
     def testChownUsesOpenFdAsPath(self):
+        self.testPosixOnly()
         self.skipRealFs()
         self.assertRaisesOSError(errno.EBADF, self.os.chown, 5, 100, 101)
         file_path = self.makePath('foo', 'bar')
@@ -2947,6 +2955,8 @@ class FakeOsModuleTimeTest(FakeOsModuleTestBase):
     @unittest.skipIf(sys.version_info < (3, 3),
                      'file descriptor as path new in Python 3.3')
     def testUtimeUsesOpenFdAsPath(self):
+        if os.utime not in os.supports_fd:
+            self.skipRealFs()
         self.assertRaisesOSError(errno.EBADF, self.os.utime, 5, (1, 2))
         path = self.makePath('some_file')
         self.createTestFile(path)
