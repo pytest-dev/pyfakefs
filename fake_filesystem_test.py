@@ -1317,11 +1317,10 @@ class FakeOsModuleTest(FakeOsModuleTestBase):
 
     def testRemoveOpenFileFailsUnderWindows(self):
         self.testWindowsOnly()
-        self.skipRealFsFailure()
         path = self.makePath('foo', 'bar')
         self.createFile(path)
-        self.open(path, 'r')
-        self.assertRaisesOSError(errno.EACCES, self.os.remove, path)
+        with self.open(path, 'r'):
+            self.assertRaisesOSError(errno.EACCES, self.os.remove, path)
         self.assertTrue(self.os.path.exists(path))
 
     def testRemoveOpenFilePossibleUnderPosix(self):
@@ -1484,8 +1483,6 @@ class FakeOsModuleTest(FakeOsModuleTestBase):
 
     def testRenameSymlinkToDirRaises(self):
         self.testPosixOnly()
-        # raises EISDIR under Linux
-        self.skipRealFsFailure(skipMacOs=False)
         base_path = self.makePath('foo', 'bar')
         link_path = self.os.path.join(base_path, 'dir_link')
         dir_path = self.os.path.join(base_path, 'dir')
@@ -1540,14 +1537,21 @@ class FakeOsModuleTest(FakeOsModuleTestBase):
                 self.assertEqual(3,
                                  self.filesystem.GetObject(new_path).st_nlink)
 
-    def testRenameDirectoryToExistingFileRaises(self):
-        self.skipRealFsFailure(skipPosix=False)
+    def checkRenameDirectoryToExistingFileRaises(self, error_nr):
         dir_path = self.makePath('dir')
         file_path = self.makePath('file')
         self.createDirectory(dir_path)
         self.createFile(file_path)
-        self.assertRaisesOSError(errno.ENOTDIR, self.os.rename, dir_path,
+        self.assertRaisesOSError(error_nr, self.os.rename, dir_path,
                                  file_path)
+
+    def testRenameDirectoryToExistingFileRaisesPosix(self):
+        self.testPosixOnly()
+        self.checkRenameDirectoryToExistingFileRaises(errno.ENOTDIR)
+
+    def testRenameDirectoryToExistingFileRaisesWindows(self):
+        self.testWindowsOnly()
+        self.checkRenameDirectoryToExistingFileRaises(errno.EEXIST)
 
     def testRenameToExistingDirectoryShouldRaiseUnderWindows(self):
         """Renaming to an existing directory raises OSError under Windows."""

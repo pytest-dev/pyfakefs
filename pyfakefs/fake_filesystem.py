@@ -1970,10 +1970,11 @@ class FakeFilesystem(object):
                                       'cannot rename file to directory',
                                       new_file_path)
             elif stat.S_ISDIR(old_object.st_mode):
-                        raise OSError(errno.ENOTDIR,
-                                      'Fake filesystem object: '
-                                      'cannot rename directory to file',
-                                      new_file_path)
+                error = errno.EEXIST if self.is_windows_fs else errno.ENOTDIR
+                raise OSError(error,
+                              'Fake filesystem object: '
+                              'cannot rename directory to file',
+                              new_file_path)
             elif self.is_windows_fs and not force_replace:
                 raise OSError(errno.EEXIST,
                               'Fake filesystem object: '
