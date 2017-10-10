@@ -1276,18 +1276,29 @@ class FakeOsModuleTest(FakeOsModuleTestBase):
         self.assertEqual(self.makePath('cats'),
                          self.os.readlink(self.makePath('dogs', 'chase')))
 
-    def testRemoveDir(self):
-        self.skipRealFsFailure(skipLinux=False)
+    def checkRemoveDir(self, dir_error):
         directory = self.makePath('xyzzy')
         dir_path = self.os.path.join(directory, 'plugh')
         self.createDirectory(dir_path)
         self.assertTrue(self.os.path.exists(dir_path))
-        self.assertRaisesOSError(errno.EISDIR, self.os.remove, dir_path)
+        self.assertRaisesOSError(dir_error, self.os.remove, dir_path)
         self.assertTrue(self.os.path.exists(dir_path))
         self.os.chdir(directory)
-        self.assertRaisesOSError(errno.EISDIR, self.os.remove, dir_path)
+        self.assertRaisesOSError(dir_error, self.os.remove, dir_path)
         self.assertTrue(self.os.path.exists(dir_path))
         self.assertRaisesOSError(errno.ENOENT, self.os.remove, '/plugh')
+
+    def testRemoveDirLinux(self):
+        self.testLinuxOnly()
+        self.checkRemoveDir(errno.EISDIR)
+
+    def testRemoveDirMacOs(self):
+        self.testMacOsOnly()
+        self.checkRemoveDir(errno.EPERM)
+
+    def testRemoveDirWindows(self):
+        self.testWindowsOnly()
+        self.checkRemoveDir(errno.EACCES)
 
     def testRemoveFile(self):
         directory = self.makePath('zzy')
@@ -1349,11 +1360,22 @@ class FakeOsModuleTest(FakeOsModuleTestBase):
         self.os.chdir(original_dir)
         self.assertFalse(self.os.path.exists(file_path))
 
-    def testRemoveDirRaisesError(self):
-        self.skipRealFsFailure(skipLinux=False)
+    def checkRemoveDirRaisesError(self, dir_error):
         directory = self.makePath('zzy')
         self.createDirectory(directory)
-        self.assertRaisesOSError(errno.EISDIR, self.os.remove, directory)
+        self.assertRaisesOSError(dir_error, self.os.remove, directory)
+
+    def testRemoveDirRaisesErrorLinux(self):
+        self.testLinuxOnly()
+        self.checkRemoveDirRaisesError(errno.EISDIR)
+
+    def testRemoveDirRaisesErrorMacOs(self):
+        self.testMacOsOnly()
+        self.checkRemoveDirRaisesError(errno.EPERM)
+
+    def testRemoveDirRaisesErrorWindows(self):
+        self.testWindowsOnly()
+        self.checkRemoveDirRaisesError(errno.EACCES)
 
     def testRemoveSymlinkToDir(self):
         self.skipIfSymlinkNotSupported()

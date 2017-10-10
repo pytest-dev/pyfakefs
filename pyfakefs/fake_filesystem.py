@@ -2564,7 +2564,13 @@ class FakeFilesystem(object):
             if stat.S_IFMT(obj.st_mode) == stat.S_IFDIR:
                 link_obj = self.LResolveObject(path)
                 if stat.S_IFMT(link_obj.st_mode) != stat.S_IFLNK:
-                    raise OSError(errno.EISDIR, "Is a directory: '%s'" % path)
+                    if self.is_windows_fs:
+                        error = errno.EACCES
+                    elif self.is_macos:
+                        error = errno.EPERM
+                    else:
+                        error = errno.EISDIR
+                    raise OSError(error, "Is a directory: '%s'" % path)
 
         try:
             self.RemoveObject(path)
