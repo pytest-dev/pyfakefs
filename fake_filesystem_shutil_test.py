@@ -84,8 +84,8 @@ class FakeShutilModuleTest(RealFsTestCase):
         self.assertFalse(os.path.exists(dir_path))
         self.assertFalse(os.path.exists(file_path))
 
-    def testRmtreeWithoutPermissionForAFile(self):
-        self.skipRealFsFailure(skipWindows=False)
+    def testRmtreeWithoutPermissionForAFileInWindows(self):
+        self.testWindowsOnly()
         dir_path = self.makePath('foo')
         self.createFile(os.path.join(dir_path, 'bar'))
         file_path = os.path.join(dir_path, 'baz')
@@ -94,6 +94,17 @@ class FakeShutilModuleTest(RealFsTestCase):
         self.assertRaises(OSError, shutil.rmtree, dir_path)
         self.assertTrue(os.path.exists(file_path))
         self.os.chmod(file_path, 0o666)
+
+    def testRmtreeWithoutPermissionForADirInPosix(self):
+        self.testPosixOnly()
+        dir_path = self.makePath('foo')
+        self.createFile(os.path.join(dir_path, 'bar'))
+        file_path = os.path.join(dir_path, 'baz')
+        self.createFile(file_path)
+        self.os.chmod(dir_path, 0o555)
+        self.assertRaises(OSError, shutil.rmtree, dir_path)
+        self.assertTrue(os.path.exists(file_path))
+        self.os.chmod(dir_path, 0o777)
 
     def testRmtreeWithOpenFilePosix(self):
         self.testPosixOnly()

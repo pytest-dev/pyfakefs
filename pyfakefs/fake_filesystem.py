@@ -700,11 +700,20 @@ class FakeDirectory(FakeFile):
                 or (Windows only) the file is open.
         """
         entry = self.contents[pathname_name]
-        if entry.st_mode & PERM_WRITE == 0:
-            raise OSError(errno.EACCES, 'Trying to remove object without write permission',
-                          pathname_name)
-        if self.filesystem.is_windows_fs and self.filesystem.HasOpenFile(entry):
-            raise OSError(errno.EACCES, 'Trying to remove an open file', pathname_name)
+        if self.filesystem.is_windows_fs:
+            if entry.st_mode & PERM_WRITE == 0:
+                raise OSError(errno.EACCES, 'Trying to remove object '
+                                            'without write permission',
+                              pathname_name)
+            if self.filesystem.HasOpenFile(entry):
+                raise OSError(errno.EACCES, 'Trying to remove an open file',
+                              pathname_name)
+        else:
+            if self.st_mode & (PERM_WRITE | PERM_EXE) != PERM_WRITE | PERM_EXE:
+                raise OSError(errno.EACCES, 'Trying to remove object '
+                                            'without parent dir permission',
+                              pathname_name)
+
         if recursive and isinstance(entry, FakeDirectory):
             while entry.contents:
                 entry.RemoveEntry(list(entry.contents)[0])
@@ -1240,6 +1249,7 @@ class FakeFilesystem(object):
         drive, path = self.SplitDrive(path)
         sep = self._path_separator(path)
         is_absolute_path = path.startswith(sep)
+        ends_with_path_sep = path.endswith(sep)
         path_components = path.split(sep)
         collapsed_path_components = []
         dot = self._matching_string(path, '.')

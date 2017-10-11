@@ -1020,8 +1020,6 @@ class FakeOsModuleTest(FakeOsModuleTestBase):
         self.createFile(self.makePath(directory, 'foo'))
         self.assertEqual(['foo'], self.os.listdir(directory))
 
-    @unittest.skipIf(TestCase.is_windows and sys.version_info < (3, 3),
-                     'Links are not supported under Windows before Python 3.3')
     def testListdirOnSymlink(self):
         self.skipIfSymlinkNotSupported()
         directory = self.makePath('xyzzy')
@@ -1318,13 +1316,34 @@ class FakeOsModuleTest(FakeOsModuleTestBase):
         self.os.remove(file_name)
         self.assertFalse(self.os.path.exists(file_path))
 
-    def testRemoveFileWithoutPermissionRaises(self):
-        # no exception raised
-        self.skipRealFsFailure()
+    def testRemoveFileWithReadPermissionRaisesInWindows(self):
+        self.testWindowsOnly()
         path = self.makePath('foo', 'bar')
         self.createFile(path)
         self.os.chmod(path, 0o444)
         self.assertRaisesOSError(errno.EACCES, self.os.remove, path)
+        self.os.chmod(path, 0o666)
+
+    def testRemoveFileWithReadPermissionShallSucceedInPosix(self):
+        self.testPosixOnly()
+        path = self.makePath('foo', 'bar')
+        self.createFile(path)
+        self.os.chmod(path, 0o444)
+        self.os.remove(path)
+        self.assertFalse(self.os.path.exists(path))
+
+    def testRemoveFileWithoutParentPermissionRaisesInPosix(self):
+        self.testPosixOnly()
+        parent_dir = self.makePath('foo')
+        path = self.os.path.join(parent_dir, 'bar')
+        self.createFile(path)
+        self.os.chmod(parent_dir, 0o666)  # missing execute permission
+        self.assertRaisesOSError(errno.EACCES, self.os.remove, path)
+        self.os.chmod(parent_dir, 0o555)  # missing write permission
+        self.assertRaisesOSError(errno.EACCES, self.os.remove, path)
+        self.os.chmod(parent_dir, 0o333)
+        self.os.remove(path)
+        self.assertFalse(self.os.path.exists(path))
 
     def testRemoveOpenFileFailsUnderWindows(self):
         self.testWindowsOnly()
@@ -2153,7 +2172,6 @@ class FakeOsModuleTest(FakeOsModuleTestBase):
 
     def testFdatasyncRaisesOnNonInt(self):
         self.testLinuxOnly()
-        self.skipRealFsFailure()
         self.assertRaises(TypeError, self.os.fdatasync, "zero")
 
     def testFsyncRaisesOnInvalidFd(self):
