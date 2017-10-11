@@ -1921,7 +1921,7 @@ class FakeFilesystem(object):
             OSError: if the file would be moved to another filesystem
                 (e.g. mount point).
         """
-        old_file_path = self.NormalizePath(old_file_path)
+        old_file_path = self.NormalizeCase(self.NormalizePath(old_file_path))
         new_file_path = self.NormalizePath(new_file_path)
         if not self.Exists(old_file_path) and not self.IsLink(old_file_path):
             raise_os_error(errno.ENOENT, 2,

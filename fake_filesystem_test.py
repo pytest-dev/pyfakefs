@@ -126,6 +126,14 @@ class RealFsTestMixin(object):
             self.filesystem.is_windows_fs = False
             self.filesystem.is_macos = True
 
+    def testCaseInsensitiveFs(self):
+        if self.useRealFs():
+            if not TestCase.is_macos and not TestCase.is_windows:
+                raise unittest.SkipTest(
+                    'Testing case insensitive specific functionality')
+        else:
+            self.filesystem.is_case_sensitive = False
+
     def testPosixOnly(self):
         if self.useRealFs():
             if TestCase.is_windows:
@@ -1613,6 +1621,16 @@ class FakeOsModuleTest(FakeOsModuleTestBase):
         self.os.rename(file_path, link_path)
         self.assertTrue(self.os.path.exists(file_path))
         self.assertTrue(self.os.path.exists(link_path))
+
+    def testRenameWithIncorrectSourceCase(self):
+        """Regression test for #308."""
+        self.testCaseInsensitiveFs()
+        base_path = self.makePath('foo')
+        path0 = self.os.path.join(base_path, 'bar')
+        path1 = self.os.path.join(base_path, 'Bar')
+        self.createDirectory(path0)
+        self.os.rename(path1, path0)
+        self.assertTrue(self.os.path.exists(path0))
 
     def testHardlinkWorksWithSymlink(self):
         self.testPosixOnly()
