@@ -4155,6 +4155,13 @@ class FakePathModuleTest(TestCase):
 
         self.assertFalse(self.path.islink('it_dont_exist'))
 
+    def testIsLinkCaseSensitive(self):
+        """Regression test for #306"""
+        self.filesystem.is_case_sensitive = False
+        self.filesystem.CreateDirectory('foo')
+        self.filesystem.CreateLink('foo!bar', 'foo')
+        self.assertTrue(self.path.islink('foo!Bar'))
+
     def testIsmount(self):
         self.assertFalse(self.path.ismount(''))
         self.assertTrue(self.path.ismount('!'))

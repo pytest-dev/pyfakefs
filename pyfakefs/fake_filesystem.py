@@ -1842,6 +1842,7 @@ class FakeFilesystem(object):
         alt_sep = self._alternative_path_separator(path)
         if path.endswith(sep) or (alt_sep and path.endswith(alt_sep)):
             path = path[:-1]
+        path = self.NormalizeCase(path)
 
         parent_directory, child_name = self.SplitPath(path)
         if not parent_directory:
