@@ -2060,6 +2060,15 @@ class FakeOsModuleTest(FakeOsModuleTestBase):
         self.assertTrue(self.os.path.exists(file_path))
         self.assertRaisesOSError(errno.EEXIST, self.os.mkdir, file_path)
 
+    def testMkdirRaisesIfSymlinkExists(self):
+        """Regression test for #309."""
+        self.skipIfSymlinkNotSupported()
+        self.testCaseInsensitiveFs()
+        path1 = self.makePath('baz')
+        self.os.symlink(path1, path1)
+        path2 = self.makePath('Baz')
+        self.assertRaisesOSError(errno.EEXIST, self.os.mkdir, path2)
+
     def testMkdirRaisesIfParentIsFile(self):
         """mkdir raises exception if name already exists as a file."""
         self.skipRealFsFailure(skipPosix=False)

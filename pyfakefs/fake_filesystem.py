@@ -2422,7 +2422,7 @@ class FakeFilesystem(object):
                 raise OSError(errno.ENOENT, 'No such fake directory', base_dir)
 
         dir_name = self.NormalizePath(dir_name)
-        if self.Exists(dir_name):
+        if self.Exists(dir_name) or self.IsLink(dir_name):
             raise OSError(errno.EEXIST, 'Fake object already exists', dir_name)
         head, tail = self.SplitPath(dir_name)
 
