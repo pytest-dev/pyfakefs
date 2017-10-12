@@ -2552,6 +2552,7 @@ class FakeOsModuleTest(FakeOsModuleTestBase):
         self.assertFalse(self.os.path.exists(filename))
         self.os.mknod(filename)
         self.assertTrue(self.os.path.exists(filename))
+        self.assertEqual(stat.S_IFREG | 0o600, self.os.stat(filename).st_mode)
 
     def testMkNodRaisesIfEmptyFileName(self):
         self.testLinuxOnly()
@@ -2787,18 +2788,17 @@ class FakeOsModuleTest(FakeOsModuleTestBase):
         self.assertModeEqual(0o710,
                              self.os.stat(self.makePath('p2', 'dir2')).st_mode)
 
-    def testMknodeUmaskApplied(self):
+    def testMknodUmaskApplied(self):
         """mkdir creates a device with umask applied."""
-        self.testPosixOnly()
-        # gets 0o600 instead of 0o644
-        self.skipRealFsFailure()
+        # skipping MacOs due to mknod permission issues
+        self.testLinuxOnly()
         self.os.umask(0o22)
         node1 = self.makePath('nod1')
-        self.os.mknod(node1)
+        self.os.mknod(node1, stat.S_IFREG | 0o666)
         self.assertModeEqual(0o644, self.os.stat(node1).st_mode)
         self.os.umask(0o27)
         node2 = self.makePath('nod2')
-        self.os.mknod(node2)
+        self.os.mknod(node2, stat.S_IFREG | 0o666)
         self.assertModeEqual(0o640, self.os.stat(node2).st_mode)
 
     def testOpenUmaskApplied(self):

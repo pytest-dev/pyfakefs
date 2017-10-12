@@ -3960,7 +3960,9 @@ class FakeOsModule(object):
         if self.filesystem.is_windows_fs:
             raise(AttributeError, "module 'os' has no attribute 'mknode'")
         if mode is None:
-            mode = stat.S_IFREG | PERM_DEF_FILE
+            # note that a default value of 0o600 without a device type is
+            # documented - this is not how it seems to work
+            mode = stat.S_IFREG | 0o600
         if device or not mode & stat.S_IFREG:
             raise OSError(errno.EPERM,
                           'Fake os mknod implementation only supports '
