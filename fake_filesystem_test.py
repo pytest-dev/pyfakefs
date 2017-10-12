@@ -1632,6 +1632,18 @@ class FakeOsModuleTest(FakeOsModuleTestBase):
         self.os.rename(path1, path0)
         self.assertTrue(self.os.path.exists(path0))
 
+    def testStatWithMixedCase(self):
+        """Regression test for #310."""
+        self.testCaseInsensitiveFs()
+        base_path = self.makePath('foo')
+        path = self.os.path.join(base_path, 'bar')
+        self.createDirectory(path)
+        path = self.os.path.join(path, 'Bar')
+        self.os.symlink(base_path, path)
+        path = self.os.path.join(path, 'Bar')
+        # used to raise
+        self.os.stat(path)
+
     def testHardlinkWorksWithSymlink(self):
         self.testPosixOnly()
         base_path = self.makePath('foo')

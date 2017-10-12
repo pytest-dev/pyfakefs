@@ -1760,6 +1760,7 @@ class FakeFilesystem(object):
             file_path = os.fspath(file_path)
         if file_path == self.root.name:
             return self.root
+        file_path = self.NormalizeCase(file_path)
         path_components = self.GetPathComponents(file_path)
         target_object = self.root
         try:
@@ -1796,7 +1797,7 @@ class FakeFilesystem(object):
         """
         if sys.version_info >= (3, 6):
             file_path = os.fspath(file_path)
-        file_path = self.NormalizePath(self.NormalizeCase(file_path))
+        file_path = self.NormalizePath(file_path)
         return self.GetObjectFromNormalizedPath(file_path)
 
     def ResolveObject(self, file_path, follow_symlinks=True, allow_fd=False):
