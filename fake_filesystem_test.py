@@ -2163,12 +2163,10 @@ class FakeOsModuleTest(FakeOsModuleTestBase):
 
     def testMakedirsRaisesIfParentIsLoopingLink(self):
         self.skipIfSymlinkNotSupported()
-        # raises EEXIST under Linux
-        self.skipRealFsFailure()
         link_path = self.makePath('link')
         link_target = self.os.path.join(link_path, 'link')
         self.os.symlink(link_target, link_path)
-        self.assertRaisesOSError(errno.ELOOP, self.os.makedirs, link_path)
+        self.assertRaisesOSError(errno.EEXIST, self.os.makedirs, link_path)
 
     def testMakedirsIfParentIsSymlink(self):
         self.testPosixOnly()
@@ -2712,6 +2710,17 @@ class FakeOsModuleTest(FakeOsModuleTestBase):
         self.createFile(file_path)
         self.assertRaisesOSError(errno.EEXIST, self.os.link, file_path,
                                  file_path)
+
+    def testLinkIsBrokenSymlink(self):
+        self.skipIfSymlinkNotSupported()
+        self.testCaseInsensitiveFs()
+        file_path = self.makePath('baz')
+        self.createFile(file_path)
+        path_lower = self.makePath('foo')
+        self.os.symlink(path_lower, path_lower)
+        path_upper = self.makePath('Foo')
+        self.assertRaisesOSError(errno.EEXIST,
+                                 self.os.link, file_path, path_upper)
 
     def testLinkTargetIsDirWindows(self):
         self.testWindowsOnly()

@@ -1553,7 +1553,7 @@ class FakeFilesystem(object):
 
         return None, None
 
-    def Exists(self, file_path):
+    def Exists(self, file_path, check_link=False):
         """Return true if a path points to an existing file system object.
 
         Args:
@@ -1565,6 +1565,8 @@ class FakeFilesystem(object):
         Raises:
             TypeError: if file_path is None.
         """
+        if check_link and self.IsLink(file_path):
+            return True
         if sys.version_info >= (3, 6):
             file_path = os.fspath(file_path)
         if file_path is None:
@@ -1924,7 +1926,7 @@ class FakeFilesystem(object):
         """
         old_file_path = self.NormalizeCase(self.NormalizePath(old_file_path))
         new_file_path = self.NormalizePath(new_file_path)
-        if not self.Exists(old_file_path) and not self.IsLink(old_file_path):
+        if not self.Exists(old_file_path, check_link=True):
             raise_os_error(errno.ENOENT, 2,
                           'Fake filesystem object: '
                           'can not rename nonexistent file',
@@ -1943,7 +1945,7 @@ class FakeFilesystem(object):
                               'Cannot rename symlink to directory',
                               new_file_path)
 
-        if self.Exists(new_file_path) or self.IsLink(new_file_path):
+        if self.Exists(new_file_path, check_link=True):
             if old_file_path == new_file_path:
                 return  # Nothing to do here.
 
@@ -2072,7 +2074,7 @@ class FakeFilesystem(object):
         """
         directory_path = self.NormalizePath(directory_path)
         self._AutoMountDriveIfNeeded(directory_path)
-        if self.Exists(directory_path):
+        if self.Exists(directory_path, check_link=True):
             raise OSError(errno.EEXIST,
                           'Directory exists in fake filesystem',
                           directory_path)
@@ -2253,8 +2255,7 @@ class FakeFilesystem(object):
         error_class = OSError if raw_io else IOError
         file_path = self.NormalizePath(file_path)
 
-        # also consider broken links
-        if self.Exists(file_path) or self.IsLink(file_path):
+        if self.Exists(file_path, check_link=True):
             raise OSError(errno.EEXIST,
                               'File already exists in fake filesystem',
                               file_path)
@@ -2338,7 +2339,7 @@ class FakeFilesystem(object):
         if not self._IsLinkSupported():
             raise OSError("Links are not supported on Windows before Python 3.2")
         new_path_normalized = self.NormalizePath(new_path)
-        if self.Exists(new_path_normalized):
+        if self.Exists(new_path_normalized, check_link=True):
             raise OSError(errno.EEXIST,
                           'File already exists in fake filesystem',
                           new_path)
@@ -2423,7 +2424,7 @@ class FakeFilesystem(object):
                 raise OSError(errno.ENOENT, 'No such fake directory', base_dir)
 
         dir_name = self.NormalizePath(dir_name)
-        if self.Exists(dir_name) or self.IsLink(dir_name):
+        if self.Exists(dir_name, check_link=True):
             raise OSError(errno.EEXIST, 'Fake object already exists', dir_name)
         head, tail = self.SplitPath(dir_name)
 
@@ -2823,7 +2824,7 @@ class FakePathModule(object):
         Returns:
           bool (if file exists).
         """
-        return self.exists(path) or self.islink(path)
+        return self.filesystem.Exists(path, check_link=True)
 
     def getsize(self, path):
         """Return the file object size in bytes.
@@ -3972,7 +3973,7 @@ class FakeOsModule(object):
         filename = self._path_with_dir_fd(filename, self.mknod, dir_fd)
         head, tail = self.path.split(filename)
         if not tail:
-            if self.filesystem.Exists(head):
+            if self.filesystem.Exists(head, check_link=True):
                 raise OSError(errno.EEXIST, 'Fake filesystem: %s: %s' % (
                     os.strerror(errno.EEXIST), filename))
             raise OSError(errno.ENOENT, 'Fake filesystem: %s: %s' % (
@@ -3980,7 +3981,7 @@ class FakeOsModule(object):
         if tail in (b'.', u'.', b'..', u'..'):
             raise OSError(errno.ENOENT, 'Fake fileystem: %s: %s' % (
                 os.strerror(errno.ENOENT), filename))
-        if self.filesystem.Exists(filename):
+        if self.filesystem.Exists(filename, check_link=True):
             raise OSError(errno.EEXIST, 'Fake fileystem: %s: %s' % (
                 os.strerror(errno.EEXIST), filename))
         try:
