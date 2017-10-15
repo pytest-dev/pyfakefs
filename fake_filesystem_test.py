@@ -307,7 +307,7 @@ class FakeDirectoryUnitTest(TestCase):
         self.assertEqual('dummy_file', self.fake_file.contents)
 
     def testSetContentsToDirRaises(self):
-        """Regression test for #276."""
+        # Regression test for #276
         self.filesystem.is_windows_fs = True
         error_check = (self.assertRaisesIOError if self.is_python2
                        else self.assertRaisesOSError)
@@ -467,7 +467,7 @@ class FakeFilesystemUnitTest(TestCase):
         self.assertFalse(self.filesystem.Exists(self.fake_file.name))
 
     def testNotExistsSubpathNamedLikeFileContents(self):
-        """Regression test for #219."""
+        # Regression test for #219
         file_path = "/foo/bar"
         self.filesystem.CreateFile(file_path, contents='baz')
         self.assertFalse(self.filesystem.Exists(file_path + "/baz"))
@@ -1069,9 +1069,8 @@ class FakeOsModuleTest(FakeOsModuleTestBase):
         self.assertRaises(TypeError, self.os.fdopen, 'a string')
 
     def testOutOfRangeFdopen(self):
-        # We haven't created any files, so even 0 is out of range.
-        self.skipRealFs()
-        self.assertRaisesOSError(errno.EBADF, self.os.fdopen, 0)
+        # test some file descriptor that is clearly out of range
+        self.assertRaisesOSError(errno.EBADF, self.os.fdopen, 100)
 
     def testClosedFileDescriptor(self):
         # under Windows and Python2, hangs in tearDown
@@ -1498,7 +1497,7 @@ class FakeOsModuleTest(FakeOsModuleTestBase):
                                  new_path)
 
     def testRenameFileToParentDirFile(self):
-        """Regression test for issue 230."""
+        # Regression test for issue 230
         dir_path = self.makePath('dir')
         self.createDirectory(dir_path)
         file_path = self.makePath('old_file')
@@ -1623,7 +1622,7 @@ class FakeOsModuleTest(FakeOsModuleTestBase):
         self.assertTrue(self.os.path.exists(link_path))
 
     def testRenameWithIncorrectSourceCase(self):
-        """Regression test for #308."""
+        # Regression test for #308
         self.testCaseInsensitiveFs()
         base_path = self.makePath('foo')
         path0 = self.os.path.join(base_path, 'bar')
@@ -1633,7 +1632,7 @@ class FakeOsModuleTest(FakeOsModuleTestBase):
         self.assertTrue(self.os.path.exists(path0))
 
     def testStatWithMixedCase(self):
-        """Regression test for #310."""
+        # Regression test for #310
         self.testCaseInsensitiveFs()
         base_path = self.makePath('foo')
         path = self.os.path.join(base_path, 'bar')
@@ -2073,7 +2072,7 @@ class FakeOsModuleTest(FakeOsModuleTestBase):
         self.assertRaisesOSError(errno.EEXIST, self.os.mkdir, file_path)
 
     def testMkdirRaisesIfSymlinkExists(self):
-        """Regression test for #309."""
+        # Regression test for #309
         self.skipIfSymlinkNotSupported()
         self.testCaseInsensitiveFs()
         path1 = self.makePath('baz')
@@ -2212,17 +2211,13 @@ class FakeOsModuleTest(FakeOsModuleTestBase):
         self.assertRaises(TypeError, self.os.fdatasync, "zero")
 
     def testFsyncRaisesOnInvalidFd(self):
-        # No open files yet, so even 0 is invalid
-        # raises EINVAL under Linux
-        self.skipRealFsFailure(skipWindows=False)
-        self.assertRaisesOSError(errno.EBADF, self.os.fsync, 0)
+        self.assertRaisesOSError(errno.EBADF, self.os.fsync, 100)
 
     def testFdatasyncRaisesOnInvalidFd(self):
-        # No open files yet, so even 0 is invalid
+        # No open files yet
         self.testLinuxOnly()
-        # raises EINVAL under Linux
-        self.skipRealFsFailure()
-        self.assertRaisesOSError(errno.EBADF, self.os.fdatasync, 0)
+        self.assertRaisesOSError(errno.EINVAL, self.os.fdatasync, 0)
+        self.assertRaisesOSError(errno.EBADF, self.os.fdatasync, 100)
 
     def testFsyncPass(self):
         # setup
@@ -2712,6 +2707,7 @@ class FakeOsModuleTest(FakeOsModuleTestBase):
                                  file_path)
 
     def testLinkIsBrokenSymlink(self):
+        # Regression test for #311
         self.skipIfSymlinkNotSupported()
         self.testCaseInsensitiveFs()
         file_path = self.makePath('baz')
@@ -3293,7 +3289,7 @@ class FakeOsModuleLowLevelFileOpTest(FakeOsModuleTestBase):
         dir_path = self.makePath('dir')
         self.createDirectory(dir_path)
         file_des = self.os.open(dir_path, os.O_RDONLY)
-        self.assertEqual(0, file_des)
+        self.assertEqual(3, file_des)
 
     def testOpenModePosix(self):
         self.testPosixOnly()
@@ -3345,7 +3341,7 @@ class FakeOsModuleLowLevelFileOpTest(FakeOsModuleTestBase):
         self.assertRaisesOSError(errno.EBADF, self.os.read, fileno, 10)
 
     def testWriteFromDifferentFDs(self):
-        """Regression test for #211."""
+        # Regression test for #211
         file_path = self.makePath('baz')
         fd0 = self.os.open(file_path, os.O_CREAT | os.O_WRONLY | os.O_TRUNC)
         fd1 = self.os.open(file_path, os.O_CREAT | os.O_WRONLY | os.O_TRUNC)
@@ -3357,7 +3353,7 @@ class FakeOsModuleLowLevelFileOpTest(FakeOsModuleTestBase):
         self.os.close(fd0)
 
     def testWriteFromDifferentFDsWithAppend(self):
-        """Regression test for #268."""
+        # Regression test for #268
         file_path = self.makePath('baz')
         fd0 = self.os.open(file_path, os.O_CREAT | os.O_WRONLY | os.O_TRUNC)
         fd1 = self.os.open(file_path, os.O_WRONLY | os.O_APPEND)
@@ -3369,7 +3365,7 @@ class FakeOsModuleLowLevelFileOpTest(FakeOsModuleTestBase):
         self.os.close(fd0)
 
     def testReadOnlyReadAfterWrite(self):
-        """Regression test for #269."""
+        # Regression test for #269
         self.testPosixOnly()
         file_path = self.makePath('foo', 'bar', 'baz')
         self.createFile(file_path, contents=b'test')
@@ -3380,7 +3376,7 @@ class FakeOsModuleLowLevelFileOpTest(FakeOsModuleTestBase):
         self.os.close(fd0)
 
     def testReadAfterClosingWriteDescriptor(self):
-        """Regression test for #271."""
+        # Regression test for #271
         file_path = self.makePath('baz')
         fd0 = self.os.open(file_path, os.O_CREAT | os.O_WRONLY | os.O_TRUNC)
         fd1 = self.os.open(file_path, os.O_CREAT | os.O_WRONLY | os.O_TRUNC)
@@ -3392,7 +3388,7 @@ class FakeOsModuleLowLevelFileOpTest(FakeOsModuleTestBase):
         self.os.close(fd1)
 
     def testWritingBehindEndOfFile(self):
-        """Regression test for #273."""
+        # Regression test for #273
         file_path = self.makePath('baz')
         fd1 = self.os.open(file_path, os.O_CREAT)
         fd2 = self.os.open(file_path, os.O_RDWR)
@@ -4222,7 +4218,7 @@ class FakePathModuleTest(TestCase):
         self.assertFalse(self.path.islink('it_dont_exist'))
 
     def testIsLinkCaseSensitive(self):
-        """Regression test for #306"""
+        # Regression test for #306
         self.filesystem.is_case_sensitive = False
         self.filesystem.CreateDirectory('foo')
         self.filesystem.CreateLink('foo!bar', 'foo')
@@ -4879,7 +4875,7 @@ class FakeFileOpenTest(FakeFileOpenTestBase):
         self.assertEqual(target_contents, got_contents)
 
     def testOpenRaisesOnSymlinkLoop(self):
-        """Regression test for #274."""
+        # Regression test for #274
         self.testPosixOnly()
         file_dir = self.makePath('foo')
         self.os.mkdir(file_dir)
@@ -4895,27 +4891,24 @@ class FakeFileOpenTest(FakeFileOpenTestBase):
         third_path = self.makePath('some_file3')
         self.createFile(third_path, contents='contents here3')
 
-        fake_file1 = self.open(first_path, 'r')
-        fake_file2 = self.open(second_path, 'r')
-        fake_file3 = self.open(third_path, 'r')
-        fileno1 = fake_file1.fileno()
-        fileno2 = fake_file2.fileno()
-        self.assertGreater(fileno2, fileno1)
-        self.assertGreater(fake_file3.fileno(), fileno2)
+        with self.open(first_path) as fake_file1:
+            with self.open(second_path) as fake_file2:
+                with self.open(third_path) as fake_file3:
+                    fileno2 = fake_file2.fileno()
+                    self.assertGreater(fileno2, fake_file1.fileno())
+                    self.assertGreater(fake_file3.fileno(), fileno2)
 
     def testFileDescriptorsForTheSameFileAreDifferent(self):
         first_path = self.makePath('some_file1')
         self.createFile(first_path, contents='contents here1')
         second_path = self.makePath('some_file2')
         self.createFile(second_path, contents='contents here2')
-
-        fake_file1 = self.open(first_path, 'r')
-        fake_file2 = self.open(second_path, 'r')
-        fake_file1a = self.open(first_path, 'r')
-        fileno1 = fake_file1.fileno()
-        fileno2 = fake_file2.fileno()
-        self.assertGreater(fileno2, fileno1)
-        self.assertGreater(fake_file1a.fileno(), fileno2)
+        with self.open(first_path) as fake_file1:
+            with self.open(second_path) as fake_file2:
+                with self.open(first_path) as fake_file1a:
+                    fileno2 = fake_file2.fileno()
+                    self.assertGreater(fileno2, fake_file1.fileno())
+                    self.assertGreater(fake_file1a.fileno(), fileno2)
 
     def testReusedFileDescriptorsDoNotAffectOthers(self):
         first_path = self.makePath('some_file1')
@@ -5032,7 +5025,7 @@ class FakeFileOpenTest(FakeFileOpenTestBase):
             self.assertEqual('', fh.read())
 
     def testTruncateFlushesContents(self):
-        """Regression test for #285."""
+        # Regression test for #285
         file_path = self.makePath('baz')
         self.createFile(file_path)
         f0 = self.open(file_path, 'w')
@@ -5041,7 +5034,7 @@ class FakeFileOpenTest(FakeFileOpenTestBase):
         self.assertEqual(4, self.os.path.getsize(file_path))
 
     def testThatReadOverEndDoesNotResetPosition(self):
-        """Regression test for #286."""
+        # Regression test for #286
         file_path = self.makePath('baz')
         f0 = self.open(file_path, 'w')
         f0.close()
@@ -5051,7 +5044,7 @@ class FakeFileOpenTest(FakeFileOpenTestBase):
         self.assertEqual(2, f0.tell())
 
     def testAccessingClosedFileRaises(self):
-        """Regression test for #275, #280."""
+        # Regression test for #275, #280
         if platform.python_implementation() == 'PyPy':
             raise unittest.SkipTest('Different exceptions with PyPy')
         file_path = self.makePath('foo')
@@ -5069,7 +5062,7 @@ class FakeFileOpenTest(FakeFileOpenTestBase):
     @unittest.skipIf(sys.version_info >= (3,),
                      'file.next() not available in Python 3')
     def testNextRaisesOnClosedFile(self):
-        """Regression test for #284."""
+        # Regression test for #284
         file_path = self.makePath('foo')
         f0 = self.open(file_path, 'w')
         f0.write('test')
@@ -5077,7 +5070,7 @@ class FakeFileOpenTest(FakeFileOpenTestBase):
         self.assertRaises(IOError, lambda: f0.next())
 
     def testAccessingOpenFileWithAnotherHandleRaises(self):
-        """Regression test for #282."""
+        # Regression test for #282
         if platform.python_implementation() == 'PyPy':
             raise unittest.SkipTest('Different exceptions with PyPy')
         file_path = self.makePath('foo')
@@ -5089,7 +5082,7 @@ class FakeFileOpenTest(FakeFileOpenTestBase):
         self.os.close(f0)
 
     def testTellFlushesUnderPosix(self):
-        """Regression test for #288."""
+        # Regression test for #288
         self.testPosixOnly()
         self.skipRealFsFailure(skipPython3=False, skipMacOs=False)
         file_path = self.makePath('foo')
@@ -5099,7 +5092,7 @@ class FakeFileOpenTest(FakeFileOpenTestBase):
         self.assertEqual(4, self.os.path.getsize(file_path))
 
     def testTellFlushesUnderWindowsInPython3(self):
-        """Regression test for #288."""
+        # Regression test for #288
         self.testWindowsOnly()
         file_path = self.makePath('foo')
         f0 = self.open(file_path, 'w')
@@ -5111,7 +5104,7 @@ class FakeFileOpenTest(FakeFileOpenTestBase):
     @unittest.skipIf(sys.version_info < (2, 7),
                      'Python 2.6 behaves differently')
     def testReadFlushesUnderPosix(self):
-        """Regression test for #278."""
+        # Regression test for #278
         self.testPosixOnly()
         file_path = self.makePath('foo')
         f0 = self.open(file_path, 'a+')
@@ -5120,7 +5113,7 @@ class FakeFileOpenTest(FakeFileOpenTestBase):
         self.assertEqual(4, self.os.path.getsize(file_path))
 
     def testReadFlushesUnderWindowsInPython3(self):
-        """Regression test for #278."""
+        # Regression test for #278
         self.testWindowsOnly()
         file_path = self.makePath('foo')
         f0 = self.open(file_path, 'w+')
@@ -5130,7 +5123,7 @@ class FakeFileOpenTest(FakeFileOpenTestBase):
         self.assertEqual(expected, self.os.path.getsize(file_path))
 
     def testSeekFlushes(self):
-        """Regression test for #290."""
+        # Regression test for #290
         file_path = self.makePath('foo')
         f0 = self.open(file_path, 'w')
         f0.write('test')
@@ -5139,7 +5132,7 @@ class FakeFileOpenTest(FakeFileOpenTestBase):
         self.assertEqual(4, self.os.path.getsize(file_path))
 
     def testTruncateFlushes(self):
-        """Regression test for #291."""
+        # Regression test for #291
         file_path = self.makePath('foo')
         f0 = self.open(file_path, 'a')
         f0.write('test')
@@ -5148,7 +5141,7 @@ class FakeFileOpenTest(FakeFileOpenTestBase):
         self.assertEqual(4, self.os.path.getsize(file_path))
 
     def checkSeekOutsideAndTruncateSetsSize(self, mode):
-        """Regression test for #294 and #296."""
+        # Regression test for #294 and #296
         file_path = self.makePath('baz')
         f0 = self.open(file_path, mode)
         f0.seek(1)
@@ -5161,15 +5154,15 @@ class FakeFileOpenTest(FakeFileOpenTestBase):
         self.assertEqual(1, self.os.path.getsize(file_path))
 
     def testSeekOutsideAndTruncateSetsSizeInWriteMode(self):
-        """Regression test for #294."""
+        # Regression test for #294
         self.checkSeekOutsideAndTruncateSetsSize('w')
 
     def testSeekOutsideAndTruncateSetsSizeInAppendMode(self):
-        """Regression test for #295."""
+        # Regression test for #295
         self.checkSeekOutsideAndTruncateSetsSize('a')
 
     def testClosingClosedFileDoesNothing(self):
-        """Regression test for #299."""
+        # Regression test for #299
         file_path = self.makePath('baz')
         f0 = self.open(file_path, 'w')
         f0.close()
@@ -5179,7 +5172,7 @@ class FakeFileOpenTest(FakeFileOpenTestBase):
         self.assertEqual('', f1.read())
 
     def testTruncateFlushesZeros(self):
-        """Regression test for #301."""
+        # Regression test for #301
         file_path = self.makePath('baz')
         f0 = self.open(file_path, 'w')
         f1 = self.open(file_path)

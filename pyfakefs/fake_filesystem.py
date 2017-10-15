@@ -152,6 +152,8 @@ FAKE_PATH_MODULE_DEPRECATION = ('Do not instantiate a FakePathModule directly; '
                                 'let FakeOsModule instantiate it.  See the '
                                 'FakeOsModule docstring for details.')
 
+NR_STD_STREAMS = 3
+
 
 def raise_os_error(errno, winerror, message, filename=''):
     if sys.platform == 'win32' and sys.version_info[0] < 3:
@@ -862,6 +864,7 @@ class FakeFilesystem(object):
         self._last_dev = 0
         self.mount_points = {}
         self.AddMountPoint(self.root.name, total_size)
+        self._add_standard_streams()
 
     @staticmethod
     def _matching_string(matched, string):
@@ -2779,6 +2782,11 @@ class FakeFilesystem(object):
     def __str__(self):
         return str(self.root)
 
+    def _add_standard_streams(self):
+        self.AddOpenFile(StandardStreamWrapper(sys.stdin))
+        self.AddOpenFile(StandardStreamWrapper(sys.stdout))
+        self.AddOpenFile(StandardStreamWrapper(sys.stderr))
+
 
 class FakePathModule(object):
     """Faked os.path module replacement.
@@ -4040,6 +4048,8 @@ class FakeOsModule(object):
             TypeError: file_des is not an integer.
         """
         # Throw an error if file_des isn't valid
+        if 0 <= file_des < NR_STD_STREAMS:
+            raise OSError(errno.EINVAL, 'Invalid file descriptor')
         self.filesystem.GetOpenFile(file_des)
 
     def fdatasync(self, file_des):
@@ -4055,6 +4065,8 @@ class FakeOsModule(object):
         # Throw an error if file_des isn't valid
         if self.filesystem.is_windows_fs or self.filesystem.is_macos:
             raise AttributeError("module 'os' has no attribute 'fdatasync'")
+        if 0 <= file_des < NR_STD_STREAMS:
+            raise OSError(errno.EINVAL, 'Invalid file descriptor')
         self.filesystem.GetOpenFile(file_des)
 
     def __getattr__(self, name):
@@ -4443,6 +4455,25 @@ class FakeFileWrapper(object):
         if not self._read:
             self._raise('File is not open for reading')
         return self._io.__iter__()
+
+
+class StandardStreamWrapper(object):
+    """Wrapper for a system standard stream to be used in open files list.
+    """
+    def __init__(self, stream_object):
+        self._stream_object = stream_object
+        self.filedes = None
+
+    def GetObject(self):
+        return self._stream_object
+
+    def fileno(self):
+        """Return the file descriptor of the wrapped standard stream."""
+        return self.filedes
+
+    def close(self):
+        """We do not support closing standard streams."""
+        pass
 
 
 class FakeDirWrapper(object):
