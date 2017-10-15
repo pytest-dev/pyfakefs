@@ -3312,29 +3312,23 @@ class FakeOsModuleLowLevelFileOpTest(FakeOsModuleTestBase):
         self.os.close(file_des)
 
     def testWriteRead(self):
-        # raises OSError EBADF, see below
-        self.skipRealFsFailure()
         file_path = self.makePath('file1')
         self.createFile(file_path, contents=b'orig contents')
         new_contents = b'1234567890abcdef'
 
-        fh = self.open(file_path, 'wb')
-        fileno = fh.fileno()
+        with self.open(file_path, 'wb') as fh:
+            fileno = fh.fileno()
+            self.assertEqual(len(new_contents),
+                             self.os.write(fileno, new_contents))
+            self.checkContents(file_path, new_contents)
 
-        self.assertEqual(len(new_contents),
-                         self.os.write(fileno, new_contents))
-        self.checkContents(file_path, new_contents)
-        self.os.close(fileno)
-
-        fh = self.open(file_path, 'rb')
-        fileno = fh.fileno()
-        # raises OSError EBADF
-        self.assertEqual(b'', self.os.read(fileno, 0))
-        self.assertEqual(new_contents[0:2], self.os.read(fileno, 2))
-        self.assertEqual(new_contents[2:10], self.os.read(fileno, 8))
-        self.assertEqual(new_contents[10:], self.os.read(fileno, 100))
-        self.assertEqual(b'', self.os.read(fileno, 10))
-        self.os.close(fileno)
+        with self.open(file_path, 'rb') as fh:
+            fileno = fh.fileno()
+            self.assertEqual(b'', self.os.read(fileno, 0))
+            self.assertEqual(new_contents[0:2], self.os.read(fileno, 2))
+            self.assertEqual(new_contents[2:10], self.os.read(fileno, 8))
+            self.assertEqual(new_contents[10:], self.os.read(fileno, 100))
+            self.assertEqual(b'', self.os.read(fileno, 10))
 
         self.assertRaisesOSError(errno.EBADF, self.os.write, fileno,
                                  new_contents)
