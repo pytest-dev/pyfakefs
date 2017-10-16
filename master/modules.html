@@ -5,12 +5,9 @@
 <html xmlns="http://www.w3.org/1999/xhtml">
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-    
     <title>Public Modules and Classes &#8212; pyfakefs 3.3 documentation</title>
-    
     <link rel="stylesheet" href="_static/nature.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
-    
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    './',
@@ -149,7 +146,7 @@ to PEP-8 (maintaining upwards compatibility).</p>
 <h2>Fake filesystem classes<a class="headerlink" href="#fake-filesystem-classes" title="Permalink to this headline">¶</a></h2>
 <dl class="class">
 <dt id="pyfakefs.fake_filesystem.FakeFilesystem">
-<em class="property">class </em><code class="descclassname">pyfakefs.fake_filesystem.</code><code class="descname">FakeFilesystem</code><span class="sig-paren">(</span><em>path_separator=’'</em>, <em>total_size=None</em><span class="sig-paren">)</span><a class="headerlink" href="#pyfakefs.fake_filesystem.FakeFilesystem" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><code class="descclassname">pyfakefs.fake_filesystem.</code><code class="descname">FakeFilesystem</code><span class="sig-paren">(</span><em>path_separator='/'</em>, <em>total_size=None</em><span class="sig-paren">)</span><a class="headerlink" href="#pyfakefs.fake_filesystem.FakeFilesystem" title="Permalink to this definition">¶</a></dt>
 <dd><p>Provides the appearance of a real directory tree for unit testing.</p>
 <dl class="attribute">
 <dt id="pyfakefs.fake_filesystem.FakeFilesystem.path_separator">
@@ -333,7 +330,7 @@ If negative, the used space will be decreased.</li>
 
 <dl class="method">
 <dt id="pyfakefs.fake_filesystem.FakeFilesystem.CreateFile">
-<code class="descname">CreateFile</code><span class="sig-paren">(</span><em>file_path</em>, <em>st_mode=33206</em>, <em>contents=”</em>, <em>st_size=None</em>, <em>create_missing_dirs=True</em>, <em>apply_umask=False</em>, <em>encoding=None</em>, <em>errors=None</em><span class="sig-paren">)</span><a class="headerlink" href="#pyfakefs.fake_filesystem.FakeFilesystem.CreateFile" title="Permalink to this definition">¶</a></dt>
+<code class="descname">CreateFile</code><span class="sig-paren">(</span><em>file_path</em>, <em>st_mode=33206</em>, <em>contents=''</em>, <em>st_size=None</em>, <em>create_missing_dirs=True</em>, <em>apply_umask=False</em>, <em>encoding=None</em>, <em>errors=None</em><span class="sig-paren">)</span><a class="headerlink" href="#pyfakefs.fake_filesystem.FakeFilesystem.CreateFile" title="Permalink to this definition">¶</a></dt>
 <dd><p>Create file_path, including all the parent directories along the way.</p>
 <p>This helper method can be used to set up tests more easily.</p>
 <table class="docutils field-list" frame="void" rules="none">
@@ -659,7 +656,7 @@ or (Windows only) the file is open.</li>
 <h2>Unittest module classes<a class="headerlink" href="#unittest-module-classes" title="Permalink to this headline">¶</a></h2>
 <dl class="class">
 <dt id="pyfakefs.fake_filesystem_unittest.TestCase">
-<em class="property">class </em><code class="descclassname">pyfakefs.fake_filesystem_unittest.</code><code class="descname">TestCase</code><span class="sig-paren">(</span><em>methodName=’runTest’</em>, <em>additional_skip_names=None</em>, <em>patch_path=True</em>, <em>special_names=None</em>, <em>modules_to_reload=None</em>, <em>use_dynamic_patch=False</em><span class="sig-paren">)</span><a class="headerlink" href="#pyfakefs.fake_filesystem_unittest.TestCase" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><code class="descclassname">pyfakefs.fake_filesystem_unittest.</code><code class="descname">TestCase</code><span class="sig-paren">(</span><em>methodName='runTest'</em>, <em>additional_skip_names=None</em>, <em>patch_path=True</em>, <em>special_names=None</em>, <em>modules_to_reload=None</em>, <em>use_dynamic_patch=False</em><span class="sig-paren">)</span><a class="headerlink" href="#pyfakefs.fake_filesystem_unittest.TestCase" title="Permalink to this definition">¶</a></dt>
 <dd><p>Test case class that automatically replaces file-system related
 modules by fake implementations.</p>
 <p>Creates the test class instance and the stubber used to stub out
@@ -946,7 +943,7 @@ my_io_module = fake_filesystem.FakeIoModule(filesystem)</p>
     </div>
     <div class="footer" role="contentinfo">
         &#169; Copyright 2017, John McGehee.
-      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.6.1.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.6.4.
     </div>
   </body>
 </html>
