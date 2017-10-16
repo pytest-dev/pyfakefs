@@ -126,6 +126,14 @@ class RealFsTestMixin(object):
             self.filesystem.is_windows_fs = False
             self.filesystem.is_macos = True
 
+    def testLinuxAndWindows(self):
+        if self.useRealFs():
+            if TestCase.is_macos:
+                raise unittest.SkipTest(
+                    'Testing non-MacOs functionality')
+        else:
+            self.filesystem.is_macos = False
+
     def testCaseInsensitiveFs(self):
         if self.useRealFs():
             if not TestCase.is_macos and not TestCase.is_windows:
@@ -133,6 +141,14 @@ class RealFsTestMixin(object):
                     'Testing case insensitive specific functionality')
         else:
             self.filesystem.is_case_sensitive = False
+
+    def testCaseSensitiveFs(self):
+        if self.useRealFs():
+            if TestCase.is_macos or TestCase.is_windows:
+                raise unittest.SkipTest(
+                    'Testing case sensitive specific functionality')
+        else:
+            self.filesystem.is_case_sensitive = True
 
     def testPosixOnly(self):
         if self.useRealFs():
@@ -736,6 +752,8 @@ class FakeFilesystemUnitTest(TestCase):
         self.assertEqual('target', obj.name)
         self.assertEqual(target_contents, obj.contents)
 
+    @unittest.skipIf(TestCase.is_windows and sys.version_info < (3, 3),
+                     'Links are not supported under Windows before Python 3.3')
     def checkLresolveObject(self):
         target_path = 'dir/target'
         target_contents = '0123456789ABCDEF'
@@ -1165,8 +1183,6 @@ class FakeOsModuleTest(FakeOsModuleTestBase):
                          self.os.stat(link_path, follow_symlinks=False)[
                              stat.ST_SIZE])
 
-    @unittest.skipIf(TestCase.is_windows and sys.version_info < (3, 3),
-                     'Links are not supported under Windows before Python 3.3')
     def testLstat(self):
         self.skipIfSymlinkNotSupported()
         directory = self.makePath('xyzzy')
@@ -1634,6 +1650,7 @@ class FakeOsModuleTest(FakeOsModuleTestBase):
     def testStatWithMixedCase(self):
         # Regression test for #310
         self.testCaseInsensitiveFs()
+        self.skipIfSymlinkNotSupported()
         base_path = self.makePath('foo')
         path = self.os.path.join(base_path, 'bar')
         self.createDirectory(path)
@@ -5075,19 +5092,18 @@ class FakeFileOpenTest(FakeFileOpenTestBase):
         self.assertRaises(ValueError, lambda: fake_file.write('a'))
         self.os.close(f0)
 
-    def testTellFlushesUnderPosix(self):
+    def testTellFlushesUnderMacOs(self):
         # Regression test for #288
-        self.testPosixOnly()
-        self.skipRealFsFailure(skipPython3=False, skipMacOs=False)
+        self.testMacOsOnly()
         file_path = self.makePath('foo')
         f0 = self.open(file_path, 'w')
         f0.write('test')
         self.assertEqual(4, f0.tell())
         self.assertEqual(4, self.os.path.getsize(file_path))
 
-    def testTellFlushesUnderWindowsInPython3(self):
+    def testTellFlushesInPython3(self):
         # Regression test for #288
-        self.testWindowsOnly()
+        self.testLinuxAndWindows()
         file_path = self.makePath('foo')
         f0 = self.open(file_path, 'w')
         f0.write('test')
