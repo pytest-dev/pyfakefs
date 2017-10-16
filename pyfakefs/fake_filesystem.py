@@ -685,6 +685,12 @@ class FakeDirectory(FakeFile):
         Raises:
             KeyError: if no child exists by the specified name.
         """
+        if not self.filesystem.is_case_sensitive:
+            matching_names = [name for name in self.contents
+                                if name.lower() == pathname_name.lower()]
+            if matching_names:
+                pathname_name = matching_names[0]
+
         return self.contents[pathname_name]
 
     def RemoveEntry(self, pathname_name, recursive=True):

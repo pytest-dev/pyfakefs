@@ -2735,6 +2735,15 @@ class FakeOsModuleTest(FakeOsModuleTestBase):
         self.assertRaisesOSError(errno.EEXIST,
                                  self.os.link, file_path, path_upper)
 
+    def testLinkWithChangedCase(self):
+        # Regression test for #312
+        self.skipIfSymlinkNotSupported()
+        self.testCaseInsensitiveFs()
+        link_path = self.makePath('link')
+        self.os.symlink(self.base_path, link_path)
+        link_path = self.os.path.join(link_path, 'Link')
+        self.assertTrue(self.os.lstat(link_path))
+
     def testLinkTargetIsDirWindows(self):
         self.testWindowsOnly()
         self.skipIfSymlinkNotSupported()
