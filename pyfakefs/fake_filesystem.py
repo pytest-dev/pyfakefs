@@ -1964,7 +1964,8 @@ class FakeFilesystem(object):
 
             new_object = self.GetObject(new_file_path)
             if old_object == new_object:
-                if old_file_path.lower() == new_file_path.lower():
+                if (self.ResolvePath(old_file_path).lower() ==
+                        self.ResolvePath(new_file_path).lower()):
                     # only case is changed in case-insensitive file system
                     # - do the rename
                     parent, file_name = self.SplitPath(new_file_path)

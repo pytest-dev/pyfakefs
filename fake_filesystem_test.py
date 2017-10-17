@@ -3106,6 +3106,18 @@ class FakeOsModuleTestCaseInsensitiveFS(FakeOsModuleTestBase):
         self.assertRaisesOSError(errno.EINVAL, self.os.rename, dir_path,
                                  dir_in_dir_path.upper())
 
+    def testRenameDirectoryToLinkedDir(self):
+        # Regression test for #314
+        self.skipIfSymlinkNotSupported()
+        link_path = self.makePath('link')
+        self.os.symlink(self.base_path, link_path)
+        link_subdir = self.os.path.join(link_path, 'dir')
+        dir_path = self.makePath('Dir')
+        self.os.mkdir(dir_path)
+        self.os.rename(dir_path, link_subdir)
+        self.assertEqual(['dir', 'link'],
+                         sorted(self.os.listdir(self.base_path)))
+
     def testRecursiveRenameRaises(self):
         self.testPosixOnly()
         base_path = self.makePath('foo', 'bar')
