@@ -992,6 +992,7 @@ class FakeOsModuleTest(FakeOsModuleTestBase):
 
     def testBackwardsChdir(self):
         """chdir into '..' should behave appropriately."""
+        # skipping real fs test - can't test root dir
         self.skipRealFs()
         rootdir = self.os.getcwd()
         dirname = 'foo'
@@ -1005,6 +1006,7 @@ class FakeOsModuleTest(FakeOsModuleTestBase):
         self.assertEqual(rootdir, self.os.getcwd())
 
     def testGetCwd(self):
+        # skipping real fs test - can't test root dir
         self.skipRealFs()
         dirname = self.makePath('foo', 'bar')
         self.createDirectory(dirname)
@@ -1567,33 +1569,6 @@ class FakeOsModuleTest(FakeOsModuleTestBase):
         self.assertTrue(self.os.path.lexists(file_path))
         self.assertFalse(self.os.path.exists(link_path))
 
-    def testChangeCaseInCaseInsensitiveFileSystem(self):
-        """Can use `rename()` to change filename case in a case-insensitive
-         file system."""
-        self.testCaseInsensitiveFs()
-        old_file_path = self.makePath('fileName')
-        new_file_path = self.makePath('FileNAME')
-        self.createFile(old_file_path, contents='test contents')
-        if not self.useRealFs():
-            self.assertEqual(old_file_path,
-                             self.filesystem.NormalizeCase(old_file_path))
-        self.os.rename(old_file_path, new_file_path)
-        self.assertTrue(self.os.path.exists(old_file_path))
-        self.assertTrue(self.os.path.exists(new_file_path))
-        if not self.useRealFs():
-            self.assertEqual(new_file_path,
-                             self.filesystem.NormalizeCase(old_file_path))
-
-    def testRenameSymlinkWithChangedCase(self):
-        # Regression test for #313
-        self.testCaseInsensitiveFs()
-        self.skipIfSymlinkNotSupported()
-        link_path = self.makePath('link')
-        self.os.symlink(self.base_path, link_path)
-        link_path = self.os.path.join(link_path, 'link')
-        link_path_upper = self.makePath('link', 'LINK')
-        self.os.rename(link_path_upper, link_path)
-
     def testRenameDirectory(self):
         """Can rename a directory to an unused name."""
         for old_path, new_path in [('wxyyw', 'xyzzy'), ('abccb', 'cdeed')]:
@@ -1646,29 +1621,6 @@ class FakeOsModuleTest(FakeOsModuleTestBase):
         self.os.rename(file_path, link_path)
         self.assertTrue(self.os.path.exists(file_path))
         self.assertTrue(self.os.path.exists(link_path))
-
-    def testRenameWithIncorrectSourceCase(self):
-        # Regression test for #308
-        self.testCaseInsensitiveFs()
-        base_path = self.makePath('foo')
-        path0 = self.os.path.join(base_path, 'bar')
-        path1 = self.os.path.join(base_path, 'Bar')
-        self.createDirectory(path0)
-        self.os.rename(path1, path0)
-        self.assertTrue(self.os.path.exists(path0))
-
-    def testStatWithMixedCase(self):
-        # Regression test for #310
-        self.testCaseInsensitiveFs()
-        self.skipIfSymlinkNotSupported()
-        base_path = self.makePath('foo')
-        path = self.os.path.join(base_path, 'bar')
-        self.createDirectory(path)
-        path = self.os.path.join(path, 'Bar')
-        self.os.symlink(base_path, path)
-        path = self.os.path.join(path, 'Bar')
-        # used to raise
-        self.os.stat(path)
 
     def testHardlinkWorksWithSymlink(self):
         self.testPosixOnly()
@@ -2097,15 +2049,6 @@ class FakeOsModuleTest(FakeOsModuleTestBase):
         self.createFile(file_path)
         self.assertTrue(self.os.path.exists(file_path))
         self.assertRaisesOSError(errno.EEXIST, self.os.mkdir, file_path)
-
-    def testMkdirRaisesIfSymlinkExists(self):
-        # Regression test for #309
-        self.skipIfSymlinkNotSupported()
-        self.testCaseInsensitiveFs()
-        path1 = self.makePath('baz')
-        self.os.symlink(path1, path1)
-        path2 = self.makePath('Baz')
-        self.assertRaisesOSError(errno.EEXIST, self.os.mkdir, path2)
 
     def testMkdirRaisesIfParentIsFile(self):
         """mkdir raises exception if name already exists as a file."""
@@ -2712,8 +2655,6 @@ class FakeOsModuleTest(FakeOsModuleTestBase):
         with self.open(file2_path) as f:
             self.assertEqual(f.read(), contents2)
 
-    @unittest.skipIf(TestCase.is_windows and sys.version_info < (3, 3),
-                     'Links are not supported under Windows before Python 3.3')
     def testLinkNonExistentParent(self):
         self.skipIfSymlinkNotSupported()
         file1_path = self.makePath('test_file1')
@@ -2732,27 +2673,6 @@ class FakeOsModuleTest(FakeOsModuleTestBase):
         self.createFile(file_path)
         self.assertRaisesOSError(errno.EEXIST, self.os.link, file_path,
                                  file_path)
-
-    def testLinkIsBrokenSymlink(self):
-        # Regression test for #311
-        self.skipIfSymlinkNotSupported()
-        self.testCaseInsensitiveFs()
-        file_path = self.makePath('baz')
-        self.createFile(file_path)
-        path_lower = self.makePath('foo')
-        self.os.symlink(path_lower, path_lower)
-        path_upper = self.makePath('Foo')
-        self.assertRaisesOSError(errno.EEXIST,
-                                 self.os.link, file_path, path_upper)
-
-    def testLinkWithChangedCase(self):
-        # Regression test for #312
-        self.skipIfSymlinkNotSupported()
-        self.testCaseInsensitiveFs()
-        link_path = self.makePath('link')
-        self.os.symlink(self.base_path, link_path)
-        link_path = self.os.path.join(link_path, 'Link')
-        self.assertTrue(self.os.lstat(link_path))
 
     def testLinkTargetIsDirWindows(self):
         self.testWindowsOnly()
@@ -2868,6 +2788,839 @@ class FakeOsModuleTest(FakeOsModuleTestBase):
 
 
 class RealOsModuleTest(FakeOsModuleTest):
+    def useRealFs(self):
+        return True
+
+
+class FakeOsModuleTestCaseInsensitiveFS(FakeOsModuleTestBase):
+    def setUp(self):
+        super(FakeOsModuleTestCaseInsensitiveFS, self).setUp()
+        self.testCaseInsensitiveFs()
+        self.rwx = self.os.R_OK | self.os.W_OK | self.os.X_OK
+        self.rw = self.os.R_OK | self.os.W_OK
+
+    def testChdirFailsNonDirectory(self):
+        """chdir should raise OSError if the target is not a directory."""
+        filename = self.makePath('foo', 'bar')
+        self.createFile(filename)
+        filename1 = self.makePath('Foo', 'Bar')
+        self.assertRaisesOSError(self.not_dir_error(), self.os.chdir, filename1)
+
+    def testListdirReturnsList(self):
+        directory_root = self.makePath('xyzzy')
+        self.os.mkdir(directory_root)
+        directory = self.os.path.join(directory_root, 'bug')
+        self.os.mkdir(directory)
+        directory_upper = self.makePath('XYZZY', 'BUG')
+        self.createFile(self.makePath(directory, 'foo'))
+        self.assertEqual(['foo'], self.os.listdir(directory_upper))
+
+    def testListdirOnSymlink(self):
+        self.skipIfSymlinkNotSupported()
+        directory = self.makePath('xyzzy')
+        files = ['foo', 'bar', 'baz']
+        for f in files:
+            self.createFile(self.makePath(directory, f))
+        self.createLink(self.makePath('symlink'), self.makePath('xyzzy'))
+        files.sort()
+        self.assertEqual(files,
+                         sorted(self.os.listdir(self.makePath('SymLink'))))
+
+    def testFdopenMode(self):
+        self.skipRealFs()
+        file_path1 = self.makePath('some_file1')
+        file_path2 = self.makePath('Some_File1')
+        file_path3 = self.makePath('SOME_file1')
+        self.createFile(file_path1, contents='contents here1')
+        self.os.chmod(file_path2, (stat.S_IFREG | 0o666) ^ stat.S_IWRITE)
+
+        fake_file1 = self.open(file_path3, 'r')
+        fileno1 = fake_file1.fileno()
+        self.os.fdopen(fileno1)
+        self.os.fdopen(fileno1, 'r')
+        exception = OSError if self.is_python2 else IOError
+        self.assertRaises(exception, self.os.fdopen, fileno1, 'w')
+
+    def testStat(self):
+        directory = self.makePath('xyzzy')
+        directory1 = self.makePath('XYZZY')
+        file_path = self.os.path.join(directory, 'plugh')
+        self.createFile(file_path, contents='ABCDE')
+        self.assertTrue(stat.S_IFDIR & self.os.stat(directory1)[stat.ST_MODE])
+        file_path1 = self.os.path.join(directory1, 'Plugh')
+        self.assertTrue(stat.S_IFREG & self.os.stat(file_path1)[stat.ST_MODE])
+        self.assertTrue(stat.S_IFREG & self.os.stat(file_path1).st_mode)
+        self.assertEqual(5, self.os.stat(file_path1)[stat.ST_SIZE])
+
+    @unittest.skipIf(sys.version_info < (3, 3),
+                     'follow_symlinks new in Python 3.3')
+    def testStatNoFollowSymlinks(self):
+        """Test that stat with follow_symlinks=False behaves like lstat."""
+        self.skipIfSymlinkNotSupported()
+        directory = self.makePath('xyzzy')
+        base_name = 'plugh'
+        file_contents = 'frobozz'
+        # Just make sure we didn't accidentally make our test data meaningless.
+        self.assertNotEqual(len(base_name), len(file_contents))
+        file_path = self.os.path.join(directory, base_name)
+        link_path = self.os.path.join(directory, 'link')
+        self.createFile(file_path, contents=file_contents)
+        self.createLink(link_path, base_name)
+        self.assertEqual(len(file_contents),
+                         self.os.stat(file_path.upper(), follow_symlinks=False)[
+                             stat.ST_SIZE])
+        self.assertEqual(len(base_name),
+                         self.os.stat(link_path.upper(), follow_symlinks=False)[
+                             stat.ST_SIZE])
+
+    def testLstat(self):
+        self.skipIfSymlinkNotSupported()
+        directory = self.makePath('xyzzy')
+        base_name = 'plugh'
+        file_contents = 'frobozz'
+        # Just make sure we didn't accidentally make our test data meaningless.
+        self.assertNotEqual(len(base_name), len(file_contents))
+        file_path = self.os.path.join(directory, base_name)
+        link_path = self.os.path.join(directory, 'link')
+        self.createFile(file_path, contents=file_contents)
+        self.createLink(link_path, base_name)
+        self.assertEqual(len(file_contents),
+                         self.os.lstat(file_path.upper())[stat.ST_SIZE])
+        self.assertEqual(len(base_name),
+                         self.os.lstat(link_path.upper())[stat.ST_SIZE])
+
+    def testReadlink(self):
+        self.skipIfSymlinkNotSupported()
+        link_path = self.makePath('foo', 'bar', 'baz')
+        target = self.makePath('tarJAY')
+        self.createLink(link_path, target)
+        self.assertEqual(self.os.readlink(link_path.upper()), target)
+
+    def checkReadlinkRaisesIfPathIsNotALink(self):
+        file_path = self.makePath('foo', 'bar', 'eleventyone')
+        self.createFile(file_path)
+        self.assertRaisesOSError(errno.EINVAL,
+                                 self.os.readlink, file_path.upper())
+
+    def testReadlinkRaisesIfPathIsNotALinkWindows(self):
+        self.testWindowsOnly()
+        self.skipIfSymlinkNotSupported()
+        self.checkReadlinkRaisesIfPathIsNotALink()
+
+    def testReadlinkRaisesIfPathIsNotALinkPosix(self):
+        self.testPosixOnly()
+        self.checkReadlinkRaisesIfPathIsNotALink()
+
+    def checkReadlinkRaisesIfPathHasFile(self, error_subtype):
+        self.createFile(self.makePath('a_file'))
+        file_path = self.makePath('a_file', 'foo')
+        self.assertRaisesOSError(error_subtype,
+                                 self.os.readlink, file_path.upper())
+        file_path = self.makePath('a_file', 'foo', 'bar')
+        self.assertRaisesOSError(error_subtype,
+                                 self.os.readlink, file_path.upper())
+
+    def testReadlinkRaisesIfPathHasFileWindows(self):
+        self.testWindowsOnly()
+        self.skipIfSymlinkNotSupported()
+        self.checkReadlinkRaisesIfPathHasFile(errno.ENOENT)
+
+    def testReadlinkRaisesIfPathHasFilePosix(self):
+        self.testPosixOnly()
+        self.checkReadlinkRaisesIfPathHasFile(errno.ENOTDIR)
+
+    def testReadlinkWithLinksInPath(self):
+        self.skipIfSymlinkNotSupported()
+        self.createLink(self.makePath('meyer', 'lemon', 'pie'),
+                        self.makePath('yum'))
+        self.createLink(self.makePath('geo', 'metro'),
+                        self.makePath('Meyer'))
+        self.assertEqual(self.makePath('yum'),
+                         self.os.readlink(
+                             self.makePath('Geo', 'Metro', 'Lemon', 'Pie')))
+
+    def testReadlinkWithChainedLinksInPath(self):
+        self.skipIfSymlinkNotSupported()
+        self.createLink(self.makePath(
+            'eastern', 'european', 'wolfhounds', 'chase'),
+            self.makePath('cats'))
+        self.createLink(self.makePath('russian'),
+                        self.makePath('Eastern', 'European'))
+        self.createLink(self.makePath('dogs'),
+                        self.makePath('Russian', 'Wolfhounds'))
+        self.assertEqual(self.makePath('cats'),
+                         self.os.readlink(self.makePath('DOGS', 'Chase')))
+
+    def checkRemoveDir(self, dir_error):
+        directory = self.makePath('xyzzy')
+        dir_path = self.os.path.join(directory, 'plugh')
+        self.createDirectory(dir_path)
+        dir_path = dir_path.upper()
+        self.assertTrue(self.os.path.exists(dir_path.upper()))
+        self.assertRaisesOSError(dir_error, self.os.remove, dir_path)
+        self.assertTrue(self.os.path.exists(dir_path))
+        self.os.chdir(directory)
+        self.assertRaisesOSError(dir_error, self.os.remove, dir_path)
+        self.assertTrue(self.os.path.exists(dir_path))
+        self.assertRaisesOSError(errno.ENOENT, self.os.remove, '/Plugh')
+
+    def testRemoveDirMacOs(self):
+        self.testMacOsOnly()
+        self.checkRemoveDir(errno.EPERM)
+
+    def testRemoveDirWindows(self):
+        self.testWindowsOnly()
+        self.checkRemoveDir(errno.EACCES)
+
+    def testRemoveFile(self):
+        directory = self.makePath('zzy')
+        file_path = self.os.path.join(directory, 'plugh')
+        self.createFile(file_path)
+        self.assertTrue(self.os.path.exists(file_path.upper()))
+        self.os.remove(file_path.upper())
+        self.assertFalse(self.os.path.exists(file_path))
+
+    def testRemoveFileNoDirectory(self):
+        directory = self.makePath('zzy')
+        file_name = 'plugh'
+        file_path = self.os.path.join(directory, file_name)
+        self.createFile(file_path)
+        self.assertTrue(self.os.path.exists(file_path))
+        self.os.chdir(directory.upper())
+        self.os.remove(file_name.upper())
+        self.assertFalse(self.os.path.exists(file_path))
+
+    def testRemoveOpenFileFailsUnderWindows(self):
+        self.testWindowsOnly()
+        path = self.makePath('foo', 'bar')
+        self.createFile(path)
+        with self.open(path, 'r'):
+            self.assertRaisesOSError(errno.EACCES,
+                                     self.os.remove, path.upper())
+        self.assertTrue(self.os.path.exists(path))
+
+    def testRemoveOpenFilePossibleUnderPosix(self):
+        self.testPosixOnly()
+        path = self.makePath('foo', 'bar')
+        self.createFile(path)
+        self.open(path, 'r')
+        self.os.remove(path.upper())
+        self.assertFalse(self.os.path.exists(path))
+
+    def testRemoveFileRelativePath(self):
+        self.skipRealFs()
+        original_dir = self.os.getcwd()
+        directory = self.makePath('zzy')
+        subdirectory = self.os.path.join(directory, 'zzy')
+        file_name = 'plugh'
+        file_path = self.os.path.join(directory, file_name)
+        file_path_relative = self.os.path.join('..', file_name)
+        self.createFile(file_path.upper())
+        self.assertTrue(self.os.path.exists(file_path))
+        self.createDirectory(subdirectory)
+        self.assertTrue(self.os.path.exists(subdirectory))
+        self.os.chdir(subdirectory.upper())
+        self.os.remove(file_path_relative.upper())
+        self.assertFalse(self.os.path.exists(file_path_relative))
+        self.os.chdir(original_dir.upper())
+        self.assertFalse(self.os.path.exists(file_path))
+
+    def checkRemoveDirRaisesError(self, dir_error):
+        directory = self.makePath('zzy')
+        self.createDirectory(directory)
+        self.assertRaisesOSError(dir_error,
+                                 self.os.remove, directory.upper())
+
+    def testRemoveDirRaisesErrorMacOs(self):
+        self.testMacOsOnly()
+        self.checkRemoveDirRaisesError(errno.EPERM)
+
+    def testRemoveDirRaisesErrorWindows(self):
+        self.testWindowsOnly()
+        self.checkRemoveDirRaisesError(errno.EACCES)
+
+    def testRemoveSymlinkToDir(self):
+        self.skipIfSymlinkNotSupported()
+        directory = self.makePath('zzy')
+        link = self.makePath('link_to_dir')
+        self.createDirectory(directory)
+        self.os.symlink(directory, link)
+        self.assertTrue(self.os.path.exists(directory))
+        self.assertTrue(self.os.path.exists(link))
+        self.os.remove(link.upper())
+        self.assertTrue(self.os.path.exists(directory))
+        self.assertFalse(self.os.path.exists(link))
+
+    def testRenameDirToSymlinkPosix(self):
+        self.testPosixOnly()
+        link_path = self.makePath('link')
+        dir_path = self.makePath('dir')
+        link_target = self.os.path.join(dir_path, 'link_target')
+        self.createDirectory(dir_path)
+        self.os.symlink(link_target.upper(), link_path.upper())
+        self.assertRaisesOSError(errno.ENOTDIR, self.os.rename, dir_path,
+                                 link_path)
+
+    def testRenameDirToSymlinkWindows(self):
+        self.testWindowsOnly()
+        self.skipIfSymlinkNotSupported()
+        link_path = self.makePath('link')
+        dir_path = self.makePath('dir')
+        link_target = self.os.path.join(dir_path, 'link_target')
+        self.createDirectory(dir_path)
+        self.os.symlink(link_target.upper(), link_path.upper())
+        self.assertRaisesOSError(errno.EEXIST, self.os.rename, dir_path,
+                                 link_path)
+
+    def testRenameFileToSymlink(self):
+        self.testPosixOnly()
+        link_path = self.makePath('file_link')
+        file_path = self.makePath('file')
+        self.os.symlink(file_path, link_path)
+        self.createFile(file_path)
+        self.os.rename(file_path.upper(), link_path)
+        self.assertFalse(self.os.path.exists(file_path))
+        self.assertTrue(self.os.path.exists(link_path.upper()))
+        self.assertTrue(self.os.path.isfile(link_path.upper()))
+
+    def testRenameSymlinkToSymlink(self):
+        self.testPosixOnly()
+        base_path = self.makePath('foo', 'bar')
+        self.createDirectory(base_path)
+        link_path1 = self.os.path.join(base_path, 'link1')
+        link_path2 = self.os.path.join(base_path, 'link2')
+        self.os.symlink(base_path.upper(), link_path1)
+        self.os.symlink(base_path, link_path2)
+        self.os.rename(link_path1.upper(), link_path2.upper())
+        self.assertFalse(self.os.path.exists(link_path1))
+        self.assertTrue(self.os.path.exists(link_path2))
+
+    def testRenameSymlinkToSymlinkForParentRaises(self):
+        self.testPosixOnly()
+        dir_link = self.makePath('dir_link')
+        dir_path = self.makePath('dir')
+        dir_in_dir_path = self.os.path.join(dir_link, 'inner_dir')
+        self.createDirectory(dir_path)
+        self.os.symlink(dir_path.upper(), dir_link)
+        self.createDirectory(dir_in_dir_path)
+        self.assertRaisesOSError(errno.EINVAL, self.os.rename, dir_path,
+                                 dir_in_dir_path.upper())
+
+    def testRecursiveRenameRaises(self):
+        self.testPosixOnly()
+        base_path = self.makePath('foo', 'bar')
+        self.createDirectory(base_path)
+        new_path = self.os.path.join(base_path, 'new_dir')
+        self.assertRaisesOSError(errno.EINVAL, self.os.rename,
+                                 base_path.upper(), new_path)
+
+    def testRenameWithTargetParentFileRaisesPosix(self):
+        self.testPosixOnly()
+        file_path = self.makePath('foo', 'baz')
+        self.createFile(file_path)
+        self.assertRaisesOSError(errno.ENOTDIR, self.os.rename, file_path,
+                                 file_path.upper() + '/new')
+
+    def testRenameWithTargetParentFileRaisesWindows(self):
+        self.testWindowsOnly()
+        file_path = self.makePath('foo', 'baz')
+        self.createFile(file_path)
+        self.assertRaisesOSError(errno.EACCES, self.os.rename, file_path,
+                                 self.os.path.join(file_path.upper(), 'new'))
+
+    def testRenameSymlinkToSource(self):
+        self.testPosixOnly()
+        base_path = self.makePath('foo')
+        link_path = self.os.path.join(base_path, 'slink')
+        file_path = self.os.path.join(base_path, 'file')
+        self.createFile(file_path)
+        self.os.symlink(file_path, link_path)
+        self.os.rename(link_path.upper(), file_path.upper())
+        self.assertFalse(self.os.path.exists(file_path))
+
+    def testRenameSymlinkToDirRaises(self):
+        self.testPosixOnly()
+        base_path = self.makePath('foo', 'bar')
+        link_path = self.os.path.join(base_path, 'dir_link')
+        dir_path = self.os.path.join(base_path, 'dir')
+        self.createDirectory(dir_path)
+        self.os.symlink(dir_path, link_path.upper())
+        self.assertRaisesOSError(errno.EISDIR, self.os.rename, link_path,
+                                 dir_path.upper())
+
+    def testRenameBrokenSymlink(self):
+        self.testPosixOnly()
+        base_path = self.makePath('foo')
+        self.createDirectory(base_path)
+        link_path = self.os.path.join(base_path, 'slink')
+        file_path = self.os.path.join(base_path, 'file')
+        self.os.symlink(file_path.upper(), link_path)
+        self.os.rename(link_path.upper(), file_path)
+        self.assertFalse(self.os.path.exists(file_path))
+        self.assertTrue(self.os.path.lexists(file_path))
+        self.assertFalse(self.os.path.exists(link_path))
+
+    def testChangeCaseInCaseInsensitiveFileSystem(self):
+        """Can use `rename()` to change filename case in a case-insensitive
+         file system."""
+        old_file_path = self.makePath('fileName')
+        new_file_path = self.makePath('FileNAME')
+        self.createFile(old_file_path, contents='test contents')
+        if not self.useRealFs():
+            self.assertEqual(old_file_path,
+                             self.filesystem.NormalizeCase(old_file_path))
+        self.os.rename(old_file_path, new_file_path)
+        self.assertTrue(self.os.path.exists(old_file_path))
+        self.assertTrue(self.os.path.exists(new_file_path))
+        if not self.useRealFs():
+            self.assertEqual(new_file_path,
+                             self.filesystem.NormalizeCase(old_file_path))
+
+    def testRenameSymlinkWithChangedCase(self):
+        # Regression test for #313
+        self.skipIfSymlinkNotSupported()
+        link_path = self.makePath('link')
+        self.os.symlink(self.base_path, link_path)
+        link_path = self.os.path.join(link_path, 'link')
+        link_path_upper = self.makePath('link', 'LINK')
+        self.os.rename(link_path_upper, link_path)
+
+    def testRenameDirectory(self):
+        """Can rename a directory to an unused name."""
+        for old_path, new_path in [('wxyyw', 'xyzzy'), ('abccb', 'cdeed')]:
+            old_path = self.makePath(old_path)
+            new_path = self.makePath(new_path)
+            self.createFile(self.os.path.join(old_path, 'plugh'),
+                            contents='test')
+            self.assertTrue(self.os.path.exists(old_path))
+            self.assertFalse(self.os.path.exists(new_path))
+            self.os.rename(old_path.upper(), new_path.upper())
+            self.assertFalse(self.os.path.exists(old_path))
+            self.assertTrue(self.os.path.exists(new_path))
+            self.checkContents(self.os.path.join(new_path, 'plugh'), 'test')
+            if not self.useRealFs():
+                self.assertEqual(3,
+                                 self.filesystem.GetObject(new_path).st_nlink)
+
+    def checkRenameDirectoryToExistingFileRaises(self, error_nr):
+        dir_path = self.makePath('dir')
+        file_path = self.makePath('file')
+        self.createDirectory(dir_path)
+        self.createFile(file_path)
+        self.assertRaisesOSError(error_nr, self.os.rename, dir_path,
+                                 file_path.upper())
+
+    def testRenameDirectoryToExistingFileRaisesPosix(self):
+        self.testPosixOnly()
+        self.checkRenameDirectoryToExistingFileRaises(errno.ENOTDIR)
+
+    def testRenameDirectoryToExistingFileRaisesWindows(self):
+        self.testWindowsOnly()
+        self.checkRenameDirectoryToExistingFileRaises(errno.EEXIST)
+
+    def testRenameToExistingDirectoryShouldRaiseUnderWindows(self):
+        """Renaming to an existing directory raises OSError under Windows."""
+        self.testWindowsOnly()
+        old_path = self.makePath('foo', 'bar')
+        new_path = self.makePath('foo', 'baz')
+        self.createDirectory(old_path)
+        self.createDirectory(new_path)
+        self.assertRaisesOSError(errno.EEXIST, self.os.rename,
+                                 old_path.upper(),
+                                 new_path.upper())
+
+    def testRenameToAHardlinkOfSameFileShouldDoNothing(self):
+        self.testPosixOnly()
+        file_path = self.makePath('dir', 'file')
+        self.createFile(file_path)
+        link_path = self.makePath('link')
+        self.os.link(file_path.upper(), link_path)
+        self.os.rename(file_path, link_path.upper())
+        self.assertTrue(self.os.path.exists(file_path))
+        self.assertTrue(self.os.path.exists(link_path))
+
+    def testRenameWithIncorrectSourceCase(self):
+        # Regression test for #308
+        base_path = self.makePath('foo')
+        path0 = self.os.path.join(base_path, 'bar')
+        path1 = self.os.path.join(base_path, 'Bar')
+        self.createDirectory(path0)
+        self.os.rename(path1, path0)
+        self.assertTrue(self.os.path.exists(path0))
+
+    def testStatWithMixedCase(self):
+        # Regression test for #310
+        self.skipIfSymlinkNotSupported()
+        base_path = self.makePath('foo')
+        path = self.os.path.join(base_path, 'bar')
+        self.createDirectory(path)
+        path = self.os.path.join(path, 'Bar')
+        self.os.symlink(base_path, path)
+        path = self.os.path.join(path, 'Bar')
+        # used to raise
+        self.os.stat(path)
+
+    def testHardlinkWorksWithSymlink(self):
+        self.testPosixOnly()
+        base_path = self.makePath('foo')
+        self.createDirectory(base_path)
+        symlink_path = self.os.path.join(base_path, 'slink')
+        self.os.symlink(base_path.upper(), symlink_path)
+        file_path = self.os.path.join(base_path, 'slink', 'beta')
+        self.createFile(file_path)
+        link_path = self.os.path.join(base_path, 'Slink', 'gamma')
+        self.os.link(file_path, link_path)
+        self.assertTrue(self.os.path.exists(link_path))
+
+    @unittest.skipIf(sys.version_info < (3, 3), 'replace is new in Python 3.3')
+    def testReplaceExistingDirectoryShouldRaiseUnderWindows(self):
+        """Renaming to an existing directory raises OSError under Windows."""
+        self.testWindowsOnly()
+        old_path = self.makePath('foo', 'bar')
+        new_path = self.makePath('foo', 'baz')
+        self.createDirectory(old_path)
+        self.createDirectory(new_path)
+        self.assertRaisesOSError(errno.EACCES, self.os.replace, old_path,
+                                 new_path.upper())
+
+    def testRenameToExistingDirectoryUnderPosix(self):
+        """Renaming to an existing directory changes the existing directory
+        under Posix."""
+        self.testPosixOnly()
+        old_path = self.makePath('foo', 'bar')
+        new_path = self.makePath('xyzzy')
+        self.createDirectory(self.os.path.join(old_path, 'sub'))
+        self.createDirectory(new_path)
+        self.os.rename(old_path.upper(), new_path.upper())
+        self.assertTrue(
+            self.os.path.exists(self.os.path.join(new_path, 'sub')))
+        self.assertFalse(self.os.path.exists(old_path))
+
+    def testRenameFileToExistingDirectoryRaisesUnderPosix(self):
+        self.testPosixOnly()
+        file_path = self.makePath('foo', 'bar', 'baz')
+        new_path = self.makePath('xyzzy')
+        self.createFile(file_path)
+        self.createDirectory(new_path)
+        self.assertRaisesOSError(errno.EISDIR, self.os.rename,
+                                 file_path.upper(),
+                                 new_path.upper())
+
+    def testRenameToExistentFilePosix(self):
+        """Can rename a file to a used name under Unix."""
+        self.testPosixOnly()
+        directory = self.makePath('xyzzy')
+        old_file_path = self.os.path.join(directory, 'plugh_old')
+        new_file_path = self.os.path.join(directory, 'plugh_new')
+        self.createFile(old_file_path, contents='test contents 1')
+        self.createFile(new_file_path, contents='test contents 2')
+        self.assertTrue(self.os.path.exists(old_file_path))
+        self.assertTrue(self.os.path.exists(new_file_path))
+        self.os.rename(old_file_path.upper(), new_file_path.upper())
+        self.assertFalse(self.os.path.exists(old_file_path))
+        self.assertTrue(self.os.path.exists(new_file_path))
+        self.checkContents(new_file_path, 'test contents 1')
+
+    def testRenameToExistentFileWindows(self):
+        """Renaming a file to a used name raises OSError under Windows."""
+        self.testWindowsOnly()
+        directory = self.makePath('xyzzy')
+        old_file_path = self.os.path.join(directory, 'plugh_old')
+        new_file_path = self.os.path.join(directory, 'plugh_new')
+        self.createFile(old_file_path, contents='test contents 1')
+        self.createFile(new_file_path, contents='test contents 2')
+        self.assertTrue(self.os.path.exists(old_file_path))
+        self.assertTrue(self.os.path.exists(new_file_path))
+        self.assertRaisesOSError(errno.EEXIST, self.os.rename,
+                                 old_file_path.upper(),
+                                 new_file_path.upper())
+
+    @unittest.skipIf(sys.version_info < (3, 3), 'replace is new in Python 3.3')
+    def testReplaceToExistentFile(self):
+        """Replaces an existing file (does not work with `rename()` under
+        Windows)."""
+        directory = self.makePath('xyzzy')
+        old_file_path = self.os.path.join(directory, 'plugh_old')
+        new_file_path = self.os.path.join(directory, 'plugh_new')
+        self.createFile(old_file_path, contents='test contents 1')
+        self.createFile(new_file_path, contents='test contents 2')
+        self.assertTrue(self.os.path.exists(old_file_path))
+        self.assertTrue(self.os.path.exists(new_file_path))
+        self.os.replace(old_file_path.upper(), new_file_path.upper())
+        self.assertFalse(self.os.path.exists(old_file_path))
+        self.assertTrue(self.os.path.exists(new_file_path))
+        self.checkContents(new_file_path, 'test contents 1')
+
+    def testRenameToNonexistentDir(self):
+        """Can rename a file to a name in a nonexistent dir."""
+        self.skipRealFsFailure(skipPosix=False, skipPython3=False)
+        directory = self.makePath('xyzzy')
+        old_file_path = self.os.path.join(directory, 'plugh_old')
+        new_file_path = self.os.path.join(
+            directory, 'no_such_path', 'plugh_new')
+        self.createFile(old_file_path, contents='test contents')
+        self.assertTrue(self.os.path.exists(old_file_path))
+        self.assertFalse(self.os.path.exists(new_file_path))
+        self.assertRaisesOSError(errno.ENOENT, self.os.rename,
+                                 old_file_path.upper(),
+                                 new_file_path.upper())
+        self.assertTrue(self.os.path.exists(old_file_path))
+        self.assertFalse(self.os.path.exists(new_file_path))
+        self.checkContents(old_file_path, 'test contents')
+
+    def testRenameDir(self):
+        """Test a rename of a directory."""
+        directory = self.makePath('xyzzy')
+        before_dir = self.os.path.join(directory, 'before')
+        before_file = self.os.path.join(directory, 'before', 'file')
+        after_dir = self.os.path.join(directory, 'after')
+        after_file = self.os.path.join(directory, 'after', 'file')
+        self.createDirectory(before_dir)
+        self.createFile(before_file, contents='payload')
+        self.assertTrue(self.os.path.exists(before_dir.upper()))
+        self.assertTrue(self.os.path.exists(before_file.upper()))
+        self.assertFalse(self.os.path.exists(after_dir.upper()))
+        self.assertFalse(self.os.path.exists(after_file.upper()))
+        self.os.rename(before_dir.upper(), after_dir)
+        self.assertFalse(self.os.path.exists(before_dir.upper()))
+        self.assertFalse(self.os.path.exists(before_file.upper()))
+        self.assertTrue(self.os.path.exists(after_dir.upper()))
+        self.assertTrue(self.os.path.exists(after_file.upper()))
+        self.checkContents(after_file, 'payload')
+
+    def testRenameSameFilenames(self):
+        """Test renaming when old and new names are the same."""
+        directory = self.makePath('xyzzy')
+        file_contents = 'Spam eggs'
+        file_path = self.os.path.join(directory, 'eggs')
+        self.createFile(file_path, contents=file_contents)
+        self.os.rename(file_path, file_path.upper())
+        self.checkContents(file_path, file_contents)
+
+    def testRmdir(self):
+        """Can remove a directory."""
+        directory = self.makePath('xyzzy')
+        sub_dir = self.makePath('xyzzy', 'abccd')
+        other_dir = self.makePath('xyzzy', 'cdeed')
+        self.createDirectory(directory)
+        self.assertTrue(self.os.path.exists(directory))
+        self.os.rmdir(directory)
+        self.assertFalse(self.os.path.exists(directory))
+        self.createDirectory(sub_dir)
+        self.createDirectory(other_dir)
+        self.os.chdir(sub_dir)
+        self.os.rmdir('../CDEED')
+        self.assertFalse(self.os.path.exists(other_dir))
+        self.os.chdir('..')
+        self.os.rmdir('AbcCd')
+        self.assertFalse(self.os.path.exists(sub_dir))
+
+    def testRmdirViaSymlink(self):
+        self.testWindowsOnly()
+        self.skipIfSymlinkNotSupported()
+        base_path = self.makePath('foo', 'bar')
+        dir_path = self.os.path.join(base_path, 'alpha')
+        self.createDirectory(dir_path)
+        link_path = self.os.path.join(base_path, 'beta')
+        self.os.symlink(base_path, link_path)
+        self.os.rmdir(link_path + '/Alpha')
+        self.assertFalse(self.os.path.exists(dir_path))
+
+    def testRemoveDirsWithNonTopSymlinkSucceeds(self):
+        self.testPosixOnly()
+        dir_path = self.makePath('dir')
+        dir_link = self.makePath('dir_link')
+        self.createDirectory(dir_path)
+        self.os.symlink(dir_path, dir_link)
+        dir_in_dir = self.os.path.join(dir_link, 'dir2')
+        self.createDirectory(dir_in_dir)
+        self.os.removedirs(dir_in_dir.upper())
+        self.assertFalse(self.os.path.exists(dir_in_dir))
+        # ensure that the symlink is not removed
+        self.assertTrue(self.os.path.exists(dir_link))
+
+    def testMkdirRaisesOnSymlinkInPosix(self):
+        self.testPosixOnly()
+        base_path = self.makePath('foo', 'bar')
+        link_path = self.os.path.join(base_path, 'link_to_dir')
+        dir_path = self.os.path.join(base_path, 'dir')
+        self.createDirectory(dir_path)
+        self.os.symlink(dir_path.upper(), link_path.upper())
+        self.assertRaisesOSError(errno.ENOTDIR, self.os.rmdir, link_path)
+
+    def testMkdirRemovesSymlinkInWindows(self):
+        self.testWindowsOnly()
+        self.skipIfSymlinkNotSupported()
+        base_path = self.makePath('foo', 'bar')
+        link_path = self.os.path.join(base_path, 'link_to_dir')
+        dir_path = self.os.path.join(base_path, 'dir')
+        self.createDirectory(dir_path)
+        self.os.symlink(dir_path.upper(), link_path.upper())
+        self.os.rmdir(link_path)
+        self.assertFalse(self.os.path.exists(link_path))
+        self.assertTrue(self.os.path.exists(dir_path))
+
+    def testMkdirRaisesIfDirectoryExists(self):
+        """mkdir raises exception if directory already exists."""
+        directory = self.makePath('xyzzy')
+        self.createDirectory(directory)
+        self.assertTrue(self.os.path.exists(directory))
+        self.assertRaisesOSError(errno.EEXIST,
+                                 self.os.mkdir, directory.upper())
+
+    def testMkdirRaisesIfFileExists(self):
+        """mkdir raises exception if name already exists as a file."""
+        directory = self.makePath('xyzzy')
+        file_path = self.os.path.join(directory, 'plugh')
+        self.createFile(file_path)
+        self.assertTrue(self.os.path.exists(file_path))
+        self.assertRaisesOSError(errno.EEXIST,
+                                 self.os.mkdir, file_path.upper())
+
+    def testMkdirRaisesIfSymlinkExists(self):
+        # Regression test for #309
+        self.skipIfSymlinkNotSupported()
+        path1 = self.makePath('baz')
+        self.os.symlink(path1, path1)
+        path2 = self.makePath('Baz')
+        self.assertRaisesOSError(errno.EEXIST, self.os.mkdir, path2)
+
+    def testMkdirRaisesIfParentIsFile(self):
+        """mkdir raises exception if name already exists as a file."""
+        self.skipRealFsFailure(skipPosix=False)
+        directory = self.makePath('xyzzy')
+        file_path = self.os.path.join(directory, 'plugh')
+        self.createFile(file_path)
+        self.assertRaisesOSError(errno.ENOTDIR, self.os.mkdir,
+                                 self.os.path.join(file_path.upper(),
+                                                   'ff'))
+
+    def testMakedirs(self):
+        """makedirs can create a directory even if parent does not exist."""
+        parent = self.makePath('xyzzy')
+        directory = self.os.path.join(parent, 'foo')
+        self.assertFalse(self.os.path.exists(parent))
+        self.os.makedirs(directory.upper())
+        self.assertTrue(self.os.path.exists(directory))
+
+    def testMakedirsRaisesIfParentIsFile(self):
+        """makedirs raises exception if a parent component exists as a file."""
+        self.skipRealFsFailure(skipPosix=False)
+        file_path = self.makePath('xyzzy')
+        directory = self.os.path.join(file_path, 'plugh')
+        self.createFile(file_path)
+        self.assertTrue(self.os.path.exists(file_path))
+        self.assertRaisesOSError(errno.ENOTDIR, self.os.makedirs,
+                                 directory.upper())
+
+    def testMakedirsRaisesIfParentIsBrokenLink(self):
+        self.testPosixOnly()
+        link_path = self.makePath('broken_link')
+        self.os.symlink(self.makePath('bogus'), link_path)
+        self.assertRaisesOSError(errno.ENOENT, self.os.makedirs,
+                                 self.os.path.join(link_path.upper(),
+                                                   'newdir'))
+
+    @unittest.skipIf(sys.version_info < (3, 2),
+                     'os.makedirs(exist_ok) argument new in version 3.2')
+    def testMakedirsExistOk(self):
+        """makedirs uses the exist_ok argument"""
+        directory = self.makePath('xyzzy', 'foo')
+        self.createDirectory(directory)
+        self.assertTrue(self.os.path.exists(directory))
+
+        self.assertRaisesOSError(errno.EEXIST, self.os.makedirs,
+                                 directory.upper())
+        self.os.makedirs(directory.upper(), exist_ok=True)
+        self.assertTrue(self.os.path.exists(directory))
+
+    # test fsync and fdatasync
+
+    def testFsyncPass(self):
+        # setup
+        self.skipRealFsFailure(skipPosix=False)
+        test_file_path = self.makePath('test_file')
+        self.createFile(test_file_path, contents='dummy file contents')
+        test_file = self.open(test_file_path.upper(), 'r')
+        test_fd = test_file.fileno()
+        # Test that this doesn't raise anything
+        self.os.fsync(test_fd)
+        # And just for sanity, double-check that this still raises
+        self.assertRaisesOSError(errno.EBADF, self.os.fsync, test_fd + 1)
+
+    def testChmod(self):
+        # set up
+        self.testPosixOnly()
+        self.skipRealFs()
+        path = self.makePath('some_file')
+        self.createTestFile(path)
+        # actual tests
+        self.os.chmod(path.upper(), 0o6543)
+        st = self.os.stat(path)
+        self.assertModeEqual(0o6543, st.st_mode)
+        self.assertTrue(st.st_mode & stat.S_IFREG)
+        self.assertFalse(st.st_mode & stat.S_IFDIR)
+
+    def testSymlink(self):
+        self.skipIfSymlinkNotSupported()
+        file_path = self.makePath('foo', 'bar', 'baz')
+        self.createDirectory(self.makePath('foo', 'bar'))
+        self.os.symlink('bogus', file_path.upper())
+        self.assertTrue(self.os.path.lexists(file_path))
+        self.assertFalse(self.os.path.exists(file_path))
+        self.createFile(self.makePath('Foo', 'Bar', 'Bogus'))
+        self.assertTrue(self.os.path.lexists(file_path))
+        self.assertTrue(self.os.path.exists(file_path))
+
+    # hard link related tests
+
+    def testLinkDelete(self):
+        self.skipIfSymlinkNotSupported()
+
+        file1_path = self.makePath('test_file1')
+        file2_path = self.makePath('test_file2')
+        contents1 = 'abcdef'
+        # Create file
+        self.createFile(file1_path, contents=contents1)
+        # link to second file
+        self.os.link(file1_path.upper(), file2_path)
+        # delete first file
+        self.os.unlink(file1_path)
+        # assert that second file exists, and its contents are the same
+        self.assertTrue(self.os.path.exists(file2_path))
+        with self.open(file2_path.upper()) as f:
+            self.assertEqual(f.read(), contents1)
+
+    def testLinkIsExistingFile(self):
+        self.skipIfSymlinkNotSupported()
+        file_path = self.makePath('foo', 'bar')
+        self.createFile(file_path)
+        self.assertRaisesOSError(errno.EEXIST, self.os.link,
+                                 file_path.upper(), file_path.upper())
+
+    def testLinkIsBrokenSymlink(self):
+        # Regression test for #311
+        self.skipIfSymlinkNotSupported()
+        self.testCaseInsensitiveFs()
+        file_path = self.makePath('baz')
+        self.createFile(file_path)
+        path_lower = self.makePath('foo')
+        self.os.symlink(path_lower, path_lower)
+        path_upper = self.makePath('Foo')
+        self.assertRaisesOSError(errno.EEXIST,
+                                 self.os.link, file_path, path_upper)
+
+    def testLinkWithChangedCase(self):
+        # Regression test for #312
+        self.skipIfSymlinkNotSupported()
+        self.testCaseInsensitiveFs()
+        link_path = self.makePath('link')
+        self.os.symlink(self.base_path, link_path)
+        link_path = self.os.path.join(link_path, 'Link')
+        self.assertTrue(self.os.lstat(link_path))
+
+
+class RealOsModuleTestCaseInsensitiveFS(FakeOsModuleTestCaseInsensitiveFS):
     def useRealFs(self):
         return True
 

@@ -1967,7 +1967,9 @@ class FakeFilesystem(object):
                 if old_file_path.lower() == new_file_path.lower():
                     # only case is changed in case-insensitive file system
                     # - do the rename
-                    pass
+                    parent, file_name = self.SplitPath(new_file_path)
+                    new_file_path = self.JoinPaths(
+                        self.NormalizeCase(parent), file_name)
                 else:
                     # hard links to the same file - nothing to do
                     return
@@ -1996,6 +1998,7 @@ class FakeFilesystem(object):
                                       'Fake filesystem object: '
                                       'cannot rename file to directory',
                                       new_file_path)
+                new_file_path = self.NormalizeCase(new_file_path)
             elif stat.S_ISDIR(old_object.st_mode):
                 error = errno.EEXIST if self.is_windows_fs else errno.ENOTDIR
                 raise OSError(error,
