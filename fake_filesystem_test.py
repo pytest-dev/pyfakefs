@@ -1570,19 +1570,29 @@ class FakeOsModuleTest(FakeOsModuleTestBase):
     def testChangeCaseInCaseInsensitiveFileSystem(self):
         """Can use `rename()` to change filename case in a case-insensitive
          file system."""
-        self.skipRealFs()
-        self.filesystem.is_case_sensitive = False
-        directory = 'xyzzy'
-        old_file_path = '/%s/fileName' % directory
-        new_file_path = '/%s/FileNAME' % directory
-        self.filesystem.CreateFile(old_file_path, contents='test contents')
-        self.assertEqual(old_file_path,
-                         self.filesystem.NormalizeCase(old_file_path))
+        self.testCaseInsensitiveFs()
+        old_file_path = self.makePath('fileName')
+        new_file_path = self.makePath('FileNAME')
+        self.createFile(old_file_path, contents='test contents')
+        if not self.useRealFs():
+            self.assertEqual(old_file_path,
+                             self.filesystem.NormalizeCase(old_file_path))
         self.os.rename(old_file_path, new_file_path)
         self.assertTrue(self.os.path.exists(old_file_path))
         self.assertTrue(self.os.path.exists(new_file_path))
-        self.assertEqual(new_file_path,
-                         self.filesystem.NormalizeCase(old_file_path))
+        if not self.useRealFs():
+            self.assertEqual(new_file_path,
+                             self.filesystem.NormalizeCase(old_file_path))
+
+    def testRenameSymlinkWithChangedCase(self):
+        # Regression test for #313
+        self.testCaseInsensitiveFs()
+        self.skipIfSymlinkNotSupported()
+        link_path = self.makePath('link')
+        self.os.symlink(self.base_path, link_path)
+        link_path = self.os.path.join(link_path, 'link')
+        link_path_upper = self.makePath('link', 'LINK')
+        self.os.rename(link_path_upper, link_path)
 
     def testRenameDirectory(self):
         """Can rename a directory to an unused name."""
@@ -4228,7 +4238,7 @@ class FakePathModuleTest(TestCase):
         self.assertFalse(self.path.islink('foo'))
 
         # An object can be both a link and a file or file, according to the
-        # comments in Python!Lib!posixpath.py.
+        # comments in Python/Lib/posixpath.py.
         self.assertTrue(self.path.islink('foo!link_to_file'))
         self.assertTrue(self.path.isfile('foo!link_to_file'))
 
@@ -4237,6 +4247,8 @@ class FakePathModuleTest(TestCase):
 
         self.assertFalse(self.path.islink('it_dont_exist'))
 
+    @unittest.skipIf(TestCase.is_windows and sys.version_info < (3, 3),
+                     'Links are not supported under Windows before Python 3.3')
     def testIsLinkCaseSensitive(self):
         # Regression test for #306
         self.filesystem.is_case_sensitive = False

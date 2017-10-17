@@ -685,13 +685,16 @@ class FakeDirectory(FakeFile):
         Raises:
             KeyError: if no child exists by the specified name.
         """
+        pathname_name = self._normalized_entryname(pathname_name)
+        return self.contents[pathname_name]
+
+    def _normalized_entryname(self, pathname_name):
         if not self.filesystem.is_case_sensitive:
             matching_names = [name for name in self.contents
-                                if name.lower() == pathname_name.lower()]
+                              if name.lower() == pathname_name.lower()]
             if matching_names:
                 pathname_name = matching_names[0]
-
-        return self.contents[pathname_name]
+        return pathname_name
 
     def RemoveEntry(self, pathname_name, recursive=True):
         """Removes the specified child file or directory.
@@ -707,7 +710,8 @@ class FakeDirectory(FakeFile):
             OSError: if user lacks permission to delete the file,
                 or (Windows only) the file is open.
         """
-        entry = self.contents[pathname_name]
+        pathname_name = self._normalized_entryname(pathname_name)
+        entry = self.GetEntry(pathname_name)
         if self.filesystem.is_windows_fs:
             if entry.st_mode & PERM_WRITE == 0:
                 raise OSError(errno.EACCES, 'Trying to remove object '
