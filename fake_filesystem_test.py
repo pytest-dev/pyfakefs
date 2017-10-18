@@ -716,6 +716,9 @@ class FakeFilesystemUnitTest(TestCase):
         self.assertTrue(stat.S_IFREG & new_file.st_mode)
         self.assertEqual(new_file, retval)
 
+    def testCreateFileWithIncorrectModeType(self):
+        self.assertRaises(TypeError, self.filesystem.CreateFile, 'foo', 'bar')
+
     def testCreateFileAlreadyExistsError(self):
         path = 'foo/bar/baz'
         self.filesystem.CreateFile(path, contents='dummy_data')

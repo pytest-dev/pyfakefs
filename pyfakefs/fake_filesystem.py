@@ -161,6 +161,11 @@ def raise_os_error(errno, winerror, message, filename=''):
     raise OSError(errno, message, filename)
 
 
+def is_int_type(val):
+    int_types = (int, long) if sys.version_info[0] < 3 else int  # pylint: disable=undefined-variable
+    return isinstance(val, int_types)
+
+
 class FakeLargeFileIoException(Exception):
     """Exception thrown on unsupported operations for fake large files.
     Fake large files have a size with no real content.
@@ -1199,7 +1204,7 @@ class FakeFilesystem(object):
         Returns:
             Open file object.
         """
-        if not isinstance(file_des, int):
+        if not is_int_type(file_des):
             raise TypeError('an integer is required')
         if (file_des >= len(self.open_files) or
                 self.open_files[file_des] is None):
@@ -2276,6 +2281,8 @@ class FakeFilesystem(object):
         """
         error_class = OSError if raw_io else IOError
         file_path = self.NormalizePath(file_path)
+        if not is_int_type(st_mode):
+            raise TypeError('st_mode must be of int type - did you mean to set contents?')
 
         if self.Exists(file_path, check_link=True):
             raise OSError(errno.EEXIST,
@@ -3236,7 +3243,7 @@ class FakeOsModule(object):
         Raises:
             TypeError: if file descriptor is not an integer.
         """
-        if not isinstance(args[0], int):
+        if not is_int_type(args[0]):
             raise TypeError('an integer is required')
         return FakeFileOpen(self.filesystem)(*args, **kwargs)
 
@@ -3257,7 +3264,7 @@ class FakeOsModule(object):
             OSError: if bad file descriptor or incompatible mode is given.
             TypeError: if file descriptor is not an integer.
         """
-        if not isinstance(file_des, int):
+        if not is_int_type(file_des):
             raise TypeError('an integer is required')
 
         try:
@@ -3437,7 +3444,7 @@ class FakeOsModule(object):
         Raises:
             TypeError: if new_mask is of an invalid type.
         """
-        if not isinstance(new_mask, int):
+        if not is_int_type(new_mask):
             raise TypeError('an integer is required')
         old_umask = self.filesystem.umask
         self.filesystem.umask = new_mask
@@ -3957,8 +3964,8 @@ class FakeOsModule(object):
                               'No such file or directory in fake filesystem',
                               path)
             raise
-        if not ((isinstance(uid, int) or uid is None) and
-                (isinstance(gid, int) or gid is None)):
+        if not ((is_int_type(uid) or uid is None) and
+                (is_int_type(gid) or gid is None)):
             raise TypeError("An integer is required")
         if uid != -1:
             file_object.st_uid = uid
