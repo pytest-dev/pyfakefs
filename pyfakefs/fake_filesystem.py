@@ -2340,6 +2340,14 @@ class FakeFilesystem(object):
         """
         if not self._IsLinkSupported():
             raise OSError("Symbolic links are not supported on Windows before Python 3.2")
+
+        # the link path cannot end with a path separator
+        file_path = self.NormalizePathSeparator(file_path)
+        if file_path.endswith(self.path_separator):
+            if self.Exists(file_path):
+                raise OSError(errno.EEXIST, 'File exists')
+            raise OSError(errno.ENOENT, 'No such file or directory')
+
         # resolve the link path only if it is not a link itself
         if not self.IsLink(file_path):
             file_path = self.ResolvePath(file_path)

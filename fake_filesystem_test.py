@@ -2612,6 +2612,17 @@ class FakeOsModuleTest(FakeOsModuleTestBase):
         self.assertRaisesOSError(errno.ENOENT, self.os.symlink, dir_path,
                                  link_path)
 
+    def testSymlinkWithPathEndingWithSep(self):
+        self.skipIfSymlinkNotSupported()
+        dirPath = self.makePath('dir')
+        self.createDirectory(dirPath)
+        self.assertRaisesOSError(errno.EEXIST, self.os.symlink,
+                                 self.base_path, dirPath + self.os.sep)
+
+        dirPath = self.makePath('bar')
+        self.assertRaisesOSError(errno.ENOENT, self.os.symlink,
+                                 self.base_path, dirPath + self.os.sep)
+
     # hard link related tests
 
     def testLinkBogus(self):
