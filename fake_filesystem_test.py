@@ -3140,6 +3140,16 @@ class FakeOsModuleTestCaseInsensitiveFS(FakeOsModuleTestBase):
         self.assertRaisesOSError(errno.EACCES, self.os.rename, file_path,
                                  self.os.path.join(file_path.upper(), 'new'))
 
+    def testRenameLoopingSymlink(self):
+        # Regression test for #315
+        self.skipIfSymlinkNotSupported()
+        path_lower = self.makePath('baz')
+        path_upper = self.makePath('BAZ')
+        self.os.symlink(path_lower, path_upper)
+        self.os.rename(path_upper, path_lower)
+        self.assertEqual(['baz'], self.os.listdir(self.base_path))
+
+
     def testRenameSymlinkToSource(self):
         self.testPosixOnly()
         base_path = self.makePath('foo')

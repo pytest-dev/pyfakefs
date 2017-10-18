@@ -1964,16 +1964,21 @@ class FakeFilesystem(object):
 
             new_object = self.GetObject(new_file_path)
             if old_object == new_object:
-                if (self.ResolvePath(old_file_path).lower() ==
-                        self.ResolvePath(new_file_path).lower()):
-                    # only case is changed in case-insensitive file system
-                    # - do the rename
-                    parent, file_name = self.SplitPath(new_file_path)
-                    new_file_path = self.JoinPaths(
-                        self.NormalizeCase(parent), file_name)
-                else:
-                    # hard links to the same file - nothing to do
-                    return
+                try:
+                    if (self.ResolvePath(old_file_path).lower() ==
+                            self.ResolvePath(new_file_path).lower()):
+                        # only case is changed in case-insensitive file system
+                        # - do the rename
+                        parent, file_name = self.SplitPath(new_file_path)
+                        new_file_path = self.JoinPaths(
+                            self.NormalizeCase(parent), file_name)
+                    else:
+                        # hard links to the same file - nothing to do
+                        return
+                except (IOError, OSError):
+                    # ResolvePath may fail due to symlink loop issues or similar -
+                    # in this case just assume the paths different
+                    pass
 
             elif (stat.S_ISDIR(new_object.st_mode) or
                       stat.S_ISLNK(new_object.st_mode)):
