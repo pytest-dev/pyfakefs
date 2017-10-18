@@ -2009,7 +2009,6 @@ class FakeFilesystem(object):
                                       'Fake filesystem object: '
                                       'cannot rename file to directory',
                                       new_file_path)
-                new_file_path = self.NormalizeCase(new_file_path)
             elif stat.S_ISDIR(old_object.st_mode):
                 error = errno.EEXIST if self.is_windows_fs else errno.ENOTDIR
                 raise OSError(error,
@@ -2051,6 +2050,7 @@ class FakeFilesystem(object):
         object_to_rename = old_dir_object.GetEntry(old_name)
         old_dir_object.RemoveEntry(old_name, recursive=False)
         object_to_rename.name = new_name
+        new_name = new_dir_object._normalized_entryname(new_name)
         if new_name in new_dir_object.contents:
             # in case of overwriting remove the old entry first
             new_dir_object.RemoveEntry(new_name)

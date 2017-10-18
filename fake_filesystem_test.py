@@ -3075,6 +3075,16 @@ class FakeOsModuleTestCaseInsensitiveFS(FakeOsModuleTestBase):
         self.assertRaisesOSError(errno.EEXIST, self.os.rename, dir_path,
                                  link_path)
 
+    def testRenameDirToExistingDir(self):
+        # Regression tet for #317
+        dest_dir_path = self.makePath('Dest')
+        new_dest_dir_path = self.makePath('dest')
+        self.os.mkdir(dest_dir_path)
+        source_dir_path = self.makePath('src')
+        self.os.mkdir(source_dir_path)
+        self.os.rename(source_dir_path, new_dest_dir_path)
+        self.assertEqual(['dest'], self.os.listdir(self.base_path))
+
     def testRenameFileToSymlink(self):
         self.testPosixOnly()
         link_path = self.makePath('file_link')
