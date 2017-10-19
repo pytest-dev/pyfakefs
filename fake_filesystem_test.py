@@ -1185,9 +1185,9 @@ class FakeOsModuleTest(FakeOsModuleTestBase):
 
     @unittest.skipIf(sys.version_info < (3, 3),
                      'follow_symlinks new in Python 3.3')
-    def testStatNoFollowSymlinks(self):
+    def testStatNoFollowSymlinksPosix(self):
         """Test that stat with follow_symlinks=False behaves like lstat."""
-        self.skipIfSymlinkNotSupported()
+        self.testPosixOnly()
         directory = self.makePath('xyzzy')
         base_name = 'plugh'
         file_contents = 'frobozz'
@@ -1204,8 +1204,30 @@ class FakeOsModuleTest(FakeOsModuleTestBase):
                          self.os.stat(link_path, follow_symlinks=False)[
                              stat.ST_SIZE])
 
-    def testLstat(self):
+    @unittest.skipIf(sys.version_info < (3, 3),
+                     'follow_symlinks new in Python 3.3')
+    def testStatNoFollowSymlinksWindows(self):
+        """Test that stat with follow_symlinks=False behaves like lstat."""
+        self.testWindowsOnly()
         self.skipIfSymlinkNotSupported()
+        directory = self.makePath('xyzzy')
+        base_name = 'plugh'
+        file_contents = 'frobozz'
+        # Just make sure we didn't accidentally make our test data meaningless.
+        self.assertNotEqual(len(base_name), len(file_contents))
+        file_path = self.os.path.join(directory, base_name)
+        link_path = self.os.path.join(directory, 'link')
+        self.createFile(file_path, contents=file_contents)
+        self.createLink(link_path, base_name)
+        self.assertEqual(len(file_contents),
+                         self.os.stat(file_path, follow_symlinks=False)[
+                             stat.ST_SIZE])
+        self.assertEqual(0,
+                         self.os.stat(link_path, follow_symlinks=False)[
+                             stat.ST_SIZE])
+
+    def testLstatSizePosix(self):
+        self.testPosixOnly()
         directory = self.makePath('xyzzy')
         base_name = 'plugh'
         file_contents = 'frobozz'
@@ -1219,6 +1241,24 @@ class FakeOsModuleTest(FakeOsModuleTestBase):
                          self.os.lstat(file_path)[stat.ST_SIZE])
         self.assertEqual(len(base_name),
                          self.os.lstat(link_path)[stat.ST_SIZE])
+
+    def testLstatSizeWindows(self):
+        self.testWindowsOnly()
+        self.skipIfSymlinkNotSupported()
+        directory = self.makePath('xyzzy')
+        base_name = 'plugh'
+        file_contents = 'frobozz'
+        # Just make sure we didn't accidentally make our test data meaningless.
+        self.assertNotEqual(len(base_name), len(file_contents))
+        file_path = self.os.path.join(directory, base_name)
+        link_path = self.os.path.join(directory, 'link')
+        self.createFile(file_path, contents=file_contents)
+        self.createLink(link_path, base_name)
+        self.assertEqual(len(file_contents),
+                         self.os.lstat(file_path)[stat.ST_SIZE])
+        self.assertEqual(0,
+                         self.os.lstat(link_path)[stat.ST_SIZE])
+
 
     @unittest.skipIf(sys.version_info < (3, 3),
                      'file descriptor as path new in Python 3.3')
@@ -2628,8 +2668,8 @@ class FakeOsModuleTest(FakeOsModuleTestBase):
         self.assertRaisesOSError(errno.ENOENT, self.os.symlink, dir_path,
                                  link_path)
 
-    def testSymlinkWithPathEndingWithSep(self):
-        self.skipIfSymlinkNotSupported()
+    def testSymlinkWithPathEndingWithSepInPosix(self):
+        self.testPosixOnly()
         dirPath = self.makePath('dir')
         self.createDirectory(dirPath)
         self.assertRaisesOSError(errno.EEXIST, self.os.symlink,
@@ -2638,6 +2678,19 @@ class FakeOsModuleTest(FakeOsModuleTestBase):
         dirPath = self.makePath('bar')
         self.assertRaisesOSError(errno.ENOENT, self.os.symlink,
                                  self.base_path, dirPath + self.os.sep)
+
+    def testSymlinkWithPathEndingWithSepInWindows(self):
+        self.testWindowsOnly()
+        self.skipIfSymlinkNotSupported()
+        dirPath = self.makePath('dir')
+        self.createDirectory(dirPath)
+        self.assertRaisesOSError(errno.EEXIST, self.os.symlink,
+                                 self.base_path, dirPath + self.os.sep)
+
+        dirPath = self.makePath('bar')
+        # does not raise under Windows
+        self.os.symlink(self.base_path, dirPath + self.os.sep)
+
 
     # hard link related tests
 
@@ -2884,9 +2937,9 @@ class FakeOsModuleTestCaseInsensitiveFS(FakeOsModuleTestBase):
 
     @unittest.skipIf(sys.version_info < (3, 3),
                      'follow_symlinks new in Python 3.3')
-    def testStatNoFollowSymlinks(self):
+    def testStatNoFollowSymlinksPosix(self):
         """Test that stat with follow_symlinks=False behaves like lstat."""
-        self.skipIfSymlinkNotSupported()
+        self.testPosixOnly()
         directory = self.makePath('xyzzy')
         base_name = 'plugh'
         file_contents = 'frobozz'
@@ -2903,8 +2956,8 @@ class FakeOsModuleTestCaseInsensitiveFS(FakeOsModuleTestBase):
                          self.os.stat(link_path.upper(), follow_symlinks=False)[
                              stat.ST_SIZE])
 
-    def testLstat(self):
-        self.skipIfSymlinkNotSupported()
+    def testLstatPosix(self):
+        self.testPosixOnly()
         directory = self.makePath('xyzzy')
         base_name = 'plugh'
         file_contents = 'frobozz'
@@ -4106,14 +4159,26 @@ class FakeOsModuleLowLevelFileOpTest(FakeOsModuleTestBase):
 
     @unittest.skipIf(sys.version_info < (3, 3),
                      'Exclusive mode new in Python 3.3')
-    def testOpenExclusiveRaisesIfSymlinkExists(self):
-        self.skipIfSymlinkNotSupported()
+    def testOpenExclusiveRaisesIfSymlinkExistsInPosix(self):
+        self.testPosixOnly()
         link_path = self.makePath('link')
         link_target = self.makePath('link_target')
         self.os.symlink(link_target, link_path)
         self.assertRaisesOSError(
             errno.EEXIST, self.os.open, link_path,
             os.O_CREAT | os.O_WRONLY | os.O_TRUNC | os.O_EXCL)
+
+    @unittest.skipIf(sys.version_info < (3, 3),
+                     'Exclusive mode new in Python 3.3')
+    def testOpenExclusiveIfSymlinkExistsWorksInWindows(self):
+        self.testWindowsOnly()
+        self.skipIfSymlinkNotSupported()
+        link_path = self.makePath('link')
+        link_target = self.makePath('link_target')
+        self.os.symlink(link_target, link_path)
+        fd = self.os.open(link_path,
+                          os.O_CREAT | os.O_WRONLY | os.O_TRUNC | os.O_EXCL)
+        self.os.close(fd)
 
     def testOpenDirectoryRaisesUnderWindows(self):
         self.testWindowsOnly()
@@ -4639,7 +4704,9 @@ class FakeScandirTest(FakeOsModuleTestBase):
     def testStat(self):
         self.assertEqual(500, self.dir_entries[1].stat().st_size)
         self.assertEqual(100, self.dir_entries[3].stat().st_size)
-        self.assertEqual(len('/linked/plugh/file'),
+        expected_size = (0 if self.filesystem.is_windows_fs
+                         else len('/linked/plugh/file'))
+        self.assertEqual(expected_size,
                          self.dir_entries[3].stat(
                              follow_symlinks=False).st_size)
         self.assertEqual(

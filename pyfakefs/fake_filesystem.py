@@ -192,7 +192,7 @@ class _FakeStatResult(object):
     """
     long_type = long if sys.version_info < (3,) else int
 
-    def __init__(self, initial_time=None):
+    def __init__(self, is_windows, initial_time=None):
         self.use_float = FakeOsModule.stat_float_times
         self.st_mode = None
         self.st_ino = None
@@ -200,7 +200,8 @@ class _FakeStatResult(object):
         self.st_nlink = 0
         self.st_uid = None
         self.st_gid = None
-        self.st_size = None
+        self._st_size = None
+        self.is_windows = is_windows
         if initial_time is not None:
             self._st_atime_ns = self.long_type(initial_time * 1e9)
         else:
@@ -214,7 +215,7 @@ class _FakeStatResult(object):
             self._st_atime_ns == other._st_atime_ns and
             self._st_ctime_ns == other._st_ctime_ns and
             self._st_mtime_ns == other._st_mtime_ns and
-            self.st_size == other.st_size and
+            self._st_size == other._st_size and
             self.st_gid == other.st_gid and
             self.st_uid == other.st_uid and
             self.st_nlink == other.st_nlink and
@@ -243,7 +244,7 @@ class _FakeStatResult(object):
         self.st_mode = stat_result.st_mode
         self.st_uid = stat_result.st_uid
         self.st_gid = stat_result.st_gid
-        self.st_size = stat_result.st_size
+        self._st_size = stat_result.st_size
         if sys.version_info < (3, 3):
             self._st_atime_ns = self.long_type(stat_result.st_atime * 1e9)
             self._st_mtime_ns = self.long_type(stat_result.st_mtime * 1e9)
@@ -285,6 +286,16 @@ class _FakeStatResult(object):
     def st_mtime(self, val):
         """Set the modification time in seconds."""
         self._st_mtime_ns = self.long_type(val * 1e9)
+
+    @property
+    def st_size(self):
+        if self.st_mode & stat.S_IFLNK == stat.S_IFLNK and self.is_windows:
+            return 0
+        return self._st_size
+
+    @st_size.setter
+    def st_size(self, val):
+        self._st_size = val
 
     def __getitem__(self, item):
         """Implement item access to mimic `os.stat_result` behavior."""
@@ -377,18 +388,20 @@ class FakeFile(object):
                 for serialization.
             errors: The error mode used for encoding/decoding errors.
         """
+        # to be backwards compatible regarding argument order, we raise on None
+        if filesystem is None:
+            raise ValueError('filesystem shall not be None')
+        self.filesystem = filesystem
+
         self.name = name
-        self.stat_result = _FakeStatResult(time.time())
+        self.stat_result = _FakeStatResult(
+            filesystem.is_windows_fs, time.time())
         self.stat_result.st_mode = st_mode
         self.encoding = encoding
         self.errors = errors or 'strict'
         self._byte_contents = self._encode_contents(contents)
         self.stat_result.st_size = (
             len(self._byte_contents) if self._byte_contents is not None else 0)
-        # to be backwards compatible regarding argument order, we raise on None
-        if filesystem is None:
-            raise ValueError('filesystem shall not be None')
-        self.filesystem = filesystem
         self.epoch = 0
         self.parent_dir = None
 
@@ -2346,7 +2359,8 @@ class FakeFilesystem(object):
         if file_path.endswith(self.path_separator):
             if self.Exists(file_path):
                 raise OSError(errno.EEXIST, 'File exists')
-            raise OSError(errno.ENOENT, 'No such file or directory')
+            if not self.is_windows_fs:
+                raise OSError(errno.ENOENT, 'No such file or directory')
 
         # resolve the link path only if it is not a link itself
         if not self.IsLink(file_path):
@@ -4629,7 +4643,9 @@ class FakeFileOpen(object):
             closefd = True
 
         error_class = OSError if self.raw_io else IOError
-        if open_modes.must_not_exist and (file_object or self.filesystem.IsLink(file_path)):
+        if (open_modes.must_not_exist and
+                (file_object or self.filesystem.IsLink(file_path) and
+                 not self.filesystem.is_windows_fs)):
             raise error_class(errno.EEXIST, 'File exists', file_path)
         if file_object:
             if ((open_modes.can_read and not file_object.st_mode & PERM_READ) or
