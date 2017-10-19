@@ -60,6 +60,8 @@ class TestCase(unittest.TestCase):
     is_cygwin = sys.platform == 'cygwin'
     is_macos = sys.platform == 'darwin'
     is_python2 = sys.version_info[0] < 3
+    symlinks_can_be_tested = None
+
 
     def assertModeEqual(self, expected, actual):
         return self.assertEqual(stat.S_IMODE(expected), stat.S_IMODE(actual))
@@ -177,15 +179,29 @@ class RealFsTestMixin(object):
                 raise unittest.SkipTest(
                     'Skipping because FakeFS does not match real FS')
 
+    def symlinksCanBeTested(self):
+        if not TestCase.is_windows or not self.useRealFs():
+            return True
+        if TestCase.symlinks_can_be_tested is None:
+            link_path = self.makePath('link')
+            try:
+                self.os.symlink(self.base_path, link_path)
+                TestCase.symlinks_can_be_tested = True
+                self.os.remove(link_path)
+            except OSError:
+                TestCase.symlinks_can_be_tested = False
+        return TestCase.symlinks_can_be_tested
+
     def skipIfSymlinkNotSupported(self):
-        if self.useRealFs():
-            if TestCase.is_windows:
+        if not self.symlinksCanBeTested():
+            raise unittest.SkipTest(
+                'Symlinks under Windows need admin privileges')
+        if (self.useRealFs() and TestCase.is_windows or
+                    not self.useRealFs() and self.filesystem.is_windows_fs):
+            if sys.version_info < (3, 3):
                 raise unittest.SkipTest(
-                    'Symlinks under Windows need admin privileges')
-        else:
-            if self.filesystem.is_windows_fs and sys.version_info < (3, 3):
-                raise unittest.SkipTest(
-                    'Symlinks are not supported under Windows before Python 3.3')
+                    'Symlinks are not supported under Windows '
+                    'before Python 3.3')
 
     def makePath(self, *args):
         if isinstance(args[0], (list, tuple)):
@@ -3087,7 +3103,8 @@ class FakeOsModuleTestCaseInsensitiveFS(FakeOsModuleTestBase):
                                  link_path)
 
     def testRenameDirToExistingDir(self):
-        # Regression tet for #317
+        # Regression test for #317
+        self.testPosixOnly()
         dest_dir_path = self.makePath('Dest')
         new_dest_dir_path = self.makePath('dest')
         self.os.mkdir(dest_dir_path)
