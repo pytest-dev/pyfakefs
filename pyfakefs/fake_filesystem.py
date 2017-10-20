@@ -1925,7 +1925,8 @@ class FakeFilesystem(object):
         else:
             target_directory = self.ResolveObject(file_path)
             if not stat.S_ISDIR(target_directory.st_mode):
-                raise error_class(errno.ENOTDIR,
+                error = errno.ENOENT if self.is_windows_fs else errno.ENOTDIR
+                raise error_class(error,
                               'Not a directory in the fake filesystem',
                               file_path)
         target_directory.AddEntry(file_object)
@@ -2515,8 +2516,8 @@ class FakeFilesystem(object):
         except (IOError, OSError) as e:
             if (not exist_ok or
                     not isinstance(self.ResolveObject(dir_name), FakeDirectory)):
-                if isinstance(e, OSError):
-                    raise
+                if self.is_windows_fs and e.errno == errno.ENOTDIR:
+                    e.errno = errno.ENOENT
                 raise OSError(e.errno, e.strerror, e.filename)
 
     def _IsType(self, path, st_flag, follow_symlinks=True):

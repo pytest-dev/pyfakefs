@@ -193,15 +193,15 @@ class RealFsTestMixin(object):
         return TestCase.symlinks_can_be_tested
 
     def skipIfSymlinkNotSupported(self):
-        if not self.symlinksCanBeTested():
-            raise unittest.SkipTest(
-                'Symlinks under Windows need admin privileges')
         if (self.useRealFs() and TestCase.is_windows or
                     not self.useRealFs() and self.filesystem.is_windows_fs):
             if sys.version_info < (3, 3):
                 raise unittest.SkipTest(
                     'Symlinks are not supported under Windows '
                     'before Python 3.3')
+        if not self.symlinksCanBeTested():
+            raise unittest.SkipTest(
+                'Symlinks under Windows need admin privileges')
 
     def makePath(self, *args):
         if isinstance(args[0], (list, tuple)):
@@ -564,9 +564,17 @@ class FakeFilesystemUnitTest(TestCase):
             {self.fake_file.name: self.fake_file},
             self.filesystem.root.GetEntry(self.fake_child.name).contents)
 
-    def testAddObjectToRegularFileError(self):
+    def testAddObjectToRegularFileErrorPosix(self):
+        self.filesystem.is_windows_fs = False
         self.filesystem.AddObject(self.root_name, self.fake_file)
         self.assertRaisesOSError(errno.ENOTDIR,
+                                 self.filesystem.AddObject,
+                                 self.fake_file.name, self.fake_file)
+
+    def testAddObjectToRegularFileErrorWindows(self):
+        self.filesystem.is_windows_fs = True
+        self.filesystem.AddObject(self.root_name, self.fake_file)
+        self.assertRaisesOSError(errno.ENOENT,
                                  self.filesystem.AddObject,
                                  self.fake_file.name, self.fake_file)
 
@@ -2109,14 +2117,21 @@ class FakeOsModuleTest(FakeOsModuleTestBase):
         self.assertTrue(self.os.path.exists(file_path))
         self.assertRaisesOSError(errno.EEXIST, self.os.mkdir, file_path)
 
-    def testMkdirRaisesIfParentIsFile(self):
+    def checkMkdirRaisesIfParentIsFile(self, error_type):
         """mkdir raises exception if name already exists as a file."""
-        self.skipRealFsFailure(skipPosix=False)
         directory = self.makePath('xyzzy')
         file_path = self.os.path.join(directory, 'plugh')
         self.createFile(file_path)
-        self.assertRaisesOSError(errno.ENOTDIR, self.os.mkdir,
+        self.assertRaisesOSError(error_type, self.os.mkdir,
                                  self.os.path.join(file_path, 'ff'))
+
+    def testMkdirRaisesIfParentIsFilePosix(self):
+        self.testPosixOnly()
+        self.checkMkdirRaisesIfParentIsFile(errno.ENOTDIR)
+
+    def testMkdirRaisesIfParentIsFileWindows(self):
+        self.testWindowsOnly()
+        self.checkMkdirRaisesIfParentIsFile(errno.ENOENT)
 
     def testMkdirRaisesWithSlashDot(self):
         """mkdir raises exception if mkdir foo/. (trailing /.)."""
@@ -2173,14 +2188,22 @@ class FakeOsModuleTest(FakeOsModuleTestBase):
         self.os.makedirs(directory)
         self.assertTrue(self.os.path.exists(directory))
 
-    def testMakedirsRaisesIfParentIsFile(self):
+    def checkMakedirsRaisesIfParentIsFile(self, error_type):
         """makedirs raises exception if a parent component exists as a file."""
         self.skipRealFsFailure(skipPosix=False)
         file_path = self.makePath('xyzzy')
         directory = self.os.path.join(file_path, 'plugh')
         self.createFile(file_path)
         self.assertTrue(self.os.path.exists(file_path))
-        self.assertRaisesOSError(errno.ENOTDIR, self.os.makedirs, directory)
+        self.assertRaisesOSError(error_type, self.os.makedirs, directory)
+
+    def testMakedirsRaisesIfParentIsFilePosix(self):
+        self.testPosixOnly()
+        self.checkMakedirsRaisesIfParentIsFile(errno.ENOTDIR)
+
+    def testMakedirsRaisesIfParentIsFileWindows(self):
+        self.testWindowsOnly()
+        self.checkMakedirsRaisesIfParentIsFile(errno.ENOENT)
 
     def testMakedirsRaisesIfParentIsBrokenLink(self):
         self.testPosixOnly()
@@ -3601,15 +3624,22 @@ class FakeOsModuleTestCaseInsensitiveFS(FakeOsModuleTestBase):
         path2 = self.makePath('Baz')
         self.assertRaisesOSError(errno.EEXIST, self.os.mkdir, path2)
 
-    def testMkdirRaisesIfParentIsFile(self):
+    def checkMkdirRaisesIfParentIsFile(self, error_type):
         """mkdir raises exception if name already exists as a file."""
         self.skipRealFsFailure(skipPosix=False)
         directory = self.makePath('xyzzy')
         file_path = self.os.path.join(directory, 'plugh')
         self.createFile(file_path)
-        self.assertRaisesOSError(errno.ENOTDIR, self.os.mkdir,
+        self.assertRaisesOSError(error_type, self.os.mkdir,
                                  self.os.path.join(file_path.upper(),
                                                    'ff'))
+    def testMkdirRaisesIfParentIsFilePosix(self):
+        self.testPosixOnly()
+        self.checkMkdirRaisesIfParentIsFile(errno.ENOTDIR)
+
+    def testMkdirRaisesIfParentIsFileWindows(self):
+        self.testWindowsOnly()
+        self.checkMkdirRaisesIfParentIsFile(errno.ENOENT)
 
     def testMakedirs(self):
         """makedirs can create a directory even if parent does not exist."""
@@ -3619,15 +3649,23 @@ class FakeOsModuleTestCaseInsensitiveFS(FakeOsModuleTestBase):
         self.os.makedirs(directory.upper())
         self.assertTrue(self.os.path.exists(directory))
 
-    def testMakedirsRaisesIfParentIsFile(self):
+    def checkMakedirsRaisesIfParentIsFile(self, error_type):
         """makedirs raises exception if a parent component exists as a file."""
         self.skipRealFsFailure(skipPosix=False)
         file_path = self.makePath('xyzzy')
         directory = self.os.path.join(file_path, 'plugh')
         self.createFile(file_path)
         self.assertTrue(self.os.path.exists(file_path))
-        self.assertRaisesOSError(errno.ENOTDIR, self.os.makedirs,
+        self.assertRaisesOSError(error_type, self.os.makedirs,
                                  directory.upper())
+
+    def testMakedirsRaisesIfParentIsFilePosix(self):
+        self.testPosixOnly()
+        self.checkMakedirsRaisesIfParentIsFile(errno.ENOTDIR)
+
+    def testMakedirsRaisesIfParentIsFileWindows(self):
+        self.testWindowsOnly()
+        self.checkMakedirsRaisesIfParentIsFile(errno.ENOENT)
 
     def testMakedirsRaisesIfParentIsBrokenLink(self):
         self.testPosixOnly()
@@ -5909,12 +5947,20 @@ class FakeFileOpenTest(FakeFileOpenTestBase):
         self.assertRaises(IOError, _IteratorOpen, file_path, 'w')
         self.assertRaises(IOError, _IteratorOpen, file_path, 'a')
 
-    def testOpenRaisesIOErrorIfParentIsFile(self):
+    def testOpenRaisesIOErrorIfParentIsFilePosix(self):
+        self.testPosixOnly()
         self.skipRealFsFailure(skipPosix=False)
         file_path = self.makePath('bar')
         self.createFile(file_path)
         file_path = self.os.path.join(file_path, 'baz')
         self.assertRaisesIOError(errno.ENOTDIR, self.open, file_path, 'w')
+
+    def testOpenRaisesIOErrorIfParentIsFileWindows(self):
+        self.testWindowsOnly()
+        file_path = self.makePath('bar')
+        self.createFile(file_path)
+        file_path = self.os.path.join(file_path, 'baz')
+        self.assertRaisesIOError(errno.ENOENT, self.open, file_path, 'w')
 
     def testCanReadFromBlockDevice(self):
         self.skipRealFs()
