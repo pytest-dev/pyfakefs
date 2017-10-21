@@ -4517,7 +4517,7 @@ class FakeOsModuleWalkTest(FakeOsModuleTestBase):
 
         expected = [(self.os.path.join(base_dir, 'created_link'),
                      [], ['subfile'])]
-        self.assertWalkResults(expected, 
+        self.assertWalkResults(expected,
                                self.os.path.join(base_dir, 'created_link'),
                                followlinks=True)
 
@@ -4676,21 +4676,22 @@ class FakeOsModuleDirFdTest(FakeOsModuleTestBase):
 class FakeScandirTest(FakeOsModuleTestBase):
     def setUp(self):
         super(FakeScandirTest, self).setUp()
-        directory = '/xyzzy/plugh'
-        link_dir = '/linked/plugh'
-        linked_file_path = self.filesystem.JoinPaths(link_dir, 'file')
-        linked_dir_path = self.filesystem.JoinPaths(link_dir, 'dir')
+        self.skipIfSymlinkNotSupported()
+        directory = self.makePath('xyzzy', 'plugh')
+        link_dir = self.makePath('linked', 'plugh')
+        self.linked_file_path = self.os.path.join(link_dir, 'file')
+        self.linked_dir_path = self.os.path.join(link_dir, 'dir')
 
-        self.filesystem.CreateDirectory(linked_dir_path)
-        self.filesystem.CreateFile(linked_file_path, st_size=100)
-        self.filesystem.CreateDirectory(
-            self.filesystem.JoinPaths(directory, 'dir'))
-        self.filesystem.CreateFile(
-            self.filesystem.JoinPaths(directory, 'file'), st_size=500)
-        self.filesystem.CreateLink(self.filesystem.JoinPaths(
-            directory, 'link_file'), linked_file_path)
-        self.filesystem.CreateLink(self.filesystem.JoinPaths(
-            directory, 'link_dir'), linked_dir_path)
+        self.createDirectory(self.linked_dir_path)
+        self.createFile(self.linked_file_path, contents=b'a' * 10)
+        self.dir_path = self.os.path.join(directory, 'dir')
+        self.createDirectory(self.dir_path)
+        self.file_path = self.os.path.join(directory, 'file')
+        self.createFile(self.file_path, contents=b'b' * 50)
+        self.file_link_path = self.os.path.join(directory, 'link_file')
+        self.createLink(self.file_link_path, self.linked_file_path)
+        self.dir_link_path = self.os.path.join(directory, 'link_dir')
+        self.createLink(self.dir_link_path, self.linked_dir_path)
 
         self.dir_entries = [entry for entry in self.os.scandir(directory)]
         self.dir_entries = sorted(self.dir_entries,
@@ -4701,7 +4702,7 @@ class FakeScandirTest(FakeOsModuleTestBase):
         sorted_names = ['dir', 'file', 'link_dir', 'link_file']
         self.assertEqual(sorted_names,
                          [entry.name for entry in self.dir_entries])
-        self.assertEqual('/xyzzy/plugh/dir', self.dir_entries[0].path)
+        self.assertEqual(self.dir_path, self.dir_entries[0].path)
 
     def testIsfile(self):
         self.assertFalse(self.dir_entries[0].is_file())
@@ -4726,48 +4727,49 @@ class FakeScandirTest(FakeOsModuleTestBase):
         self.assertTrue(self.dir_entries[3].is_symlink())
 
     def testInode(self):
-        self.assertEqual(self.filesystem.GetObject('/xyzzy/plugh/dir').st_ino,
+        self.assertEqual(self.os.stat(self.dir_path).st_ino,
                          self.dir_entries[0].inode())
-        self.assertEqual(self.filesystem.GetObject('/xyzzy/plugh/file').st_ino,
+        self.assertEqual(self.os.stat(self.file_path).st_ino,
                          self.dir_entries[1].inode())
-        self.assertEqual(
-            self.filesystem.GetObject('/xyzzy/plugh/link_dir').st_ino,
-            self.dir_entries[2].inode())
-        self.assertEqual(
-            self.filesystem.GetObject('/xyzzy/plugh/link_file').st_ino,
-            self.dir_entries[3].inode())
+        self.assertEqual(self.os.lstat(self.dir_link_path).st_ino,
+                         self.dir_entries[2].inode())
+        self.assertEqual(self.os.lstat(self.file_link_path).st_ino,
+                         self.dir_entries[3].inode())
 
     def testStat(self):
-        self.assertEqual(500, self.dir_entries[1].stat().st_size)
-        self.assertEqual(100, self.dir_entries[3].stat().st_size)
-        expected_size = (0 if self.filesystem.is_windows_fs
-                         else len('/linked/plugh/file'))
-        self.assertEqual(expected_size,
+        self.assertEqual(50, self.dir_entries[1].stat().st_size)
+        self.assertEqual(10, self.dir_entries[3].stat().st_size)
+        self.assertEqual(len(self.linked_file_path),
                          self.dir_entries[3].stat(
                              follow_symlinks=False).st_size)
         self.assertEqual(
-            self.filesystem.ResolveObject('/xyzzy/plugh/dir').st_ctime,
+            self.os.stat(self.dir_path).st_ctime,
             self.dir_entries[0].stat().st_ctime)
         self.assertEqual(
-            self.filesystem.ResolveObject('/linked/plugh/dir').st_mtime,
+            self.os.stat(self.linked_dir_path).st_mtime,
             self.dir_entries[2].stat().st_mtime)
 
     def testIndexAccessToStatTimesReturnsInt(self):
-        self.assertEqual(self.os.stat('/xyzzy/plugh/dir')[stat.ST_CTIME],
+        self.assertEqual(self.os.stat(self.dir_path)[stat.ST_CTIME],
                          int(self.dir_entries[0].stat().st_ctime))
-        self.assertEqual(self.os.stat('/linked/plugh/dir')[stat.ST_MTIME],
+        self.assertEqual(self.os.stat(self.linked_dir_path)[stat.ST_MTIME],
                          int(self.dir_entries[2].stat().st_mtime))
 
     def testStatInoDevPosix(self):
-        self.filesystem.is_windows_fs = False
-        file_obj = self.filesystem.ResolveObject('/linked/plugh/file')
-        self.assertEqual(file_obj.st_ino, self.dir_entries[3].stat().st_ino)
-        self.assertEqual(file_obj.st_dev, self.dir_entries[3].stat().st_dev)
+        self.checkPosixOnly()
+        file_stat = self.os.stat(self.linked_file_path)
+        self.assertEqual(file_stat.st_ino, self.dir_entries[3].stat().st_ino)
+        self.assertEqual(file_stat.st_dev, self.dir_entries[3].stat().st_dev)
 
     def testStatInoDevWindows(self):
-        self.filesystem.is_windows_fs = True
+        self.checkWindowsOnly()
         self.assertEqual(0, self.dir_entries[3].stat().st_ino)
         self.assertEqual(0, self.dir_entries[3].stat().st_dev)
+
+
+class RealScandirTest(FakeScandirTest):
+    def useRealFs(self):
+        return True
 
 
 class StatPropagationTest(TestCase):
