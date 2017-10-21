@@ -85,7 +85,7 @@ class FakeShutilModuleTest(RealFsTestCase):
         self.assertFalse(os.path.exists(file_path))
 
     def testRmtreeWithoutPermissionForAFileInWindows(self):
-        self.testWindowsOnly()
+        self.checkWindowsOnly()
         dir_path = self.makePath('foo')
         self.createFile(os.path.join(dir_path, 'bar'))
         file_path = os.path.join(dir_path, 'baz')
@@ -96,7 +96,7 @@ class FakeShutilModuleTest(RealFsTestCase):
         self.os.chmod(file_path, 0o666)
 
     def testRmtreeWithoutPermissionForADirInPosix(self):
-        self.testPosixOnly()
+        self.checkPosixOnly()
         dir_path = self.makePath('foo')
         self.createFile(os.path.join(dir_path, 'bar'))
         file_path = os.path.join(dir_path, 'baz')
@@ -107,7 +107,7 @@ class FakeShutilModuleTest(RealFsTestCase):
         self.os.chmod(dir_path, 0o777)
 
     def testRmtreeWithOpenFilePosix(self):
-        self.testPosixOnly()
+        self.checkPosixOnly()
         dir_path = self.makePath('foo')
         self.createFile(os.path.join(dir_path, 'bar'))
         file_path = os.path.join(dir_path, 'baz')
@@ -117,7 +117,7 @@ class FakeShutilModuleTest(RealFsTestCase):
         self.assertFalse(os.path.exists(file_path))
 
     def testRmtreeWithOpenFileFailsUnderWindows(self):
-        self.testWindowsOnly()
+        self.checkWindowsOnly()
         dir_path = self.makePath('foo')
         self.createFile(os.path.join(dir_path, 'bar'))
         file_path = os.path.join(dir_path, 'baz')
@@ -400,7 +400,7 @@ class FakeCopyFileTest(RealFsTestCase):
         os.chmod(dst_file, 0o666)
 
     def testRaisesIfDestDirIsNotWritableUnderPosix(self):
-        self.testPosixOnly()
+        self.checkPosixOnly()
         self.skipRealFsFailure(skipPython3=False)
         src_file = self.makePath('xyzzy')
         dst_dir = self.makePath('tmp', 'foo')
