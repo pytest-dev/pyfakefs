@@ -5416,7 +5416,6 @@ class FakeFileOpenTest(FakeFileOpenTestBase):
         self.assertEqual(['two\r\r\n', 'lines'], fake_file.readlines())
 
     def testOpenValidFileWithCwd(self):
-        self.skipRealFs()
         contents = [
             'I am he as\n',
             'you are he as\n',
@@ -5425,7 +5424,7 @@ class FakeFileOpenTest(FakeFileOpenTestBase):
         ]
         file_path = self.makePath('bar.txt')
         self.createFile(file_path, contents=''.join(contents))
-        self.filesystem.cwd = self.base_path
+        self.os.chdir(self.base_path)
         self.assertEqual(contents, self.open(file_path).readlines())
 
     def testIterateOverFile(self):

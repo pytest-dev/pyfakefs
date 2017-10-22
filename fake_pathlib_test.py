@@ -21,23 +21,34 @@ Note that many of the tests are directly taken from examples in the python docs.
 """
 
 import os
+import pathlib
 import stat
+import sys
 import unittest
 
-import sys
-
-from pyfakefs import fake_filesystem
+from fake_filesystem_test import RealFsTestCase
 from pyfakefs import fake_pathlib
 
 is_windows = sys.platform == 'win32'
 
 
-class FakePathlibInitializationTest(unittest.TestCase):
+class RealPathlibTestCase(RealFsTestCase):
+    def __init__(self, methodName='runTest'):
+        super(RealPathlibTestCase, self).__init__(methodName)
+        self.pathlib = pathlib
+        self.path = None
+
     def setUp(self):
-        filesystem = fake_filesystem.FakeFilesystem(path_separator='/')
-        filesystem.is_windows_fs = False
-        self.pathlib = fake_pathlib.FakePathlibModule(filesystem)
+        super(RealPathlibTestCase, self).setUp()
+        if not self.useRealFs():
+            self.pathlib = fake_pathlib.FakePathlibModule(self.filesystem)
         self.path = self.pathlib.Path
+
+
+class FakePathlibInitializationTest(RealPathlibTestCase):
+    def setUp(self):
+        super(FakePathlibInitializationTest, self).setUp()
+        # filesystem.is_windows_fs = False
 
     def test_initialization_type(self):
         """Make sure tests for class type will work"""
@@ -91,12 +102,15 @@ class FakePathlibInitializationTest(unittest.TestCase):
         self.assertFalse(self.path('a/b').is_absolute())
 
 
-class FakePathlibInitializationWithDriveTest(unittest.TestCase):
+class RealPathlibInitializationTest(FakePathlibInitializationTest):
+    def useRealFs(self):
+        return True
+
+
+class FakePathlibInitializationWithDriveTest(RealPathlibTestCase):
     def setUp(self):
-        filesystem = fake_filesystem.FakeFilesystem(path_separator='/')
-        filesystem.is_windows_fs = True
-        pathlib = fake_pathlib.FakePathlibModule(filesystem)
-        self.path = pathlib.Path
+        super(FakePathlibInitializationWithDriveTest, self).setUp()
+        self.checkWindowsOnly()
 
     def test_init_with_segments(self):
         """Basic initialization tests - taken from pathlib.Path documentation"""
@@ -125,6 +139,7 @@ class FakePathlibInitializationWithDriveTest(unittest.TestCase):
         self.assertEqual(path.parents[0], self.path('d:/python scripts'))
         self.assertEqual(path.parents[1], self.path('d:/'))
 
+    @unittest.skipIf(not is_windows, 'Windows-specifc behavior')
     def test_is_absolute(self):
         self.assertTrue(self.path('c:/a/b').is_absolute())
         self.assertFalse(self.path('/a/b').is_absolute())
@@ -132,24 +147,32 @@ class FakePathlibInitializationWithDriveTest(unittest.TestCase):
         self.assertTrue(self.path('//some/share').is_absolute())
 
 
-class FakePathlibPurePathTest(unittest.TestCase):
+class RealPathlibInitializationWithDriveTest(FakePathlibInitializationWithDriveTest):
+    def useRealFs(self):
+        return True
+
+
+class FakePathlibPurePathTest(RealPathlibTestCase):
     """Tests functionality present in PurePath class."""
 
     def setUp(self):
-        filesystem = fake_filesystem.FakeFilesystem(path_separator='/')
-        filesystem.is_windows_fs = True
-        pathlib = fake_pathlib.FakePathlibModule(filesystem)
-        self.path = pathlib.Path
+        super(FakePathlibPurePathTest, self).setUp()
+        # filesystem.is_windows_fs = True
 
-    def test_is_reserved(self):
+    @unittest.skipIf(is_windows, 'POSIX specific behavior')
+    def test_is_reserved_posix(self):
         self.assertFalse(self.path('/dev').is_reserved())
         self.assertFalse(self.path('/').is_reserved())
-        if is_windows:
-            self.assertTrue(self.path('COM1').is_reserved())
-            self.assertTrue(self.path('nul.txt').is_reserved())
-        else:
-            self.assertFalse(self.path('COM1').is_reserved())
-            self.assertFalse(self.path('nul.txt').is_reserved())
+        self.assertFalse(self.path('COM1').is_reserved())
+        self.assertFalse(self.path('nul.txt').is_reserved())
+
+    @unittest.skipIf(not is_windows, 'Windows specific behavior')
+    def test_is_reserved_windows(self):
+        self.checkWindowsOnly()
+        self.assertFalse(self.path('/dev').is_reserved())
+        self.assertFalse(self.path('/').is_reserved())
+        self.assertTrue(self.path('COM1').is_reserved())
+        self.assertTrue(self.path('nul.txt').is_reserved())
 
     def test_joinpath(self):
         self.assertEqual(self.path('/etc').joinpath('passwd'),
@@ -158,6 +181,9 @@ class FakePathlibPurePathTest(unittest.TestCase):
                          self.path('/etc/passwd'))
         self.assertEqual(self.path('/foo').joinpath('bar', 'baz'),
                          self.path('/foo/bar/baz'))
+
+    def test_joinpath_drive(self):
+        self.checkWindowsOnly()
         self.assertEqual(self.path('c:').joinpath('/Program Files'),
                          self.path('c:/Program Files'))
 
@@ -174,6 +200,7 @@ class FakePathlibPurePathTest(unittest.TestCase):
         self.assertRaises(ValueError, self.path('passwd').relative_to, '/usr')
 
     def test_with_name(self):
+        self.checkWindowsOnly()
         self.assertEqual(self.path('c:/Downloads/pathlib.tar.gz').with_name('setup.py'),
                          self.path('c:/Downloads/setup.py'))
         self.assertRaises(ValueError, self.path('c:/').with_name, 'setup.py')
@@ -185,98 +212,135 @@ class FakePathlibPurePathTest(unittest.TestCase):
                          self.path('README.txt'))
 
 
-class FakePathlibFileObjectPropertyTest(unittest.TestCase):
+class RealPathlibPurePathTest(FakePathlibPurePathTest):
+    def useRealFs(self):
+        return True
+
+
+class FakePathlibFileObjectPropertyTest(RealPathlibTestCase):
     def setUp(self):
-        self.filesystem = fake_filesystem.FakeFilesystem(path_separator='/')
-        self.filesystem.is_windows_fs = False
-        pathlib = fake_pathlib.FakePathlibModule(self.filesystem)
-        self.path = pathlib.Path
-        self.filesystem.CreateFile('/home/jane/test.py', st_size=100, st_mode=stat.S_IFREG | 0o666)
-        self.filesystem.CreateDirectory('/home/john')
-        self.filesystem.CreateLink('/john', '/home/john')
-        self.filesystem.CreateLink('/test.py', '/home/jane/test.py')
-        self.filesystem.CreateLink('/broken_dir_link', '/home/none')
-        self.filesystem.CreateLink('/broken_file_link', '/home/none/test.py')
+        super(FakePathlibFileObjectPropertyTest, self).setUp()
+        self.skipIfSymlinkNotSupported()
+        self.file_path = self.makePath('home', 'jane', 'test.py')
+        self.createFile(self.file_path, contents=b'a' * 100)
+        self.createDirectory(self.makePath('home', 'john'))
+        self.createLink(self.makePath('john'), self.makePath('home', 'john'))
+        self.file_link_path = self.makePath('test.py')
+        self.createLink(self.file_link_path, self.file_path)
+        self.createLink(self.makePath('broken_dir_link'),
+                        self.makePath('home', 'none'))
+        self.createLink(self.makePath('broken_file_link'),
+                        self.makePath('home', 'none', 'test.py'))
 
     def test_exists(self):
-        self.assertTrue(self.path('/home/jane/test.py').exists())
-        self.assertTrue(self.path('/home/jane').exists())
-        self.assertFalse(self.path('/home/jane/test').exists())
-        self.assertTrue(self.path('/john').exists())
-        self.assertTrue(self.path('/test.py').exists())
-        self.assertFalse(self.path('/broken_dir_link').exists())
-        self.assertFalse(self.path('/broken_file_link').exists())
+        self.assertTrue(self.path(self.file_path).exists())
+        self.assertTrue(self.path(
+            self.makePath('home', 'jane')).exists())
+        self.assertFalse(self.path(
+            self.makePath('home', 'jane', 'test')).exists())
+        self.assertTrue(self.path(
+            self.makePath('john')).exists())
+        self.assertTrue(self.path(
+            self.file_link_path).exists())
+        self.assertFalse(self.path(
+            self.makePath('broken_dir_link')).exists())
+        self.assertFalse(self.path(
+            self.makePath('broken_file_link')).exists())
 
     def test_is_dir(self):
-        self.assertFalse(self.path('/home/jane/test.py').is_dir())
-        self.assertTrue(self.path('/home/jane').is_dir())
-        self.assertTrue(self.path('/john').is_dir())
-        self.assertFalse(self.path('/test.py').is_dir())
-        self.assertFalse(self.path('/broken_dir_link').is_dir())
-        self.assertFalse(self.path('/broken_file_link').is_dir())
+        self.assertFalse(self.path(
+            self.file_path).is_dir())
+        self.assertTrue(self.path(
+            self.makePath('home/jane')).is_dir())
+        self.assertTrue(self.path(
+            self.makePath('john')).is_dir())
+        self.assertFalse(self.path(
+            self.file_link_path).is_dir())
+        self.assertFalse(self.path(
+            self.makePath('broken_dir_link')).is_dir())
+        self.assertFalse(self.path(
+            self.makePath('broken_file_link')).is_dir())
 
     def test_is_file(self):
-        self.assertTrue(self.path('/home/jane/test.py').is_file())
-        self.assertFalse(self.path('/home/jane').is_file())
-        self.assertFalse(self.path('/john').is_file())
-        self.assertTrue(self.path('/test.py').is_file())
-        self.assertFalse(self.path('/broken_dir_link').is_file())
-        self.assertFalse(self.path('/broken_file_link').is_file())
+        self.assertTrue(self.path(
+            self.makePath('home/jane/test.py')).is_file())
+        self.assertFalse(self.path(
+            self.makePath('home/jane')).is_file())
+        self.assertFalse(self.path(
+            self.makePath('john')).is_file())
+        self.assertTrue(self.path(
+            self.file_link_path).is_file())
+        self.assertFalse(self.path(
+            self.makePath('broken_dir_link')).is_file())
+        self.assertFalse(self.path(
+            self.makePath('broken_file_link')).is_file())
 
     def test_is_symlink(self):
-        self.assertFalse(self.path('/home/jane/test.py').is_symlink())
-        self.assertFalse(self.path('/home/jane').is_symlink())
-        self.assertTrue(self.path('/john').is_symlink())
-        self.assertTrue(self.path('/test.py').is_symlink())
-        self.assertTrue(self.path('/broken_dir_link').is_symlink())
-        self.assertTrue(self.path('/broken_file_link').is_symlink())
+        self.assertFalse(self.path(
+            self.makePath('home/jane/test.py')).is_symlink())
+        self.assertFalse(self.path(
+            self.makePath('home/jane')).is_symlink())
+        self.assertTrue(self.path(
+            self.makePath('john')).is_symlink())
+        self.assertTrue(self.path(
+            self.file_link_path).is_symlink())
+        self.assertTrue(self.path(
+            self.makePath('broken_dir_link')).is_symlink())
+        self.assertTrue(self.path(
+            self.makePath('broken_file_link')).is_symlink())
 
     def test_stat(self):
-        file_object = self.filesystem.ResolveObject('/home/jane/test.py')
+        file_stat = self.os.stat(self.file_path)
 
-        stat_result = self.path('/test.py').stat()
+        stat_result = self.path(self.file_link_path).stat()
         self.assertFalse(stat_result.st_mode & stat.S_IFDIR)
         self.assertTrue(stat_result.st_mode & stat.S_IFREG)
-        self.assertEqual(stat_result.st_ino, file_object.st_ino)
+        self.assertEqual(stat_result.st_ino, file_stat.st_ino)
         self.assertEqual(stat_result.st_size, 100)
-        self.assertEqual(stat_result.st_mtime, file_object.st_mtime)
-        self.assertEqual(stat_result[stat.ST_MTIME], int(file_object.st_mtime))
+        self.assertEqual(stat_result.st_mtime, file_stat.st_mtime)
+        self.assertEqual(stat_result[stat.ST_MTIME], int(file_stat.st_mtime))
 
     def test_lstat(self):
-        link_object = self.filesystem.LResolveObject('/test.py')
+        link_stat = self.os.lstat(self.file_link_path)
 
-        stat_result = self.path('/test.py').lstat()
+        stat_result = self.path(self.file_link_path).lstat()
         self.assertTrue(stat_result.st_mode & stat.S_IFREG)
         self.assertTrue(stat_result.st_mode & stat.S_IFLNK)
-        self.assertEqual(stat_result.st_ino, link_object.st_ino)
-        self.assertEqual(stat_result.st_size, len('/home/jane/test.py'))
-        self.assertEqual(stat_result.st_mtime, link_object.st_mtime)
+        self.assertEqual(stat_result.st_ino, link_stat.st_ino)
+        self.assertEqual(stat_result.st_size, len(self.file_path))
+        self.assertEqual(stat_result.st_mtime, link_stat.st_mtime)
 
     def test_chmod(self):
-        file_object = self.filesystem.ResolveObject('/home/jane/test.py')
-        link_object = self.filesystem.LResolveObject('/test.py')
-        self.path('/test.py').chmod(0o444)
-        self.assertEqual(file_object.st_mode, stat.S_IFREG | 0o444)
-        self.assertEqual(link_object.st_mode, stat.S_IFLNK | 0o777)
+        self.checkLinuxAndWindows()
+        self.path(self.file_link_path).chmod(0o444)
+        file_stat = self.os.stat(self.file_path)
+        self.assertEqual(file_stat.st_mode, stat.S_IFREG | 0o444)
+        link_stat = self.os.lstat(self.file_link_path)
+        # we get stat.S_IFLNK | 0o755 under MacOs
+        self.assertEqual(link_stat.st_mode, stat.S_IFLNK | 0o777)
 
+    @unittest.skipIf(sys.platform == 'darwin', 'Different behavior under MacOs')
     def test_lchmod(self):
-        file_object = self.filesystem.ResolveObject('/home/jane/test.py')
-        link_object = self.filesystem.LResolveObject('/test.py')
+        file_stat = self.os.stat(self.file_path)
+        link_stat = self.os.lstat(self.file_link_path)
         if not hasattr(os, "lchmod"):
-            self.assertRaises(NotImplementedError, self.path('/test.py').lchmod, 0o444)
+            self.assertRaises(NotImplementedError,
+                              self.path(self.file_link_path).lchmod, 0o444)
         else:
-            self.path('/test.py').lchmod(0o444)
-            self.assertEqual(file_object.st_mode, stat.S_IFREG | 0o666)
-            self.assertEqual(link_object.st_mode, stat.S_IFLNK | 0o444)
+            self.path(self.file_link_path).lchmod(0o444)
+            self.assertEqual(file_stat.st_mode, stat.S_IFREG | 0o666)
+            # we get stat.S_IFLNK | 0o755 under MacOs
+            self.assertEqual(link_stat.st_mode, stat.S_IFLNK | 0o444)
 
     def test_resolve(self):
-        self.filesystem.cwd = '/home/antoine'
-        self.filesystem.CreateDirectory('/home/antoine/docs')
-        self.filesystem.CreateFile('/home/antoine/setup.py')
+        self.createDirectory(self.makePath('antoine', 'docs'))
+        self.createFile(self.makePath('antoine', 'setup.py'))
+        self.os.chdir(self.makePath('antoine'))
+        # use real path to handle symlink /var to /private/var in MacOs
         self.assertEqual(self.path().resolve(),
-                         self.path('/home/antoine'))
-        self.assertEqual(self.path('docs/../setup.py').resolve(),
-                         self.path('/home/antoine/setup.py'))
+                         self.path(self.os.path.realpath(self.makePath('antoine'))))
+        self.assertEqual(self.path(self.os.path.join('docs', '..', 'setup.py')).resolve(),
+                         self.path(self.os.path.realpath(self.makePath('antoine', 'setup.py'))))
 
     @unittest.skipIf(sys.version_info >= (3, 6), 'Changed behavior in Python 3.6')
     def test_resolve_nonexisting_file(self):
@@ -285,25 +349,26 @@ class FakePathlibFileObjectPropertyTest(unittest.TestCase):
 
     @unittest.skipIf(sys.version_info >= (3, 6), 'Changed behavior in Python 3.6')
     def test_resolve_file_as_parent_windows(self):
-        self.filesystem.is_windows_fs = True
-        self.filesystem.CreateFile('/a_file')
-        path = self.path('/a_file/this can not exist')
+        self.checkWindowsOnly()
+        self.createFile(self.makePath('a_file'))
+        path = self.path(self.makePath('a_file', 'this can not exist'))
         self.assertRaises(FileNotFoundError, path.resolve)
 
     @unittest.skipIf(sys.version_info >= (3, 6), 'Changed behavior in Python 3.6')
     def test_resolve_file_as_parent_posix(self):
-        self.filesystem.is_windows_fs = False
-        self.filesystem.CreateFile('/a_file')
-        path = self.path('/a_file/this can not exist')
+        self.checkPosixOnly()
+        self.createFile(self.makePath('a_file'))
+        path = self.path(self.makePath('', 'a_file', 'this can not exist'))
         self.assertRaises(NotADirectoryError, path.resolve)
 
     @unittest.skipIf(sys.version_info < (3, 6), 'Changed behavior in Python 3.6')
     def test_resolve_nonexisting_file(self):
-        path = self.path('/path/to/file/this can not exist')
+        path = self.path(self.makePath('/path', 'to', 'file', 'this can not exist'))
         self.assertTrue(path, path.resolve())
         self.assertRaises(FileNotFoundError, path.resolve, strict=True)
 
     def test_cwd(self):
+        self.skipRealFs()
         self.filesystem.cwd = '/home/jane'
         self.assertEqual(self.path.cwd(), self.path('/home/jane'))
 
@@ -326,198 +391,211 @@ class FakePathlibFileObjectPropertyTest(unittest.TestCase):
                              self.path(os.environ['HOME']))
 
 
-class FakePathlibPathFileOperationTest(unittest.TestCase):
+class RealPathlibFileObjectPropertyTest(FakePathlibFileObjectPropertyTest):
+    def useRealFs(self):
+        return True
+
+
+class FakePathlibPathFileOperationTest(RealPathlibTestCase):
     """Tests methods related to file and directory handling."""
 
     def setUp(self):
-        self.filesystem = fake_filesystem.FakeFilesystem(path_separator='!')
-        # self.filesystem.is_windows_fs = False
-        self.filesystem.is_case_sensitive = True
-        pathlib = fake_pathlib.FakePathlibModule(self.filesystem)
-        self.path = pathlib.Path
+        super(FakePathlibPathFileOperationTest, self).setUp()
 
     def test_exists(self):
-        self.filesystem.CreateFile('!home!jane!test.py')
-        self.filesystem.CreateDirectory('!home!john')
-        self.filesystem.CreateLink('!john', '!home!john')
-        self.filesystem.CreateLink('!none', '!home!none')
+        self.skipIfSymlinkNotSupported()
+        self.createFile(self.makePath('home', 'jane', 'test.py'))
+        self.createDirectory(self.makePath('home', 'john'))
+        self.createLink(self.makePath('john'), self.makePath('home', 'john'))
+        self.createLink(self.makePath('none'), self.makePath('home', 'none'))
 
-        self.assertTrue(self.path('!home!jane!test.py').exists())
-        self.assertTrue(self.path('!home!jane').exists())
-        self.assertTrue(self.path('!john').exists())
-        self.assertFalse(self.path('!none').exists())
-        self.assertFalse(self.path('!home!jane!test').exists())
+        self.assertTrue(self.path(self.makePath('home', 'jane', 'test.py')).exists())
+        self.assertTrue(self.path(self.makePath('home', 'jane')).exists())
+        self.assertTrue(self.path(self.makePath('john')).exists())
+        self.assertFalse(self.path(self.makePath('none')).exists())
+        self.assertFalse(self.path(self.makePath('home', 'jane', 'test')).exists())
 
     def test_open(self):
-        self.filesystem.CreateDirectory('!foo')
-        self.assertRaises(OSError, self.path('!foo!bar.txt').open)
-        self.path('!foo!bar.txt').open('w')
-        self.assertTrue(self.filesystem.Exists('!foo!bar.txt'))
+        self.createDirectory(self.makePath('foo'))
+        self.assertRaises(OSError, self.path(self.makePath('foo', 'bar.txt')).open)
+        self.path(self.makePath('foo', 'bar.txt')).open('w')
+        self.assertTrue(self.os.path.exists(self.makePath('foo', 'bar.txt')))
 
     @unittest.skipIf(sys.version_info < (3, 5), 'New in version 3.5')
     def test_read_text(self):
-        self.filesystem.CreateFile('text_file', contents='ерунда', encoding='cyrillic')
-        file_path = self.path('text_file')
+        self.createFile(self.makePath('text_file'),
+                        contents='ерунда', encoding='cyrillic')
+        file_path = self.path(self.makePath('text_file'))
         self.assertEqual(file_path.read_text(encoding='cyrillic'), 'ерунда')
 
     @unittest.skipIf(sys.version_info < (3, 5), 'New in version 3.5')
     def test_write_text(self):
-        file_path = self.path('text_file')
+        path_name = self.makePath('text_file')
+        file_path = self.path(path_name)
         file_path.write_text('ανοησίες', encoding='greek')
-        self.assertTrue(self.filesystem.Exists('text_file'))
-        file_object = self.filesystem.ResolveObject('text_file')
-        self.assertEqual(file_object.byte_contents.decode('greek'), 'ανοησίες')
+        self.assertTrue(self.os.path.exists(path_name))
+        self.checkContents(path_name, 'ανοησίες'.encode('greek'))
 
     @unittest.skipIf(sys.version_info < (3, 5), 'New in version 3.5')
     def test_read_bytes(self):
-        self.filesystem.CreateFile('binary_file', contents=b'Binary file contents')
-        file_path = self.path('binary_file')
+        path_name = self.makePath('binary_file')
+        self.createFile(path_name, contents=b'Binary file contents')
+        file_path = self.path(path_name)
         self.assertEqual(file_path.read_bytes(), b'Binary file contents')
 
     @unittest.skipIf(sys.version_info < (3, 5), 'New in version 3.5')
     def test_write_bytes(self):
-        file_path = self.path('binary_file')
+        path_name = self.makePath('binary_file')
+        file_path = self.path(path_name)
         file_path.write_bytes(b'Binary file contents')
-        self.assertTrue(self.filesystem.Exists('binary_file'))
-        file_object = self.filesystem.ResolveObject('binary_file')
-        self.assertEqual(file_object.byte_contents, b'Binary file contents')
+        self.assertTrue(self.os.path.exists(path_name))
+        self.checkContents(path_name, b'Binary file contents')
 
     def test_rename(self):
-        self.filesystem.CreateFile('!foo!bar.txt', contents='test')
-        self.path('!foo!bar.txt').rename('foo!baz.txt')
-        self.assertFalse(self.filesystem.Exists('!foo!bar.txt'))
-        file_obj = self.filesystem.ResolveObject('foo!baz.txt')
-        self.assertTrue(file_obj)
-        self.assertEqual(file_obj.contents, 'test')
+        file_name = self.makePath('foo', 'bar.txt')
+        self.createFile(file_name, contents='test')
+        new_file_name = self.makePath('foo', 'baz.txt')
+        self.path(file_name).rename(new_file_name)
+        self.assertFalse(self.os.path.exists(file_name))
+        self.checkContents(new_file_name, 'test')
 
     def test_replace(self):
-        self.filesystem.CreateFile('!foo!bar.txt', contents='test')
-        self.filesystem.CreateFile('!bar!old.txt', contents='replaced')
-        self.path('!bar!old.txt').replace('foo!bar.txt')
-        self.assertFalse(self.filesystem.Exists('!bar!old.txt'))
-        file_obj = self.filesystem.ResolveObject('foo!bar.txt')
-        self.assertTrue(file_obj)
-        self.assertEqual(file_obj.contents, 'replaced')
+        self.createFile(self.makePath('foo', 'bar.txt'), contents='test')
+        self.createFile(self.makePath('bar', 'old.txt'), contents='replaced')
+        self.path(self.makePath('bar', 'old.txt')).replace(self.makePath('foo', 'bar.txt'))
+        self.assertFalse(self.os.path.exists(self.makePath('bar', 'old.txt')))
+        self.checkContents(self.makePath('foo', 'bar.txt'), 'replaced')
 
     def test_unlink(self):
-        self.filesystem.CreateFile('!foo!bar.txt', contents='test')
-        self.assertTrue(self.filesystem.Exists('!foo!bar.txt'))
-        self.path('!foo!bar.txt').unlink()
-        self.assertFalse(self.filesystem.Exists('!foo!bar.txt'))
+        file_path = self.makePath('foo', 'bar.txt')
+        self.createFile(file_path, contents='test')
+        self.assertTrue(self.os.path.exists(file_path))
+        self.path(file_path).unlink()
+        self.assertFalse(self.os.path.exists(file_path))
 
     def test_touch_non_existing(self):
-        self.filesystem.CreateDirectory('!foo')
-        self.path('!foo!bar.txt').touch(mode=0o444)
-        file_obj = self.filesystem.ResolveObject('!foo!bar.txt')
-        self.assertTrue(file_obj)
-        self.assertEqual(file_obj.contents, '')
-        self.assertTrue(file_obj.st_mode, stat.S_IFREG | 0o444)
+        self.createDirectory(self.makePath('foo'))
+        file_name = self.makePath('foo', 'bar.txt')
+        self.path(file_name).touch(mode=0o444)
+        self.checkContents(file_name, '')
+        self.assertTrue(self.os.stat(file_name).st_mode, stat.S_IFREG | 0o444)
 
     def test_touch_existing(self):
-        self.filesystem.CreateFile('!foo!bar.txt', contents='test')
-        file_path = self.path('!foo!bar.txt')
+        file_name = self.makePath('foo', 'bar.txt')
+        self.createFile(file_name, contents='test')
+        file_path = self.path(file_name)
         self.assertRaises(FileExistsError, file_path.touch, exist_ok=False)
         file_path.touch()
-        file_obj = self.filesystem.ResolveObject('!foo!bar.txt')
-        self.assertTrue(file_obj)
-        self.assertEqual(file_obj.contents, 'test')
+        self.checkContents(file_name, 'test')
 
     @unittest.skipIf(sys.version_info < (3, 5), 'New in version 3.5')
     def test_samefile(self):
-        self.filesystem.CreateFile('!foo!bar.txt')
-        self.filesystem.CreateFile('!foo!baz.txt')
-        self.assertRaises(OSError, self.path('!foo!other').samefile, '!foo!other.txt')
-        path = self.path('!foo!bar.txt')
-        self.assertRaises(OSError, path.samefile, '!foo!other.txt')
-        self.assertRaises(OSError, path.samefile, self.path('!foo!other.txt'))
-        self.assertFalse(path.samefile('!foo!baz.txt'))
-        self.assertFalse(path.samefile(self.path('!foo!baz.txt')))
-        self.assertTrue(path.samefile('!foo!..!foo!bar.txt'))
-        self.assertTrue(path.samefile(self.path('!foo!..!foo!bar.txt')))
+        file_name = self.makePath('foo', 'bar.txt')
+        self.createFile(file_name)
+        file_name2 = self.makePath('foo', 'baz.txt')
+        self.createFile(file_name2)
+        self.assertRaises(OSError, self.path(self.makePath('foo', 'other')).samefile, self.makePath('foo', 'other.txt'))
+        path = self.path(file_name)
+        other_name = self.makePath('foo', 'other.txt')
+        self.assertRaises(OSError, path.samefile, other_name)
+        self.assertRaises(OSError, path.samefile, self.path(other_name))
+        self.assertFalse(path.samefile(file_name2))
+        self.assertFalse(path.samefile(self.path(file_name2)))
+        self.assertTrue(path.samefile(self.makePath('foo', '..', 'foo', 'bar.txt')))
+        self.assertTrue(path.samefile(self.path(self.makePath('foo', '..', 'foo', 'bar.txt'))))
 
     def test_symlink_to(self):
-        self.filesystem.CreateFile('!foo!bar.txt')
-        path = self.path('!link_to_bar')
-        path.symlink_to('!foo!bar.txt')
-        self.assertTrue(self.filesystem.Exists('!link_to_bar'))
-        file_obj = self.filesystem.ResolveObject('!foo!bar.txt')
-        linked_file_obj = self.filesystem.ResolveObject('!link_to_bar')
-        self.assertEqual(file_obj, linked_file_obj)
-        link__obj = self.filesystem.LResolveObject('!link_to_bar')
+        file_name = self.makePath('foo', 'bar.txt')
+        self.createFile(file_name)
+        link_name = self.makePath('link_to_bar')
+        path = self.path(link_name)
+        path.symlink_to(file_name)
+        self.assertTrue(self.os.path.exists(link_name))
+        # file_obj = self.filesystem.ResolveObject(file_name)
+        # linked_file_obj = self.filesystem.ResolveObject(link_name)
+        # self.assertEqual(file_obj, linked_file_obj)
+        # link__obj = self.filesystem.LResolveObject(link_name)
         self.assertTrue(path.is_symlink())
 
     def test_mkdir(self):
-        self.assertRaises(FileNotFoundError, self.path('!foo!bar').mkdir)
-        self.path('!foo!bar').mkdir(parents=True)
-        self.assertTrue(self.filesystem.Exists('!foo!bar'))
-        self.assertRaises(FileExistsError, self.path('!foo!bar').mkdir)
+        dir_name = self.makePath('foo', 'bar')
+        self.assertRaises(FileNotFoundError, self.path(dir_name).mkdir)
+        self.path(dir_name).mkdir(parents=True)
+        self.assertTrue(self.os.path.exists(dir_name))
+        self.assertRaises(FileExistsError, self.path(dir_name).mkdir)
 
     @unittest.skipIf(sys.version_info < (3, 5), 'exist_ok argument new in Python 3.5')
     def test_mkdir_exist_ok(self):
-        self.filesystem.CreateDirectory('!foo!bar')
-        self.path('foo!bar').mkdir(exist_ok=True)
-        self.filesystem.CreateFile('!foo!bar!baz')
-        self.assertRaises(FileExistsError, self.path('!foo!bar!baz').mkdir, exist_ok=True)
+        dir_name = self.makePath('foo', 'bar')
+        self.createDirectory(dir_name)
+        self.path(dir_name).mkdir(exist_ok=True)
+        file_name = self.os.path.join(dir_name, 'baz')
+        self.createFile(file_name)
+        self.assertRaises(FileExistsError, self.path(file_name).mkdir, exist_ok=True)
 
     def test_rmdir(self):
-        self.filesystem.CreateDirectory('!foo!bar')
-        self.path('!foo!bar').rmdir()
-        self.assertFalse(self.filesystem.Exists('!foo!bar'))
-        self.assertTrue(self.filesystem.Exists('!foo'))
-        self.filesystem.CreateFile('!foo!baz')
-        self.assertRaises(OSError, self.path('!foo').rmdir)
-        self.assertTrue(self.filesystem.Exists('!foo'))
+        dir_name = self.makePath('foo', 'bar')
+        self.createDirectory(dir_name)
+        self.path(dir_name).rmdir()
+        self.assertFalse(self.os.path.exists(dir_name))
+        self.assertTrue(self.os.path.exists(self.makePath('foo')))
+        self.createFile(self.makePath('foo', 'baz'))
+        self.assertRaises(OSError, self.path(self.makePath('foo')).rmdir)
+        self.assertTrue(self.os.path.exists(self.makePath('foo')))
 
     def test_iterdir(self):
-        self.filesystem.CreateFile('!foo!bar!file1')
-        self.filesystem.CreateFile('!foo!bar!file2')
-        self.filesystem.CreateFile('!foo!bar!file3')
-        path = self.path('!foo!bar')
+        self.createFile(self.makePath('foo', 'bar', 'file1'))
+        self.createFile(self.makePath('foo', 'bar', 'file2'))
+        self.createFile(self.makePath('foo', 'bar', 'file3'))
+        path = self.path(self.makePath('foo', 'bar'))
         contents = [entry for entry in path.iterdir()]
         self.assertEqual(3, len(contents))
-        self.assertIn(self.path('!foo!bar!file2'), contents)
+        self.assertIn(self.path(self.makePath('foo', 'bar', 'file2')), contents)
 
     def test_glob(self):
-        self.filesystem.CreateFile('!foo!setup.py')
-        self.filesystem.CreateFile('!foo!all_tests.py')
-        self.filesystem.CreateFile('!foo!README.md')
-        self.filesystem.CreateFile('!foo!setup.pyc')
-        path = self.path('!foo')
+        self.createFile(self.makePath('foo', 'setup.py'))
+        self.createFile(self.makePath('foo', 'all_tests.py'))
+        self.createFile(self.makePath('foo', 'README.md'))
+        self.createFile(self.makePath('foo', 'setup.pyc'))
+        path = self.path(self.makePath('foo'))
         self.assertEqual(sorted(path.glob('*.py')),
-                         [self.path('!foo!all_tests.py'), self.path('!foo!setup.py')])
+                         [self.path(self.makePath('foo', 'all_tests.py')),
+                          self.path(self.makePath('foo', 'setup.py'))])
 
     def test_glob_case_windows(self):
-        self.filesystem.is_windows_fs = True
-        self.filesystem.CreateFile('!foo!setup.py')
-        self.filesystem.CreateFile('!foo!all_tests.PY')
-        self.filesystem.CreateFile('!foo!README.md')
-        self.filesystem.CreateFile('!foo!example.Py')
-        path = self.path('!foo')
+        self.checkWindowsOnly()
+        self.createFile(self.makePath('foo', 'setup.py'))
+        self.createFile(self.makePath('foo', 'all_tests.PY'))
+        self.createFile(self.makePath('foo', 'README.md'))
+        self.createFile(self.makePath('foo', 'example.Py'))
+        path = self.path(self.makePath('foo'))
         self.assertEqual(sorted(path.glob('*.py')),
-                         [self.path('!foo!all_tests.PY'), self.path('!foo!example.Py'), self.path('!foo!setup.py')])
+                         [self.path(self.makePath('foo', 'all_tests.PY')),
+                          self.path(self.makePath('foo', 'example.Py')),
+                          self.path(self.makePath('foo', 'setup.py'))])
 
     def test_glob_case_posix(self):
-        self.filesystem.is_windows_fs = False
-        self.filesystem.CreateFile('!foo!setup.py')
-        self.filesystem.CreateFile('!foo!all_tests.PY')
-        self.filesystem.CreateFile('!foo!README.md')
-        self.filesystem.CreateFile('!foo!example.Py')
-        path = self.path('!foo')
-        self.assertEqual(sorted(path.glob('*.py')), [self.path('!foo!setup.py')])
+        self.checkPosixOnly()
+        self.createFile(self.makePath('foo', 'setup.py'))
+        self.createFile(self.makePath('foo', 'all_tests.PY'))
+        self.createFile(self.makePath('foo', 'README.md'))
+        self.createFile(self.makePath('foo', 'example.Py'))
+        path = self.path(self.makePath('foo'))
+        self.assertEqual(sorted(path.glob('*.py')),
+                         [self.path(self.makePath('foo', 'setup.py'))])
+
+
+class RealPathlibPathFileOperationTest(FakePathlibPathFileOperationTest):
+    def useRealFs(self):
+        return True
+
 
 @unittest.skipIf(sys.version_info < (3, 6), 'path-like objects new in Python 3.6')
-class FakePathlibUsageInOsFunctionsTest(unittest.TestCase):
+class FakePathlibUsageInOsFunctionsTest(RealPathlibTestCase):
     """Test that many os / os.path functions accept a path-like object since Python 3.6.
     The functionality of these functions is testd elsewhere, we just check that they
     accept a fake path object as an argument.
     """
-
-    def setUp(self):
-        self.filesystem = fake_filesystem.FakeFilesystem(path_separator='!')
-        self.pathlib = fake_pathlib.FakePathlibModule(self.filesystem)
-        self.path = self.pathlib.Path
-        self.os = fake_filesystem.FakeOsModule(self.filesystem)
-
     def test_join(self):
         dir1 = 'foo'
         dir2 = 'bar'
@@ -527,116 +605,121 @@ class FakePathlibUsageInOsFunctionsTest(unittest.TestCase):
         self.assertEqual(dir, self.os.path.join(self.path(dir1), self.path(dir2)))
 
     def test_normcase(self):
-        dir1 = '!Foo!Bar!Baz'
+        dir1 = self.makePath('Foo', 'Bar', 'Baz')
         self.assertEqual(self.os.path.normcase(dir1), self.os.path.normcase(self.path(dir1)))
 
     def test_normpath(self):
-        dir1 = '!foo!bar!..!baz'
+        dir1 = self.makePath('foo', 'bar', '..', 'baz')
         self.assertEqual(self.os.path.normpath(dir1), self.os.path.normpath(self.path(dir1)))
 
     def test_realpath(self):
-        dir1 = '!foo!bar!..!baz'
+        dir1 = self.makePath('foo', 'bar', '..', 'baz')
         self.assertEqual(self.os.path.realpath(dir1), self.os.path.realpath(self.path(dir1)))
 
     def test_relpath(self):
-        path_foo = '!path!to!foo'
-        path_bar = '!path!to!bar'
+        path_foo = self.makePath('path', 'to', 'foo')
+        path_bar = self.makePath('path', 'to', 'bar')
         rel_path = self.os.path.relpath(path_foo, path_bar)
         self.assertEqual(rel_path, self.os.path.relpath(self.path(path_foo), path_bar))
         self.assertEqual(rel_path, self.os.path.relpath(path_foo, self.path(path_bar)))
         self.assertEqual(rel_path, self.os.path.relpath(self.path(path_foo), self.path(path_bar)))
 
     def test_split(self):
-        dir1 = '!Foo!Bar!Baz'
+        dir1 = self.makePath('Foo', 'Bar', 'Baz')
         self.assertEqual(self.os.path.split(dir1), self.os.path.split(self.path(dir1)))
 
     def test_splitdrive(self):
-        dir1 = 'C:!Foo!Bar!Baz'
+        dir1 = self.makePath('C:', 'Foo', 'Bar', 'Baz')
         self.assertEqual(self.os.path.splitdrive(dir1), self.os.path.splitdrive(self.path(dir1)))
 
     def test_abspath(self):
-        dir1 = '!foo!bar!..!baz'
+        dir1 = self.makePath('foo', 'bar', '..', 'baz')
         self.assertEqual(self.os.path.abspath(dir1), self.os.path.abspath(self.path(dir1)))
 
     def test_exists(self):
-        dir1 = '!foo!bar!..!baz'
+        dir1 = self.makePath('foo', 'bar', '..', 'baz')
         self.assertEqual(self.os.path.exists(dir1), self.os.path.exists(self.path(dir1)))
 
     def test_lexists(self):
-        dir1 = '!foo!bar!..!baz'
+        dir1 = self.makePath('foo', 'bar', '..', 'baz')
         self.assertEqual(self.os.path.lexists(dir1), self.os.path.lexists(self.path(dir1)))
 
     def test_expanduser(self):
-        dir1 = '~!foo'
+        dir1 = self.os.path.join('~', 'foo')
         self.assertEqual(self.os.path.expanduser(dir1), self.os.path.expanduser(self.path(dir1)))
 
     def test_getmtime(self):
-        dir1 = 'foo!bar1.txt'
+        self.skipRealFs()
+        dir1 = self.makePath('foo', 'bar1.txt')
         path_obj = self.filesystem.CreateFile(dir1)
         path_obj.SetMTime(24)
         self.assertEqual(self.os.path.getmtime(dir1), self.os.path.getmtime(self.path(dir1)))
 
     def test_getctime(self):
-        dir1 = 'foo!bar1.txt'
+        self.skipRealFs()
+        dir1 = self.makePath('foo', 'bar1.txt')
         path_obj = self.filesystem.CreateFile(dir1)
         path_obj.SetCTime(42)
         self.assertEqual(self.os.path.getctime(dir1), self.os.path.getctime(self.path(dir1)))
 
     def test_getatime(self):
-        dir1 = 'foo!bar1.txt'
+        self.skipRealFs()
+        dir1 = self.makePath('foo', 'bar1.txt')
         path_obj = self.filesystem.CreateFile(dir1)
         path_obj.SetATime(11)
         self.assertEqual(self.os.path.getatime(dir1), self.os.path.getatime(self.path(dir1)))
 
     def test_getsize(self):
-        path = 'foo!bar!baz'
-        self.filesystem.CreateFile(path, contents='1234567')
+        path = self.makePath('foo', 'bar', 'baz')
+        self.createFile(path, contents='1234567')
         self.assertEqual(self.os.path.getsize(path), self.os.path.getsize(self.path(path)))
 
     def test_isabs(self):
-        path = '!foo!bar!..!baz'
+        path = self.makePath('foo', 'bar', '..', 'baz')
         self.assertEqual(self.os.path.isabs(path), self.os.path.isabs(self.path(path)))
 
     def test_isfile(self):
-        path = 'foo!bar!baz'
-        self.filesystem.CreateFile(path)
+        path = self.makePath('foo', 'bar', 'baz')
+        self.createFile(path)
         self.assertEqual(self.os.path.isfile(path), self.os.path.isfile(self.path(path)))
 
     def test_islink(self):
-        path = 'foo!bar!baz'
-        self.filesystem.CreateFile(path)
+        path = self.makePath('foo', 'bar', 'baz')
+        self.createFile(path)
         self.assertEqual(self.os.path.islink(path), self.os.path.islink(self.path(path)))
 
     def test_isdir(self):
-        path = 'foo!bar!baz'
-        self.filesystem.CreateFile(path)
+        path = self.makePath('foo', 'bar', 'baz')
+        self.createFile(path)
         self.assertEqual(self.os.path.isdir(path), self.os.path.isdir(self.path(path)))
 
     def test_ismount(self):
-        path = '!'
+        path = self.os.path.sep
         self.assertEqual(self.os.path.ismount(path), self.os.path.ismount(self.path(path)))
 
     def test_access(self):
-        path = 'foo!bar!baz'
-        self.filesystem.CreateFile(path, contents='1234567')
+        path = self.makePath('foo', 'bar', 'baz')
+        self.createFile(path, contents='1234567')
         self.assertEqual(self.os.access(path, os.R_OK), self.os.access(self.path(path), os.R_OK))
 
     def test_chdir(self):
-        path = '!foo!bar!baz'
-        self.filesystem.CreateDirectory(path)
+        path = self.makePath('foo', 'bar', 'baz')
+        self.createDirectory(path)
         self.os.chdir(self.path(path))
-        self.assertEqual(path, self.filesystem.cwd)
+        # use real path to handle symlink /var to /private/var in MacOs
+        self.assertEqual(self.os.path.realpath(path), self.os.getcwd())
 
     def test_chmod(self):
-        path = '!some_file'
-        self.filesystem.CreateFile(path)
+        path = self.makePath('some_file')
+        self.createFile(path)
         self.os.chmod(self.path(path), 0o400)
         self.assertEqual(stat.S_IMODE(0o400), stat.S_IMODE(self.os.stat(path).st_mode))
 
     def test_link(self):
-        file1_path = 'test_file1'
-        file2_path = 'test_file2'
-        self.filesystem.CreateFile(file1_path)
+        self.skipIfSymlinkNotSupported()
+        file1_path = self.makePath('test_file1')
+        file2_path = self.makePath('test_file2')
+        self.createFile(file1_path)
         self.os.link(self.path(file1_path), file2_path)
         self.assertTrue(self.os.path.exists(file2_path))
         self.os.unlink(file2_path)
@@ -647,68 +730,70 @@ class FakePathlibUsageInOsFunctionsTest(unittest.TestCase):
         self.assertTrue(self.os.path.exists(file2_path))
 
     def test_listdir(self):
-        path = '!foo!bar'
-        self.filesystem.CreateDirectory(path)
-        self.filesystem.CreateFile(path + 'baz.txt')
+        path = self.makePath('foo', 'bar')
+        self.createDirectory(path)
+        self.createFile(path + 'baz.txt')
         self.assertEqual(self.os.listdir(path), self.os.listdir(self.path(path)))
 
     def test_mkdir(self):
-        path = '!foo'
+        path = self.makePath('foo')
         self.os.mkdir(self.path(path))
-        self.assertTrue(self.filesystem.Exists(path))
+        self.assertTrue(self.os.path.exists(path))
 
     def test_makedirs(self):
-        path = '!foo!bar'
+        path = self.makePath('foo', 'bar')
         self.os.makedirs(self.path(path))
-        self.assertTrue(self.filesystem.Exists(path))
+        self.assertTrue(self.os.path.exists(path))
 
     def test_readlink(self):
-        link_path = 'foo!bar!baz'
-        target = 'tarJAY'
-        self.filesystem.CreateLink(link_path, target)
+        self.skipIfSymlinkNotSupported()
+        link_path = self.makePath('foo', 'bar', 'baz')
+        target = self.makePath('tarJAY')
+        self.createLink(link_path, target)
         self.assertEqual(self.os.readlink(self.path(link_path)), target)
 
     def test_remove(self):
-        path = '!test.txt'
-        self.filesystem.CreateFile(path)
+        path = self.makePath('test.txt')
+        self.createFile(path)
         self.os.remove(self.path(path))
-        self.assertFalse(self.filesystem.Exists(path))
+        self.assertFalse(self.os.path.exists(path))
 
     def test_rename(self):
-        path1 = 'test1.txt'
-        path2 = 'test2.txt'
-        self.filesystem.CreateFile(path1)
+        path1 = self.makePath('test1.txt')
+        path2 = self.makePath('test2.txt')
+        self.createFile(path1)
         self.os.rename(self.path(path1), path2)
-        self.assertTrue(self.filesystem.Exists(path2))
+        self.assertTrue(self.os.path.exists(path2))
         self.os.rename(self.path(path2), self.path(path1))
-        self.assertTrue(self.filesystem.Exists(path1))
+        self.assertTrue(self.os.path.exists(path1))
 
     def test_replace(self):
-        path1 = 'test1.txt'
-        path2 = 'test2.txt'
-        self.filesystem.CreateFile(path1)
+        path1 = self.makePath('test1.txt')
+        path2 = self.makePath('test2.txt')
+        self.createFile(path1)
         self.os.replace(self.path(path1), path2)
-        self.assertTrue(self.filesystem.Exists(path2))
+        self.assertTrue(self.os.path.exists(path2))
         self.os.replace(self.path(path2), self.path(path1))
-        self.assertTrue(self.filesystem.Exists(path1))
+        self.assertTrue(self.os.path.exists(path1))
 
     def test_rmdir(self):
-        path = '!foo!bar'
-        self.filesystem.CreateDirectory(path)
+        path = self.makePath('foo', 'bar')
+        self.createDirectory(path)
         self.os.rmdir(self.path(path))
-        self.assertFalse(self.filesystem.Exists(path))
+        self.assertFalse(self.os.path.exists(path))
 
     def test_scandir(self):
-        directory = '!xyzzy!plugh'
-        self.filesystem.CreateDirectory(directory)
-        self.filesystem.CreateFile(directory + '!test.txt')
+        directory = self.makePath('xyzzy', 'plugh')
+        self.createDirectory(directory)
+        self.createFile(self.os.path.join(directory, 'test.txt'))
         dir_entries = [entry for entry in self.os.scandir(self.path(directory))]
         self.assertEqual(1, len(dir_entries))
 
     def test_symlink(self):
-        file_path = 'test_file1'
-        link_path = 'link'
-        self.filesystem.CreateFile(file_path)
+        self.skipIfSymlinkNotSupported()
+        file_path = self.makePath('test_file1')
+        link_path = self.makePath('link')
+        self.createFile(file_path)
         self.os.symlink(self.path(file_path), link_path)
         self.assertTrue(self.os.path.exists(link_path))
         self.os.remove(link_path)
@@ -716,17 +801,22 @@ class FakePathlibUsageInOsFunctionsTest(unittest.TestCase):
         self.assertTrue(self.os.path.exists(link_path))
 
     def test_stat(self):
-        path = 'foo!bar!baz'
-        self.filesystem.CreateFile(path, contents='1234567')
+        path = self.makePath('foo', 'bar', 'baz')
+        self.createFile(path, contents='1234567')
         self.assertEqual(self.os.stat(path), self.os.stat(self.path(path)))
 
     def test_utime(self):
-        path = '!some_file'
-        self.filesystem.CreateFile(path, contents='test')
+        path = self.makePath('some_file')
+        self.createFile(path, contents='test')
         self.os.utime(self.path(path), (1, 2))
         st = self.os.stat(path)
         self.assertEqual(1, st.st_atime)
         self.assertEqual(2, st.st_mtime)
+
+
+class RealPathlibUsageInOsFunctionsTest(FakePathlibUsageInOsFunctionsTest):
+    def useRealFs(self):
+        return True
 
 
 if __name__ == '__main__':
