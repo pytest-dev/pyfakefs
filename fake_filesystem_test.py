@@ -4736,10 +4736,10 @@ class FakeScandirTest(FakeOsModuleTestBase):
         self.assertEqual(self.os.lstat(self.file_link_path).st_ino,
                          self.dir_entries[3].inode())
 
-    def testStat(self):
+    def checkStat(self, expected_size):
         self.assertEqual(50, self.dir_entries[1].stat().st_size)
         self.assertEqual(10, self.dir_entries[3].stat().st_size)
-        self.assertEqual(len(self.linked_file_path),
+        self.assertEqual(expected_size,
                          self.dir_entries[3].stat(
                              follow_symlinks=False).st_size)
         self.assertEqual(
@@ -4749,22 +4749,24 @@ class FakeScandirTest(FakeOsModuleTestBase):
             self.os.stat(self.linked_dir_path).st_mtime,
             self.dir_entries[2].stat().st_mtime)
 
+    @unittest.skipIf(TestCase.is_windows, 'POSIX specific behavior')
+    def testStatPosix(self):
+        self.checkStat(len(self.linked_file_path))
+
+    @unittest.skipIf(not TestCase.is_windows, 'Windows specific behavior')
+    def testStatWindows(self):
+        self.checkStat(0)
+
     def testIndexAccessToStatTimesReturnsInt(self):
         self.assertEqual(self.os.stat(self.dir_path)[stat.ST_CTIME],
                          int(self.dir_entries[0].stat().st_ctime))
         self.assertEqual(self.os.stat(self.linked_dir_path)[stat.ST_MTIME],
                          int(self.dir_entries[2].stat().st_mtime))
 
-    def testStatInoDevPosix(self):
-        self.checkPosixOnly()
+    def testStatInoDev(self):
         file_stat = self.os.stat(self.linked_file_path)
         self.assertEqual(file_stat.st_ino, self.dir_entries[3].stat().st_ino)
         self.assertEqual(file_stat.st_dev, self.dir_entries[3].stat().st_dev)
-
-    def testStatInoDevWindows(self):
-        self.checkWindowsOnly()
-        self.assertEqual(0, self.dir_entries[3].stat().st_ino)
-        self.assertEqual(0, self.dir_entries[3].stat().st_dev)
 
 
 class RealScandirTest(FakeScandirTest):

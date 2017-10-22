@@ -215,7 +215,7 @@ class _FakeStatResult(object):
             self._st_atime_ns == other._st_atime_ns and
             self._st_ctime_ns == other._st_ctime_ns and
             self._st_mtime_ns == other._st_mtime_ns and
-            self._st_size == other._st_size and
+            self.st_size == other.st_size and
             self.st_gid == other.st_gid and
             self.st_uid == other.st_uid and
             self.st_nlink == other.st_nlink and
@@ -2758,10 +2758,6 @@ class FakeFilesystem(object):
                     if self._statresult_symlink is None:
                         file_object = self._filesystem.ResolveObject(self.path)
                         if self._filesystem.is_windows_fs:
-                            # under Windows, some properties are 0
-                            # probably due to performance reasons
-                            file_object.st_ino = 0
-                            file_object.st_dev = 0
                             file_object.st_nlink = 0
                         self._statresult_symlink = file_object.stat_result.copy()
                     return self._statresult_symlink
@@ -2770,8 +2766,6 @@ class FakeFilesystem(object):
                     file_object = self._filesystem.LResolveObject(self.path)
                     self._inode = file_object.st_ino
                     if self._filesystem.is_windows_fs:
-                        file_object.st_ino = 0
-                        file_object.st_dev = 0
                         file_object.st_nlink = 0
                     self._statresult = file_object.stat_result.copy()
                 return self._statresult
