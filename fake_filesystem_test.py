@@ -109,6 +109,7 @@ class RealFsTestMixin(object):
                     'Testing Windows specific functionality')
         else:
             self.filesystem.is_windows_fs = True
+            self.filesystem.is_macos = False
 
     def checkLinuxOnly(self):
         if self.useRealFs():
@@ -1680,7 +1681,8 @@ class FakeOsModuleTest(FakeOsModuleTestBase):
                                  new_path)
 
     def testRenameToAHardlinkOfSameFileShouldDoNothing(self):
-        self.checkPosixOnly()
+        self.skipRealFsFailure(skipPosix=False)
+        self.skipIfSymlinkNotSupported()
         file_path = self.makePath('dir', 'file')
         self.createFile(file_path)
         link_path = self.makePath('link')
@@ -3365,7 +3367,8 @@ class FakeOsModuleTestCaseInsensitiveFS(FakeOsModuleTestBase):
                                  new_path.upper())
 
     def testRenameToAHardlinkOfSameFileShouldDoNothing(self):
-        self.checkPosixOnly()
+        self.skipRealFsFailure(skipPosix=False)
+        self.skipIfSymlinkNotSupported()
         file_path = self.makePath('dir', 'file')
         self.createFile(file_path)
         link_path = self.makePath('link')
@@ -3382,6 +3385,25 @@ class FakeOsModuleTestCaseInsensitiveFS(FakeOsModuleTestBase):
         self.createDirectory(path0)
         self.os.rename(path1, path0)
         self.assertTrue(self.os.path.exists(path0))
+
+    def testRenameSymlinkToOtherCaseDoesNothingInMacOs(self):
+        self.checkMacOsOnly()
+        path0 = self.makePath("beta")
+        self.os.symlink(self.base_path, path0)
+        path0 = self.makePath("beta", "Beta")
+        path1 = self.makePath("Beta")
+        self.os.rename(path0, path1)
+        self.assertEqual(['beta'], sorted(self.os.listdir(path0)))
+
+    def testRenameSymlinkToOtherCaseWorksInWindows(self):
+        self.checkWindowsOnly()
+        self.skipIfSymlinkNotSupported()
+        path0 = self.makePath("beta")
+        self.os.symlink(self.base_path, path0)
+        path0 = self.makePath("beta", "Beta")
+        path1 = self.makePath("Beta")
+        self.os.rename(path0, path1)
+        self.assertEqual(['Beta'], sorted(self.os.listdir(path0)))
 
     def testStatWithMixedCase(self):
         # Regression test for #310

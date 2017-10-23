@@ -1983,21 +1983,28 @@ class FakeFilesystem(object):
 
             new_object = self.GetObject(new_file_path)
             if old_object == new_object:
-                try:
-                    if (self.ResolvePath(old_file_path).lower() ==
-                            self.ResolvePath(new_file_path).lower()):
-                        # only case is changed in case-insensitive file system
-                        # - do the rename
-                        parent, file_name = self.SplitPath(new_file_path)
-                        new_file_path = self.JoinPaths(
-                            self.NormalizeCase(parent), file_name)
-                    else:
-                        # hard links to the same file - nothing to do
-                        return
-                except (IOError, OSError):
-                    # ResolvePath may fail due to symlink loop issues or similar -
-                    # in this case just assume the paths different
-                    pass
+                doRename = old_file_path.lower() == new_file_path.lower()
+                if not doRename:
+                    try:
+                        real_old_path = self.ResolvePath(old_file_path)
+                        real_new_path = self.ResolvePath(new_file_path)
+                        if real_new_path == real_old_path:
+                            doRename = not self.is_macos
+                        else:
+                            doRename = real_new_path.lower() == real_old_path.lower()
+                        if doRename:
+                            # only case is changed in case-insensitive file system
+                            # - do the rename
+                            parent, file_name = self.SplitPath(new_file_path)
+                            new_file_path = self.JoinPaths(
+                                self.NormalizeCase(parent), file_name)
+                    except (IOError, OSError):
+                        # ResolvePath may fail due to symlink loop issues or similar -
+                        # in this case just assume the paths different
+                        pass
+                if not doRename:
+                    # hard links to the same file - nothing to do
+                    return
 
             elif (stat.S_ISDIR(new_object.st_mode) or
                       stat.S_ISLNK(new_object.st_mode)):
