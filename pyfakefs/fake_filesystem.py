@@ -1988,7 +1988,8 @@ class FakeFilesystem(object):
                     try:
                         real_old_path = self.ResolvePath(old_file_path)
                         real_new_path = self.ResolvePath(new_file_path)
-                        if real_new_path == real_old_path:
+                        if (real_new_path == real_old_path and
+                                new_file_path.lower() != real_new_path.lower()):
                             doRename = not self.is_macos
                         else:
                             doRename = real_new_path.lower() == real_old_path.lower()

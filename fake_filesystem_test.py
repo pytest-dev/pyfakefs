@@ -3389,6 +3389,7 @@ class FakeOsModuleTestCaseInsensitiveFS(FakeOsModuleTestBase):
         self.assertTrue(self.os.path.exists(path0))
 
     def testRenameSymlinkToOtherCaseDoesNothingInMacOs(self):
+        # Regression test for #318
         self.checkMacOsOnly()
         path0 = self.makePath("beta")
         self.os.symlink(self.base_path, path0)
@@ -3525,6 +3526,17 @@ class FakeOsModuleTestCaseInsensitiveFS(FakeOsModuleTestBase):
         self.assertTrue(self.os.path.exists(old_file_path))
         self.assertFalse(self.os.path.exists(new_file_path))
         self.checkContents(old_file_path, 'test contents')
+
+    def testRenameCaseOnlyWithSymlinkParent(self):
+        # Regression test for #319
+        self.skipIfSymlinkNotSupported()
+        self.os.symlink(self.base_path, self.makePath('link'))
+        dir_upper = self.makePath('link', 'Alpha')
+        self.os.mkdir(dir_upper)
+        dir_lower = self.makePath('alpha')
+        self.os.rename(dir_upper, dir_lower)
+        self.assertEqual(['alpha', 'link'],
+                         sorted(self.os.listdir(self.base_path)))
 
     def testRenameDir(self):
         """Test a rename of a directory."""
