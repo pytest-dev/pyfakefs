@@ -1745,6 +1745,7 @@ class FakeOsModuleTest(FakeOsModuleTestBase):
         new_path = self.makePath('foo', 'baz')
         self.createDirectory(self.os.path.join(old_path, 'sub'))
         self.createDirectory(self.os.path.join(new_path, 'sub'))
+        # FIXME: under MacOS, errno 66 (ENOTEMPTY) is raised instead
         self.assertRaisesOSError(errno.EEXIST, self.os.rename,
                                  old_path, new_path)
 
@@ -1804,7 +1805,6 @@ class FakeOsModuleTest(FakeOsModuleTestBase):
 
     def testRenameToNonexistentDir(self):
         """Can rename a file to a name in a nonexistent dir."""
-        self.skipRealFsFailure(skipPosix=False, skipPython3=False)
         directory = self.makePath('xyzzy')
         old_file_path = self.os.path.join(directory, 'plugh_old')
         new_file_path = self.os.path.join(
@@ -1920,7 +1920,6 @@ class FakeOsModuleTest(FakeOsModuleTestBase):
 
     def testRmdirRaisesIfNotEmpty(self):
         """Raises an exception if the target directory is not empty."""
-        self.skipRealFsFailure(skipPosix=False, skipPython3=False)
         directory = self.makePath('xyzzy')
         file_path = self.os.path.join(directory, 'plugh')
         self.createFile(file_path)
@@ -1936,6 +1935,7 @@ class FakeOsModuleTest(FakeOsModuleTestBase):
         self.assertTrue(self.os.path.exists(file_path))
         self.assertRaisesOSError(self.not_dir_error(),
                                  self.os.rmdir, file_path)
+        # FIXME: raises errno.EACCES under Windows instead
         self.assertRaisesOSError(errno.EINVAL, self.os.rmdir, '.')
 
     def testRmdirRaisesIfNotExist(self):
@@ -2138,6 +2138,7 @@ class FakeOsModuleTest(FakeOsModuleTestBase):
     def testMkdirRaisesWithSlashDot(self):
         """mkdir raises exception if mkdir foo/. (trailing /.)."""
         self.skipRealFsFailure(skipPosix=False)
+        # FIXME: raises errno.EACCES under Windows instead
         self.assertRaisesOSError(errno.EEXIST, self.os.mkdir, '/.')
         directory = self.makePath('xyzzy', '.')
         self.assertRaisesOSError(errno.ENOENT, self.os.mkdir, directory)
@@ -2147,6 +2148,7 @@ class FakeOsModuleTest(FakeOsModuleTestBase):
     def testMkdirRaisesWithDoubleDots(self):
         """mkdir raises exception if mkdir foo/foo2/../foo3."""
         self.skipRealFsFailure(skipPosix=False)
+        # FIXME: raises errno.EACCES under Windows instead
         self.assertRaisesOSError(errno.EEXIST, self.os.mkdir, '/..')
         directory = self.makePath('xyzzy', 'dir1', 'dir2', '..', '..', 'dir3')
         self.assertRaisesOSError(errno.ENOENT, self.os.mkdir, directory)
@@ -2192,7 +2194,6 @@ class FakeOsModuleTest(FakeOsModuleTestBase):
 
     def checkMakedirsRaisesIfParentIsFile(self, error_type):
         """makedirs raises exception if a parent component exists as a file."""
-        self.skipRealFsFailure(skipPosix=False)
         file_path = self.makePath('xyzzy')
         directory = self.os.path.join(file_path, 'plugh')
         self.createFile(file_path)
@@ -2281,6 +2282,7 @@ class FakeOsModuleTest(FakeOsModuleTestBase):
         test_file = self.open(test_file_path, 'r')
         test_fd = test_file.fileno()
         # Test that this doesn't raise anything
+        # FIXME: raises OSError(errno.EBADF) under Windows in real FS
         self.os.fsync(test_fd)
         # And just for sanity, double-check that this still raises
         self.assertRaisesOSError(errno.EBADF, self.os.fsync, test_fd + 1)
@@ -3510,7 +3512,6 @@ class FakeOsModuleTestCaseInsensitiveFS(FakeOsModuleTestBase):
 
     def testRenameToNonexistentDir(self):
         """Can rename a file to a name in a nonexistent dir."""
-        self.skipRealFsFailure(skipPosix=False, skipPython3=False)
         directory = self.makePath('xyzzy')
         old_file_path = self.os.path.join(directory, 'plugh_old')
         new_file_path = self.os.path.join(
@@ -3644,7 +3645,6 @@ class FakeOsModuleTestCaseInsensitiveFS(FakeOsModuleTestBase):
 
     def checkMkdirRaisesIfParentIsFile(self, error_type):
         """mkdir raises exception if name already exists as a file."""
-        self.skipRealFsFailure(skipPosix=False)
         directory = self.makePath('xyzzy')
         file_path = self.os.path.join(directory, 'plugh')
         self.createFile(file_path)
@@ -3669,7 +3669,6 @@ class FakeOsModuleTestCaseInsensitiveFS(FakeOsModuleTestBase):
 
     def checkMakedirsRaisesIfParentIsFile(self, error_type):
         """makedirs raises exception if a parent component exists as a file."""
-        self.skipRealFsFailure(skipPosix=False)
         file_path = self.makePath('xyzzy')
         directory = self.os.path.join(file_path, 'plugh')
         self.createFile(file_path)
@@ -3716,6 +3715,7 @@ class FakeOsModuleTestCaseInsensitiveFS(FakeOsModuleTestBase):
         test_file = self.open(test_file_path.upper(), 'r')
         test_fd = test_file.fileno()
         # Test that this doesn't raise anything
+        # FIXME: raises errno.EBADF under Windows in real FS
         self.os.fsync(test_fd)
         # And just for sanity, double-check that this still raises
         self.assertRaisesOSError(errno.EBADF, self.os.fsync, test_fd + 1)
@@ -4185,7 +4185,7 @@ class FakeOsModuleLowLevelFileOpTest(FakeOsModuleTestBase):
         self.os.close(file_des)
 
     def testOpenCreateMode(self):
-        # under Windows, mode is 0o666 instead of 0o700
+        # FIXME: under Windows, mode is 0o666 instead of 0o700
         self.skipRealFsFailure(skipPosix=False)
         file_path = self.makePath('file1')
         file_des = self.os.open(file_path, os.O_WRONLY | os.O_CREAT, 0o700)
@@ -5405,6 +5405,7 @@ class FakeFileOpenTest(FakeFileOpenTestBase):
             self.assertEqual(contents, fake_file.readlines())
 
     def testOpenValidArgs(self):
+        # FIXME: under Windows, line endings are not handled correctly
         self.skipRealFsFailure(skipPosix=False, skipPython2=False)
         contents = [
             "Bang bang Maxwell's silver hammer\n",
@@ -5424,6 +5425,7 @@ class FakeFileOpenTest(FakeFileOpenTestBase):
     @unittest.skipIf(sys.version_info < (3, 0),
                      'only tested on 3.0 or greater')
     def testOpenNewlineArg(self):
+        # FIXME: line endings are not handled correctly in pyfakefs
         self.skipRealFsFailure()
         file_path = self.makePath('some_file')
         file_contents = b'two\r\nlines'
@@ -5602,6 +5604,7 @@ class FakeFileOpenTest(FakeFileOpenTestBase):
             self.assertEqual('', fake_file.read())
 
     def testOpenWithAppendFlag(self):
+        # FIXME: under Windows, line endings are not handled correctly
         self.skipRealFsFailure(skipPosix=False)
         contents = [
             'I am he as\n',
@@ -5629,7 +5632,7 @@ class FakeFileOpenTest(FakeFileOpenTestBase):
                 contents + additional_contents, fake_file.readlines())
 
     def testAppendWithAplus(self):
-        # MacOS in Python2 behaves like PyPy
+        # FIXME: MacOS in Python2 behaves like PyPy
         self.skipRealFsFailure(skipWindows=False, skipLinux=False)
         file_path = self.makePath('aplus_file')
         self.createFile(file_path, contents='old contents')
@@ -5972,7 +5975,6 @@ class FakeFileOpenTest(FakeFileOpenTestBase):
 
     def testOpenRaisesIOErrorIfParentIsFilePosix(self):
         self.checkPosixOnly()
-        self.skipRealFsFailure(skipPosix=False)
         file_path = self.makePath('bar')
         self.createFile(file_path)
         file_path = self.os.path.join(file_path, 'baz')
@@ -6265,6 +6267,7 @@ class OpenFileWithEncodingTest(FakeFileOpenTestBase):
             self.assertTrue(u'новое содержание', fake_file.read())
 
     def testOpenWithAppendFlag(self):
+        # FIXME: under Windows, line endings are not handled correctly
         self.skipRealFsFailure(skipPosix=False)
         if self.useRealFs() and sys.version_info < (2, 7):
             raise unittest.SkipTest('Python 2.6 behaving differently here')
