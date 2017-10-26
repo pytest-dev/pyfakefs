@@ -64,7 +64,9 @@ class TestCase(unittest.TestCase):
 
 
     def assertModeEqual(self, expected, actual):
-        return self.assertEqual(stat.S_IMODE(expected), stat.S_IMODE(actual))
+        return self.assertEqual(stat.S_IMODE(expected), stat.S_IMODE(actual),
+                                'got {} instead of {}'.format(
+                                    oct(actual), oct(expected)))
 
     def assertRaisesIOError(self, subtype, expression, *args, **kwargs):
         try:
@@ -2418,8 +2420,9 @@ class FakeOsModuleTest(FakeOsModuleTestBase):
     @unittest.skipIf(sys.version_info < (3, 3),
                      'follow_symlinks new in Python 3.3')
     def testChmodFollowSymlink(self):
-        self.skipIfSymlinkNotSupported()
-        self.skipRealFs()
+        self.checkPosixOnly()
+        if self.useRealFs() and not 'chmod' in os.supports_follow_symlinks:
+            raise unittest.SkipTest('follow_symlinks not available')
         path = self.makePath('some_file')
         self.createTestFile(path)
         link_path = self.makePath('link_to_some_file')
@@ -2434,8 +2437,9 @@ class FakeOsModuleTest(FakeOsModuleTestBase):
     @unittest.skipIf(sys.version_info < (3, 3),
                      'follow_symlinks new in Python 3.3')
     def testChmodNoFollowSymlink(self):
-        self.skipIfSymlinkNotSupported()
-        self.skipRealFs()
+        self.checkPosixOnly()
+        if self.useRealFs() and not 'chmod' in os.supports_follow_symlinks:
+            raise unittest.SkipTest('follow_symlinks not available')
         path = self.makePath('some_file')
         self.createTestFile(path)
         link_path = self.makePath('link_to_some_file')
@@ -4196,15 +4200,38 @@ class FakeOsModuleLowLevelFileOpTest(FakeOsModuleTestBase):
         self.assertRaisesOSError(errno.EBADF, self.os.write, file_des, b'')
         self.os.close(file_des)
 
-    def testOpenCreateMode(self):
-        # FIXME: under Windows, mode is 0o666 instead of 0o700
-        self.skipRealFsFailure(skipPosix=False)
+    def testOpenCreateModePosix(self):
+        self.checkPosixOnly()
         file_path = self.makePath('file1')
         file_des = self.os.open(file_path, os.O_WRONLY | os.O_CREAT, 0o700)
         self.assertTrue(self.os.path.exists(file_path))
         self.assertRaisesOSError(errno.EBADF, self.os.read, file_des, 5)
         self.assertEqual(4, self.os.write(file_des, b'test'))
         self.assertModeEqual(0o700, self.os.stat(file_path).st_mode)
+        self.os.close(file_des)
+
+    def testOpenCreateModeWindows(self):
+        self.checkWindowsOnly()
+        file_path = self.makePath('file1')
+        file_des = self.os.open(file_path, os.O_WRONLY | os.O_CREAT, 0o700)
+        self.assertTrue(self.os.path.exists(file_path))
+        self.assertRaisesOSError(errno.EBADF, self.os.read, file_des, 5)
+        self.assertEqual(4, self.os.write(file_des, b'test'))
+        self.assertModeEqual(0o666, self.os.stat(file_path).st_mode)
+        self.os.close(file_des)
+
+    def testOpenCreateMode444Windows(self):
+        self.checkWindowsOnly()
+        file_path = self.makePath('file1')
+        file_des = self.os.open(file_path, os.O_WRONLY | os.O_CREAT, 0o442)
+        self.assertModeEqual(0o444, self.os.stat(file_path).st_mode)
+        self.os.close(file_des)
+
+    def testOpenCreateMode666Windows(self):
+        self.checkWindowsOnly()
+        file_path = self.makePath('file1')
+        file_des = self.os.open(file_path, os.O_WRONLY | os.O_CREAT, 0o224)
+        self.assertModeEqual(0o666, self.os.stat(file_path).st_mode)
         self.os.close(file_des)
 
     @unittest.skipIf(sys.version_info < (3, 3),

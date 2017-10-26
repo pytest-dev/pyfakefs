@@ -421,7 +421,7 @@ class FakeCopyFileTest(RealFsTestCase):
         self.assertRaises(IOError, shutil.copyfile, src_file, dst_file)
 
     def testRaisesIfSrcNotReadable(self):
-        self.skipRealFs()
+        self.checkPosixOnly()
         src_file = self.makePath('xyzzy')
         dst_file = self.makePath('xyzzy_copy')
         src_contents = 'contents of source file'

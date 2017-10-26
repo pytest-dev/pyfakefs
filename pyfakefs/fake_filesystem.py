@@ -1100,8 +1100,14 @@ class FakeFilesystem(object):
                               'No such file or directory in fake filesystem',
                               path)
             raise
-        file_object.st_mode = ((file_object.st_mode & ~PERM_ALL) |
-                               (mode & PERM_ALL))
+        if self.is_windows_fs:
+            if mode & PERM_WRITE:
+                file_object.st_mode = file_object.st_mode | 0o222
+            else:
+                file_object.st_mode = file_object.st_mode & 0o777555
+        else:
+            file_object.st_mode = ((file_object.st_mode & ~PERM_ALL) |
+                                   (mode & PERM_ALL))
         file_object.st_ctime = time.time()
 
     def UpdateTime(self, path, times=None, ns=None, follow_symlinks=True):

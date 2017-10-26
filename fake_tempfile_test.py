@@ -64,8 +64,9 @@ class FakeTempfileModuleTest(fake_filesystem_unittest.TestCase):
         self.assertTrue(temporary[1].startswith(os.path.join(tempfile.gettempdir(), 'tmp')))
         self.assertEqual(next_fd, temporary[0])
         self.assertTrue(self.fs.Exists(temporary[1]))
+        mode = 0o666 if self.fs.is_windows_fs else 0o600
         self.assertEqual(self.fs.GetObject(temporary[1]).st_mode,
-                         stat.S_IFREG | 0o600)
+                         stat.S_IFREG | mode)
         fh = os.fdopen(temporary[0], 'w+b')
         self.assertEqual(temporary[0], fh.fileno())
 
@@ -81,8 +82,9 @@ class FakeTempfileModuleTest(fake_filesystem_unittest.TestCase):
         self.assertEqual(next_fd, temporary[0])
         self.assertTrue(temporary[1].startswith(os.path.join(os.sep, 'dir', 'tmp')))
         self.assertTrue(self.fs.Exists(temporary[1]))
+        mode = 0o666 if self.fs.is_windows_fs else 0o600
         self.assertEqual(self.fs.GetObject(temporary[1]).st_mode,
-                         stat.S_IFREG | 0o600)
+                         stat.S_IFREG | mode)
 
     def testMkdtemp(self):
         dirname = tempfile.mkdtemp()
