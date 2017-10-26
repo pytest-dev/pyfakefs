@@ -4283,12 +4283,20 @@ class FakeOsModuleLowLevelFileOpTest(FakeOsModuleTestBase):
         self.assertRaisesOSError(errno.EISDIR,
                                  self.os.open, dir_path, os.O_CREAT)
 
+    def testWritingToExistingDirectory(self):
+        self.checkMacOsOnly()
+        dir_path = self.makePath("alpha")
+        self.os.mkdir(dir_path)
+        fd = self.os.open(dir_path, os.O_CREAT)
+        self.assertRaisesOSError(errno.EBADF, self.os.write, fd, b'')
+
     def testOpeningExistingDirectoryInWriteMode(self):
         self.checkPosixOnly()
         dir_path = self.makePath("alpha")
         self.os.mkdir(dir_path)
         self.assertRaisesOSError(errno.EISDIR,
                                  self.os.open, dir_path, os.O_WRONLY)
+
     def testOpenModePosix(self):
         self.checkPosixOnly()
         self.skipRealFs()

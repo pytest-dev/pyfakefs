@@ -3422,6 +3422,8 @@ class FakeOsModule(object):
             TypeError: if file descriptor is not an integer.
         """
         file_handle = self.filesystem.GetOpenFile(file_des)
+        if isinstance(file_handle, FakeDirWrapper):
+            raise OSError(errno.EBADF, 'Cannot write to directory')
         file_handle.raw_io = True
         file_handle._sync_io()
         file_handle.write(contents)
