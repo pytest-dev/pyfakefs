@@ -3353,11 +3353,13 @@ class FakeOsModule(object):
             raise NotImplementedError('O_EXCL without O_CREAT mode is not supported')
 
         if (not self.filesystem.is_windows_fs and
-                not open_modes.can_write and
                 self.filesystem.Exists(file_path)):
             # handle opening directory - only allowed under Posix with read-only mode
             obj = self.filesystem.ResolveObject(file_path)
             if isinstance(obj, FakeDirectory):
+                if ((not open_modes.must_exist and not self.filesystem.is_macos)
+                        or open_modes.can_write):
+                    raise OSError(errno.EISDIR, 'Fake directory exists')
                 dir_wrapper = FakeDirWrapper(obj, file_path, self.filesystem)
                 file_des = self.filesystem.AddOpenFile(dir_wrapper)
                 dir_wrapper.filedes = file_des

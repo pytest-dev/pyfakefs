@@ -4276,6 +4276,19 @@ class FakeOsModuleLowLevelFileOpTest(FakeOsModuleTestBase):
         file_des = self.os.open(dir_path, os.O_RDONLY)
         self.assertEqual(3, file_des)
 
+    def testOpeningExistingDirectoryInCreationMode(self):
+        self.checkLinuxOnly()
+        dir_path = self.makePath("alpha")
+        self.os.mkdir(dir_path)
+        self.assertRaisesOSError(errno.EISDIR,
+                                 self.os.open, dir_path, os.O_CREAT)
+
+    def testOpeningExistingDirectoryInWriteMode(self):
+        self.checkPosixOnly()
+        dir_path = self.makePath("alpha")
+        self.os.mkdir(dir_path)
+        self.assertRaisesOSError(errno.EISDIR,
+                                 self.os.open, dir_path, os.O_WRONLY)
     def testOpenModePosix(self):
         self.checkPosixOnly()
         self.skipRealFs()
