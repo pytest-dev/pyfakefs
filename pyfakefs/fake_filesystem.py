@@ -676,7 +676,8 @@ class FakeDirectory(FakeFile):
             OSError: if the file or directory to be added already exists
         """
         if not self.st_mode & PERM_WRITE and not self.filesystem.is_windows_fs:
-            raise OSError(errno.EACCES, 'Permission Denied', self.GetPath())
+            exception = IOError if sys.version_info[0] < 3 else OSError
+            raise exception(errno.EACCES, 'Permission Denied', self.GetPath())
 
         if path_object.name in self.contents:
             raise OSError(errno.EEXIST,
@@ -3829,7 +3830,12 @@ class FakeOsModule(object):
                 or as per FakeFilesystem.AddObject.
         """
         dir_name = self._path_with_dir_fd(dir_name, self.mkdir, dir_fd)
-        self.filesystem.MakeDirectory(dir_name, mode)
+        try:
+            self.filesystem.MakeDirectory(dir_name, mode)
+        except IOError as e:
+            if e.errno == errno.EACCES:
+                raise OSError(e.errno, os.strerror(e.errno), dir_name)
+            raise
 
     def makedirs(self, dir_name, mode=PERM_DEF, exist_ok=None):
         """Create a leaf Fake directory + create any non-existent parent dirs.

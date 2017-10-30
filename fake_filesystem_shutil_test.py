@@ -401,7 +401,6 @@ class FakeCopyFileTest(RealFsTestCase):
 
     def testRaisesIfDestDirIsNotWritableUnderPosix(self):
         self.checkPosixOnly()
-        self.skipRealFsFailure(skipLinux=False, skipPython3=False)
         src_file = self.makePath('xyzzy')
         dst_dir = self.makePath('tmp', 'foo')
         dst_file = os.path.join(dst_dir, 'xyzzy')
@@ -411,8 +410,8 @@ class FakeCopyFileTest(RealFsTestCase):
         os.chmod(dst_dir, 0o555)
         self.assertTrue(os.path.exists(src_file))
         self.assertTrue(os.path.exists(dst_dir))
-        # FIXME: raises IOError (permission denied) under MacOS
-        self.assertRaises(OSError, shutil.copyfile, src_file, dst_file)
+        exception = OSError if sys.version_info[0] > 2 else IOError
+        self.assertRaises(exception, shutil.copyfile, src_file, dst_file)
 
     def testRaisesIfSrcDoesntExist(self):
         src_file = self.makePath('xyzzy')

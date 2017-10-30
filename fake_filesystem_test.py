@@ -689,8 +689,13 @@ class FakeFilesystemUnitTest(TestCase):
         dir_path = '/foo/bar'
         self.filesystem.CreateDirectory(dir_path, perm_bits=0o555)
         file_path = dir_path + '/baz'
-        self.assertRaisesOSError(errno.EACCES, self.filesystem.CreateFile,
-                                 file_path)
+        if sys.version_info[0] < 3:
+            self.assertRaisesIOError(errno.EACCES, self.filesystem.CreateFile,
+                                     file_path)
+        else:
+            self.assertRaisesOSError(errno.EACCES, self.filesystem.CreateFile,
+                                     file_path)
+
 
     def testCreateFileInReadOnlyDirectoryPossibleInWindows(self):
         self.filesystem.is_windows_fs = True
