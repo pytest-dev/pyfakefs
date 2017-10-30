@@ -18,12 +18,13 @@ The release versions are PyPi releases.
 
 #### Infrastructure
   * Added Travis CI tests for MacOSX (Python 2.7 and 3.6).
+  * Added Appveyor CI tests for Windows (Python 2.7, 3.3 and 3.6).
   * Added auto-generated documentation for development version on GitHub Pages.
   * Removed most of `fake_filesystem_shutil` implementation, relying on the patched `os` module instead ([#194](../../issues/194)).
   * Removed `fake_tempfile` and `fake_filesystem_glob`, relying on the patched `os` module instead ([#189](../../issues/189), [#191](../../issues/191)).
 
 #### Fixes
-  * Multiple fixes of bugs found using TSTL by agroce (see issues with `TSTL` label)
+  * Multiple fixes of bugs found using TSTL by agroce (see about 100 issues with `TSTL` label)
     * several problems with buffer handling in high-level i/o functions
     * several problems with multiple handles on the same file
     * several problems with low-level i/o functions
@@ -31,7 +32,8 @@ The release versions are PyPi releases.
     * Fake `rename` did not behave like `os.rename` in many cases
     * Symlinks have not been considered or incorrectly handled in several functions 
     * A non-existing file that has the same name as the content of the parent object was seen as existent
-    * Incorrect error handling during directory creation 
+    * Incorrect error handling during directory creation
+    * many fixes for OS-specific behavior
   * Also patch modules that are loaded between `__init__()` and `setUp()` ([#199](../../issues/199)).
   * Creating files in read-only directory was possible ([#203](../../issues/203)).
 
