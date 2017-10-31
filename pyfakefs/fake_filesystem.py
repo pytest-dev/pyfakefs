@@ -4587,7 +4587,8 @@ class FakeFileOpen(object):
         self.filesystem = filesystem
         self._delete_on_close = delete_on_close
         self._use_io = (use_io or sys.version_info >= (3, 0) or
-                        platform.python_implementation() == 'PyPy')
+                        platform.python_implementation() == 'PyPy' or
+                        self.filesystem.is_macos)
         self.raw_io = raw_io
 
     def __call__(self, *args, **kwargs):

@@ -95,6 +95,14 @@ class RealFsTestMixin(object):
     def is_windows_fs(self):
         return TestCase.is_windows
 
+    @property
+    def is_macos(self):
+        return TestCase.is_macos
+
+    @property
+    def is_pypy(self):
+        return platform.python_implementation() == 'PyPy'
+
     def useRealFs(self):
         return False
 
@@ -272,6 +280,12 @@ class RealFsTestCase(TestCase, RealFsTestMixin):
         if self.useRealFs():
             return self.is_windows
         return self.filesystem.is_windows_fs
+
+    @property
+    def is_macos(self):
+        if self.useRealFs():
+            return TestCase.is_macos
+        return self.filesystem.is_macos
 
     def tearDown(self):
         if self.useRealFs():
@@ -1061,8 +1075,6 @@ class FakeOsModuleTest(FakeOsModuleTestBase):
         self.checkPosixOnly()
         if os.listdir not in os.supports_fd:
             self.skipRealFs()
-        # if self.useRealFs() and platform.python_implementation() == 'PyPy':
-        #     raise unittest.SkipTest('Different exceptions with PyPy')
         self.assertRaisesOSError(errno.EBADF, self.os.listdir, 500)
         dir_path = self.makePath('xyzzy', 'plugh')
         files = ['foo', 'bar', 'baz']
@@ -5695,17 +5707,19 @@ class FakeFileOpenTest(FakeFileOpenTestBase):
             self.assertEqual(
                 contents + additional_contents, fake_file.readlines())
 
-    def testAppendWithAplus(self):
-        # FIXME: MacOS in Python2 behaves like PyPy
-        self.skipRealFsFailure(skipWindows=False, skipLinux=False)
+    def checkAppendWithAplus(self):
         file_path = self.makePath('aplus_file')
         self.createFile(file_path, contents='old contents')
         self.assertTrue(self.os.path.exists(file_path))
         with self.open(file_path, 'r') as fake_file:
             self.assertEqual('old contents', fake_file.read())
-        # actual tests
+
+        if self.filesystem:
+            # need to recreate FakeFileOpen for OS specific initialization
+            self.open = fake_filesystem.FakeFileOpen(self.filesystem,
+                                                     delete_on_close=True)
         with self.open(file_path, 'a+') as fake_file:
-            if self.is_python2 and platform.python_implementation() != 'PyPy':
+            if self.is_python2 and not self.is_macos and not self.is_pypy:
                 self.assertEqual(0, fake_file.tell())
                 fake_file.seek(12)
             else:
@@ -5714,6 +5728,14 @@ class FakeFileOpenTest(FakeFileOpenTestBase):
             self.assertEqual(24, fake_file.tell())
             fake_file.seek(0)
             self.assertEqual('old contentsnew contents', fake_file.read())
+
+    def testAppendWithAplusMacOs(self):
+        self.checkMacOsOnly()
+        self.checkAppendWithAplus()
+
+    def testAppendWithAplusLinuxWindows(self):
+        self.checkLinuxAndWindows()
+        self.checkAppendWithAplus()
 
     def testAppendWithAplusReadWithLoop(self):
         # set up
@@ -6079,7 +6101,7 @@ class FakeFileOpenTest(FakeFileOpenTestBase):
 
     def testAccessingClosedFileRaises(self):
         # Regression test for #275, #280
-        if platform.python_implementation() == 'PyPy':
+        if self.is_pypy:
             raise unittest.SkipTest('Different exceptions with PyPy')
         file_path = self.makePath('foo')
         self.createFile(file_path, contents=b'test')
@@ -6105,7 +6127,7 @@ class FakeFileOpenTest(FakeFileOpenTestBase):
 
     def testAccessingOpenFileWithAnotherHandleRaises(self):
         # Regression test for #282
-        if platform.python_implementation() == 'PyPy':
+        if self.is_pypy:
             raise unittest.SkipTest('Different exceptions with PyPy')
         file_path = self.makePath('foo')
         f0 = self.os.open(file_path, os.O_CREAT | os.O_WRONLY | os.O_TRUNC)
