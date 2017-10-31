@@ -1944,17 +1944,23 @@ class FakeOsModuleTest(FakeOsModuleTestBase):
         self.assertTrue(self.os.path.exists(file_path))
         self.assertRaisesOSError(errno.ENOTEMPTY, self.os.rmdir, directory)
 
-    def testRmdirRaisesIfNotDirectory(self):
+    def checkRmdirRaisesIfNotDirectory(self, error_nr):
         """Raises an exception if the target is not a directory."""
-        self.skipRealFsFailure(skipPosix=False)
         directory = self.makePath('xyzzy')
         file_path = self.os.path.join(directory, 'plugh')
         self.createFile(file_path)
         self.assertTrue(self.os.path.exists(file_path))
         self.assertRaisesOSError(self.not_dir_error(),
                                  self.os.rmdir, file_path)
-        # FIXME: raises errno.EACCES under Windows instead
-        self.assertRaisesOSError(errno.EINVAL, self.os.rmdir, '.')
+        self.assertRaisesOSError(error_nr, self.os.rmdir, '.')
+
+    def testRmdirRaisesIfNotDirectoryPosix(self):
+        self.checkPosixOnly()
+        self.checkRmdirRaisesIfNotDirectory(errno.EINVAL)
+
+    def testRmdirRaisesIfNotDirectoryWindows(self):
+        self.checkWindowsOnly()
+        self.checkRmdirRaisesIfNotDirectory(errno.EACCES)
 
     def testRmdirRaisesIfNotExist(self):
         """Raises an exception if the target does not exist."""

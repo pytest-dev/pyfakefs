@@ -155,12 +155,6 @@ FAKE_PATH_MODULE_DEPRECATION = ('Do not instantiate a FakePathModule directly; '
 NR_STD_STREAMS = 3
 
 
-def raise_os_error(errno, winerror, message, filename=''):
-    if sys.platform == 'win32' and sys.version_info[0] < 3:
-        raise WindowsError(winerror, message, filename)
-    raise OSError(errno, message, filename)
-
-
 def is_int_type(val):
     int_types = (int, long) if sys.version_info[0] < 3 else int  # pylint: disable=undefined-variable
     return isinstance(val, int_types)
@@ -895,6 +889,12 @@ class FakeFilesystem(object):
         self.AddMountPoint(self.root.name, total_size)
         self._add_standard_streams()
 
+    def raise_os_error(self, errno, winerror, message, filename=''):
+        if (sys.platform == 'win32' and self.is_windows_fs and
+                    sys.version_info[0] < 3):
+            raise WindowsError(winerror, message, filename)
+        raise OSError(errno, message, filename)
+
     @staticmethod
     def _matching_string(matched, string):
         """Return the string as byte or unicode depending 
@@ -1081,8 +1081,8 @@ class FakeFilesystem(object):
                 entry_path, follow_symlinks, allow_fd=True)
             return file_object.stat_result.copy()
         except IOError as io_error:
-            raise_os_error(io_error.errno, io_error.errno,
-                           io_error.strerror, entry_path)
+            self.raise_os_error(io_error.errno, io_error.errno,
+                                io_error.strerror, entry_path)
 
     def ChangeMode(self, path, mode, follow_symlinks=True):
         """Change the permissions of a file as encoded in integer mode.
@@ -1966,10 +1966,10 @@ class FakeFilesystem(object):
         old_file_path = self.NormalizeCase(self.NormalizePath(old_file_path))
         new_file_path = self.NormalizePath(new_file_path)
         if not self.Exists(old_file_path, check_link=True):
-            raise_os_error(errno.ENOENT, 2,
-                          'Fake filesystem object: '
-                          'can not rename nonexistent file',
-                          old_file_path)
+            self.raise_os_error(errno.ENOENT, 2,
+                                 'Fake filesystem object: '
+                                 'can not rename nonexistent file',
+                                old_file_path)
 
         old_object = self.LResolveObject(old_file_path)
         if not self.is_windows_fs:
@@ -2622,9 +2622,13 @@ class FakeFilesystem(object):
         except IOError as exc:
             raise OSError(exc.errno, exc.strerror, target_directory)
         if not directory.st_mode & stat.S_IFDIR:
-            raise_os_error(errno.ENOTDIR, 267,
-                           'Fake os module: not a directory',
-                           target_directory)
+            if self.is_windows_fs and sys.version_info[0] < 3:
+                error_nr = errno.EINVAL
+            else:
+                error_nr = errno.ENOTDIR
+            self.raise_os_error(error_nr, 267,
+                                 'Fake os module: not a directory',
+                                target_directory)
         return directory
 
     def RemoveFile(self, path):
@@ -2672,7 +2676,8 @@ class FakeFilesystem(object):
                 Cannot remove '.'.
         """
         if target_directory in (b'.', u'.'):
-            raise OSError(errno.EINVAL, 'Invalid argument: \'.\'')
+            error_nr = errno.EACCES if self.is_windows_fs else errno.EINVAL
+            raise OSError(error_nr, 'Invalid argument: \'.\'')
         target_directory = self.NormalizePath(target_directory)
         if self.ConfirmDir(target_directory):
             if not self.is_windows_fs and self.IsLink(target_directory):
@@ -2958,7 +2963,7 @@ class FakePathModule(object):
         try:
             file_obj = self.filesystem.ResolveObject(path)
         except IOError as exc:
-            raise_os_error(errno.ENOENT, 3, str(exc))
+            self.filesystem.raise_os_error(errno.ENOENT, 3, str(exc))
         return file_obj.st_mtime
 
     def getatime(self, path):
