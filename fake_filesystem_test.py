@@ -62,11 +62,8 @@ class TestCase(unittest.TestCase):
     is_python2 = sys.version_info[0] < 3
     symlinks_can_be_tested = None
 
-
     def assertModeEqual(self, expected, actual):
-        return self.assertEqual(stat.S_IMODE(expected), stat.S_IMODE(actual),
-                                'got {} instead of {}'.format(
-                                    oct(actual), oct(expected)))
+        return self.assertEqual(stat.S_IMODE(expected), stat.S_IMODE(actual))
 
     def assertRaisesIOError(self, subtype, expression, *args, **kwargs):
         try:
