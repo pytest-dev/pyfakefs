@@ -532,7 +532,8 @@ class FakeFilesystemUnitTest(TestCase):
         self.filesystem.AddObject(self.root_name, self.fake_file)
         self.assertTrue(self.filesystem.Exists(self.fake_file.name))
 
-    def testExistsRelativePath(self):
+    def testExistsRelativePathPosix(self):
+        self.filesystem.is_windows_fs = False
         self.filesystem.CreateFile('/a/b/file_one')
         self.filesystem.CreateFile('/a/c/file_two')
         self.assertTrue(self.filesystem.Exists('a/b/../c/file_two'))
@@ -546,6 +547,23 @@ class FakeFilesystemUnitTest(TestCase):
         self.assertTrue(self.filesystem.Exists('../../a/b/../../a/c/file_two'))
         self.assertFalse(self.filesystem.Exists('../z/file_one'))
         self.assertFalse(self.filesystem.Exists('../z/../c/file_two'))
+
+    def testExistsRelativePathWindows(self):
+        self.filesystem.is_windows_fs = True
+        self.filesystem.is_macos = False
+        self.filesystem.CreateFile('/a/b/file_one')
+        self.filesystem.CreateFile('/a/c/file_two')
+        self.assertTrue(self.filesystem.Exists('a/b/../c/file_two'))
+        self.assertTrue(self.filesystem.Exists('/a/c/../b/file_one'))
+        self.assertTrue(self.filesystem.Exists('/a/c/../../a/b/file_one'))
+        self.assertFalse(self.filesystem.Exists('a/b/../z/d'))
+        self.assertTrue(self.filesystem.Exists('a/b/../z/../c/file_two'))
+        self.filesystem.cwd = '/a/c'
+        self.assertTrue(self.filesystem.Exists('../b/file_one'))
+        self.assertTrue(self.filesystem.Exists('../../a/b/file_one'))
+        self.assertTrue(self.filesystem.Exists('../../a/b/../../a/c/file_two'))
+        self.assertFalse(self.filesystem.Exists('../z/file_one'))
+        self.assertTrue(self.filesystem.Exists('../z/../c/file_two'))
 
     def testGetObjectFromRoot(self):
         self.filesystem.AddObject(self.root_name, self.fake_file)
@@ -2159,21 +2177,31 @@ class FakeOsModuleTest(FakeOsModuleTestBase):
         self.checkWindowsOnly()
         self.checkMkdirRaisesIfParentIsFile(errno.ENOENT)
 
-    def testMkdirRaisesWithSlashDot(self):
+    def testMkdirRaisesWithSlashDotPosix(self):
         """mkdir raises exception if mkdir foo/. (trailing /.)."""
-        self.skipRealFsFailure(skipPosix=False)
-        # FIXME: raises errno.EACCES under Windows instead
-        self.assertRaisesOSError(errno.EEXIST, self.os.mkdir, '/.')
+        self.checkPosixOnly()
+        self.assertRaisesOSError(errno.EEXIST,
+                                 self.os.mkdir, self.os.sep + '.')
         directory = self.makePath('xyzzy', '.')
         self.assertRaisesOSError(errno.ENOENT, self.os.mkdir, directory)
         self.createDirectory(self.makePath('xyzzy'))
         self.assertRaisesOSError(errno.EEXIST, self.os.mkdir, directory)
 
-    def testMkdirRaisesWithDoubleDots(self):
+    def testMkdirRaisesWithSlashDotWindows(self):
+        """mkdir raises exception if mkdir foo/. (trailing /.)."""
+        self.checkWindowsOnly()
+        self.assertRaisesOSError(errno.EACCES,
+                                 self.os.mkdir, self.os.sep + '.')
+        directory = self.makePath('xyzzy', '.')
+        self.os.mkdir(directory)
+        self.createDirectory(self.makePath('xyzzy'))
+        self.assertRaisesOSError(errno.EEXIST, self.os.mkdir, directory)
+
+    def testMkdirRaisesWithDoubleDotsPosix(self):
         """mkdir raises exception if mkdir foo/foo2/../foo3."""
-        self.skipRealFsFailure(skipPosix=False)
-        # FIXME: raises errno.EACCES under Windows instead
-        self.assertRaisesOSError(errno.EEXIST, self.os.mkdir, '/..')
+        self.checkPosixOnly()
+        self.assertRaisesOSError(errno.EEXIST,
+                                 self.os.mkdir, self.os.sep + '..')
         directory = self.makePath('xyzzy', 'dir1', 'dir2', '..', '..', 'dir3')
         self.assertRaisesOSError(errno.ENOENT, self.os.mkdir, directory)
         self.createDirectory(self.makePath('xyzzy'))
@@ -2181,6 +2209,20 @@ class FakeOsModuleTest(FakeOsModuleTestBase):
         self.createDirectory(self.makePath('xyzzy', 'dir1'))
         self.assertRaisesOSError(errno.ENOENT, self.os.mkdir, directory)
         self.createDirectory(self.makePath('xyzzy', 'dir1', 'dir2'))
+        self.os.mkdir(directory)
+        self.assertTrue(self.os.path.exists(directory))
+        directory = self.makePath('xyzzy', 'dir1', '..')
+        self.assertRaisesOSError(errno.EEXIST, self.os.mkdir, directory)
+
+    def testMkdirRaisesWithDoubleDotsWindows(self):
+        """mkdir raises exception if mkdir foo/foo2/../foo3."""
+        self.checkWindowsOnly()
+        self.assertRaisesOSError(errno.EACCES,
+                                 self.os.mkdir, self.os.sep + '..')
+        directory = self.makePath(
+            'xyzzy', 'dir1', 'dir2', '..', '..', 'dir3')
+        self.assertRaisesOSError(errno.ENOENT, self.os.mkdir, directory)
+        self.createDirectory(self.makePath('xyzzy'))
         self.os.mkdir(directory)
         self.assertTrue(self.os.path.exists(directory))
         directory = self.makePath('xyzzy', 'dir1', '..')

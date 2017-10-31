@@ -1673,7 +1673,10 @@ class FakeFilesystem(object):
             return path
 
         def _ValidRelativePath(file_path):
-            slash_dotdot = self._matching_string(file_path, '/..')
+            if self.is_windows_fs:
+                return True
+            slash_dotdot = self._matching_string(
+                file_path, self.path_separator + '..')
             while file_path and slash_dotdot in file_path:
                 file_path = file_path[:file_path.rfind(slash_dotdot)]
                 if not self.Exists(self.NormalizePath(file_path)):
@@ -2481,18 +2484,24 @@ class FakeFilesystem(object):
         if not dir_name:
             raise OSError(errno.ENOENT, 'Empty directory name')
 
+        if self.is_windows_fs:
+            dir_name = self.NormalizePath(dir_name)
         parent_dir, _ = self.SplitPath(dir_name)
         if parent_dir:
             base_dir = self.CollapsePath(parent_dir)
             ellipsis = self._matching_string(parent_dir, self.path_separator + '..')
-            if parent_dir.endswith(ellipsis):
+            if parent_dir.endswith(ellipsis) and not self.is_windows_fs:
                 base_dir, dummy_dotdot, _ = parent_dir.partition(ellipsis)
             if not self.Exists(base_dir):
                 raise OSError(errno.ENOENT, 'No such fake directory', base_dir)
 
         dir_name = self.NormalizePath(dir_name)
         if self.Exists(dir_name, check_link=True):
-            raise OSError(errno.EEXIST, 'Fake object already exists', dir_name)
+            if self.is_windows_fs and dir_name == self.path_separator:
+                error_nr = errno.EACCES
+            else:
+                error_nr = errno.EEXIST
+            raise OSError(error_nr, 'Fake object already exists', dir_name)
         head, tail = self.SplitPath(dir_name)
 
         self.AddObject(
