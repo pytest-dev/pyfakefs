@@ -173,7 +173,8 @@ class RealFsTestMixin(object):
         if True:
             if (self.useRealFs() and
                     (TestCase.is_windows and skipWindows or
-                             not TestCase.is_windows and skipPosix or
+                             not TestCase.is_windows
+                             and skipMacOs and skipLinux or
                              TestCase.is_macos and skipMacOs or
                                  not TestCase.is_windows and
                                  not TestCase.is_macos and skipLinux) and
@@ -1747,14 +1748,15 @@ class FakeOsModuleTest(FakeOsModuleTestBase):
         """Renaming to an existing directory changes the existing directory
         under Posix."""
         self.checkPosixOnly()
-        self.skipRealFsFailure(skipLinux=False)
         old_path = self.makePath('foo', 'bar')
         new_path = self.makePath('foo', 'baz')
         self.createDirectory(self.os.path.join(old_path, 'sub'))
         self.createDirectory(self.os.path.join(new_path, 'sub'))
-        # FIXME: under MacOS, errno 66 (ENOTEMPTY) is raised instead
-        self.assertRaisesOSError(errno.EEXIST, self.os.rename,
-                                 old_path, new_path)
+        
+        # not testing specific subtype:
+        # raises errno.ENOTEMPTY under Ubuntu 16.04, MacOS and pyfakefs
+        # but raises errno.EEXIST at least under Ubunto 14.04
+        self.assertRaises(OSError, self.os.rename, old_path, new_path)
 
     def testRenameToAnotherDeviceShouldRaise(self):
         """Renaming to another filesystem device raises OSError."""

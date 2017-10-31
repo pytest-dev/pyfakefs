@@ -2029,7 +2029,7 @@ class FakeFilesystem(object):
                                       new_file_path)
                 if not stat.S_ISLNK(new_object.st_mode):
                     if new_object.contents:
-                        raise OSError(errno.EEXIST,
+                        raise OSError(errno.ENOTEMPTY,
                                       'Fake filesystem object: '
                                       'can not rename to non-empty directory',
                                       new_file_path)
