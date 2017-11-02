@@ -311,6 +311,7 @@ class Patcher(object):
         Ensure that all patched modules are removed in case of an unhandled exception.
         """
         self.setUp()
+        return self
 
     def __exit__(self, exc_type, exc_val, exc_tb):
         self.tearDown()

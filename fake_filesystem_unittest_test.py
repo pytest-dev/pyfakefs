@@ -24,8 +24,11 @@ import os
 import glob
 import shutil
 import sys
+from unittest import TestCase
 
 from import_as_example import check_if_exists
+from pyfakefs.fake_filesystem_unittest import Patcher
+from pyfakefs import fake_filesystem_unittest
 
 if sys.version_info >= (3, 4):
     import pathlib
@@ -34,7 +37,15 @@ if sys.version_info < (2, 7):
     import unittest2 as unittest
 else:
     import unittest
-from pyfakefs import fake_filesystem_unittest
+
+
+class TestPatcher(TestCase):
+    def testContextManager(self):
+        with Patcher() as patcher:
+            patcher.fs.CreateFile('/foo/bar', contents='test')
+            with open('/foo/bar') as f:
+                contents = f.read()
+            self.assertEqual('test', contents)
 
 
 class TestPyfakefsUnittestBase(fake_filesystem_unittest.TestCase):
