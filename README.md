@@ -139,7 +139,8 @@ For example, pyfakefs will not work with [`lxml`](http://lxml.de/).  In this cas
 
 ### Continuous integration
 
-pyfakefs is automatically tested with Python 2.6 and above under Linux, and with Python 2.7 and Python 3.6 under MacOSX. 
+pyfakefs is currently automatically tested with Python 2.6, 2.7, 3.3 and above under Linux, with Python 2.7 and 3.6 under MacOSX,
+ and with Python 2.7, 3.3 and 3.6 under Windows.
 It is currently [![Build Status](https://travis-ci.org/jmcgeheeiv/pyfakefs.svg)](https://travis-ci.org/jmcgeheeiv/pyfakefs).
 
 See [Travis-CI](http://travis-ci.org) for

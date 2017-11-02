@@ -70,10 +70,10 @@ for the modules you want to patch.
 
 The following modules and functions can be patched:
 
-* ``os`` and ``os.path`` by ``fake_filessystem.FakeOsModule``
-* ``io`` by ``fake_filessystem.FakeIoModule``
+* ``os`` and ``os.path`` by ``fake_filesystem.FakeOsModule``
+* ``io`` by ``fake_filesystem.FakeIoModule``
 * ``pathlib`` by ``fake_pathlib.FakePathlibModule``
-* build-in ``open()`` by ``fake_filessystem.FakeFileOpen``
+* build-in ``open()`` by ``fake_filesystem.FakeFileOpen``
 
 .. code:: python
 
