@@ -184,7 +184,7 @@ class _FakeStatResult(object):
     This is needed as `os.stat_result` has no possibility to set
     nanosecond times directly.
     """
-    long_type = long if sys.version_info < (3,) else int
+    long_type = long if sys.version_info[0] == 2 else int
 
     def __init__(self, is_windows, initial_time=None):
         self.use_float = FakeOsModule.stat_float_times
@@ -406,7 +406,7 @@ class FakeFile(object):
     @property
     def contents(self):
         """Return the contents as string with the original encoding."""
-        if sys.version_info >= (3, 0) and isinstance(self.byte_contents, bytes):
+        if sys.version_info[0] > 2 and isinstance(self.byte_contents, bytes):
             return self.byte_contents.decode(
                 self.encoding or locale.getpreferredencoding(False),
                 errors=self.errors)
@@ -435,7 +435,7 @@ class FakeFile(object):
 
     def _check_positive_int(self, size):
         # the size should be an positive integer value
-        int_types = (int, long) if sys.version_info < (3, 0) else int  # pylint: disable=undefined-variable
+        int_types = (int, long) if sys.version_info[0] == 2 else int  # pylint: disable=undefined-variable
         if not isinstance(size, int_types) or size < 0:
             raise IOError(errno.ENOSPC,
                           'Fake file object: size must be a non-negative integer, but is %s'
@@ -447,9 +447,9 @@ class FakeFile(object):
 
     def _encode_contents(self, contents):
         # pylint: disable=undefined-variable
-        if sys.version_info >= (3, 0) and isinstance(contents, str):
+        if sys.version_info[0] > 2 and isinstance(contents, str):
             contents = bytes(contents, self.encoding or locale.getpreferredencoding(False), self.errors)
-        elif sys.version_info < (3, 0) and isinstance(contents, unicode):
+        elif sys.version_info[0] == 2 and isinstance(contents, unicode):
             contents = contents.encode(self.encoding or locale.getpreferredencoding(False), self.errors)
         return contents
 
@@ -905,13 +905,10 @@ class FakeFilesystem(object):
         if sys.version_info < (3, ):
             if isinstance(matched, unicode):
                 return unicode(string)
-            else:
-                return string
         else:
-            if isinstance(matched, bytes):
-                return bytes(string, 'ascii')
-            else:
-                return string
+            if isinstance(matched, bytes) and isinstance(string, str):
+                return string.encode(locale.getpreferredencoding(False))
+        return string
 
     def _path_separator(self, path):
         """Return the path separator as the same type as path"""
@@ -1362,6 +1359,7 @@ class FakeFilesystem(object):
             or the root directory if path is empty.
         """
         path = self.NormalizePathSeparator(path)
+        cwd = self._matching_string(path, self.cwd)
         if not path:
             path = self.path_separator
         elif not self._StartsWithRootPath(path):
@@ -1369,9 +1367,9 @@ class FakeFilesystem(object):
             root_name = self._matching_string(path, self.root.name)
             empty = self._matching_string(path, '')
             path = self._path_separator(path).join(
-                (self.cwd != root_name and self.cwd or empty, path))
+                (cwd != root_name and cwd or empty, path))
         if path == self._matching_string(path, '.'):
-            path = self.cwd
+            path = cwd
         return self.CollapsePath(path)
 
     def SplitPath(self, path):
@@ -1625,6 +1623,12 @@ class FakeFilesystem(object):
                 return False
         return True
 
+    @staticmethod
+    def _to_string(path):
+        if sys.version_info[0] > 2 and isinstance(path, bytes):
+            path = path.decode(locale.getpreferredencoding(False))
+        return path
+
     def ResolvePath(self, file_path, allow_fd=False, raw_io=True):
         """Follow a path, resolving symlinks.
 
@@ -1735,6 +1739,7 @@ class FakeFilesystem(object):
         if file_path is None:
             # file.open(None) raises TypeError, so mimic that.
             raise TypeError('Expected file system path string, received None')
+        file_path = self._to_string(file_path)
         if not file_path or not _ValidRelativePath(file_path):
             # file.open('') raises IOError, so mimic that, and validate that
             # all parts of a relative path exist.
@@ -3019,9 +3024,9 @@ class FakePathModule(object):
         def getcwd():
             """Return the current working directory."""
             # pylint: disable=undefined-variable
-            if sys.version_info < (3, ) and isinstance(path, unicode):
+            if sys.version_info[0] == 2 and isinstance(path, unicode):
                 return self.os.getcwdu()
-            elif sys.version_info >= (3, ) and isinstance(path, bytes):
+            elif sys.version_info[0] > 2 and isinstance(path, bytes):
                 return self.os.getcwdb()
             else:
                 return self.os.getcwd()
@@ -4269,7 +4274,7 @@ class FakeFileWrapper(object):
     def _raise(self, message):
         if self.raw_io:
             raise OSError(errno.EBADF, message)
-        if sys.version_info < (3, 0):
+        if sys.version_info[0] == 2:
             raise IOError(message)
         raise io.UnsupportedOperation(message)
 
@@ -4434,7 +4439,7 @@ class FakeFileWrapper(object):
             if write_seek != self._io.tell():
                 self._read_seek = self._io.tell()
                 self._read_whence = 0
-            if not writing or sys.version_info >= (3, ):
+            if not writing or sys.version_info[0] > 2:
                 return ret_value
 
         return other_wrapper
@@ -4460,7 +4465,7 @@ class FakeFileWrapper(object):
                     self._io.seek(buffer_size)
                     self._io.write('\0' * (size - buffer_size))
                     self._file_object.SetContents(self._io.getvalue(), self._encoding)
-            if sys.version_info >= (3, ):
+            if sys.version_info[0] > 2:
                 return size
 
         return truncate_wrapper
@@ -4476,7 +4481,7 @@ class FakeFileWrapper(object):
         def write_wrapper(*args, **kwargs):
             """Wrap trunctae call to call flush after truncate."""
             ret_value = io_attr(*args, **kwargs)
-            if sys.version_info >= (3, ):
+            if sys.version_info[0] > 2:
                 return ret_value
 
         return write_wrapper
@@ -4600,7 +4605,7 @@ class FakeFileOpen(object):
         """
         self.filesystem = filesystem
         self._delete_on_close = delete_on_close
-        self._use_io = (use_io or sys.version_info >= (3, 0) or
+        self._use_io = (use_io or sys.version_info[0] > 2 or
                         platform.python_implementation() == 'PyPy' or
                         self.filesystem.is_macos)
         self.raw_io = raw_io
@@ -4650,7 +4655,7 @@ class FakeFileOpen(object):
         """
         orig_modes = mode  # Save original modes for error messages.
         # Binary mode for non 3.x or set by mode
-        binary = sys.version_info < (3, 0) or 'b' in mode
+        binary = sys.version_info[0] == 2 or 'b' in mode
         # Normalize modes. Ignore 't' and 'U'.
         mode = mode.replace('t', '').replace('b', '')
         mode = mode.replace('rU', 'r').replace('U', 'r')

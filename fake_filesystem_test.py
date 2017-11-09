@@ -213,12 +213,18 @@ class RealFsTestMixin(object):
                 'Symlinks under Windows need admin privileges')
 
     def makePath(self, *args):
+        if not self.is_python2 and isinstance(args[0], bytes):
+            base_path = self.base_path.encode()
+        else:
+            base_path = self.base_path
+
         if isinstance(args[0], (list, tuple)):
-            path = self.base_path
+            path = base_path
             for arg in args[0]:
                 path = self.os.path.join(path, arg)
             return path
-        return self.os.path.join(self.base_path, *args)
+        return self.os.path.join(base_path, *args)
+
 
     def createDirectory(self, dir_path):
         existing_path = dir_path
@@ -6281,6 +6287,20 @@ class FakeFileOpenTest(FakeFileOpenTestBase):
                 f0.seek(1)
                 f0.truncate()
                 self.assertEqual('\0', f1.read())
+
+    def testByteFilename(self):
+        file_path = self.makePath(b'test')
+        with self.open(file_path, 'wb') as f:
+            f.write(b'test')
+        with self.open(file_path, 'rb') as f:
+            self.assertEqual(b'test', f.read())
+
+    def testUnicodeFilename(self):
+        file_path = self.makePath(u'тест')
+        with self.open(file_path, 'wb') as f:
+            f.write(b'test')
+        with self.open(file_path, 'rb') as f:
+            self.assertEqual(b'test', f.read())
 
 
 class RealFileOpenTest(FakeFileOpenTest):
