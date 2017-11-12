@@ -2346,18 +2346,30 @@ class FakeOsModuleTest(FakeOsModuleTestBase):
         self.assertRaisesOSError(errno.EINVAL, self.os.fdatasync, 0)
         self.assertRaisesOSError(errno.EBADF, self.os.fdatasync, 100)
 
-    def testFsyncPass(self):
-        # setup
-        self.skipRealFsFailure(skipPosix=False)
+    def testFsyncPassPosix(self):
+        self.checkPosixOnly()
         test_file_path = self.makePath('test_file')
         self.createFile(test_file_path, contents='dummy file contents')
-        test_file = self.open(test_file_path, 'r')
-        test_fd = test_file.fileno()
-        # Test that this doesn't raise anything
-        # FIXME: raises OSError(errno.EBADF) under Windows in real FS
-        self.os.fsync(test_fd)
-        # And just for sanity, double-check that this still raises
-        self.assertRaisesOSError(errno.EBADF, self.os.fsync, test_fd + 1)
+        with self.open(test_file_path, 'r') as test_file:
+            test_fd = test_file.fileno()
+            # Test that this doesn't raise anything
+            self.os.fsync(test_fd)
+            # And just for sanity, double-check that this still raises
+            self.assertRaisesOSError(errno.EBADF, self.os.fsync, test_fd + 1)
+
+    def testFsyncPassWindows(self):
+        self.checkWindowsOnly()
+        test_file_path = self.makePath('test_file')
+        self.createFile(test_file_path, contents='dummy file contents')
+        with self.open(test_file_path, 'r+') as test_file:
+            test_fd = test_file.fileno()
+            # Test that this doesn't raise anything
+            self.os.fsync(test_fd)
+            # And just for sanity, double-check that this still raises
+            self.assertRaisesOSError(errno.EBADF, self.os.fsync, test_fd + 1)
+        with self.open(test_file_path, 'r') as test_file:
+            test_fd = test_file.fileno()
+            self.assertRaisesOSError(errno.EBADF, self.os.fsync, test_fd)
 
     def testFdatasyncPass(self):
         # setup
@@ -3794,14 +3806,11 @@ class FakeOsModuleTestCaseInsensitiveFS(FakeOsModuleTestBase):
     # test fsync and fdatasync
 
     def testFsyncPass(self):
-        # setup
-        self.skipRealFsFailure(skipPosix=False)
         test_file_path = self.makePath('test_file')
         self.createFile(test_file_path, contents='dummy file contents')
-        test_file = self.open(test_file_path.upper(), 'r')
+        test_file = self.open(test_file_path.upper(), 'r+')
         test_fd = test_file.fileno()
         # Test that this doesn't raise anything
-        # FIXME: raises errno.EBADF under Windows in real FS
         self.os.fsync(test_fd)
         # And just for sanity, double-check that this still raises
         self.assertRaisesOSError(errno.EBADF, self.os.fsync, test_fd + 1)

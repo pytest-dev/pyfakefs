@@ -4136,7 +4136,13 @@ class FakeOsModule(object):
         # Throw an error if file_des isn't valid
         if 0 <= file_des < NR_STD_STREAMS:
             raise OSError(errno.EINVAL, 'Invalid file descriptor')
-        self.filesystem.GetOpenFile(file_des)
+        file_object = self.filesystem.GetOpenFile(file_des)
+        if self.filesystem.is_windows_fs:
+            if (not hasattr(file_object, 'allow_update') or
+                    not file_object.allow_update):
+                raise OSError(errno.EBADF, 'File is not open for writing')
+
+
 
     def fdatasync(self, file_des):
         """Perform fdatasync for a fake file (in other words, do nothing).
