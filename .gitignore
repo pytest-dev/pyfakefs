@@ -15,3 +15,6 @@
 
 # autodoc created by sphinx
 gh-pages/
+
+# Distribution creation
+dist/

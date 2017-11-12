@@ -1,41 +1,53 @@
-# pyfakefs Release Notes 
+# pyfakefs Release Notes
 The release versions are PyPi releases.
 
-## Version 3.3 (as yet unreleased)
+## [Version 3.3](https://pypi.python.org/pypi/pyfakefs/3.3)
+
+This is the last release that supports Python 2.6.
 
 #### New Features
-  * Added possibility to reload modules and switch on dynamic loading of modules after setup (experimental, see [#248](../../issues/248))
-  * Added possibility to patch modules that import file system modules under another name, 
-  e.g. `import os as '_os` ([#231](../../issues/231)).
-  * Added support for `dir_fd` argument in several `os` functions ([#206](../../issues/206)). 
-  * Added support for open file descriptor as path argument
-    in `os.utime`, `os.chmod`, `os.chdir`, `os.chown`, `os.listdir`, `os.stat` and `os.lstat` 
-    (Python >= 3.3) ([#205](../../issues/205)).
-  * Added support for basic modes in fake `os.open()` ([#204](../../issues/204)). 
-  * Added fake `os.path.samefile` implementation ([#193](../../issues/193)).
-  * Added support for `ns` argument in `os.utime()` (Python >= 3.3) ([#192](../../issues/192)).
-  * Added nanosecond time members in `os.stat_result` (Python >= 3.3) ([#196](../../issues/196)).
+  * Added possibility to reload modules and switch on dynamic loading of modules
+    after setup (experimental, see [#248](../../issues/248))
+  * Added possibility to patch modules that import file system modules under
+    another name, for example `import os as '_os` ([#231](../../issues/231))
+  * Added support for `dir_fd` argument in several `os` functions
+    ([#206](../../issues/206))
+  * Added support for open file descriptor as path argument in `os.utime`,
+    `os.chmod`, `os.chdir`, `os.chown`, `os.listdir`, `os.stat` and `os.lstat`
+    (Python >= 3.3) ([#205](../../issues/205))
+  * Added support for basic modes in fake `os.open()` ([#204](../../issues/204))
+  * Added fake `os.path.samefile` implementation ([#193](../../issues/193))
+  * Added support for `ns` argument in `os.utime()` (Python >= 3.3)
+    ([#192](../../issues/192))
+  * Added nanosecond time members in `os.stat_result` (Python >= 3.3)
+    ([#196](../../issues/196))
 
 #### Infrastructure
-  * Added Travis CI tests for MacOSX (Python 2.7 and 3.6).
-  * Added Appveyor CI tests for Windows (Python 2.7, 3.3 and 3.6).
-  * Added auto-generated documentation for development version on GitHub Pages.
-  * Removed most of `fake_filesystem_shutil` implementation, relying on the patched `os` module instead ([#194](../../issues/194)).
-  * Removed `fake_tempfile` and `fake_filesystem_glob`, relying on the patched `os` module instead ([#189](../../issues/189), [#191](../../issues/191)).
+  * Added Travis CI tests for MacOSX (Python 2.7 and 3.6)
+  * Added Appveyor CI tests for Windows (Python 2.7, 3.3 and 3.6)
+  * Added auto-generated documentation for development version on GitHub Pages
+  * Removed most of `fake_filesystem_shutil` implementation, relying on the
+    patched `os` module instead ([#194](../../issues/194))
+  * Removed `fake_tempfile` and `fake_filesystem_glob`, relying on the patched
+    `os` module instead ([#189](../../issues/189), [#191](../../issues/191))
 
 #### Fixes
-  * Multiple fixes of bugs found using TSTL by agroce (see about 100 issues with `TSTL` label)
-    * several problems with buffer handling in high-level i/o functions
+  * Multiple fixes of bugs found using TSTL by @agroce (see about 100 issues
+    with the `TSTL` label)
+    * several problems with buffer handling in high-level IO functions
     * several problems with multiple handles on the same file
-    * several problems with low-level i/o functions
+    * several problems with low-level IO functions
     * incorrect exception (`IOError` vs `OSError`) raised in several cases
     * Fake `rename` did not behave like `os.rename` in many cases
-    * Symlinks have not been considered or incorrectly handled in several functions 
-    * A non-existing file that has the same name as the content of the parent object was seen as existent
+    * Symlinks have not been considered or incorrectly handled in several
+      functions
+    * A nonexistent file that has the same name as the content of the parent
+      object was seen as existing
     * Incorrect error handling during directory creation
     * many fixes for OS-specific behavior
-  * Also patch modules that are loaded between `__init__()` and `setUp()` ([#199](../../issues/199)).
-  * Creating files in read-only directory was possible ([#203](../../issues/203)).
+  * Also patch modules that are loaded between `__init__()` and `setUp()`
+    ([#199](../../issues/199))
+  * Creating files in read-only directory was possible ([#203](../../issues/203))
 
 ## [Version 3.2](https://pypi.python.org/pypi/pyfakefs/3.2)
 
@@ -53,23 +65,23 @@ The release versions are PyPi releases.
 #### Infrastructure
   * The `mox3` package is no longer a prerequisite--the portion required by pyfakefs
     has been integrated into pyfakefs ([#182](../../issues/182))
-  
+
 #### Fixes
  * Corrected the handling of byte/unicode paths in several functions ([#187](../../issues/187))
  * `FakeShutilModule.rmtree()` failed for directories ending with path separator ([#177](../../issues/177))
- * Case was incorrectly handled for added Windows drives 
+ * Case was incorrectly handled for added Windows drives
  * `pathlib.glob()` incorrectly handled case under MacOS ([#167](../../issues/167))
  * tox support was broken ([#163](../../issues/163))
  * On Windows it was not possible to rename a file when only the case of the file
    name changed ([#160](../../issues/160))
- 
+
 ## [Version 3.1](https://pypi.python.org/pypi/pyfakefs/3.1)
 
 #### New Features
  * Added helper method `TestCase.copyRealFile()` to copy a file from
    the real file system to the fake file system. This makes it easy to use
    template, data and configuration files in your tests.
- * A pytest plugin is now installed with pyfakefs that exports the 
+ * A pytest plugin is now installed with pyfakefs that exports the
    fake filesystem as pytest fixture `fs`.
 
 #### Fixes
@@ -80,7 +92,7 @@ The release versions are PyPi releases.
 #### New Features
  * Support for path-like objects as arguments in fake `os`
    and `os.path` modules (Python >= 3.6)
- * Some changes to make pyfakefs work with Python 3.6 
+ * Some changes to make pyfakefs work with Python 3.6
  * Added fake `pathlib` module (Python >= 3.4) ([#29](../../issues/29))
  * Support for `os.replace` (Python >= 3.3)
  * `os.access`, `os.chmod`, `os.chown`, `os.stat`, `os.utime`:
@@ -89,7 +101,7 @@ The release versions are PyPi releases.
  * Option to not fake modules named `path` ([#53](../../issues/53))
  * `glob.glob`, `glob.iglob`: support for `recursive` argument (Python >= 3.5) ([#116](../../issues/116))
  * Support for `glob.iglob` ([#59](../../issues/59))
- 
+
 #### Infrastructure
  * Added [auto-generated documentation](http://jmcgeheeiv.github.io/pyfakefs/)
 
@@ -99,7 +111,7 @@ The release versions are PyPi releases.
  * Incorrect exception type in Posix if path ancestor is a file ([#139](../../issues/139))
  * Exception handling when using `Patcher` with py.test ([#135](../../issues/135))
  * Fake `os.listdir` returned sorted instead of unsorted entries
- 
+
 ## [Version 2.9](https://pypi.python.org/pypi/pyfakefs/2.9)
 
 #### New Features
@@ -117,7 +129,7 @@ The release versions are PyPi releases.
  * `shutil.rmtree`: support for `ignore_errors` and `onerror` arguments ([#72](../../issues/72))
  * Support for `os.fsync()` and `os.fdatasync()` ([#73](../../issues/73))
  * `os.walk`: Support for `followlinks` argument
- 
+
 #### Fixes
  * `shutil` functions like `make_archive` do not work with pyfakefs ([#104](../../issues/104))
  * File permissions on deletion not correctly handled ([#27](../../issues/27))
@@ -131,9 +143,9 @@ The release versions are PyPi releases.
  * Added continuous integration testing with Travis CI
  * Added usage documentation in project wiki
  * Better support for pypi releases
- 
+
 #### New Features
- * Added direct unit test support in `fake_filesystem_unittest` 
+ * Added direct unit test support in `fake_filesystem_unittest`
    (transparently patches all calls to faked implementations)
  * Added support for doctests
  * Added support for cygwin
