@@ -15,14 +15,8 @@
 import datetime
 import math
 import os
+import unittest
 from os import path
-
-import sys
-
-if sys.version_info < (2, 7):
-    import unittest2 as unittest
-else:
-    import unittest
 
 import mox3_stubout_example
 from pyfakefs import mox3_stubout

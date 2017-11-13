@@ -30,13 +30,10 @@ and allows you to specify the contents or the size of the file.
 import io
 import os
 import sys
-
-if sys.version_info < (2, 7):
-    import unittest2 as unittest
-else:
-    import unittest
+import unittest
 
 from pyfakefs import fake_filesystem_unittest
+
 # The module under test is pyfakefs/example
 import example
 

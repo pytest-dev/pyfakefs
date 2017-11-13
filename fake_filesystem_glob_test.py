@@ -16,15 +16,9 @@
 
 """Test for glob using fake_filesystem."""
 
-import doctest
 import glob
 import os
-import sys
-
-if sys.version_info < (2, 7):
-    import unittest2 as unittest
-else:
-    import unittest
+import unittest
 
 from pyfakefs import fake_filesystem_unittest
 

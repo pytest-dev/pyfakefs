@@ -22,16 +22,10 @@ and works correctly with the fake filesystem because of the faked `os` module.
 import os
 import shutil
 import sys
-
-import time
+import unittest
 
 from fake_filesystem_test import RealFsTestMixin
 from pyfakefs import fake_filesystem_unittest
-
-if sys.version_info < (2, 7):
-    import unittest2 as unittest
-else:
-    import unittest
 
 
 class RealFsTestCase(fake_filesystem_unittest.TestCase, RealFsTestMixin):

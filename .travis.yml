@@ -18,8 +18,6 @@ language: python
 
 matrix:
     include:
-        - python: 2.6
-          env: PYTHON=py26
         - python: 2.7
           env: PYTHON=py27
         - python: 3.3
