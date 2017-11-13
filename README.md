@@ -18,9 +18,9 @@ This file provides general usage instructions for pyfakefs.  There is more:
   specific topics
 * The [Release Notes](https://github.com/jmcgeheeiv/pyfakefs/blob/master/CHANGES.md) shows a list of changes in the latest versions
 
-### Link to pyfakefs.org
+### Linking to pyfakefs
 
-In your own documentation, please link to pyfakefs using <http://pyfakefs.org>.
+In your own documentation, please link to pyfakefs using the canonical URL <http://pyfakefs.org>.
 This URL always points to the most relevant top page for pyfakefs.
 
 ## Usage
