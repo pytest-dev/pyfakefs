@@ -24,6 +24,7 @@ import os
 import glob
 import shutil
 import sys
+import unittest
 from unittest import TestCase
 
 from import_as_example import check_if_exists
@@ -32,11 +33,6 @@ from pyfakefs import fake_filesystem_unittest
 
 if sys.version_info >= (3, 4):
     import pathlib
-
-if sys.version_info < (2, 7):
-    import unittest2 as unittest
-else:
-    import unittest
 
 
 class TestPatcher(TestCase):
@@ -204,16 +200,18 @@ class TestPatchPathUnittestPassing(TestPyfakefsUnittestBase):
         self.assertEqual(2, path.floor(2.5))
 
 
-@unittest.skipIf(sys.version_info < (2, 7), "No byte strings in Python 2.6")
 class TestCopyOrAddRealFile(TestPyfakefsUnittestBase):
     """Tests the `fake_filesystem_unittest.TestCase.copyRealFile()` method.
-    Note that `copyRealFile()` is deprecated in favor of `FakeFilesystem.add_real_file()`.
+    Note that `copyRealFile()` is deprecated in favor of
+    `FakeFilesystem.add_real_file()`.
     """
-    with open(__file__) as f:
-        real_string_contents = f.read()
-    with open(__file__, 'rb') as f:
-        real_byte_contents = f.read()
-    real_stat = os.stat(__file__)
+    @classmethod
+    def setUpClass(cls):
+        with open(__file__) as f:
+            cls.real_string_contents = f.read()
+        with open(__file__, 'rb') as f:
+            cls.real_byte_contents = f.read()
+        cls.real_stat = os.stat(__file__)
 
     @unittest.skipIf(sys.platform == 'darwin', 'Different copy behavior')
     def testCopyRealFile(self):

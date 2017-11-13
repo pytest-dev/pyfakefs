@@ -19,23 +19,17 @@
 import errno
 import io
 import locale
-import platform
 import os
+import platform
+import shutil
 import stat
 import sys
 import tempfile
 import time
-
-import shutil
-
-from pyfakefs.fake_filesystem import FakeFileOpen
-
-if sys.version_info < (2, 7):
-    import unittest2 as unittest
-else:
-    import unittest
+import unittest
 
 from pyfakefs import fake_filesystem
+from pyfakefs.fake_filesystem import FakeFileOpen
 
 
 class _DummyTime(object):
@@ -5165,12 +5159,7 @@ class FakePathModuleTest(TestCase):
         path_other = '!some!where!else'
         self.assertRaises(ValueError, self.path.relpath, None)
         self.assertRaises(ValueError, self.path.relpath, '')
-        if sys.version_info < (2, 7):
-            # The real Python 2.6 os.path.relpath('!path!to!foo') actually does
-            # return '..!path!to!foo' instead of 'path!to!foo'
-            self.assertEqual('..!path!to!foo', self.path.relpath(path_foo))
-        else:
-            self.assertEqual('path!to!foo', self.path.relpath(path_foo))
+        self.assertEqual('path!to!foo', self.path.relpath(path_foo))
         self.assertEqual('..!foo',
                          self.path.relpath(path_foo, path_bar))
         self.assertEqual('..!..!..%s' % path_other,
@@ -6219,8 +6208,6 @@ class FakeFileOpenTest(FakeFileOpenTestBase):
             expected = 0 if sys.version_info < (3,) else 4
             self.assertEqual(expected, self.os.path.getsize(file_path))
 
-    @unittest.skipIf(sys.version_info < (2, 7),
-                     'Python 2.6 behaves differently')
     def testReadFlushesUnderPosix(self):
         # Regression test for #278
         self.checkPosixOnly()
@@ -6432,8 +6419,6 @@ class OpenFileWithEncodingTest(FakeFileOpenTestBase):
     def testOpenWithAppendFlag(self):
         # FIXME: under Windows, line endings are not handled correctly
         self.skipRealFsFailure(skipPosix=False)
-        if self.useRealFs() and sys.version_info < (2, 7):
-            raise unittest.SkipTest('Python 2.6 behaving differently here')
         contents = [
             u'Калинка,\n',
             u'калинка,\n',

@@ -2,7 +2,7 @@
 
 # Copyright 2009 Google Inc. All Rights Reserved.
 # Copyright 2014 Altera Corporation. All Rights Reserved.
-# Copyright 2014-2015 John McGehee
+# Copyright 2014-2017 John McGehee
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -18,8 +18,6 @@
 
 
 from pyfakefs.fake_filesystem import __version__
-
-import os
 
 NAME = 'pyfakefs'
 REQUIRES = []
@@ -41,7 +39,6 @@ CLASSIFIERS = [
     'Intended Audience :: Developers',
     'License :: OSI Approved :: Apache Software License',
     'Programming Language :: Python',
-    'Programming Language :: Python :: 2.6',
     'Programming Language :: Python :: 2.7',
     'Programming Language :: Python :: 3.2',
     'Programming Language :: Python :: 3.3',
@@ -91,8 +88,5 @@ try:
     from setuptools import setup
 except ImportError:
     from distutils.core import setup
-else:
-    params['tests_require'] = ['unittest2']
-    params['test_suite'] = 'unittest2.collector'
 
 setup(**params)  # pylint: disable = W0142

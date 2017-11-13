@@ -9,6 +9,7 @@ must use pyfakefs 3.3 or earlier.
 #### New Features
 
 #### Infrastructure
+  * Removed Python 2.6 support [#293](../../issues/293)
 
 #### Fixes
 

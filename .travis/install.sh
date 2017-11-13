@@ -13,10 +13,6 @@ if [[ $TRAVIS_OS_NAME == 'osx' ]]; then
     eval "$(pyenv init -)"
 
     case "${PYTHON}" in
-        py26)
-            pyenv install 2.6.6
-            pyenv global 2.6.6
-            ;;
         py27)
             curl -O https://bootstrap.pypa.io/get-pip.py
             python get-pip.py --user

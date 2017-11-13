@@ -66,10 +66,7 @@ from pyfakefs import mox3_stubout
 if sys.version_info >= (3, 4):
     from pyfakefs import fake_pathlib
 
-if sys.version_info < (2, 7):
-    import unittest2 as unittest
-else:
-    import unittest
+import unittest
 
 if sys.version_info < (3,):
     import __builtin__ as builtins  # pylint: disable=import-error
@@ -260,8 +257,6 @@ class Patcher(object):
     HAS_PATHLIB = sys.version_info >= (3, 4)
     IS_WINDOWS = sys.platform in ('win32', 'cygwin')
 
-    # To add py.test support per issue https://github.com/jmcgeheeiv/pyfakefs/issues/43,
-    # it appears that adding  'py', 'pytest', '_pytest' to SKIPNAMES will help
     SKIPNAMES = set(['os', 'path', 'io', 'genericpath'])
     if HAS_PATHLIB:
         SKIPNAMES.add('pathlib')
@@ -380,7 +375,7 @@ class Patcher(object):
          Shall be replaced by a more generic mechanism.
         """
         if 'unlink' in tempfile._TemporaryFileWrapper.__dict__:
-            # Python 2.6 to 3.2: unlink is a class method of _TemporaryFileWrapper
+            # Python 2.7 to 3.2: unlink is a class method of _TemporaryFileWrapper
             tempfile._TemporaryFileWrapper.unlink = self.fake_os.unlink
 
             #  Python 3.0 to 3.2 (and PyPy3 based on Python 3.2):
