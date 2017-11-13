@@ -121,7 +121,7 @@ The following modules and functions can be patched:
 ## Installation
 
 ### Compatibility
-pyfakefs works with CPython 2.6, 2.7, 3.3 and above, on Linux, Windows and OSX (MacOS), and with PyPy2 and PyPy3.
+pyfakefs works with CPython 2.7, 3.3 and above, on Linux, Windows and OSX (MacOS), and with PyPy2 and PyPy3.
 
 pyfakefs works with [PyTest](http://doc.pytest.org) version 2.8.6 or above.
 
@@ -140,7 +140,7 @@ For example, pyfakefs will not work with [`lxml`](http://lxml.de/).  In this cas
 ### Continuous integration
 
 pyfakefs is currently automatically tested:
-* On Linux, with Python 2.6, 2.7, 3.3 and above using [Travis](https://travis-ci.org/jmcgeheeiv/pyfakefs).
+* On Linux, with Python 2.7, 3.3 and above using [Travis](https://travis-ci.org/jmcgeheeiv/pyfakefs).
   The Linux build is currently [![Build Status](https://travis-ci.org/jmcgeheeiv/pyfakefs.svg)](https://travis-ci.org/jmcgeheeiv/pyfakefs).
 * On MacOS, with Python 3.4 and 3.6
 * On Windows, with Python 2.7, 3.3 and 3.6 using [Appveyor](https://ci.appveyor.com/project/jmcgeheeiv/pyfakefs).
