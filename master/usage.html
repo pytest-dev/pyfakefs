@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>Usage &#8212; pyfakefs 3.3 documentation</title>
+    <title>Usage &#8212; pyfakefs 3.4 documentation</title>
     
     <link rel="stylesheet" href="_static/nature.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
@@ -14,7 +14,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    './',
-        VERSION:     '3.3',
+        VERSION:     '3.4',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true,
@@ -45,7 +45,7 @@
         <li class="right" >
           <a href="intro.html" title="Introduction"
              accesskey="P">previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="index.html">pyfakefs 3.3 documentation</a> &#187;</li> 
+        <li class="nav-item nav-item-0"><a href="index.html">pyfakefs 3.4 documentation</a> &#187;</li> 
       </ul>
     </div>  
 
@@ -117,10 +117,10 @@ You have to create a fake filesystem object, and afterwards fake modules based o
 for the modules you want to patch.</p>
 <p>The following modules and functions can be patched:</p>
 <ul class="simple">
-<li><code class="docutils literal"><span class="pre">os</span></code> and <code class="docutils literal"><span class="pre">os.path</span></code> by <code class="docutils literal"><span class="pre">fake_filessystem.FakeOsModule</span></code></li>
-<li><code class="docutils literal"><span class="pre">io</span></code> by <code class="docutils literal"><span class="pre">fake_filessystem.FakeIoModule</span></code></li>
+<li><code class="docutils literal"><span class="pre">os</span></code> and <code class="docutils literal"><span class="pre">os.path</span></code> by <code class="docutils literal"><span class="pre">fake_filesystem.FakeOsModule</span></code></li>
+<li><code class="docutils literal"><span class="pre">io</span></code> by <code class="docutils literal"><span class="pre">fake_filesystem.FakeIoModule</span></code></li>
 <li><code class="docutils literal"><span class="pre">pathlib</span></code> by <code class="docutils literal"><span class="pre">fake_pathlib.FakePathlibModule</span></code></li>
-<li>build-in <code class="docutils literal"><span class="pre">open()</span></code> by <code class="docutils literal"><span class="pre">fake_filessystem.FakeFileOpen</span></code></li>
+<li>build-in <code class="docutils literal"><span class="pre">open()</span></code> by <code class="docutils literal"><span class="pre">fake_filesystem.FakeFileOpen</span></code></li>
 </ul>
 <div class="code python highlight-default"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">pyfakefs.fake_filesystem</span> <span class="k">as</span> <span class="nn">fake_fs</span>
 
@@ -207,7 +207,7 @@ for the modules you want to patch.</p>
         <li class="right" >
           <a href="intro.html" title="Introduction"
              >previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="index.html">pyfakefs 3.3 documentation</a> &#187;</li> 
+        <li class="nav-item nav-item-0"><a href="index.html">pyfakefs 3.4 documentation</a> &#187;</li> 
       </ul>
     </div>
     <div class="footer" role="contentinfo">

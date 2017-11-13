@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>Usage &#8212; pyfakefs 3.2 documentation</title>
+    <title>Usage &#8212; pyfakefs 3.3 documentation</title>
     
     <link rel="stylesheet" href="_static/nature.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
@@ -14,7 +14,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    './',
-        VERSION:     '3.2',
+        VERSION:     '3.3',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true,
@@ -26,7 +26,7 @@
     <script type="text/javascript" src="_static/doctools.js"></script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
-    <link rel="next" title="Modules" href="modules.html" />
+    <link rel="next" title="Public Modules and Classes" href="modules.html" />
     <link rel="prev" title="Introduction" href="intro.html" /> 
   </head>
   <body>
@@ -40,12 +40,12 @@
           <a href="py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
         <li class="right" >
-          <a href="modules.html" title="Modules"
+          <a href="modules.html" title="Public Modules and Classes"
              accesskey="N">next</a> |</li>
         <li class="right" >
           <a href="intro.html" title="Introduction"
              accesskey="P">previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="index.html">pyfakefs 3.2 documentation</a> &#187;</li> 
+        <li class="nav-item nav-item-0"><a href="index.html">pyfakefs 3.3 documentation</a> &#187;</li> 
       </ul>
     </div>  
 
@@ -61,7 +61,7 @@
 <h2>Automatically find and patch using fake_filesystem_unittest<a class="headerlink" href="#automatically-find-and-patch-using-fake-filesystem-unittest" title="Permalink to this headline">¶</a></h2>
 <p>The first approach is to allow pyfakefs to automatically find all real file functions and modules,
 and stub these out with the fake file system functions and modules.
-This is the simplest approch if you are using separate unit tests.
+This is the simplest approach if you are using separate unit tests.
 The usage is explained in the pyfakefs wiki page
 <a class="reference external" href="https://github.com/jmcgeheeiv/pyfakefs/wiki/Automatically-find-and-patch-file-functions-and-modules">Automatically find and patch file functions and modules</a>
 and demonstrated in files <code class="docutils literal"><span class="pre">example.py</span></code> and <code class="docutils literal"><span class="pre">example_test.py</span></code>.</p>
@@ -80,18 +80,55 @@ described above.</p>
 </pre></div>
 </div>
 </div>
-<div class="section" id="patch-using-unittest-mock">
-<h2>Patch using unittest.mock<a class="headerlink" href="#patch-using-unittest-mock" title="Permalink to this headline">¶</a></h2>
-<p>If you are using other means of testing like <a class="reference external" href="http://nose2.readthedocs.io">nose</a>, you can do the patching yourself using
-<code class="docutils literal"><span class="pre">mock.patch()</span></code>:</p>
+<div class="section" id="patch-using-fake-filesystem-unittest-patcher">
+<h2>Patch using fake_filesystem_unittest.Patcher<a class="headerlink" href="#patch-using-fake-filesystem-unittest-patcher" title="Permalink to this headline">¶</a></h2>
+<p>If you are using other means of testing like <a class="reference external" href="http://nose2.readthedocs.io">nose</a>, you can do the
+patching using <code class="docutils literal"><span class="pre">fake_filesystem_unittest.Patcher</span></code> - the class doing the actual work
+of replacing the filesystem modules with the fake modules in the first two approaches.</p>
+<p>The easiest way is to just use <code class="docutils literal"><span class="pre">Patcher</span></code> as a context manager:</p>
+<div class="code python highlight-default"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">fake_filesystem_unittest</span> <span class="k">import</span> <span class="n">Patcher</span>
+
+<span class="k">with</span> <span class="n">Patcher</span><span class="p">()</span> <span class="k">as</span> <span class="n">patcher</span><span class="p">:</span>
+    <span class="c1"># access the fake_filesystem object via patcher.fs</span>
+    <span class="n">patcher</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">CreateFile</span><span class="p">(</span><span class="s1">&#39;/foo/bar&#39;</span><span class="p">,</span> <span class="n">contents</span><span class="o">=</span><span class="s1">&#39;test&#39;</span><span class="p">)</span>
+
+    <span class="c1"># the following code works on the fake filesystem</span>
+    <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="s1">&#39;/foo/bar&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+        <span class="n">contents</span> <span class="o">=</span> <span class="n">f</span><span class="o">.</span><span class="n">read</span><span class="p">()</span>
+</pre></div>
+</div>
+<p>You can also initialize <code class="docutils literal"><span class="pre">Patcher</span></code> manually:</p>
+<div class="code python highlight-default"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">fake_filesystem_unittest</span> <span class="k">import</span> <span class="n">Patcher</span>
+
+<span class="n">patcher</span> <span class="o">=</span> <span class="n">Patcher</span><span class="p">()</span>
+<span class="n">patcher</span><span class="o">.</span><span class="n">setUp</span><span class="p">()</span>     <span class="c1"># called in the initialization code</span>
+<span class="o">...</span>
+<span class="n">patcher</span><span class="o">.</span><span class="n">tearDown</span><span class="p">()</span>  <span class="c1"># somewhere in the cleanup code</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="patch-using-unittest-mock-deprecated">
+<h2>Patch using unittest.mock (deprecated)<a class="headerlink" href="#patch-using-unittest-mock-deprecated" title="Permalink to this headline">¶</a></h2>
+<p>You can also use <code class="docutils literal"><span class="pre">mock.patch()</span></code> to patch the modules manually. This approach will
+only work for the directly imported modules, therefore it is not suited for testing
+larger code bases. As the other approaches are more convenient, this one is considered
+deprecated.
+You have to create a fake filesystem object, and afterwards fake modules based on this file system
+for the modules you want to patch.</p>
+<p>The following modules and functions can be patched:</p>
+<ul class="simple">
+<li><code class="docutils literal"><span class="pre">os</span></code> and <code class="docutils literal"><span class="pre">os.path</span></code> by <code class="docutils literal"><span class="pre">fake_filesystem.FakeOsModule</span></code></li>
+<li><code class="docutils literal"><span class="pre">io</span></code> by <code class="docutils literal"><span class="pre">fake_filesystem.FakeIoModule</span></code></li>
+<li><code class="docutils literal"><span class="pre">pathlib</span></code> by <code class="docutils literal"><span class="pre">fake_pathlib.FakePathlibModule</span></code></li>
+<li>build-in <code class="docutils literal"><span class="pre">open()</span></code> by <code class="docutils literal"><span class="pre">fake_filesystem.FakeFileOpen</span></code></li>
+</ul>
 <div class="code python highlight-default"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">pyfakefs.fake_filesystem</span> <span class="k">as</span> <span class="nn">fake_fs</span>
 
 <span class="c1"># Create a faked file system</span>
 <span class="n">fs</span> <span class="o">=</span> <span class="n">fake_fs</span><span class="o">.</span><span class="n">FakeFilesystem</span><span class="p">()</span>
 
 <span class="c1"># Do some setup on the faked file system</span>
-<span class="n">fs</span><span class="o">.</span><span class="n">CreateFile</span><span class="p">(</span><span class="s1">&#39;/var/data/xx1.txt&#39;</span><span class="p">)</span>
-<span class="n">fs</span><span class="o">.</span><span class="n">CreateFile</span><span class="p">(</span><span class="s1">&#39;/var/data/xx2.txt&#39;</span><span class="p">)</span>
+<span class="n">fs</span><span class="o">.</span><span class="n">CreateFile</span><span class="p">(</span><span class="s1">&#39;/foo/bar&#39;</span><span class="p">,</span> <span class="n">contents</span><span class="o">=</span><span class="s1">&#39;test&#39;</span><span class="p">)</span>
 
 <span class="c1"># Replace some built-in file system related modules you use with faked ones</span>
 
@@ -101,12 +138,11 @@ described above.</p>
 <span class="k">except</span> <span class="ne">ImportError</span><span class="p">:</span>
     <span class="kn">from</span> <span class="nn">mock</span> <span class="k">import</span> <span class="n">patch</span>  <span class="c1"># Python 2</span>
 
-<span class="kn">import</span> <span class="nn">pyfakefs.fake_filesystem_glob</span> <span class="k">as</span> <span class="nn">fake_glob</span>
-
 <span class="c1"># Note that this fake module is based on the fake fs you just created</span>
-<span class="n">glob</span> <span class="o">=</span> <span class="n">fake_glob</span><span class="o">.</span><span class="n">FakeGlobModule</span><span class="p">(</span><span class="n">fs</span><span class="p">)</span>
-<span class="k">with</span> <span class="n">patch</span><span class="p">(</span><span class="s1">&#39;mymodule.glob&#39;</span><span class="p">,</span> <span class="n">glob</span><span class="p">):</span>
-    <span class="nb">print</span><span class="p">(</span><span class="n">glob</span><span class="o">.</span><span class="n">glob</span><span class="p">(</span><span class="s1">&#39;/var/data/xx*&#39;</span><span class="p">))</span>
+<span class="n">os</span> <span class="o">=</span> <span class="n">fake_fs</span><span class="o">.</span><span class="n">FakeOsModule</span><span class="p">(</span><span class="n">fs</span><span class="p">)</span>
+<span class="k">with</span> <span class="n">patch</span><span class="p">(</span><span class="s1">&#39;mymodule.os&#39;</span><span class="p">,</span> <span class="n">os</span><span class="p">):</span>
+    <span class="n">fd</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">open</span><span class="p">(</span><span class="s1">&#39;/foo/bar&#39;</span><span class="p">,</span> <span class="n">os</span><span class="o">.</span><span class="n">O_RDONLY</span><span class="p">)</span>
+    <span class="n">contents</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">read</span><span class="p">(</span><span class="n">fd</span><span class="p">,</span> <span class="mi">4</span><span class="p">)</span>
 </pre></div>
 </div>
 </div>
@@ -123,7 +159,8 @@ described above.</p>
 <li><a class="reference internal" href="#">Usage</a><ul>
 <li><a class="reference internal" href="#automatically-find-and-patch-using-fake-filesystem-unittest">Automatically find and patch using fake_filesystem_unittest</a></li>
 <li><a class="reference internal" href="#patch-using-the-pytest-plugin">Patch using the PyTest plugin</a></li>
-<li><a class="reference internal" href="#patch-using-unittest-mock">Patch using unittest.mock</a></li>
+<li><a class="reference internal" href="#patch-using-fake-filesystem-unittest-patcher">Patch using fake_filesystem_unittest.Patcher</a></li>
+<li><a class="reference internal" href="#patch-using-unittest-mock-deprecated">Patch using unittest.mock (deprecated)</a></li>
 </ul>
 </li>
 </ul>
@@ -133,7 +170,7 @@ described above.</p>
                         title="previous chapter">Introduction</a></p>
   <h4>Next topic</h4>
   <p class="topless"><a href="modules.html"
-                        title="next chapter">Modules</a></p>
+                        title="next chapter">Public Modules and Classes</a></p>
   <div role="note" aria-label="source link">
     <h3>This Page</h3>
     <ul class="this-page-menu">
@@ -165,12 +202,12 @@ described above.</p>
           <a href="py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
         <li class="right" >
-          <a href="modules.html" title="Modules"
+          <a href="modules.html" title="Public Modules and Classes"
              >next</a> |</li>
         <li class="right" >
           <a href="intro.html" title="Introduction"
              >previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="index.html">pyfakefs 3.2 documentation</a> &#187;</li> 
+        <li class="nav-item nav-item-0"><a href="index.html">pyfakefs 3.3 documentation</a> &#187;</li> 
       </ul>
     </div>
     <div class="footer" role="contentinfo">
