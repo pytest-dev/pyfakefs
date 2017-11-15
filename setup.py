@@ -29,6 +29,8 @@ try:
     import pypandoc
 
     LONG_DESCRIPTION = pypandoc.convert('README.md', 'rst')
+    with open('README.rst', 'w') as f:
+        f.write(LONG_DESCRIPTION)
 except ImportError:
     LONG_DESCRIPTION = '''Using pyfakefs, your tests operate on a fake file system in memory without
 touching the real disk. The software under test requires no modification to work with pyfakefs.'''

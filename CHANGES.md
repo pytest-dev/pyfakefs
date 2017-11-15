@@ -18,6 +18,8 @@ must use pyfakefs 3.3 or earlier.
 This is the last release that supports Python 2.6.
 
 #### New Features
+  * The OS specific temp directory is now automatically created in `setUp()` (related to [#191](../../issues/191)).
+    Note that this may break test code that assumes that the fake file system is completely empty at test start.
   * Added possibility to reload modules and switch on dynamic loading of modules
     after setup (experimental, see [#248](../../issues/248))
   * Added possibility to patch modules that import file system modules under
