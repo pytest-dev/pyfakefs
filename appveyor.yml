@@ -6,6 +6,7 @@ environment:
     - PYTHON: "C:\\Python36-x64"
 
 install:
+  - "%PYTHON%\\python.exe -m pip install py==1.4.34"
   - "%PYTHON%\\python.exe -m pip install -r requirements.txt"
   - "%PYTHON%\\python.exe -m pip install ."
 
