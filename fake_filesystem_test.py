@@ -30,7 +30,7 @@ import unittest
 
 from pyfakefs import fake_filesystem
 from pyfakefs.fake_filesystem import FakeFileOpen
-
+from pyfakefs.fake_filesystem_unittest import has_scandir
 
 class _DummyTime(object):
     """Mock replacement for time.time. Increases returned time on access."""
@@ -2676,14 +2676,6 @@ class FakeOsModuleTest(FakeOsModuleTestBase):
         self.assertEqual(test_directories, dirs)
         self.assertEqual(test_files, files)
 
-    def testClassifyDoesNotHideExceptions(self):
-        """_ClassifyDirectoryContents should not hide exceptions."""
-        self.skipRealFs()
-        directory = self.makePath('foo')
-        self.assertEqual(False, self.os.path.exists(directory))
-        self.assertRaisesOSError(errno.ENOENT,
-                                 self.os._ClassifyDirectoryContents, directory)
-
     # os.mknod does not work under MacOS due to permission issues
     # so we test it under Linux only
 
@@ -4826,12 +4818,21 @@ class FakeOsModuleDirFdTest(FakeOsModuleTestBase):
         self.assertLess(0, fd)
 
 
-@unittest.skipIf(sys.version_info < (3, 5),
+@unittest.skipIf(sys.version_info < (3, 5) and not has_scandir,
                  'os.scandir was introduced in Python 3.5')
 class FakeScandirTest(FakeOsModuleTestBase):
     def setUp(self):
         super(FakeScandirTest, self).setUp()
         self.skipIfSymlinkNotSupported()
+
+        if has_scandir:
+            if self.useRealFs():
+                from scandir import scandir
+            else:
+                from fake_scandir import scandir
+        else:
+            scandir = self.os.scandir
+
         directory = self.makePath('xyzzy', 'plugh')
         link_dir = self.makePath('linked', 'plugh')
         self.linked_file_path = self.os.path.join(link_dir, 'file')
@@ -4847,8 +4848,7 @@ class FakeScandirTest(FakeOsModuleTestBase):
         self.createLink(self.file_link_path, self.linked_file_path)
         self.dir_link_path = self.os.path.join(directory, 'link_dir')
         self.createLink(self.dir_link_path, self.linked_dir_path)
-
-        self.dir_entries = [entry for entry in self.os.scandir(directory)]
+        self.dir_entries = [entry for entry in scandir(directory)]
         self.dir_entries = sorted(self.dir_entries,
                                   key=lambda entry: entry.name)
 

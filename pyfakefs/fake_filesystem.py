@@ -105,6 +105,8 @@ from collections import namedtuple
 import stat
 from copy import copy
 
+from pyfakefs.fake_scandir import scandir, walk
+
 __pychecker__ = 'no-reimportself'
 
 __version__ = '3.4'
@@ -2738,136 +2740,6 @@ class FakeFilesystem(object):
         directory_contents = directory.contents
         return list(directory_contents.keys())
 
-    if sys.version_info >= (3, 5):
-        class DirEntry():
-            """Emulates os.DirEntry. Note that we did not enforce keyword only arguments."""
-
-            def __init__(self, filesystem):
-                """Initialize the dir entry with unset values.
-
-                Args:
-                    filesystem: the fake filesystem used for implementation.
-                """
-                self._filesystem = filesystem
-                self.name = ''
-                self.path = ''
-                self._inode = None
-                self._islink = False
-                self._isdir = False
-                self._statresult = None
-                self._statresult_symlink = None
-
-            def inode(self):
-                """Return the inode number of the entry."""
-                if self._inode is None:
-                    self.stat(follow_symlinks=False)
-                return self._inode
-
-            def is_dir(self, follow_symlinks=True):
-                """Return True if this entry is a directory entry.
-
-                Args:
-                    follow_symlinks: If True, also return True if this entry is a symlink
-                                    pointing to a directory.
-
-                Returns:
-                    True if this entry is an existing directory entry, or if
-                    follow_symlinks is set, and this entry points to an existing directory entry.
-                """
-                return self._isdir and (follow_symlinks or not self._islink)
-
-            def is_file(self, follow_symlinks=True):
-                """Return True if this entry is a regular file entry.
-
-                Args:
-                    follow_symlinks: If True, also return True if this entry is a symlink
-                                    pointing to a regular file.
-
-                Returns:
-                    True if this entry is an existing file entry, or if
-                    follow_symlinks is set, and this entry points to an existing file entry.
-                """
-                return not self._isdir and (follow_symlinks or not self._islink)
-
-            def is_symlink(self):
-                """Return True if this entry is a symbolic link (even if broken)."""
-                return self._islink
-
-            def stat(self, follow_symlinks=True):
-                """Return a stat_result object for this entry.
-
-                Args:
-                    follow_symlinks: If False and the entry is a symlink, return the
-                        result for the symlink, otherwise for the object it points to.
-                """
-                if follow_symlinks:
-                    if self._statresult_symlink is None:
-                        file_object = self._filesystem.ResolveObject(self.path)
-                        if self._filesystem.is_windows_fs:
-                            file_object.st_nlink = 0
-                        self._statresult_symlink = file_object.stat_result.copy()
-                    return self._statresult_symlink
-
-                if self._statresult is None:
-                    file_object = self._filesystem.LResolveObject(self.path)
-                    self._inode = file_object.st_ino
-                    if self._filesystem.is_windows_fs:
-                        file_object.st_nlink = 0
-                    self._statresult = file_object.stat_result.copy()
-                return self._statresult
-
-        class ScanDirIter:
-            """Iterator for DirEntry objects returned from `scandir()`
-            function."""
-
-            def __init__(self, filesystem, path):
-                self.filesystem = filesystem
-                self.path = self.filesystem.ResolvePath(path)
-                contents = {}
-                try:
-                    contents = self.filesystem.ConfirmDir(path).contents
-                except OSError:
-                    pass
-                self.contents_iter = iter(contents)
-
-            def __iter__(self):
-                return self
-
-            def __next__(self):
-                entry = self.contents_iter.__next__()
-                dir_entry = self.filesystem.DirEntry(self.filesystem)
-                dir_entry.name = entry
-                dir_entry.path = self.filesystem.JoinPaths(self.path, dir_entry.name)
-                dir_entry._isdir = self.filesystem.IsDir(dir_entry.path)
-                dir_entry._islink = self.filesystem.IsLink(dir_entry.path)
-                return dir_entry
-
-            if sys.version_info >= (3, 6):
-                def __enter__(self):
-                    return self
-
-                def __exit__(self, exc_type, exc_val, exc_tb):
-                    self.close()
-
-                def close(self):
-                    pass
-
-        def ScanDir(self, path=''):
-            """Return an iterator of DirEntry objects corresponding to the entries
-            in the directory given by path.
-
-            Args:
-                path: Path to the target directory within the fake filesystem.
-
-            Returns:
-                an iterator to an unsorted list of os.DirEntry objects for
-                each entry in path.
-
-            Raises:
-                OSError: if the target is not a directory.
-            """
-            return self.ScanDirIter(self, path)
-
     def __str__(self):
         return str(self.root)
 
@@ -3586,32 +3458,7 @@ class FakeOsModule(object):
             Raises:
                 OSError: if the target is not a directory.
             """
-            return self.filesystem.ScanDir(path)
-
-    def _ClassifyDirectoryContents(self, root):
-        """Classify contents of a directory as files/directories.
-
-        Args:
-            root: (str) Directory to examine.
-
-        Returns:
-            (tuple) A tuple consisting of three values: the directory examined,
-            a list containing all of the directory entries, and a list
-            containing all of the non-directory entries.
-            (This is the same format as returned by the `os.walk` generator.)
-
-        Raises:
-            Nothing on its own, but be ready to catch exceptions generated by
-            underlying mechanisms like `os.listdir`.
-        """
-        dirs = []
-        files = []
-        for entry in self.listdir(root):
-            if self.path.isdir(self.path.join(root, entry)):
-                dirs.append(entry)
-            else:
-                files.append(entry)
-        return (root, dirs, files)
+            return scandir(self.filesystem, path)
 
     def walk(self, top, topdown=True, onerror=None, followlinks=False):
         """Perform an os.walk operation over the fake filesystem.
@@ -3630,32 +3477,7 @@ class FakeOsModule(object):
             subdirectories.  See the documentation for the builtin os module
             for further details.
         """
-        def do_walk(top, topMost=False):
-            top = self.path.normpath(top)
-            if not topMost and not followlinks and self.path.islink(top):
-                return
-            try:
-                top_contents = self._ClassifyDirectoryContents(top)
-            except OSError as exc:
-                top_contents = None
-                if onerror is not None:
-                    onerror(exc)
-
-            if top_contents is not None:
-                if topdown:
-                    yield top_contents
-
-                for directory in top_contents[1]:
-                    if not followlinks and self.path.islink(directory):
-                        continue
-                    for contents in do_walk(self.path.join(top, directory)):
-                        yield contents
-
-                if not topdown:
-                    yield top_contents
-
-        return do_walk(top, topMost=True)
-
+        return walk(self.filesystem, top, topdown, onerror, followlinks)
 
     def readlink(self, path, dir_fd=None):
         """Read the target of a symlink.

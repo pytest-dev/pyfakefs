@@ -39,6 +39,7 @@ import functools
 
 import errno
 
+from pyfakefs import fake_scandir
 from pyfakefs.fake_filesystem import FakeFileOpen, FakeFilesystem
 
 
@@ -86,7 +87,7 @@ class _FakeAccessor(pathlib._Accessor):  # pylint: disable=protected-access
     chmod = _wrap_strfunc(FakeFilesystem.ChangeMode)
 
     if sys.version_info >= (3, 6):
-        scandir = _wrap_strfunc(FakeFilesystem.ScanDir)
+        scandir = _wrap_strfunc(fake_scandir.scandir)
 
     if hasattr(os, "lchmod"):
         lchmod = _wrap_strfunc(lambda fs, path, mode: FakeFilesystem.ChangeMode(

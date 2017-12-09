@@ -68,6 +68,13 @@ if sys.version_info >= (3, 4):
 
 import unittest
 
+try:
+    import scandir
+    import fake_scandir
+    has_scandir = True
+except ImportError:
+    has_scandir = False
+
 if sys.version_info < (3,):
     import __builtin__ as builtins  # pylint: disable=import-error
 else:
@@ -289,6 +296,8 @@ class Patcher(object):
         }
         if self.HAS_PATHLIB:
             self._fake_module_classes['pathlib'] = fake_pathlib.FakePathlibModule
+        if has_scandir:
+            self._fake_module_classes['scandir'] = fake_scandir.FakeScanDirModule
 
         self._modules = {}
         for name in self._fake_module_classes:
@@ -364,7 +373,7 @@ class Patcher(object):
         """
         if 'unlink' in tempfile._TemporaryFileWrapper.__dict__:
             # Python 2.7 to 3.2: unlink is a class method of _TemporaryFileWrapper
-            tempfile._TemporaryFileWrapper.unlink = self.fake_os.unlink
+            tempfile._TemporaryFileWrapper.unlink = self._fake_modules['os'].unlink
 
             #  Python 3.0 to 3.2 (and PyPy3 based on Python 3.2):
             # `TemporaryDirectory._rmtree` is used instead of `shutil.rmtree`
