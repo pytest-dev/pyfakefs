@@ -1385,14 +1385,19 @@ class FakeFilesystem(object):
             (str) A duple (pathname, basename) for which pathname does not
             end with a slash, and basename does not contain a slash.
         """
-        drive, path = self.SplitDrive(path)
         path = self.NormalizePathSeparator(path)
         sep = self._path_separator(path)
         path_components = path.split(sep)
         if not path_components:
             return ('', '')
+
+        starts_with_drive = self.StartsWithDriveLetter(path)
         basename = path_components.pop()
+        colon = self._matching_string(path, ':')
         if not path_components:
+            if starts_with_drive:
+                components = basename.split(colon)
+                return (components[0] + colon, components[1])
             return ('', basename)
         for component in path_components:
             if component:
@@ -1400,9 +1405,16 @@ class FakeFilesystem(object):
                 # component. Strip all trailing separators.
                 while not path_components[-1]:
                     path_components.pop()
-                return (drive + sep.join(path_components), basename)
+                if starts_with_drive:
+                    if not path_components:
+                        components = basename.split(colon)
+                        return (components[0] + colon, components[1])
+                    if (len(path_components) == 1 and
+                            path_components[0].endswith(colon)):
+                        return (path_components[0] + sep, basename)
+                return (sep.join(path_components), basename)
         # Root path.  Collapse all leading separators.
-        return (drive or sep, basename)
+        return (sep, basename)
 
     def SplitDrive(self, path):
         """Splits the path into the drive part and the rest of the path.

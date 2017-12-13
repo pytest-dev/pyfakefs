@@ -5208,6 +5208,23 @@ class FakePathModuleTest(TestCase):
         self.filesystem.CreateFile('foo!bar!bogus')
         self.assertTrue(self.path.exists(file_path))
 
+    def testDirnameWithDrive(self):
+        self.filesystem.is_windows_fs = True
+        self.assertEqual(u'c:!foo',
+                         self.path.dirname(u'c:!foo!bar'))
+        self.assertEqual(b'c:!',
+                         self.path.dirname(b'c:!foo'))
+        self.assertEqual(u'!foo',
+                         self.path.dirname(u'!foo!bar'))
+        self.assertEqual(b'!',
+                         self.path.dirname(b'!foo'))
+        self.assertEqual(u'c:foo',
+                         self.path.dirname(u'c:foo!bar'))
+        self.assertEqual(b'c:',
+                         self.path.dirname(b'c:foo'))
+        self.assertEqual(u'foo',
+                         self.path.dirname(u'foo!bar'))
+
     def testDirname(self):
         dirname = 'foo!bar'
         self.assertEqual(dirname, self.path.dirname('%s!baz' % dirname))
@@ -7078,12 +7095,34 @@ class DriveLetterSupportTest(TestCase):
     def testSplitPathStr(self):
         self.assertEqual((u'c:!foo', u'bar'),
                          self.filesystem.SplitPath(u'c:!foo!bar'))
-        self.assertEqual((u'c:', u'foo'), self.filesystem.SplitPath(u'c:!foo'))
+        self.assertEqual((u'c:!', u'foo'),
+                         self.filesystem.SplitPath(u'c:!foo'))
+        self.assertEqual((u'!foo', u'bar'),
+                         self.filesystem.SplitPath(u'!foo!bar'))
+        self.assertEqual((u'!', u'foo'),
+                         self.filesystem.SplitPath(u'!foo'))
+        self.assertEqual((u'c:foo', u'bar'),
+                         self.filesystem.SplitPath(u'c:foo!bar'))
+        self.assertEqual((u'c:', u'foo'),
+                         self.filesystem.SplitPath(u'c:foo'))
+        self.assertEqual((u'foo', u'bar'),
+                         self.filesystem.SplitPath(u'foo!bar'))
 
     def testSplitPathBytes(self):
         self.assertEqual((b'c:!foo', b'bar'),
                          self.filesystem.SplitPath(b'c:!foo!bar'))
-        self.assertEqual((b'c:', b'foo'), self.filesystem.SplitPath(b'c:!foo'))
+        self.assertEqual((b'c:!', b'foo'),
+                         self.filesystem.SplitPath(b'c:!foo'))
+        self.assertEqual((b'!foo', b'bar'),
+                         self.filesystem.SplitPath(b'!foo!bar'))
+        self.assertEqual((b'!', b'foo'),
+                         self.filesystem.SplitPath(b'!foo'))
+        self.assertEqual((b'c:foo', b'bar'),
+                         self.filesystem.SplitPath(b'c:foo!bar'))
+        self.assertEqual((b'c:', b'foo'),
+                         self.filesystem.SplitPath(b'c:foo'))
+        self.assertEqual((b'foo', b'bar'),
+                         self.filesystem.SplitPath(b'foo!bar'))
 
     def testCharactersBeforeRootIgnoredInJoinPaths(self):
         self.assertEqual('c:d', self.filesystem.JoinPaths('b', 'c:', 'd'))
