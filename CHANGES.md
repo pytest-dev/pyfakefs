@@ -7,11 +7,13 @@ This version of pyfakefs does not support Python 2.6.  Python 2.6 users
 must use pyfakefs 3.3 or earlier.
 
 #### New Features
+  * Added support to fake out backported `scandir` module ([#332](../../issues/332))
 
 #### Infrastructure
   * Removed Python 2.6 support [#293](../../issues/293)
 
 #### Fixes
+  * `os.path.split()` and `os.path.dirname()` gave incorrect results under Windows ([#335](../../issues/335))
 
 ## [Version 3.3](https://pypi.python.org/pypi/pyfakefs/3.3)
 

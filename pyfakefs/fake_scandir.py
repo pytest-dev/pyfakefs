@@ -97,13 +97,19 @@ class ScanDirIter:
         return self
 
     def __next__(self):
-        entry = self.contents_iter.__next__()
+        try:
+            entry = self.contents_iter.next()
+        except AttributeError:
+            entry = self.contents_iter.__next__()
         dir_entry = DirEntry(self.filesystem)
         dir_entry.name = entry
         dir_entry.path = self.filesystem.JoinPaths(self.path, dir_entry.name)
         dir_entry._isdir = self.filesystem.IsDir(dir_entry.path)
         dir_entry._islink = self.filesystem.IsLink(dir_entry.path)
         return dir_entry
+
+    # satisfy both Python 2 and 3
+    next = __next__
 
     if sys.version_info >= (3, 6):
         def __enter__(self):

@@ -40,6 +40,12 @@ import os
 import glob
 import shutil
 
+try:
+    import scandir
+    has_scandir = True
+except ImportError:
+    has_scandir = False
+
 
 def create_file(path):
     """Create the specified file and add some content to it.  Use the `open()`
@@ -131,9 +137,13 @@ def rm_tree(path):
     """Delete the specified file hierarchy."""
     shutil.rmtree(path)
 
-def scandir(path):
+
+def scan_dir(path):
     """Return a list of directory entries for the given path."""
-    return list(os.scandir(path))
+    if has_scandir:
+        return list(scandir.scandir(path))
+    else:
+        return list(os.scandir(path))
 
 def file_contents(path):
     """Return the contents of the given path as byte array."""

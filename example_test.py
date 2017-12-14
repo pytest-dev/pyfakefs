@@ -33,6 +33,7 @@ import sys
 import unittest
 
 from pyfakefs import fake_filesystem_unittest
+from pyfakefs.fake_filesystem_unittest import has_scandir
 
 # The module under test is pyfakefs/example
 import example
@@ -126,8 +127,9 @@ class TestExample(fake_filesystem_unittest.TestCase):  # pylint: disable=R0904
         example.rm_tree('/test/dir1')
         self.assertFalse(os.path.exists('/test/dir1'))
 
-    @unittest.skipIf(sys.version_info < (3, 5), 'os.scandir was introduced in Python 3.5')
-    def test_scandir(self):
+    @unittest.skipIf(sys.version_info < (3, 5),
+                     'os.scandir was introduced in Python 3.5')
+    def test_os_scandir(self):
         """Test example.scandir() which uses `os.scandir()`.
 
         The os module has been replaced with the fake os module so the
@@ -138,12 +140,28 @@ class TestExample(fake_filesystem_unittest.TestCase):  # pylint: disable=R0904
         self.fs.CreateFile('/linktest/linked')
         self.fs.CreateLink('/test/linked_file', '/linktest/linked')
 
-        entries = sorted(example.scandir('/test'), key=lambda e: e.name)
+        entries = sorted(example.scan_dir('/test'), key=lambda e: e.name)
         self.assertEqual(3, len(entries))
         self.assertEqual('linked_file', entries[1].name)
         self.assertTrue(entries[0].is_dir())
         self.assertTrue(entries[1].is_symlink())
         self.assertTrue(entries[2].is_file())
+
+    @unittest.skipIf(not has_scandir, 'Testing only if scandir module is installed')
+    def test_scandir_scandir(self):
+        """Test example.scandir() which uses `scandir.scandir()`.
+
+        The scandir module has been replaced with the fake_scandir module so the
+        fake filesystem path entries are returned instead of `scandir.DirEntry` objects.
+        """
+        self.fs.CreateFile('/test/text.txt')
+        self.fs.CreateDirectory('/test/dir')
+
+        entries = sorted(example.scan_dir('/test'), key=lambda e: e.name)
+        self.assertEqual(2, len(entries))
+        self.assertEqual('text.txt', entries[1].name)
+        self.assertTrue(entries[0].is_dir())
+        self.assertTrue(entries[1].is_file())
 
     def test_real_file_access(self):
         """Test `example.file_contents()` for a real file after adding it using `add_real_file()`."""
