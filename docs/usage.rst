@@ -41,7 +41,7 @@ The easiest way is to just use ``Patcher`` as a context manager:
 
    with Patcher() as patcher:
        # access the fake_filesystem object via patcher.fs
-       patcher.fs.CreateFile('/foo/bar', contents='test')
+       patcher.fs.create_file('/foo/bar', contents='test')
 
        # the following code works on the fake filesystem
        with open('/foo/bar') as f:

@@ -10,6 +10,7 @@ must use pyfakefs 3.3 or earlier.
   * Added support to fake out backported `scandir` module ([#332](../../issues/332))
 
 #### Infrastructure
+  * Changed API to be PEP-8 conform [#186](../../issues/186). Note: The old API is still available.
   * Removed Python 2.6 support [#293](../../issues/293)
 
 #### Fixes
