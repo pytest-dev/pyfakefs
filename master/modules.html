@@ -5,12 +5,9 @@
 <html xmlns="http://www.w3.org/1999/xhtml">
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-    
     <title>Public Modules and Classes &#8212; pyfakefs 3.4 documentation</title>
-    
     <link rel="stylesheet" href="_static/nature.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
-    
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    './',
@@ -26,6 +23,7 @@
     <script type="text/javascript" src="_static/doctools.js"></script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="API Notes" href="api.html" />
     <link rel="prev" title="Usage" href="usage.html" /> 
   </head>
   <body>
@@ -38,6 +36,9 @@
         <li class="right" >
           <a href="py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
+        <li class="right" >
+          <a href="api.html" title="API Notes"
+             accesskey="N">next</a> |</li>
         <li class="right" >
           <a href="usage.html" title="Usage"
              accesskey="P">previous</a> |</li>
@@ -55,9 +56,6 @@
 <p><em>Note:</em> only public classes and methods interesting to the pyfakfs user
 are shown. Methods that mimic the behavior of standard Python
 functions are not listed - you may always use the standard functions.</p>
-<p><em>Style note:</em> most method names conform to the original Google style that does
-not match PEP-8. In the next version, we plan to change the API to conform
-to PEP-8 (maintaining upwards compatibility).</p>
 <div class="section" id="module-pyfakefs.fake_filesystem">
 <span id="fake-filesystem-module"></span><h2>Fake filesystem module<a class="headerlink" href="#module-pyfakefs.fake_filesystem" title="Permalink to this headline">¶</a></h2>
 <p>A fake filesystem implementation for unit testing.</p>
@@ -88,27 +86,27 @@ to PEP-8 (maintaining upwards compatibility).</p>
 <p>Create a new file object, creating parent directory objects as needed:</p>
 <div class="highlight-default"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">os_module</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">pathname</span><span class="p">)</span>
 <span class="go">False</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">new_file</span> <span class="o">=</span> <span class="n">filesystem</span><span class="o">.</span><span class="n">CreateFile</span><span class="p">(</span><span class="n">pathname</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">new_file</span> <span class="o">=</span> <span class="n">filesystem</span><span class="o">.</span><span class="n">create_file</span><span class="p">(</span><span class="n">pathname</span><span class="p">)</span>
 </pre></div>
 </div>
 <p>File objects can’t be overwritten:</p>
 <div class="highlight-default"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">os_module</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">pathname</span><span class="p">)</span>
 <span class="go">True</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="k">try</span><span class="p">:</span>
-<span class="gp">... </span>  <span class="n">filesystem</span><span class="o">.</span><span class="n">CreateFile</span><span class="p">(</span><span class="n">pathname</span><span class="p">)</span>
+<span class="gp">... </span>  <span class="n">filesystem</span><span class="o">.</span><span class="n">create_file</span><span class="p">(</span><span class="n">pathname</span><span class="p">)</span>
 <span class="gp">... </span><span class="k">except</span> <span class="ne">IOError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
 <span class="gp">... </span>  <span class="k">assert</span> <span class="n">e</span><span class="o">.</span><span class="n">errno</span> <span class="o">==</span> <span class="n">errno</span><span class="o">.</span><span class="n">EEXIST</span><span class="p">,</span> <span class="s1">&#39;unexpected errno: </span><span class="si">%d</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="n">e</span><span class="o">.</span><span class="n">errno</span>
 <span class="gp">... </span>  <span class="k">assert</span> <span class="n">e</span><span class="o">.</span><span class="n">strerror</span> <span class="o">==</span> <span class="s1">&#39;File already exists in fake filesystem&#39;</span>
 </pre></div>
 </div>
 <p>Remove a file object:</p>
-<div class="highlight-default"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">filesystem</span><span class="o">.</span><span class="n">RemoveObject</span><span class="p">(</span><span class="n">pathname</span><span class="p">)</span>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">filesystem</span><span class="o">.</span><span class="n">remove_object</span><span class="p">(</span><span class="n">pathname</span><span class="p">)</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">os_module</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">pathname</span><span class="p">)</span>
 <span class="go">False</span>
 </pre></div>
 </div>
 <p>Create a new file object at the previous path:</p>
-<div class="highlight-default"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">beatles_file</span> <span class="o">=</span> <span class="n">filesystem</span><span class="o">.</span><span class="n">CreateFile</span><span class="p">(</span><span class="n">pathname</span><span class="p">,</span>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">beatles_file</span> <span class="o">=</span> <span class="n">filesystem</span><span class="o">.</span><span class="n">create_file</span><span class="p">(</span><span class="n">pathname</span><span class="p">,</span>
 <span class="gp">... </span>    <span class="n">contents</span><span class="o">=</span><span class="s1">&#39;Dear Prudence</span><span class="se">\n</span><span class="s1">Won</span><span class="se">\&#39;</span><span class="s1">t you come out to play?</span><span class="se">\n</span><span class="s1">&#39;</span><span class="p">)</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">os_module</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">pathname</span><span class="p">)</span>
 <span class="go">True</span>
@@ -149,7 +147,7 @@ to PEP-8 (maintaining upwards compatibility).</p>
 <h2>Fake filesystem classes<a class="headerlink" href="#fake-filesystem-classes" title="Permalink to this headline">¶</a></h2>
 <dl class="class">
 <dt id="pyfakefs.fake_filesystem.FakeFilesystem">
-<em class="property">class </em><code class="descclassname">pyfakefs.fake_filesystem.</code><code class="descname">FakeFilesystem</code><span class="sig-paren">(</span><em>path_separator=’'</em>, <em>total_size=None</em><span class="sig-paren">)</span><a class="headerlink" href="#pyfakefs.fake_filesystem.FakeFilesystem" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><code class="descclassname">pyfakefs.fake_filesystem.</code><code class="descname">FakeFilesystem</code><span class="sig-paren">(</span><em>path_separator='\'</em>, <em>total_size=None</em><span class="sig-paren">)</span><a class="headerlink" href="#pyfakefs.fake_filesystem.FakeFilesystem" title="Permalink to this definition">¶</a></dt>
 <dd><p>Provides the appearance of a real directory tree for unit testing.</p>
 <dl class="attribute">
 <dt id="pyfakefs.fake_filesystem.FakeFilesystem.path_separator">
@@ -166,7 +164,13 @@ to PEP-8 (maintaining upwards compatibility).</p>
 <dl class="attribute">
 <dt id="pyfakefs.fake_filesystem.FakeFilesystem.is_windows_fs">
 <code class="descname">is_windows_fs</code><a class="headerlink" href="#pyfakefs.fake_filesystem.FakeFilesystem.is_windows_fs" title="Permalink to this definition">¶</a></dt>
-<dd><p><cite>True</cite> in a Windows file system, <cite>False</cite> otherwise.</p>
+<dd><p><cite>True</cite> in a real or faked Windows file system.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="pyfakefs.fake_filesystem.FakeFilesystem.is_macos">
+<code class="descname">is_macos</code><a class="headerlink" href="#pyfakefs.fake_filesystem.FakeFilesystem.is_macos" title="Permalink to this definition">¶</a></dt>
+<dd><p><cite>True</cite> under MacOS, or if we are faking it.</p>
 </dd></dl>
 
 <dl class="attribute">
@@ -216,8 +220,8 @@ to PEP-8 (maintaining upwards compatibility).</p>
 </dd>
 </dl>
 <dl class="method">
-<dt id="pyfakefs.fake_filesystem.FakeFilesystem.AddMountPoint">
-<code class="descname">AddMountPoint</code><span class="sig-paren">(</span><em>path</em>, <em>total_size=None</em><span class="sig-paren">)</span><a class="headerlink" href="#pyfakefs.fake_filesystem.FakeFilesystem.AddMountPoint" title="Permalink to this definition">¶</a></dt>
+<dt id="pyfakefs.fake_filesystem.FakeFilesystem.add_mount_point">
+<code class="descname">add_mount_point</code><span class="sig-paren">(</span><em>path</em>, <em>total_size=None</em><span class="sig-paren">)</span><a class="headerlink" href="#pyfakefs.fake_filesystem.FakeFilesystem.add_mount_point" title="Permalink to this definition">¶</a></dt>
 <dd><p>Add a new mount point for a filesystem device.
 The mount point gets a new unique device number.</p>
 <table class="docutils field-list" frame="void" rules="none">
@@ -242,8 +246,8 @@ in bytes. Defaults to infinite size.</li>
 </dd></dl>
 
 <dl class="method">
-<dt id="pyfakefs.fake_filesystem.FakeFilesystem.GetDiskUsage">
-<code class="descname">GetDiskUsage</code><span class="sig-paren">(</span><em>path=None</em><span class="sig-paren">)</span><a class="headerlink" href="#pyfakefs.fake_filesystem.FakeFilesystem.GetDiskUsage" title="Permalink to this definition">¶</a></dt>
+<dt id="pyfakefs.fake_filesystem.FakeFilesystem.get_disk_usage">
+<code class="descname">get_disk_usage</code><span class="sig-paren">(</span><em>path=None</em><span class="sig-paren">)</span><a class="headerlink" href="#pyfakefs.fake_filesystem.FakeFilesystem.get_disk_usage" title="Permalink to this definition">¶</a></dt>
 <dd><p>Return the total, used and free disk space in bytes as named tuple,
 or placeholder values simulating unlimited space if not set.
 Note: This matches the return value of shutil.disk_usage().</p>
@@ -260,8 +264,8 @@ Defaults to the root path (e.g. ‘/’ on Unix systems).</td>
 </dd></dl>
 
 <dl class="method">
-<dt id="pyfakefs.fake_filesystem.FakeFilesystem.SetDiskUsage">
-<code class="descname">SetDiskUsage</code><span class="sig-paren">(</span><em>total_size</em>, <em>path=None</em><span class="sig-paren">)</span><a class="headerlink" href="#pyfakefs.fake_filesystem.FakeFilesystem.SetDiskUsage" title="Permalink to this definition">¶</a></dt>
+<dt id="pyfakefs.fake_filesystem.FakeFilesystem.set_disk_usage">
+<code class="descname">set_disk_usage</code><span class="sig-paren">(</span><em>total_size</em>, <em>path=None</em><span class="sig-paren">)</span><a class="headerlink" href="#pyfakefs.fake_filesystem.FakeFilesystem.set_disk_usage" title="Permalink to this definition">¶</a></dt>
 <dd><p>Changes the total size of the file system, preserving the used space.
 Example usage: set the size of an auto-mounted Windows drive.</p>
 <table class="docutils field-list" frame="void" rules="none">
@@ -284,8 +288,8 @@ Defaults to the root path (e.g. ‘/’ on Unix systems).</li>
 </dd></dl>
 
 <dl class="method">
-<dt id="pyfakefs.fake_filesystem.FakeFilesystem.ChangeDiskUsage">
-<code class="descname">ChangeDiskUsage</code><span class="sig-paren">(</span><em>usage_change</em>, <em>file_path</em>, <em>st_dev</em><span class="sig-paren">)</span><a class="headerlink" href="#pyfakefs.fake_filesystem.FakeFilesystem.ChangeDiskUsage" title="Permalink to this definition">¶</a></dt>
+<dt id="pyfakefs.fake_filesystem.FakeFilesystem.change_disk_usage">
+<code class="descname">change_disk_usage</code><span class="sig-paren">(</span><em>usage_change</em>, <em>file_path</em>, <em>st_dev</em><span class="sig-paren">)</span><a class="headerlink" href="#pyfakefs.fake_filesystem.FakeFilesystem.change_disk_usage" title="Permalink to this definition">¶</a></dt>
 <dd><p>Change the used disk space by the given amount.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
@@ -307,8 +311,8 @@ If negative, the used space will be decreased.</li>
 </dd></dl>
 
 <dl class="method">
-<dt id="pyfakefs.fake_filesystem.FakeFilesystem.CreateDirectory">
-<code class="descname">CreateDirectory</code><span class="sig-paren">(</span><em>directory_path</em>, <em>perm_bits=511</em><span class="sig-paren">)</span><a class="headerlink" href="#pyfakefs.fake_filesystem.FakeFilesystem.CreateDirectory" title="Permalink to this definition">¶</a></dt>
+<dt id="pyfakefs.fake_filesystem.FakeFilesystem.create_dir">
+<code class="descname">create_dir</code><span class="sig-paren">(</span><em>directory_path</em>, <em>perm_bits=511</em><span class="sig-paren">)</span><a class="headerlink" href="#pyfakefs.fake_filesystem.FakeFilesystem.create_dir" title="Permalink to this definition">¶</a></dt>
 <dd><p>Create directory_path, and all the parent directories.</p>
 <p>Helper method to set up your test faster.</p>
 <table class="docutils field-list" frame="void" rules="none">
@@ -332,8 +336,8 @@ If negative, the used space will be decreased.</li>
 </dd></dl>
 
 <dl class="method">
-<dt id="pyfakefs.fake_filesystem.FakeFilesystem.CreateFile">
-<code class="descname">CreateFile</code><span class="sig-paren">(</span><em>file_path</em>, <em>st_mode=33206</em>, <em>contents=”</em>, <em>st_size=None</em>, <em>create_missing_dirs=True</em>, <em>apply_umask=False</em>, <em>encoding=None</em>, <em>errors=None</em><span class="sig-paren">)</span><a class="headerlink" href="#pyfakefs.fake_filesystem.FakeFilesystem.CreateFile" title="Permalink to this definition">¶</a></dt>
+<dt id="pyfakefs.fake_filesystem.FakeFilesystem.create_file">
+<code class="descname">create_file</code><span class="sig-paren">(</span><em>file_path</em>, <em>st_mode=33206</em>, <em>contents=''</em>, <em>st_size=None</em>, <em>create_missing_dirs=True</em>, <em>apply_umask=False</em>, <em>encoding=None</em>, <em>errors=None</em><span class="sig-paren">)</span><a class="headerlink" href="#pyfakefs.fake_filesystem.FakeFilesystem.create_file" title="Permalink to this definition">¶</a></dt>
 <dd><p>Create file_path, including all the parent directories along the way.</p>
 <p>This helper method can be used to set up tests more easily.</p>
 <table class="docutils field-list" frame="void" rules="none">
@@ -451,8 +455,8 @@ real file system to the fake file system. See <cite>add_real_file()</cite> and
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
 <li><strong>path_list</strong> – List of file and directory paths in the real file system.</li>
-<li><strong>read_only</strong> – If set, all files and files under under the directories are treated as read-only,
-e.g. a write access raises an exception;
+<li><strong>read_only</strong> – If set, all files and files under under the directories are
+treated as read-only, e.g. a write access raises an exception;
 otherwise, writing to the files changes the fake files only as usually.</li>
 <li><strong>lazy_dir_read</strong> – Uses lazy reading of directory contents if set
 (see <cite>add_real_directory</cite>)</li>
@@ -460,8 +464,39 @@ otherwise, writing to the files changes the fake files only as usually.</li>
 </td>
 </tr>
 <tr class="field-even field"><th class="field-name">Raises:</th><td class="field-body"><ul class="first last simple">
-<li><code class="xref py py-exc docutils literal"><span class="pre">OSError</span></code> – if any of the files and directories in the list does not exist in the real file system.</li>
-<li><code class="xref py py-exc docutils literal"><span class="pre">OSError</span></code> – if any of the files and directories in the list already exists in the fake file system.</li>
+<li><code class="xref py py-exc docutils literal"><span class="pre">OSError</span></code> – if any of the files and directories in the list
+does not exist in the real file system.</li>
+<li><code class="xref py py-exc docutils literal"><span class="pre">OSError</span></code> – if any of the files and directories in the list
+already exists in the fake file system.</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="pyfakefs.fake_filesystem.FakeFilesystem.create_symlink">
+<code class="descname">create_symlink</code><span class="sig-paren">(</span><em>file_path</em>, <em>link_target</em>, <em>create_missing_dirs=True</em><span class="sig-paren">)</span><a class="headerlink" href="#pyfakefs.fake_filesystem.FakeFilesystem.create_symlink" title="Permalink to this definition">¶</a></dt>
+<dd><p>Create the specified symlink, pointed at the specified link target.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>file_path</strong> – path to the symlink to create</li>
+<li><strong>link_target</strong> – the target of the symlink</li>
+<li><strong>create_missing_dirs</strong> – If <cite>True</cite>, any missing parent directories of
+file_path will be created</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first">The newly created FakeFile object.</p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Raises:</th><td class="field-body"><ul class="first last simple">
+<li><code class="xref py py-exc docutils literal"><span class="pre">OSError</span></code> – if the symlink could not be created (see <cite>CreateFile</cite>).</li>
+<li><code class="xref py py-exc docutils literal"><span class="pre">OSError</span></code> – if on Windows before Python 3.2.</li>
 </ul>
 </td>
 </tr>
@@ -485,10 +520,11 @@ st_mtime: the time.time() timestamp when the file was last modified.
 st_size: the size of the file
 st_nlink: the number of hard links to the file
 st_ino: the inode number - a unique number identifying the file
-st_dev: a unique number identifying the (fake) file system device the file belongs to</dd>
+st_dev: a unique number identifying the (fake) file system device
+the file belongs to</dd>
 </dl>
-<p>Other attributes needed by os.stat are assigned default value of None
-these include: st_uid, st_gid</p>
+<p>Other attributes needed by os.stat are assigned a default value of None.
+These include: st_uid, st_gid</p>
 <p>init.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
@@ -517,14 +553,14 @@ for serialization.</li>
 </dd></dl>
 
 <dl class="method">
-<dt id="pyfakefs.fake_filesystem.FakeFile.IsLargeFile">
-<code class="descname">IsLargeFile</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#pyfakefs.fake_filesystem.FakeFile.IsLargeFile" title="Permalink to this definition">¶</a></dt>
+<dt id="pyfakefs.fake_filesystem.FakeFile.is_large_file">
+<code class="descname">is_large_file</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#pyfakefs.fake_filesystem.FakeFile.is_large_file" title="Permalink to this definition">¶</a></dt>
 <dd><p>Return True if this file was initialized with size but no contents.</p>
 </dd></dl>
 
 <dl class="method">
-<dt id="pyfakefs.fake_filesystem.FakeFile.SetContents">
-<code class="descname">SetContents</code><span class="sig-paren">(</span><em>contents</em>, <em>encoding=None</em><span class="sig-paren">)</span><a class="headerlink" href="#pyfakefs.fake_filesystem.FakeFile.SetContents" title="Permalink to this definition">¶</a></dt>
+<dt id="pyfakefs.fake_filesystem.FakeFile.set_contents">
+<code class="descname">set_contents</code><span class="sig-paren">(</span><em>contents</em>, <em>encoding=None</em><span class="sig-paren">)</span><a class="headerlink" href="#pyfakefs.fake_filesystem.FakeFile.set_contents" title="Permalink to this definition">¶</a></dt>
 <dd><p>Sets the file contents and size and increases the modification time.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
@@ -546,33 +582,16 @@ or if st_size exceeds the available file system space.</p>
 </table>
 </dd></dl>
 
-<dl class="method">
-<dt id="pyfakefs.fake_filesystem.FakeFile.GetSize">
-<code class="descname">GetSize</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#pyfakefs.fake_filesystem.FakeFile.GetSize" title="Permalink to this definition">¶</a></dt>
-<dd><p>Returns the size in bytes of the file contents.</p>
-</dd></dl>
-
-<dl class="method">
-<dt id="pyfakefs.fake_filesystem.FakeFile.GetPath">
-<code class="descname">GetPath</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#pyfakefs.fake_filesystem.FakeFile.GetPath" title="Permalink to this definition">¶</a></dt>
+<dl class="attribute">
+<dt id="pyfakefs.fake_filesystem.FakeFile.path">
+<code class="descname">path</code><a class="headerlink" href="#pyfakefs.fake_filesystem.FakeFile.path" title="Permalink to this definition">¶</a></dt>
 <dd><p>Return the full path of the current object.</p>
 </dd></dl>
 
-<dl class="method">
-<dt id="pyfakefs.fake_filesystem.FakeFile.SetSize">
-<code class="descname">SetSize</code><span class="sig-paren">(</span><em>st_size</em><span class="sig-paren">)</span><a class="headerlink" href="#pyfakefs.fake_filesystem.FakeFile.SetSize" title="Permalink to this definition">¶</a></dt>
-<dd><p>Resizes file content, padding with nulls if new size exceeds the old.</p>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>st_size</strong> – The desired size for the file.</td>
-</tr>
-<tr class="field-even field"><th class="field-name">Raises:</th><td class="field-body"><code class="xref py py-exc docutils literal"><span class="pre">IOError</span></code> – if the st_size arg is not a non-negative integer
-or if st_size exceeds the available file system space</td>
-</tr>
-</tbody>
-</table>
+<dl class="attribute">
+<dt id="pyfakefs.fake_filesystem.FakeFile.size">
+<code class="descname">size</code><a class="headerlink" href="#pyfakefs.fake_filesystem.FakeFile.size" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns the size in bytes of the file contents.</p>
 </dd></dl>
 
 </dd></dl>
@@ -602,8 +621,8 @@ or if st_size exceeds the available file system space</td>
 </dd></dl>
 
 <dl class="method">
-<dt id="pyfakefs.fake_filesystem.FakeDirectory.GetEntry">
-<code class="descname">GetEntry</code><span class="sig-paren">(</span><em>pathname_name</em><span class="sig-paren">)</span><a class="headerlink" href="#pyfakefs.fake_filesystem.FakeDirectory.GetEntry" title="Permalink to this definition">¶</a></dt>
+<dt id="pyfakefs.fake_filesystem.FakeDirectory.get_entry">
+<code class="descname">get_entry</code><span class="sig-paren">(</span><em>pathname_name</em><span class="sig-paren">)</span><a class="headerlink" href="#pyfakefs.fake_filesystem.FakeDirectory.get_entry" title="Permalink to this definition">¶</a></dt>
 <dd><p>Retrieves the specified child file or directory entry.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
@@ -620,8 +639,8 @@ or if st_size exceeds the available file system space</td>
 </dd></dl>
 
 <dl class="method">
-<dt id="pyfakefs.fake_filesystem.FakeDirectory.RemoveEntry">
-<code class="descname">RemoveEntry</code><span class="sig-paren">(</span><em>pathname_name</em>, <em>recursive=True</em><span class="sig-paren">)</span><a class="headerlink" href="#pyfakefs.fake_filesystem.FakeDirectory.RemoveEntry" title="Permalink to this definition">¶</a></dt>
+<dt id="pyfakefs.fake_filesystem.FakeDirectory.remove_entry">
+<code class="descname">remove_entry</code><span class="sig-paren">(</span><em>pathname_name</em>, <em>recursive=True</em><span class="sig-paren">)</span><a class="headerlink" href="#pyfakefs.fake_filesystem.FakeDirectory.remove_entry" title="Permalink to this definition">¶</a></dt>
 <dd><p>Removes the specified child file or directory.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
@@ -646,9 +665,9 @@ or (Windows only) the file is open.</li>
 </table>
 </dd></dl>
 
-<dl class="method">
-<dt id="pyfakefs.fake_filesystem.FakeDirectory.GetSize">
-<code class="descname">GetSize</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#pyfakefs.fake_filesystem.FakeDirectory.GetSize" title="Permalink to this definition">¶</a></dt>
+<dl class="attribute">
+<dt id="pyfakefs.fake_filesystem.FakeDirectory.size">
+<code class="descname">size</code><a class="headerlink" href="#pyfakefs.fake_filesystem.FakeDirectory.size" title="Permalink to this definition">¶</a></dt>
 <dd><p>Return the total size of all files contained in this directory tree.</p>
 </dd></dl>
 
@@ -659,7 +678,7 @@ or (Windows only) the file is open.</li>
 <h2>Unittest module classes<a class="headerlink" href="#unittest-module-classes" title="Permalink to this headline">¶</a></h2>
 <dl class="class">
 <dt id="pyfakefs.fake_filesystem_unittest.TestCase">
-<em class="property">class </em><code class="descclassname">pyfakefs.fake_filesystem_unittest.</code><code class="descname">TestCase</code><span class="sig-paren">(</span><em>methodName=’runTest’</em>, <em>additional_skip_names=None</em>, <em>patch_path=True</em>, <em>special_names=None</em>, <em>modules_to_reload=None</em>, <em>use_dynamic_patch=False</em><span class="sig-paren">)</span><a class="headerlink" href="#pyfakefs.fake_filesystem_unittest.TestCase" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><code class="descclassname">pyfakefs.fake_filesystem_unittest.</code><code class="descname">TestCase</code><span class="sig-paren">(</span><em>methodName='runTest'</em>, <em>additional_skip_names=None</em>, <em>patch_path=True</em>, <em>special_names=None</em>, <em>modules_to_reload=None</em>, <em>use_dynamic_patch=False</em><span class="sig-paren">)</span><a class="headerlink" href="#pyfakefs.fake_filesystem_unittest.TestCase" title="Permalink to this definition">¶</a></dt>
 <dd><p>Test case class that automatically replaces file-system related
 modules by fake implementations.</p>
 <p>Creates the test class instance and the stubber used to stub out
@@ -738,8 +757,8 @@ class.</p>
 <em class="property">class </em><code class="descclassname">pyfakefs.fake_filesystem_unittest.</code><code class="descname">Patcher</code><span class="sig-paren">(</span><em>additional_skip_names=None</em>, <em>patch_path=True</em>, <em>special_names=None</em><span class="sig-paren">)</span><a class="headerlink" href="#pyfakefs.fake_filesystem_unittest.Patcher" title="Permalink to this definition">¶</a></dt>
 <dd><p>Instantiate a stub creator to bind and un-bind the file-related modules to
 the <code class="xref py py-mod docutils literal"><span class="pre">pyfakefs</span></code> fake modules.</p>
-<p>The arguments are explained in <code class="xref py py-class docutils literal"><span class="pre">TestCase</span></code>.</p>
-<p><code class="xref py py-class docutils literal"><span class="pre">Patcher</span></code> is used in <code class="xref py py-class docutils literal"><span class="pre">TestCase</span></code>.  <code class="xref py py-class docutils literal"><span class="pre">Patcher</span></code>
+<p>The arguments are explained in <a class="reference internal" href="#pyfakefs.fake_filesystem_unittest.TestCase" title="pyfakefs.fake_filesystem_unittest.TestCase"><code class="xref py py-class docutils literal"><span class="pre">TestCase</span></code></a>.</p>
+<p><a class="reference internal" href="#pyfakefs.fake_filesystem_unittest.Patcher" title="pyfakefs.fake_filesystem_unittest.Patcher"><code class="xref py py-class docutils literal"><span class="pre">Patcher</span></code></a> is used in <a class="reference internal" href="#pyfakefs.fake_filesystem_unittest.TestCase" title="pyfakefs.fake_filesystem_unittest.TestCase"><code class="xref py py-class docutils literal"><span class="pre">TestCase</span></code></a>.  <a class="reference internal" href="#pyfakefs.fake_filesystem_unittest.Patcher" title="pyfakefs.fake_filesystem_unittest.Patcher"><code class="xref py py-class docutils literal"><span class="pre">Patcher</span></code></a>
 also works as a context manager for PyTest:</p>
 <div class="highlight-default"><div class="highlight"><pre><span></span><span class="k">with</span> <span class="n">Patcher</span><span class="p">():</span>
     <span class="n">doStuff</span><span class="p">()</span>
@@ -908,6 +927,9 @@ my_io_module = fake_filesystem.FakeIoModule(filesystem)</p>
   <h4>Previous topic</h4>
   <p class="topless"><a href="usage.html"
                         title="previous chapter">Usage</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="api.html"
+                        title="next chapter">API Notes</a></p>
   <div role="note" aria-label="source link">
     <h3>This Page</h3>
     <ul class="this-page-menu">
@@ -939,6 +961,9 @@ my_io_module = fake_filesystem.FakeIoModule(filesystem)</p>
           <a href="py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
         <li class="right" >
+          <a href="api.html" title="API Notes"
+             >next</a> |</li>
+        <li class="right" >
           <a href="usage.html" title="Usage"
              >previous</a> |</li>
         <li class="nav-item nav-item-0"><a href="index.html">pyfakefs 3.4 documentation</a> &#187;</li> 
@@ -946,7 +971,7 @@ my_io_module = fake_filesystem.FakeIoModule(filesystem)</p>
     </div>
     <div class="footer" role="contentinfo">
         &#169; Copyright 2017, John McGehee.
-      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.6.1.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.6.5.
     </div>
   </body>
 </html>

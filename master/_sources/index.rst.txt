@@ -14,6 +14,7 @@ Contents:
    intro
    usage
    modules
+   api
 
 Indices and tables
 ==================

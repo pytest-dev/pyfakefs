@@ -5,12 +5,9 @@
 <html xmlns="http://www.w3.org/1999/xhtml">
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-    
     <title>Usage &#8212; pyfakefs 3.4 documentation</title>
-    
     <link rel="stylesheet" href="_static/nature.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
-    
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    './',
@@ -75,7 +72,7 @@ described above.</p>
 <p>The PyTest plugin provides the <code class="docutils literal"><span class="pre">fs</span></code> fixture for use in your test. For example:</p>
 <div class="code python highlight-default"><div class="highlight"><pre><span></span><span class="k">def</span> <span class="nf">my_fakefs_test</span><span class="p">(</span><span class="n">fs</span><span class="p">):</span>
     <span class="c1"># &quot;fs&quot; is the reference to the fake file system</span>
-    <span class="n">fs</span><span class="o">.</span><span class="n">CreateFile</span><span class="p">(</span><span class="s1">&#39;/var/data/xx1.txt&#39;</span><span class="p">)</span>
+    <span class="n">fs</span><span class="o">.</span><span class="n">create_file</span><span class="p">(</span><span class="s1">&#39;/var/data/xx1.txt&#39;</span><span class="p">)</span>
     <span class="k">assert</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="s1">&#39;/var/data/xx1.txt&#39;</span><span class="p">)</span>
 </pre></div>
 </div>
@@ -90,7 +87,7 @@ of replacing the filesystem modules with the fake modules in the first two appro
 
 <span class="k">with</span> <span class="n">Patcher</span><span class="p">()</span> <span class="k">as</span> <span class="n">patcher</span><span class="p">:</span>
     <span class="c1"># access the fake_filesystem object via patcher.fs</span>
-    <span class="n">patcher</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">CreateFile</span><span class="p">(</span><span class="s1">&#39;/foo/bar&#39;</span><span class="p">,</span> <span class="n">contents</span><span class="o">=</span><span class="s1">&#39;test&#39;</span><span class="p">)</span>
+    <span class="n">patcher</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">create_file</span><span class="p">(</span><span class="s1">&#39;/foo/bar&#39;</span><span class="p">,</span> <span class="n">contents</span><span class="o">=</span><span class="s1">&#39;test&#39;</span><span class="p">)</span>
 
     <span class="c1"># the following code works on the fake filesystem</span>
     <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="s1">&#39;/foo/bar&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
@@ -128,7 +125,7 @@ for the modules you want to patch.</p>
 <span class="n">fs</span> <span class="o">=</span> <span class="n">fake_fs</span><span class="o">.</span><span class="n">FakeFilesystem</span><span class="p">()</span>
 
 <span class="c1"># Do some setup on the faked file system</span>
-<span class="n">fs</span><span class="o">.</span><span class="n">CreateFile</span><span class="p">(</span><span class="s1">&#39;/foo/bar&#39;</span><span class="p">,</span> <span class="n">contents</span><span class="o">=</span><span class="s1">&#39;test&#39;</span><span class="p">)</span>
+<span class="n">fs</span><span class="o">.</span><span class="n">create_file</span><span class="p">(</span><span class="s1">&#39;/foo/bar&#39;</span><span class="p">,</span> <span class="n">contents</span><span class="o">=</span><span class="s1">&#39;test&#39;</span><span class="p">)</span>
 
 <span class="c1"># Replace some built-in file system related modules you use with faked ones</span>
 
@@ -212,7 +209,7 @@ for the modules you want to patch.</p>
     </div>
     <div class="footer" role="contentinfo">
         &#169; Copyright 2017, John McGehee.
-      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.6.1.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.6.5.
     </div>
   </body>
 </html>

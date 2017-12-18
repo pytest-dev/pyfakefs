@@ -6,12 +6,9 @@
 <html xmlns="http://www.w3.org/1999/xhtml">
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-    
     <title>Index &#8212; pyfakefs 3.4 documentation</title>
-    
     <link rel="stylesheet" href="_static/nature.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
-    
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    './',
@@ -66,15 +63,15 @@
 <h2 id="A">A</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="modules.html#pyfakefs.fake_filesystem.FakeFilesystem.add_real_directory">add_real_directory() (pyfakefs.fake_filesystem.FakeFilesystem method)</a>
+      <li><a href="modules.html#pyfakefs.fake_filesystem.FakeFilesystem.add_mount_point">add_mount_point() (pyfakefs.fake_filesystem.FakeFilesystem method)</a>
 </li>
-      <li><a href="modules.html#pyfakefs.fake_filesystem.FakeFilesystem.add_real_file">add_real_file() (pyfakefs.fake_filesystem.FakeFilesystem method)</a>
+      <li><a href="modules.html#pyfakefs.fake_filesystem.FakeFilesystem.add_real_directory">add_real_directory() (pyfakefs.fake_filesystem.FakeFilesystem method)</a>
 </li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="modules.html#pyfakefs.fake_filesystem.FakeFilesystem.add_real_paths">add_real_paths() (pyfakefs.fake_filesystem.FakeFilesystem method)</a>
+      <li><a href="modules.html#pyfakefs.fake_filesystem.FakeFilesystem.add_real_file">add_real_file() (pyfakefs.fake_filesystem.FakeFilesystem method)</a>
 </li>
-      <li><a href="modules.html#pyfakefs.fake_filesystem.FakeFilesystem.AddMountPoint">AddMountPoint() (pyfakefs.fake_filesystem.FakeFilesystem method)</a>
+      <li><a href="modules.html#pyfakefs.fake_filesystem.FakeFilesystem.add_real_paths">add_real_paths() (pyfakefs.fake_filesystem.FakeFilesystem method)</a>
 </li>
       <li><a href="modules.html#pyfakefs.fake_filesystem.FakeFilesystem.alternative_path_separator">alternative_path_separator (pyfakefs.fake_filesystem.FakeFilesystem attribute)</a>
 </li>
@@ -84,7 +81,7 @@
 <h2 id="C">C</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="modules.html#pyfakefs.fake_filesystem.FakeFilesystem.ChangeDiskUsage">ChangeDiskUsage() (pyfakefs.fake_filesystem.FakeFilesystem method)</a>
+      <li><a href="modules.html#pyfakefs.fake_filesystem.FakeFilesystem.change_disk_usage">change_disk_usage() (pyfakefs.fake_filesystem.FakeFilesystem method)</a>
 </li>
       <li><a href="modules.html#pyfakefs.fake_filesystem.FakeDirectory.contents">contents (pyfakefs.fake_filesystem.FakeDirectory attribute)</a>
 
@@ -94,9 +91,11 @@
       </ul></li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="modules.html#pyfakefs.fake_filesystem.FakeFilesystem.CreateDirectory">CreateDirectory() (pyfakefs.fake_filesystem.FakeFilesystem method)</a>
+      <li><a href="modules.html#pyfakefs.fake_filesystem.FakeFilesystem.create_dir">create_dir() (pyfakefs.fake_filesystem.FakeFilesystem method)</a>
 </li>
-      <li><a href="modules.html#pyfakefs.fake_filesystem.FakeFilesystem.CreateFile">CreateFile() (pyfakefs.fake_filesystem.FakeFilesystem method)</a>
+      <li><a href="modules.html#pyfakefs.fake_filesystem.FakeFilesystem.create_file">create_file() (pyfakefs.fake_filesystem.FakeFilesystem method)</a>
+</li>
+      <li><a href="modules.html#pyfakefs.fake_filesystem.FakeFilesystem.create_symlink">create_symlink() (pyfakefs.fake_filesystem.FakeFilesystem method)</a>
 </li>
       <li><a href="modules.html#pyfakefs.fake_filesystem.FakeFilesystem.cwd">cwd (pyfakefs.fake_filesystem.FakeFilesystem attribute)</a>
 </li>
@@ -132,20 +131,12 @@
 <h2 id="G">G</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="modules.html#pyfakefs.fake_filesystem.FakeFilesystem.GetDiskUsage">GetDiskUsage() (pyfakefs.fake_filesystem.FakeFilesystem method)</a>
-</li>
-      <li><a href="modules.html#pyfakefs.fake_filesystem.FakeDirectory.GetEntry">GetEntry() (pyfakefs.fake_filesystem.FakeDirectory method)</a>
+      <li><a href="modules.html#pyfakefs.fake_filesystem.FakeFilesystem.get_disk_usage">get_disk_usage() (pyfakefs.fake_filesystem.FakeFilesystem method)</a>
 </li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="modules.html#pyfakefs.fake_filesystem.FakeFile.GetPath">GetPath() (pyfakefs.fake_filesystem.FakeFile method)</a>
+      <li><a href="modules.html#pyfakefs.fake_filesystem.FakeDirectory.get_entry">get_entry() (pyfakefs.fake_filesystem.FakeDirectory method)</a>
 </li>
-      <li><a href="modules.html#pyfakefs.fake_filesystem.FakeDirectory.GetSize">GetSize() (pyfakefs.fake_filesystem.FakeDirectory method)</a>
-
-      <ul>
-        <li><a href="modules.html#pyfakefs.fake_filesystem.FakeFile.GetSize">(pyfakefs.fake_filesystem.FakeFile method)</a>
-</li>
-      </ul></li>
   </ul></td>
 </tr></table>
 
@@ -154,11 +145,13 @@
   <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="modules.html#pyfakefs.fake_filesystem.FakeFilesystem.is_case_sensitive">is_case_sensitive (pyfakefs.fake_filesystem.FakeFilesystem attribute)</a>
 </li>
+      <li><a href="modules.html#pyfakefs.fake_filesystem.FakeFile.is_large_file">is_large_file() (pyfakefs.fake_filesystem.FakeFile method)</a>
+</li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="modules.html#pyfakefs.fake_filesystem.FakeFilesystem.is_windows_fs">is_windows_fs (pyfakefs.fake_filesystem.FakeFilesystem attribute)</a>
+      <li><a href="modules.html#pyfakefs.fake_filesystem.FakeFilesystem.is_macos">is_macos (pyfakefs.fake_filesystem.FakeFilesystem attribute)</a>
 </li>
-      <li><a href="modules.html#pyfakefs.fake_filesystem.FakeFile.IsLargeFile">IsLargeFile() (pyfakefs.fake_filesystem.FakeFile method)</a>
+      <li><a href="modules.html#pyfakefs.fake_filesystem.FakeFilesystem.is_windows_fs">is_windows_fs (pyfakefs.fake_filesystem.FakeFilesystem attribute)</a>
 </li>
   </ul></td>
 </tr></table>
@@ -167,6 +160,8 @@
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="modules.html#pyfakefs.fake_filesystem_unittest.Patcher">Patcher (class in pyfakefs.fake_filesystem_unittest)</a>
+</li>
+      <li><a href="modules.html#pyfakefs.fake_filesystem.FakeFile.path">path (pyfakefs.fake_filesystem.FakeFile attribute)</a>
 </li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
@@ -180,7 +175,7 @@
 <h2 id="R">R</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="modules.html#pyfakefs.fake_filesystem.FakeDirectory.RemoveEntry">RemoveEntry() (pyfakefs.fake_filesystem.FakeDirectory method)</a>
+      <li><a href="modules.html#pyfakefs.fake_filesystem.FakeDirectory.remove_entry">remove_entry() (pyfakefs.fake_filesystem.FakeDirectory method)</a>
 </li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
@@ -192,18 +187,22 @@
 <h2 id="S">S</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="modules.html#pyfakefs.fake_filesystem.FakeFile.SetContents">SetContents() (pyfakefs.fake_filesystem.FakeFile method)</a>
+      <li><a href="modules.html#pyfakefs.fake_filesystem.FakeFile.set_contents">set_contents() (pyfakefs.fake_filesystem.FakeFile method)</a>
 </li>
-      <li><a href="modules.html#pyfakefs.fake_filesystem.FakeFilesystem.SetDiskUsage">SetDiskUsage() (pyfakefs.fake_filesystem.FakeFilesystem method)</a>
-</li>
-  </ul></td>
-  <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="modules.html#pyfakefs.fake_filesystem.FakeFile.SetSize">SetSize() (pyfakefs.fake_filesystem.FakeFile method)</a>
+      <li><a href="modules.html#pyfakefs.fake_filesystem.FakeFilesystem.set_disk_usage">set_disk_usage() (pyfakefs.fake_filesystem.FakeFilesystem method)</a>
 </li>
       <li><a href="modules.html#pyfakefs.fake_filesystem_unittest.Patcher.setUp">setUp() (pyfakefs.fake_filesystem_unittest.Patcher method)</a>
 </li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="modules.html#pyfakefs.fake_filesystem_unittest.TestCase.setUpPyfakefs">setUpPyfakefs() (pyfakefs.fake_filesystem_unittest.TestCase method)</a>
 </li>
+      <li><a href="modules.html#pyfakefs.fake_filesystem.FakeDirectory.size">size (pyfakefs.fake_filesystem.FakeDirectory attribute)</a>
+
+      <ul>
+        <li><a href="modules.html#pyfakefs.fake_filesystem.FakeFile.size">(pyfakefs.fake_filesystem.FakeFile attribute)</a>
+</li>
+      </ul></li>
   </ul></td>
 </tr></table>
 
@@ -265,7 +264,7 @@
     </div>
     <div class="footer" role="contentinfo">
         &#169; Copyright 2017, John McGehee.
-      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.6.1.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.6.5.
     </div>
   </body>
 </html>
