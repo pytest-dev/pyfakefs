@@ -33,13 +33,13 @@ class FakeTempfileModuleTest(fake_filesystem_unittest.TestCase):
     def setUp(self):
         self.setUpPyfakefs()
 
-    def testNamedTemporaryFile(self):
+    def test_named_temporary_file(self):
         obj = tempfile.NamedTemporaryFile()
         self.assertTrue(self.fs.get_object(obj.name))
         obj.close()
         self.assertRaises(IOError, self.fs.get_object, obj.name)
 
-    def testNamedTemporaryFileNoDelete(self):
+    def test_named_temporary_file_no_delete(self):
         obj = tempfile.NamedTemporaryFile(delete=False)
         obj.write(b'foo')
         obj.close()
@@ -52,7 +52,7 @@ class FakeTempfileModuleTest(fake_filesystem_unittest.TestCase):
         file_obj = self.fs.get_object(obj.name)
         self.assertEqual('foo', file_obj.contents)
 
-    def testMkstemp(self):
+    def test_mkstemp(self):
         next_fd = len(self.fs.open_files)
         temporary = tempfile.mkstemp()
         self.assertEqual(2, len(temporary))
@@ -65,7 +65,7 @@ class FakeTempfileModuleTest(fake_filesystem_unittest.TestCase):
         fh = os.fdopen(temporary[0], 'w+b')
         self.assertEqual(temporary[0], fh.fileno())
 
-    def testMkstempDir(self):
+    def test_mkstemp_dir(self):
         """test tempfile.mkstemp(dir=)."""
         # expect fail: /dir does not exist
         self.assertRaises(OSError, tempfile.mkstemp, dir='/dir')
@@ -81,7 +81,7 @@ class FakeTempfileModuleTest(fake_filesystem_unittest.TestCase):
         self.assertEqual(self.fs.get_object(temporary[1]).st_mode,
                          stat.S_IFREG | mode)
 
-    def testMkdtemp(self):
+    def test_mkdtemp(self):
         dirname = tempfile.mkdtemp()
         self.assertTrue(dirname)
         self.assertTrue(self.fs.exists(dirname))
@@ -89,7 +89,7 @@ class FakeTempfileModuleTest(fake_filesystem_unittest.TestCase):
                          stat.S_IFDIR | 0o700)
 
     @unittest.skipIf(sys.version_info < (3, 0), "TemporaryDirectory showed up in 3")
-    def testTemporaryDirectory(self):
+    def test_temporary_directory(self):
         with tempfile.TemporaryDirectory() as tmpdir:
             self.assertTrue(tmpdir)
             self.assertTrue(self.fs.exists(tmpdir))

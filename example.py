@@ -145,6 +145,7 @@ def scan_dir(path):
     else:
         return list(os.scandir(path))
 
+
 def file_contents(path):
     """Return the contents of the given path as byte array."""
     with open(path, 'rb') as f:

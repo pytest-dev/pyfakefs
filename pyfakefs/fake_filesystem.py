@@ -12,7 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-
 """A fake filesystem implementation for unit testing.
 
 :Includes:
@@ -122,7 +121,6 @@ _OpenModes = namedtuple(
     'open_modes',
     'must_exist can_read can_write truncate append must_not_exist'
 )
-
 
 _OPEN_MODE_MAP = {
     # mode name:(file must exist, can read, can write,
@@ -647,7 +645,6 @@ class FakeFile(object):
         """
         self.st_ino = st_ino
 
-
 Deprecator.add(FakeFile, FakeFile.set_large_file_size, 'SetLargeFileSize')
 Deprecator.add(FakeFile, FakeFile.set_contents, 'SetContents')
 Deprecator.add(FakeFile, FakeFile.is_large_file, 'IsLargeFile')
@@ -852,7 +849,6 @@ class FakeDirectory(FakeFile):
                 if line:
                     description = description + '  ' + line + '\n'
         return description
-
 
 Deprecator.add(FakeDirectory, FakeDirectory.add_entry, 'AddEntry')
 Deprecator.add(FakeDirectory, FakeDirectory.get_entry, 'GetEntry')
@@ -1256,7 +1252,6 @@ class FakeFilesystem(object):
             file_object.st_atime = current_time
             file_object.st_mtime = current_time
 
-
     @Deprecator
     def SetIno(self, path, st_ino):
         """Set the self.st_ino attribute of file at 'path'.
@@ -1414,6 +1409,7 @@ class FakeFilesystem(object):
         Returns:
             A version of path matching the case of existing path elements.
         """
+
         def components_to_path():
             if len(path_components) > len(normalized_components):
                 normalized_components.extend(
@@ -2855,7 +2851,6 @@ class FakeFilesystem(object):
         self._add_open_file(StandardStreamWrapper(sys.stdout))
         self._add_open_file(StandardStreamWrapper(sys.stderr))
 
-
 Deprecator.add(FakeFilesystem, FakeFilesystem.get_disk_usage, 'GetDiskUsage')
 Deprecator.add(FakeFilesystem, FakeFilesystem.set_disk_usage, 'SetDiskUsage')
 Deprecator.add(FakeFilesystem, FakeFilesystem.change_disk_usage, 'ChangeDiskUsage')
@@ -3241,7 +3236,7 @@ class FakePathModule(object):
                     sep, self.filesystem._alternative_path_separator(path)
                 )
             else:
-                path_seps = (sep,)
+                path_seps = (sep, )
             drive, rest = self.filesystem.splitdrive(normed_path)
             if drive and drive[:1] in path_seps:
                 return (not rest) or (rest in path_seps)
@@ -3381,7 +3376,6 @@ class FakeOsModule(object):
             mask = os.umask(0)
             os.umask(mask)
             return mask
-
 
     def open(self, file_path, flags, mode=None, dir_fd=None):
         """Return the file descriptor for a FakeFile.
@@ -3795,7 +3789,7 @@ class FakeOsModule(object):
             OSError: if target_directory does not exist or is not a directory,
             or as per FakeFilesystem.remove_object. Cannot remove '.'.
         """
-        target_directory= self._path_with_dir_fd(target_directory, self.rmdir, dir_fd)
+        target_directory = self._path_with_dir_fd(target_directory, self.rmdir, dir_fd)
         self.filesystem.rmdir(target_directory)
 
     def removedirs(self, target_directory):
@@ -4202,6 +4196,7 @@ class FakeFileWrapper(object):
     If the wrapper has any data written to it, it will propagate to
     the FakeFile object on close() or flush().
     """
+
     def __init__(self, file_object, file_path, update=False, read=False,
                  append=False, delete_on_close=False, filesystem=None,
                  newline=None, binary=True, closefd=True, encoding=None,
@@ -4551,6 +4546,7 @@ class FakeFileWrapper(object):
 class StandardStreamWrapper(object):
     """Wrapper for a system standard stream to be used in open files list.
     """
+
     def __init__(self, stream_object):
         self._stream_object = stream_object
         self.filedes = None
@@ -4570,6 +4566,7 @@ class StandardStreamWrapper(object):
 class FakeDirWrapper(object):
     """Wrapper for a FakeDirectory object to be used in open files list.
     """
+
     def __init__(self, file_object, file_path, filesystem):
         self._file_object = file_object
         self._file_path = file_path

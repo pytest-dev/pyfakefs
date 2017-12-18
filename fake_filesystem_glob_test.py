@@ -33,41 +33,41 @@ class FakeGlobUnitTest(fake_filesystem_unittest.TestCase):
         self.fs.create_file('%s/subfile' % directory)
         self.fs.create_file('[Temp]')
 
-    def testGlobEmpty(self):
+    def test_glob_empty(self):
         self.assertEqual(glob.glob(''), [])
 
-    def testGlobStar(self):
+    def test_glob_star(self):
         basedir = os.sep + 'xyzzy'
         self.assertEqual([os.path.join(basedir, 'subdir'),
                           os.path.join(basedir, 'subdir2'),
                           os.path.join(basedir, 'subfile')],
                          sorted(glob.glob('/xyzzy/*')))
 
-    def testGlobExact(self):
+    def test_glob_exact(self):
         self.assertEqual(['/xyzzy'], glob.glob('/xyzzy'))
         self.assertEqual(['/xyzzy/subfile'], glob.glob('/xyzzy/subfile'))
 
-    def testGlobQuestion(self):
+    def test_glob_question(self):
         basedir = os.sep + 'xyzzy'
         self.assertEqual([os.path.join(basedir, 'subdir'),
                           os.path.join(basedir, 'subdir2'),
                           os.path.join(basedir, 'subfile')],
                          sorted(glob.glob('/x?zz?/*')))
 
-    def testGlobNoMagic(self):
+    def test_glob_no_magic(self):
         self.assertEqual(['/xyzzy'], glob.glob('/xyzzy'))
         self.assertEqual(['/xyzzy/subdir'], glob.glob('/xyzzy/subdir'))
 
-    def testNonExistentPath(self):
+    def test_non_existent_path(self):
         self.assertEqual([], glob.glob('nonexistent'))
 
-    def testMagicDir(self):
+    def test_magic_dir(self):
         self.assertEqual([os.sep + '[Temp]'], glob.glob('/*emp*'))
 
     def testGlob1(self):
         self.assertEqual(['[Temp]'], glob.glob1('/', '*Tem*'))
 
-    def testHasMagic(self):
+    def test_has_magic(self):
         self.assertTrue(glob.has_magic('['))
         self.assertFalse(glob.has_magic('a'))
 

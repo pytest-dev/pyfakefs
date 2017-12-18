@@ -77,7 +77,7 @@ try:
 except ImportError:
     has_scandir = False
 
-if sys.version_info < (3,):
+if sys.version_info < (3, ):
     import __builtin__ as builtins  # pylint: disable=import-error
 else:
     import builtins
@@ -97,7 +97,7 @@ def load_doctests(loader, tests, ignore, module,
     """
     _patcher = Patcher(additional_skip_names=additional_skip_names,
                        patch_path=patch_path, special_names=special_names)
-    globs = _patcher.replaceGlobs(vars(module))
+    globs = _patcher.replace_globs(vars(module))
     tests.addTests(doctest.DocTestSuite(module,
                                         globs=globs,
                                         setUp=_patcher.setUp,
@@ -310,7 +310,7 @@ class Patcher(object):
         if self._patchPath:
             self._modules['path'] = set()
 
-        self._findModules()
+        self._find_modules()
 
         assert None not in vars(self).values(), \
             "_findModules() missed the initialization of an instance variable"
@@ -334,7 +334,7 @@ class Patcher(object):
     def __exit__(self, exc_type, exc_val, exc_tb):
         self.tearDown()
 
-    def _findModules(self):
+    def _find_modules(self):
         """Find and cache all modules that import file system modules.
         Later, `setUp()` will stub these with the fake file system
         modules.
@@ -386,22 +386,22 @@ class Patcher(object):
                 tempfile.TemporaryDirectory._rmtree = lambda o, path: shutil.rmtree(path)
         else:
             # Python > 3.2 - unlink is a default parameter of _TemporaryFileCloser
-            tempfile._TemporaryFileCloser.close.__defaults__ = (self._fake_modules['os'].unlink,)
+            tempfile._TemporaryFileCloser.close.__defaults__ = (self._fake_modules['os'].unlink, )
 
     def setUp(self, doctester=None):
         """Bind the file-related modules to the :py:mod:`pyfakefs` fake
         modules real ones.  Also bind the fake `file()` and `open()` functions.
         """
         temp_dir = tempfile.gettempdir()
-        self._findModules()
+        self._find_modules()
         self._refresh()
         assert None not in vars(self).values(), \
             "_findModules() missed the initialization of an instance variable"
 
         if doctester is not None:
-            doctester.globs = self.replaceGlobs(doctester.globs)
+            doctester.globs = self.replace_globs(doctester.globs)
 
-        if sys.version_info < (3,):
+        if sys.version_info < (3, ):
             # file() was eliminated in Python3
             self._stubs.SmartSet(builtins, 'file', self.fake_open)
         self._stubs.SmartSet(builtins, 'open', self.fake_open)
@@ -413,8 +413,7 @@ class Patcher(object):
         # so we create it here for convenience
         self.fs.create_dir(temp_dir)
 
-
-    def replaceGlobs(self, globs_):
+    def replace_globs(self, globs_):
         globs = globs_.copy()
         if self._isStale:
             self._refresh()
@@ -436,6 +435,7 @@ class DynamicPatcher(object):
     fake implementation if they are loaded after calling `setupPyFakefs()`.
     Implements the protocol needed for import hooks.
     """
+
     def __init__(self, patcher):
         self._patcher = patcher
         self._patching = False

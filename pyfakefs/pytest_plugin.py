@@ -12,7 +12,6 @@ import py
 import pytest
 from pyfakefs.fake_filesystem_unittest import Patcher
 
-
 Patcher.SKIPMODULES.add(py)  # Ignore pytest components when faking filesystem
 
 

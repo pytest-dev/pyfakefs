@@ -33,7 +33,6 @@ def make_file_factory(func_name, fake, result):
 
     return make_file
 
-
 passes = make_file_factory('passes', fake=False, result=True)
 passes_too = make_file_factory('passes_too', fake=True, result=True)
 
@@ -45,4 +44,3 @@ fails = make_file_factory('fails', fake=False, result=False)
 # Pytest versions below 2.8.6 raise an internal error when running these doctests:
 crashes = make_file_factory('crashes', fake=True, result=False)
 crashes_too = make_file_factory(') SyntaxError', fake=True, result=False)
-

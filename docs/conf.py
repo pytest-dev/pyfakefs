@@ -87,7 +87,6 @@ language = None
 # directories to ignore when looking for source files.
 # This patterns also effect to html_static_path and html_extra_path
 exclude_patterns = ['_build', 'Thumbs.db', '.DS_Store']
-
 # The reST default role (used for this markup: `text`) to use for all
 # documents.
 #
@@ -122,7 +121,6 @@ pygments_style = 'sphinx'
 
 # If true, `todo` and `todoList` produce output, else they produce nothing.
 todo_include_todos = False
-
 
 # -- Options for HTML output ----------------------------------------------
 
@@ -244,7 +242,6 @@ html_static_path = []
 
 # Output file base name for HTML help builder.
 htmlhelp_basename = 'pyfakefsdoc'
-
 # -- Options for LaTeX output ---------------------------------------------
 
 latex_elements = {
@@ -295,7 +292,7 @@ latex_documents = [
 #
 # latex_appendices = []
 
-# It false, will not define \strong, \code, 	itleref, \crossref ... but only
+# It false, will not define \strong, \code,     itleref, \crossref ... but only
 # \sphinxstrong, ..., \sphinxtitleref, ... To help avoid clash with user added
 # packages.
 #

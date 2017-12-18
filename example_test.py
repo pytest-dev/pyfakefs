@@ -66,7 +66,7 @@ class TestExample(fake_filesystem_unittest.TestCase):  # pylint: disable=R0904
         # This is before setUpPyfakefs(), so still using the real file system
         with io.open(__file__, 'rb') as f:
             self.real_contents = f.read()
- 
+
         self.setUpPyfakefs()
 
     def tearDown(self):

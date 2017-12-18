@@ -36,7 +36,7 @@ if sys.version_info >= (3, 4):
 
 
 class TestPatcher(TestCase):
-    def testContextManager(self):
+    def test_context_manager(self):
         with Patcher() as patcher:
             patcher.fs.CreateFile('/foo/bar', contents='test')
             with open('/foo/bar') as f:
@@ -53,7 +53,7 @@ class TestPyfakefsUnittestBase(fake_filesystem_unittest.TestCase):
 class TestPyfakefsUnittest(TestPyfakefsUnittestBase):  # pylint: disable=R0904
     """Test the `pyfakefs.fake_filesystem_unittest.TestCase` base class."""
 
-    @unittest.skipIf(sys.version_info > (2,), "file() was removed in Python 3")
+    @unittest.skipIf(sys.version_info > (2, ), "file() was removed in Python 3")
     def test_file(self):
         """Fake `file()` function is bound"""
         self.assertFalse(os.path.exists('/fake_file.txt'))
@@ -142,12 +142,11 @@ class TestImportAsOtherName(fake_filesystem_unittest.TestCase):
     def setUp(self):
         self.setUpPyfakefs()
 
-    def testFileExists(self):
+    def test_file_exists(self):
         file_path = '/foo/bar/baz'
         self.fs.create_file(file_path)
         self.assertTrue(self.fs.exists(file_path))
         self.assertTrue(check_if_exists(file_path))
-
 
 sys.path.append(os.path.join(os.path.dirname(__file__), 'fixtures'))
 import module_with_attributes
@@ -158,7 +157,7 @@ class TestAttributesWithFakeModuleNames(TestPyfakefsUnittestBase):
     stubbed out.
     """
 
-    def testAttributes(self):
+    def test_attributes(self):
         """Attributes of module under test are not patched"""
         global path
 
@@ -167,7 +166,6 @@ class TestAttributesWithFakeModuleNames(TestPyfakefsUnittestBase):
         self.assertEqual(module_with_attributes.pathlib, 'pathlib attribute value')
         self.assertEqual(module_with_attributes.shutil, 'shutil attribute value')
         self.assertEqual(module_with_attributes.io, 'io attribute value')
-
 
 import math as path
 
@@ -205,6 +203,7 @@ class TestCopyOrAddRealFile(TestPyfakefsUnittestBase):
     Note that `copyRealFile()` is deprecated in favor of
     `FakeFilesystem.add_real_file()`.
     """
+
     @classmethod
     def setUpClass(cls):
         with open(__file__) as f:
@@ -214,7 +213,7 @@ class TestCopyOrAddRealFile(TestPyfakefsUnittestBase):
         cls.real_stat = os.stat(__file__)
 
     @unittest.skipIf(sys.platform == 'darwin', 'Different copy behavior')
-    def testCopyRealFile(self):
+    def test_copy_real_file(self):
         '''Typical usage of deprecated copyRealFile()'''
         # Use this file as the file to be copied to the fake file system
         real_file_path = os.path.realpath(__file__)
@@ -239,7 +238,7 @@ class TestCopyOrAddRealFile(TestPyfakefsUnittestBase):
         self.assertEqual(fake_file.st_uid, self.real_stat.st_uid)
         self.assertEqual(fake_file.st_gid, self.real_stat.st_gid)
 
-    def testCopyRealFileDeprecatedArguments(self):
+    def test_copy_real_file_deprecated_arguments(self):
         '''Deprecated copyRealFile() arguments'''
         real_file_path = __file__
         self.assertFalse(self.fs.exists(real_file_path))
@@ -253,7 +252,7 @@ class TestCopyOrAddRealFile(TestPyfakefsUnittestBase):
         with self.assertRaises(ValueError):
             self.copyRealFile(real_file_path, create_missing_dirs=False)
 
-    def testAddRealFile(self):
+    def test_add_real_file(self):
         '''Add a real file to the fake file system to be read on demand'''
 
         # this tests only the basic functionality inside a unit test, more thorough tests
@@ -264,7 +263,7 @@ class TestCopyOrAddRealFile(TestPyfakefsUnittestBase):
         self.assertIsNone(fake_file._byte_contents)
         self.assertEqual(self.real_byte_contents, fake_file.byte_contents)
 
-    def testAddRealDirectory(self):
+    def test_add_real_directory(self):
         '''Add a real directory and the contained files to the fake file system to be read on demand'''
 
         # this tests only the basic functionality inside a unit test, more thorough tests

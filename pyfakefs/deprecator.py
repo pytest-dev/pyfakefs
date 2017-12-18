@@ -17,7 +17,7 @@ import warnings
 
 class Deprecator(object):
     """Decorator class for adding deprecated functions.
-   
+
     Warnings are switched off by default.
     To enable deprecation warnings, use:
 
@@ -45,7 +45,7 @@ class Deprecator(object):
                     message = 'Use {} instead.'.format(self.use_instead)
                 warnings.warn('Call to deprecated function {}. {}'.format(
                     self.func_name or func.__name__, message),
-                    category=DeprecationWarning, stacklevel=2)
+                            category=DeprecationWarning, stacklevel=2)
                 warnings.simplefilter('default', DeprecationWarning)
             return func(*args, **kwargs)
 
@@ -55,7 +55,7 @@ class Deprecator(object):
     def add(cls, func, deprecated_name):
         """Add the deprecated version of a member function to the given class.
         Gives a deprecation warning on usage.
-    
+
         Args:
             cls: the class where the deprecated function is to be added
             func: the actual function that is called by the deprecated version

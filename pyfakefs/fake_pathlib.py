@@ -116,7 +116,6 @@ class _FakeAccessor(pathlib._Accessor):  # pylint: disable=protected-access
 
     utime = _wrap_strfunc(FakeFilesystem.utime)
 
-
 _fake_accessor = _FakeAccessor()
 
 
@@ -381,7 +380,7 @@ class _FakeWindowsFlavour(_FakeFlavour):
             # corresponding usernames.  If current user home directory points
             # to nonstandard place, this guess is likely wrong.
             if os.environ['USERNAME'] != username:
-                drv, root, parts = self.parse_parts((userhome,))
+                drv, root, parts = self.parse_parts((userhome, ))
                 if parts[-1] != os.environ['USERNAME']:
                     raise RuntimeError("Can't determine home directory "
                                        "for %r" % username)
