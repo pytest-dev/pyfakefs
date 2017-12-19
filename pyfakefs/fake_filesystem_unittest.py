@@ -224,15 +224,14 @@ class TestCase(unittest.TestCase):
         """
         self._stubber.setUp()
         self.addCleanup(self._stubber.tearDown)
-        dyn_patcher = DynamicPatcher(self._stubber)
-        sys.meta_path.insert(0, dyn_patcher)
+
         for module in self._modules_to_reload:
             if module.__name__ in sys.modules:
                 reload(module)
         if self._use_dynamic_patch:
+            dyn_patcher = DynamicPatcher(self._stubber)
+            sys.meta_path.insert(0, dyn_patcher)
             self.addCleanup(lambda: sys.meta_path.pop(0))
-        else:
-            sys.meta_path.pop(0)
 
     @DeprecationWarning
     def tearDownPyfakefs(self):
