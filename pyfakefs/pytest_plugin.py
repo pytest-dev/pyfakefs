@@ -1,6 +1,6 @@
 """A pytest plugin for using pyfakefs as a fixture
 
-When pyfakefs is installed, the "fs" fixture becomes avaialable.
+When pyfakefs is installed, the "fs" fixture becomes available.
 
 :Usage:
 

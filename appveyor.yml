@@ -13,6 +13,6 @@ install:
 build: off
 
 test_script:
-  - "%PYTHON%\\python.exe all_tests.py"
-  - "%PYTHON%\\Scripts\\py.test.exe pytest_plugin_test.py"
+  - "%PYTHON%\\python.exe -m tests.all_tests"
+  - "%PYTHON%\\Scripts\\py.test.exe tests\\pytest_plugin_test.py"
 

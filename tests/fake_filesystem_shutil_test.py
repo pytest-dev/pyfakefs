@@ -24,8 +24,8 @@ import shutil
 import sys
 import unittest
 
-from fake_filesystem_test import RealFsTestMixin
 from pyfakefs import fake_filesystem_unittest
+from tests.fake_filesystem_test import RealFsTestMixin
 
 
 class RealFsTestCase(fake_filesystem_unittest.TestCase, RealFsTestMixin):
@@ -34,6 +34,7 @@ class RealFsTestCase(fake_filesystem_unittest.TestCase, RealFsTestMixin):
         RealFsTestMixin.__init__(self)
 
     def setUp(self):
+        self.cwd = os.getcwd()
         if not self.use_real_fs():
             self.setUpPyfakefs()
             self.filesystem = self.fs
@@ -46,6 +47,7 @@ class RealFsTestCase(fake_filesystem_unittest.TestCase, RealFsTestMixin):
         if self.use_real_fs():
             self.os.chdir(os.path.dirname(self.base_path))
             shutil.rmtree(self.base_path, ignore_errors=True)
+            os.chdir(self.cwd)
 
     @property
     def is_windows_fs(self):

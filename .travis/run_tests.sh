@@ -5,4 +5,4 @@ if [[ $TRAVIS_OS_NAME == 'osx' ]]; then
 fi
 
 python --version
-python ./all_tests.py
+python -m tests.all_tests

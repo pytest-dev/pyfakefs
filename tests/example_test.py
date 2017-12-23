@@ -34,9 +34,10 @@ import unittest
 
 from pyfakefs import fake_filesystem_unittest
 from pyfakefs.fake_filesystem_unittest import has_scandir
+from tests import example
+
 
 # The module under test is pyfakefs/example
-import example
 
 
 def load_tests(loader, tests, ignore):
@@ -64,7 +65,8 @@ class TestExample(fake_filesystem_unittest.TestCase):  # pylint: disable=R0904
         """
 
         # This is before setUpPyfakefs(), so still using the real file system
-        with io.open(__file__, 'rb') as f:
+        self.filepath = os.path.realpath(__file__)
+        with io.open(self.filepath, 'rb') as f:
             self.real_contents = f.read()
 
         self.setUpPyfakefs()
@@ -166,11 +168,10 @@ class TestExample(fake_filesystem_unittest.TestCase):  # pylint: disable=R0904
     def test_real_file_access(self):
         """Test `example.file_contents()` for a real file after adding it using
          `add_real_file()`."""
-        filename = __file__
         with self.assertRaises(IOError):
-            example.file_contents(filename)
-        self.fs.add_real_file(filename)
-        self.assertEqual(example.file_contents(filename), self.real_contents)
+            example.file_contents(self.filepath)
+        self.fs.add_real_file(self.filepath)
+        self.assertEqual(example.file_contents(self.filepath), self.real_contents)
 
 
 if __name__ == "__main__":

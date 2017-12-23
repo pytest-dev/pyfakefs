@@ -16,21 +16,21 @@
 
 """A test suite that runs all tests for pyfakefs at once."""
 
-import unittest
 import sys
+import unittest
 
-import dynamic_patch_test
-import fake_filesystem_glob_test
-import fake_filesystem_shutil_test
-import fake_filesystem_test
-import fake_filesystem_vs_real_test
-import fake_tempfile_test
-import fake_filesystem_unittest_test
-import example_test
-import mox3_stubout_test
+from tests import dynamic_patch_test
+from tests import example_test
+from tests import fake_filesystem_glob_test
+from tests import fake_filesystem_shutil_test
+from tests import fake_filesystem_test
+from tests import fake_filesystem_unittest_test
+from tests import fake_tempfile_test
+from tests import fake_filesystem_vs_real_test
+from tests import mox3_stubout_test
 
 if sys.version_info >= (3, 4):
-    import fake_pathlib_test
+    from tests import fake_pathlib_test
 
 
 class AllTests(unittest.TestSuite):

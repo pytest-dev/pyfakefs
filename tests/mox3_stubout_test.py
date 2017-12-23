@@ -18,8 +18,8 @@ import os
 import unittest
 from os import path
 
-import mox3_stubout_example
 from pyfakefs import mox3_stubout
+from tests import mox3_stubout_example
 
 
 class NoPanicMath(object):

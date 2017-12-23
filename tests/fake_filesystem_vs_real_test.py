@@ -89,6 +89,7 @@ class FakeFilesystemVsRealTest(TestCase):
         # so that missing features in the fake don't fall through to the base
         # operations and magically succeed.
         tsname = 'fakefs.%s' % time.time()
+        self.cwd = os.getcwd()
         # Fully expand the base_path - required on OS X.
         self.real_base = os.path.realpath(
             os.path.join(tempfile.gettempdir(), tsname))
@@ -134,6 +135,7 @@ class FakeFilesystemVsRealTest(TestCase):
                     self.fake_os.remove(fake_path)
         finally:
             shutil.rmtree(self.real_base)
+            os.chdir(self.cwd)
 
     def _GetErrno(self, raised_error):
         try:

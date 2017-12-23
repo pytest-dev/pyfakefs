@@ -19,17 +19,17 @@
 """
 Test the :py:class`pyfakefs.fake_filesystem_unittest.TestCase` base class.
 """
+import glob
 import io
 import os
-import glob
 import shutil
 import sys
 import unittest
 from unittest import TestCase
 
-from import_as_example import check_if_exists
-from pyfakefs.fake_filesystem_unittest import Patcher
 from pyfakefs import fake_filesystem_unittest
+from pyfakefs.fake_filesystem_unittest import Patcher
+from tests.import_as_example import check_if_exists
 
 if sys.version_info >= (3, 4):
     import pathlib
@@ -135,7 +135,7 @@ class TestPyfakefsUnittest(TestPyfakefsUnittestBase):  # pylint: disable=R0904
 
 class TestImportAsOtherName(fake_filesystem_unittest.TestCase):
     def __init__(self, methodName='RunTest'):
-        special_names = {'import_as_example': {'os': '_os'}}
+        special_names = {'tests.import_as_example': {'os': '_os'}}
         super(TestImportAsOtherName, self).__init__(methodName,
                                                     special_names=special_names)
 
@@ -148,8 +148,8 @@ class TestImportAsOtherName(fake_filesystem_unittest.TestCase):
         self.assertTrue(self.fs.exists(file_path))
         self.assertTrue(check_if_exists(file_path))
 
-sys.path.append(os.path.join(os.path.dirname(__file__), 'fixtures'))
-import module_with_attributes
+
+from tests.fixtures import module_with_attributes
 
 
 class TestAttributesWithFakeModuleNames(TestPyfakefsUnittestBase):
@@ -203,21 +203,22 @@ class TestCopyOrAddRealFile(TestPyfakefsUnittestBase):
     Note that `copyRealFile()` is deprecated in favor of
     `FakeFilesystem.add_real_file()`.
     """
+    filepath = None
 
     @classmethod
     def setUpClass(cls):
-        with open(__file__) as f:
+        cls.filepath = os.path.abspath(__file__)
+        with open(cls.filepath) as f:
             cls.real_string_contents = f.read()
-        with open(__file__, 'rb') as f:
+        with open(cls.filepath, 'rb') as f:
             cls.real_byte_contents = f.read()
-        cls.real_stat = os.stat(__file__)
+        cls.real_stat = os.stat(cls.filepath)
 
     @unittest.skipIf(sys.platform == 'darwin', 'Different copy behavior')
     def test_copy_real_file(self):
         '''Typical usage of deprecated copyRealFile()'''
         # Use this file as the file to be copied to the fake file system
-        real_file_path = os.path.realpath(__file__)
-        fake_file = self.copyRealFile(real_file_path)
+        fake_file = self.copyRealFile(self.filepath)
 
         self.assertTrue('class TestCopyOrAddRealFile(TestPyfakefsUnittestBase)'
                         in self.real_string_contents,
@@ -240,26 +241,24 @@ class TestCopyOrAddRealFile(TestPyfakefsUnittestBase):
 
     def test_copy_real_file_deprecated_arguments(self):
         '''Deprecated copyRealFile() arguments'''
-        real_file_path = __file__
-        self.assertFalse(self.fs.exists(real_file_path))
+        self.assertFalse(self.fs.exists(self.filepath))
         # Specify redundant fake file path
-        self.copyRealFile(real_file_path, real_file_path)
-        self.assertTrue(self.fs.exists(real_file_path))
+        self.copyRealFile(self.filepath, self.filepath)
+        self.assertTrue(self.fs.exists(self.filepath))
 
         # Test deprecated argument values
         with self.assertRaises(ValueError):
-            self.copyRealFile(real_file_path, '/different/filename')
+            self.copyRealFile(self.filepath, '/different/filename')
         with self.assertRaises(ValueError):
-            self.copyRealFile(real_file_path, create_missing_dirs=False)
+            self.copyRealFile(self.filepath, create_missing_dirs=False)
 
     def test_add_real_file(self):
         '''Add a real file to the fake file system to be read on demand'''
 
         # this tests only the basic functionality inside a unit test, more thorough tests
         # are done in fake_filesystem_test.RealFileSystemAccessTest
-        real_file_path = __file__
-        fake_file = self.fs.add_real_file(real_file_path)
-        self.assertTrue(self.fs.exists(real_file_path))
+        fake_file = self.fs.add_real_file(self.filepath)
+        self.assertTrue(self.fs.exists(self.filepath))
         self.assertIsNone(fake_file._byte_contents)
         self.assertEqual(self.real_byte_contents, fake_file.byte_contents)
 
@@ -269,7 +268,8 @@ class TestCopyOrAddRealFile(TestPyfakefsUnittestBase):
         # this tests only the basic functionality inside a unit test, more thorough tests
         # are done in fake_filesystem_test.RealFileSystemAccessTest
         # Note: this test fails (add_real_directory raises) if 'genericpath' is not added to SKIPNAMES
-        real_dir_path = os.path.join(os.path.dirname(__file__), 'pyfakefs')
+        root_path = os.path.split(os.path.dirname(self.filepath))[0]
+        real_dir_path = os.path.join(root_path, 'pyfakefs')
         self.fs.add_real_directory(real_dir_path)
         self.assertTrue(self.fs.exists(real_dir_path))
         self.assertTrue(self.fs.exists(os.path.join(real_dir_path, 'fake_filesystem.py')))
