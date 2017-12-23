@@ -199,7 +199,7 @@ class RealFsTestMixin(object):
 
     def skip_if_symlink_not_supported(self):
         if (self.use_real_fs() and TestCase.is_windows or
-                    not self.use_real_fs() and self.filesystem.is_windows_fs):
+                not self.use_real_fs() and self.filesystem.is_windows_fs):
             if sys.version_info < (3, 3):
                 raise unittest.SkipTest(
                     'Symlinks are not supported under Windows '
@@ -369,7 +369,7 @@ class FakeDirectoryUnitTest(TestCase):
         self.filesystem.is_windows_fs = False
         self.assert_raises_io_error(errno.EISDIR, self.fake_dir.set_contents, 'a')
 
-    def test_pads_file_content_with_null_bytes_if_size_is_greater_than_current_size(self):
+    def test_pads_file_content_with_nullbytes_if_size_is_greater_than_current_size(self):
         self.fake_file.size = 13
         self.assertEqual('dummy_file\0\0\0', self.fake_file.contents)
 
@@ -638,8 +638,8 @@ class FakeFilesystemUnitTest(TestCase):
         self.filesystem.add_object(self.fake_child.name, self.fake_file)
         self.assert_raises_io_error(errno.ENOENT, self.filesystem.get_object,
                                     self.filesystem.joinpaths(
-                                     self.fake_child.name,
-                                     'some_bogus_filename'))
+                                        self.fake_child.name,
+                                        'some_bogus_filename'))
 
     def test_remove_object_from_child(self):
         self.filesystem.add_object(self.root_name, self.fake_child)
@@ -654,15 +654,16 @@ class FakeFilesystemUnitTest(TestCase):
         self.filesystem.add_object(self.root_name, self.fake_child)
         self.assert_raises_io_error(errno.ENOENT, self.filesystem.remove_object,
                                     self.filesystem.joinpaths(
-                                     self.fake_child.name,
-                                     'some_bogus_filename'))
+                                        self.fake_child.name,
+                                        'some_bogus_filename'))
 
     def test_remove_object_from_non_directory_error(self):
         self.filesystem.add_object(self.root_name, self.fake_file)
-        self.assert_raises_io_error(errno.ENOTDIR, self.filesystem.remove_object,
-                                    self.filesystem.joinpaths(
-                                     '%s' % self.fake_file.name,
-                                     'file_does_not_matter_since_parent_not_a_directory'))
+        self.assert_raises_io_error(
+            errno.ENOTDIR, self.filesystem.remove_object,
+            self.filesystem.joinpaths(
+                '%s' % self.fake_file.name,
+                'file_does_not_matter_since_parent_not_a_directory'))
 
     def test_exists_file_removed_from_child(self):
         self.filesystem.add_object(self.root_name, self.fake_child)
@@ -1374,7 +1375,7 @@ class FakeOsModuleTest(FakeOsModuleTestBase):
     def test_readlink_raises_if_path_does_not_exist(self):
         self.skip_if_symlink_not_supported()
         self.assert_raises_os_error(errno.ENOENT, self.os.readlink,
-                                 '/this/path/does/not/exist')
+                                    '/this/path/does/not/exist')
 
     def test_readlink_raises_if_path_is_none(self):
         self.skip_if_symlink_not_supported()
@@ -1788,7 +1789,7 @@ class FakeOsModuleTest(FakeOsModuleTestBase):
     def test_rename_to_another_device_should_raise(self):
         """Renaming to another filesystem device raises OSError."""
         self.skip_real_fs()
-        self.filesystem.AddMountPoint('/mount')
+        self.filesystem.add_mount_point('/mount')
         old_path = '/foo/bar'
         new_path = '/mount/bar'
         self.filesystem.create_file(old_path)
@@ -1857,7 +1858,7 @@ class FakeOsModuleTest(FakeOsModuleTestBase):
     def test_rename_nonexistent_file_should_raise_error(self):
         """Can't rename a file that doesn't exist."""
         self.assert_raises_os_error(errno.ENOENT, self.os.rename,
-                                 'nonexistent-foo', 'doesn\'t-matter-bar')
+                                    'nonexistent-foo', 'doesn\'t-matter-bar')
 
     def test_rename_empty_dir(self):
         """Test a rename of an empty directory."""
@@ -2121,7 +2122,7 @@ class FakeOsModuleTest(FakeOsModuleTestBase):
     def test_mkdir_raises_if_no_parent(self):
         """mkdir raises exception if parent directory does not exist."""
         parent = 'xyzzy'
-        directory = '%s/foo' % (parent, )
+        directory = '%s/foo' % (parent,)
         self.assertFalse(self.os.path.exists(parent))
         self.assert_raises_os_error(errno.ENOENT, self.os.mkdir, directory)
 
@@ -2794,7 +2795,7 @@ class FakeOsModuleTest(FakeOsModuleTestBase):
         self.skip_if_symlink_not_supported()
         self.assert_raises_os_error(errno.ENOENT,
                                     self.os.link, '/nonexistent_source',
-                                 '/link_dest')
+                                    '/link_dest')
 
     def test_link_delete(self):
         self.skip_if_symlink_not_supported()
@@ -3406,7 +3407,7 @@ class FakeOsModuleTestCaseInsensitiveFS(FakeOsModuleTestBase):
             self.check_contents(self.os.path.join(new_path, 'plugh'), 'test')
             if not self.use_real_fs():
                 self.assertEqual(3,
-                                 self.filesystem.GetObject(new_path).st_nlink)
+                                 self.filesystem.get_object(new_path).st_nlink)
 
     def check_rename_directory_to_existing_file_raises(self, error_nr):
         dir_path = self.make_path('dir')
@@ -3729,7 +3730,7 @@ class FakeOsModuleTestCaseInsensitiveFS(FakeOsModuleTestBase):
         self.create_file(file_path)
         self.assert_raises_os_error(error_type, self.os.mkdir,
                                     self.os.path.join(file_path.upper(),
-                                                   'ff'))
+                                                      'ff'))
 
     def test_mkdir_raises_if_parent_is_file_posix(self):
         self.check_posix_only()
@@ -3770,7 +3771,7 @@ class FakeOsModuleTestCaseInsensitiveFS(FakeOsModuleTestBase):
         self.os.symlink(self.make_path('bogus'), link_path)
         self.assert_raises_os_error(errno.ENOENT, self.os.makedirs,
                                     self.os.path.join(link_path.upper(),
-                                                   'newdir'))
+                                                      'newdir'))
 
     @unittest.skipIf(sys.version_info < (3, 2),
                      'os.makedirs(exist_ok) argument new in version 3.2')
@@ -3956,7 +3957,7 @@ class FakeOsModuleTimeTest(FakeOsModuleTestBase):
         self.setDummyTime(200.9123)
         path = self.make_path('some_file')
         self.createTestFile(path)
-        test_file = self.filesystem.GetObject(path)
+        test_file = self.filesystem.get_object(path)
 
         self.dummy_time.start()
         st = self.os.stat(path)
@@ -5141,7 +5142,7 @@ class FakePathModuleTest(TestCase):
     """
         filename = '!foo!bar!baz'
         file_components = filename.split(self.path.sep)
-        basedir = '!%s' % (file_components[0], )
+        basedir = '!%s' % (file_components[0],)
         self.filesystem.create_file(filename)
         self.os.chdir(basedir)
         self.assertEqual(basedir, self.path.abspath(self.path.curdir))
@@ -5328,7 +5329,7 @@ class FakePathModuleTest(TestCase):
     def test_get_mtime_raises_os_error(self):
         self.assertFalse(self.path.exists('it_dont_exist'))
         self.assert_raises_os_error(errno.ENOENT, self.path.getmtime,
-                                 'it_dont_exist')
+                                    'it_dont_exist')
 
     @unittest.skipIf(TestCase.is_windows and sys.version_info < (3, 3),
                      'Links are not supported under Windows before Python 3.3')
@@ -5775,7 +5776,7 @@ class FakeFileOpenTest(FakeFileOpenTestBase):
         file_path = self.make_path('appendfile')
         self.create_file(file_path, contents=''.join(contents))
         with self.open(file_path, 'a') as fake_file:
-            expected_error = (IOError if sys.version_info < (3, )
+            expected_error = (IOError if sys.version_info < (3,)
                               else io.UnsupportedOperation)
             self.assertRaises(expected_error, fake_file.read, 0)
             self.assertRaises(expected_error, fake_file.readline)
@@ -6195,7 +6196,7 @@ class FakeFileOpenTest(FakeFileOpenTestBase):
         self.assertRaises(ValueError, lambda: fake_file.seek(1))
         self.assertRaises(ValueError, lambda: fake_file.flush())
 
-    @unittest.skipIf(sys.version_info >= (3, ),
+    @unittest.skipIf(sys.version_info >= (3,),
                      'file.next() not available in Python 3')
     def test_next_raises_on_closed_file(self):
         # Regression test for #284
@@ -6233,7 +6234,7 @@ class FakeFileOpenTest(FakeFileOpenTestBase):
         with self.open(file_path, 'w') as f0:
             f0.write('test')
             self.assertEqual(4, f0.tell())
-            expected = 0 if sys.version_info < (3, ) else 4
+            expected = 0 if sys.version_info < (3,) else 4
             self.assertEqual(expected, self.os.path.getsize(file_path))
 
     def test_read_flushes_under_posix(self):
@@ -6459,7 +6460,7 @@ class OpenFileWithEncodingTest(FakeFileOpenTestBase):
         self.create_file(self.file_path, contents=''.join(contents),
                          encoding='cyrillic')
         with self.open(self.file_path, 'a', encoding='cyrillic') as fake_file:
-            expected_error = (IOError if sys.version_info < (3, )
+            expected_error = (IOError if sys.version_info < (3,)
                               else io.UnsupportedOperation)
             self.assertRaises(expected_error, fake_file.read, 0)
             self.assertRaises(expected_error, fake_file.readline)
@@ -7301,7 +7302,7 @@ class DiskSpaceTest(TestCase):
         self.assert_raises_io_error(errno.ENOSPC, file_object.set_large_file_size,
                                     200)
         self.assert_raises_io_error(errno.ENOSPC, file_object.set_contents,
-                                 'a' * 150)
+                                    'a' * 150)
 
     def test_file_system_size_after_directory_rename(self):
         self.filesystem.create_file('!foo!bar', st_size=20)
@@ -7336,9 +7337,9 @@ class DiskSpaceTest(TestCase):
 
         self.assert_raises_io_error(errno.ENOSPC,
                                     self.filesystem.create_file,
-                                 '!mount_limited!foo', st_size=60)
+                                    '!mount_limited!foo', st_size=60)
         self.assert_raises_io_error(errno.ENOSPC, self.filesystem.create_file,
-                                 '!bar', st_size=110)
+                                    '!bar', st_size=110)
 
         try:
             self.filesystem.create_file('!foo', st_size=60)
@@ -7442,9 +7443,9 @@ class MountPointTest(TestCase):
 
     def test_that_mount_point_cannot_be_added_twice(self):
         self.assert_raises_os_error(errno.EEXIST, self.filesystem.add_mount_point,
-                                 '!foo')
+                                    '!foo')
         self.assert_raises_os_error(errno.EEXIST, self.filesystem.add_mount_point,
-                                 '!foo!')
+                                    '!foo!')
 
     def test_that_drives_are_auto_mounted(self):
         self.filesystem.is_windows_fs = True
@@ -7528,7 +7529,7 @@ class RealFileSystemAccessTest(TestCase):
             real_contents = f.read()
         self.assertEqual(fake_file.byte_contents, real_contents)
         self.assert_raises_io_error(errno.EACCES, self.fake_open, real_file_path,
-                                 'w')
+                                    'w')
 
     def check_writable_file(self, fake_file, real_file_path):
         with open(real_file_path, 'rb') as f:

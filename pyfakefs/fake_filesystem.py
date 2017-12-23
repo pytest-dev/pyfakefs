@@ -158,8 +158,8 @@ NR_STD_STREAMS = 3
 
 
 def is_int_type(val):
-    int_types = ((int, long) if sys.version_info[0] < 3
-                 else int)  # pylint: disable=undefined-variable
+    # pylint: disable=undefined-variable
+    int_types = (int, long) if sys.version_info[0] < 3 else int
     return isinstance(val, int_types)
 
 
@@ -187,6 +187,7 @@ class _FakeStatResult(object):
     This is needed as `os.stat_result` has no possibility to set
     nanosecond times directly.
     """
+    # pylint: disable=undefined-variable
     long_type = long if sys.version_info[0] == 2 else int
 
     def __init__(self, is_windows, initial_time=None):
@@ -295,9 +296,9 @@ class _FakeStatResult(object):
         self._st_size = val
 
     def __getitem__(self, item):
+        """Implement item access to mimic `os.stat_result` behavior."""
         import stat
 
-        """Implement item access to mimic `os.stat_result` behavior."""
         if item == stat.ST_MODE:
             return self.st_mode
         if item == stat.ST_INO:
@@ -319,6 +320,7 @@ class _FakeStatResult(object):
             return int(self.st_mtime)
         if item == stat.ST_CTIME:
             return int(self.st_ctime)
+        raise ValueError('Invalid item')
 
     if sys.version_info >= (3, 3):
 
@@ -872,7 +874,7 @@ class FakeDirectoryFromRealDirectory(FakeDirectory):
                 as read-only, e.g. a write access raises an exception;
                 otherwise, writing to the files changes the fake files
                 only as usually.
-                
+
         Raises:
             OSError: if the directory does not exist in the real file system
         """
@@ -977,18 +979,19 @@ class FakeFilesystem(object):
 
     def raise_os_error(self, errno, winerror, message, filename=''):
         if (sys.platform == 'win32' and self.is_windows_fs and
-                    sys.version_info[0] < 3):
+                sys.version_info[0] < 3):
             raise WindowsError(winerror, message, filename)
         raise OSError(errno, message, filename)
 
     @staticmethod
     def _matching_string(matched, string):
-        """Return the string as byte or unicode depending 
+        """Return the string as byte or unicode depending
         on the type of matched, assuming string is an ASCII string.
         """
         if string is None:
             return string
         if sys.version_info < (3, ):
+            # pylint: disable=undefined-variable
             if isinstance(matched, unicode):
                 return unicode(string)
         else:
@@ -1114,7 +1117,7 @@ class FakeFilesystem(object):
             path = self.root.name
         mount_point = self._mount_point_for_path(path)
         if (mount_point['total_size'] is not None and
-                    mount_point['used_size'] > total_size):
+                mount_point['used_size'] > total_size):
             raise IOError(errno.ENOSPC,
                           'Fake file system: cannot change size to %r bytes - '
                           'used space is larger' % total_size, path)
@@ -1200,20 +1203,20 @@ class FakeFilesystem(object):
 
         Args:
             path: (str) Path to the file.
-            times: 2-tuple of int or float numbers, of the form (atime, mtime) 
-                which is used to set the access and modified times in seconds. 
+            times: 2-tuple of int or float numbers, of the form (atime, mtime)
+                which is used to set the access and modified times in seconds.
                 If None, both times are set to the current time.
-            ns: 2-tuple of int numbers, of the form (atime, mtime)  which is 
-                used to set the access and modified times in nanoseconds. 
+            ns: 2-tuple of int numbers, of the form (atime, mtime)  which is
+                used to set the access and modified times in nanoseconds.
                 If None, both times are set to the current time.
                 New in Python 3.3.
-            follow_symlinks: If `False` and entry_path points to a symlink, 
-                the link itself is queried instead of the linked object. 
+            follow_symlinks: If `False` and entry_path points to a symlink,
+                the link itself is queried instead of the linked object.
                 New in Python 3.3.
-    
+
             Raises:
-                TypeError: If anything other than the expected types is 
-                    specified in the passed `times` or `ns` tuple, 
+                TypeError: If anything other than the expected types is
+                    specified in the passed `times` or `ns` tuple,
                     or if the tuple length is not equal to 2.
                 ValueError: If both times and ns are specified.
         """
@@ -1298,7 +1301,7 @@ class FakeFilesystem(object):
         self.open_files[file_des] = None
         heapq.heappush(self._free_fd_heap, file_des)
 
-    def _get_open_file(self, file_des):
+    def get_open_file(self, file_des):
         """Return an open file.
 
         Args:
@@ -1326,7 +1329,7 @@ class FakeFilesystem(object):
         Returns:
             `True` if the file is open.
         """
-        return (file_object in [wrapper.GetObject()
+        return (file_object in [wrapper.get_object()
                                 for wrapper in self.open_files if wrapper])
 
     def normcase(self, path):
@@ -1431,7 +1434,7 @@ class FakeFilesystem(object):
             dir_name, current_dir = self._directory_content(current_dir, component)
             if current_dir is None or (
                             isinstance(current_dir, FakeDirectory) and
-                            current_dir._byte_contents is None and
+                                current_dir._byte_contents is None and
                             current_dir.st_size == 0):
                 return components_to_path()
             normalized_components.append(dir_name)
@@ -1837,7 +1840,7 @@ class FakeFilesystem(object):
 
         if (allow_fd and sys.version_info >= (3, 3) and
                 isinstance(file_path, int)):
-            return self._get_open_file(file_path).get_object().path
+            return self.get_open_file(file_path).get_object().path
         if sys.version_info >= (3, 6):
             file_path = os.fspath(file_path)
         if file_path is None:
@@ -1970,7 +1973,7 @@ class FakeFilesystem(object):
         """
         if isinstance(file_path, int):
             if allow_fd and sys.version_info >= (3, 3):
-                return self._get_open_file(file_path).get_object()
+                return self.get_open_file(file_path).get_object()
             raise TypeError('path should be string, bytes or '
                             'os.PathLike (if supported), not int')
 
@@ -2047,8 +2050,8 @@ class FakeFilesystem(object):
             if not S_ISDIR(target_directory.st_mode):
                 error = errno.ENOENT if self.is_windows_fs else errno.ENOTDIR
                 raise error_class(error,
-                              'Not a directory in the fake filesystem',
-                              file_path)
+                                  'Not a directory in the fake filesystem',
+                                  file_path)
         target_directory.add_entry(file_object)
 
     def rename(self, old_file_path, new_file_path, force_replace=False):
@@ -2080,8 +2083,8 @@ class FakeFilesystem(object):
         new_file_path = self.absnormpath(new_file_path)
         if not self.exists(old_file_path, check_link=True):
             self.raise_os_error(errno.ENOENT, 2,
-                                 'Fake filesystem object: '
-                                 'can not rename nonexistent file',
+                                'Fake filesystem object: '
+                                'can not rename nonexistent file',
                                 old_file_path)
 
         old_object = self.lresolve(old_file_path)
@@ -2127,8 +2130,7 @@ class FakeFilesystem(object):
                     # hard links to the same file - nothing to do
                     return
 
-            elif (S_ISDIR(new_object.st_mode) or
-                      S_ISLNK(new_object.st_mode)):
+            elif (S_ISDIR(new_object.st_mode) or S_ISLNK(new_object.st_mode)):
                 if self.is_windows_fs:
                     if force_replace:
                         raise OSError(errno.EACCES,
@@ -2275,8 +2277,8 @@ class FakeFilesystem(object):
         return current_dir
 
     def create_file(self, file_path, st_mode=S_IFREG | PERM_DEF_FILE,
-                   contents='', st_size=None, create_missing_dirs=True,
-                   apply_umask=False, encoding=None, errors=None):
+                    contents='', st_size=None, create_missing_dirs=True,
+                    apply_umask=False, encoding=None, errors=None):
         """Create file_path, including all the parent directories along the way.
 
         This helper method can be used to set up tests more easily.
@@ -2392,9 +2394,9 @@ class FakeFilesystem(object):
                 (see `add_real_directory`)
 
         Raises:
-            OSError: if any of the files and directories in the list 
+            OSError: if any of the files and directories in the list
                 does not exist in the real file system.
-            OSError: if any of the files and directories in the list 
+            OSError: if any of the files and directories in the list
                 already exists in the fake file system.
         """
         for path in path_list:
@@ -2435,8 +2437,8 @@ class FakeFilesystem(object):
 
         if self.exists(file_path, check_link=True):
             raise OSError(errno.EEXIST,
-                              'File already exists in fake filesystem',
-                              file_path)
+                          'File already exists in fake filesystem',
+                          file_path)
         parent_directory, new_file = self.splitpath(file_path)
         if not parent_directory:
             parent_directory = self.cwd
@@ -2758,7 +2760,7 @@ class FakeFilesystem(object):
             else:
                 error_nr = errno.ENOTDIR
             self.raise_os_error(error_nr, 267,
-                                 'Fake os module: not a directory',
+                                'Fake os module: not a directory',
                                 target_directory)
         return directory
 
@@ -2861,7 +2863,7 @@ Deprecator.add(FakeFilesystem, FakeFilesystem.utime, 'UpdateTime')
 Deprecator.add(FakeFilesystem, FakeFilesystem._add_open_file, 'AddOpenFile')
 Deprecator.add(FakeFilesystem, FakeFilesystem._close_open_file, 'CloseOpenFile')
 Deprecator.add(FakeFilesystem, FakeFilesystem.has_open_file, 'HasOpenFile')
-Deprecator.add(FakeFilesystem, FakeFilesystem._get_open_file, 'GetOpenFile')
+Deprecator.add(FakeFilesystem, FakeFilesystem.get_open_file, 'GetOpenFile')
 Deprecator.add(FakeFilesystem, FakeFilesystem.normcase, 'NormalizePathSeparator')
 Deprecator.add(FakeFilesystem, FakeFilesystem.normpath, 'CollapsePath')
 Deprecator.add(FakeFilesystem, FakeFilesystem._original_path, 'NormalizeCase')
@@ -3243,7 +3245,7 @@ class FakePathModule(object):
             if rest in path_seps:
                 return True
         for mount_point in self.filesystem.mount_points:
-            if (normed_path.rstrip(sep) == mount_point.rstrip(sep)):
+            if normed_path.rstrip(sep) == mount_point.rstrip(sep):
                 return True
         return False
 
@@ -3449,7 +3451,7 @@ class FakeOsModule(object):
             OSError: bad file descriptor.
             TypeError: if file descriptor is not an integer.
         """
-        file_handle = self.filesystem._get_open_file(file_des)
+        file_handle = self.filesystem.get_open_file(file_des)
         file_handle.close()
 
     def read(self, file_des, num_bytes):
@@ -3466,7 +3468,7 @@ class FakeOsModule(object):
             OSError: bad file descriptor.
             TypeError: if file descriptor is not an integer.
         """
-        file_handle = self.filesystem._get_open_file(file_des)
+        file_handle = self.filesystem.get_open_file(file_des)
         file_handle.raw_io = True
         return file_handle.read(num_bytes)
 
@@ -3484,7 +3486,7 @@ class FakeOsModule(object):
             OSError: bad file descriptor.
             TypeError: if file descriptor is not an integer.
         """
-        file_handle = self.filesystem._get_open_file(file_des)
+        file_handle = self.filesystem.get_open_file(file_des)
         if isinstance(file_handle, FakeDirWrapper):
             raise OSError(errno.EBADF, 'Cannot write to directory')
         file_handle.raw_io = True
@@ -3521,7 +3523,7 @@ class FakeOsModule(object):
             OSError: if the filesystem object doesn't exist.
         """
         # stat should return the tuple representing return value of os.stat
-        file_object = self.filesystem._get_open_file(file_des).get_object()
+        file_object = self.filesystem.get_open_file(file_des).get_object()
         return file_object.stat_result.copy()
 
     def umask(self, new_mask):
@@ -3881,7 +3883,7 @@ class FakeOsModule(object):
                     "%s: Can't specify dir_fd without matching path" % fct.__name__)
             if not self.path.isabs(path):
                 return self.path.join(
-                    self.filesystem._get_open_file(dir_fd).get_object().path, path)
+                    self.filesystem.get_open_file(dir_fd).get_object().path, path)
         return path
 
     def access(self, path, mode, dir_fd=None, follow_symlinks=None):
@@ -3951,11 +3953,11 @@ class FakeOsModule(object):
 
         Args:
             path: (str) Path to the file.
-            times: 2-tuple of int or float numbers, of the form (atime, mtime) 
-                which is used to set the access and modified times in seconds. 
+            times: 2-tuple of int or float numbers, of the form (atime, mtime)
+                which is used to set the access and modified times in seconds.
                 If None, both times are set to the current time.
-            ns: 2-tuple of int numbers, of the form (atime, mtime)  which is 
-                used to set the access and modified times in nanoseconds. 
+            ns: 2-tuple of int numbers, of the form (atime, mtime)  which is
+                used to set the access and modified times in nanoseconds.
                 If None, both times are set to the current time.
                 New in Python 3.3.
             dir_fd: If not `None`, the file descriptor of a directory, with `path`
@@ -3964,10 +3966,10 @@ class FakeOsModule(object):
             follow_symlinks: (bool) If `False` and `path` points to a symlink,
                 the link itself is queried instead of the linked object.
                 New in Python 3.3.
-    
+
             Raises:
-                TypeError: If anything other than the expected types is 
-                    specified in the passed `times` or `ns` tuple, 
+                TypeError: If anything other than the expected types is
+                    specified in the passed `times` or `ns` tuple,
                     or if the tuple length is not equal to 2.
                 ValueError: If both times and ns are specified.
         """
@@ -4128,7 +4130,7 @@ class FakeOsModule(object):
         # Throw an error if file_des isn't valid
         if 0 <= file_des < NR_STD_STREAMS:
             raise OSError(errno.EINVAL, 'Invalid file descriptor')
-        file_object = self.filesystem._get_open_file(file_des)
+        file_object = self.filesystem.get_open_file(file_des)
         if self.filesystem.is_windows_fs:
             if (not hasattr(file_object, 'allow_update') or
                     not file_object.allow_update):
@@ -4149,7 +4151,7 @@ class FakeOsModule(object):
             raise AttributeError("module 'os' has no attribute 'fdatasync'")
         if 0 <= file_des < NR_STD_STREAMS:
             raise OSError(errno.EINVAL, 'Invalid file descriptor')
-        self.filesystem._get_open_file(file_des)
+        self.filesystem.get_open_file(file_des)
 
     def __getattr__(self, name):
         """Forwards any unfaked calls to the standard os module."""
@@ -4551,7 +4553,7 @@ class StandardStreamWrapper(object):
         self._stream_object = stream_object
         self.filedes = None
 
-    def GetObject(self):
+    def get_object(self):
         return self._stream_object
 
     def fileno(self):
@@ -4673,9 +4675,9 @@ class FakeFileOpen(object):
         # opening a file descriptor
         if isinstance(file_, int):
             filedes = file_
-            wrapper = self.filesystem._get_open_file(filedes)
+            wrapper = self.filesystem.get_open_file(filedes)
             self._delete_on_close = wrapper.delete_on_close
-            file_object = self.filesystem._get_open_file(filedes).get_object()
+            file_object = self.filesystem.get_open_file(filedes).get_object()
             file_path = file_object.name
             real_path = file_path
         else:
@@ -4739,11 +4741,11 @@ class FakeFileOpen(object):
         return fakefile
 
 
-def _RunDoctest():
+def _run_doctest():
     import doctest
     from pyfakefs import fake_filesystem  # pylint: disable=import-self
     return doctest.testmod(fake_filesystem)
 
 
 if __name__ == '__main__':
-    _RunDoctest()
+    _run_doctest()

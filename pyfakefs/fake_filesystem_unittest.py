@@ -176,17 +176,14 @@ class TestCase(unittest.TestCase):
     def fs(self):
         return self._stubber.fs
 
-    @property
-    def patches(self):
-        return self._stubber.patches
-
     @Deprecator('add_real_file')
     def copyRealFile(self, real_file_path, fake_file_path=None,
                      create_missing_dirs=True):
         """Add the file `real_file_path` in the real file system to the same
         path in the fake file system.
 
-        **This method is deprecated** in favor of :py:meth:`FakeFilesystem..add_real_file`.
+        **This method is deprecated** in favor of
+        :py:meth:`FakeFilesystem..add_real_file`.
         `copyRealFile()` is retained with limited functionality for backward
         compatability only.
 
@@ -357,7 +354,7 @@ class Patcher(object):
     def _refresh(self):
         """Renew the fake file system and set the _isStale flag to `False`."""
         if self._stubs is not None:
-            self._stubs.SmartUnsetAll()
+            self._stubs.smart_unset_all()
         self._stubs = mox3_stubout.StubOutForTesting()
 
         self.fs = fake_filesystem.FakeFilesystem()
@@ -386,7 +383,8 @@ class Patcher(object):
                 tempfile.TemporaryDirectory._rmtree = lambda o, path: shutil.rmtree(path)
         else:
             # Python > 3.2 - unlink is a default parameter of _TemporaryFileCloser
-            tempfile._TemporaryFileCloser.close.__defaults__ = (self._fake_modules['os'].unlink, )
+            tempfile._TemporaryFileCloser.close.__defaults__ = (
+            self._fake_modules['os'].unlink,)
 
     def setUp(self, doctester=None):
         """Bind the file-related modules to the :py:mod:`pyfakefs` fake
@@ -403,11 +401,11 @@ class Patcher(object):
 
         if sys.version_info < (3, ):
             # file() was eliminated in Python3
-            self._stubs.SmartSet(builtins, 'file', self.fake_open)
-        self._stubs.SmartSet(builtins, 'open', self.fake_open)
+            self._stubs.smart_set(builtins, 'file', self.fake_open)
+        self._stubs.smart_set(builtins, 'open', self.fake_open)
         for name in self._modules:
             for module, attr in self._modules[name]:
-                self._stubs.SmartSet(module, attr, self._fake_modules[name])
+                self._stubs.smart_set(module, attr, self._fake_modules[name])
 
         # the temp directory is assumed to exist at least in `tempfile1,
         # so we create it here for convenience
@@ -427,7 +425,7 @@ class Patcher(object):
     def tearDown(self, doctester=None):
         """Clear the fake filesystem bindings created by `setUp()`."""
         self._isStale = True
-        self._stubs.SmartUnsetAll()
+        self._stubs.smart_unset_all()
 
 
 class DynamicPatcher(object):

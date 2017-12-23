@@ -87,7 +87,7 @@ class TestExample(fake_filesystem_unittest.TestCase):  # pylint: disable=R0904
         """Test example.delete_file() which uses `os.remove()`."""
         self.fs.create_file('/test/full.txt',
                             contents='First line\n'
-                                    'Second Line\n')
+                                     'Second Line\n')
         self.assertTrue(os.path.exists('/test/full.txt'))
         example.delete_file('/test/full.txt')
         self.assertFalse(os.path.exists('/test/full.txt'))
@@ -164,7 +164,8 @@ class TestExample(fake_filesystem_unittest.TestCase):  # pylint: disable=R0904
         self.assertTrue(entries[1].is_file())
 
     def test_real_file_access(self):
-        """Test `example.file_contents()` for a real file after adding it using `add_real_file()`."""
+        """Test `example.file_contents()` for a real file after adding it using
+         `add_real_file()`."""
         filename = __file__
         with self.assertRaises(IOError):
             example.file_contents(filename)

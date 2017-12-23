@@ -11,16 +11,18 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#
-# This is a fork of the pymox library intended to work with Python 3.
-# The file was modified by quermit@gmail.com and dawid.fatyga@gmail.com
-#
-# Previously, pyfakefs used just this file from the mox3 library.
-# However, mox3 will soon be decommissioned, yet standard mock cannot
-# be used because of the problem described in pyfakefs #182 and
-# mock issue 250 (https://github.com/testing-cabal/mock/issues/250).
-# Therefore just this file was forked from mox3 and incorporated
-# into pyfakefs.
+
+"""
+This is a fork of the pymox library intended to work with Python 3.
+The file was modified by quermit@gmail.com and dawid.fatyga@gmail.com
+
+Previously, pyfakefs used just this file from the mox3 library.
+However, mox3 will soon be decommissioned, yet standard mock cannot
+be used because of the problem described in pyfakefs #182 and
+mock issue 250 (https://github.com/testing-cabal/mock/issues/250).
+Therefore just this file was forked from mox3 and incorporated
+into pyfakefs.
+"""
 
 import inspect
 
@@ -46,10 +48,10 @@ class StubOutForTesting(object):
         self.stubs = []
 
     def __del__(self):
-        self.SmartUnsetAll()
-        self.UnsetAll()
+        self.smart_unset_all()
+        self.unset_all()
 
-    def SmartSet(self, obj, attr_name, new_attr):
+    def smart_set(self, obj, attr_name, new_attr):
         """Replace obj.attr_name with new_attr.
 
         This method is smart and works at the module, class, and instance level
@@ -99,13 +101,13 @@ class StubOutForTesting(object):
         # function. We need to ensure that we put it back as a staticmethod.
         old_attribute = obj.__dict__.get(attr_name)
         if (old_attribute is not None
-            and isinstance(old_attribute, staticmethod)):
+                and isinstance(old_attribute, staticmethod)):
             orig_attr = staticmethod(orig_attr)
 
         self.stubs.append((orig_obj, attr_name, orig_attr))
         setattr(orig_obj, attr_name, new_attr)
 
-    def SmartUnsetAll(self):
+    def smart_unset_all(self):
         """Reverses all the SmartSet() calls.
 
         Restores things to their original definition. Its okay to call
@@ -119,14 +121,14 @@ class StubOutForTesting(object):
 
         self.stubs = []
 
-    def Set(self, parent, child_name, new_child):
+    def set(self, parent, child_name, new_child):
         """Replace child_name's old definition with new_child.
 
         Replace definition in the context of the given parent. The parent could
         be a module when the child is a function at module scope. Or the parent
         could be a class when a class' method is being replaced. The named
         child is set to new_child, while the prior definition is saved away
-        for later, when UnsetAll() is called.
+        for later, when unset_all() is called.
 
         This method supports the case where child_name is a staticmethod or a
         classmethod of parent.
@@ -143,14 +145,14 @@ class StubOutForTesting(object):
         self.cache.append((parent, old_child, child_name))
         setattr(parent, child_name, new_child)
 
-    def UnsetAll(self):
+    def unset_all(self):
         """Reverses all the Set() calls.
 
         Restores things to their original definition. Its okay to call
-        UnsetAll() repeatedly, as later calls have no effect if no Set()
+        unset_all() repeatedly, as later calls have no effect if no Set()
         calls have been made.
         """
-        # Undo calls to Set() in reverse order, in case Set() was called on the
+        # Undo calls to set() in reverse order, in case set() was called on the
         # same arguments repeatedly (want the original call to be last one
         # undone)
         self.cache.reverse()

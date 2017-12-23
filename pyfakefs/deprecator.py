@@ -45,14 +45,14 @@ class Deprecator(object):
                     message = 'Use {} instead.'.format(self.use_instead)
                 warnings.warn('Call to deprecated function {}. {}'.format(
                     self.func_name or func.__name__, message),
-                            category=DeprecationWarning, stacklevel=2)
+                              category=DeprecationWarning, stacklevel=2)
                 warnings.simplefilter('default', DeprecationWarning)
             return func(*args, **kwargs)
 
         return _new_func
 
     @staticmethod
-    def add(cls, func, deprecated_name):
+    def add(clss, func, deprecated_name):
         """Add the deprecated version of a member function to the given class.
         Gives a deprecation warning on usage.
 
@@ -66,4 +66,4 @@ class Deprecator(object):
         def _old_function(*args, **kwargs):
             return func(*args, **kwargs)
 
-        setattr(cls, deprecated_name, _old_function)
+        setattr(clss, deprecated_name, _old_function)

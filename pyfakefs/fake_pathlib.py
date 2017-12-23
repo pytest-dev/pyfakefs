@@ -156,7 +156,7 @@ class _FakeFlavour(pathlib._Flavour):
         first = path[0:1]
         second = path[1:2]
         if second == sep and first == sep:
-            # XXX extended paths should also disable the collapsing of "."
+            # extended paths should also disable the collapsing of "."
             # components (according to MSDN docs).
             prefix, path = self._split_extended_path(path)
             first = path[0:1]
@@ -179,8 +179,7 @@ class _FakeFlavour(pathlib._Flavour):
                         index2 = len(path)
                     if prefix:
                         return prefix + path[1:index2], sep, path[index2 + 1:]
-                    else:
-                        return path[:index2], sep, path[index2 + 1:]
+                    return path[:index2], sep, path[index2 + 1:]
         drv = root = ''
         if second == ':' and first in self.drive_letters:
             drv = path[:2]
@@ -197,8 +196,7 @@ class _FakeFlavour(pathlib._Flavour):
             stripped_part = path.lstrip(sep)
             if len(path) - len(stripped_part) == 2:
                 return '', sep * 2, stripped_part
-            else:
-                return '', sep, stripped_part
+            return '', sep, stripped_part
         else:
             return '', '', path
 
@@ -210,11 +208,11 @@ class _FakeFlavour(pathlib._Flavour):
             return self._splitroot_with_drive(path, sep)
         return self._splitroot_posix(path, sep)
 
-    def casefold(self, s):
+    def casefold(self, path):
         """Return the lower-case version of s for a Windows filesystem."""
         if self.filesystem.is_windows_fs:
-            return s.lower()
-        return s
+            return path.lower()
+        return path
 
     def casefold_parts(self, parts):
         """Return the lower-case version of parts for a Windows filesystem."""
@@ -251,8 +249,8 @@ class _FakeFlavour(pathlib._Flavour):
                 # Resolve the symbolic link
                 try:
                     target = self.filesystem.readlink(newpath)
-                except OSError as e:
-                    if e.errno != errno.EINVAL:
+                except OSError as exc:
+                    if exc.errno != errno.EINVAL:
                         if strict:
                             raise
                         else:
@@ -272,33 +270,31 @@ class _FakeFlavour(pathlib._Flavour):
         return _resolve(base, str(path)) or sep
 
     def _resolve_windows(self, path, strict):
-        s = str(path)
-        if not s:
+        path = str(path)
+        if not path:
             return os.getcwd()
         previous_s = None
         if strict:
-            if not self.filesystem.exists(s):
-                raise FileNotFoundError(s)
-            return self.filesystem.resolve_path(s)
+            if not self.filesystem.exists(path):
+                raise FileNotFoundError(path)
+            return self.filesystem.resolve_path(path)
         else:
             while True:
                 try:
-                    s = self.filesystem.resolve_path(s)
+                    path = self.filesystem.resolve_path(path)
                 except FileNotFoundError:
-                    previous_s = s
-                    s = self.filesystem.splitpath(s)[0]
+                    previous_s = path
+                    path = self.filesystem.splitpath(path)[0]
                 else:
                     if previous_s is None:
-                        return s
-                    else:
-                        return self.filesystem.joinpaths(s, os.path.basename(previous_s))
+                        return path
+                    return self.filesystem.joinpaths(path, os.path.basename(previous_s))
 
     def resolve(self, path, strict):
         """Make the path absolute, resolving any symlinks."""
         if self.filesystem.is_windows_fs:
             return self._resolve_windows(path, strict)
-        else:
-            return self._resolve_posix(path, strict)
+        return self._resolve_posix(path, strict)
 
     def gethomedir(self, username):
         """Return the home directory of the current user."""
@@ -507,8 +503,8 @@ class FakePath(pathlib.Path):
             """
             Open the fake file in text mode, read it, and close the file.
             """
-            with FakeFileOpen(self.filesystem)(
-                    self._path(), mode='r', encoding=encoding, errors=errors) as f:
+            with FakeFileOpen(self.filesystem)(self._path(), mode='r', encoding=encoding,
+                                               errors=errors) as f:
                 return f.read()
 
         def write_bytes(self, data):
@@ -540,8 +536,8 @@ class FakePath(pathlib.Path):
             if not isinstance(data, str):
                 raise TypeError('data must be str, not %s' %
                                 data.__class__.__name__)
-            with FakeFileOpen(self.filesystem)(
-                    self._path(), mode='w', encoding=encoding, errors=errors) as f:
+            with FakeFileOpen(self.filesystem)(self._path(), mode='w', encoding=encoding,
+                                               errors=errors) as f:
                 return f.write(data)
 
         @classmethod
