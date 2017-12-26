@@ -27,7 +27,7 @@ import sys
 import unittest
 
 from pyfakefs import fake_pathlib
-from tests.fake_filesystem_test import RealFsTestCase
+from tests.test_utils import RealFsTestCase
 
 is_windows = sys.platform == 'win32'
 

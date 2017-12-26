@@ -25,7 +25,7 @@ import sys
 import unittest
 
 from pyfakefs import fake_filesystem_unittest
-from tests.fake_filesystem_test import RealFsTestMixin
+from tests.test_utils import RealFsTestMixin
 
 
 class RealFsTestCase(fake_filesystem_unittest.TestCase, RealFsTestMixin):

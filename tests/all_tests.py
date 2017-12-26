@@ -20,6 +20,8 @@ import sys
 import unittest
 
 from tests import dynamic_patch_test
+from tests import fake_open_test
+from tests import fake_os_test
 from tests import example_test
 from tests import fake_filesystem_glob_test
 from tests import fake_filesystem_shutil_test
@@ -42,6 +44,8 @@ class AllTests(unittest.TestSuite):
             loader.loadTestsFromModule(fake_filesystem_test),
             loader.loadTestsFromModule(fake_filesystem_glob_test),
             loader.loadTestsFromModule(fake_filesystem_shutil_test),
+            loader.loadTestsFromModule(fake_os_test),
+            loader.loadTestsFromModule(fake_open_test),
             loader.loadTestsFromModule(fake_tempfile_test),
             loader.loadTestsFromModule(fake_filesystem_vs_real_test),
             loader.loadTestsFromModule(fake_filesystem_unittest_test),
