@@ -73,6 +73,7 @@ class DynamicImportPatchTest(TestPyfakefsUnittestBase):
         file_object = self.fs.get_object(file_path)
         self.assertEqual('test', file_object.contents)
 
+    @unittest.skipIf(sys.version_info < (3, 4), 'pathlib new in Python 3.4')
     def testPathlibPathPatch(self):
         from pathlib import Path
 
