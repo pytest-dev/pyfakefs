@@ -57,7 +57,7 @@ class Deprecator(object):
         Gives a deprecation warning on usage.
 
         Args:
-            cls: the class where the deprecated function is to be added
+            clss: the class where the deprecated function is to be added
             func: the actual function that is called by the deprecated version
             deprecated_name: the deprecated name of the function
         """

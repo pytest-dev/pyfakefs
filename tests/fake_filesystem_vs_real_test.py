@@ -27,29 +27,37 @@ import unittest
 from pyfakefs import fake_filesystem
 
 
-def Sep(path):
+def sep(path):
     """Converts slashes in the path to the architecture's path seperator."""
     if isinstance(path, str):
         return path.replace('/', os.sep)
     return path
 
 
+def _get_errno(raised_error):
+    if raised_error is not None:
+        try:
+            return raised_error.errno
+        except AttributeError:
+            pass
+
+
 class TestCase(unittest.TestCase):
     is_windows = sys.platform.startswith('win')
-    _FAKE_FS_BASE = Sep('/fakefs')
+    _FAKE_FS_BASE = sep('/fakefs')
 
 
 class FakeFilesystemVsRealTest(TestCase):
     def _Paths(self, path):
         """For a given path, return paths in the real and fake filesystems."""
         if not path:
-            return (None, None)
+            return None, None
         return (os.path.join(self.real_base, path),
                 os.path.join(self.fake_base, path))
 
     def _CreateTestFile(self, file_type, path, contents=None):
         """Create a dir, file, or link in both the real fs and the fake."""
-        path = Sep(path)
+        path = sep(path)
         self._created_files.append([file_type, path, contents])
         real_path, fake_path = self._Paths(path)
         if file_type == 'd':
@@ -137,14 +145,8 @@ class FakeFilesystemVsRealTest(TestCase):
             shutil.rmtree(self.real_base)
             os.chdir(self.cwd)
 
-    def _GetErrno(self, raised_error):
-        try:
-            return (raised_error and raised_error.errno) or None
-        except AttributeError:
-            return None
-
-    def _CompareBehaviors(self, method_name, path, real, fake,
-                          method_returns_path=False):
+    def _compare_behaviors(self, method_name, path, real, fake,
+                           method_returns_path=False):
         """Invoke an os method in both real and fake contexts and compare results.
 
         Invoke a real filesystem method with a path to a real file and invoke a fake
@@ -167,8 +169,8 @@ class FakeFilesystemVsRealTest(TestCase):
         """
         # pylint: disable=C6403
 
-        def _ErrorClass(e):
-            return (e and e.__class__.__name__) or 'None'
+        def _error_class(exc):
+            return (exc and exc.__class__.__name__) or 'None'
 
         real_value = None
         fake_value = None
@@ -195,26 +197,26 @@ class FakeFilesystemVsRealTest(TestCase):
             fake_err = e
         # We only compare on the error class because the acutal error contents
         # is almost always different because of the file paths.
-        if _ErrorClass(real_err) != _ErrorClass(fake_err):
+        if _error_class(real_err) != _error_class(fake_err):
             if real_err is None:
                 return '%s: real version returned %s, fake raised %s' % (
-                    method_call, real_value, _ErrorClass(fake_err))
+                    method_call, real_value, _error_class(fake_err))
             if fake_err is None:
                 return '%s: real version raised %s, fake returned %s' % (
-                    method_call, _ErrorClass(real_err), fake_value)
+                    method_call, _error_class(real_err), fake_value)
             return '%s: real version raised %s, fake raised %s' % (
-                method_call, _ErrorClass(real_err), _ErrorClass(fake_err))
-        real_errno = self._GetErrno(real_err)
-        fake_errno = self._GetErrno(fake_err)
+                method_call, _error_class(real_err), _error_class(fake_err))
+        real_errno = _get_errno(real_err)
+        fake_errno = _get_errno(fake_err)
         if real_errno != fake_errno:
             return '%s(%s): both raised %s, real errno %s, fake errno %s' % (
-                method_name, path, _ErrorClass(real_err), real_errno, fake_errno)
+                method_name, path, _error_class(real_err), real_errno, fake_errno)
         # If the method is supposed to return a full path AND both values
         # begin with the expected full path, then trim it off.
         if method_returns_path:
             if (real_value and fake_value
-                and real_value.startswith(self.real_base)
-                and fake_value.startswith(self.fake_base)):
+                    and real_value.startswith(self.real_base)
+                    and fake_value.startswith(self.fake_base)):
                 real_value = real_value[len(self.real_base):]
                 fake_value = fake_value[len(self.fake_base):]
         if real_value != fake_value:
@@ -239,9 +241,9 @@ class FakeFilesystemVsRealTest(TestCase):
         Returns:
             A description of the difference in behavior, or None.
         """
-        path = Sep(path)
-        return self._CompareBehaviors(method_name, path, os, self.fake_os,
-                                      method_returns_path)
+        path = sep(path)
+        return self._compare_behaviors(method_name, path, os, self.fake_os,
+                                       method_returns_path)
 
     def DiffOpenMethodBehavior(self, method_name, path, mode, data,
                                method_returns_data=True):
@@ -263,8 +265,8 @@ class FakeFilesystemVsRealTest(TestCase):
         """
         with open(path, mode) as real_fh:
             with self.fake_open(path, mode) as fake_fh:
-                return self._CompareBehaviors(method_name, data, real_fh, fake_fh,
-                                              method_returns_data)
+                return self._compare_behaviors(method_name, data, real_fh, fake_fh,
+                                               method_returns_data)
 
     def DiffOsPathMethodBehavior(self, method_name, path,
                                  method_returns_path=False):
@@ -283,8 +285,8 @@ class FakeFilesystemVsRealTest(TestCase):
         Returns:
             A description of the difference in behavior, or None.
         """
-        return self._CompareBehaviors(method_name, path, os.path, self.fake_os.path,
-                                      method_returns_path)
+        return self._compare_behaviors(method_name, path, os.path, self.fake_os.path,
+                                       method_returns_path)
 
     def assertOsPathMethodBehaviorMatches(self, method_name, path,
                                           method_returns_path=False):
@@ -302,13 +304,13 @@ class FakeFilesystemVsRealTest(TestCase):
         Raises:
             AssertionError if there is any difference in behavior.
         """
-        path = Sep(path)
+        path = sep(path)
         diff = self.DiffOsPathMethodBehavior(method_name, path, method_returns_path)
         if diff:
             self.fail(diff)
 
     def assertAllOsBehaviorsMatch(self, path):
-        path = Sep(path)
+        path = sep(path)
         os_method_names = [] if self.is_windows else ['readlink']
         os_method_names_no_args = ['getcwd']
         if sys.version_info < (3, 0):
@@ -321,7 +323,7 @@ class FakeFilesystemVsRealTest(TestCase):
         if not self.is_windows:
             os_path_method_names.append('islink')
             os_path_method_names.append('lexists')
-        wrapped_methods = [['access', self._AccessReal, self._AccessFake],
+        wrapped_methods = [['access', self._access_real, self._access_fake],
                            ['stat.size', self._StatSizeReal, self._StatSizeFake],
                            ['lstat.size', self._LstatSizeReal, self._LstatSizeFake]
                            ]
@@ -341,7 +343,7 @@ class FakeFilesystemVsRealTest(TestCase):
             if diff:
                 differences.append(diff)
         for m in wrapped_methods:
-            diff = self._CompareBehaviors(m[0], path, m[1], m[2])
+            diff = self._compare_behaviors(m[0], path, m[1], m[2])
             if diff:
                 differences.append(diff)
         if differences:
@@ -349,7 +351,7 @@ class FakeFilesystemVsRealTest(TestCase):
                       (path, '\n    '.join(differences)))
 
     def assertFileHandleBehaviorsMatch(self, path, mode, data):
-        path = Sep(path)
+        path = sep(path)
         write_method_names = ['write', 'writelines']
         read_method_names = ['read', 'readlines']
         other_method_names = ['truncate', 'flush', 'close']
@@ -365,12 +367,13 @@ class FakeFilesystemVsRealTest(TestCase):
         if differences:
             self.fail('Behaviors do not match for %s:\n    %s' %
                       (path, '\n    '.join(differences)))
-    # Helpers for checks which are not straight method calls.
 
-    def _AccessReal(self, path):
+    # Helpers for checks which are not straight method calls.
+    @staticmethod
+    def _access_real(path):
         return os.access(path, os.R_OK)
 
-    def _AccessFake(self, path):
+    def _access_fake(self, path):
         return self.fake_os.access(path, os.R_OK)
 
     def _StatSizeReal(self, path):
@@ -597,7 +600,7 @@ class FakeFilesystemVsRealTest(TestCase):
         self.assertFileHandleBehaviorsMatch('append', 'ab', 'other contents')
 
 
-def main(unused_argv):
+def main(_):
     unittest.main()
 
 

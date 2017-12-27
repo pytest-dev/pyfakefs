@@ -26,7 +26,7 @@ class NoPanicMath(object):
     real_math = math
 
     @staticmethod
-    def fabs(x):
+    def fabs(_x):
         return 42
 
     def __getattr__(self, name):
@@ -38,7 +38,7 @@ class ExistingPath(object):
     real_path = path
 
     @staticmethod
-    def exists(path):
+    def exists(_path):
         return True
 
     def __getattr__(self, name):
@@ -84,9 +84,12 @@ class StubOutForTestingTest(unittest.TestCase):
         self.assertEqual(10, mox3_stubout_example.fabs(-10))
 
     def testSetRaiseIfUnknownAttribute(self):
-        self.assertRaises(AttributeError, self.stubber.set, os.path, 'exists_not', lambda x: True)
-        self.assertRaises(AttributeError, self.stubber.set, datetime, 'tomorrow', GroundhogDate)
-        self.assertRaises(AttributeError, self.stubber.set, mox3_stubout_example, 'math1', NoPanicMath)
+        self.assertRaises(AttributeError, self.stubber.set,
+                          os.path, 'exists_not', lambda x: True)
+        self.assertRaises(AttributeError, self.stubber.set,
+                          datetime, 'tomorrow', GroundhogDate)
+        self.assertRaises(AttributeError, self.stubber.set,
+                          mox3_stubout_example, 'math1', NoPanicMath)
 
     def testStuboutMethodWithSmartSet(self):
         non_existing_path = 'non_existing_path'
@@ -121,9 +124,12 @@ class StubOutForTestingTest(unittest.TestCase):
         self.assertFalse(mox3_stubout_example.check_if_exists(non_existing_path))
 
     def testSmartSetRaiseIfUnknownAttribute(self):
-        self.assertRaises(AttributeError, self.stubber.smart_set, os.path, 'exists_not', lambda x: True)
-        self.assertRaises(AttributeError, self.stubber.smart_set, datetime, 'tomorrow', GroundhogDate)
-        self.assertRaises(AttributeError, self.stubber.smart_set, mox3_stubout_example, 'math1', NoPanicMath)
+        self.assertRaises(AttributeError, self.stubber.smart_set,
+                          os.path, 'exists_not', lambda x: True)
+        self.assertRaises(AttributeError, self.stubber.smart_set,
+                          datetime, 'tomorrow', GroundhogDate)
+        self.assertRaises(AttributeError, self.stubber.smart_set,
+                          mox3_stubout_example, 'math1', NoPanicMath)
 
 
 if __name__ == '__main__':

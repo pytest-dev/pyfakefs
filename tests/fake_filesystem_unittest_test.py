@@ -263,11 +263,13 @@ class TestCopyOrAddRealFile(TestPyfakefsUnittestBase):
         self.assertEqual(self.real_byte_contents, fake_file.byte_contents)
 
     def test_add_real_directory(self):
-        '''Add a real directory and the contained files to the fake file system to be read on demand'''
+        '''Add a real directory and the contained files to the fake file system
+        to be read on demand'''
 
         # this tests only the basic functionality inside a unit test, more thorough tests
         # are done in fake_filesystem_test.RealFileSystemAccessTest
-        # Note: this test fails (add_real_directory raises) if 'genericpath' is not added to SKIPNAMES
+        # Note: this test fails (add_real_directory raises) if 'genericpath'
+        # is not added to SKIPNAMES
         root_path = os.path.split(os.path.dirname(self.filepath))[0]
         real_dir_path = os.path.join(root_path, 'pyfakefs')
         self.fs.add_real_directory(real_dir_path)

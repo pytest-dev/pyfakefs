@@ -134,7 +134,7 @@ class FakeShutilModuleTest(RealFsTestCase):
         class NonLocal:
             pass
 
-        def error_handler(_, path, error_info):
+        def error_handler(_, path, _error_info):
             NonLocal.errorHandled = True
             NonLocal.errorPath = path
 

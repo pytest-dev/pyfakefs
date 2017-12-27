@@ -73,6 +73,18 @@ class DynamicImportPatchTest(TestPyfakefsUnittestBase):
         file_object = self.fs.get_object(file_path)
         self.assertEqual('test', file_object.contents)
 
+    def testPathlibPathPatch(self):
+        from pathlib import Path
+
+        file_path = 'test.txt'
+        path = Path(file_path)
+        with path.open('w') as f:
+            f.write('test')
+
+        self.assertTrue(self.fs.exists(file_path))
+        file_object = self.fs.get_object(file_path)
+        self.assertEqual('test', file_object.contents)
+
 
 if __name__ == "__main__":
     unittest.main()

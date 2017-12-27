@@ -80,7 +80,8 @@ class _FakeAccessor(pathlib._Accessor):  # pylint: disable=protected-access
 
     stat = _wrap_strfunc(FakeFilesystem.stat)
 
-    lstat = _wrap_strfunc(lambda fs, path: FakeFilesystem.stat(fs, path, follow_symlinks=False))
+    lstat = _wrap_strfunc(lambda fs, path: FakeFilesystem.stat(fs, path,
+                                                               follow_symlinks=False))
 
     listdir = _wrap_strfunc(FakeFilesystem.listdir)
 
@@ -431,7 +432,8 @@ class FakePath(pathlib.Path):
     def __new__(cls, *args, **kwargs):
         """Creates the correct subclass based on OS."""
         if cls is FakePathlibModule.Path:
-            cls = FakePathlibModule.WindowsPath if os.name == 'nt' else FakePathlibModule.PosixPath
+            cls = (FakePathlibModule.WindowsPath if os.name == 'nt'
+                   else FakePathlibModule.PosixPath)
         self = cls._from_parts(args, init=True)
         return self
 
@@ -553,10 +555,11 @@ class FakePath(pathlib.Path):
             (as returned by os.path.samefile()).
 
             Args:
-                other_path: a path object or string of the file object to be compared with
+                other_path: A path object or string of the file object
+                to be compared with
 
             Raises:
-              OSError: if the filesystem object doesn't exist.
+                OSError: if the filesystem object doesn't exist.
             """
             st = self.stat()
             try:
@@ -573,7 +576,8 @@ class FakePath(pathlib.Path):
                             .replace(os.path.sep, self.filesystem.path_separator))
 
     def touch(self, mode=0o666, exist_ok=True):
-        """Create a fake file for the path with the given access mode, if it doesn't exist.
+        """Create a fake file for the path with the given access mode,
+        if it doesn't exist.
 
         Args:
             mode: the file mode for the file if it does not exist

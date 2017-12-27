@@ -56,7 +56,8 @@ class FakeTempfileModuleTest(fake_filesystem_unittest.TestCase):
         next_fd = len(self.fs.open_files)
         temporary = tempfile.mkstemp()
         self.assertEqual(2, len(temporary))
-        self.assertTrue(temporary[1].startswith(os.path.join(tempfile.gettempdir(), 'tmp')))
+        self.assertTrue(
+            temporary[1].startswith(os.path.join(tempfile.gettempdir(), 'tmp')))
         self.assertEqual(next_fd, temporary[0])
         self.assertTrue(self.fs.exists(temporary[1]))
         mode = 0o666 if self.fs.is_windows_fs else 0o600

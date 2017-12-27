@@ -66,11 +66,11 @@ def create_file(path):
     True
     >>> with open('/test/file.txt') as f:
     ...     f.readlines()
-    ["This is test file '/test/file.txt'.\\n", 'It was created using the open() function.\\n']
+    ["This is test file '/test/file.txt'.\\n", 'It was created using open().\\n']
     """
     with open(path, 'w') as f:
         f.write("This is test file '{0}'.\n".format(path))
-        f.write("It was created using the open() function.\n")
+        f.write("It was created using open().\n")
 
 
 def delete_file(path):
