@@ -454,6 +454,14 @@ class FakeOsModuleTest(FakeOsModuleTestBase):
         self.check_windows_only()
         self.check_remove_dir(errno.EACCES)
 
+    def test_remove_dir_with_drive(self):
+        # regression test for issue #337
+        self.check_windows_only()
+        self.skip_real_fs()
+        dir_path = self.os.path.join('C:', 'test')
+        self.filesystem.create_dir(dir_path)
+        self.assert_raises_os_error(errno.EACCES, self.os.remove, dir_path)
+
     def test_remove_file(self):
         directory = self.make_path('zzy')
         file_path = self.os.path.join(directory, 'plugh')

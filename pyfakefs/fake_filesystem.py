@@ -933,7 +933,7 @@ class FakeFilesystem(object):
         Args:
             path_separator:  optional substitute for os.path.sep
             total_size: if not None, the total size in bytes of the
-            root filesystem.
+                root filesystem.
 
         Example usage to emulate real file systems:
             filesystem = FakeFilesystem(
@@ -1644,8 +1644,11 @@ class FakeFilesystem(object):
         path_components = path.split(self._path_separator(path))
         assert drive or path_components
         if not path_components[0]:
-            # This is an absolute path.
-            path_components = path_components[1:]
+            if len(path_components) > 1 and not path_components[1]:
+                path_components = []
+            else:
+                # This is an absolute path.
+                path_components = path_components[1:]
         if drive:
             path_components.insert(0, drive)
         return path_components
@@ -1675,7 +1678,7 @@ class FakeFilesystem(object):
         root_name = self._matching_string(file_path, self.root.name)
         return (file_path == root_name or
                 not self.is_case_sensitive and file_path.lower() == root_name.lower() or
-                len(file_path) == 2 and self._starts_with_drive_letter(file_path))
+                2 <= len(file_path) <= 3 and self._starts_with_drive_letter(file_path))
 
     def _ends_with_path_separator(self, file_path):
         return (file_path and
