@@ -102,6 +102,8 @@ class RealFsTestMixin(object):
         return False
 
     def path_separator(self):
+        if self.use_real_fs():
+            return os.path.sep
         return '/'
 
     def check_windows_only(self):

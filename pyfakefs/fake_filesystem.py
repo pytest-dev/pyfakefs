@@ -2013,7 +2013,7 @@ class FakeFilesystem(object):
         # remove trailing separator
         sep = self._path_separator(path)
         alt_sep = self._alternative_path_separator(path)
-        if path.endswith(sep) or (alt_sep and path.endswith(alt_sep)):
+        while path.endswith(sep) or (alt_sep and path.endswith(alt_sep)):
             path = path[:-1]
         path = self._original_path(path)
 

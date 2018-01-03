@@ -332,6 +332,13 @@ class FakeOsModuleTest(FakeOsModuleTestBase):
         self.assertEqual(0,
                          self.os.lstat(link_path)[stat.ST_SIZE])
 
+    def test_lstat_trailing_sep(self):
+        # regression test for #342
+        stat = self.os.lstat(self.base_path)
+        self.assertEqual(stat, self.os.lstat(self.base_path + self.path_separator()))
+        self.assertEqual(stat, self.os.lstat(
+            self.base_path + self.path_separator() + self.path_separator()))
+
     @unittest.skipIf(sys.version_info < (3, 3),
                      'file descriptor as path new in Python 3.3')
     def test_lstat_uses_open_fd_as_path(self):
