@@ -55,10 +55,6 @@ class FakeOsModuleTest(FakeOsModuleTestBase):
         self.rwx = self.os.R_OK | self.os.W_OK | self.os.X_OK
         self.rw = self.os.R_OK | self.os.W_OK
 
-    @property
-    def use_drive_root(self):
-        return True
-
     def test_chdir(self):
         """chdir should work on a directory."""
         directory = self.make_path('foo')

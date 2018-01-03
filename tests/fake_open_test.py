@@ -1434,8 +1434,8 @@ class ResolvePathTest(FakeFileOpenTestBase):
 
     def test_that_drive_letters_are_preserved(self):
         self.filesystem.is_windows_fs = True
-        self.assertEqual('c:!foo!bar',
-                         self.filesystem.resolve_path('c:!foo!!bar'))
+        self.assertEqual('C:!foo!bar',
+                         self.filesystem.resolve_path('C:!foo!!bar'))
 
     @unittest.skipIf(sys.version_info < (2, 7, 8),
                      'UNC path support since Python 2.7.8')

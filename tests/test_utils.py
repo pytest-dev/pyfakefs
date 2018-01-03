@@ -91,10 +91,6 @@ class RealFsTestMixin(object):
             self.create_basepath()
 
     @property
-    def use_drive_root(self):
-        return False
-
-    @property
     def is_macos(self):
         return TestCase.is_macos
 
@@ -269,7 +265,7 @@ class RealFsTestMixin(object):
         if self.filesystem is not None:
             old_base_path = self.base_path
             self.base_path = self.filesystem.path_separator + 'basepath'
-            if self.is_windows_fs and self.use_drive_root:
+            if self.is_windows_fs:
                 self.base_path = 'C:' + self.base_path
             if old_base_path != self.base_path:
                 if not self.filesystem.exists(self.base_path):

@@ -40,8 +40,8 @@ class RealFsTestCase(fake_filesystem_unittest.TestCase, RealFsTestMixin):
             self.filesystem = self.fs
             self.os = os
             self.open = open
-            self.fs.set_disk_usage(1000)
             self.create_basepath()
+            self.fs.set_disk_usage(1000, self.base_path)
 
     def tearDown(self):
         if self.use_real_fs():
@@ -322,7 +322,8 @@ class FakeShutilModuleTest(RealFsTestCase):
         self.skip_real_fs()
         file_path = self.make_path('foo', 'bar')
         self.fs.create_file(file_path, st_size=400)
-        disk_usage = shutil.disk_usage('/')
+        # root = self.os.path.splitdrive(file_path)[0] + self.fs.path_separator
+        disk_usage = shutil.disk_usage(file_path)
         self.assertEqual(1000, disk_usage.total)
         self.assertEqual(400, disk_usage.used)
         self.assertEqual(600, disk_usage.free)

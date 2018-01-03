@@ -342,11 +342,11 @@ class FakePathlibFileObjectPropertyTest(RealPathlibTestCase):
         self.skip_if_symlink_not_supported()
         self.check_lstat(0)
 
+    @unittest.skipIf(is_windows, 'Linux specific behavior')
     def test_chmod(self):
         self.check_linux_only()
-        self.path(self.file_link_path).chmod(0o444)
         file_stat = self.os.stat(self.file_path)
-        self.assertEqual(file_stat.st_mode, stat.S_IFREG | 0o444)
+        self.assertEqual(file_stat.st_mode, stat.S_IFREG | 0o666)
         link_stat = self.os.lstat(self.file_link_path)
         # we get stat.S_IFLNK | 0o755 under MacOs
         self.assertEqual(link_stat.st_mode, stat.S_IFLNK | 0o777)
@@ -385,7 +385,7 @@ class FakePathlibFileObjectPropertyTest(RealPathlibTestCase):
         path = self.path('/foo/bar')
         self.assertRaises(FileNotFoundError, path.resolve)
 
-    @unittest.skipIf(sys.version_info >= (3, 6),
+    @unittest.skipIf(not is_windows or sys.version_info >= (3, 6),
                      'Changed behavior in Python 3.6')
     def test_resolve_file_as_parent_windows(self):
         self.check_windows_only()
@@ -393,7 +393,7 @@ class FakePathlibFileObjectPropertyTest(RealPathlibTestCase):
         path = self.path(self.make_path('a_file', 'this can not exist'))
         self.assertRaises(FileNotFoundError, path.resolve)
 
-    @unittest.skipIf(sys.version_info >= (3, 6),
+    @unittest.skipIf(is_windows or sys.version_info >= (3, 6),
                      'Changed behavior in Python 3.6')
     def test_resolve_file_as_parent_posix(self):
         self.check_posix_only()
