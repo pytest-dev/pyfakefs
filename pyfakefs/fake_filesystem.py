@@ -1332,6 +1332,12 @@ class FakeFilesystem(object):
         return (file_object in [wrapper.get_object()
                                 for wrapper in self.open_files if wrapper])
 
+    def _normalize_path_sep(self, path):
+        if self.alternative_path_separator is None or not path:
+            return path
+        return path.replace(self._alternative_path_separator(path),
+                            self._path_separator(path))
+
     def normcase(self, path):
         """Replace all appearances of alternative path separator
         with path separator.
@@ -1346,10 +1352,7 @@ class FakeFilesystem(object):
         """
         if sys.version_info >= (3, 6):
             path = os.fspath(path)
-        if self.alternative_path_separator is None or not path:
-            return path
-        return path.replace(self._alternative_path_separator(path),
-                            self._path_separator(path))
+        return self._normalize_path_sep(path)
 
     def normpath(self, path):
         """Mimic os.path.normpath using the specified path_separator.
@@ -1669,6 +1672,7 @@ class FakeFilesystem(object):
 
     def _starts_with_root_path(self, file_path):
         root_name = self._matching_string(file_path, self.root.name)
+        file_path = self._normalize_path_sep(file_path)
         return (file_path.startswith(root_name) or
                 not self.is_case_sensitive and file_path.lower().startswith(
                     root_name.lower()) or
@@ -1827,8 +1831,7 @@ class FakeFilesystem(object):
             # For links to absolute paths, we want to throw out everything
             # in the path built so far and replace with the link. For relative
             # links, we have to append the link to what we have so far,
-            if (not link_path.startswith(sep) and
-                    (alt_sep is None or not link_path.startswith(alt_sep))):
+            if not self._starts_with_root_path(link_path):
                 # Relative path. Append remainder of path to what we have
                 # processed so far, excluding the name of the link itself.
                 # /a/b => ../c  should yield /a/../c

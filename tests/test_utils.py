@@ -75,14 +75,24 @@ class RealFsTestMixin(object):
         self.open = open
         self.os = os
         self.is_python2 = sys.version_info[0] == 2
+        self.base_path = None
         if self.use_real_fs():
             self.base_path = tempfile.mkdtemp()
-        else:
-            self.base_path = self.path_separator() + 'basepath'
 
     @property
     def is_windows_fs(self):
         return TestCase.is_windows
+
+    def set_windows_fs(self, value):
+        if self.filesystem is not None:
+            self.filesystem.is_windows_fs = value
+            if value:
+                self.filesystem.is_macos = False
+            self.create_basepath()
+
+    @property
+    def use_drive_root(self):
+        return False
 
     @property
     def is_macos(self):
@@ -104,8 +114,7 @@ class RealFsTestMixin(object):
                 raise unittest.SkipTest(
                     'Testing Windows specific functionality')
         else:
-            self.filesystem.is_windows_fs = True
-            self.filesystem.is_macos = False
+            self.set_windows_fs(True)
 
     def check_linux_only(self):
         if self.use_real_fs():
@@ -113,7 +122,7 @@ class RealFsTestMixin(object):
                 raise unittest.SkipTest(
                     'Testing Linux specific functionality')
         else:
-            self.filesystem.is_windows_fs = False
+            self.set_windows_fs(False)
             self.filesystem.is_macos = False
 
     def check_macos_only(self):
@@ -122,7 +131,7 @@ class RealFsTestMixin(object):
                 raise unittest.SkipTest(
                     'Testing MacOS specific functionality')
         else:
-            self.filesystem.is_windows_fs = False
+            self.set_windows_fs(False)
             self.filesystem.is_macos = True
 
     def check_linux_and_windows(self):
@@ -155,7 +164,7 @@ class RealFsTestMixin(object):
                 raise unittest.SkipTest(
                     'Testing Posix specific functionality')
         else:
-            self.filesystem.is_windows_fs = False
+            self.set_windows_fs(False)
 
     def skip_real_fs(self):
         if self.use_real_fs():
@@ -256,6 +265,22 @@ class RealFsTestMixin(object):
             error = errno.EINVAL
         return error
 
+    def create_basepath(self):
+        if self.filesystem is not None:
+            old_base_path = self.base_path
+            self.base_path = self.filesystem.path_separator + 'basepath'
+            if self.is_windows_fs and self.use_drive_root:
+                self.base_path = 'C:' + self.base_path
+            if old_base_path != self.base_path:
+                if not self.filesystem.exists(self.base_path):
+                    self.filesystem.create_dir(self.base_path)
+                if old_base_path is not None:
+                    for entry in self.filesystem.listdir(old_base_path):
+                        old_name = self.os.path.join(old_base_path, entry)
+                        new_name = self.os.path.join(self.base_path, entry)
+                        self.filesystem.rename(old_name, new_name)
+                    self.os.removedirs(old_base_path)
+
 
 class RealFsTestCase(TestCase, RealFsTestMixin):
     def __init__(self, methodName='runTest'):
@@ -269,7 +294,7 @@ class RealFsTestCase(TestCase, RealFsTestMixin):
                 path_separator=self.path_separator())
             self.open = fake_filesystem.FakeFileOpen(self.filesystem)
             self.os = fake_filesystem.FakeOsModule(self.filesystem)
-            self.filesystem.create_dir(self.base_path)
+            self.create_basepath()
 
     @property
     def is_windows_fs(self):

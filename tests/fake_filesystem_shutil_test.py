@@ -41,7 +41,7 @@ class RealFsTestCase(fake_filesystem_unittest.TestCase, RealFsTestMixin):
             self.os = os
             self.open = open
             self.fs.set_disk_usage(1000)
-            self.fs.create_dir(self.base_path)
+            self.create_basepath()
 
     def tearDown(self):
         if self.use_real_fs():
@@ -275,9 +275,10 @@ class FakeShutilModuleTest(RealFsTestCase):
 
     def test_move_file_into_other_filesystem(self):
         self.skip_real_fs()
-        self.fs.add_mount_point('/mount')
-        src_file = '/original_xyzzy'
-        dst_file = '/mount/moved_xyzzy'
+        mount_point = self.create_mount_point()
+
+        src_file = self.make_path('original_xyzzy')
+        dst_file = self.os.path.join(mount_point, 'moved_xyzzy')
         src_object = self.fs.create_file(src_file)
         src_ino = src_object.st_ino
         src_dev = src_object.st_dev
@@ -319,17 +320,25 @@ class FakeShutilModuleTest(RealFsTestCase):
     @unittest.skipIf(sys.version_info < (3, 3), 'New in Python 3.3')
     def test_disk_usage(self):
         self.skip_real_fs()
-        self.fs.create_file('/foo/bar', st_size=400)
+        file_path = self.make_path('foo', 'bar')
+        self.fs.create_file(file_path, st_size=400)
         disk_usage = shutil.disk_usage('/')
         self.assertEqual(1000, disk_usage.total)
         self.assertEqual(400, disk_usage.used)
         self.assertEqual(600, disk_usage.free)
         self.assertEqual((1000, 400, 600), disk_usage)
 
-        self.fs.add_mount_point('/mount', total_size=500)
-        self.fs.create_file('/mount/foo/bar', st_size=400)
-        disk_usage = shutil.disk_usage('/mount/foo/')
+        mount_point = self.create_mount_point()
+        dir_path = self.os.path.join(mount_point, 'foo')
+        file_path = self.os.path.join(dir_path, 'bar')
+        self.fs.create_file(file_path, st_size=400)
+        disk_usage = shutil.disk_usage(dir_path)
         self.assertEqual((500, 400, 100), disk_usage)
+
+    def create_mount_point(self):
+        mount_point = 'M:' if self.is_windows_fs else '/mount'
+        self.fs.add_mount_point(mount_point, total_size=500)
+        return mount_point
 
 
 class RealShutilModuleTest(FakeShutilModuleTest):

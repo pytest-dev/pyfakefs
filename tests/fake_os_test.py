@@ -55,6 +55,10 @@ class FakeOsModuleTest(FakeOsModuleTestBase):
         self.rwx = self.os.R_OK | self.os.W_OK | self.os.X_OK
         self.rw = self.os.R_OK | self.os.W_OK
 
+    @property
+    def use_drive_root(self):
+        return True
+
     def test_chdir(self):
         """chdir should work on a directory."""
         directory = self.make_path('foo')
@@ -1075,7 +1079,7 @@ class FakeOsModuleTest(FakeOsModuleTestBase):
         """Raises exception if asked to remove '/'."""
         self.skip_real_fs()
         self.os.rmdir(self.base_path)
-        directory = self.os.path.sep
+        directory = self.os.path.splitdrive(self.base_path)[0] + self.os.path.sep
         self.assertTrue(self.os.path.exists(directory))
         self.assert_raises_os_error(errno.EBUSY, self.os.removedirs, directory)
 
@@ -1091,7 +1095,7 @@ class FakeOsModuleTest(FakeOsModuleTestBase):
         self.assertTrue(self.os.path.exists(directory))
         self.assert_raises_os_error(errno.EBUSY, self.os.removedirs, directory)
         head, unused_tail = self.os.path.split(directory)
-        while head != self.os.path.sep:
+        while self.os.path.splitdrive(head)[1] != self.os.path.sep:
             self.assertFalse(self.os.path.exists(directory))
             head, unused_tail = self.os.path.split(head)
 
