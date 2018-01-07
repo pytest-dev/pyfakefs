@@ -113,7 +113,7 @@ class TestCase(unittest.TestCase):
     def __init__(self, methodName='runTest', additional_skip_names=None,
                  patch_path=True, special_names=None,
                  modules_to_reload=None,
-                 use_dynamic_patch=False):
+                 use_dynamic_patch=True):
         """Creates the test class instance and the stubber used to stub out
         file system related modules.
 
@@ -140,11 +140,10 @@ class TestCase(unittest.TestCase):
                 Note: this is done independently of `use_dynamic_patch`
                 Caution: this may not work with some Python versions
                 or have unwanted side effects.
-            use_dynamic_patch (experimental): If `True`, dynamic patching
+            use_dynamic_patch: If `True`, dynamic patching
                 after setup is used (for example for modules loaded locally
                 inside of functions).
-                Caution: this may not work with some Python versions
-                or have unwanted side effects.
+                Can be switched off if it causes unwanted side effects.
 
         If you specify arguments `additional_skip_names` or `patch_path` here
         and you have DocTests, consider also specifying the same arguments to
@@ -232,6 +231,7 @@ class TestCase(unittest.TestCase):
             dyn_patcher = DynamicPatcher(self._stubber)
             sys.meta_path.insert(0, dyn_patcher)
             self.addCleanup(lambda: sys.meta_path.pop(0))
+            self.addCleanup(dyn_patcher.cleanup)
 
     @DeprecationWarning
     def tearDownPyfakefs(self):
@@ -436,6 +436,7 @@ class DynamicPatcher(object):
     def __init__(self, patcher):
         self._patcher = patcher
         self._patching = False
+        self.sysmodules = {}
         self.modules = self._patcher._fake_modules
         if 'path' in self.modules:
             self.modules['os.path'] = self.modules['path']
@@ -445,7 +446,12 @@ class DynamicPatcher(object):
         # otherwise the find_... methods will not be called
         for module in self.modules:
             if self.needs_patch(module) and module in sys.modules:
+                self.sysmodules[module] = sys.modules[module]
                 del sys.modules[module]
+
+    def cleanup(self):
+        for module in self.sysmodules:
+            sys.modules[module] = self.sysmodules[module]
 
     def needs_patch(self, name):
         """Check if the module with the given name shall be replaced."""

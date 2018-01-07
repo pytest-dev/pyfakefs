@@ -1391,7 +1391,7 @@ class FakeOsModuleTest(FakeOsModuleTestBase):
             # Test that this doesn't raise anything
             self.os.fsync(test_fd)
             # And just for sanity, double-check that this still raises
-            self.assert_raises_os_error(errno.EBADF, self.os.fsync, test_fd + 1)
+            self.assert_raises_os_error(errno.EBADF, self.os.fsync, test_fd + 10)
 
     def test_fsync_pass_windows(self):
         self.check_windows_only()
@@ -1402,7 +1402,7 @@ class FakeOsModuleTest(FakeOsModuleTestBase):
             # Test that this doesn't raise anything
             self.os.fsync(test_fd)
             # And just for sanity, double-check that this still raises
-            self.assert_raises_os_error(errno.EBADF, self.os.fsync, test_fd + 1)
+            self.assert_raises_os_error(errno.EBADF, self.os.fsync, test_fd + 10)
         with self.open(test_file_path, 'r') as test_file:
             test_fd = test_file.fileno()
             self.assert_raises_os_error(errno.EBADF, self.os.fsync, test_fd)
@@ -1417,7 +1417,7 @@ class FakeOsModuleTest(FakeOsModuleTestBase):
         # Test that this doesn't raise anything
         self.os.fdatasync(test_fd)
         # And just for sanity, double-check that this still raises
-        self.assert_raises_os_error(errno.EBADF, self.os.fdatasync, test_fd + 1)
+        self.assert_raises_os_error(errno.EBADF, self.os.fdatasync, test_fd + 10)
 
     def test_access700(self):
         # set up
@@ -2837,7 +2837,7 @@ class FakeOsModuleTestCaseInsensitiveFS(FakeOsModuleTestBase):
         # Test that this doesn't raise anything
         self.os.fsync(test_fd)
         # And just for sanity, double-check that this still raises
-        self.assert_raises_os_error(errno.EBADF, self.os.fsync, test_fd + 1)
+        self.assert_raises_os_error(errno.EBADF, self.os.fsync, test_fd + 10)
 
     def test_chmod(self):
         # set up
