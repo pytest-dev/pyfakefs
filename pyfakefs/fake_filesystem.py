@@ -1282,10 +1282,10 @@ class FakeFilesystem(object):
         """
         if self._free_fd_heap:
             open_fd = heapq.heappop(self._free_fd_heap)
-            self.open_files[open_fd] = file_obj
+            self.open_files[open_fd] = [file_obj]
             return open_fd
 
-        self.open_files.append(file_obj)
+        self.open_files.append([file_obj])
         return len(self.open_files) - 1
 
     def _close_open_file(self, file_des):
@@ -1318,7 +1318,7 @@ class FakeFilesystem(object):
             raise TypeError('an integer is required')
         if (file_des >= len(self.open_files) or self.open_files[file_des] is None):
             raise OSError(errno.EBADF, 'Bad file descriptor', file_des)
-        return self.open_files[file_des]
+        return self.open_files[file_des][0]
 
     def has_open_file(self, file_object):
         """Return True if the given file object is in the list of open files.
@@ -1329,8 +1329,8 @@ class FakeFilesystem(object):
         Returns:
             `True` if the file is open.
         """
-        return (file_object in [wrapper.get_object()
-                                for wrapper in self.open_files if wrapper])
+        return (file_object in [wrappers[0].get_object()
+                                for wrappers in self.open_files if wrappers])
 
     def _normalize_path_sep(self, path):
         if self.alternative_path_separator is None or not path:
@@ -4295,13 +4295,16 @@ class FakeFileWrapper(object):
     def close(self):
         """Close the file."""
         # ignore closing a closed file
-        if self not in self._filesystem.open_files:
+        if not self._is_open():
             return
+
         # for raw io, all writes are flushed immediately
         if self.allow_update and not self.raw_io:
             self._file_object.set_contents(self._io.getvalue(), self._encoding)
         if self._closefd:
             self._filesystem._close_open_file(self.filedes)
+        else:
+            self._filesystem.open_files[self.filedes].remove(self)
         if self.delete_on_close:
             self._filesystem.remove_object(self.get_object().path)
 
@@ -4541,8 +4544,14 @@ class FakeFileWrapper(object):
 
         return getattr(self._io, name)
 
+    def _is_open(self):
+        return (self.filedes < len(self._filesystem.open_files) and
+                self._filesystem.open_files[self.filedes] is not None and
+                self in self._filesystem.open_files[self.filedes])
+
+
     def _check_open_file(self):
-        if not self.is_stream and not self in self._filesystem.open_files:
+        if not self.is_stream and not self._is_open():
             raise ValueError('I/O operation on closed file')
 
     def __iter__(self):
@@ -4741,7 +4750,7 @@ class FakeFileOpen(object):
         if filedes is not None:
             fakefile.filedes = filedes
             # replace the file wrapper
-            self.filesystem.open_files[filedes] = fakefile
+            self.filesystem.open_files[filedes].append(fakefile)
         else:
             fakefile.filedes = self.filesystem._add_open_file(fakefile)
         return fakefile

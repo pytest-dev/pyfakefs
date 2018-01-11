@@ -890,6 +890,18 @@ class FakeFileOpenTest(FakeFileOpenTestBase):
             f0.close()
             self.assertEqual('', f1.read())
 
+    @unittest.skipIf(TestCase.is_python2, 'closefd argument not available in Python2')
+    def test_closing_file_with_different_close_mode(self):
+        self.skip_real_fs()
+        filename = self.make_path('test.txt')
+        fd = self.os.open(filename, os.O_CREAT | os.O_RDWR)
+        file_obj = self.filesystem.get_object(filename)
+        with self.open(fd, 'wb', closefd=False) as fp:
+            fp.write(b'test')
+        self.assertTrue(self.filesystem.has_open_file(file_obj))
+        self.os.close(fd)
+        self.assertFalse(self.filesystem.has_open_file(file_obj))
+
     def test_truncate_flushes_zeros(self):
         # Regression test for #301
         file_path = self.make_path('baz')
