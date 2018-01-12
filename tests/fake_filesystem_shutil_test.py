@@ -27,6 +27,8 @@ import unittest
 from pyfakefs import fake_filesystem_unittest
 from tests.test_utils import RealFsTestMixin
 
+is_windows = sys.platform == 'win32'
+
 
 class RealFsTestCase(fake_filesystem_unittest.TestCase, RealFsTestMixin):
     def __init__(self, methodName='runTest'):
@@ -91,6 +93,7 @@ class FakeShutilModuleTest(RealFsTestCase):
         self.assertTrue(os.path.exists(file_path))
         self.os.chmod(file_path, 0o666)
 
+    @unittest.skipIf(is_windows, 'Posix specific behavior')
     def test_rmtree_without_permission_for_a_dir_in_posix(self):
         self.check_posix_only()
         dir_path = self.make_path('foo')
@@ -102,6 +105,7 @@ class FakeShutilModuleTest(RealFsTestCase):
         self.assertTrue(os.path.exists(file_path))
         self.os.chmod(dir_path, 0o777)
 
+    @unittest.skipIf(is_windows, 'Posix specific behavior')
     def test_rmtree_with_open_file_posix(self):
         self.check_posix_only()
         dir_path = self.make_path('foo')
@@ -405,6 +409,7 @@ class FakeCopyFileTest(RealFsTestCase):
         self.assertRaises(IOError, shutil.copyfile, src_file, dst_file)
         os.chmod(dst_file, 0o666)
 
+    @unittest.skipIf(is_windows, 'Posix specific behavior')
     def test_raises_if_dest_dir_is_not_writable_under_posix(self):
         self.check_posix_only()
         src_file = self.make_path('xyzzy')
@@ -425,6 +430,7 @@ class FakeCopyFileTest(RealFsTestCase):
         self.assertFalse(os.path.exists(src_file))
         self.assertRaises(IOError, shutil.copyfile, src_file, dst_file)
 
+    @unittest.skipIf(is_windows, 'Posix specific behavior')
     def test_raises_if_src_not_readable(self):
         self.check_posix_only()
         src_file = self.make_path('xyzzy')

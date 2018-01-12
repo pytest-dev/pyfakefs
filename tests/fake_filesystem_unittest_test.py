@@ -29,7 +29,7 @@ from unittest import TestCase
 
 from pyfakefs import fake_filesystem_unittest
 from pyfakefs.fake_filesystem_unittest import Patcher
-from tests.import_as_example import check_if_exists
+import tests.import_as_example
 
 if sys.version_info >= (3, 4):
     import pathlib
@@ -135,9 +135,9 @@ class TestPyfakefsUnittest(TestPyfakefsUnittestBase):  # pylint: disable=R0904
 
 class TestImportAsOtherName(fake_filesystem_unittest.TestCase):
     def __init__(self, methodName='RunTest'):
-        special_names = {'tests.import_as_example': {'os': '_os'}}
+        modules_to_load = [tests.import_as_example]
         super(TestImportAsOtherName, self).__init__(methodName,
-                                                    special_names=special_names)
+                                                    modules_to_reload=modules_to_load)
 
     def setUp(self):
         self.setUpPyfakefs()
@@ -146,7 +146,7 @@ class TestImportAsOtherName(fake_filesystem_unittest.TestCase):
         file_path = '/foo/bar/baz'
         self.fs.create_file(file_path)
         self.assertTrue(self.fs.exists(file_path))
-        self.assertTrue(check_if_exists(file_path))
+        self.assertTrue(tests.import_as_example.check_if_exists(file_path))
 
 
 from tests.fixtures import module_with_attributes
