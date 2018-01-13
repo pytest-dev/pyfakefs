@@ -4209,7 +4209,7 @@ class FakeFileWrapper(object):
                  append=False, delete_on_close=False, filesystem=None,
                  newline=None, binary=True, closefd=True, encoding=None,
                  errors=None, raw_io=False, is_stream=False, use_io=True):
-        self._file_object = file_object
+        self.file_object = file_object
         self._file_path = file_path
         self._append = append
         self._read = read
@@ -4286,7 +4286,7 @@ class FakeFileWrapper(object):
 
     def get_object(self):
         """Return the FakeFile object that is wrapped by the current instance."""
-        return self._file_object
+        return self.file_object
 
     def fileno(self):
         """Return the file descriptor of the file object."""
@@ -4300,7 +4300,7 @@ class FakeFileWrapper(object):
 
         # for raw io, all writes are flushed immediately
         if self.allow_update and not self.raw_io:
-            self._file_object.set_contents(self._io.getvalue(), self._encoding)
+            self.file_object.set_contents(self._io.getvalue(), self._encoding)
         if self._closefd:
             self._filesystem._close_open_file(self.filedes)
         else:
@@ -4313,8 +4313,17 @@ class FakeFileWrapper(object):
         self._check_open_file()
         if self.allow_update:
             self._io.flush()
-            self._file_object.set_contents(self._io.getvalue(), self._encoding)
-            self._file_epoch = self._file_object.epoch
+            self.file_object.set_contents(self._io.getvalue(), self._encoding)
+            self._file_epoch = self.file_object.epoch
+
+            if not self.is_stream:
+                self._flush_related_files()
+
+    def _flush_related_files(self):
+        for open_files in self._filesystem.open_files[3:]:
+            for open_file in open_files:
+                if open_file is not self and self.file_object == open_file.file_object:
+                    open_file._sync_io()
 
     def seek(self, offset, whence=0):
         """Move read/write pointer in 'file'."""
@@ -4358,13 +4367,13 @@ class FakeFileWrapper(object):
 
     def _sync_io(self):
         """Update the stream with changes to the file object contents."""
-        if self._file_epoch == self._file_object.epoch:
+        if self._file_epoch == self.file_object.epoch:
             return
 
         if isinstance(self._io, io.BytesIO):
-            contents = self._file_object.byte_contents
+            contents = self.file_object.byte_contents
         else:
-            contents = self._file_object.contents
+            contents = self.file_object.contents
 
         is_stream_reader_writer = isinstance(self._io, codecs.StreamReaderWriter)
         if is_stream_reader_writer:
@@ -4380,7 +4389,7 @@ class FakeFileWrapper(object):
 
         if is_stream_reader_writer:
             self._io.stream.allow_update = False
-        self._file_epoch = self._file_object.epoch
+        self._file_epoch = self.file_object.epoch
 
     def _read_wrappers(self, name):
         """Wrap a stream attribute in a read wrapper.
@@ -4468,12 +4477,12 @@ class FakeFileWrapper(object):
             size = io_attr(*args, **kwargs)
             self.flush()
             if not self.is_stream:
-                self._file_object.SetSize(size)
+                self.file_object.SetSize(size)
                 buffer_size = len(self._io.getvalue())
                 if buffer_size < size:
                     self._io.seek(buffer_size)
                     self._io.write('\0' * (size - buffer_size))
-                    self._file_object.SetContents(self._io.getvalue(), self._encoding)
+                    self.file_object.SetContents(self._io.getvalue(), self._encoding)
             if sys.version_info[0] > 2:
                 return size
 
@@ -4497,10 +4506,10 @@ class FakeFileWrapper(object):
 
     def size(self):
         """Return the content size in bytes of the wrapped file."""
-        return self._file_object.st_size
+        return self.file_object.st_size
 
     def __getattr__(self, name):
-        if self._file_object.is_large_file():
+        if self.file_object.is_large_file():
             raise FakeLargeFileIoException(self._file_path)
 
         reading = name.startswith('read') or name == 'next'
@@ -4579,20 +4588,23 @@ class StandardStreamWrapper(object):
         """We do not support closing standard streams."""
         pass
 
+    def is_stream(self):
+        return True
+
 
 class FakeDirWrapper(object):
     """Wrapper for a FakeDirectory object to be used in open files list.
     """
 
     def __init__(self, file_object, file_path, filesystem):
-        self._file_object = file_object
+        self.file_object = file_object
         self._file_path = file_path
         self._filesystem = filesystem
         self.filedes = None
 
     def get_object(self):
         """Return the FakeFile object that is wrapped by the current instance."""
-        return self._file_object
+        return self.file_object
 
     def fileno(self):
         """Return the file descriptor of the file object."""

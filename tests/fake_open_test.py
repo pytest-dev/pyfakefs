@@ -757,6 +757,16 @@ class FakeFileOpenTest(FakeFileOpenTestBase):
             f0.truncate()
             self.assertEqual(4, self.os.path.getsize(file_path))
 
+    def test_update_other_instances_of_same_file_on_flush(self):
+        # Regression test for #302
+        file_path = self.make_path('baz')
+        f0 = self.open(file_path, 'w')
+        f1 = self.open(file_path, 'w')
+        f0.write('test')
+        f0.truncate()
+        f1.flush()
+        self.assertEqual(4, self.os.path.getsize(file_path))
+
     def test_that_read_over_end_does_not_reset_position(self):
         # Regression test for #286
         file_path = self.make_path('baz')
