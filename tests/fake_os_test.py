@@ -928,6 +928,26 @@ class FakeOsModuleTest(FakeOsModuleTestBase):
         self.assertFalse(self.os.path.exists(file_path))
         self.assertTrue(self.os.path.exists(new_file_path))
 
+    def check_append_mode_tell_after_truncate(self, tell_result):
+        file_path = self.make_path('baz')
+        with self.open(file_path, 'w') as f0:
+            with self.open(file_path, 'a') as f1:
+                f1.write('abcde')
+                f0.seek(2)
+                f0.truncate()
+                # self.assertEqual(tell_result, f1.tell())
+        with self.open(file_path, mode='rb') as f:
+            self.assertEqual(b'\0\0abcde', f.read())
+
+    def test_append_mode_tell_linux_windows(self):
+        self.check_linux_and_windows()
+        tell_result = 5 if self.is_python2 else 7
+        self.check_append_mode_tell_after_truncate(tell_result)
+
+    def test_append_mode_tell_macos(self):
+        self.check_linux_and_windows()
+        self.check_append_mode_tell_after_truncate(7)
+
     def test_rename_dir(self):
         """Test a rename of a directory."""
         directory = self.make_path('xyzzy')
@@ -3481,7 +3501,7 @@ class FakeOsModuleLowLevelFileOpTest(FakeOsModuleTestBase):
         self.os.close(fd1)
         self.os.close(fd0)
 
-    def test_write_from_different_f_ds_with_append(self):
+    def test_write_from_different_fds_with_append(self):
         # Regression test for #268
         file_path = self.make_path('baz')
         fd0 = self.os.open(file_path, os.O_CREAT | os.O_WRONLY | os.O_TRUNC)

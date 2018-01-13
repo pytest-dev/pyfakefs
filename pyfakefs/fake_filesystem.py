@@ -162,6 +162,11 @@ def is_int_type(val):
     int_types = (int, long) if sys.version_info[0] < 3 else int
     return isinstance(val, int_types)
 
+def is_byte_string(val):
+    if sys.version_info[0] > 2:
+        return isinstance(val, bytes)
+    return isinstance(val, str)
+
 
 class FakeLargeFileIoException(Exception):
     """Exception thrown on unsupported operations for fake large files.
@@ -3497,6 +3502,7 @@ class FakeOsModule(object):
             raise OSError(errno.EBADF, 'Cannot write to directory')
         file_handle.raw_io = True
         file_handle._sync_io()
+        file_handle.update_flush_pos()
         file_handle.write(contents)
         file_handle.flush()
         return len(contents)
@@ -4244,21 +4250,18 @@ class FakeFileWrapper(object):
             else:
                 self._io = io_class(**io_args)
 
+        self._read_whence = 0
+        self._read_seek = 0
+        self._flush_pos = 0
         if contents:
+            self._flush_pos = len(contents)
             if update:
                 if not encoding:  # already written with encoding
                     self._io.write(contents)
                 if not append:
                     self._io.seek(0)
-                else:
-                    self._read_whence = 0
-                    if read and not use_io:
-                        self._read_seek = 0
-                    else:
-                        self._read_seek = self._io.tell()
-        else:
-            self._read_whence = 0
-            self._read_seek = 0
+                elif not read or use_io:
+                    self._read_seek = self._io.tell()
 
         if delete_on_close:
             assert filesystem, 'delete_on_close=True requires filesystem'
@@ -4300,7 +4303,7 @@ class FakeFileWrapper(object):
 
         # for raw io, all writes are flushed immediately
         if self.allow_update and not self.raw_io:
-            self.file_object.set_contents(self._io.getvalue(), self._encoding)
+            self.flush()
         if self._closefd:
             self._filesystem._close_open_file(self.filedes)
         else:
@@ -4311,19 +4314,35 @@ class FakeFileWrapper(object):
     def flush(self):
         """Flush file contents to 'disk'."""
         self._check_open_file()
-        if self.allow_update:
-            self._io.flush()
-            self.file_object.set_contents(self._io.getvalue(), self._encoding)
+        if self.allow_update and not self.is_stream:
+            contents = self._io.getvalue()
+            if self._append:
+                self._sync_io()
+                old_contents = (self.file_object.byte_contents
+                                if is_byte_string(contents) else
+                                self.file_object.contents)
+                contents = old_contents + contents[self._flush_pos:]
+                self._set_stream_contents(contents)
+            else:
+                self._io.flush()
+            self.update_flush_pos()
+            self.file_object.set_contents(contents, self._encoding)
             self._file_epoch = self.file_object.epoch
 
             if not self.is_stream:
                 self._flush_related_files()
 
+    def update_flush_pos(self):
+        self._flush_pos = self._io.tell()
+
     def _flush_related_files(self):
         for open_files in self._filesystem.open_files[3:]:
-            for open_file in open_files:
-                if open_file is not self and self.file_object == open_file.file_object:
-                    open_file._sync_io()
+            if open_files is not None:
+                for open_file in open_files:
+                    if (open_file is not self and
+                                self.file_object == open_file.file_object and
+                            not open_file._append):
+                        open_file._sync_io()
 
     def seek(self, offset, whence=0):
         """Move read/write pointer in 'file'."""
@@ -4345,6 +4364,7 @@ class FakeFileWrapper(object):
         self._check_open_file()
         if self._flushes_after_tell():
             self.flush()
+
         if not self._append:
             return self._io.tell()
         if self._read_whence:
@@ -4378,18 +4398,22 @@ class FakeFileWrapper(object):
         is_stream_reader_writer = isinstance(self._io, codecs.StreamReaderWriter)
         if is_stream_reader_writer:
             self._io.stream.allow_update = True
-        whence = self._io.tell()
-        self._io.seek(0)
-        self._io.truncate()
-        self._io.write(contents)
-        if self._append:
-            self._io.seek(0, os.SEEK_END)
-        else:
-            self._io.seek(whence)
+        self._set_stream_contents(contents)
 
         if is_stream_reader_writer:
             self._io.stream.allow_update = False
         self._file_epoch = self.file_object.epoch
+
+    def _set_stream_contents(self, contents):
+        whence = self._io.tell()
+        self._io.seek(0)
+        self._io.truncate()
+        if not isinstance(self._io, io.BytesIO) and is_byte_string(contents):
+            contents = contents.decode(self._encoding)
+
+        self._io.write(contents)
+        if not self._append:
+            self._io.seek(whence)
 
     def _read_wrappers(self, name):
         """Wrap a stream attribute in a read wrapper.
@@ -4483,6 +4507,7 @@ class FakeFileWrapper(object):
                     self._io.seek(buffer_size)
                     self._io.write('\0' * (size - buffer_size))
                     self.file_object.SetContents(self._io.getvalue(), self._encoding)
+                    self._flush_pos = size
             if sys.version_info[0] > 2:
                 return size
 
