@@ -34,10 +34,7 @@ import unittest
 
 from pyfakefs import fake_filesystem_unittest
 from pyfakefs.fake_filesystem_unittest import has_scandir
-from tests import example
-
-
-# The module under test is pyfakefs/example
+from tests import example  # The module under test
 
 
 def load_tests(loader, tests, ignore):
