@@ -4323,9 +4323,9 @@ class FakeFileWrapper(object):
                                 self.file_object.contents)
                 contents = old_contents + contents[self._flush_pos:]
                 self._set_stream_contents(contents)
+                self.update_flush_pos()
             else:
                 self._io.flush()
-            self.update_flush_pos()
             self.file_object.set_contents(contents, self._encoding)
             self._file_epoch = self.file_object.epoch
 
@@ -4364,6 +4364,9 @@ class FakeFileWrapper(object):
         self._check_open_file()
         if self._flushes_after_tell():
             self.flush()
+            if self._read_seek:
+                self._read_seek = self._flush_pos
+                self._read_whence = 0
 
         if not self._append:
             return self._io.tell()

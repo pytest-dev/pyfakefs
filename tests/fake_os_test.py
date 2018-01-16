@@ -935,7 +935,7 @@ class FakeOsModuleTest(FakeOsModuleTestBase):
                 f1.write('abcde')
                 f0.seek(2)
                 f0.truncate()
-                # self.assertEqual(tell_result, f1.tell())
+                self.assertEqual(tell_result, f1.tell())
         with self.open(file_path, mode='rb') as f:
             self.assertEqual(b'\0\0abcde', f.read())
 
@@ -945,7 +945,7 @@ class FakeOsModuleTest(FakeOsModuleTestBase):
         self.check_append_mode_tell_after_truncate(tell_result)
 
     def test_append_mode_tell_macos(self):
-        self.check_linux_and_windows()
+        self.check_macos_only()
         self.check_append_mode_tell_after_truncate(7)
 
     def test_rename_dir(self):
