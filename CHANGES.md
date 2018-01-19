@@ -8,8 +8,9 @@ must use pyfakefs 3.3 or earlier.
 
 #### New Features
   * Added support to fake out backported `scandir` module ([#332](../../issues/332))
-  * Dynamic loading of modules after setup is now on by default and no more considered experimental (see [#340](../../issues/340)).
-
+  * Dynamic loading of modules after setup is now on by default and no more considered experimental (see [#340](../../issues/340))
+  * `IOError`/`OSError` exception messages in the fake file system now always start with the message issued in the real file system in Unix systems (see [#202](../../issues/202))
+  
 #### Infrastructure
   * Changed API to be PEP-8 conform [#186](../../issues/186). Note: The old API is still available.
   * Removed Python 2.6 support [#293](../../issues/293)
