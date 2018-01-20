@@ -19,6 +19,7 @@
   * FakeDirectory: Provides the appearance of a real directory.
   * FakeFilesystem:  Provides the appearance of a real directory hierarchy.
   * FakeOsModule:  Uses FakeFilesystem to provide a fake os module replacement.
+  * FakeIoModule:  Uses FakeFilesystem to provide a fake io module replacement.
   * FakePathModule:  Faked os.path module replacement.
   * FakeFileOpen:  Faked file() and open() function replacements.
 

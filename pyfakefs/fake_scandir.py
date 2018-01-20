@@ -1,3 +1,19 @@
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+"""A fake implementation for the `scandir` function working with FakeFilesystem.
+Works with both the function integrated into the `os` module since Python 3.5 and the
+standalone function available in the standalone `scandir` python package.
+"""
 import sys
 
 
@@ -214,11 +230,50 @@ def walk(filesystem, top, topdown=True, onerror=None, followlinks=False):
 
 
 class FakeScanDirModule(object):
+    """Uses FakeFilesystem to provide a fake `scandir` module replacement.
+    Note:
+        The `scandir` function is a part of the standard `os` module since Python 3.5,
+        this class handled the the separate `scandir` module that is available on pypi.
+
+    You need a fake_filesystem to use this:
+    `filesystem = fake_filesystem.FakeFilesystem()`
+    `fake_scandir_module = fake_filesystem.FakeScanDirModule(filesystem)`
+    """
+
     def __init__(self, filesystem):
         self.filesystem = filesystem
 
     def scandir(self, path='.'):
+        """Return an iterator of DirEntry objects corresponding to the entries
+        in the directory given by path.
+
+        Args:
+            path: Path to the target directory within the fake filesystem.
+
+        Returns:
+            an iterator to an unsorted list of os.DirEntry objects for
+            each entry in path.
+
+        Raises:
+            OSError: if the target is not a directory.
+        """
         return scandir(self.filesystem, path)
 
     def walk(self, top, topdown=True, onerror=None, followlinks=False):
+        """Perform a walk operation over the fake filesystem.
+
+        Args:
+            top: The root directory from which to begin walk.
+            topdown: Determines whether to return the tuples with the root as
+                the first entry (`True`) or as the last, after all the child
+                directory tuples (`False`).
+          onerror: If not `None`, function which will be called to handle the
+                `os.error` instance provided when `os.listdir()` fails.
+          followlinks: If `True`, symbolic links are followed.
+
+        Yields:
+            (path, directories, nondirectories) for top and each of its
+            subdirectories.  See the documentation for the builtin os module
+            for further details.
+        """
         return walk(self.filesystem, top, topdown, onerror, followlinks)

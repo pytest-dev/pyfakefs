@@ -16,6 +16,10 @@ must use pyfakefs 3.3 or earlier.
   * Removed Python 2.6 support [#293](../../issues/293)
 
 #### Fixes
+  * Creating a file with a path ending with path separator did not raise ([#320](../../issues/320))
+  * Fixed more problems related to `flush` ([#302](../../issues/302), [#300](../../issues/300))
+  * Fake `os.lstat()` crashed with several trailing path separators ([#342](../../issues/342))
+  * Fixed handling of path components starting with a drive letter([#337](../../issues/337))
   * Symlinks to absolute paths were incorrectly resolved under Windows ([#341](../../issues/341))
   * Unittest mock didn't work after setUpPyfakefs ([#334](../../issues/334))
   * `os.path.split()` and `os.path.dirname()` gave incorrect results under Windows ([#335](../../issues/335))
