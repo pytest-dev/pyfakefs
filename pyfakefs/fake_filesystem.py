@@ -1393,7 +1393,6 @@ class FakeFilesystem(object):
         drive, path = self.splitdrive(path)
         sep = self._path_separator(path)
         is_absolute_path = path.startswith(sep)
-        ends_with_path_sep = path.endswith(sep)
         path_components = path.split(sep)
         collapsed_path_components = []
         dot = self._matching_string(path, '.')
@@ -1697,7 +1696,8 @@ class FakeFilesystem(object):
                 not self.is_case_sensitive and file_path.lower() == root_name.lower() or
                 2 <= len(file_path) <= 3 and self._starts_with_drive_letter(file_path))
 
-    def _ends_with_path_separator(self, file_path):
+    def ends_with_path_separator(self, file_path):
+        """Return True if `file_path ends with a valid path separator."""
         return (file_path and
                 (file_path.endswith(self._path_separator(file_path)) or
                  self.alternative_path_separator is not None and
@@ -2017,9 +2017,7 @@ class FakeFilesystem(object):
             return self.root
 
         # remove trailing separator
-        sep = self._path_separator(path)
-        alt_sep = self._alternative_path_separator(path)
-        while path.endswith(sep) or (alt_sep and path.endswith(alt_sep)):
+        while self.ends_with_path_separator(path):
             path = path[:-1]
         path = self._original_path(path)
 
@@ -2464,7 +2462,7 @@ class FakeFilesystem(object):
 
         # the link path cannot end with a path separator
         file_path = self.normcase(file_path)
-        if file_path.endswith(self.path_separator):
+        if self.ends_with_path_separator(file_path):
             if self.exists(file_path):
                 self.raise_os_error(errno.EEXIST, file_path)
             if not self.is_windows_fs:
@@ -2563,7 +2561,7 @@ class FakeFilesystem(object):
         """
         if sys.version_info >= (3, 6):
             dir_name = os.fspath(dir_name)
-        if self._ends_with_path_separator(dir_name):
+        if self.ends_with_path_separator(dir_name):
             dir_name = dir_name[:-1]
         if not dir_name:
             self.raise_os_error(errno.ENOENT, '')
@@ -4693,6 +4691,10 @@ class FakeFileOpen(object):
         else:
             if open_modes.must_exist:
                 raise error_class(errno.ENOENT, 'No such file or directory', file_path)
+            if self.filesystem.ends_with_path_separator(file_path):
+                error = (errno.EINVAL if self.filesystem.is_windows_fs
+                         else errno.ENOENT if self.filesystem.is_macos else errno.EISDIR)
+                self.filesystem.raise_os_error(error, file_path)
             file_object = self.filesystem.create_file_internally(
                 real_path, create_missing_dirs=False,
                 apply_umask=True, raw_io=self.raw_io)

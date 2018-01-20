@@ -740,6 +740,23 @@ class FakeFileOpenTest(FakeFileOpenTestBase):
         file_path = self.os.path.join(file_path, 'baz')
         self.assert_raises_io_error(errno.ENOENT, self.open, file_path, 'w')
 
+    def check_open_raises_with_trailing_separator(self, error_nr):
+        file_path = self.make_path('bar') + self.os.sep
+        self.assert_raises_os_error(error_nr, self.os.open,
+                                    file_path, os.O_CREAT | os.O_WRONLY | os.O_TRUNC)
+
+    def test_open_raises_with_trailing_separator_linux(self):
+        self.check_linux_only()
+        self.check_open_raises_with_trailing_separator(errno.EISDIR)
+
+    def test_open_raises_with_trailing_separator_macos(self):
+        self.check_macos_only()
+        self.check_open_raises_with_trailing_separator(errno.ENOENT)
+
+    def test_open_raises_with_trailing_separator_windows(self):
+        self.check_windows_only()
+        self.check_open_raises_with_trailing_separator(errno.EINVAL)
+
     def test_can_read_from_block_device(self):
         self.skip_real_fs()
         device_path = 'device'
