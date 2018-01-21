@@ -2109,9 +2109,11 @@ class FakeFilesystem(object):
                 if not doRename:
                     try:
                         real_old_path = self.resolve_path(old_file_path)
+                        original_old_path = self._original_path(real_old_path)
                         real_new_path = self.resolve_path(new_file_path)
-                        if (real_new_path == real_old_path and
-                                new_file_path.lower() != real_new_path.lower()):
+                        if (real_new_path == original_old_path and
+                                    (new_file_path == real_old_path) ==
+                                    (new_file_path.lower() == real_old_path.lower())):
                             doRename = not self.is_macos
                         else:
                             doRename = real_new_path.lower() == real_old_path.lower()

@@ -652,6 +652,27 @@ class FakeOsModuleTest(FakeOsModuleTestBase):
         self.assert_raises_os_error(errno.EINVAL, self.os.rename, dir_path,
                                     dir_in_dir_path)
 
+    def check_rename_case_with_symlink(self, result):
+        self.skip_if_symlink_not_supported()
+        self.check_case_insensitive_fs()
+        dir_path_lower = self.make_path('beta')
+        self.create_dir(dir_path_lower)
+        link_path = self.make_path('b')
+        self.os.symlink(self.base_path, link_path)
+        path1 = self.os.path.join(link_path, 'Beta')
+        dir_path_upper = self.make_path('Beta')
+        self.os.rename(path1, dir_path_upper)
+        self.assertEqual(result, sorted(self.os.listdir(self.base_path)))
+
+    def test_rename_case_with_symlink_mac(self):
+        # Regression test for #322
+        self.check_macos_only()
+        self.check_rename_case_with_symlink(['b', 'beta'])
+
+    def test_rename_case_with_symlink_windows(self):
+        self.check_windows_only()
+        self.check_rename_case_with_symlink(['Beta', 'b'])
+
     def test_recursive_rename_raises(self):
         self.check_posix_only()
         base_path = self.make_path('foo', 'bar')
@@ -2657,9 +2678,8 @@ class FakeOsModuleTestCaseInsensitiveFS(FakeOsModuleTestBase):
         self.assertFalse(self.os.path.exists(new_file_path))
         self.check_contents(old_file_path, 'test contents')
 
-    def test_rename_case_only_with_symlink_parent(self):
+    def check_rename_case_only_with_symlink_parent(self):
         # Regression test for #319
-        self.skip_if_symlink_not_supported()
         self.os.symlink(self.base_path, self.make_path('link'))
         dir_upper = self.make_path('link', 'Alpha')
         self.os.mkdir(dir_upper)
@@ -2667,6 +2687,15 @@ class FakeOsModuleTestCaseInsensitiveFS(FakeOsModuleTestBase):
         self.os.rename(dir_upper, dir_lower)
         self.assertEqual(['alpha', 'link'],
                          sorted(self.os.listdir(self.base_path)))
+
+    def test_rename_case_only_with_symlink_parent_windows(self):
+        self.check_windows_only()
+        self.skip_if_symlink_not_supported()
+        self.check_rename_case_only_with_symlink_parent()
+
+    def test_rename_case_only_with_symlink_parent_macos(self):
+        self.check_macos_only()
+        self.check_rename_case_only_with_symlink_parent()
 
     def test_rename_dir(self):
         """Test a rename of a directory."""
