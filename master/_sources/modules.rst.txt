@@ -47,3 +47,4 @@ Faked module classes
 
 .. autoclass:: pyfakefs.fake_pathlib.FakePathlibModule
 
+.. autoclass:: pyfakefs.fake_scandir.FakeScanDirModule

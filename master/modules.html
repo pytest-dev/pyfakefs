@@ -68,6 +68,7 @@ functions are not listed - you may always use the standard functions.</p>
 <li>FakeDirectory: Provides the appearance of a real directory.</li>
 <li>FakeFilesystem:  Provides the appearance of a real directory hierarchy.</li>
 <li>FakeOsModule:  Uses FakeFilesystem to provide a fake os module replacement.</li>
+<li>FakeIoModule:  Uses FakeFilesystem to provide a fake io module replacement.</li>
 <li>FakePathModule:  Faked os.path module replacement.</li>
 <li>FakeFileOpen:  Faked file() and open() function replacements.</li>
 </ul>
@@ -204,8 +205,8 @@ functions are not listed - you may always use the standard functions.</p>
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
 <li><strong>path_separator</strong> – optional substitute for os.path.sep</li>
-<li><strong>total_size</strong> – if not None, the total size in bytes of the</li>
-<li><strong>filesystem.</strong> (<a class="reference internal" href="#pyfakefs.fake_filesystem.FakeFilesystem.root" title="pyfakefs.fake_filesystem.FakeFilesystem.root"><em>root</em></a>) – </li>
+<li><strong>total_size</strong> – if not None, the total size in bytes of the
+root filesystem.</li>
 </ul>
 </td>
 </tr>
@@ -678,7 +679,7 @@ or (Windows only) the file is open.</li>
 <h2>Unittest module classes<a class="headerlink" href="#unittest-module-classes" title="Permalink to this headline">¶</a></h2>
 <dl class="class">
 <dt id="pyfakefs.fake_filesystem_unittest.TestCase">
-<em class="property">class </em><code class="descclassname">pyfakefs.fake_filesystem_unittest.</code><code class="descname">TestCase</code><span class="sig-paren">(</span><em>methodName='runTest'</em>, <em>additional_skip_names=None</em>, <em>patch_path=True</em>, <em>special_names=None</em>, <em>modules_to_reload=None</em>, <em>use_dynamic_patch=False</em><span class="sig-paren">)</span><a class="headerlink" href="#pyfakefs.fake_filesystem_unittest.TestCase" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><code class="descclassname">pyfakefs.fake_filesystem_unittest.</code><code class="descname">TestCase</code><span class="sig-paren">(</span><em>methodName='runTest'</em>, <em>additional_skip_names=None</em>, <em>patch_path=True</em>, <em>modules_to_reload=None</em>, <em>use_dynamic_patch=True</em><span class="sig-paren">)</span><a class="headerlink" href="#pyfakefs.fake_filesystem_unittest.TestCase" title="Permalink to this definition">¶</a></dt>
 <dd><p>Test case class that automatically replaces file-system related
 modules by fake implementations.</p>
 <p>Creates the test class instance and the stubber used to stub out
@@ -701,22 +702,16 @@ some other module named ‘path’, for example:</p>
 <p>Irrespective of patch_path, module ‘os.path’ is still correctly faked
 if imported the usual way using <cite>import os</cite> or <cite>import os.path</cite>.</p>
 </li>
-<li><strong>special_names</strong> – A dictionary with module names as key and a dictionary as
-value, where the key is the original name of the module to be patched,
-and the value is the name as it is imported.
-This allows to patch modules where some of the file system modules are
-imported as another name (e.g. <cite>import os as _os</cite>).</li>
 <li><strong>modules_to_reload</strong> (<em>experimental</em>) – A list of modules that need to be reloaded
 to be patched dynamically; may be needed if the module
 imports file system modules under an alias
 Note: this is done independently of <cite>use_dynamic_patch</cite>
 Caution: this may not work with some Python versions
 or have unwanted side effects.</li>
-<li><strong>use_dynamic_patch</strong> (<em>experimental</em>) – If <cite>True</cite>, dynamic patching
+<li><strong>use_dynamic_patch</strong> – If <cite>True</cite>, dynamic patching
 after setup is used (for example for modules loaded locally
 inside of functions).
-Caution: this may not work with some Python versions
-or have unwanted side effects.</li>
+Can be switched off if it causes unwanted side effects.</li>
 </ul>
 </td>
 </tr>
@@ -730,14 +725,6 @@ and you have DocTests, consider also specifying the same arguments to
     <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">methodName</span><span class="o">=</span><span class="s1">&#39;runTest&#39;</span><span class="p">):</span>
         <span class="nb">super</span><span class="p">(</span><span class="n">MyTestCase</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span>
             <span class="n">methodName</span><span class="o">=</span><span class="n">methodName</span><span class="p">,</span> <span class="n">additional_skip_names</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;posixpath&#39;</span><span class="p">])</span>
-
-
-<span class="k">class</span> <span class="nc">AnotherTestCase</span><span class="p">(</span><span class="n">fake_filesystem_unittest</span><span class="o">.</span><span class="n">TestCase</span><span class="p">):</span>
-    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">methodName</span><span class="o">=</span><span class="s1">&#39;runTest&#39;</span><span class="p">):</span>
-        <span class="c1"># allow patching a module that imports `os` as `my_os`</span>
-        <span class="n">special_names</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;amodule&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;os&#39;</span><span class="p">:</span> <span class="s1">&#39;my_os&#39;</span><span class="p">}}</span>
-        <span class="nb">super</span><span class="p">(</span><span class="n">MyTestCase</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span>
-            <span class="n">methodName</span><span class="o">=</span><span class="n">methodName</span><span class="p">,</span> <span class="n">special_names</span><span class="o">=</span><span class="n">special_names</span><span class="p">)</span>
 </pre></div>
 </div>
 <dl class="method">
@@ -754,7 +741,7 @@ class.</p>
 
 <dl class="class">
 <dt id="pyfakefs.fake_filesystem_unittest.Patcher">
-<em class="property">class </em><code class="descclassname">pyfakefs.fake_filesystem_unittest.</code><code class="descname">Patcher</code><span class="sig-paren">(</span><em>additional_skip_names=None</em>, <em>patch_path=True</em>, <em>special_names=None</em><span class="sig-paren">)</span><a class="headerlink" href="#pyfakefs.fake_filesystem_unittest.Patcher" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><code class="descclassname">pyfakefs.fake_filesystem_unittest.</code><code class="descname">Patcher</code><span class="sig-paren">(</span><em>additional_skip_names=None</em>, <em>patch_path=True</em><span class="sig-paren">)</span><a class="headerlink" href="#pyfakefs.fake_filesystem_unittest.Patcher" title="Permalink to this definition">¶</a></dt>
 <dd><p>Instantiate a stub creator to bind and un-bind the file-related modules to
 the <code class="xref py py-mod docutils literal"><span class="pre">pyfakefs</span></code> fake modules.</p>
 <p>The arguments are explained in <a class="reference internal" href="#pyfakefs.fake_filesystem_unittest.TestCase" title="pyfakefs.fake_filesystem_unittest.TestCase"><code class="xref py py-class docutils literal"><span class="pre">TestCase</span></code></a>.</p>
@@ -902,6 +889,20 @@ my_io_module = fake_filesystem.FakeIoModule(filesystem)</p>
 </tr>
 </tbody>
 </table>
+</dd></dl>
+
+<dl class="class">
+<dt id="pyfakefs.fake_scandir.FakeScanDirModule">
+<em class="property">class </em><code class="descclassname">pyfakefs.fake_scandir.</code><code class="descname">FakeScanDirModule</code><span class="sig-paren">(</span><em>filesystem</em><span class="sig-paren">)</span><a class="headerlink" href="#pyfakefs.fake_scandir.FakeScanDirModule" title="Permalink to this definition">¶</a></dt>
+<dd><p>Uses FakeFilesystem to provide a fake <cite>scandir</cite> module replacement.
+.. note:</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span>The `scandir` function is a part of the standard `os` module since Python 3.5,
+this class handled the the separate `scandir` module that is available on pypi.
+</pre></div>
+</div>
+<p>You need a fake_filesystem to use this:
+<cite>filesystem = fake_filesystem.FakeFilesystem()</cite>
+<cite>fake_scandir_module = fake_filesystem.FakeScanDirModule(filesystem)</cite></p>
 </dd></dl>
 
 </div>

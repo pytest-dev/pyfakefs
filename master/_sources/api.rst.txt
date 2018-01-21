@@ -13,7 +13,7 @@ However, if you want to be sure to use the new API, you can add such warnings by
 
 In some later version of ``pyfakefs`` we plan to enable the deprecation warnings by default.
 
-Here is a list of some of the changes:
+Here is a list of selected changes:
 
 :pyfakefs.fake_filesystem.FakeFileSystem:
 
