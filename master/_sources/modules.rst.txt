@@ -27,7 +27,7 @@ Unittest module classes
 -----------------------
 
 .. autoclass:: pyfakefs.fake_filesystem_unittest.TestCase
-    :members: fs, patches, setUpPyfakefs
+    :members: fs, setUpPyfakefs
 
 .. autoclass:: pyfakefs.fake_filesystem_unittest.Patcher
     :members: setUp, tearDown

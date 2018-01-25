@@ -702,15 +702,13 @@ some other module named ‘path’, for example:</p>
 <p>Irrespective of patch_path, module ‘os.path’ is still correctly faked
 if imported the usual way using <cite>import os</cite> or <cite>import os.path</cite>.</p>
 </li>
-<li><strong>modules_to_reload</strong> (<em>experimental</em>) – A list of modules that need to be reloaded
+<li><strong>modules_to_reload</strong> – A list of modules that need to be reloaded
 to be patched dynamically; may be needed if the module
 imports file system modules under an alias
 Note: this is done independently of <cite>use_dynamic_patch</cite>
-Caution: this may not work with some Python versions
-or have unwanted side effects.</li>
-<li><strong>use_dynamic_patch</strong> – If <cite>True</cite>, dynamic patching
-after setup is used (for example for modules loaded locally
-inside of functions).
+Caution: reloading modules may have unwanted side effects.</li>
+<li><strong>use_dynamic_patch</strong> – If <cite>True</cite>, dynamic patching after setup is used
+(for example for modules loaded locally inside of functions).
 Can be switched off if it causes unwanted side effects.</li>
 </ul>
 </td>
@@ -725,6 +723,13 @@ and you have DocTests, consider also specifying the same arguments to
     <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">methodName</span><span class="o">=</span><span class="s1">&#39;runTest&#39;</span><span class="p">):</span>
         <span class="nb">super</span><span class="p">(</span><span class="n">MyTestCase</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span>
             <span class="n">methodName</span><span class="o">=</span><span class="n">methodName</span><span class="p">,</span> <span class="n">additional_skip_names</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;posixpath&#39;</span><span class="p">])</span>
+
+<span class="kn">import</span> <span class="nn">sut</span>
+
+<span class="k">class</span> <span class="nc">AnotherTestCase</span><span class="p">(</span><span class="n">fake_filesystem_unittest</span><span class="o">.</span><span class="n">TestCase</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">methodName</span><span class="o">=</span><span class="s1">&#39;runTest&#39;</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">MyTestCase</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span>
+            <span class="n">methodName</span><span class="o">=</span><span class="n">methodName</span><span class="p">,</span> <span class="n">modules_to_reload</span><span class="o">=</span><span class="p">[</span><span class="n">sut</span><span class="p">])</span>
 </pre></div>
 </div>
 <dl class="method">
