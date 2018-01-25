@@ -5,9 +5,6 @@ Introduction
 Using pyfakefs, your tests operate on a fake file system in memory without touching the real disk.
 The software under test requires no modification to work with pyfakefs.
 
-Note that pyfakefs will not work with Python libraries that use C libraries to access the
-file system, because it cannot patch the underlying C libraries' file access functions.
-
 pyfakefs works with CPython 2.7, 3.3 and above, on Linux, Windows and OSX (MacOS), and with PyPy2 and PyPy3.
 
 pyfakefs works with `PyTest <doc.pytest.org>`__ version 2.8.6 or above.
@@ -15,11 +12,35 @@ pyfakefs works with `PyTest <doc.pytest.org>`__ version 2.8.6 or above.
 Installation
 ------------
 pyfakefs is available on `PyPi <https://pypi.python.org/pypi/pyfakefs/>`__.
-It can be installed using pip:
+The latest released version can be installed form pypi:
 
 .. code:: bash
 
    pip install pyfakefs
+
+The latest master can be installed form the GitHub sources:
+
+.. code:: bash
+
+   pip install git+https://github.com/jmcgeheeiv/pyfakefs
+
+Limitations
+-----------
+pyfakefs will not work with Python libraries that use C libraries to access the
+file system, because it cannot patch the underlying C libraries' file access functions.
+
+pyfakefs works out of the box only if the faked file system modules are loaded directly,
+e.g. `import pathlib` works, but `from pathlib import Path` does not. See
+`Additional parameters to Patcher and TestCase` in the `Usage` chapter for a way to
+work around this.
+
+pyfakefs is only tested with CPython and newest PyPy versions, other Python implementations
+will probably not work.
+
+Differences in the behavior in different Linux distributions or different MacOS or Windows versions
+may not be reflected in the implementation, as well as some OS-specific low-level file
+system behavior. The systems used for automatic tests in Travis.CI and AppVeyor are considered
+as reference systems.
 
 History
 -------

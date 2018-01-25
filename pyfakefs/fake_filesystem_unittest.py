@@ -129,15 +129,13 @@ class TestCase(unittest.TestCase):
 
                 Irrespective of patch_path, module 'os.path' is still correctly faked
                 if imported the usual way using `import os` or `import os.path`.
-            modules_to_reload (experimental): A list of modules that need to be reloaded
+            modules_to_reload: A list of modules that need to be reloaded
                 to be patched dynamically; may be needed if the module
                 imports file system modules under an alias
                 Note: this is done independently of `use_dynamic_patch`
-                Caution: this may not work with some Python versions
-                or have unwanted side effects.
-            use_dynamic_patch: If `True`, dynamic patching
-                after setup is used (for example for modules loaded locally
-                inside of functions).
+                Caution: reloading modules may have unwanted side effects.
+            use_dynamic_patch: If `True`, dynamic patching after setup is used
+                (for example for modules loaded locally inside of functions).
                 Can be switched off if it causes unwanted side effects.
 
         If you specify arguments `additional_skip_names` or `patch_path` here
@@ -150,6 +148,13 @@ class TestCase(unittest.TestCase):
                 def __init__(self, methodName='runTest'):
                     super(MyTestCase, self).__init__(
                         methodName=methodName, additional_skip_names=['posixpath'])
+
+            import sut
+
+            class AnotherTestCase(fake_filesystem_unittest.TestCase):
+                def __init__(self, methodName='runTest'):
+                    super(MyTestCase, self).__init__(
+                        methodName=methodName, modules_to_reload=[sut])
         """
         super(TestCase, self).__init__(methodName)
         self._stubber = Patcher(additional_skip_names=additional_skip_names,

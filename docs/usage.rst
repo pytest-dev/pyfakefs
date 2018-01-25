@@ -4,9 +4,12 @@ There are several approaches to implementing tests using pyfakefs.
 
 Automatically find and patch using fake_filesystem_unittest
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-The first approach is to allow pyfakefs to automatically find all real file functions and modules,
+If you are using the ``python unittest`` package, the easiest approach is to use test classes
+derived from ``fake_filesystem_unittest.TestCase``.
+
+This allows pyfakefs to automatically find all real file functions and modules,
 and stub these out with the fake file system functions and modules.
-This is the simplest approach if you are using separate unit tests.
+
 The usage is explained in the pyfakefs wiki page
 `Automatically find and patch file functions and modules <https://github.com/jmcgeheeiv/pyfakefs/wiki/Automatically-find-and-patch-file-functions-and-modules>`__
 and demonstrated in files ``example.py`` and ``example_test.py``.
@@ -14,9 +17,7 @@ and demonstrated in files ``example.py`` and ``example_test.py``.
 Patch using the PyTest plugin
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 If you use `PyTest <https://doc.pytest.org>`__, you will be interested in the PyTest plugin in pyfakefs.
-This automatically patches all file system functions and modules in a manner similar to the
-`automatic find and patch approach <https://github.com/jmcgeheeiv/pyfakefs/wiki/Automatically-find-and-patch-file-functions-and-modules>`__
-described above.
+This automatically patches all file system functions and modules in a similar manner as desribed above.
 
 The PyTest plugin provides the ``fs`` fixture for use in your test. For example:
 
@@ -59,42 +60,36 @@ You can also initialize ``Patcher`` manually:
    patcher.tearDown()  # somewhere in the cleanup code
 
 
+Additional parameters to Patcher and TestCase
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Both ``fake_filesystem_unittest.Patcher`` and ``fake_filesystem_unittest.TestCase``
+provide a few additional arguments for fine-tuning.
+
+The most helpful maybe ``modules_to_reload``. This allows to pass a list of modules
+that shall be reloaded, thus allowing to patch modules not imported directly.
+If a module imports modules to be patched like this:
+
+.. code:: python
+
+  import os as _os
+  from pathlib import Path
+
+the modules ``os`` and ``pathlib.Path`` will not be patched (the only exception is
+importing ``os.path`` like ``from os import path``, see also below). If adding the module
+containing these imports to ``modules_to_reload``, they will be correctly patched.
+
+``additional_skip_names`` may be used to add modules that shall not be patched. This
+is mostly used to avoid patching the Python file system modules themselves, but may be
+helpful in some special situations.
+
+``patch_path`` is True by default, meaning that modules named `path` are patched as
+``os.path``. If this clashes with another module of the same name, it can be switched
+off (and imports like ``from os import path`` will not be patched).
+
+
 Patch using unittest.mock (deprecated)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 You can also use ``mock.patch()`` to patch the modules manually. This approach will
 only work for the directly imported modules, therefore it is not suited for testing
 larger code bases. As the other approaches are more convenient, this one is considered
-deprecated.
-You have to create a fake filesystem object, and afterwards fake modules based on this file system
-for the modules you want to patch.
-
-The following modules and functions can be patched:
-
-* ``os`` and ``os.path`` by ``fake_filesystem.FakeOsModule``
-* ``io`` by ``fake_filesystem.FakeIoModule``
-* ``pathlib`` by ``fake_pathlib.FakePathlibModule``
-* build-in ``open()`` by ``fake_filesystem.FakeFileOpen``
-
-.. code:: python
-
-   import pyfakefs.fake_filesystem as fake_fs
-
-   # Create a faked file system
-   fs = fake_fs.FakeFilesystem()
-
-   # Do some setup on the faked file system
-   fs.create_file('/foo/bar', contents='test')
-
-   # Replace some built-in file system related modules you use with faked ones
-
-   # Assuming you are using the mock library to ... mock things
-   try:
-       from unittest.mock import patch  # In Python 3, mock is built-in
-   except ImportError:
-       from mock import patch  # Python 2
-
-   # Note that this fake module is based on the fake fs you just created
-   os = fake_fs.FakeOsModule(fs)
-   with patch('mymodule.os', os):
-       fd = os.open('/foo/bar', os.O_RDONLY)
-       contents = os.read(fd, 4)
+deprecated and will not be described in detail.
