@@ -94,18 +94,18 @@ import errno
 import heapq
 import io
 import locale
-import platform
 import os
+import platform
 import sys
 import time
 import warnings
 from collections import namedtuple
 from stat import S_IFREG, S_IFDIR, S_ISLNK, S_IFMT, S_ISDIR, S_IFLNK, S_ISREG
 
-from copy import copy
 from pyfakefs.deprecator import Deprecator
-
 from pyfakefs.fake_scandir import scandir, walk
+from pyfakefs.helpers import FakeStatResult, StringIO
+from pyfakefs.helpers import is_int_type, is_byte_string, IS_PY2
 
 __pychecker__ = 'no-reimportself'
 
@@ -158,17 +158,6 @@ FAKE_PATH_MODULE_DEPRECATION = (
 NR_STD_STREAMS = 3
 
 
-def is_int_type(val):
-    # pylint: disable=undefined-variable
-    int_types = (int, long) if sys.version_info[0] < 3 else int
-    return isinstance(val, int_types)
-
-def is_byte_string(val):
-    if sys.version_info[0] > 2:
-        return isinstance(val, bytes)
-    return isinstance(val, str)
-
-
 class FakeLargeFileIoException(Exception):
     """Exception thrown on unsupported operations for fake large files.
     Fake large files have a size with no real content.
@@ -186,179 +175,6 @@ def _copy_module(old):
     new = __import__(old.__name__)
     sys.modules[old.__name__] = saved
     return new
-
-
-class _FakeStatResult(object):
-    """Mimics os.stat_result for use as return type of `stat()` and similar.
-    This is needed as `os.stat_result` has no possibility to set
-    nanosecond times directly.
-    """
-    # pylint: disable=undefined-variable
-    long_type = long if sys.version_info[0] == 2 else int
-
-    def __init__(self, is_windows, initial_time=None):
-        self.use_float = FakeOsModule.stat_float_times
-        self.st_mode = None
-        self.st_ino = None
-        self.st_dev = None
-        self.st_nlink = 0
-        self.st_uid = None
-        self.st_gid = None
-        self._st_size = None
-        self.is_windows = is_windows
-        if initial_time is not None:
-            self._st_atime_ns = self.long_type(initial_time * 1e9)
-        else:
-            self._st_atime_ns = None
-        self._st_mtime_ns = self._st_atime_ns
-        self._st_ctime_ns = self._st_atime_ns
-
-    def __eq__(self, other):
-        return (
-            isinstance(other, _FakeStatResult) and
-            self._st_atime_ns == other._st_atime_ns and
-            self._st_ctime_ns == other._st_ctime_ns and
-            self._st_mtime_ns == other._st_mtime_ns and
-            self.st_size == other.st_size and
-            self.st_gid == other.st_gid and
-            self.st_uid == other.st_uid and
-            self.st_nlink == other.st_nlink and
-            self.st_dev == other.st_dev and
-            self.st_ino == other.st_ino and
-            self.st_mode == other.st_mode
-        )
-
-    def __ne__(self, other):
-        return not self == other
-
-    def copy(self):
-        """Return a copy where the float usage is hard-coded to mimic the behavior
-        of the real os.stat_result.
-        """
-        use_float = self.use_float()
-        stat_result = copy(self)
-        stat_result.use_float = lambda: use_float
-        return stat_result
-
-    def set_from_stat_result(self, stat_result):
-        """Set values from a real os.stat_result.
-        Note: values that are controlled by the fake filesystem are not set.
-        This includes st_ino, st_dev and st_nlink.
-        """
-        self.st_mode = stat_result.st_mode
-        self.st_uid = stat_result.st_uid
-        self.st_gid = stat_result.st_gid
-        self._st_size = stat_result.st_size
-        if sys.version_info < (3, 3):
-            self._st_atime_ns = self.long_type(stat_result.st_atime * 1e9)
-            self._st_mtime_ns = self.long_type(stat_result.st_mtime * 1e9)
-            self._st_ctime_ns = self.long_type(stat_result.st_ctime * 1e9)
-        else:
-            self._st_atime_ns = stat_result.st_atime_ns
-            self._st_mtime_ns = stat_result.st_mtime_ns
-            self._st_ctime_ns = stat_result.st_ctime_ns
-
-    @property
-    def st_ctime(self):
-        """Return the creation time in seconds."""
-        ctime = self._st_ctime_ns / 1e9
-        return ctime if self.use_float() else int(ctime)
-
-    @property
-    def st_atime(self):
-        """Return the access time in seconds."""
-        atime = self._st_atime_ns / 1e9
-        return atime if self.use_float() else int(atime)
-
-    @property
-    def st_mtime(self):
-        """Return the modification time in seconds."""
-        mtime = self._st_mtime_ns / 1e9
-        return mtime if self.use_float() else int(mtime)
-
-    @st_ctime.setter
-    def st_ctime(self, val):
-        """Set the creation time in seconds."""
-        self._st_ctime_ns = self.long_type(val * 1e9)
-
-    @st_atime.setter
-    def st_atime(self, val):
-        """Set the access time in seconds."""
-        self._st_atime_ns = self.long_type(val * 1e9)
-
-    @st_mtime.setter
-    def st_mtime(self, val):
-        """Set the modification time in seconds."""
-        self._st_mtime_ns = self.long_type(val * 1e9)
-
-    @property
-    def st_size(self):
-        if self.st_mode & S_IFLNK == S_IFLNK and self.is_windows:
-            return 0
-        return self._st_size
-
-    @st_size.setter
-    def st_size(self, val):
-        self._st_size = val
-
-    def __getitem__(self, item):
-        """Implement item access to mimic `os.stat_result` behavior."""
-        import stat
-
-        if item == stat.ST_MODE:
-            return self.st_mode
-        if item == stat.ST_INO:
-            return self.st_ino
-        if item == stat.ST_DEV:
-            return self.st_dev
-        if item == stat.ST_NLINK:
-            return self.st_nlink
-        if item == stat.ST_UID:
-            return self.st_uid
-        if item == stat.ST_GID:
-            return self.st_gid
-        if item == stat.ST_SIZE:
-            return self.st_size
-        if item == stat.ST_ATIME:
-            # item access always returns int for backward compatibility
-            return int(self.st_atime)
-        if item == stat.ST_MTIME:
-            return int(self.st_mtime)
-        if item == stat.ST_CTIME:
-            return int(self.st_ctime)
-        raise ValueError('Invalid item')
-
-    if sys.version_info >= (3, 3):
-
-        @property
-        def st_atime_ns(self):
-            """Return the access time in nanoseconds."""
-            return self._st_atime_ns
-
-        @property
-        def st_mtime_ns(self):
-            """Return the modification time in nanoseconds."""
-            return self._st_mtime_ns
-
-        @property
-        def st_ctime_ns(self):
-            """Return the creation time in nanoseconds."""
-            return self._st_ctime_ns
-
-        @st_atime_ns.setter
-        def st_atime_ns(self, val):
-            """Set the access time in nanoseconds."""
-            self._st_atime_ns = val
-
-        @st_mtime_ns.setter
-        def st_mtime_ns(self, val):
-            """Set the modification time of the fake file in nanoseconds."""
-            self._st_mtime_ns = val
-
-        @st_ctime_ns.setter
-        def st_ctime_ns(self, val):
-            """Set the creation time of the fake file in nanoseconds."""
-            self._st_ctime_ns = val
 
 
 class FakeFile(object):
@@ -402,7 +218,7 @@ class FakeFile(object):
         self.filesystem = filesystem
 
         self.name = name
-        self.stat_result = _FakeStatResult(
+        self.stat_result = FakeStatResult(
             filesystem.is_windows_fs, time.time())
         self.stat_result.st_mode = st_mode
         self.encoding = encoding
@@ -420,7 +236,7 @@ class FakeFile(object):
     @property
     def contents(self):
         """Return the contents as string with the original encoding."""
-        if sys.version_info[0] > 2 and isinstance(self.byte_contents, bytes):
+        if not IS_PY2 and isinstance(self.byte_contents, bytes):
             return self.byte_contents.decode(
                 self.encoding or locale.getpreferredencoding(False),
                 errors=self.errors)
@@ -492,11 +308,11 @@ class FakeFile(object):
 
     def _encode_contents(self, contents):
         # pylint: disable=undefined-variable
-        if sys.version_info[0] > 2 and isinstance(contents, str):
+        if not IS_PY2 and isinstance(contents, str):
             contents = bytes(contents,
                              self.encoding or locale.getpreferredencoding(False),
                              self.errors)
-        elif sys.version_info[0] == 2 and isinstance(contents, unicode):
+        elif IS_PY2 and isinstance(contents, unicode):
             contents = contents.encode(
                 self.encoding or locale.getpreferredencoding(False), self.errors)
         return contents
@@ -585,7 +401,7 @@ class FakeFile(object):
             if st_size < current_size:
                 self._byte_contents = self._byte_contents[:st_size]
             else:
-                if sys.version_info < (3, 0):
+                if IS_PY2:
                     self._byte_contents = '%s%s' % (
                         self._byte_contents, '\0' * (st_size - current_size))
                 else:
@@ -715,7 +531,7 @@ class FakeDirectory(FakeFile):
         self.st_nlink += 1
 
     def set_contents(self, contents, encoding=None):
-        if self.filesystem.is_windows_fs and sys.version_info[0] > 2:
+        if self.filesystem.is_windows_fs and not IS_PY2:
             error_class = OSError
         else:
             error_class = IOError
@@ -744,7 +560,7 @@ class FakeDirectory(FakeFile):
             OSError: if the file or directory to be added already exists
         """
         if not self.st_mode & PERM_WRITE and not self.filesystem.is_windows_fs:
-            exception = IOError if sys.version_info[0] < 3 else OSError
+            exception = IOError if IS_PY2 else OSError
             raise exception(errno.EACCES, 'Permission Denied', self.path)
 
         if path_object.name in self.contents:
@@ -973,6 +789,22 @@ class FakeFilesystem(object):
         self.add_mount_point(self.root.name, total_size)
         self._add_standard_streams()
 
+    def reset(self, total_size=None):
+        """Remove all file system contents and reset the root."""
+        self.root = FakeDirectory(self.path_separator, filesystem=self)
+        self.cwd = self.root.name
+
+        self.open_files = []
+        self._free_fd_heap = []
+        self._last_ino = 0
+        self._last_dev = 0
+        self.mount_points = {}
+        self.add_mount_point(self.root.name, total_size)
+        self._add_standard_streams()
+
+    def line_separator(self):
+        return '\r\n' if self.is_windows_fs else '\n'
+
     def _error_message(self, errno):
         return os.strerror(errno) + ' in the fake filesystem'
 
@@ -990,7 +822,7 @@ class FakeFilesystem(object):
         """
         message = self._error_message(errno)
         if winerror is not None and sys.platform == 'win32' and self.is_windows_fs:
-            if sys.version_info[0] < 3:
+            if IS_PY2:
                 raise WindowsError(winerror, message, filename)
             raise OSError(errno, message, filename, winerror)
         raise OSError(errno, message, filename)
@@ -1013,7 +845,7 @@ class FakeFilesystem(object):
         """
         if string is None:
             return string
-        if sys.version_info < (3, ):
+        if IS_PY2:
             # pylint: disable=undefined-variable
             if isinstance(matched, unicode):
                 return unicode(string)
@@ -1074,7 +906,7 @@ class FakeFilesystem(object):
             using the default encoding."""
             if string is None or isinstance(string, str):
                 return string
-            if sys.version_info < (3, 0):
+            if IS_PY2:
                 return string.encode(locale.getpreferredencoding(False))
             else:
                 return string.decode(locale.getpreferredencoding(False))
@@ -1754,7 +1586,7 @@ class FakeFilesystem(object):
 
     @staticmethod
     def _to_string(path):
-        if sys.version_info[0] > 2 and isinstance(path, bytes):
+        if not IS_PY2 and isinstance(path, bytes):
             path = path.decode(locale.getpreferredencoding(False))
         return path
 
@@ -2716,7 +2548,7 @@ class FakeFilesystem(object):
         except IOError as exc:
             self.raise_os_error(exc.errno, target_directory)
         if not directory.st_mode & S_IFDIR:
-            if self.is_windows_fs and sys.version_info[0] < 3:
+            if self.is_windows_fs and IS_PY2:
                 error_nr = errno.EINVAL
             else:
                 error_nr = errno.ENOTDIR
@@ -3019,9 +2851,9 @@ class FakePathModule(object):
         def getcwd():
             """Return the current working directory."""
             # pylint: disable=undefined-variable
-            if sys.version_info[0] == 2 and isinstance(path, unicode):
+            if IS_PY2 and isinstance(path, unicode):
                 return self.os.getcwdu()
-            elif sys.version_info[0] > 2 and isinstance(path, bytes):
+            elif not IS_PY2 and isinstance(path, bytes):
                 return self.os.getcwdb()
             else:
                 return self.os.getcwd()
@@ -3207,7 +3039,7 @@ class FakePathModule(object):
                 return True
         return False
 
-    if sys.version_info < (3, 0):
+    if IS_PY2:
         def walk(self, top, func, arg):
             """Directory tree walk with callback function.
 
@@ -3254,8 +3086,6 @@ class FakeOsModule(object):
     my_os_module = fake_filesystem.FakeOsModule(filesystem)
     """
 
-    _stat_float_times = sys.version_info >= (2, 5)
-
     def __init__(self, filesystem, os_path_module=None):
         """Also exposes self.path (to fake os.path).
 
@@ -3266,6 +3096,7 @@ class FakeOsModule(object):
         self.filesystem = filesystem
         self.sep = filesystem.path_separator
         self.altsep = filesystem.alternative_path_separator
+        self.linesep = filesystem.line_separator()
         self._os_module = os
         if os_path_module is None:
             self.path = FakePathModule(self.filesystem, self)
@@ -3273,7 +3104,7 @@ class FakeOsModule(object):
             warnings.warn(FAKE_PATH_MODULE_DEPRECATION, DeprecationWarning,
                           stacklevel=2)
             self.path = os_path_module
-        if sys.version_info < (3, 0):
+        if IS_PY2:
             self.fdopen = self._fdopen_ver2
         else:
             self.fdopen = self._fdopen
@@ -3454,8 +3285,8 @@ class FakeOsModule(object):
         file_handle.flush()
         return len(contents)
 
-    @classmethod
-    def stat_float_times(cls, newvalue=None):
+    @staticmethod
+    def stat_float_times(newvalue=None):
         """Determine whether a file's time stamps are reported as floats or ints.
 
         Calling without arguments returns the current value. The value is shared
@@ -3465,9 +3296,7 @@ class FakeOsModule(object):
             newvalue: If `True`, mtime, ctime, atime are reported as floats.
                 Otherwise, they are returned as ints (rounding down).
         """
-        if newvalue is not None:
-            cls._stat_float_times = bool(newvalue)
-        return cls._stat_float_times
+        return FakeStatResult.stat_float_times(newvalue)
 
     def fstat(self, file_des):
         """Return the os.stat-like tuple for the FakeFile object of file_des.
@@ -3525,7 +3354,7 @@ class FakeOsModule(object):
         """Return current working directory."""
         return self.filesystem.cwd
 
-    if sys.version_info < (3, ):
+    if IS_PY2:
         def getcwdu(self):
             """Return current working directory as unicode. Python 2 only."""
             return unicode(self.filesystem.cwd)  # pylint: disable=undefined-variable
@@ -4163,7 +3992,7 @@ class FakeFileWrapper(object):
         self._binary = binary
         self.is_stream = is_stream
         contents = file_object.byte_contents
-        self._encoding = encoding
+        self._encoding = encoding or locale.getpreferredencoding(False)
         errors = errors or 'strict'
         if encoding:
             file_wrapper = FakeFileWrapper(
@@ -4174,14 +4003,18 @@ class FakeFileWrapper(object):
             self._io = codecs.StreamReaderWriter(file_wrapper, codec_info.streamreader,
                                                  codec_info.streamwriter, errors)
         else:
-            if not binary and sys.version_info >= (3, 0):
-                io_class = io.StringIO
+            if not binary:
+                io_class = StringIO
+                io_args = {
+                    'linesep': filesystem.line_separator(),
+                    'encoding': self._encoding,
+                    'newline': newline
+                }
             else:
                 io_class = io.BytesIO
-            io_args = {} if binary else {'newline': newline}
-            if contents and not binary:
-                contents = contents.decode(
-                    encoding or locale.getpreferredencoding(False), errors=errors)
+                io_args = {}
+            if contents and not binary and not IS_PY2:
+                contents = contents.decode(self._encoding, errors=errors)
             if contents and not update:
                 self._io = io_class(contents, **io_args)
             else:
@@ -4194,7 +4027,7 @@ class FakeFileWrapper(object):
             self._flush_pos = len(contents)
             if update:
                 if not encoding:  # already written with encoding
-                    self._io.write(contents)
+                    self._write_contents_without_newline_conversion(contents)
                 if not append:
                     self._io.seek(0)
                 elif not read or use_io:
@@ -4220,7 +4053,7 @@ class FakeFileWrapper(object):
     def _raise(self, message):
         if self.raw_io:
             self._filesystem.raise_os_error(errno.EBADF)
-        if sys.version_info[0] == 2:
+        if IS_PY2:
             raise IOError(message)
         raise io.UnsupportedOperation(message)
 
@@ -4317,13 +4150,11 @@ class FakeFileWrapper(object):
 
     def _flushes_after_read(self):
         return (not self.is_stream and
-                (not self._filesystem.is_windows_fs or
-                 sys.version_info[0] > 2))
+                (not self._filesystem.is_windows_fs or not IS_PY2))
 
     def _flushes_after_tell(self):
         return (not self.is_stream and
-                (self._filesystem.is_macos or
-                 sys.version_info[0] > 2))
+                (self._filesystem.is_macos or not IS_PY2))
 
     def _sync_io(self):
         """Update the stream with changes to the file object contents."""
@@ -4344,14 +4175,19 @@ class FakeFileWrapper(object):
             self._io.stream.allow_update = False
         self._file_epoch = self.file_object.epoch
 
+    def _write_contents_without_newline_conversion(self, contents):
+        if isinstance(self._io, StringIO):
+            self._io.putvalue(contents)
+        else:
+            self._io.write(contents)
+
     def _set_stream_contents(self, contents):
         whence = self._io.tell()
         self._io.seek(0)
         self._io.truncate()
         if not isinstance(self._io, io.BytesIO) and is_byte_string(contents):
             contents = contents.decode(self._encoding)
-
-        self._io.write(contents)
+        self._write_contents_without_newline_conversion(contents)
         if not self._append:
             self._io.seek(whence)
 
@@ -4421,7 +4257,7 @@ class FakeFileWrapper(object):
             if write_seek != self._io.tell():
                 self._read_seek = self._io.tell()
                 self._read_whence = 0
-            if not writing or sys.version_info[0] > 2:
+            if not writing or not IS_PY2:
                 return ret_value
 
         return other_wrapper
@@ -4448,7 +4284,7 @@ class FakeFileWrapper(object):
                     self._io.write('\0' * (size - buffer_size))
                     self.file_object.SetContents(self._io.getvalue(), self._encoding)
                     self._flush_pos = size
-            if sys.version_info[0] > 2:
+            if not IS_PY2:
                 return size
 
         return truncate_wrapper
@@ -4462,9 +4298,9 @@ class FakeFileWrapper(object):
         io_attr = getattr(self._io, name)
 
         def write_wrapper(*args, **kwargs):
-            """Wrap trunctae call to call flush after truncate."""
+            """Wrap truncate call to call flush after truncate."""
             ret_value = io_attr(*args, **kwargs)
-            if sys.version_info[0] > 2:
+            if not IS_PY2:
                 return ret_value
 
         return write_wrapper
@@ -4602,7 +4438,7 @@ class FakeFileOpen(object):
         """
         self.filesystem = filesystem
         self._delete_on_close = delete_on_close
-        self._use_io = (use_io or sys.version_info[0] > 2 or
+        self._use_io = (use_io or not IS_PY2 or
                         platform.python_implementation() == 'PyPy' or
                         self.filesystem.is_macos)
         self.raw_io = raw_io
@@ -4652,9 +4488,15 @@ class FakeFileOpen(object):
         """
         orig_modes = mode  # Save original modes for error messages.
         # Binary mode for non 3.x or set by mode
-        binary = sys.version_info[0] == 2 or 'b' in mode
+        binary = 'b' in mode
         # Normalize modes. Ignore 't' and 'U'.
+
+        if ('b' in mode and 't' in mode and
+                (not IS_PY2 or self.filesystem.is_windows_fs)):
+            raise ValueError('Invalid mode: ' + mode)
         mode = mode.replace('t', '').replace('b', '')
+        if IS_PY2 and not 'U' in mode:
+            newline = '-'
         mode = mode.replace('rU', 'r').replace('U', 'r')
 
         if not self.raw_io:

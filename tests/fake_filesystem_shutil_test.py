@@ -22,6 +22,7 @@ and works correctly with the fake filesystem because of the faked `os` module.
 import os
 import shutil
 import sys
+import tempfile
 import unittest
 
 from pyfakefs import fake_filesystem_unittest
@@ -82,6 +83,7 @@ class FakeShutilModuleTest(RealFsTestCase):
         self.assertFalse(os.path.exists(dir_path))
         self.assertFalse(os.path.exists(file_path))
 
+    @unittest.skipIf(not is_windows, 'Windows specific behavior')
     def test_rmtree_without_permission_for_a_file_in_windows(self):
         self.check_windows_only()
         dir_path = self.make_path('foo')
@@ -116,6 +118,7 @@ class FakeShutilModuleTest(RealFsTestCase):
             shutil.rmtree(dir_path)
         self.assertFalse(os.path.exists(file_path))
 
+    @unittest.skipIf(not is_windows, 'Windows specific behavior')
     def test_rmtree_with_open_file_fails_under_windows(self):
         self.check_windows_only()
         dir_path = self.make_path('foo')

@@ -25,6 +25,7 @@ import tempfile
 import unittest
 
 from pyfakefs import fake_filesystem
+from pyfakefs.helpers import is_byte_string
 
 
 class DummyTime(object):
@@ -297,8 +298,7 @@ class RealFsTestMixin(object):
         subdirectories. `file_path` shall be composed using `make_path()`.
         """
         self.create_dir(self.os.path.dirname(file_path))
-        mode = ('wb' if not self.is_python2 and isinstance(contents, bytes)
-                else 'w')
+        mode = 'wb' if is_byte_string(contents) else 'w'
 
         if encoding is not None:
             open_fct = lambda: self.open(file_path, mode, encoding=encoding)
@@ -320,8 +320,7 @@ class RealFsTestMixin(object):
         """Compare `contents` with the contents of the file at `file_path`.
         Asserts equality.
         """
-        mode = ('rb' if not self.is_python2 and isinstance(contents, bytes)
-                else 'r')
+        mode = 'rb' if is_byte_string(contents) else 'r'
         with self.open(file_path, mode) as f:
             self.assertEqual(contents, f.read())
 
@@ -339,14 +338,14 @@ class RealFsTestMixin(object):
             if self.is_windows_fs:
                 self.base_path = 'C:' + self.base_path
             if old_base_path != self.base_path:
+                if old_base_path is not None:
+                    self.filesystem.reset()
                 if not self.filesystem.exists(self.base_path):
                     self.filesystem.create_dir(self.base_path)
                 if old_base_path is not None:
-                    for entry in self.filesystem.listdir(old_base_path):
-                        old_name = self.os.path.join(old_base_path, entry)
-                        new_name = self.os.path.join(self.base_path, entry)
-                        self.filesystem.rename(old_name, new_name)
-                    self.os.removedirs(old_base_path)
+
+                    self.setUpFileSystem()
+
 
 
 class RealFsTestCase(TestCase, RealFsTestMixin):
@@ -364,6 +363,10 @@ class RealFsTestCase(TestCase, RealFsTestMixin):
             self.open = fake_filesystem.FakeFileOpen(self.filesystem)
             self.os = fake_filesystem.FakeOsModule(self.filesystem)
             self.create_basepath()
+        self.setUpFileSystem()
+
+    def setUpFileSystem(self):
+        pass
 
     @property
     def is_windows_fs(self):
