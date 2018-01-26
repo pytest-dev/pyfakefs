@@ -4011,7 +4011,6 @@ class StatPropagationTest(TestCase):
 class FakeScandirTest(FakeOsModuleTestBase):
     def setUp(self):
         super(FakeScandirTest, self).setUp()
-
         self.supports_symlinks = (not self.is_windows or
                                   not self.use_real_fs() and not self.is_python2)
 
@@ -4023,24 +4022,25 @@ class FakeScandirTest(FakeOsModuleTestBase):
                 scandir = lambda p: pyfakefs.fake_scandir.scandir(self.filesystem, p)
         else:
             scandir = self.os.scandir
+        self.scandir = scandir
 
-        directory = self.make_path('xyzzy', 'plugh')
+        self.directory = self.make_path('xyzzy', 'plugh')
         link_dir = self.make_path('linked', 'plugh')
         self.linked_file_path = self.os.path.join(link_dir, 'file')
         self.linked_dir_path = self.os.path.join(link_dir, 'dir')
 
         self.create_dir(self.linked_dir_path)
         self.create_file(self.linked_file_path, contents=b'a' * 10)
-        self.dir_path = self.os.path.join(directory, 'dir')
+        self.dir_path = self.os.path.join(self.directory, 'dir')
         self.create_dir(self.dir_path)
-        self.file_path = self.os.path.join(directory, 'file')
+        self.file_path = self.os.path.join(self.directory, 'file')
         self.create_file(self.file_path, contents=b'b' * 50)
-        self.file_link_path = self.os.path.join(directory, 'link_file')
+        self.file_link_path = self.os.path.join(self.directory, 'link_file')
         if self.supports_symlinks:
             self.create_symlink(self.file_link_path, self.linked_file_path)
-            self.dir_link_path = self.os.path.join(directory, 'link_dir')
+            self.dir_link_path = self.os.path.join(self.directory, 'link_dir')
             self.create_symlink(self.dir_link_path, self.linked_dir_path)
-        self.dir_entries = [entry for entry in scandir(directory)]
+        self.dir_entries = [entry for entry in self.scandir(self.directory)]
         self.dir_entries = sorted(self.dir_entries,
                                   key=lambda entry: entry.name)
 
@@ -4052,6 +4052,10 @@ class FakeScandirTest(FakeOsModuleTestBase):
         self.assertEqual(len(sorted_names), len(self.dir_entries))
         self.assertEqual(sorted_names,
                          [entry.name for entry in self.dir_entries])
+
+        self.skip_real_fs()
+        # this one does not work in the real fs - will wait for
+        # final 3.7 release to check into this
         self.assertEqual(self.dir_path, self.dir_entries[0].path)
 
     def test_isfile(self):
@@ -4130,5 +4134,25 @@ class FakeScandirTest(FakeOsModuleTestBase):
 
 
 class RealScandirTest(FakeScandirTest):
+    def use_real_fs(self):
+        return True
+
+
+@unittest.skipIf(sys.version_info < (3, 7) or TestCase.is_windows,
+                 'dir_fd support for os.scandir was introduced in Python 3.7')
+class FakeScandirFdTest(FakeScandirTest):
+    def setUp(self):
+        super(FakeScandirFdTest, self).setUp()
+        self.dir_fd = self.os.open(self.directory, os.O_RDONLY)
+        self.dir_entries = [entry for entry in self.scandir(self.dir_fd)]
+        self.dir_entries = sorted(self.dir_entries,
+                                  key=lambda entry: entry.name)
+
+    def tearDown(self):
+        self.os.close(self.dir_fd)
+        super(FakeScandirFdTest, self).tearDown()
+
+
+class RealScandirFdTest(FakeScandirFdTest):
     def use_real_fs(self):
         return True

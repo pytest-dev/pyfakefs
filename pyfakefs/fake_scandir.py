@@ -16,6 +16,8 @@ standalone function available in the standalone `scandir` python package.
 """
 import sys
 
+import os
+
 
 class DirEntry(object):
     """Emulates os.DirEntry. Note that we did not enforce keyword only arguments."""
@@ -101,6 +103,12 @@ class ScanDirIter:
 
     def __init__(self, filesystem, path):
         self.filesystem = filesystem
+        if isinstance(path, int):
+            if sys.version_info < (3, 7) or self.filesystem.is_windows_fs:
+                raise NotImplementedError('scandir does not support file descriptor'
+                                          'path argument')
+            path = self.filesystem.get_open_file(path).get_object().path
+
         self.path = self.filesystem.ResolvePath(path)
         contents = {}
         try:
