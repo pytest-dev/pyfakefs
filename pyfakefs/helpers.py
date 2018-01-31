@@ -12,6 +12,7 @@
 
 """Helper classes use for fake file system implementation."""
 import io
+import locale
 import sys
 from copy import copy
 from stat import S_IFLNK
@@ -27,10 +28,19 @@ def is_int_type(val):
 
 
 def is_byte_string(val):
-    """Return True if `val` is a byte string, False for a unicode string."""
+    """Return True if `val` is a bytes-like object, False for a unicode
+    string."""
     if not IS_PY2:
-        return isinstance(val, bytes)
+        return not hasattr(val, 'encode')
     return isinstance(val, str)
+
+
+def is_unicode_string(val):
+    """Return True if `val` is a unicode string, False for a bytes-like
+    object."""
+    if not IS_PY2:
+        return hasattr(val, 'encode')
+    return isinstance(val, unicode)
 
 
 class FakeStatResult(object):
@@ -221,83 +231,110 @@ class FakeStatResult(object):
             self._st_ctime_ns = val
 
 
-class StringIO(object):
-    """Stream class that handles both Python2 and Python3 string contents
-    for files. The standard io.StringIO cannot be used due to the slightly
-    different handling of newline mode.
-    StringIO uses a io.BytesIO stream for the raw data and adds handling
-    of encoding and newlines.
+class FileBufferIO(object):
+    """Stream class that handles both Python2 and Python3 string and
+    byte contents for files. The standard io.StringIO cannot be used
+    for strings due to the slightly different handling of newline mode.
+    Uses an io.BytesIO stream for the raw data and adds handling of encoding
+    and newlines.
     """
-    def __init__(self, contents=None, linesep='\n',
+    def __init__(self, contents=None, linesep='\n', binary=False,
                  newline=None, encoding=None, errors='strict'):
-        self.newline = newline
-        self.encoding = encoding
+        self._newline = newline
+        self._encoding = encoding
         self.errors = errors
-        self.linesep = linesep
-        self.bytestream = io.BytesIO()
+        self._linesep = linesep
+        self.binary = binary
+        self._bytestream = io.BytesIO()
         if contents is not None:
-            self.bytestream.write(self.encoded_string(contents))
-            self.bytestream.seek(0)
+            self._bytestream.write(self.encoded_string(contents))
+            self._bytestream.seek(0)
+
+    def encoding(self):
+        return self._encoding or locale.getpreferredencoding(False)
 
     def encoded_string(self, contents):
         if is_byte_string(contents):
             return contents
-        return contents.encode(self.encoding, self.errors)
+        return contents.encode(self.encoding(), self.errors)
 
     def decoded_string(self, contents):
-        if IS_PY2:
+        if IS_PY2 and not self._encoding:
             return contents
-        return contents.decode(self.encoding, self.errors)
+        return contents.decode(self.encoding(), self.errors)
 
     def convert_newlines_for_writing(self, s):
-        if self.newline in (None, '-'):
-            return s.replace('\n', self.linesep)
-        if self.newline in ('', '\n'):
+        if self.binary:
             return s
-        return s.replace('\n', self.newline)
+        if self._newline in (None, '-'):
+            return s.replace('\n', self._linesep)
+        if self._newline in ('', '\n'):
+            return s
+        return s.replace('\n', self._newline)
 
     def convert_newlines_after_reading(self, s):
-        if self.newline is None:
+        if self._newline is None:
             return s.replace('\r\n', '\n').replace('\r', '\n')
-        if self.newline == '-':
-            return s.replace(self.linesep, '\n')
+        if self._newline == '-':
+            return s.replace(self._linesep, '\n')
         return s
 
     def read(self, size=-1):
-        contents = self.bytestream.read(size)
-        return self.convert_newlines_after_reading(self.decoded_string(contents))
+        contents = self._bytestream.read(size)
+        if self.binary:
+            return contents
+        return self.convert_newlines_after_reading(
+            self.decoded_string(contents))
 
     def readline(self, size=-1):
-        seek_pos = self.bytestream.tell()
-        contents = self.decoded_string(self.bytestream.read(size))
-        read_contents = self.convert_newlines_after_reading(contents)
-        if self.newline is None:
-            length = end_pos = read_contents.find('\n') + 1
-            if length == 0:
-                length = end_pos = len(contents)
-            elif (contents[end_pos - 1] == '\r' and len(contents) > end_pos and
-                          contents[end_pos] == '\n'):
-                end_pos += 1
-        elif self.newline == '':
-            length = read_contents.find('\n') + 1
-            if length == 0:
-                length = len(contents)
-            end_pos = length
-        else:
-            length = read_contents.find('\n')
-            if length == -1:
-                length = len(contents)
-                end_pos = len(read_contents)
-            else:
-                end_pos = length
-                if contents.find(self.linesep) == length:
-                    end_pos += len(self.linesep)
-                else:
-                    end_pos += 1
-                length += 1
+        seek_pos = self._bytestream.tell()
+        byte_contents = self._bytestream.read(size)
+        read_contents = self.convert_newlines_after_reading(
+            self.decoded_string(byte_contents))
+        end_pos = 0
 
-        self.bytestream.seek(seek_pos + end_pos)
-        return read_contents[:length]
+        if self._newline is None:
+            end_pos = self._linelen_for_universal_newlines(byte_contents)
+            if end_pos > 0:
+                length = read_contents.find('\n') + 1
+        elif self._newline == '':
+            end_pos = self._linelen_for_universal_newlines(byte_contents)
+            if end_pos > 0:
+                if byte_contents[end_pos - 1] == ord(b'\r'):
+                    newline = '\r'
+                elif end_pos > 1 and byte_contents[end_pos - 2] == ord(b'\r'):
+                    newline = '\r\n'
+                else:
+                    newline = '\n'
+                length = read_contents.find(newline) + len(newline)
+        else:
+            newline = '\n' if self._newline == '-' else self._newline
+            length = read_contents.find(newline)
+            if length >= 0:
+                nl_len = len(newline)
+                end_pos = byte_contents.find(newline.encode()) + nl_len
+                length += nl_len
+
+        if end_pos == 0:
+            length = len(read_contents)
+            end_pos = len(byte_contents)
+
+        self._bytestream.seek(seek_pos + end_pos)
+        return (byte_contents[:end_pos] if self.binary
+                else read_contents[:length])
+
+    def _linelen_for_universal_newlines(self, byte_contents):
+        pos_lf = byte_contents.find(b'\n')
+        pos_cr = byte_contents.find(b'\r')
+        if pos_lf == -1 and pos_cr == -1:
+            return 0
+        if pos_lf != -1 and (pos_lf < pos_cr or pos_cr == -1):
+            end_pos = pos_lf
+        else:
+            end_pos = pos_cr
+        if end_pos == pos_cr and end_pos + 1 == pos_lf:
+            end_pos = pos_lf
+        return end_pos + 1
 
     def readlines(self, size=-1):
         remaining_size = size
@@ -313,12 +350,14 @@ class StringIO(object):
                     return lines
 
     def putvalue(self, s):
-        self.bytestream.write(self.encoded_string(s))
+        self._bytestream.write(self.encoded_string(s))
 
     def write(self, s):
+        if not IS_PY2 and self.binary != is_byte_string(s):
+            raise TypeError('Incorrect type for writing')
         contents = self.convert_newlines_for_writing(s)
         length = len(contents)
-        self.bytestream.write(self.encoded_string(contents))
+        self._bytestream.write(self.encoded_string(contents))
         return length
 
     def writelines(self, lines):
@@ -339,4 +378,4 @@ class StringIO(object):
         return self.__next__()
 
     def __getattr__(self, name):
-        return getattr(self.bytestream, name)
+        return getattr(self._bytestream, name)

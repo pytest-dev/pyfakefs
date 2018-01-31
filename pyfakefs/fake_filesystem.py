@@ -89,7 +89,6 @@ True
 >>> stat.S_ISDIR(os_module.stat(os_module.path.dirname(pathname)).st_mode)
 True
 """
-import codecs
 import errno
 import heapq
 import io
@@ -104,8 +103,8 @@ from stat import S_IFREG, S_IFDIR, S_ISLNK, S_IFMT, S_ISDIR, S_IFLNK, S_ISREG
 
 from pyfakefs.deprecator import Deprecator
 from pyfakefs.fake_scandir import scandir, walk
-from pyfakefs.helpers import FakeStatResult, StringIO
-from pyfakefs.helpers import is_int_type, is_byte_string, IS_PY2
+from pyfakefs.helpers import FakeStatResult, FileBufferIO, IS_PY2
+from pyfakefs.helpers import is_int_type, is_byte_string, is_unicode_string
 
 __pychecker__ = 'no-reimportself'
 
@@ -307,14 +306,14 @@ class FakeFile(object):
         return self._byte_contents is None
 
     def _encode_contents(self, contents):
-        # pylint: disable=undefined-variable
-        if not IS_PY2 and isinstance(contents, str):
-            contents = bytes(contents,
-                             self.encoding or locale.getpreferredencoding(False),
-                             self.errors)
-        elif IS_PY2 and isinstance(contents, unicode):
-            contents = contents.encode(
-                self.encoding or locale.getpreferredencoding(False), self.errors)
+        if is_unicode_string(contents):
+            if IS_PY2:
+                contents = contents.encode(
+                    self.encoding or locale.getpreferredencoding(False), self.errors)
+            else:
+                contents = bytes(contents,
+                                 self.encoding or locale.getpreferredencoding(False),
+                                 self.errors)
         return contents
 
     def _set_initial_contents(self, contents):
@@ -3994,31 +3993,9 @@ class FakeFileWrapper(object):
         contents = file_object.byte_contents
         self._encoding = encoding or locale.getpreferredencoding(False)
         errors = errors or 'strict'
-        if encoding:
-            file_wrapper = FakeFileWrapper(
-                file_object, file_path, update, read, append,
-                delete_on_close=False, filesystem=filesystem,
-                newline=None, binary=True, closefd=closefd, is_stream=True)
-            codec_info = codecs.lookup(encoding)
-            self._io = codecs.StreamReaderWriter(file_wrapper, codec_info.streamreader,
-                                                 codec_info.streamwriter, errors)
-        else:
-            if not binary:
-                io_class = StringIO
-                io_args = {
-                    'linesep': filesystem.line_separator(),
-                    'encoding': self._encoding,
-                    'newline': newline
-                }
-            else:
-                io_class = io.BytesIO
-                io_args = {}
-            if contents and not binary and not IS_PY2:
-                contents = contents.decode(self._encoding, errors=errors)
-            if contents and not update:
-                self._io = io_class(contents, **io_args)
-            else:
-                self._io = io_class(**io_args)
+        self._io = FileBufferIO(contents, linesep=filesystem.line_separator(),
+                                binary=binary, encoding=encoding,
+                                newline=newline, errors=errors)
 
         self._read_whence = 0
         self._read_seek = 0
@@ -4026,12 +4003,12 @@ class FakeFileWrapper(object):
         if contents:
             self._flush_pos = len(contents)
             if update:
-                if not encoding:  # already written with encoding
-                    self._write_contents_without_newline_conversion(contents)
                 if not append:
                     self._io.seek(0)
-                elif not read or use_io:
-                    self._read_seek = self._io.tell()
+                else:
+                    self._io.seek(self._flush_pos)
+                    if not read or use_io:
+                        self._read_seek = self._io.tell()
 
         if delete_on_close:
             assert filesystem, 'delete_on_close=True requires filesystem'
@@ -4161,33 +4138,21 @@ class FakeFileWrapper(object):
         if self._file_epoch == self.file_object.epoch:
             return
 
-        if isinstance(self._io, io.BytesIO):
+        if self._io.binary:
             contents = self.file_object.byte_contents
         else:
             contents = self.file_object.contents
 
-        is_stream_reader_writer = isinstance(self._io, codecs.StreamReaderWriter)
-        if is_stream_reader_writer:
-            self._io.stream.allow_update = True
         self._set_stream_contents(contents)
-
-        if is_stream_reader_writer:
-            self._io.stream.allow_update = False
         self._file_epoch = self.file_object.epoch
-
-    def _write_contents_without_newline_conversion(self, contents):
-        if isinstance(self._io, StringIO):
-            self._io.putvalue(contents)
-        else:
-            self._io.write(contents)
 
     def _set_stream_contents(self, contents):
         whence = self._io.tell()
         self._io.seek(0)
         self._io.truncate()
-        if not isinstance(self._io, io.BytesIO) and is_byte_string(contents):
+        if not self._io.binary and is_byte_string(contents):
             contents = contents.decode(self._encoding)
-        self._write_contents_without_newline_conversion(contents)
+        self._io.putvalue(contents)
         if not self._append:
             self._io.seek(whence)
 
@@ -4438,6 +4403,7 @@ class FakeFileOpen(object):
         """
         self.filesystem = filesystem
         self._delete_on_close = delete_on_close
+        self._py2_newlines = IS_PY2 and not use_io
         self._use_io = (use_io or not IS_PY2 or
                         platform.python_implementation() == 'PyPy' or
                         self.filesystem.is_macos)
@@ -4459,14 +4425,12 @@ class FakeFileOpen(object):
     def call(self, file_, mode='r', buffering=-1, encoding=None,
              errors=None, newline=None, closefd=True, opener=None,
              open_modes=None):
-        """Return a file-like object with the contents of the target file object.
+        """Return a file-like object with the contents of the target
+        file object.
 
         Args:
             file_: Path to target file or a file descriptor.
-            mode: Additional file modes. All r/w/a/x r+/w+/a+ modes are
-                supported. 't', and 'U' are ignored, e.g., 'wU' is treated
-                as 'w'. 'b' sets binary mode, no end of line translations
-                in StringIO.
+            mode: Additional file modes (all modes in `open()` are supported).
             buffering: ignored. (Used for signature compliance with
                 __builtin__.open)
             encoding: The encoding used to encode unicode strings / decode
@@ -4483,19 +4447,24 @@ class FakeFileOpen(object):
             A file-like object containing the contents of the target file.
 
         Raises:
-            IOError: if the target object is a directory, the path is invalid
-                or permission is denied.
+            IOError, OSError depending on Python version / call mode:
+                - if the target object is a directory
+                - on an invalid path
+                - if the file does not exist when it should
+                - if the file exists but should not
+                - if permission is denied
+            ValueError: for an invalid mode or mode combination
         """
         orig_modes = mode  # Save original modes for error messages.
-        # Binary mode for non 3.x or set by mode
         binary = 'b' in mode
-        # Normalize modes. Ignore 't' and 'U'.
+        # Normalize modes. Handle 't' and 'U'.
 
         if ('b' in mode and 't' in mode and
                 (not IS_PY2 or self.filesystem.is_windows_fs)):
             raise ValueError('Invalid mode: ' + mode)
         mode = mode.replace('t', '').replace('b', '')
-        if IS_PY2 and not 'U' in mode:
+        if self._py2_newlines and not 'U' in mode:
+            # default mode in open() for Python 2
             newline = '-'
         mode = mode.replace('rU', 'r').replace('U', 'r')
 

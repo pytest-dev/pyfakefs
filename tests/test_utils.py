@@ -298,13 +298,11 @@ class RealFsTestMixin(object):
         subdirectories. `file_path` shall be composed using `make_path()`.
         """
         self.create_dir(self.os.path.dirname(file_path))
-        mode = 'wb' if is_byte_string(contents) else 'w'
+        mode = 'wb' if encoding is not None or is_byte_string(contents) else 'w'
 
-        if encoding is not None:
-            open_fct = lambda: self.open(file_path, mode, encoding=encoding)
-        else:
-            open_fct = lambda: self.open(file_path, mode)
-        with open_fct() as f:
+        if encoding is not None and contents is not None:
+            contents = contents.encode(encoding)
+        with self.open(file_path, mode) as f:
             if contents is not None:
                 f.write(contents)
         self.os.chmod(file_path, 0o666)
