@@ -60,9 +60,9 @@
 derived from <code class="docutils literal"><span class="pre">fake_filesystem_unittest.TestCase</span></code>.</p>
 <p>This allows pyfakefs to automatically find all real file functions and modules,
 and stub these out with the fake file system functions and modules.</p>
-<p>The usage is explained in the pyfakefs wiki page
+<p>The usage is explained in more detail in the pyfakefs wiki page
 <a class="reference external" href="https://github.com/jmcgeheeiv/pyfakefs/wiki/Automatically-find-and-patch-file-functions-and-modules">Automatically find and patch file functions and modules</a>
-and demonstrated in files <code class="docutils literal"><span class="pre">example.py</span></code> and <code class="docutils literal"><span class="pre">example_test.py</span></code>.</p>
+and demonstrated in the files <code class="docutils literal"><span class="pre">example.py</span></code> and <code class="docutils literal"><span class="pre">example_test.py</span></code>.</p>
 </div>
 <div class="section" id="patch-using-the-pytest-plugin">
 <h2>Patch using the PyTest plugin<a class="headerlink" href="#patch-using-the-pytest-plugin" title="Permalink to this headline">¶</a></h2>
@@ -106,23 +106,77 @@ of replacing the filesystem modules with the fake modules in the first two appro
 <div class="section" id="additional-parameters-to-patcher-and-testcase">
 <h2>Additional parameters to Patcher and TestCase<a class="headerlink" href="#additional-parameters-to-patcher-and-testcase" title="Permalink to this headline">¶</a></h2>
 <p>Both <code class="docutils literal"><span class="pre">fake_filesystem_unittest.Patcher</span></code> and <code class="docutils literal"><span class="pre">fake_filesystem_unittest.TestCase</span></code>
-provide a few additional arguments for fine-tuning.</p>
-<p>The most helpful maybe <code class="docutils literal"><span class="pre">modules_to_reload</span></code>. This allows to pass a list of modules
-that shall be reloaded, thus allowing to patch modules not imported directly.
-If a module imports modules to be patched like this:</p>
-<div class="code python highlight-default"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">os</span> <span class="k">as</span> <span class="nn">_os</span>
+provide a few additional arguments for fine-tuning. These are only needed if
+patching does not work for some module.</p>
+<div class="section" id="modules-to-reload-testcase-only">
+<h3>modules_to_reload (TestCase only)<a class="headerlink" href="#modules-to-reload-testcase-only" title="Permalink to this headline">¶</a></h3>
+<p>This allows to pass a list of modules that shall be reloaded, thus allowing
+to patch modules not imported directly.</p>
+<p>The following imports of <code class="docutils literal"><span class="pre">os</span></code> and <code class="docutils literal"><span class="pre">pathlib.Path</span></code> will not be patched by
+<code class="docutils literal"><span class="pre">pyfakefs</span></code> directly:</p>
+<div class="code python highlight-default"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">os</span> <span class="k">as</span> <span class="nn">my_os</span>
 <span class="kn">from</span> <span class="nn">pathlib</span> <span class="k">import</span> <span class="n">Path</span>
 </pre></div>
 </div>
-<p>the modules <code class="docutils literal"><span class="pre">os</span></code> and <code class="docutils literal"><span class="pre">pathlib.Path</span></code> will not be patched (the only exception is
-importing <code class="docutils literal"><span class="pre">os.path</span></code> like <code class="docutils literal"><span class="pre">from</span> <span class="pre">os</span> <span class="pre">import</span> <span class="pre">path</span></code>, see also below). If adding the module
-containing these imports to <code class="docutils literal"><span class="pre">modules_to_reload</span></code>, they will be correctly patched.</p>
-<p><code class="docutils literal"><span class="pre">additional_skip_names</span></code> may be used to add modules that shall not be patched. This
-is mostly used to avoid patching the Python file system modules themselves, but may be
-helpful in some special situations.</p>
-<p><code class="docutils literal"><span class="pre">patch_path</span></code> is True by default, meaning that modules named <cite>path</cite> are patched as
+<p>If adding the module containing these imports to <code class="docutils literal"><span class="pre">modules_to_reload</span></code>, they
+will be correctly patched.
+Ther is one exception to that: importing <code class="docutils literal"><span class="pre">os.path</span></code> like
+<code class="docutils literal"><span class="pre">from</span> <span class="pre">os</span> <span class="pre">import</span> <span class="pre">path</span></code> will works, because it is handled by <code class="docutils literal"><span class="pre">pyfakefs</span></code>
+(see also <code class="docutils literal"><span class="pre">patch_path</span></code> below).</p>
+</div>
+<div class="section" id="modules-to-patch">
+<h3>modules_to_patch<a class="headerlink" href="#modules-to-patch" title="Permalink to this headline">¶</a></h3>
+<p>This also allows patching modules that are not patched out of the box, i
+this case by adding a fake module implementation for a module name. The
+argument is a dictionary of fake modules mapped to the names to be faked.
+This can be used to fake modules imported as another name directly. For the
+<code class="docutils literal"><span class="pre">os</span></code> import above you could also use:</p>
+<div class="code python highlight-default"><div class="highlight"><pre><span></span><span class="k">with</span> <span class="n">Patcher</span><span class="p">(</span><span class="n">modules_to_patch</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;my_os&#39;</span><span class="p">:</span> <span class="n">fake_filesystem</span><span class="o">.</span><span class="n">FakeOsModule</span><span class="p">}):</span>
+    <span class="n">test_something</span><span class="p">()</span>
+</pre></div>
+</div>
+<p>For the second example (<code class="docutils literal"><span class="pre">from</span> <span class="pre">pathlib</span> <span class="pre">import</span> <span class="pre">Path</span></code>) the syntax is slightly
+different:</p>
+<div class="code python highlight-default"><div class="highlight"><pre><span></span><span class="k">with</span> <span class="n">Patcher</span><span class="p">(</span><span class="n">modules_to_patch</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;pathlib.Path&#39;</span><span class="p">:</span> <span class="n">MyFakePath</span><span class="p">}):</span>
+    <span class="n">test_something</span><span class="p">()</span>
+</pre></div>
+</div>
+<p>Here is an example how to implement <code class="docutils literal"><span class="pre">MyFakePath</span></code>:</p>
+<div class="code python highlight-default"><div class="highlight"><pre><span></span><span class="k">class</span> <span class="nc">MyFakePath</span><span class="p">():</span>
+    <span class="sd">&quot;&quot;&quot;Patches `pathlib.Path` by passing all calls to FakePathlibModule.&quot;&quot;&quot;</span>
+    <span class="n">fake_pathlib</span> <span class="o">=</span> <span class="kc">None</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">filesystem</span><span class="p">):</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">fake_pathlib</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="kn">from</span> <span class="nn">pyfakefs.fake_pathlib</span> <span class="k">import</span> <span class="n">FakePathlibModule</span>
+            <span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="n">fake_pathlib</span> <span class="o">=</span> <span class="n">FakePathlibModule</span><span class="p">(</span><span class="n">filesystem</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">fake_pathlib</span><span class="o">.</span><span class="n">Path</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">__getattr__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">):</span>
+        <span class="k">return</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">fake_pathlib</span><span class="o">.</span><span class="n">Path</span><span class="p">,</span> <span class="n">name</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="patch-path">
+<h3>patch_path<a class="headerlink" href="#patch-path" title="Permalink to this headline">¶</a></h3>
+<p>This is True by default, meaning that modules named <code class="docutils literal"><span class="pre">path</span></code> are patched as
 <code class="docutils literal"><span class="pre">os.path</span></code>. If this clashes with another module of the same name, it can be switched
 off (and imports like <code class="docutils literal"><span class="pre">from</span> <span class="pre">os</span> <span class="pre">import</span> <span class="pre">path</span></code> will not be patched).</p>
+</div>
+<div class="section" id="additional-skip-names">
+<h3>additional_skip_names<a class="headerlink" href="#additional-skip-names" title="Permalink to this headline">¶</a></h3>
+<p>This may be used to add modules that shall not be patched. This is mostly
+used to avoid patching the Python file system modules themselves, but may be
+helpful in some special situations.</p>
+</div>
+<div class="section" id="use-dynamic-patch-testcase-only">
+<h3>use_dynamic_patch (TestCase only)<a class="headerlink" href="#use-dynamic-patch-testcase-only" title="Permalink to this headline">¶</a></h3>
+<p>If <code class="docutils literal"><span class="pre">True</span></code> (the default), dynamic patching after setup is used (for example
+for modules loaded locally inside of functions).
+Can be switched off if it causes unwanted side effects.</p>
+</div>
 </div>
 <div class="section" id="patch-using-unittest-mock-deprecated">
 <h2>Patch using unittest.mock (deprecated)<a class="headerlink" href="#patch-using-unittest-mock-deprecated" title="Permalink to this headline">¶</a></h2>
@@ -145,7 +199,14 @@ deprecated and will not be described in detail.</p>
 <li><a class="reference internal" href="#automatically-find-and-patch-using-fake-filesystem-unittest">Automatically find and patch using fake_filesystem_unittest</a></li>
 <li><a class="reference internal" href="#patch-using-the-pytest-plugin">Patch using the PyTest plugin</a></li>
 <li><a class="reference internal" href="#patch-using-fake-filesystem-unittest-patcher">Patch using fake_filesystem_unittest.Patcher</a></li>
-<li><a class="reference internal" href="#additional-parameters-to-patcher-and-testcase">Additional parameters to Patcher and TestCase</a></li>
+<li><a class="reference internal" href="#additional-parameters-to-patcher-and-testcase">Additional parameters to Patcher and TestCase</a><ul>
+<li><a class="reference internal" href="#modules-to-reload-testcase-only">modules_to_reload (TestCase only)</a></li>
+<li><a class="reference internal" href="#modules-to-patch">modules_to_patch</a></li>
+<li><a class="reference internal" href="#patch-path">patch_path</a></li>
+<li><a class="reference internal" href="#additional-skip-names">additional_skip_names</a></li>
+<li><a class="reference internal" href="#use-dynamic-patch-testcase-only">use_dynamic_patch (TestCase only)</a></li>
+</ul>
+</li>
 <li><a class="reference internal" href="#patch-using-unittest-mock-deprecated">Patch using unittest.mock (deprecated)</a></li>
 </ul>
 </li>

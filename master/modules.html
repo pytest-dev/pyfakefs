@@ -679,7 +679,7 @@ or (Windows only) the file is open.</li>
 <h2>Unittest module classes<a class="headerlink" href="#unittest-module-classes" title="Permalink to this headline">¶</a></h2>
 <dl class="class">
 <dt id="pyfakefs.fake_filesystem_unittest.TestCase">
-<em class="property">class </em><code class="descclassname">pyfakefs.fake_filesystem_unittest.</code><code class="descname">TestCase</code><span class="sig-paren">(</span><em>methodName='runTest'</em>, <em>additional_skip_names=None</em>, <em>patch_path=True</em>, <em>modules_to_reload=None</em>, <em>use_dynamic_patch=True</em><span class="sig-paren">)</span><a class="headerlink" href="#pyfakefs.fake_filesystem_unittest.TestCase" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><code class="descclassname">pyfakefs.fake_filesystem_unittest.</code><code class="descname">TestCase</code><span class="sig-paren">(</span><em>methodName='runTest'</em>, <em>additional_skip_names=None</em>, <em>patch_path=True</em>, <em>modules_to_reload=None</em>, <em>use_dynamic_patch=True</em>, <em>modules_to_patch=None</em><span class="sig-paren">)</span><a class="headerlink" href="#pyfakefs.fake_filesystem_unittest.TestCase" title="Permalink to this definition">¶</a></dt>
 <dd><p>Test case class that automatically replaces file-system related
 modules by fake implementations.</p>
 <p>Creates the test class instance and the stubber used to stub out
@@ -710,6 +710,12 @@ Caution: reloading modules may have unwanted side effects.</li>
 <li><strong>use_dynamic_patch</strong> – If <cite>True</cite>, dynamic patching after setup is used
 (for example for modules loaded locally inside of functions).
 Can be switched off if it causes unwanted side effects.</li>
+<li><strong>modules_to_patch</strong> – A dictionary of fake modules mapped to the
+patched module names. Can be used to add patching of modules
+not provided by <cite>pyfakefs</cite>.
+If you want to patch a class in a module imported using
+<cite>from some_module import SomeClass</cite>, you have to specify
+<cite>some_module.Class</cite> as the key for the fake class.</li>
 </ul>
 </td>
 </tr>
@@ -746,7 +752,7 @@ class.</p>
 
 <dl class="class">
 <dt id="pyfakefs.fake_filesystem_unittest.Patcher">
-<em class="property">class </em><code class="descclassname">pyfakefs.fake_filesystem_unittest.</code><code class="descname">Patcher</code><span class="sig-paren">(</span><em>additional_skip_names=None</em>, <em>patch_path=True</em><span class="sig-paren">)</span><a class="headerlink" href="#pyfakefs.fake_filesystem_unittest.Patcher" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><code class="descclassname">pyfakefs.fake_filesystem_unittest.</code><code class="descname">Patcher</code><span class="sig-paren">(</span><em>additional_skip_names=None</em>, <em>patch_path=True</em>, <em>modules_to_patch=None</em><span class="sig-paren">)</span><a class="headerlink" href="#pyfakefs.fake_filesystem_unittest.Patcher" title="Permalink to this definition">¶</a></dt>
 <dd><p>Instantiate a stub creator to bind and un-bind the file-related modules to
 the <code class="xref py py-mod docutils literal"><span class="pre">pyfakefs</span></code> fake modules.</p>
 <p>The arguments are explained in <a class="reference internal" href="#pyfakefs.fake_filesystem_unittest.TestCase" title="pyfakefs.fake_filesystem_unittest.TestCase"><code class="xref py py-class docutils literal"><span class="pre">TestCase</span></code></a>.</p>
