@@ -10,9 +10,9 @@ derived from ``fake_filesystem_unittest.TestCase``.
 This allows pyfakefs to automatically find all real file functions and modules,
 and stub these out with the fake file system functions and modules.
 
-The usage is explained in the pyfakefs wiki page
+The usage is explained in more detail in the pyfakefs wiki page
 `Automatically find and patch file functions and modules <https://github.com/jmcgeheeiv/pyfakefs/wiki/Automatically-find-and-patch-file-functions-and-modules>`__
-and demonstrated in files ``example.py`` and ``example_test.py``.
+and demonstrated in the files ``example.py`` and ``example_test.py``.
 
 Patch using the PyTest plugin
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -63,28 +63,86 @@ You can also initialize ``Patcher`` manually:
 Additional parameters to Patcher and TestCase
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Both ``fake_filesystem_unittest.Patcher`` and ``fake_filesystem_unittest.TestCase``
-provide a few additional arguments for fine-tuning.
+provide a few additional arguments for fine-tuning. These are only needed if
+patching does not work for some module.
 
-The most helpful maybe ``modules_to_reload``. This allows to pass a list of modules
-that shall be reloaded, thus allowing to patch modules not imported directly.
-If a module imports modules to be patched like this:
+modules_to_reload (TestCase only)
+#################################
+This allows to pass a list of modules that shall be reloaded, thus allowing
+to patch modules not imported directly.
+
+The following imports of ``os`` and ``pathlib.Path`` will not be patched by
+``pyfakefs`` directly:
 
 .. code:: python
 
-  import os as _os
+  import os as my_os
   from pathlib import Path
 
-the modules ``os`` and ``pathlib.Path`` will not be patched (the only exception is
-importing ``os.path`` like ``from os import path``, see also below). If adding the module
-containing these imports to ``modules_to_reload``, they will be correctly patched.
+If adding the module containing these imports to ``modules_to_reload``, they
+will be correctly patched.
+Ther is one exception to that: importing ``os.path`` like
+``from os import path`` will works, because it is handled by ``pyfakefs``
+(see also ``patch_path`` below).
 
-``additional_skip_names`` may be used to add modules that shall not be patched. This
-is mostly used to avoid patching the Python file system modules themselves, but may be
-helpful in some special situations.
+modules_to_patch
+################
+This also allows patching modules that are not patched out of the box, i
+this case by adding a fake module implementation for a module name. The
+argument is a dictionary of fake modules mapped to the names to be faked.
+This can be used to fake modules imported as another name directly. For the
+``os`` import above you could also use:
 
-``patch_path`` is True by default, meaning that modules named `path` are patched as
+.. code:: python
+
+  with Patcher(modules_to_patch={'my_os': fake_filesystem.FakeOsModule}):
+      test_something()
+
+For the second example (``from pathlib import Path``) the syntax is slightly
+different:
+
+.. code:: python
+
+  with Patcher(modules_to_patch={'pathlib.Path': MyFakePath}):
+      test_something()
+
+Here is an example how to implement ``MyFakePath``:
+
+.. code:: python
+
+    class MyFakePath():
+        """Patches `pathlib.Path` by passing all calls to FakePathlibModule."""
+        fake_pathlib = None
+
+        def __init__(self, filesystem):
+            if self.fake_pathlib is None:
+                from pyfakefs.fake_pathlib import FakePathlibModule
+                self.__class__.fake_pathlib = FakePathlibModule(filesystem)
+
+        def __call__(self, *args, **kwargs):
+            return self.fake_pathlib.Path(*args, **kwargs)
+
+        def __getattr__(self, name):
+            return getattr(self.fake_pathlib.Path, name)
+
+patch_path
+##########
+This is True by default, meaning that modules named ``path`` are patched as
 ``os.path``. If this clashes with another module of the same name, it can be switched
 off (and imports like ``from os import path`` will not be patched).
+
+
+additional_skip_names
+#####################
+This may be used to add modules that shall not be patched. This is mostly
+used to avoid patching the Python file system modules themselves, but may be
+helpful in some special situations.
+
+use_dynamic_patch (TestCase only)
+#################################
+If ``True`` (the default), dynamic patching after setup is used (for example
+for modules loaded locally inside of functions).
+Can be switched off if it causes unwanted side effects.
 
 
 Patch using unittest.mock (deprecated)

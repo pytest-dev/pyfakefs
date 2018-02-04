@@ -110,10 +110,12 @@ class TestCase(unittest.TestCase):
     modules by fake implementations.
     """
 
-    def __init__(self, methodName='runTest', additional_skip_names=None,
+    def __init__(self, methodName='runTest',
+                 additional_skip_names=None,
                  patch_path=True,
                  modules_to_reload=None,
-                 use_dynamic_patch=True):
+                 use_dynamic_patch=True,
+                 modules_to_patch=None):
         """Creates the test class instance and the stubber used to stub out
         file system related modules.
 
@@ -137,6 +139,12 @@ class TestCase(unittest.TestCase):
             use_dynamic_patch: If `True`, dynamic patching after setup is used
                 (for example for modules loaded locally inside of functions).
                 Can be switched off if it causes unwanted side effects.
+            modules_to_patch: A dictionary of fake modules mapped to the
+                patched module names. Can be used to add patching of modules
+                not provided by `pyfakefs`.
+                If you want to patch a class in a module imported using
+                `from some_module import SomeClass`, you have to specify
+                `some_module.Class` as the key for the fake class.
 
         If you specify arguments `additional_skip_names` or `patch_path` here
         and you have DocTests, consider also specifying the same arguments to
@@ -158,11 +166,14 @@ class TestCase(unittest.TestCase):
         """
         super(TestCase, self).__init__(methodName)
         self._stubber = Patcher(additional_skip_names=additional_skip_names,
-                                patch_path=patch_path)
+                                patch_path=patch_path,
+                                modules_to_patch=modules_to_patch)
+
         self._modules_to_reload = [tempfile]
         if modules_to_reload is not None:
             self._modules_to_reload.extend(modules_to_reload)
         self._use_dynamic_patch = use_dynamic_patch
+
 
     @property
     def fs(self):
@@ -265,7 +276,8 @@ class Patcher(object):
     if HAS_PATHLIB:
         SKIPNAMES.add('pathlib')
 
-    def __init__(self, additional_skip_names=None, patch_path=True):
+    def __init__(self, additional_skip_names=None, patch_path=True,
+                 modules_to_patch=None):
         """For a description of the arguments, see TestCase.__init__"""
 
         self._skipNames = self.SKIPNAMES.copy()
@@ -292,6 +304,14 @@ class Patcher(object):
             self._fake_module_classes['pathlib'] = fake_pathlib.FakePathlibModule
         if has_scandir:
             self._fake_module_classes['scandir'] = fake_scandir.FakeScanDirModule
+
+        self._class_modules = {}
+        if modules_to_patch is not None:
+            for name, fake_module in modules_to_patch.items():
+                if '.' in name:
+                    module_name, name = name.split('.')
+                    self._class_modules[name] = module_name
+                self._fake_module_classes[name] = fake_module
 
         self._modules = {}
         for name in self._fake_module_classes:
@@ -335,7 +355,11 @@ class Patcher(object):
                         name.split('.')[0] in self._skipNames):
                 continue
             for name in self._modules:
-                if inspect.ismodule(module.__dict__.get(name)):
+                mod = module.__dict__.get(name)
+                if (mod is not None and
+                        (inspect.ismodule(mod) or
+                         inspect.isclass(mod) and
+                         mod.__module__ == self._class_modules.get(name))):
                     self._modules[name].add((module, name))
 
     def _refresh(self):
@@ -359,8 +383,6 @@ class Patcher(object):
         temp_dir = tempfile.gettempdir()
         self._find_modules()
         self._refresh()
-        assert None not in vars(self).values(), \
-            "_findModules() missed the initialization of an instance variable"
 
         if doctester is not None:
             doctester.globs = self.replace_globs(doctester.globs)

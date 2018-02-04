@@ -14,8 +14,18 @@
 Example module that is used for testing modules that import file system modules
 to be patched under another name.
 """
-import os as _os
+import os as my_os
+
+try:
+    from pathlib import Path
+except ImportError:
+    Path = None
 
 
 def check_if_exists(filepath):
-    return _os.path.exists(filepath)
+    return my_os.path.exists(filepath)
+
+
+if Path is not None:
+    def check_if_path_exists(filepath):
+        return Path(filepath).exists()

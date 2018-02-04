@@ -27,7 +27,7 @@ import sys
 import unittest
 from unittest import TestCase
 
-from pyfakefs import fake_filesystem_unittest
+from pyfakefs import fake_filesystem_unittest, fake_filesystem
 from pyfakefs.fake_filesystem_unittest import Patcher
 import tests.import_as_example
 
@@ -196,6 +196,53 @@ class TestPatchPathUnittestPassing(TestPyfakefsUnittestBase):
 
     def test_own_path_module(self):
         self.assertEqual(2, path.floor(2.5))
+
+
+if sys.version_info >= (3, 4):
+    class FakePathlibPathModule(object):
+        """Patches `pathlib.Path` by passing all calls to FakePathlibModule."""
+        fake_pathlib = None
+
+        def __init__(self, filesystem):
+            if self.fake_pathlib is None:
+                from pyfakefs.fake_pathlib import FakePathlibModule
+                self.__class__.fake_pathlib = FakePathlibModule(filesystem)
+
+        def __call__(self, *args, **kwargs):
+            return self.fake_pathlib.Path(*args, **kwargs)
+
+        def __getattr__(self, name):
+            return getattr(self.fake_pathlib.Path, name)
+
+
+    class PatchPathlibPathTest(TestPyfakefsUnittestBase):
+        """Shows how to patch a class inside a module."""
+        def __init__(self, methodName='RunTest'):
+            modules_to_patch = {'pathlib.Path': FakePathlibPathModule}
+            super(PatchPathlibPathTest, self).__init__(
+                methodName, modules_to_patch=modules_to_patch)
+
+        def test_path_exists(self):
+            file_path = '/foo/bar'
+            self.fs.create_dir(file_path)
+            self.assertTrue(
+                tests.import_as_example.check_if_path_exists(file_path))
+
+
+class PatchAsOtherNameTest(TestPyfakefsUnittestBase):
+    """Patches a module imported under another name using `modules_to_patch`.
+    This is an alternative to reloading the module.
+    """
+    def __init__(self, methodName='RunTest'):
+        modules_to_patch = {'my_os': fake_filesystem.FakeOsModule}
+        super(PatchAsOtherNameTest, self).__init__(
+            methodName, modules_to_patch=modules_to_patch)
+
+    def test_path_exists(self):
+        file_path = '/foo/bar'
+        self.fs.create_dir(file_path)
+        self.assertTrue(
+            tests.import_as_example.check_if_exists(file_path))
 
 
 class TestCopyOrAddRealFile(TestPyfakefsUnittestBase):
