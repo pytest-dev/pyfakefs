@@ -7,11 +7,13 @@ This version of pyfakefs does not support Python 2.6.  Python 2.6 users
 must use pyfakefs 3.3 or earlier.
 
 #### New Features
-  * Added possibility to add own fake modules to `Patcher` / `TestCase`
-   via modules_to_patch argument (see [#345](../../issues/345))
+  * Configuration of `Patcher` and `TestCase`:
+    * Possibility to reload modules is now also available in `Patcher`
+    * Added possibility to add own fake modules via `modules_to_patch` argument (see [#345](../../issues/345))
+    * Dynamic loading of modules after setup is now on by default and no more
+    considered experimental (see [#340](../../issues/340))
   * Added support for file descriptor path parameter in `os.scandir` (Python >= 3.7, Posix only) (see [#346](../../issues/346))
   * Added support to fake out backported `scandir` module ([#332](../../issues/332))
-  * Dynamic loading of modules after setup is now on by default and no more considered experimental (see [#340](../../issues/340))
   * `IOError`/`OSError` exception messages in the fake file system now always start with the message issued in the real file system in Unix systems (see [#202](../../issues/202))
   
 #### Infrastructure

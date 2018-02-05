@@ -24,9 +24,9 @@ modules from `pyfakefs`.  Further, the `open()` built-in is bound to a fake
 `open()`.  In Python 2, built-in `file()` is similarly bound to the fake
 `open()`.
 
-It is expected that `setUpPyfakefs()` be invoked at the beginning of the derived
-class' `setUp()` method.  There is no need to add anything to the derived
-class' `tearDown()` method.
+It is expected that `setUpPyfakefs()` be invoked at the beginning of the
+derived class' `setUp()` method.  There is no need to add anything to the
+derived class' `tearDown()` method.
 
 During the test, everything uses the fake file system and modules.  This means
 that even in your test fixture, familiar functions like `open()` and
@@ -37,11 +37,10 @@ pyfakefs by simply changing their base class from `:py:class`unittest.TestCase`
 to `:py:class`pyfakefs.fake_filesystem_unittest.TestCase`.
 """
 import doctest
-import importlib
 import inspect
-import shutil
 import sys
 import tempfile
+import unittest
 
 from pyfakefs.deprecator import Deprecator
 
@@ -68,7 +67,6 @@ from pyfakefs import mox3_stubout
 if sys.version_info >= (3, 4):
     from pyfakefs import fake_pathlib
 
-import unittest
 
 try:
     import scandir
@@ -120,17 +118,19 @@ class TestCase(unittest.TestCase):
         file system related modules.
 
         Args:
-            methodName: the name of the test method (same as unittest.TestCase)
+            methodName: The name of the test method (same as in
+                unittest.TestCase)
             additional_skip_names: names of modules inside of which no module
                 replacement shall be performed, in addition to the names in
-                attribute :py:attr:`fake_filesystem_unittest.Patcher.SKIPNAMES`.
-            patch_path: if False, modules named 'path' will not be patched with the
-                fake 'os.path' module. Set this to False when you need to import
-                some other module named 'path', for example::
+                :py:attr:`fake_filesystem_unittest.Patcher.SKIPNAMES`.
+            patch_path: if False, modules named 'path' will not be patched with
+                the fake 'os.path' module. Set this to False when you need
+                to import some other module named 'path', for example::
                     from my_module import path
 
-                Irrespective of patch_path, module 'os.path' is still correctly faked
-                if imported the usual way using `import os` or `import os.path`.
+                Irrespective of patch_path, module 'os.path' is still correctly
+                faked if imported the usual way using `import os` or
+                `import os.path`.
             modules_to_reload: A list of modules that need to be reloaded
                 to be patched dynamically; may be needed if the module
                 imports file system modules under an alias
@@ -155,7 +155,8 @@ class TestCase(unittest.TestCase):
             class MyTestCase(fake_filesystem_unittest.TestCase):
                 def __init__(self, methodName='runTest'):
                     super(MyTestCase, self).__init__(
-                        methodName=methodName, additional_skip_names=['posixpath'])
+                        methodName=methodName,
+                        additional_skip_names=['posixpath'])
 
             import sut
 
@@ -167,13 +168,9 @@ class TestCase(unittest.TestCase):
         super(TestCase, self).__init__(methodName)
         self._stubber = Patcher(additional_skip_names=additional_skip_names,
                                 patch_path=patch_path,
+                                use_dynamic_patch=use_dynamic_patch,
+                                modules_to_reload=modules_to_reload,
                                 modules_to_patch=modules_to_patch)
-
-        self._modules_to_reload = [tempfile]
-        if modules_to_reload is not None:
-            self._modules_to_reload.extend(modules_to_reload)
-        self._use_dynamic_patch = use_dynamic_patch
-
 
     @property
     def fs(self):
@@ -188,33 +185,35 @@ class TestCase(unittest.TestCase):
         **This method is deprecated** in favor of
         :py:meth:`FakeFilesystem..add_real_file`.
         `copyRealFile()` is retained with limited functionality for backward
-        compatability only.
+        compatibility only.
 
         Args:
-          real_file_path: Path to the file in both the real and fake file systems
-          fake_file_path: Deprecated.  Use the default, which is `real_file_path`.
-            If a value other than `real_file_path` is specified, an `ValueError`
+          real_file_path: Path to the file in both the real and fake
+            file systems
+          fake_file_path: Deprecated.  Use the default, which is
+            `real_file_path`.
+            If a value other than `real_file_path` is specified, a `ValueError`
             exception will be raised.  
-          create_missing_dirs: Deprecated.  Use the default, which creates missing
-            directories in the fake file system.  If `False` is specified, an
-            `ValueError` exception is raised.
+          create_missing_dirs: Deprecated.  Use the default, which creates
+            missing directories in the fake file system.  If `False` is
+            specified, a `ValueError` exception is raised.
 
         Returns:
           The newly created FakeFile object.
 
         Raises:
           IOError: If the file already exists in the fake file system.
-          ValueError: If deprecated argument values are specified
+          ValueError: If deprecated argument values are specified.
 
         See:
           :py:meth:`FakeFileSystem.add_real_file`
         """
         if fake_file_path is not None and real_file_path != fake_file_path:
-            raise ValueError("CopyRealFile() is deprecated and no longer supports "
-                             "different real and fake file paths")
+            raise ValueError("CopyRealFile() is deprecated and no longer "
+                             "supports different real and fake file paths")
         if not create_missing_dirs:
-            raise ValueError("CopyRealFile() is deprecated and no longer supports "
-                             "NOT creating missing directories")
+            raise ValueError("CopyRealFile() is deprecated and no longer "
+                             "supports NOT creating missing directories")
         return self._stubber.fs.add_real_file(real_file_path, read_only=False)
 
     def setUpPyfakefs(self):
@@ -227,24 +226,11 @@ class TestCase(unittest.TestCase):
         """
         self._stubber.setUp()
         self.addCleanup(self._stubber.tearDown)
-        dyn_patcher = DynamicPatcher(self._stubber)
-        sys.meta_path.insert(0, dyn_patcher)
-
-        for module in self._modules_to_reload:
-            if module.__name__ in sys.modules:
-                reload(module)
-
-        if self._use_dynamic_patch:
-            self.addCleanup(lambda: sys.meta_path.pop(0))
-            self.addCleanup(dyn_patcher.cleanup)
-        else:
-            dyn_patcher.cleanup()
-            sys.meta_path.pop(0)
 
     @DeprecationWarning
     def tearDownPyfakefs(self):
-        """This method is deprecated and exists only for backward compatibility.
-        It does nothing.
+        """This method is deprecated and exists only for backward
+        compatibility. It does nothing.
         """
         pass
 
@@ -277,6 +263,7 @@ class Patcher(object):
         SKIPNAMES.add('pathlib')
 
     def __init__(self, additional_skip_names=None, patch_path=True,
+                 modules_to_reload=None, use_dynamic_patch=True,
                  modules_to_patch=None):
         """For a description of the arguments, see TestCase.__init__"""
 
@@ -288,6 +275,11 @@ class Patcher(object):
         if not patch_path:
             self._skipNames.discard('path')
             self._skipNames.discard('genericpath')
+
+        self._modules_to_reload = [tempfile]
+        if modules_to_reload is not None:
+            self._modules_to_reload.extend(modules_to_reload)
+        self._use_dynamic_patch = use_dynamic_patch
 
         # Attributes set by _findModules()
 
@@ -330,6 +322,7 @@ class Patcher(object):
         self.fs = None
         self.fake_open = None
         self._fake_modules = {}
+        self._dyn_patcher = None
 
         # _isStale is set by tearDown(), reset by _refresh()
         self._isStale = True
@@ -352,15 +345,15 @@ class Patcher(object):
         for name, module in set(sys.modules.items()):
             if (module in self.SKIPMODULES or
                     (not inspect.ismodule(module)) or
-                        name.split('.')[0] in self._skipNames):
+                    name.split('.')[0] in self._skipNames):
                 continue
-            for name in self._modules:
-                mod = module.__dict__.get(name)
+            for mod_name in self._modules:
+                mod = module.__dict__.get(mod_name)
                 if (mod is not None and
                         (inspect.ismodule(mod) or
                          inspect.isclass(mod) and
-                         mod.__module__ == self._class_modules.get(name))):
-                    self._modules[name].add((module, name))
+                         mod.__module__ == self._class_modules.get(mod_name))):
+                    self._modules[mod_name].add((module, mod_name))
 
     def _refresh(self):
         """Renew the fake file system and set the _isStale flag to `False`."""
@@ -395,7 +388,18 @@ class Patcher(object):
             for module, attr in self._modules[name]:
                 self._stubs.smart_set(module, attr, self._fake_modules[name])
 
-        # the temp directory is assumed to exist at least in `tempfile1,
+        self._dyn_patcher = DynamicPatcher(self)
+        sys.meta_path.insert(0, self._dyn_patcher)
+
+        for module in self._modules_to_reload:
+            if module.__name__ in sys.modules:
+                reload(module)
+
+        if not self._use_dynamic_patch:
+            self._dyn_patcher.cleanup()
+            sys.meta_path.pop(0)
+
+        # the temp directory is assumed to exist at least in `tempfile1`,
         # so we create it here for convenience
         self.fs.create_dir(temp_dir)
 
@@ -414,6 +418,9 @@ class Patcher(object):
         """Clear the fake filesystem bindings created by `setUp()`."""
         self._isStale = True
         self._stubs.smart_unset_all()
+        if self._use_dynamic_patch:
+            self._dyn_patcher.cleanup()
+            sys.meta_path.pop(0)
 
 
 class DynamicPatcher(object):
@@ -424,7 +431,6 @@ class DynamicPatcher(object):
 
     def __init__(self, patcher):
         self._patcher = patcher
-        self._patching = False
         self.sysmodules = {}
         self.modules = self._patcher._fake_modules
         if 'path' in self.modules:
@@ -433,10 +439,14 @@ class DynamicPatcher(object):
 
         # remove all modules that have to be patched from `sys.modules`,
         # otherwise the find_... methods will not be called
-        for module in self.modules:
-            if self.needs_patch(module) and module in sys.modules:
-                self.sysmodules[module] = sys.modules[module]
-                del sys.modules[module]
+        for name in self.modules:
+            if self.needs_patch(name) and name in sys.modules:
+                self.sysmodules[name] = sys.modules[name]
+                del sys.modules[name]
+
+        for name, module in self.modules.items():
+            sys.modules[name] = module
+
 
     def cleanup(self):
         for module in self.sysmodules:
@@ -444,7 +454,7 @@ class DynamicPatcher(object):
 
     def needs_patch(self, name):
         """Check if the module with the given name shall be replaced."""
-        if self._patching or name not in self.modules:
+        if name not in self.modules:
             return False
         if (name in sys.modules and
                     type(sys.modules[name]) == self.modules[name]):
@@ -463,13 +473,5 @@ class DynamicPatcher(object):
 
     def load_module(self, fullname):
         """Replaces the module by its fake implementation."""
-
-        # prevent re-entry via the finder
-        self._patching = True
-        importlib.import_module(fullname)
-        self._patching = False
-        # preserve the original module (currently not used)
-        sys.modules['original_' + fullname] = sys.modules[fullname]
-        # replace with fake implementation
         sys.modules[fullname] = self.modules[fullname]
         return self.modules[fullname]
