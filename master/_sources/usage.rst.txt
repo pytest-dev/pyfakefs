@@ -1,23 +1,28 @@
 Usage
 =====
-There are several approaches to implementing tests using pyfakefs.
 
-Automatically find and patch using fake_filesystem_unittest
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Test Scenarios
+--------------
+There are several approaches to implementing tests using ``pyfakefs``.
+
+Patch using fake_filesystem_unittest
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 If you are using the ``python unittest`` package, the easiest approach is to use test classes
 derived from ``fake_filesystem_unittest.TestCase``.
 
-This allows pyfakefs to automatically find all real file functions and modules,
-and stub these out with the fake file system functions and modules.
+This allows ``pyfakefs`` to automatically find all real file functions and
+modules, and stub these out with the fake file system functions and modules.
 
-The usage is explained in more detail in the pyfakefs wiki page
+The usage is explained in more detail in the ``pyfakefs`` wiki page
 `Automatically find and patch file functions and modules <https://github.com/jmcgeheeiv/pyfakefs/wiki/Automatically-find-and-patch-file-functions-and-modules>`__
 and demonstrated in the files ``example.py`` and ``example_test.py``.
 
 Patch using the PyTest plugin
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-If you use `PyTest <https://doc.pytest.org>`__, you will be interested in the PyTest plugin in pyfakefs.
-This automatically patches all file system functions and modules in a similar manner as desribed above.
+If you use `PyTest <https://doc.pytest.org>`__, you will be interested in
+the PyTest plugin in ``pyfakefs``.
+This automatically patches all file system functions and modules in a
+similar manner as described above.
 
 The PyTest plugin provides the ``fs`` fixture for use in your test. For example:
 
@@ -59,15 +64,26 @@ You can also initialize ``Patcher`` manually:
    ...
    patcher.tearDown()  # somewhere in the cleanup code
 
+Patch using unittest.mock (deprecated)
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+You can also use ``mock.patch()`` to patch the modules manually. This approach will
+only work for the directly imported modules, therefore it is not suited for testing
+larger code bases. As the other approaches are more convenient, this one is considered
+deprecated and will not be described in detail.
 
-Additional parameters to Patcher and TestCase
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Customizing Patcher and TestCase
+--------------------------------
 Both ``fake_filesystem_unittest.Patcher`` and ``fake_filesystem_unittest.TestCase``
 provide a few additional arguments for fine-tuning. These are only needed if
 patching does not work for some module.
 
-modules_to_reload (TestCase only)
-#################################
+*Note for PyTest users:* if you need these arguments in ``PyTest``, you have to
+use ``Patcher`` directly instead of the ``fs`` fixture. Alternatively, you can
+add your own fixture with the needed parameters (see ``pytest_plugin.py``
+for the implementation).
+
+modules_to_reload
+~~~~~~~~~~~~~~~~~
 This allows to pass a list of modules that shall be reloaded, thus allowing
 to patch modules not imported directly.
 
@@ -86,7 +102,7 @@ Ther is one exception to that: importing ``os.path`` like
 (see also ``patch_path`` below).
 
 modules_to_patch
-################
+~~~~~~~~~~~~~~~~
 This also allows patching modules that are not patched out of the box, i
 this case by adding a fake module implementation for a module name. The
 argument is a dictionary of fake modules mapped to the names to be faked.
@@ -126,28 +142,20 @@ Here is an example how to implement ``MyFakePath``:
             return getattr(self.fake_pathlib.Path, name)
 
 patch_path
-##########
+~~~~~~~~~~
 This is True by default, meaning that modules named ``path`` are patched as
 ``os.path``. If this clashes with another module of the same name, it can be switched
 off (and imports like ``from os import path`` will not be patched).
 
 
 additional_skip_names
-#####################
+~~~~~~~~~~~~~~~~~~~~~
 This may be used to add modules that shall not be patched. This is mostly
 used to avoid patching the Python file system modules themselves, but may be
 helpful in some special situations.
 
-use_dynamic_patch (TestCase only)
-#################################
+use_dynamic_patch
+~~~~~~~~~~~~~~~~~
 If ``True`` (the default), dynamic patching after setup is used (for example
 for modules loaded locally inside of functions).
 Can be switched off if it causes unwanted side effects.
-
-
-Patch using unittest.mock (deprecated)
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-You can also use ``mock.patch()`` to patch the modules manually. This approach will
-only work for the directly imported modules, therefore it is not suited for testing
-larger code bases. As the other approaches are more convenient, this one is considered
-deprecated and will not be described in detail.

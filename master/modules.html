@@ -689,18 +689,20 @@ file system related modules.</p>
 <col class="field-body" />
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
-<li><strong>methodName</strong> – the name of the test method (same as unittest.TestCase)</li>
+<li><strong>methodName</strong> – The name of the test method (same as in
+unittest.TestCase)</li>
 <li><strong>additional_skip_names</strong> – names of modules inside of which no module
 replacement shall be performed, in addition to the names in
-attribute <code class="xref py py-attr docutils literal"><span class="pre">fake_filesystem_unittest.Patcher.SKIPNAMES</span></code>.</li>
-<li><strong>patch_path</strong> – <p>if False, modules named ‘path’ will not be patched with the
-fake ‘os.path’ module. Set this to False when you need to import
-some other module named ‘path’, for example:</p>
+<code class="xref py py-attr docutils literal"><span class="pre">fake_filesystem_unittest.Patcher.SKIPNAMES</span></code>.</li>
+<li><strong>patch_path</strong> – <p>if False, modules named ‘path’ will not be patched with
+the fake ‘os.path’ module. Set this to False when you need
+to import some other module named ‘path’, for example:</p>
 <div class="highlight-default"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">my_module</span> <span class="k">import</span> <span class="n">path</span>
 </pre></div>
 </div>
-<p>Irrespective of patch_path, module ‘os.path’ is still correctly faked
-if imported the usual way using <cite>import os</cite> or <cite>import os.path</cite>.</p>
+<p>Irrespective of patch_path, module ‘os.path’ is still correctly
+faked if imported the usual way using <cite>import os</cite> or
+<cite>import os.path</cite>.</p>
 </li>
 <li><strong>modules_to_reload</strong> – A list of modules that need to be reloaded
 to be patched dynamically; may be needed if the module
@@ -728,7 +730,8 @@ and you have DocTests, consider also specifying the same arguments to
 <div class="highlight-default"><div class="highlight"><pre><span></span><span class="k">class</span> <span class="nc">MyTestCase</span><span class="p">(</span><span class="n">fake_filesystem_unittest</span><span class="o">.</span><span class="n">TestCase</span><span class="p">):</span>
     <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">methodName</span><span class="o">=</span><span class="s1">&#39;runTest&#39;</span><span class="p">):</span>
         <span class="nb">super</span><span class="p">(</span><span class="n">MyTestCase</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span>
-            <span class="n">methodName</span><span class="o">=</span><span class="n">methodName</span><span class="p">,</span> <span class="n">additional_skip_names</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;posixpath&#39;</span><span class="p">])</span>
+            <span class="n">methodName</span><span class="o">=</span><span class="n">methodName</span><span class="p">,</span>
+            <span class="n">additional_skip_names</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;posixpath&#39;</span><span class="p">])</span>
 
 <span class="kn">import</span> <span class="nn">sut</span>
 
@@ -752,7 +755,7 @@ class.</p>
 
 <dl class="class">
 <dt id="pyfakefs.fake_filesystem_unittest.Patcher">
-<em class="property">class </em><code class="descclassname">pyfakefs.fake_filesystem_unittest.</code><code class="descname">Patcher</code><span class="sig-paren">(</span><em>additional_skip_names=None</em>, <em>patch_path=True</em>, <em>modules_to_patch=None</em><span class="sig-paren">)</span><a class="headerlink" href="#pyfakefs.fake_filesystem_unittest.Patcher" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><code class="descclassname">pyfakefs.fake_filesystem_unittest.</code><code class="descname">Patcher</code><span class="sig-paren">(</span><em>additional_skip_names=None</em>, <em>patch_path=True</em>, <em>modules_to_reload=None</em>, <em>use_dynamic_patch=True</em>, <em>modules_to_patch=None</em><span class="sig-paren">)</span><a class="headerlink" href="#pyfakefs.fake_filesystem_unittest.Patcher" title="Permalink to this definition">¶</a></dt>
 <dd><p>Instantiate a stub creator to bind and un-bind the file-related modules to
 the <code class="xref py py-mod docutils literal"><span class="pre">pyfakefs</span></code> fake modules.</p>
 <p>The arguments are explained in <a class="reference internal" href="#pyfakefs.fake_filesystem_unittest.TestCase" title="pyfakefs.fake_filesystem_unittest.TestCase"><code class="xref py py-class docutils literal"><span class="pre">TestCase</span></code></a>.</p>

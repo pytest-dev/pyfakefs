@@ -53,21 +53,25 @@
             
   <div class="section" id="usage">
 <h1>Usage<a class="headerlink" href="#usage" title="Permalink to this headline">¶</a></h1>
-<p>There are several approaches to implementing tests using pyfakefs.</p>
-<div class="section" id="automatically-find-and-patch-using-fake-filesystem-unittest">
-<h2>Automatically find and patch using fake_filesystem_unittest<a class="headerlink" href="#automatically-find-and-patch-using-fake-filesystem-unittest" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="test-scenarios">
+<h2>Test Scenarios<a class="headerlink" href="#test-scenarios" title="Permalink to this headline">¶</a></h2>
+<p>There are several approaches to implementing tests using <code class="docutils literal"><span class="pre">pyfakefs</span></code>.</p>
+<div class="section" id="patch-using-fake-filesystem-unittest">
+<h3>Patch using fake_filesystem_unittest<a class="headerlink" href="#patch-using-fake-filesystem-unittest" title="Permalink to this headline">¶</a></h3>
 <p>If you are using the <code class="docutils literal"><span class="pre">python</span> <span class="pre">unittest</span></code> package, the easiest approach is to use test classes
 derived from <code class="docutils literal"><span class="pre">fake_filesystem_unittest.TestCase</span></code>.</p>
-<p>This allows pyfakefs to automatically find all real file functions and modules,
-and stub these out with the fake file system functions and modules.</p>
-<p>The usage is explained in more detail in the pyfakefs wiki page
+<p>This allows <code class="docutils literal"><span class="pre">pyfakefs</span></code> to automatically find all real file functions and
+modules, and stub these out with the fake file system functions and modules.</p>
+<p>The usage is explained in more detail in the <code class="docutils literal"><span class="pre">pyfakefs</span></code> wiki page
 <a class="reference external" href="https://github.com/jmcgeheeiv/pyfakefs/wiki/Automatically-find-and-patch-file-functions-and-modules">Automatically find and patch file functions and modules</a>
 and demonstrated in the files <code class="docutils literal"><span class="pre">example.py</span></code> and <code class="docutils literal"><span class="pre">example_test.py</span></code>.</p>
 </div>
 <div class="section" id="patch-using-the-pytest-plugin">
-<h2>Patch using the PyTest plugin<a class="headerlink" href="#patch-using-the-pytest-plugin" title="Permalink to this headline">¶</a></h2>
-<p>If you use <a class="reference external" href="https://doc.pytest.org">PyTest</a>, you will be interested in the PyTest plugin in pyfakefs.
-This automatically patches all file system functions and modules in a similar manner as desribed above.</p>
+<h3>Patch using the PyTest plugin<a class="headerlink" href="#patch-using-the-pytest-plugin" title="Permalink to this headline">¶</a></h3>
+<p>If you use <a class="reference external" href="https://doc.pytest.org">PyTest</a>, you will be interested in
+the PyTest plugin in <code class="docutils literal"><span class="pre">pyfakefs</span></code>.
+This automatically patches all file system functions and modules in a
+similar manner as described above.</p>
 <p>The PyTest plugin provides the <code class="docutils literal"><span class="pre">fs</span></code> fixture for use in your test. For example:</p>
 <div class="code python highlight-default"><div class="highlight"><pre><span></span><span class="k">def</span> <span class="nf">my_fakefs_test</span><span class="p">(</span><span class="n">fs</span><span class="p">):</span>
     <span class="c1"># &quot;fs&quot; is the reference to the fake file system</span>
@@ -77,7 +81,7 @@ This automatically patches all file system functions and modules in a similar ma
 </div>
 </div>
 <div class="section" id="patch-using-fake-filesystem-unittest-patcher">
-<h2>Patch using fake_filesystem_unittest.Patcher<a class="headerlink" href="#patch-using-fake-filesystem-unittest-patcher" title="Permalink to this headline">¶</a></h2>
+<h3>Patch using fake_filesystem_unittest.Patcher<a class="headerlink" href="#patch-using-fake-filesystem-unittest-patcher" title="Permalink to this headline">¶</a></h3>
 <p>If you are using other means of testing like <a class="reference external" href="http://nose2.readthedocs.io">nose</a>, you can do the
 patching using <code class="docutils literal"><span class="pre">fake_filesystem_unittest.Patcher</span></code> - the class doing the actual work
 of replacing the filesystem modules with the fake modules in the first two approaches.</p>
@@ -103,13 +107,25 @@ of replacing the filesystem modules with the fake modules in the first two appro
 </pre></div>
 </div>
 </div>
-<div class="section" id="additional-parameters-to-patcher-and-testcase">
-<h2>Additional parameters to Patcher and TestCase<a class="headerlink" href="#additional-parameters-to-patcher-and-testcase" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="patch-using-unittest-mock-deprecated">
+<h3>Patch using unittest.mock (deprecated)<a class="headerlink" href="#patch-using-unittest-mock-deprecated" title="Permalink to this headline">¶</a></h3>
+<p>You can also use <code class="docutils literal"><span class="pre">mock.patch()</span></code> to patch the modules manually. This approach will
+only work for the directly imported modules, therefore it is not suited for testing
+larger code bases. As the other approaches are more convenient, this one is considered
+deprecated and will not be described in detail.</p>
+</div>
+</div>
+<div class="section" id="customizing-patcher-and-testcase">
+<h2>Customizing Patcher and TestCase<a class="headerlink" href="#customizing-patcher-and-testcase" title="Permalink to this headline">¶</a></h2>
 <p>Both <code class="docutils literal"><span class="pre">fake_filesystem_unittest.Patcher</span></code> and <code class="docutils literal"><span class="pre">fake_filesystem_unittest.TestCase</span></code>
 provide a few additional arguments for fine-tuning. These are only needed if
 patching does not work for some module.</p>
-<div class="section" id="modules-to-reload-testcase-only">
-<h3>modules_to_reload (TestCase only)<a class="headerlink" href="#modules-to-reload-testcase-only" title="Permalink to this headline">¶</a></h3>
+<p><em>Note for PyTest users:</em> if you need these arguments in <code class="docutils literal"><span class="pre">PyTest</span></code>, you have to
+use <code class="docutils literal"><span class="pre">Patcher</span></code> directly instead of the <code class="docutils literal"><span class="pre">fs</span></code> fixture. Alternatively, you can
+add your own fixture with the needed parameters (see <code class="docutils literal"><span class="pre">pytest_plugin.py</span></code>
+for the implementation).</p>
+<div class="section" id="modules-to-reload">
+<h3>modules_to_reload<a class="headerlink" href="#modules-to-reload" title="Permalink to this headline">¶</a></h3>
 <p>This allows to pass a list of modules that shall be reloaded, thus allowing
 to patch modules not imported directly.</p>
 <p>The following imports of <code class="docutils literal"><span class="pre">os</span></code> and <code class="docutils literal"><span class="pre">pathlib.Path</span></code> will not be patched by
@@ -171,19 +187,12 @@ off (and imports like <code class="docutils literal"><span class="pre">from</spa
 used to avoid patching the Python file system modules themselves, but may be
 helpful in some special situations.</p>
 </div>
-<div class="section" id="use-dynamic-patch-testcase-only">
-<h3>use_dynamic_patch (TestCase only)<a class="headerlink" href="#use-dynamic-patch-testcase-only" title="Permalink to this headline">¶</a></h3>
+<div class="section" id="use-dynamic-patch">
+<h3>use_dynamic_patch<a class="headerlink" href="#use-dynamic-patch" title="Permalink to this headline">¶</a></h3>
 <p>If <code class="docutils literal"><span class="pre">True</span></code> (the default), dynamic patching after setup is used (for example
 for modules loaded locally inside of functions).
 Can be switched off if it causes unwanted side effects.</p>
 </div>
-</div>
-<div class="section" id="patch-using-unittest-mock-deprecated">
-<h2>Patch using unittest.mock (deprecated)<a class="headerlink" href="#patch-using-unittest-mock-deprecated" title="Permalink to this headline">¶</a></h2>
-<p>You can also use <code class="docutils literal"><span class="pre">mock.patch()</span></code> to patch the modules manually. This approach will
-only work for the directly imported modules, therefore it is not suited for testing
-larger code bases. As the other approaches are more convenient, this one is considered
-deprecated and will not be described in detail.</p>
 </div>
 </div>
 
@@ -196,18 +205,21 @@ deprecated and will not be described in detail.</p>
   <h3><a href="index.html">Table Of Contents</a></h3>
   <ul>
 <li><a class="reference internal" href="#">Usage</a><ul>
-<li><a class="reference internal" href="#automatically-find-and-patch-using-fake-filesystem-unittest">Automatically find and patch using fake_filesystem_unittest</a></li>
+<li><a class="reference internal" href="#test-scenarios">Test Scenarios</a><ul>
+<li><a class="reference internal" href="#patch-using-fake-filesystem-unittest">Patch using fake_filesystem_unittest</a></li>
 <li><a class="reference internal" href="#patch-using-the-pytest-plugin">Patch using the PyTest plugin</a></li>
 <li><a class="reference internal" href="#patch-using-fake-filesystem-unittest-patcher">Patch using fake_filesystem_unittest.Patcher</a></li>
-<li><a class="reference internal" href="#additional-parameters-to-patcher-and-testcase">Additional parameters to Patcher and TestCase</a><ul>
-<li><a class="reference internal" href="#modules-to-reload-testcase-only">modules_to_reload (TestCase only)</a></li>
+<li><a class="reference internal" href="#patch-using-unittest-mock-deprecated">Patch using unittest.mock (deprecated)</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#customizing-patcher-and-testcase">Customizing Patcher and TestCase</a><ul>
+<li><a class="reference internal" href="#modules-to-reload">modules_to_reload</a></li>
 <li><a class="reference internal" href="#modules-to-patch">modules_to_patch</a></li>
 <li><a class="reference internal" href="#patch-path">patch_path</a></li>
 <li><a class="reference internal" href="#additional-skip-names">additional_skip_names</a></li>
-<li><a class="reference internal" href="#use-dynamic-patch-testcase-only">use_dynamic_patch (TestCase only)</a></li>
+<li><a class="reference internal" href="#use-dynamic-patch">use_dynamic_patch</a></li>
 </ul>
 </li>
-<li><a class="reference internal" href="#patch-using-unittest-mock-deprecated">Patch using unittest.mock (deprecated)</a></li>
 </ul>
 </li>
 </ul>
