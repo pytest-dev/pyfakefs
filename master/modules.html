@@ -289,29 +289,6 @@ Defaults to the root path (e.g. ‘/’ on Unix systems).</li>
 </dd></dl>
 
 <dl class="method">
-<dt id="pyfakefs.fake_filesystem.FakeFilesystem.change_disk_usage">
-<code class="descname">change_disk_usage</code><span class="sig-paren">(</span><em>usage_change</em>, <em>file_path</em>, <em>st_dev</em><span class="sig-paren">)</span><a class="headerlink" href="#pyfakefs.fake_filesystem.FakeFilesystem.change_disk_usage" title="Permalink to this definition">¶</a></dt>
-<dd><p>Change the used disk space by the given amount.</p>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
-<li><strong>usage_change</strong> – Number of bytes added to the used space.
-If negative, the used space will be decreased.</li>
-<li><strong>file_path</strong> – The path of the object needing the disk space.</li>
-<li><strong>st_dev</strong> – The device ID for the respective file system.</li>
-</ul>
-</td>
-</tr>
-<tr class="field-even field"><th class="field-name">Raises:</th><td class="field-body"><p class="first last"><code class="xref py py-exc docutils literal"><span class="pre">IOError</span></code> – if usage_change exceeds the free file system space</p>
-</td>
-</tr>
-</tbody>
-</table>
-</dd></dl>
-
-<dl class="method">
 <dt id="pyfakefs.fake_filesystem.FakeFilesystem.create_dir">
 <code class="descname">create_dir</code><span class="sig-paren">(</span><em>directory_path</em>, <em>perm_bits=511</em><span class="sig-paren">)</span><a class="headerlink" href="#pyfakefs.fake_filesystem.FakeFilesystem.create_dir" title="Permalink to this definition">¶</a></dt>
 <dd><p>Create directory_path, and all the parent directories.</p>
@@ -908,11 +885,12 @@ my_io_module = fake_filesystem.FakeIoModule(filesystem)</p>
 <dl class="class">
 <dt id="pyfakefs.fake_scandir.FakeScanDirModule">
 <em class="property">class </em><code class="descclassname">pyfakefs.fake_scandir.</code><code class="descname">FakeScanDirModule</code><span class="sig-paren">(</span><em>filesystem</em><span class="sig-paren">)</span><a class="headerlink" href="#pyfakefs.fake_scandir.FakeScanDirModule" title="Permalink to this definition">¶</a></dt>
-<dd><p>Uses FakeFilesystem to provide a fake <cite>scandir</cite> module replacement.
-.. note:</p>
-<div class="highlight-default"><div class="highlight"><pre><span></span>The `scandir` function is a part of the standard `os` module since Python 3.5,
-this class handled the the separate `scandir` module that is available on pypi.
-</pre></div>
+<dd><p>Uses FakeFilesystem to provide a fake <cite>scandir</cite> module replacement.</p>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">The <code class="docutils literal"><span class="pre">scandir</span></code> function is a part of the standard <code class="docutils literal"><span class="pre">os</span></code> module
+since Python 3.5. This class handles the separate <code class="docutils literal"><span class="pre">scandir</span></code> module
+that is available on pypi.</p>
 </div>
 <p>You need a fake_filesystem to use this:
 <cite>filesystem = fake_filesystem.FakeFilesystem()</cite>
