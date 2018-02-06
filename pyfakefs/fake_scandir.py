@@ -20,7 +20,8 @@ import os
 
 
 class DirEntry(object):
-    """Emulates os.DirEntry. Note that we did not enforce keyword only arguments."""
+    """Emulates os.DirEntry. Note that we did not enforce keyword only
+    arguments."""
 
     def __init__(self, filesystem):
         """Initialize the dir entry with unset values.
@@ -239,9 +240,10 @@ def walk(filesystem, top, topdown=True, onerror=None, followlinks=False):
 
 class FakeScanDirModule(object):
     """Uses FakeFilesystem to provide a fake `scandir` module replacement.
-    Note:
-        The `scandir` function is a part of the standard `os` module since Python 3.5,
-        this class handled the the separate `scandir` module that is available on pypi.
+
+    .. Note:: The ``scandir`` function is a part of the standard ``os`` module
+      since Python 3.5. This class handles the separate ``scandir`` module
+      that is available on pypi.
 
     You need a fake_filesystem to use this:
     `filesystem = fake_filesystem.FakeFilesystem()`

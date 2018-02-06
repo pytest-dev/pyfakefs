@@ -11,7 +11,8 @@ pyfakefs works with Linux, Windows and MacOS.
 This file provides general usage instructions for pyfakefs.  There is more:
 
 * The [Release pyfakefs API Reference](http://jmcgeheeiv.github.io/pyfakefs/release)
-  contains documentation for each pyfakefs class, method and function for the last version released on PyPi
+  contains usage documentation for pyfakefs and a description of the 
+  most relevent classes, methods and functions for the last version released on PyPi
 * The [Development pyfakefs API Reference](http://jmcgeheeiv.github.io/pyfakefs/master)
   contains the same documentation for the current master branch
 * The [pyfakefs Wiki](https://github.com/jmcgeheeiv/pyfakefs/wiki/Home) provides more detailed information on

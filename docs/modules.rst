@@ -12,7 +12,7 @@ Fake filesystem classes
 -----------------------
 .. autoclass:: pyfakefs.fake_filesystem.FakeFilesystem
     :members: add_mount_point,
-        get_disk_usage, set_disk_usage, change_disk_usage,
+        get_disk_usage, set_disk_usage,
         add_real_directory, add_real_file, add_real_paths,
         create_dir, create_file, create_symlink
 
