@@ -234,6 +234,10 @@ cheap. The access to the files is by default read-only, but even even if you
 add them using ``read_only=False``, the files are written only in the fake
 system (e.g. in memory). The real files are never changed.
 
+``add_real_file()`` and ``add_real_directory()`` also allow you to map a
+file or a directory tree into another location in the fake filesystem via the
+argument ``target_path``.
+
 .. code:: python
 
     from fake_filesystem_unittest import TestCase

@@ -1790,8 +1790,14 @@ class RealFileSystemAccessTest(TestCase):
                                     self.filesystem.add_real_directory,
                                     self.root_path)
 
-    def check_fake_file_stat(self, fake_file, real_file_path):
-        self.assertTrue(self.filesystem.exists(real_file_path))
+    def check_fake_file_stat(self, fake_file, real_file_path,
+                             target_path=None):
+        if target_path is None or target_path == real_file_path:
+            self.assertTrue(self.filesystem.exists(real_file_path))
+        else:
+            self.assertFalse(self.filesystem.exists(real_file_path))
+            self.assertTrue(self.filesystem.exists(target_path))
+
         real_stat = os.stat(real_file_path)
         self.assertIsNone(fake_file._byte_contents)
         self.assertEqual(fake_file.st_size, real_stat.st_size)
@@ -1808,8 +1814,8 @@ class RealFileSystemAccessTest(TestCase):
         with open(real_file_path, 'rb') as f:
             real_contents = f.read()
         self.assertEqual(fake_file.byte_contents, real_contents)
-        self.assert_raises_io_error(errno.EACCES, self.fake_open, real_file_path,
-                                    'w')
+        self.assert_raises_io_error(
+            errno.EACCES, self.fake_open, real_file_path, 'w')
 
     def check_writable_file(self, fake_file, real_file_path):
         with open(real_file_path, 'rb') as f:
@@ -1840,6 +1846,20 @@ class RealFileSystemAccessTest(TestCase):
         self.assertEqual(fake_file.st_mode, os.stat(real_file_path).st_mode)
         self.check_writable_file(fake_file, real_file_path)
 
+    def test_add_real_file_to_existing_path(self):
+        real_file_path = os.path.abspath(__file__)
+        self.filesystem.create_file('/foo/bar')
+        self.assert_raises_os_error(
+            errno.EEXIST, self.filesystem.add_real_file,
+            real_file_path, target_path='/foo/bar')
+
+    def test_add_real_file_to_non_existing_path(self):
+        real_file_path = os.path.abspath(__file__)
+        fake_file = self.filesystem.add_real_file(real_file_path,
+                                                  target_path='/foo/bar')
+        self.check_fake_file_stat(fake_file, real_file_path,
+                                  target_path='/foo/bar')
+
     def test_add_existing_real_directory_read_only(self):
         real_dir_path = os.path.join(self.root_path, 'pyfakefs')
         self.filesystem.add_real_directory(real_dir_path)
@@ -1865,6 +1885,30 @@ class RealFileSystemAccessTest(TestCase):
         self.assertTrue(
             self.filesystem.exists(
                 os.path.join(self.root_path, 'pyfakefs', '__init__.py')))
+
+    def test_add_existing_real_directory_tree_to_existing_path(self):
+        self.filesystem.create_dir('/foo/bar')
+        self.assert_raises_os_error(errno.EEXIST,
+                                    self.filesystem.add_real_directory,
+                                    self.root_path,
+                                    target_path='/foo/bar')
+
+    def test_add_existing_real_directory_tree_to_other_path(self):
+        self.filesystem.add_real_directory(self.root_path,
+                                           target_path='/foo/bar')
+        self.assertFalse(
+            self.filesystem.exists(
+                os.path.join(self.root_path, 'tests', 'fake_filesystem_test.py')))
+        self.assertTrue(
+            self.filesystem.exists(
+                os.path.join('foo', 'bar', 'tests',
+                             'fake_filesystem_test.py')))
+        self.assertFalse(
+            self.filesystem.exists(
+                os.path.join(self.root_path, 'pyfakefs', 'fake_filesystem.py')))
+        self.assertTrue(
+            self.filesystem.exists(
+                os.path.join('foo', 'bar', 'pyfakefs', '__init__.py')))
 
     def test_get_object_from_lazily_added_real_directory(self):
         self.filesystem.is_case_sensitive = True

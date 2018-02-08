@@ -476,27 +476,19 @@ class FakeFileFromRealFile(FakeFile):
     The contents of the file are read on demand only.
     """
 
-    def __init__(self, file_path, filesystem, read_only=True):
+    def __init__(self, file_path, filesystem):
         """init.
 
         Args:
-            file_path: path to the existing file.
-            filesystem: the fake filesystem where the file is created.
-            read_only: if set, the file is treated as read-only, e.g.
-                a write access raises an exception; otherwise, writing
-                to the file changes the fake file only as usually.
+            file_path: Path to the existing file.
+            filesystem: The fake filesystem where the file is created.
 
         Raises:
             OSError: if the file does not exist in the real file system.
+            OSError: if the file already exists in the fake file system.
         """
-        real_stat = os.stat(file_path)
-        # for read-only mode, remove the write/executable permission bits
-        super(FakeFileFromRealFile, self).__init__(name=os.path.basename(file_path),
-                                                   filesystem=filesystem)
-        self.stat_result.set_from_stat_result(real_stat)
-        if read_only:
-            self.st_mode &= 0o777444
-        self.file_path = file_path
+        super(FakeFileFromRealFile, self).__init__(
+            name=os.path.basename(file_path), filesystem=filesystem)
         self.contents_read = False
 
     @property
@@ -675,23 +667,27 @@ class FakeDirectoryFromRealDirectory(FakeDirectory):
     The contents of the directory are read on demand only.
     """
 
-    def __init__(self, dir_path, filesystem, read_only):
+    def __init__(self, source_path, filesystem, read_only,
+                 target_path=None):
         """init.
 
         Args:
-            dir_path: Full directory path.
+            source_path: Full directory path.
             filesystem: The fake filesystem where the directory is created.
             read_only: If set, all files under the directory are treated
                 as read-only, e.g. a write access raises an exception;
                 otherwise, writing to the files changes the fake files
                 only as usually.
+            target_path: If given, the target path of the directory,
+                otherwise the target is the samae as `source_path`.
 
         Raises:
             OSError: if the directory does not exist in the real file system
         """
-        real_stat = os.stat(dir_path)
+        target_path = target_path or source_path
+        real_stat = os.stat(source_path)
         super(FakeDirectoryFromRealDirectory, self).__init__(
-            name=os.path.split(dir_path)[1],
+            name=os.path.split(target_path)[1],
             perm_bits=real_stat.st_mode,
             filesystem=filesystem)
 
@@ -700,7 +696,7 @@ class FakeDirectoryFromRealDirectory(FakeDirectory):
         self.st_mtime = real_stat.st_mtime
         self.st_gid = real_stat.st_gid
         self.st_uid = real_stat.st_uid
-        self.dir_path = dir_path
+        self.source_path = source_path
         self.read_only = read_only
         self.contents_read = False
 
@@ -710,10 +706,16 @@ class FakeDirectoryFromRealDirectory(FakeDirectory):
         if not already loaded."""
         if not self.contents_read:
             self.contents_read = True
-            self.filesystem.add_real_paths(
-                [os.path.join(self.dir_path, entry) for entry in
-                 os.listdir(self.dir_path)],
-                read_only=self.read_only)
+            base = self.path
+            for entry in os.listdir(self.source_path):
+                source_path = os.path.join(self.source_path, entry)
+                target_path = os.path.join(base, entry)
+                if os.path.isdir(source_path):
+                    self.filesystem.add_real_directory(
+                        source_path, self.read_only, target_path=target_path)
+                else:
+                    self.filesystem.add_real_file(
+                        source_path, self.read_only, target_path=target_path)
         return self.byte_contents
 
     @property
@@ -2105,16 +2107,18 @@ class FakeFilesystem(object):
             file_path, st_mode, contents, st_size, create_missing_dirs,
             apply_umask, encoding, errors)
 
-    def add_real_file(self, file_path, read_only=True):
+    def add_real_file(self, source_path, read_only=True, target_path=None):
         """Create file_path, including all the parent directories along the
         way, for an existing real file. The contents of the real file are read
         only on demand.
 
         Args:
-            file_path: Path to an existing file in the real file system
+            source_path: Path to an existing file in the real file system
             read_only: If `True` (the default), writing to the fake file
                 raises an exception.  Otherwise, writing to the file changes
                 the fake file only.
+            target_path: If given, the path of the target direction,
+                otherwise it is equal to `source_path`.
 
         Returns:
             the newly created FakeFile object.
@@ -2131,17 +2135,28 @@ class FakeFilesystem(object):
                   Further, Windows offers the option to enable atime, and older \
                   versions of Linux may also modify atime.
         """
-        return self.create_file_internally(file_path,
-                                           read_from_real_fs=True,
-                                           read_only=read_only)
+        target_path = target_path or source_path
+        real_stat = os.stat(source_path)
+        fake_file = self.create_file_internally(target_path,
+                                                read_from_real_fs=True)
 
-    def add_real_directory(self, dir_path, read_only=True, lazy_read=True):
-        """Create a fake directory corresponding to the real directory at the specified
-        path.  Add entries in the fake directory corresponding to the entries in the
-        real directory.
+        # for read-only mode, remove the write/executable permission bits
+        fake_file.stat_result.set_from_stat_result(real_stat)
+        if read_only:
+            fake_file.st_mode &= 0o777444
+        fake_file.file_path = source_path
+        self.change_disk_usage(fake_file.size, fake_file.name,
+                               fake_file.st_dev)
+        return fake_file
+
+    def add_real_directory(self, source_path, read_only=True, lazy_read=True,
+                           target_path=None):
+        """Create a fake directory corresponding to the real directory at the
+        specified path.  Add entries in the fake directory corresponding to
+        the entries in the real directory.
 
         Args:
-            dir_path: The path to the existing directory.
+            source_path: The path to the existing directory.
             read_only: If set, all files under the directory are treated as
                 read-only, e.g. a write access raises an exception;
                 otherwise, writing to the files changes the fake files only
@@ -2152,6 +2167,8 @@ class FakeFilesystem(object):
                 at the time the directory contents are read; set this to
                 `False` only if you are dependent on accurate file system
                 size in your test
+            target_path: If given, the target directory, otherwise,
+                the target directory is the same as `source_path`.
 
         Returns:
             the newly created FakeDirectory object.
@@ -2160,24 +2177,28 @@ class FakeFilesystem(object):
             OSError: if the directory does not exist in the real file system.
             IOError: if the directory already exists in the fake file system.
         """
-        if not os.path.exists(dir_path):
-            self.raise_io_error(errno.ENOENT, dir_path)
+        if not os.path.exists(source_path):
+            self.raise_io_error(errno.ENOENT, source_path)
+        target_path = target_path or source_path
         if lazy_read:
-            parent_path = os.path.split(dir_path)[0]
+            parent_path = os.path.split(target_path)[0]
             if self.exists(parent_path):
                 parent_dir = self.get_object(parent_path)
             else:
                 parent_dir = self.create_dir(parent_path)
-            new_dir = FakeDirectoryFromRealDirectory(dir_path, filesystem=self,
-                                                     read_only=read_only)
+            new_dir = FakeDirectoryFromRealDirectory(
+                source_path, self, read_only, target_path)
             parent_dir.add_entry(new_dir)
             self._last_ino += 1
             new_dir.st_ino = self._last_ino
         else:
-            new_dir = self.create_dir(dir_path)
-            for base, _, files in os.walk(dir_path):
+            new_dir = self.create_dir(target_path)
+            new_base = new_dir.path
+            for base, _, files in os.walk(source_path):
                 for fileEntry in files:
-                    self.add_real_file(os.path.join(base, fileEntry), read_only)
+                    self.add_real_file(os.path.join(base, fileEntry),
+                                       read_only,
+                                       os.path.join(new_base, fileEntry))
         return new_dir
 
     def add_real_paths(self, path_list, read_only=True, lazy_dir_read=True):
@@ -2208,7 +2229,7 @@ class FakeFilesystem(object):
     def create_file_internally(self, file_path, st_mode=S_IFREG | PERM_DEF_FILE,
                                contents='', st_size=None, create_missing_dirs=True,
                                apply_umask=False, encoding=None, errors=None,
-                               read_from_real_fs=False, read_only=True, raw_io=False):
+                               read_from_real_fs=False, raw_io=False):
         """Internal fake file creator that supports both normal fake files and fake
         files based on real files.
 
@@ -2218,15 +2239,13 @@ class FakeFilesystem(object):
             contents: the contents of the file.
             st_size: file size; only valid if contents not given.
             create_missing_dirs: if True, auto create missing directories.
-            apply_umask: whether or not the current umask must be applied on st_mode.
+            apply_umask: whether or not the current umask must be applied
+                on st_mode.
             encoding: if contents is a unicode string, the encoding used for
                 serialization.
             errors: the error mode used for encoding/decoding errors
-            read_from_real_fs: if True, the contents are reaf from the real file system
-                on demand.
-            read_only: if set, the file is treated as read-only, e.g. a write access
-                raises an exception;
-                otherwise, writing to the file changes the fake file only as usually.
+            read_from_real_fs: if True, the contents are read from the real
+                file system on demand.
             raw_io: `True` if called from low-level API (`os.open`)
         """
         error_class = OSError if raw_io else IOError
@@ -2251,8 +2270,7 @@ class FakeFilesystem(object):
         if apply_umask:
             st_mode &= ~self.umask
         if read_from_real_fs:
-            file_object = FakeFileFromRealFile(
-                file_path, filesystem=self, read_only=read_only)
+            file_object = FakeFileFromRealFile(file_path, filesystem=self)
         else:
             file_object = FakeFile(new_file, st_mode, filesystem=self, encoding=encoding,
                                    errors=errors)
