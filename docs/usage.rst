@@ -28,9 +28,8 @@ with the fake file system functions and modules:
             self.fs.create_file(file_path)
             self.assertTrue(os.path.exists(file_path))
 
-The usage is explained in more detail in the ``pyfakefs`` wiki page
-`Automatically find and patch file functions and modules <https://github.com/jmcgeheeiv/pyfakefs/wiki/Automatically-find-and-patch-file-functions-and-modules>`__
-and demonstrated in the files ``example.py`` and ``example_test.py``.
+The usage is explained in more detail in :ref:`auto_patch` and
+demonstrated in the files ``example.py`` and ``example_test.py``.
 
 Patch using the PyTest plugin
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -86,16 +85,18 @@ only work for the directly imported modules, therefore it is not suited for test
 larger code bases. As the other approaches are more convenient, this one is considered
 deprecated and will not be described in detail.
 
+.. _customizing_patcher:
+
 Customizing Patcher and TestCase
 --------------------------------
 Both ``fake_filesystem_unittest.Patcher`` and ``fake_filesystem_unittest.TestCase``
 provide a few additional arguments for fine-tuning. These are only needed if
 patching does not work for some module.
 
-*Note for PyTest users:* if you need these arguments in ``PyTest``, you have to
-use ``Patcher`` directly instead of the ``fs`` fixture. Alternatively, you can
-add your own fixture with the needed parameters (see ``pytest_plugin.py``
-for a possible implementation).
+.. note:: If you need these arguments in ``PyTest``, you have to
+  use ``Patcher`` directly instead of the ``fs`` fixture. Alternatively,
+  you can add your own fixture with the needed parameters (see
+  ``pytest_plugin.py`` for a possible implementation).
 
 modules_to_reload
 ~~~~~~~~~~~~~~~~~
