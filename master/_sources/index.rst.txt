@@ -13,6 +13,7 @@ Contents:
 
    intro
    usage
+   autopatch
    modules
    api
 

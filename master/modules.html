@@ -5,8 +5,8 @@
 <html xmlns="http://www.w3.org/1999/xhtml">
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-    <title>Public Modules and Classes &#8212; pyfakefs 3.4 documentation</title>
-    <link rel="stylesheet" href="_static/nature.css" type="text/css" />
+    <title>Public Modules and Classes &#8212; pyfakefs v3.4</title>
+    <link rel="stylesheet" href="_static/pyfakefs.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
@@ -24,7 +24,7 @@
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
     <link rel="next" title="API Notes" href="api.html" />
-    <link rel="prev" title="Usage" href="usage.html" /> 
+    <link rel="prev" title="Automatically find and patch file functions and modules" href="autopatch.html" /> 
   </head>
   <body>
     <div class="related" role="navigation" aria-label="related navigation">
@@ -40,9 +40,9 @@
           <a href="api.html" title="API Notes"
              accesskey="N">next</a> |</li>
         <li class="right" >
-          <a href="usage.html" title="Usage"
+          <a href="autopatch.html" title="Automatically find and patch file functions and modules"
              accesskey="P">previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="index.html">pyfakefs 3.4 documentation</a> &#187;</li> 
+        <li class="nav-item nav-item-0"><a href="index.html">pyfakefs v3.4</a> &#187;</li> 
       </ul>
     </div>  
 
@@ -53,9 +53,13 @@
             
   <div class="section" id="public-modules-and-classes">
 <h1>Public Modules and Classes<a class="headerlink" href="#public-modules-and-classes" title="Permalink to this headline">¶</a></h1>
-<p><em>Note:</em> only public classes and methods interesting to the pyfakfs user
-are shown. Methods that mimic the behavior of standard Python
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">Only public classes and methods interesting to the pyfakfs user
+are shown.
+Methods that mimic the behavior of standard Python
 functions are not listed - you may always use the standard functions.</p>
+</div>
 <div class="section" id="module-pyfakefs.fake_filesystem">
 <span id="fake-filesystem-module"></span><h2>Fake filesystem module<a class="headerlink" href="#module-pyfakefs.fake_filesystem" title="Permalink to this headline">¶</a></h2>
 <p>A fake filesystem implementation for unit testing.</p>
@@ -350,7 +354,7 @@ for serialization.</li>
 
 <dl class="method">
 <dt id="pyfakefs.fake_filesystem.FakeFilesystem.add_real_file">
-<code class="descname">add_real_file</code><span class="sig-paren">(</span><em>file_path</em>, <em>read_only=True</em><span class="sig-paren">)</span><a class="headerlink" href="#pyfakefs.fake_filesystem.FakeFilesystem.add_real_file" title="Permalink to this definition">¶</a></dt>
+<code class="descname">add_real_file</code><span class="sig-paren">(</span><em>source_path</em>, <em>read_only=True</em>, <em>target_path=None</em><span class="sig-paren">)</span><a class="headerlink" href="#pyfakefs.fake_filesystem.FakeFilesystem.add_real_file" title="Permalink to this definition">¶</a></dt>
 <dd><p>Create file_path, including all the parent directories along the
 way, for an existing real file. The contents of the real file are read
 only on demand.</p>
@@ -359,10 +363,12 @@ only on demand.</p>
 <col class="field-body" />
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
-<li><strong>file_path</strong> – Path to an existing file in the real file system</li>
+<li><strong>source_path</strong> – Path to an existing file in the real file system</li>
 <li><strong>read_only</strong> – If <cite>True</cite> (the default), writing to the fake file
 raises an exception.  Otherwise, writing to the file changes
 the fake file only.</li>
+<li><strong>target_path</strong> – If given, the path of the target direction,
+otherwise it is equal to <cite>source_path</cite>.</li>
 </ul>
 </td>
 </tr>
@@ -385,16 +391,16 @@ the fake file only.</li>
 
 <dl class="method">
 <dt id="pyfakefs.fake_filesystem.FakeFilesystem.add_real_directory">
-<code class="descname">add_real_directory</code><span class="sig-paren">(</span><em>dir_path</em>, <em>read_only=True</em>, <em>lazy_read=True</em><span class="sig-paren">)</span><a class="headerlink" href="#pyfakefs.fake_filesystem.FakeFilesystem.add_real_directory" title="Permalink to this definition">¶</a></dt>
-<dd><p>Create a fake directory corresponding to the real directory at the specified
-path.  Add entries in the fake directory corresponding to the entries in the
-real directory.</p>
+<code class="descname">add_real_directory</code><span class="sig-paren">(</span><em>source_path</em>, <em>read_only=True</em>, <em>lazy_read=True</em>, <em>target_path=None</em><span class="sig-paren">)</span><a class="headerlink" href="#pyfakefs.fake_filesystem.FakeFilesystem.add_real_directory" title="Permalink to this definition">¶</a></dt>
+<dd><p>Create a fake directory corresponding to the real directory at the
+specified path.  Add entries in the fake directory corresponding to
+the entries in the real directory.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
-<li><strong>dir_path</strong> – The path to the existing directory.</li>
+<li><strong>source_path</strong> – The path to the existing directory.</li>
 <li><strong>read_only</strong> – If set, all files under the directory are treated as
 read-only, e.g. a write access raises an exception;
 otherwise, writing to the files changes the fake files only
@@ -405,6 +411,8 @@ accessed, and only until the needed subdirectory level.
 at the time the directory contents are read; set this to
 <cite>False</cite> only if you are dependent on accurate file system
 size in your test</li>
+<li><strong>target_path</strong> – If given, the target directory, otherwise,
+the target directory is the same as <cite>source_path</cite>.</li>
 </ul>
 </td>
 </tr>
@@ -918,8 +926,8 @@ that is available on pypi.</p>
 </ul>
 
   <h4>Previous topic</h4>
-  <p class="topless"><a href="usage.html"
-                        title="previous chapter">Usage</a></p>
+  <p class="topless"><a href="autopatch.html"
+                        title="previous chapter">Automatically find and patch file functions and modules</a></p>
   <h4>Next topic</h4>
   <p class="topless"><a href="api.html"
                         title="next chapter">API Notes</a></p>
@@ -957,13 +965,14 @@ that is available on pypi.</p>
           <a href="api.html" title="API Notes"
              >next</a> |</li>
         <li class="right" >
-          <a href="usage.html" title="Usage"
+          <a href="autopatch.html" title="Automatically find and patch file functions and modules"
              >previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="index.html">pyfakefs 3.4 documentation</a> &#187;</li> 
+        <li class="nav-item nav-item-0"><a href="index.html">pyfakefs v3.4</a> &#187;</li> 
       </ul>
     </div>
     <div class="footer" role="contentinfo">
         &#169; Copyright 2017, John McGehee.
+      Last updated on Feb 09, 2018.
       Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.6.5.
     </div>
   </body>

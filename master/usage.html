@@ -5,8 +5,8 @@
 <html xmlns="http://www.w3.org/1999/xhtml">
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-    <title>Usage &#8212; pyfakefs 3.4 documentation</title>
-    <link rel="stylesheet" href="_static/nature.css" type="text/css" />
+    <title>Usage &#8212; pyfakefs v3.4</title>
+    <link rel="stylesheet" href="_static/pyfakefs.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
@@ -23,7 +23,7 @@
     <script type="text/javascript" src="_static/doctools.js"></script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
-    <link rel="next" title="Public Modules and Classes" href="modules.html" />
+    <link rel="next" title="Automatically find and patch file functions and modules" href="autopatch.html" />
     <link rel="prev" title="Introduction" href="intro.html" /> 
   </head>
   <body>
@@ -37,12 +37,12 @@
           <a href="py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
         <li class="right" >
-          <a href="modules.html" title="Public Modules and Classes"
+          <a href="autopatch.html" title="Automatically find and patch file functions and modules"
              accesskey="N">next</a> |</li>
         <li class="right" >
           <a href="intro.html" title="Introduction"
              accesskey="P">previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="index.html">pyfakefs 3.4 documentation</a> &#187;</li> 
+        <li class="nav-item nav-item-0"><a href="index.html">pyfakefs v3.4</a> &#187;</li> 
       </ul>
     </div>  
 
@@ -76,9 +76,8 @@ with the fake file system functions and modules:</p>
         <span class="bp">self</span><span class="o">.</span><span class="n">assertTrue</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">file_path</span><span class="p">))</span>
 </pre></div>
 </div>
-<p>The usage is explained in more detail in the <code class="docutils literal"><span class="pre">pyfakefs</span></code> wiki page
-<a class="reference external" href="https://github.com/jmcgeheeiv/pyfakefs/wiki/Automatically-find-and-patch-file-functions-and-modules">Automatically find and patch file functions and modules</a>
-and demonstrated in the files <code class="docutils literal"><span class="pre">example.py</span></code> and <code class="docutils literal"><span class="pre">example_test.py</span></code>.</p>
+<p>The usage is explained in more detail in <a class="reference internal" href="autopatch.html#auto-patch"><span class="std std-ref">Automatically find and patch file functions and modules</span></a> and
+demonstrated in the files <code class="docutils literal"><span class="pre">example.py</span></code> and <code class="docutils literal"><span class="pre">example_test.py</span></code>.</p>
 </div>
 <div class="section" id="patch-using-the-pytest-plugin">
 <h3>Patch using the PyTest plugin<a class="headerlink" href="#patch-using-the-pytest-plugin" title="Permalink to this headline">¶</a></h3>
@@ -130,14 +129,17 @@ deprecated and will not be described in detail.</p>
 </div>
 </div>
 <div class="section" id="customizing-patcher-and-testcase">
-<h2>Customizing Patcher and TestCase<a class="headerlink" href="#customizing-patcher-and-testcase" title="Permalink to this headline">¶</a></h2>
+<span id="customizing-patcher"></span><h2>Customizing Patcher and TestCase<a class="headerlink" href="#customizing-patcher-and-testcase" title="Permalink to this headline">¶</a></h2>
 <p>Both <code class="docutils literal"><span class="pre">fake_filesystem_unittest.Patcher</span></code> and <code class="docutils literal"><span class="pre">fake_filesystem_unittest.TestCase</span></code>
 provide a few additional arguments for fine-tuning. These are only needed if
 patching does not work for some module.</p>
-<p><em>Note for PyTest users:</em> if you need these arguments in <code class="docutils literal"><span class="pre">PyTest</span></code>, you have to
-use <code class="docutils literal"><span class="pre">Patcher</span></code> directly instead of the <code class="docutils literal"><span class="pre">fs</span></code> fixture. Alternatively, you can
-add your own fixture with the needed parameters (see <code class="docutils literal"><span class="pre">pytest_plugin.py</span></code>
-for a possible implementation).</p>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">If you need these arguments in <code class="docutils literal"><span class="pre">PyTest</span></code>, you have to
+use <code class="docutils literal"><span class="pre">Patcher</span></code> directly instead of the <code class="docutils literal"><span class="pre">fs</span></code> fixture. Alternatively,
+you can add your own fixture with the needed parameters (see
+<code class="docutils literal"><span class="pre">pytest_plugin.py</span></code> for a possible implementation).</p>
+</div>
 <div class="section" id="modules-to-reload">
 <h3>modules_to_reload<a class="headerlink" href="#modules-to-reload" title="Permalink to this headline">¶</a></h3>
 <p>This allows to pass a list of modules that shall be reloaded, thus allowing
@@ -262,6 +264,9 @@ directories are read only on demand, so that mapping them is relatively
 cheap. The access to the files is by default read-only, but even even if you
 add them using <code class="docutils literal"><span class="pre">read_only=False</span></code>, the files are written only in the fake
 system (e.g. in memory). The real files are never changed.</p>
+<p><code class="docutils literal"><span class="pre">add_real_file()</span></code> and <code class="docutils literal"><span class="pre">add_real_directory()</span></code> also allow you to map a
+file or a directory tree into another location in the fake filesystem via the
+argument <code class="docutils literal"><span class="pre">target_path</span></code>.</p>
 <div class="code python highlight-default"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">fake_filesystem_unittest</span> <span class="k">import</span> <span class="n">TestCase</span>
 
 <span class="k">class</span> <span class="nc">ExampleTestCase</span><span class="p">(</span><span class="n">TestCase</span><span class="p">):</span>
@@ -347,8 +352,8 @@ modeled after <code class="docutils literal"><span class="pre">shutil.disk_usage
   <p class="topless"><a href="intro.html"
                         title="previous chapter">Introduction</a></p>
   <h4>Next topic</h4>
-  <p class="topless"><a href="modules.html"
-                        title="next chapter">Public Modules and Classes</a></p>
+  <p class="topless"><a href="autopatch.html"
+                        title="next chapter">Automatically find and patch file functions and modules</a></p>
   <div role="note" aria-label="source link">
     <h3>This Page</h3>
     <ul class="this-page-menu">
@@ -380,16 +385,17 @@ modeled after <code class="docutils literal"><span class="pre">shutil.disk_usage
           <a href="py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
         <li class="right" >
-          <a href="modules.html" title="Public Modules and Classes"
+          <a href="autopatch.html" title="Automatically find and patch file functions and modules"
              >next</a> |</li>
         <li class="right" >
           <a href="intro.html" title="Introduction"
              >previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="index.html">pyfakefs 3.4 documentation</a> &#187;</li> 
+        <li class="nav-item nav-item-0"><a href="index.html">pyfakefs v3.4</a> &#187;</li> 
       </ul>
     </div>
     <div class="footer" role="contentinfo">
         &#169; Copyright 2017, John McGehee.
+      Last updated on Feb 09, 2018.
       Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.6.5.
     </div>
   </body>

@@ -5,8 +5,8 @@
 <html xmlns="http://www.w3.org/1999/xhtml">
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-    <title>Introduction &#8212; pyfakefs 3.4 documentation</title>
-    <link rel="stylesheet" href="_static/nature.css" type="text/css" />
+    <title>Introduction &#8212; pyfakefs v3.4</title>
+    <link rel="stylesheet" href="_static/pyfakefs.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
@@ -42,7 +42,7 @@
         <li class="right" >
           <a href="index.html" title="Welcome to the pyfakefs documentation!"
              accesskey="P">previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="index.html">pyfakefs 3.4 documentation</a> &#187;</li> 
+        <li class="nav-item nav-item-0"><a href="index.html">pyfakefs v3.4</a> &#187;</li> 
       </ul>
     </div>  
 
@@ -75,15 +75,14 @@ The latest released version can be installed form pypi:</p>
 <p>pyfakefs will not work with Python libraries that use C libraries to access the
 file system, because it cannot patch the underlying C libraries’ file access functions.</p>
 <p>pyfakefs works out of the box only if the faked file system modules are loaded directly,
-e.g. <cite>import pathlib</cite> works, but <cite>from pathlib import Path</cite> does not. See
-<cite>Additional parameters to Patcher and TestCase</cite> in the <cite>Usage</cite> chapter for a way to
-work around this.</p>
+e.g. <code class="docutils literal"><span class="pre">import</span> <span class="pre">pathlib</span></code> works, but <code class="docutils literal"><span class="pre">from</span> <span class="pre">pathlib</span> <span class="pre">import</span> <span class="pre">Path</span></code> does not. See
+<a class="reference internal" href="usage.html#customizing-patcher"><span class="std std-ref">Customizing Patcher and TestCase</span></a> for ways to work around this.</p>
 <p>pyfakefs is only tested with CPython and newest PyPy versions, other Python implementations
 will probably not work.</p>
 <p>Differences in the behavior in different Linux distributions or different MacOS or Windows versions
 may not be reflected in the implementation, as well as some OS-specific low-level file
-system behavior. The systems used for automatic tests in Travis.CI and AppVeyor are considered
-as reference systems.</p>
+system behavior. The systems used for automatic tests in <a class="reference external" href="https://travis-ci.org/jmcgeheeiv/pyfakefs">Travis.CI</a> and <a class="reference external" href="https://ci.appveyor.com/project/jmcgeheeiv/pyfakefs">AppVeyor</a> are considered as reference
+systems.</p>
 </div>
 <div class="section" id="history">
 <h2>History<a class="headerlink" href="#history" title="Permalink to this headline">¶</a></h2>
@@ -167,11 +166,12 @@ community actively maintains and extends pyfakefs.</p>
         <li class="right" >
           <a href="index.html" title="Welcome to the pyfakefs documentation!"
              >previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="index.html">pyfakefs 3.4 documentation</a> &#187;</li> 
+        <li class="nav-item nav-item-0"><a href="index.html">pyfakefs v3.4</a> &#187;</li> 
       </ul>
     </div>
     <div class="footer" role="contentinfo">
         &#169; Copyright 2017, John McGehee.
+      Last updated on Feb 09, 2018.
       Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.6.5.
     </div>
   </body>

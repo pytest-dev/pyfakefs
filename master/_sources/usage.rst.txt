@@ -28,9 +28,8 @@ with the fake file system functions and modules:
             self.fs.create_file(file_path)
             self.assertTrue(os.path.exists(file_path))
 
-The usage is explained in more detail in the ``pyfakefs`` wiki page
-`Automatically find and patch file functions and modules <https://github.com/jmcgeheeiv/pyfakefs/wiki/Automatically-find-and-patch-file-functions-and-modules>`__
-and demonstrated in the files ``example.py`` and ``example_test.py``.
+The usage is explained in more detail in :ref:`auto_patch` and
+demonstrated in the files ``example.py`` and ``example_test.py``.
 
 Patch using the PyTest plugin
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -86,16 +85,18 @@ only work for the directly imported modules, therefore it is not suited for test
 larger code bases. As the other approaches are more convenient, this one is considered
 deprecated and will not be described in detail.
 
+.. _customizing_patcher:
+
 Customizing Patcher and TestCase
 --------------------------------
 Both ``fake_filesystem_unittest.Patcher`` and ``fake_filesystem_unittest.TestCase``
 provide a few additional arguments for fine-tuning. These are only needed if
 patching does not work for some module.
 
-*Note for PyTest users:* if you need these arguments in ``PyTest``, you have to
-use ``Patcher`` directly instead of the ``fs`` fixture. Alternatively, you can
-add your own fixture with the needed parameters (see ``pytest_plugin.py``
-for a possible implementation).
+.. note:: If you need these arguments in ``PyTest``, you have to
+  use ``Patcher`` directly instead of the ``fs`` fixture. Alternatively,
+  you can add your own fixture with the needed parameters (see
+  ``pytest_plugin.py`` for a possible implementation).
 
 modules_to_reload
 ~~~~~~~~~~~~~~~~~
@@ -233,6 +234,10 @@ directories are read only on demand, so that mapping them is relatively
 cheap. The access to the files is by default read-only, but even even if you
 add them using ``read_only=False``, the files are written only in the fake
 system (e.g. in memory). The real files are never changed.
+
+``add_real_file()`` and ``add_real_directory()`` also allow you to map a
+file or a directory tree into another location in the fake filesystem via the
+argument ``target_path``.
 
 .. code:: python
 

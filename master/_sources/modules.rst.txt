@@ -1,8 +1,9 @@
 Public Modules and Classes
 ==========================
-*Note:* only public classes and methods interesting to the pyfakfs user
-are shown. Methods that mimic the behavior of standard Python
-functions are not listed - you may always use the standard functions.
+.. note:: Only public classes and methods interesting to the pyfakfs user
+  are shown.
+  Methods that mimic the behavior of standard Python
+  functions are not listed - you may always use the standard functions.
 
 Fake filesystem module
 ----------------------
