@@ -123,19 +123,22 @@ class TestCase(unittest.TestCase):
             additional_skip_names: names of modules inside of which no module
                 replacement shall be performed, in addition to the names in
                 :py:attr:`fake_filesystem_unittest.Patcher.SKIPNAMES`.
-            patch_path: if False, modules named 'path' will not be patched with
-                the fake 'os.path' module. Set this to False when you need
-                to import some other module named 'path', for example::
+            patch_path: if False, modules named *path* will not be patched with
+                the fake ``os.path`` module. Set this to False when you need
+                to import some other module named ``path``, for example::
+
                     from my_module import path
 
-                Irrespective of patch_path, module 'os.path' is still correctly
-                faked if imported the usual way using `import os` or
-                `import os.path`.
+                Irrespective of patch_path, module ``os.path`` is still
+                correctly faked if imported the usual way using ``import
+                os`` or ``import os.path``.
             modules_to_reload: A list of modules that need to be reloaded
                 to be patched dynamically; may be needed if the module
                 imports file system modules under an alias
-                Note: this is done independently of `use_dynamic_patch`
-                Caution: reloading modules may have unwanted side effects.
+
+                .. note:: This is done independently of `use_dynamic_patch`
+
+                .. caution:: Reloading modules may have unwanted side effects.
             use_dynamic_patch: If `True`, dynamic patching after setup is used
                 (for example for modules loaded locally inside of functions).
                 Can be switched off if it causes unwanted side effects.

@@ -15,13 +15,17 @@
 """A fake filesystem implementation for unit testing.
 
 :Includes:
-  * FakeFile:  Provides the appearance of a real file.
-  * FakeDirectory: Provides the appearance of a real directory.
-  * FakeFilesystem:  Provides the appearance of a real directory hierarchy.
-  * FakeOsModule:  Uses FakeFilesystem to provide a fake os module replacement.
-  * FakeIoModule:  Uses FakeFilesystem to provide a fake io module replacement.
-  * FakePathModule:  Faked os.path module replacement.
-  * FakeFileOpen:  Faked file() and open() function replacements.
+  * :py:class:`FakeFile`: Provides the appearance of a real file.
+  * :py:class:`FakeDirectory`: Provides the appearance of a real directory.
+  * :py:class:`FakeFilesystem`: Provides the appearance of a real directory
+    hierarchy.
+  * :py:class:`FakeOsModule`: Uses :py:class:`FakeFilesystem` to provide a
+    fake :py:mod:`os` module replacement.
+  * :py:class:`FakeIoModule`: Uses :py:class:`FakeFilesystem` to provide a
+    fake ``io`` module replacement.
+  * :py:class:`FakePathModule`:  Faked ``os.path`` module replacement.
+  * :py:class:`FakeFileOpen`:  Faked ``file()`` and ``open()`` function
+    replacements.
 
 :Usage:
 
@@ -44,7 +48,7 @@ True
 ...   filesystem.create_file(pathname)
 ... except IOError as e:
 ...   assert e.errno == errno.EEXIST, 'unexpected errno: %d' % e.errno
-...   assert e.strerror == 'File already exists in fake filesystem'
+...   assert e.strerror == 'File exists in the fake filesystem'
 
 Remove a file object:
 
@@ -70,11 +74,11 @@ Won't you come out to play?
 
 File objects cannot be treated like directory objects:
 
->>> os_module.listdir(pathname)  #doctest: +NORMALIZE_WHITESPACE
-Traceback (most recent call last):
-  File "fake_filesystem.py", line 291, in listdir
-    raise OSError(errno.ENOTDIR,
-OSError: [Errno 20] Fake os module: not a directory: '/a/new/dir/new-file'
+>>> try:
+...   os_module.listdir(pathname)
+... except OSError as e:
+...   assert e.errno == errno.ENOTDIR, 'unexpected errno: %d' % e.errno
+...   assert e.strerror == 'Not a directory in the fake filesystem'
 
 The FakeOsModule can list fake directory objects:
 
@@ -230,6 +234,7 @@ class FakeFile(object):
 
     @property
     def byte_contents(self):
+        """Return the contents as raw byte array."""
         return self._byte_contents
 
     @property
@@ -279,7 +284,8 @@ class FakeFile(object):
 
         Provided specifically to simulate very large files without regards
         to their content (which wouldn't fit in memory).
-        Note that read/write operations with such a file raise FakeLargeFileIoException.
+        Note that read/write operations with such a file raise
+            :py:class:`FakeLargeFileIoException`.
 
         Args:
           st_size: (int) The desired file size
@@ -637,8 +643,8 @@ class FakeDirectory(FakeFile):
         return self.size
 
     def has_parent_object(self, dir_object):
-        """Return `True` if dir_object is a direct or indirect parent directory,
-        or if both are the same object."""
+        """Return `True` if dir_object is a direct or indirect parent
+        directory, or if both are the same object."""
         obj = self
         while obj:
             if obj == dir_object:
@@ -679,7 +685,7 @@ class FakeDirectoryFromRealDirectory(FakeDirectory):
                 otherwise, writing to the files changes the fake files
                 only as usually.
             target_path: If given, the target path of the directory,
-                otherwise the target is the samae as `source_path`.
+                otherwise the target is the same as `source_path`.
 
         Raises:
             OSError: if the directory does not exist in the real file system
@@ -735,7 +741,7 @@ class FakeFilesystem(object):
         is_windows_fs: `True` in a real or faked Windows file system.
         is_macos: `True` under MacOS, or if we are faking it.
         is_case_sensitive: `True` if a case-sensitive file system is assumed.
-        root: The root `FakeDirectory` entry of the file system.
+        root: The root :py:class:`FakeDirectory` entry of the file system.
         cwd: The current working directory path.
         umask: The umask used for newly created files, see `os.umask`.
     """
@@ -749,8 +755,9 @@ class FakeFilesystem(object):
                 root filesystem.
 
         Example usage to emulate real file systems:
-            filesystem = FakeFilesystem(
-                alt_path_separator='/' if _is_windows else None)
+
+        >>> filesystem = FakeFilesystem(
+        ...     alt_path_separator='/' if _is_windows else None)
 
         """
         self.path_separator = path_separator
@@ -1057,7 +1064,7 @@ class FakeFilesystem(object):
                 If None, both times are set to the current time.
             ns: 2-tuple of int numbers, of the form (atime, mtime)  which is
                 used to set the access and modified times in nanoseconds.
-                If None, both times are set to the current time.
+                If `None`, both times are set to the current time.
                 New in Python 3.3.
             follow_symlinks: If `False` and entry_path points to a symlink,
                 the link itself is queried instead of the linked object.
@@ -1472,14 +1479,16 @@ class FakeFilesystem(object):
         are considered relative to the root directory for the FakeFilesystem.
         Callers should basically follow this pattern:
 
-        >>> file_path = self.absnormpath(file_path)
-        >>> path_components = self._path_components(file_path)
-        >>> current_dir = self.root
-        >>> for component in path_components:
-        >>>     if component not in current_dir.contents:
-        >>>         raise IOError
-        >>>     _do_stuff_with_component(current_dir, component)
-        >>>     current_dir = current_dir.get_entry(component)
+        .. code:: python
+
+            file_path = self.absnormpath(file_path)
+            path_components = self._path_components(file_path)
+            current_dir = self.root
+            for component in path_components:
+                if component not in current_dir.contents:
+                    raise IOError
+                _do_stuff_with_component(current_dir, component)
+                current_dir = current_dir.get_entry(component)
 
         Args:
             path:  Path to tokenize.
@@ -1531,7 +1540,7 @@ class FakeFilesystem(object):
                 2 <= len(file_path) <= 3 and self._starts_with_drive_letter(file_path))
 
     def ends_with_path_separator(self, file_path):
-        """Return True if `file_path ends with a valid path separator."""
+        """Return True if ``file_path`` ends with a valid path separator."""
         return (file_path and
                 (file_path.endswith(self._path_separator(file_path)) or
                  self.alternative_path_separator is not None and
@@ -1626,13 +1635,13 @@ class FakeFilesystem(object):
             The resolved_path (string) or None.
 
         Raises:
-            TypeError: if file_path is None.
-            IOError: if file_path is '' or a part of the path doesn't exist.
+            TypeError: if `file_path` is `None`.
+            IOError: if `file_path` is '' or a part of the path doesn't exist.
         """
 
         def _components_to_path(component_folders):
-            sep = self._path_separator(
-                component_folders[0]) if component_folders else self.path_separator
+            sep = (self._path_separator(component_folders[0])
+                   if component_folders else self.path_separator)
             path = sep.join(component_folders)
             if not self._starts_with_root_path(path):
                 path = sep + path
@@ -1806,13 +1815,13 @@ class FakeFilesystem(object):
         """Search for the specified filesystem object, resolving all links.
 
         Args:
-            file_path: Specifies target FakeFile object to retrieve.
+            file_path: Specifies the target FakeFile object to retrieve.
             follow_symlinks: If `False`, the link itself is resolved,
                 otherwise the object linked to.
             allow_fd: If `True`, `file_path` may be an open file descriptor
 
         Returns:
-          The FakeFile object corresponding to file_path.
+          The FakeFile object corresponding to `file_path`.
 
         Raises:
             IOError: if the object is not found.
@@ -2091,8 +2100,9 @@ class FakeFilesystem(object):
             contents: The contents of the file.
             st_size: The file size; only valid if contents not given.
             create_missing_dirs: If `True`, auto create missing directories.
-            apply_umask: `True` if the current umask must be applied on st_mode.
-            encoding: Ff contents is a unicode string, the encoding used
+            apply_umask: `True` if the current umask must be applied
+                on `st_mode`.
+            encoding: If `contents` is a unicode string, the encoding used
                 for serialization.
             errors: The error mode used for encoding/decoding errors.
 
@@ -2127,13 +2137,10 @@ class FakeFilesystem(object):
             OSError: if the file does not exist in the real file system.
             IOError: if the file already exists in the fake file system.
 
-        .. note:: On MacOS and BSD, accessing the fake file's contents will update \
-                  both the real and fake files' `atime.` (access time).  In this \
-                  particular case, `add_real_file()` violates the rule that `pyfakefs` \
-                  must not modify the real file system. \
-                  \
-                  Further, Windows offers the option to enable atime, and older \
-                  versions of Linux may also modify atime.
+        .. note:: On most systems, accessing the fake file's contents may
+            update both the real and fake files' `atime` (access time).
+            In this particular case, `add_real_file()` violates the rule
+            that `pyfakefs` must not modify the real file system.
         """
         target_path = target_path or source_path
         real_stat = os.stat(source_path)
@@ -2163,10 +2170,11 @@ class FakeFilesystem(object):
                 as usually.
             lazy_read: If set (default), directory contents are only read when
                 accessed, and only until the needed subdirectory level.
-                *Note:* this means that the file system size is only updated
-                at the time the directory contents are read; set this to
-                `False` only if you are dependent on accurate file system
-                size in your test
+
+                .. note:: This means that the file system size is only updated
+                  at the time the directory contents are read; set this to
+                  `False` only if you are dependent on accurate file system
+                  size in your test
             target_path: If given, the target directory, otherwise,
                 the target directory is the same as `source_path`.
 
@@ -2305,8 +2313,9 @@ class FakeFilesystem(object):
             The newly created FakeFile object.
 
         Raises:
-            OSError:  if the symlink could not be created (see `CreateFile`).
-            OSError:  if on Windows before Python 3.2.
+            OSError: if the symlink could not be created
+                (see :py:meth:`create_file`).
+            OSError: if on Windows before Python 3.2.
         """
         if not self._is_link_supported():
             raise OSError(
@@ -2409,7 +2418,7 @@ class FakeFilesystem(object):
 
         Raises:
             OSError: if the directory name is invalid or parent directory is
-                read only or as per `FakeFilesystem.AddObject()`.
+                read only or as per :py:meth:`add_object`.
         """
         if sys.version_info >= (3, 6):
             dir_name = os.fspath(dir_name)
@@ -2454,18 +2463,18 @@ class FakeFilesystem(object):
                 New in Python 3.2.
 
         Raises:
-          OSError: if the directory already exists and exist_ok=False, or as per
-          `FakeFilesystem.create_dir()`.
+            OSError: if the directory already exists and exist_ok=False,
+                or as per :py:meth:`create_dir`.
         """
         dir_name = self.absnormpath(dir_name)
         path_components = self._path_components(dir_name)
 
-        # Raise a permission denied error if the first existing directory is not
-        # writeable.
+        # Raise a permission denied error if the first existing directory
+        # is not writeable.
         current_dir = self.root
         for component in path_components:
             if (component not in current_dir.contents
-                or not isinstance(current_dir.contents, dict)):
+                    or not isinstance(current_dir.contents, dict)):
                 break
             else:
                 current_dir = current_dir.contents[component]
@@ -3221,14 +3230,17 @@ class FakeOsModule(object):
             must_not_exist=flags & os.O_EXCL
         )
         if open_modes.must_not_exist and open_modes.must_exist:
-            raise NotImplementedError('O_EXCL without O_CREAT mode is not supported')
+            raise NotImplementedError(
+                'O_EXCL without O_CREAT mode is not supported')
 
         if (not self.filesystem.is_windows_fs and
                 self.filesystem.exists(file_path)):
-            # handle opening directory - only allowed under Posix with read-only mode
+            # handle opening directory - only allowed under Posix
+            # with read-only mode
             obj = self.filesystem.resolve(file_path)
             if isinstance(obj, FakeDirectory):
-                if ((not open_modes.must_exist and not self.filesystem.is_macos)
+                if ((not open_modes.must_exist and
+                     not self.filesystem.is_macos)
                         or open_modes.can_write):
                     self.filesystem.raise_os_error(errno.EISDIR, file_path)
                 dir_wrapper = FakeDirWrapper(obj, file_path, self.filesystem)
@@ -3663,8 +3675,8 @@ class FakeOsModule(object):
                 New in Python 3.2.
 
         Raises:
-          OSError: if the directory already exists and exist_ok=False, or as per
-          `FakeFilesystem.create_dir()`.
+            OSError: if the directory already exists and exist_ok=False, or as
+                per :py:meth:`FakeFilesystem.create_dir`.
         """
         if exist_ok is None:
             exist_ok = False

@@ -2,7 +2,7 @@
 
 # Copyright 2009 Google Inc. All Rights Reserved.
 # Copyright 2014 Altera Corporation. All Rights Reserved.
-# Copyright 2014-2017 John McGehee
+# Copyright 2014-2018 John McGehee
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -20,7 +20,8 @@ from pyfakefs.fake_filesystem import __version__
 
 NAME = 'pyfakefs'
 REQUIRES = []
-DESCRIPTION = 'pyfakefs implements a fake file system that mocks the Python file system modules.'
+DESCRIPTION = ('pyfakefs implements a fake file system that mocks '
+               'the Python file system modules.')
 
 URL = "http://pyfakefs.org"
 
@@ -31,8 +32,11 @@ try:
     with open('README.rst', 'w') as f:
         f.write(LONG_DESCRIPTION)
 except ImportError:
-    LONG_DESCRIPTION = '''Using pyfakefs, your tests operate on a fake file system in memory without
-touching the real disk. The software under test requires no modification to work with pyfakefs.'''
+    LONG_DESCRIPTION = (
+        'Using pyfakefs, your tests operate on a fake file system in memory '
+        'without touching the real disk. The software under test requires '
+        'no modification to work with pyfakefs.'
+    )
 
 CLASSIFIERS = [
     'Development Status :: 5 - Production/Stable',
@@ -41,7 +45,6 @@ CLASSIFIERS = [
     'License :: OSI Approved :: Apache Software License',
     'Programming Language :: Python',
     'Programming Language :: Python :: 2.7',
-    'Programming Language :: Python :: 3.2',
     'Programming Language :: Python :: 3.3',
     'Programming Language :: Python :: 3.4',
     'Programming Language :: Python :: 3.5',

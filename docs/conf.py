@@ -55,7 +55,9 @@ master_doc = 'index'
 
 # General information about the project.
 project = 'pyfakefs'
-copyright = '2017, John McGehee'
+copyright = '''2009 Google Inc. All Rights Reserved.
+© Copyright 2014 Altera Corporation. All Rights Reserved.
+© Copyright 2014-2018 John McGehee'''
 author = 'John McGehee'
 
 # The version info for the project you're documenting, acts as replacement for
@@ -141,7 +143,7 @@ html_theme_path = ['.']
 # The name for this set of Sphinx documents.
 # "<project> v<release> documentation" by default.
 #
-html_title = 'pyfakefs v3.4'
+# html_title = 'pyfakefs v3.4'
 
 # A shorter title for the navigation bar.  Default is the same as html_title.
 #
@@ -207,7 +209,7 @@ html_last_updated_fmt = '%b %d, %Y'
 
 # If true, "Created using Sphinx" is shown in the HTML footer. Default is True.
 #
-# html_show_sphinx = True
+html_show_sphinx = False
 
 # If true, "(C) Copyright ..." is shown in the HTML footer. Default is True.
 #

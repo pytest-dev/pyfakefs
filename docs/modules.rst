@@ -1,9 +1,8 @@
 Public Modules and Classes
 ==========================
-.. note:: Only public classes and methods interesting to the pyfakfs user
-  are shown.
-  Methods that mimic the behavior of standard Python
-  functions are not listed - you may always use the standard functions.
+.. note:: Only public classes and methods interesting to ``pyfakefs``
+  users are shown. Methods that mimic the behavior of standard Python
+  functions and classes that are only needed internally are not listed.
 
 Fake filesystem module
 ----------------------
@@ -15,14 +14,15 @@ Fake filesystem classes
     :members: add_mount_point,
         get_disk_usage, set_disk_usage,
         add_real_directory, add_real_file, add_real_paths,
-        create_dir, create_file, create_symlink
+        create_dir, create_file, create_symlink,
+        get_object
 
 .. autoclass:: pyfakefs.fake_filesystem.FakeFile
-    :members: byte_contents, contents, path, size,
-        is_large_file, set_contents
+    :members: byte_contents, contents, set_contents,
+        path, size, is_large_file
 
 .. autoclass:: pyfakefs.fake_filesystem.FakeDirectory
-    :members: contents, get_entry, size, remove_entry
+    :members: contents, ordered_dirs, size, get_entry, remove_entry
 
 Unittest module classes
 -----------------------
