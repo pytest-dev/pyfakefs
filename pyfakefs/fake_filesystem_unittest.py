@@ -103,7 +103,92 @@ def load_doctests(loader, tests, ignore, module,
     return tests
 
 
-class TestCase(unittest.TestCase):
+class TestCaseMixin(object):
+    """Test case mixin that automatically replaces file-system related
+    modules by fake implementations.
+
+    Attributes:
+        additional_skip_names: names of modules inside of which no module
+            replacement shall be performed, in addition to the names in
+            :py:attr:`fake_filesystem_unittest.Patcher.SKIPNAMES`.
+        patch_path: if False, modules named *path* will not be patched with
+            the fake ``os.path`` module. Set this to False when you need
+            to import some other module named ``path``, for example::
+
+                from my_module import path
+
+            Irrespective of patch_path, module ``os.path`` is still
+            correctly faked if imported the usual way using ``import
+            os`` or ``import os.path``.
+        modules_to_reload: A list of modules that need to be reloaded
+            to be patched dynamically; may be needed if the module
+            imports file system modules under an alias
+
+            .. note:: This is done independently of `use_dynamic_patch`
+
+            .. caution:: Reloading modules may have unwanted side effects.
+        use_dynamic_patch: If `True`, dynamic patching after setup is used
+            (for example for modules loaded locally inside of functions).
+            Can be switched off if it causes unwanted side effects.
+        modules_to_patch: A dictionary of fake modules mapped to the
+            patched module names. Can be used to add patching of modules
+            not provided by `pyfakefs`.
+            If you want to patch a class in a module imported using
+            `from some_module import SomeClass`, you have to specify
+            `some_module.Class` as the key for the fake class.
+
+    If you specify attributes `additional_skip_names` or `patch_path` here
+    and you have DocTests, consider also specifying the same arguments to
+    :py:func:`load_doctests`.
+
+    Example usage in derived test classes::
+
+        from unittest import TestCase
+        from fake_filesystem_unittest import TestCaseMixin
+
+        class MyTestCase(TestCase, TestCaseMixin):
+            def __init__(self, methodName='runTest'):
+                super(MyTestCase, self).__init__(
+                    methodName=methodName,
+                    additional_skip_names=['posixpath'])
+
+        import sut
+
+        class AnotherTestCase(TestCase, TestCaseMixin):
+            def __init__(self, methodName='runTest'):
+                super(MyTestCase, self).__init__(
+                    methodName=methodName, modules_to_reload=[sut])
+    """
+
+    additional_skip_names = None
+    patch_patch = True
+    modules_to_reload = None
+    use_dynamic_patch = True
+    modules_to_patch = None
+
+    @property
+    def fs(self):
+        return self._stubber.fs
+
+    def setUpPyfakefs(self):
+        """Bind the file-related modules to the :py:class:`pyfakefs` fake file
+        system instead of the real file system.  Also bind the fake `open()`
+        function, and on Python 2, the `file()` function.
+
+        Invoke this at the beginning of the `setUp()` method in your unit test
+        class.
+        """
+        self._stubber = Patcher(additional_skip_names=self.additional_skip_names,
+                                patch_path=self.patch_path,
+                                use_dynamic_patch=self.use_dynamic_patch,
+                                modules_to_reload=self.modules_to_reload,
+                                modules_to_patch=self.modules_to_patch)
+
+        self._stubber.setUp()
+        self.addCleanup(self._stubber.tearDown)
+
+
+class TestCase(unittest.TestCase, TestCaseMixin):
     """Test case class that automatically replaces file-system related
     modules by fake implementations.
     """
@@ -120,64 +205,14 @@ class TestCase(unittest.TestCase):
         Args:
             methodName: The name of the test method (same as in
                 unittest.TestCase)
-            additional_skip_names: names of modules inside of which no module
-                replacement shall be performed, in addition to the names in
-                :py:attr:`fake_filesystem_unittest.Patcher.SKIPNAMES`.
-            patch_path: if False, modules named *path* will not be patched with
-                the fake ``os.path`` module. Set this to False when you need
-                to import some other module named ``path``, for example::
-
-                    from my_module import path
-
-                Irrespective of patch_path, module ``os.path`` is still
-                correctly faked if imported the usual way using ``import
-                os`` or ``import os.path``.
-            modules_to_reload: A list of modules that need to be reloaded
-                to be patched dynamically; may be needed if the module
-                imports file system modules under an alias
-
-                .. note:: This is done independently of `use_dynamic_patch`
-
-                .. caution:: Reloading modules may have unwanted side effects.
-            use_dynamic_patch: If `True`, dynamic patching after setup is used
-                (for example for modules loaded locally inside of functions).
-                Can be switched off if it causes unwanted side effects.
-            modules_to_patch: A dictionary of fake modules mapped to the
-                patched module names. Can be used to add patching of modules
-                not provided by `pyfakefs`.
-                If you want to patch a class in a module imported using
-                `from some_module import SomeClass`, you have to specify
-                `some_module.Class` as the key for the fake class.
-
-        If you specify arguments `additional_skip_names` or `patch_path` here
-        and you have DocTests, consider also specifying the same arguments to
-        :py:func:`load_doctests`.
-        
-        Example usage in derived test classes::
-
-            class MyTestCase(fake_filesystem_unittest.TestCase):
-                def __init__(self, methodName='runTest'):
-                    super(MyTestCase, self).__init__(
-                        methodName=methodName,
-                        additional_skip_names=['posixpath'])
-
-            import sut
-
-            class AnotherTestCase(fake_filesystem_unittest.TestCase):
-                def __init__(self, methodName='runTest'):
-                    super(MyTestCase, self).__init__(
-                        methodName=methodName, modules_to_reload=[sut])
         """
         super(TestCase, self).__init__(methodName)
-        self._stubber = Patcher(additional_skip_names=additional_skip_names,
-                                patch_path=patch_path,
-                                use_dynamic_patch=use_dynamic_patch,
-                                modules_to_reload=modules_to_reload,
-                                modules_to_patch=modules_to_patch)
 
-    @property
-    def fs(self):
-        return self._stubber.fs
+        self.additional_skip_names = additional_skip_names
+        self.patch_path = patch_path
+        self.modules_to_reload = modules_to_reload
+        self.use_dynamic_patch = use_dynamic_patch
+        self.modules_to_patch = modules_to_patch
 
     @Deprecator('add_real_file')
     def copyRealFile(self, real_file_path, fake_file_path=None,
@@ -218,17 +253,6 @@ class TestCase(unittest.TestCase):
             raise ValueError("CopyRealFile() is deprecated and no longer "
                              "supports NOT creating missing directories")
         return self._stubber.fs.add_real_file(real_file_path, read_only=False)
-
-    def setUpPyfakefs(self):
-        """Bind the file-related modules to the :py:class:`pyfakefs` fake file
-        system instead of the real file system.  Also bind the fake `open()`
-        function, and on Python 2, the `file()` function.
-
-        Invoke this at the beginning of the `setUp()` method in your unit test
-        class.
-        """
-        self._stubber.setUp()
-        self.addCleanup(self._stubber.tearDown)
 
     @DeprecationWarning
     def tearDownPyfakefs(self):
