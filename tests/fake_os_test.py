@@ -3187,6 +3187,10 @@ class FakeOsModuleTimeTest(FakeOsModuleTestBase):
 class FakeOsModuleLowLevelFileOpTest(FakeOsModuleTestBase):
     """Test low level functions `os.open()`, `os.read()` and `os.write()`."""
 
+    def setUp(self):
+        os.umask(0o022)
+        super(FakeOsModuleLowLevelFileOpTest, self).setUp()
+
     def test_open_read_only(self):
         file_path = self.make_path('file1')
         self.create_file(file_path, contents=b'contents')
