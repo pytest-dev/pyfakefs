@@ -324,5 +324,19 @@ class TestCopyOrAddRealFile(TestPyfakefsUnittestBase):
         self.assertTrue(self.fs.exists(os.path.join(real_dir_path, 'fake_filesystem.py')))
 
 
+class TestPyfakefsTestCase(unittest.TestCase):
+    def setUp(self):
+        class TestTestCase(fake_filesystem_unittest.TestCase):
+            def runTest(self):
+                pass
+
+        self.test_case = TestTestCase('runTest')
+
+    def test_test_case_type(self):
+        self.assertIsInstance(self.test_case, unittest.TestCase)
+
+        self.assertIsInstance(self.test_case, fake_filesystem_unittest.TestCaseMixin)
+
+
 if __name__ == "__main__":
     unittest.main()
