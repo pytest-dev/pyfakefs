@@ -26,6 +26,7 @@ must use pyfakefs 3.3 or earlier.
   * Removed Python 2.6 support [#293](../../issues/293)
 
 #### Fixes
+  * Links in base path in `os.scandir` shall not be resolved ([#350](../../issues/350))
   * Correctly handle newline parameter in `open()` for Python 3, added support for universal newline mode in Python 2 ([#339](../../issues/339))
   * Creating a file with a path ending with path separator did not raise ([#320](../../issues/320))
   * Fixed more problems related to `flush` ([#302](../../issues/302), [#300](../../issues/300))

@@ -83,14 +83,14 @@ class DirEntry(object):
         """
         if follow_symlinks:
             if self._statresult_symlink is None:
-                file_object = self._filesystem.ResolveObject(self.path)
+                file_object = self._filesystem.resolve(self.path)
                 if self._filesystem.is_windows_fs:
                     file_object.st_nlink = 0
                 self._statresult_symlink = file_object.stat_result.copy()
             return self._statresult_symlink
 
         if self._statresult is None:
-            file_object = self._filesystem.LResolveObject(self.path)
+            file_object = self._filesystem.lresolve(self.path)
             self._inode = file_object.st_ino
             if self._filesystem.is_windows_fs:
                 file_object.st_nlink = 0
@@ -106,14 +106,15 @@ class ScanDirIter:
         self.filesystem = filesystem
         if isinstance(path, int):
             if sys.version_info < (3, 7) or self.filesystem.is_windows_fs:
-                raise NotImplementedError('scandir does not support file descriptor'
-                                          'path argument')
+                raise NotImplementedError(
+                    'scandir does not support file descriptor '
+                    'path argument')
             path = self.filesystem.get_open_file(path).get_object().path
 
-        self.path = self.filesystem.ResolvePath(path)
+        self.path = self.filesystem.absnormpath(path)
         contents = {}
         try:
-            contents = self.filesystem.ConfirmDir(path).contents
+            contents = self.filesystem.confirmdir(path).contents
         except OSError:
             pass
         self.contents_iter = iter(contents)
@@ -128,9 +129,10 @@ class ScanDirIter:
             entry = self.contents_iter.__next__()
         dir_entry = DirEntry(self.filesystem)
         dir_entry.name = entry
-        dir_entry.path = self.filesystem.JoinPaths(self.path, dir_entry.name)
-        dir_entry._isdir = self.filesystem.IsDir(dir_entry.path)
-        dir_entry._islink = self.filesystem.IsLink(dir_entry.path)
+        dir_entry.path = self.filesystem.joinpaths(self.path,
+                                                   dir_entry.name)
+        dir_entry._isdir = self.filesystem.isdir(dir_entry.path)
+        dir_entry._islink = self.filesystem.islink(dir_entry.path)
         return dir_entry
 
     # satisfy both Python 2 and 3
@@ -184,8 +186,8 @@ def _classify_directory_contents(filesystem, root):
     """
     dirs = []
     files = []
-    for entry in filesystem.ListDir(root):
-        if filesystem.IsDir(filesystem.JoinPaths(root, entry)):
+    for entry in filesystem.listdir(root):
+        if filesystem.isdir(filesystem.joinpaths(root, entry)):
             dirs.append(entry)
         else:
             files.append(entry)
@@ -213,7 +215,7 @@ def walk(filesystem, top, topdown=True, onerror=None, followlinks=False):
 
     def do_walk(top_dir, top_most=False):
         top_dir = filesystem.CollapsePath(top_dir)
-        if not top_most and not followlinks and filesystem.IsLink(top_dir):
+        if not top_most and not followlinks and filesystem.islink(top_dir):
             return
         try:
             top_contents = _classify_directory_contents(filesystem, top_dir)
@@ -227,9 +229,10 @@ def walk(filesystem, top, topdown=True, onerror=None, followlinks=False):
                 yield top_contents
 
             for directory in top_contents[1]:
-                if not followlinks and filesystem.IsLink(directory):
+                if not followlinks and filesystem.islink(directory):
                     continue
-                for contents in do_walk(filesystem.JoinPaths(top_dir, directory)):
+                for contents in do_walk(filesystem.joinpaths(top_dir,
+                                                             directory)):
                     yield contents
 
             if not topdown:

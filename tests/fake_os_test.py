@@ -4087,6 +4087,16 @@ class FakeScandirTest(FakeOsModuleTestBase):
             self.assertTrue(self.dir_entries[2].is_symlink())
             self.assertTrue(self.dir_entries[3].is_symlink())
 
+    def test_path_links_not_resolved(self):
+        # regression test for #350
+        self.skip_if_symlink_not_supported()
+        dir_path = self.make_path('A', 'B', 'C')
+        self.os.makedirs(self.os.path.join(dir_path, 'D'))
+        link_path = self.make_path('A', 'C')
+        self.os.symlink(dir_path, link_path)
+        self.assertEqual([self.os.path.join(link_path, 'D')],
+                         [f.path for f in self.os.scandir(link_path)])
+
     def test_inode(self):
         if has_scandir and self.is_windows and self.use_real_fs():
             self.skipTest('inode seems not to work in scandir module under Windows')
