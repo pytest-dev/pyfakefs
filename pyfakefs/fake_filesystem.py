@@ -121,6 +121,11 @@ PERM_DEF = 0o777  # Default permission bits.
 PERM_DEF_FILE = 0o666  # Default permission bits (regular file)
 PERM_ALL = 0o7777  # All permission bits.
 
+try:
+    text_type = unicode  # Python 2
+except NameError:
+    text_type = str      # Python 3
+
 _OpenModes = namedtuple(
     'open_modes',
     'must_exist can_read can_write truncate append must_not_exist'
@@ -822,7 +827,7 @@ class FakeFilesystem(object):
         with the error string issued in the real system.
         Note: this is not true under Windows if winerror is given - in this case
         a localized message specific to winerror will be shown in the real file system.
-        
+
         Args:
             errno: A numeric error code from the C variable errno.
             filename: The name of the affected file, if any.
@@ -838,7 +843,7 @@ class FakeFilesystem(object):
     def raise_io_error(self, errno, filename=None):
         """Raises IOError.
         The error message is constructed from the given error code and shall start
-        with the error in the real system. 
+        with the error in the real system.
 
         Args:
             errno: A numeric error code from the C variable errno.
@@ -855,8 +860,8 @@ class FakeFilesystem(object):
             return string
         if IS_PY2:
             # pylint: disable=undefined-variable
-            if isinstance(matched, unicode):
-                return unicode(string)
+            if isinstance(matched, text_type):
+                return text_type(string)
         else:
             if isinstance(matched, bytes) and isinstance(string, str):
                 return string.encode(locale.getpreferredencoding(False))
@@ -2877,7 +2882,7 @@ class FakePathModule(object):
         def getcwd():
             """Return the current working directory."""
             # pylint: disable=undefined-variable
-            if IS_PY2 and isinstance(path, unicode):
+            if IS_PY2 and isinstance(path, text_type):
                 return self.os.getcwdu()
             elif not IS_PY2 and isinstance(path, bytes):
                 return self.os.getcwdb()
@@ -3386,7 +3391,7 @@ class FakeOsModule(object):
     if IS_PY2:
         def getcwdu(self):
             """Return current working directory as unicode. Python 2 only."""
-            return unicode(self.filesystem.cwd)  # pylint: disable=undefined-variable
+            return text_type(self.filesystem.cwd)  # pylint: disable=undefined-variable
 
     else:
         def getcwdb(self):

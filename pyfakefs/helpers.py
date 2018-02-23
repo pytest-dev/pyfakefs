@@ -17,14 +17,15 @@ import sys
 from copy import copy
 from stat import S_IFLNK
 
-IS_PY2 = sys.version_info[0] == 2
+IS_PY2 = sys.version_info[0] < 3
 
 
 def is_int_type(val):
     """Return True if `val` is of integer type."""
-    # pylint: disable=undefined-variable
-    int_types = (int, long) if IS_PY2 else int
-    return isinstance(val, int_types)
+    try:               # Python 2
+        return isinstance(val, (int, long))
+    except NameError:  # Python 3
+        return isinstance(val, int)
 
 
 def is_byte_string(val):
@@ -38,9 +39,10 @@ def is_byte_string(val):
 def is_unicode_string(val):
     """Return True if `val` is a unicode string, False for a bytes-like
     object."""
-    if not IS_PY2:
+    try:               # Python 2
+        return isinstance(val, unicode)
+    except NameError:  # Python 3
         return hasattr(val, 'encode')
-    return isinstance(val, unicode)
 
 
 class FakeStatResult(object):
@@ -48,8 +50,10 @@ class FakeStatResult(object):
     This is needed as `os.stat_result` has no possibility to set
     nanosecond times directly.
     """
-    # pylint: disable=undefined-variable
-    long_type = long if sys.version_info[0] == 2 else int
+    try:
+        long_type = long  # Python 2
+    except NameError:
+        long_type = int   # Python 3
     _stat_float_times = sys.version_info >= (2, 5)
 
     def __init__(self, is_windows, initial_time=None):

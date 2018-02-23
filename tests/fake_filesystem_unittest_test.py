@@ -57,10 +57,10 @@ class TestPyfakefsUnittest(TestPyfakefsUnittestBase):  # pylint: disable=R0904
     def test_file(self):
         """Fake `file()` function is bound"""
         self.assertFalse(os.path.exists('/fake_file.txt'))
-        with file('/fake_file.txt', 'w') as f:
+        with file('/fake_file.txt', 'w') as f:  # noqa: F821 is only run on Py2
             f.write("This test file was created using the file() function.\n")
         self.assertTrue(self.fs.exists('/fake_file.txt'))
-        with file('/fake_file.txt') as f:
+        with file('/fake_file.txt') as f:       # noqa: F821 is only run on Py2
             content = f.read()
         self.assertEqual(content,
                          'This test file was created using the file() function.\n')
