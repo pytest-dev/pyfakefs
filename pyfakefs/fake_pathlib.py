@@ -47,7 +47,8 @@ def init_module(filesystem):
     """Initializes the fake module with the fake file system."""
     # pylint: disable=protected-access
     FakePath.filesystem = filesystem
-    FakePathlibModule.PureWindowsPath._flavour = _FakeWindowsFlavour(filesystem)
+    FakePathlibModule.PureWindowsPath._flavour = _FakeWindowsFlavour(
+        filesystem)
     FakePathlibModule.PurePosixPath._flavour = _FakePosixFlavour(filesystem)
 
 
@@ -62,7 +63,8 @@ def _wrap_strfunc(strfunc):
 def _wrap_binary_strfunc(strfunc):
     @functools.wraps(strfunc)
     def _wrapped(pathobj1, pathobj2, *args):
-        return strfunc(pathobj1.filesystem, str(pathobj1), str(pathobj2), *args)
+        return strfunc(
+            pathobj1.filesystem, str(pathobj1), str(pathobj2), *args)
 
     return staticmethod(_wrapped)
 
@@ -70,18 +72,20 @@ def _wrap_binary_strfunc(strfunc):
 def _wrap_binary_strfunc_reverse(strfunc):
     @functools.wraps(strfunc)
     def _wrapped(pathobj1, pathobj2, *args):
-        return strfunc(pathobj2.filesystem, str(pathobj2), str(pathobj1), *args)
+        return strfunc(
+            pathobj2.filesystem, str(pathobj2), str(pathobj1), *args)
 
     return staticmethod(_wrapped)
 
 
 class _FakeAccessor(pathlib._Accessor):  # pylint: disable=protected-access
-    """Accessor which forwards some of the functions to FakeFilesystem methods."""
+    """Accessor which forwards some of the functions to FakeFilesystem methods.
+    """
 
     stat = _wrap_strfunc(FakeFilesystem.stat)
 
-    lstat = _wrap_strfunc(lambda fs, path: FakeFilesystem.stat(fs, path,
-                                                               follow_symlinks=False))
+    lstat = _wrap_strfunc(
+        lambda fs, path: FakeFilesystem.stat(fs, path, follow_symlinks=False))
 
     listdir = _wrap_strfunc(FakeFilesystem.listdir)
 
@@ -106,9 +110,10 @@ class _FakeAccessor(pathlib._Accessor):  # pylint: disable=protected-access
 
     rename = _wrap_binary_strfunc(FakeFilesystem.rename)
 
-    replace = _wrap_binary_strfunc(lambda fs, old_path, new_path:
-                                   FakeFilesystem.rename(
-                                       fs, old_path, new_path, force_replace=True))
+    replace = _wrap_binary_strfunc(
+        lambda fs, old_path,
+        new_path: FakeFilesystem.rename(
+            fs, old_path, new_path, force_replace=True))
 
     symlink = _wrap_binary_strfunc_reverse(
         lambda fs, file_path, link_target, target_is_directory:
@@ -116,6 +121,7 @@ class _FakeAccessor(pathlib._Accessor):  # pylint: disable=protected-access
                                       create_missing_dirs=False))
 
     utime = _wrap_strfunc(FakeFilesystem.utime)
+
 
 _fake_accessor = _FakeAccessor()
 
@@ -245,7 +251,8 @@ class _FakeFlavour(pathlib._Flavour):
                     if path is not None:
                         # use cached value
                         continue
-                    # The symlink is not resolved, so we must have a symlink loop.
+                    # The symlink is not resolved, so we must have a
+                    # symlink loop.
                     raise RuntimeError("Symlink loop from %r" % newpath)
                 # Resolve the symbolic link
                 try:
@@ -289,7 +296,8 @@ class _FakeFlavour(pathlib._Flavour):
                 else:
                     if previous_s is None:
                         return path
-                    return self.filesystem.joinpaths(path, os.path.basename(previous_s))
+                    return self.filesystem.joinpaths(
+                        path, os.path.basename(previous_s))
 
     def resolve(self, path, strict):
         """Make the path absolute, resolving any symlinks."""
@@ -315,8 +323,8 @@ class _FakeFlavour(pathlib._Flavour):
 
 
 class _FakeWindowsFlavour(_FakeFlavour):
-    """Flavour used by PureWindowsPath with some Windows specific implementations
-    independent of FakeFilesystem properties.
+    """Flavour used by PureWindowsPath with some Windows specific
+    implementations independent of FakeFilesystem properties.
     """
     reserved_names = (
         {'CON', 'PRN', 'AUX', 'NUL'} |
@@ -343,7 +351,6 @@ class _FakeWindowsFlavour(_FakeFlavour):
 
         # Under Windows, file URIs use the UTF-8 encoding.
         # original version, not faked
-        # todo: make this part dependent on drive support, add encoding as property
         drive = path.drive
         if len(drive) == 2 and drive[1] == ':':
             # It's a path on a local drive => 'file:///c:/a/b'
@@ -352,7 +359,8 @@ class _FakeWindowsFlavour(_FakeFlavour):
                 drive, urlquote_from_bytes(rest.encode('utf-8')))
         else:
             # It's a path on a network drive => 'file://host/share/a/b'
-            return 'file:' + urlquote_from_bytes(path.as_posix().encode('utf-8'))
+            return ('file:' +
+                    urlquote_from_bytes(path.as_posix().encode('utf-8')))
 
     def gethomedir(self, username):
         """Return the home directory of the current user."""
@@ -421,8 +429,9 @@ class _FakePosixFlavour(_FakeFlavour):
 
 
 class FakePath(pathlib.Path):
-    """Replacement for pathlib.Path. Reimplement some methods to use fake filesystem.
-    The rest of the methods work as they are, as they will use the fake accessor.
+    """Replacement for pathlib.Path. Reimplement some methods to use
+    fake filesystem. The rest of the methods work as they are, as they will
+    use the fake accessor.
     New in pyfakefs 3.0.
     """
 
@@ -438,7 +447,8 @@ class FakePath(pathlib.Path):
         return self
 
     def _path(self):
-        """Returns the underlying path string as used by the fake filesystem."""
+        """Returns the underlying path string as used by the fake filesystem.
+        """
         return str(self)
 
     def _init(self, template=None):
@@ -455,10 +465,12 @@ class FakePath(pathlib.Path):
 
     def resolve(self, strict=None):
         """Make the path absolute, resolving all symlinks on the way and also
-        normalizing it (for example turning slashes into backslashes under Windows).
+        normalizing it (for example turning slashes into backslashes
+        under Windows).
 
         Args:
-            strict: if False (default) no excpetion is raised if the path does not exist
+            strict: If False (default) no exception is raised if the path
+                does not exist.
                 New in Python 3.6.
 
         Raises:
@@ -467,7 +479,8 @@ class FakePath(pathlib.Path):
         if strict is None:
             strict = sys.version_info < (3, 6)
         elif sys.version_info < (3, 6):
-            raise TypeError("resolve() got an unexpected keyword argument 'strict'")
+            raise TypeError(
+                "resolve() got an unexpected keyword argument 'strict'")
         if self._closed:
             self._raise_closed()
         path = self._flavour.resolve(self, strict=strict)
@@ -482,8 +495,8 @@ class FakePath(pathlib.Path):
         """Open the file pointed by this path and return a fake file object.
 
         Raises:
-            IOError: if the target object is a directory, the path is invalid or
-                permission is denied.
+            IOError: if the target object is a directory, the path is invalid
+                or permission is denied.
         """
         if self._closed:
             self._raise_closed()
@@ -495,8 +508,8 @@ class FakePath(pathlib.Path):
             """Open the fake file in bytes mode, read it, and close the file.
 
             Raises:
-                IOError: if the target object is a directory, the path is invalid or
-                    permission is denied.
+                IOError: if the target object is a directory, the path is
+                    invalid or permission is denied.
             """
             with FakeFileOpen(self.filesystem)(self._path(), mode='rb') as f:
                 return f.read()
@@ -505,7 +518,8 @@ class FakePath(pathlib.Path):
             """
             Open the fake file in text mode, read it, and close the file.
             """
-            with FakeFileOpen(self.filesystem)(self._path(), mode='r', encoding=encoding,
+            with FakeFileOpen(self.filesystem)(self._path(), mode='r',
+                                               encoding=encoding,
                                                errors=errors) as f:
                 return f.read()
 
@@ -514,8 +528,8 @@ class FakePath(pathlib.Path):
             Args:
                 data: the bytes to be written
             Raises:
-                IOError: if the target object is a directory, the path is invalid or
-                    permission is denied.
+                IOError: if the target object is a directory, the path is
+                    invalid or permission is denied.
             """
             # type-check for the buffer interface before truncating the file
             view = memoryview(data)
@@ -523,7 +537,8 @@ class FakePath(pathlib.Path):
                 return f.write(view)
 
         def write_text(self, data, encoding=None, errors=None):
-            """Open the fake file in text mode, write to it, and close the file.
+            """Open the fake file in text mode, write to it, and close
+            the file.
 
             Args:
                 data: the string to be written
@@ -532,13 +547,14 @@ class FakePath(pathlib.Path):
                 errors: ignored
             Raises:
                 TypeError: if data is not of type 'str'
-                IOError: if the target object is a directory, the path is invalid or
-                    permission is denied.
+                IOError: if the target object is a directory, the path is
+                    invalid or permission is denied.
             """
             if not isinstance(data, str):
                 raise TypeError('data must be str, not %s' %
                                 data.__class__.__name__)
-            with FakeFileOpen(self.filesystem)(self._path(), mode='w', encoding=encoding,
+            with FakeFileOpen(self.filesystem)(self._path(), mode='w',
+                                               encoding=encoding,
                                                errors=errors) as f:
                 return f.write(data)
 
@@ -566,14 +582,16 @@ class FakePath(pathlib.Path):
                 other_st = other_path.stat()
             except AttributeError:
                 other_st = self.filesystem.stat(other_path)
-            return st.st_ino == other_st.st_ino and st.st_dev == other_st.st_dev
+            return (st.st_ino == other_st.st_ino and
+                    st.st_dev == other_st.st_dev)
 
         def expanduser(self):
             """ Return a new path with expanded ~ and ~user constructs
             (as returned by os.path.expanduser)
             """
             return FakePath(os.path.expanduser(self._path())
-                            .replace(os.path.sep, self.filesystem.path_separator))
+                            .replace(os.path.sep,
+                                     self.filesystem.path_separator))
 
     def touch(self, mode=0o666, exist_ok=True):
         """Create a fake file for the path with the given access mode,
@@ -581,8 +599,8 @@ class FakePath(pathlib.Path):
 
         Args:
             mode: the file mode for the file if it does not exist
-            exist_ok: if the file already exists and this is True, nothinh happens,
-                otherwise FileExistError is raised
+            exist_ok: if the file already exists and this is True, nothing
+                happens, otherwise FileExistError is raised
 
         Raises:
             FileExistsError if the file exists and exits_ok is False.
@@ -619,7 +637,8 @@ class FakePathlibModule(object):
         self._pathlib_module = pathlib
 
     class PurePosixPath(pathlib.PurePath):
-        """A subclass of PurePath, that represents non-Windows filesystem paths"""
+        """A subclass of PurePath, that represents non-Windows filesystem
+        paths"""
         __slots__ = ()
 
     class PureWindowsPath(pathlib.PurePath):

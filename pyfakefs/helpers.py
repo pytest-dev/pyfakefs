@@ -120,10 +120,11 @@ class FakeStatResult(object):
 
     @classmethod
     def stat_float_times(cls, newvalue=None):
-        """Determine whether a file's time stamps are reported as floats or ints.
+        """Determine whether a file's time stamps are reported as floats
+        or ints.
 
-        Calling without arguments returns the current value. The value is shared
-        by all instances of FakeOsModule.
+        Calling without arguments returns the current value.
+        The value is shared by all instances of FakeOsModule.
 
         Args:
             newvalue: If `True`, mtime, ctime, atime are reported as floats.

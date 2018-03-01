@@ -16,8 +16,6 @@ standalone function available in the standalone `scandir` python package.
 """
 import sys
 
-import os
-
 
 class DirEntry(object):
     """Emulates os.DirEntry. Note that we did not enforce keyword only

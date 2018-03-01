@@ -14,7 +14,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""A fake shutil module implementation that uses fake_filesystem for unit tests.
+"""A fake shutil module implementation that uses fake_filesystem for
+unit tests.
 Note that only `shutildisk_usage()` is faked, the rest of the functions shall
 work fine with the fake file system if `os`/`os.path` are patched.
 
@@ -24,7 +25,8 @@ work fine with the fake file system if `os`/`os.path` are patched.
 
 :Usage:
   The fake implementation is automatically involved if using
-  `fake_filesystem_unittest.TestCase`, pytest fs fixture, or directly `Patcher`.
+  `fake_filesystem_unittest.TestCase`, pytest fs fixture,
+  or directly `Patcher`.
 """
 
 import shutil
@@ -32,7 +34,8 @@ import sys
 
 
 class FakeShutilModule(object):
-    """Uses a FakeFilesystem to provide a fake replacement for shutil module."""
+    """Uses a FakeFilesystem to provide a fake replacement for shutil module.
+    """
 
     def __init__(self, filesystem):
         """Construct fake shutil module using the fake filesystem.

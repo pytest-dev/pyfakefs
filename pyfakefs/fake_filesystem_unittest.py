@@ -69,7 +69,7 @@ if sys.version_info >= (3, 4):
 
 
 try:
-    import scandir
+    import scandir  # noqa: F401 import used to set has_scandir
     import fake_scandir
     has_scandir = True
 except ImportError:
@@ -87,7 +87,7 @@ def load_doctests(loader, tests, ignore, module,
     """Load the doctest tests for the specified module into unittest.
         Args:
             loader, tests, ignore : arguments passed in from `load_tests()`
-            module: module under test 
+            module: module under test
             additional_skip_names: see :py:class:`TestCase` for an explanation
             patch_path: see :py:class:`TestCase` for an explanation
 
@@ -178,11 +178,12 @@ class TestCaseMixin(object):
         Invoke this at the beginning of the `setUp()` method in your unit test
         class.
         """
-        self._stubber = Patcher(additional_skip_names=self.additional_skip_names,
-                                patch_path=self.patch_path,
-                                use_dynamic_patch=self.use_dynamic_patch,
-                                modules_to_reload=self.modules_to_reload,
-                                modules_to_patch=self.modules_to_patch)
+        self._stubber = Patcher(
+            additional_skip_names=self.additional_skip_names,
+            patch_path=self.patch_path,
+            use_dynamic_patch=self.use_dynamic_patch,
+            modules_to_reload=self.modules_to_reload,
+            modules_to_patch=self.modules_to_patch)
 
         self._stubber.setUp()
         self.addCleanup(self._stubber.tearDown)
@@ -231,7 +232,7 @@ class TestCase(unittest.TestCase, TestCaseMixin):
           fake_file_path: Deprecated.  Use the default, which is
             `real_file_path`.
             If a value other than `real_file_path` is specified, a `ValueError`
-            exception will be raised.  
+            exception will be raised.
           create_missing_dirs: Deprecated.  Use the default, which creates
             missing directories in the fake file system.  If `False` is
             specified, a `ValueError` exception is raised.
@@ -266,12 +267,12 @@ class Patcher(object):
     """
     Instantiate a stub creator to bind and un-bind the file-related modules to
     the :py:mod:`pyfakefs` fake modules.
-    
+
     The arguments are explained in :py:class:`TestCase`.
 
     :py:class:`Patcher` is used in :py:class:`TestCase`.  :py:class:`Patcher`
     also works as a context manager for PyTest::
-    
+
         with Patcher():
             doStuff()
     """
@@ -280,7 +281,8 @@ class Patcher(object):
     `sys` is included to prevent `sys.path` from being stubbed with the fake
     `os.path`.
     '''
-    assert None in SKIPMODULES, "sys.modules contains 'None' values; must skip them."
+    assert None in SKIPMODULES, ("sys.modules contains 'None' values;"
+                                 " must skip them.")
 
     HAS_PATHLIB = sys.version_info >= (3, 4)
     IS_WINDOWS = sys.platform in ('win32', 'cygwin')
@@ -320,9 +322,11 @@ class Patcher(object):
             'io': fake_filesystem.FakeIoModule,
         }
         if self.HAS_PATHLIB:
-            self._fake_module_classes['pathlib'] = fake_pathlib.FakePathlibModule
+            self._fake_module_classes[
+                'pathlib'] = fake_pathlib.FakePathlibModule
         if has_scandir:
-            self._fake_module_classes['scandir'] = fake_scandir.FakeScanDirModule
+            self._fake_module_classes[
+                'scandir'] = fake_scandir.FakeScanDirModule
 
         self._class_modules = {}
         if modules_to_patch is not None:
@@ -355,8 +359,10 @@ class Patcher(object):
         self._isStale = True
 
     def __enter__(self):
-        """Context manager for usage outside of fake_filesystem_unittest.TestCase.
-        Ensure that all patched modules are removed in case of an unhandled exception.
+        """Context manager for usage outside of
+        fake_filesystem_unittest.TestCase.
+        Ensure that all patched modules are removed in case of an
+        unhandled exception.
         """
         self.setUp()
         return self
@@ -474,7 +480,6 @@ class DynamicPatcher(object):
         for name, module in self.modules.items():
             sys.modules[name] = module
 
-
     def cleanup(self):
         for module in self.sysmodules:
             sys.modules[module] = self.sysmodules[module]
@@ -484,7 +489,7 @@ class DynamicPatcher(object):
         if name not in self.modules:
             return False
         if (name in sys.modules and
-                    type(sys.modules[name]) == self.modules[name]):
+                type(sys.modules[name]) == self.modules[name]):
             return False
         return True
 
