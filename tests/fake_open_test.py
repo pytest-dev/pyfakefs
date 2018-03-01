@@ -72,9 +72,10 @@ class FakeFileOpenTest(FakeFileOpenTestBase):
                                                  delete_on_close=True)
         file_path = 'foo'
         self.assertFalse(self.os.path.exists(file_path))
-        with self.open(file_path, 'w') as _:
+        with self.open(file_path, 'w'):
             self.assertTrue(self.os.path.exists(file_path))
-        # After the 'with' statement, the close() method should have been called.
+        # After the 'with' statement, the close() method should have been
+        # called.
         self.assertFalse(self.os.path.exists(file_path))
 
     def test_unicode_contents(self):
@@ -985,8 +986,9 @@ class OpenFileWithEncodingTest(FakeFileOpenTestBase):
             with self.open(self.file_path, 'r', encoding='ascii') as f:
                 contents = f.read()
             self.assertEqual(
-                r'\N{ARABIC LETTER AIN}\N{ARABIC LETTER LAM}\N{ARABIC LETTER YEH} '
-                r'\N{ARABIC LETTER BEH}\N{ARABIC LETTER ALEF}\N{ARABIC LETTER BEH}'
+                r'\N{ARABIC LETTER AIN}\N{ARABIC LETTER LAM}\N'
+                r'{ARABIC LETTER YEH} \N{ARABIC LETTER BEH}\N'
+                r'{ARABIC LETTER ALEF}\N{ARABIC LETTER BEH}'
                 r'\N{ARABIC LETTER ALEF}', contents)
 
     def test_read_str_error_modes(self):
@@ -1351,19 +1353,19 @@ class FakeFileOpenLineEndingWithEncodingTest(FakeFileOpenTestBase):
         with self.open(file_path, mode='r', newline='',
                        encoding='cyrillic') as f:
             self.assertEqual([u'раз\r\n', u'два\n', u'три\r', u'четыре'],
-                              f.readlines())
+                             f.readlines())
         with self.open(file_path, mode='r', newline='\r',
                        encoding='cyrillic') as f:
             self.assertEqual([u'раз\r', u'\nдва\nтри\r', u'четыре'],
-                              f.readlines())
+                             f.readlines())
         with self.open(file_path, mode='r', newline='\n',
                        encoding='cyrillic') as f:
             self.assertEqual([u'раз\r\n', u'два\n', u'три\rчетыре'],
-                              f.readlines())
+                             f.readlines())
         with self.open(file_path, mode='r', newline='\r\n',
                        encoding='cyrillic') as f:
             self.assertEqual([u'раз\r\n', u'два\nтри\rчетыре'],
-                              f.readlines())
+                             f.readlines())
 
     @unittest.skipIf(sys.version_info[0] < 3,
                      'newline argument only available since Python 3')
@@ -1399,7 +1401,7 @@ class FakeFileOpenLineEndingWithEncodingTest(FakeFileOpenTestBase):
 
 
 class RealFileOpenLineEndingWithEncodingTest(
-    FakeFileOpenLineEndingWithEncodingTest):
+        FakeFileOpenLineEndingWithEncodingTest):
     def use_real_fs(self):
         return True
 

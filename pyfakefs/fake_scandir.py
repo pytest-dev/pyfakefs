@@ -10,9 +10,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""A fake implementation for the `scandir` function working with FakeFilesystem.
-Works with both the function integrated into the `os` module since Python 3.5 and the
-standalone function available in the standalone `scandir` python package.
+"""A fake implementation for the `scandir` function working with
+FakeFilesystem.
+Works with both the function integrated into the `os` module since Python 3.5
+and the standalone function available in the standalone `scandir` python
+package.
 """
 import sys
 
@@ -46,12 +48,13 @@ class DirEntry(object):
         """Return True if this entry is a directory entry.
 
         Args:
-            follow_symlinks: If True, also return True if this entry is a symlink
-                            pointing to a directory.
+            follow_symlinks: If True, also return True if this entry is a
+                symlink pointing to a directory.
 
         Returns:
             True if this entry is an existing directory entry, or if
-            follow_symlinks is set, and this entry points to an existing directory entry.
+                follow_symlinks is set, and this entry points to an existing
+                directory entry.
         """
         return self._isdir and (follow_symlinks or not self._islink)
 
@@ -59,12 +62,13 @@ class DirEntry(object):
         """Return True if this entry is a regular file entry.
 
         Args:
-            follow_symlinks: If True, also return True if this entry is a symlink
-                            pointing to a regular file.
+            follow_symlinks: If True, also return True if this entry is a
+                symlink pointing to a regular file.
 
         Returns:
             True if this entry is an existing file entry, or if
-            follow_symlinks is set, and this entry points to an existing file entry.
+                follow_symlinks is set, and this entry points to an existing
+                file entry.
         """
         return not self._isdir and (follow_symlinks or not self._islink)
 

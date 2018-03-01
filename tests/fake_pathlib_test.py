@@ -17,7 +17,8 @@
 Unittests for fake_pathlib.
 As most of fake_pathlib is a wrapper around fake_filesystem methods, the tests
 are there mostly to ensure basic functionality.
-Note that many of the tests are directly taken from examples in the python docs.
+Note that many of the tests are directly taken from examples in the
+python docs.
 """
 
 import os
@@ -61,7 +62,8 @@ class FakePathlibInitializationTest(RealPathlibTestCase):
             self.assertRaises(NotImplementedError, self.pathlib.WindowsPath)
 
     def test_init_with_segments(self):
-        """Basic initialization tests - taken from pathlib.Path documentation"""
+        """Basic initialization tests - taken from pathlib.Path documentation
+        """
         self.assertEqual(self.path('/', 'foo', 'bar', 'baz'),
                          self.path('/foo/bar/baz'))
         self.assertEqual(self.path(), self.path('.'))
@@ -161,7 +163,7 @@ class FakePathlibInitializationWithDriveTest(RealPathlibTestCase):
 
 
 class RealPathlibInitializationWithDriveTest(
-    FakePathlibInitializationWithDriveTest):
+        FakePathlibInitializationWithDriveTest):
     def use_real_fs(self):
         return True
 
@@ -241,7 +243,8 @@ class FakePathlibFileObjectPropertyTest(RealPathlibTestCase):
             self.skip_if_symlink_not_supported()
         except unittest.SkipTest:
             return
-        self.create_symlink(self.make_path('john'), self.make_path('home', 'john'))
+        self.create_symlink(self.make_path('john'),
+                            self.make_path('home', 'john'))
         self.file_link_path = self.make_path('test.py')
         self.create_symlink(self.file_link_path, self.file_path)
         self.create_symlink(self.make_path('broken_dir_link'),
@@ -403,7 +406,7 @@ class FakePathlibFileObjectPropertyTest(RealPathlibTestCase):
 
     @unittest.skipIf(sys.version_info < (3, 6),
                      'Changed behavior in Python 3.6')
-    def test_resolve_nonexisting_file(self):
+    def test_resolve_nonexisting_file_before_36(self):
         path = self.path(
             self.make_path('/path', 'to', 'file', 'this can not exist'))
         self.assertTrue(path, path.resolve())
@@ -449,8 +452,10 @@ class FakePathlibPathFileOperationTest(RealPathlibTestCase):
         self.skip_if_symlink_not_supported()
         self.create_file(self.make_path('home', 'jane', 'test.py'))
         self.create_dir(self.make_path('home', 'john'))
-        self.create_symlink(self.make_path('john'), self.make_path('home', 'john'))
-        self.create_symlink(self.make_path('none'), self.make_path('home', 'none'))
+        self.create_symlink(
+            self.make_path('john'), self.make_path('home', 'john'))
+        self.create_symlink(
+            self.make_path('none'), self.make_path('home', 'none'))
 
         self.assertTrue(
             self.path(self.make_path('home', 'jane', 'test.py')).exists())
@@ -648,9 +653,10 @@ class RealPathlibPathFileOperationTest(FakePathlibPathFileOperationTest):
 @unittest.skipIf(sys.version_info < (3, 6),
                  'path-like objects new in Python 3.6')
 class FakePathlibUsageInOsFunctionsTest(RealPathlibTestCase):
-    """Test that many os / os.path functions accept a path-like object since Python 3.6.
-    The functionality of these functions is testd elsewhere, we just check that they
-    accept a fake path object as an argument.
+    """Test that many os / os.path functions accept a path-like object
+    since Python 3.6. The functionality of these functions is tested
+    elsewhere, we just check that they accept a fake path object as an
+    argument.
     """
 
     def test_join(self):

@@ -52,7 +52,8 @@ def create_file(path):
     built in function.
 
     For example, the following file operations occur in the fake file system.
-    In the real file system, we would not even have permission to write `/test`:
+    In the real file system, we would not even have permission
+    to write `/test`:
 
     >>> os.path.isdir('/test')
     False
@@ -66,7 +67,8 @@ def create_file(path):
     True
     >>> with open('/test/file.txt') as f:
     ...     f.readlines()
-    ["This is test file '/test/file.txt'.\\n", 'It was created using open().\\n']
+    ["This is test file '/test/file.txt'.\\n", \
+'It was created using open().\\n']
     """
     with open(path, 'w') as f:
         f.write("This is test file '{0}'.\n".format(path))

@@ -22,7 +22,6 @@ and works correctly with the fake filesystem because of the faked `os` module.
 import os
 import shutil
 import sys
-import tempfile
 import unittest
 
 from pyfakefs import fake_filesystem_unittest
@@ -161,7 +160,8 @@ class FakeShutilModuleTest(RealFsTestCase):
             shutil.rmtree(directory, ignore_errors=True, onerror=error_handler)
         except IOError:
             self.fail('rmtree raised exception despite ignore_errors True')
-        # ignore_errors is True, so the onerror() error handler was not executed
+        # ignore_errors is True, so the onerror() error handler was
+        # not executed
         self.assertFalse(NonLocal.errorHandled)
         self.assertEqual(NonLocal.errorPath, '')
 

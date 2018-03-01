@@ -57,7 +57,8 @@ class FakeTempfileModuleTest(fake_filesystem_unittest.TestCase):
         temporary = tempfile.mkstemp()
         self.assertEqual(2, len(temporary))
         self.assertTrue(
-            temporary[1].startswith(os.path.join(tempfile.gettempdir(), 'tmp')))
+            temporary[1].startswith(
+                os.path.join(tempfile.gettempdir(), 'tmp')))
         self.assertEqual(next_fd, temporary[0])
         self.assertTrue(self.fs.exists(temporary[1]))
         mode = 0o666 if self.fs.is_windows_fs else 0o600
@@ -76,7 +77,8 @@ class FakeTempfileModuleTest(fake_filesystem_unittest.TestCase):
         temporary = tempfile.mkstemp(dir='/dir')
         self.assertEqual(2, len(temporary))
         self.assertEqual(next_fd, temporary[0])
-        self.assertTrue(temporary[1].startswith(os.path.join(os.sep, 'dir', 'tmp')))
+        self.assertTrue(temporary[1].startswith(
+            os.path.join(os.sep, 'dir', 'tmp')))
         self.assertTrue(self.fs.exists(temporary[1]))
         mode = 0o666 if self.fs.is_windows_fs else 0o600
         self.assertEqual(self.fs.get_object(temporary[1]).st_mode,
@@ -89,7 +91,8 @@ class FakeTempfileModuleTest(fake_filesystem_unittest.TestCase):
         self.assertEqual(self.fs.get_object(dirname).st_mode,
                          stat.S_IFDIR | 0o700)
 
-    @unittest.skipIf(sys.version_info < (3, 0), "TemporaryDirectory showed up in 3")
+    @unittest.skipIf(sys.version_info < (3, 0),
+                     "TemporaryDirectory showed up in 3")
     def test_temporary_directory(self):
         with tempfile.TemporaryDirectory() as tmpdir:
             self.assertTrue(tmpdir)

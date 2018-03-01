@@ -30,6 +30,7 @@ from unittest import TestCase
 from pyfakefs import fake_filesystem_unittest, fake_filesystem
 from pyfakefs.fake_filesystem_unittest import Patcher
 import tests.import_as_example
+from tests.fixtures import module_with_attributes
 
 if sys.version_info >= (3, 4):
     import pathlib
@@ -53,7 +54,8 @@ class TestPyfakefsUnittestBase(fake_filesystem_unittest.TestCase):
 class TestPyfakefsUnittest(TestPyfakefsUnittestBase):  # pylint: disable=R0904
     """Test the `pyfakefs.fake_filesystem_unittest.TestCase` base class."""
 
-    @unittest.skipIf(sys.version_info > (2, ), "file() was removed in Python 3")
+    @unittest.skipIf(sys.version_info > (2, ),
+                     "file() was removed in Python 3")
     def test_file(self):
         """Fake `file()` function is bound"""
         self.assertFalse(os.path.exists('/fake_file.txt'))
@@ -62,8 +64,8 @@ class TestPyfakefsUnittest(TestPyfakefsUnittestBase):  # pylint: disable=R0904
         self.assertTrue(self.fs.exists('/fake_file.txt'))
         with file('/fake_file.txt') as f:       # noqa: F821 is only run on Py2
             content = f.read()
-        self.assertEqual(content,
-                         'This test file was created using the file() function.\n')
+        self.assertEqual(content, 'This test file was created using the '
+                                  'file() function.\n')
 
     def test_open(self):
         """Fake `open()` function is bound"""
@@ -73,19 +75,20 @@ class TestPyfakefsUnittest(TestPyfakefsUnittestBase):  # pylint: disable=R0904
         self.assertTrue(self.fs.exists('/fake_file.txt'))
         with open('/fake_file.txt') as f:
             content = f.read()
-        self.assertEqual(content,
-                         'This test file was created using the open() function.\n')
+        self.assertEqual(content, 'This test file was created using the '
+                                  'open() function.\n')
 
     def test_io_open(self):
         """Fake io module is bound"""
         self.assertFalse(os.path.exists('/fake_file.txt'))
         with io.open('/fake_file.txt', 'w') as f:
-            f.write("This test file was created using the io.open() function.\n")
+            f.write("This test file was created using the"
+                    " io.open() function.\n")
         self.assertTrue(self.fs.exists('/fake_file.txt'))
         with open('/fake_file.txt') as f:
             content = f.read()
-        self.assertEqual(content,
-                         'This test file was created using the io.open() function.\n')
+        self.assertEqual(content, 'This test file was created using the '
+                                  'io.open() function.\n')
 
     def test_os(self):
         """Fake os module is bound"""
@@ -107,9 +110,11 @@ class TestPyfakefsUnittest(TestPyfakefsUnittestBase):  # pylint: disable=R0904
         self.fs.create_dir('/test/dir1/dir2b')
         matching_paths = sorted(glob.glob('/test/dir1/dir*'))
         if is_windows:
-            self.assertEqual(matching_paths, [r'\test\dir1\dir2a', r'\test\dir1\dir2b'])
+            self.assertEqual(matching_paths,
+                             [r'\test\dir1\dir2a', r'\test\dir1\dir2b'])
         else:
-            self.assertEqual(matching_paths, ['/test/dir1/dir2a', '/test/dir1/dir2b'])
+            self.assertEqual(matching_paths,
+                             ['/test/dir1/dir2a', '/test/dir1/dir2b'])
 
     def test_shutil(self):
         """Fake shutil module is bound"""
@@ -136,8 +141,8 @@ class TestPyfakefsUnittest(TestPyfakefsUnittestBase):  # pylint: disable=R0904
 class TestImportAsOtherName(fake_filesystem_unittest.TestCase):
     def __init__(self, methodName='RunTest'):
         modules_to_load = [tests.import_as_example]
-        super(TestImportAsOtherName, self).__init__(methodName,
-                                                    modules_to_reload=modules_to_load)
+        super(TestImportAsOtherName, self).__init__(
+            methodName, modules_to_reload=modules_to_load)
 
     def setUp(self):
         self.setUpPyfakefs()
@@ -147,9 +152,6 @@ class TestImportAsOtherName(fake_filesystem_unittest.TestCase):
         self.fs.create_file(file_path)
         self.assertTrue(self.fs.exists(file_path))
         self.assertTrue(tests.import_as_example.check_if_exists(file_path))
-
-
-from tests.fixtures import module_with_attributes
 
 
 class TestAttributesWithFakeModuleNames(TestPyfakefsUnittestBase):
@@ -163,11 +165,14 @@ class TestAttributesWithFakeModuleNames(TestPyfakefsUnittestBase):
 
         self.assertEqual(module_with_attributes.os, 'os attribute value')
         self.assertEqual(module_with_attributes.path, 'path attribute value')
-        self.assertEqual(module_with_attributes.pathlib, 'pathlib attribute value')
-        self.assertEqual(module_with_attributes.shutil, 'shutil attribute value')
+        self.assertEqual(module_with_attributes.pathlib,
+                         'pathlib attribute value')
+        self.assertEqual(module_with_attributes.shutil,
+                         'shutil attribute value')
         self.assertEqual(module_with_attributes.io, 'io attribute value')
 
-import math as path
+
+import math as path  # noqa: E402 wanted import not at top
 
 
 class TestPatchPathUnittestFailing(TestPyfakefsUnittestBase):
@@ -187,7 +192,8 @@ class TestPatchPathUnittestFailing(TestPyfakefsUnittestBase):
 
 class TestPatchPathUnittestPassing(TestPyfakefsUnittestBase):
     """Tests the behavior with patch_path set to False:
-       An own path module (in this case an alias to math) can be imported and used
+       An own path module (in this case an alias to math) can be imported
+       and used.
     """
 
     def __init__(self, methodName='runTest'):
@@ -213,7 +219,6 @@ if sys.version_info >= (3, 4):
 
         def __getattr__(self, name):
             return getattr(self.fake_pathlib.Path, name)
-
 
     class PatchPathlibPathTest(TestPyfakefsUnittestBase):
         """Shows how to patch a class inside a module."""
@@ -263,31 +268,37 @@ class TestCopyOrAddRealFile(TestPyfakefsUnittestBase):
 
     @unittest.skipIf(sys.platform == 'darwin', 'Different copy behavior')
     def test_copy_real_file(self):
-        '''Typical usage of deprecated copyRealFile()'''
+        """Typical usage of deprecated copyRealFile()"""
         # Use this file as the file to be copied to the fake file system
         fake_file = self.copyRealFile(self.filepath)
 
-        self.assertTrue('class TestCopyOrAddRealFile(TestPyfakefsUnittestBase)'
-                        in self.real_string_contents,
-                        'Verify real file string contents')
-        self.assertTrue(b'class TestCopyOrAddRealFile(TestPyfakefsUnittestBase)'
-                        in self.real_byte_contents,
-                        'Verify real file byte contents')
+        self.assertTrue(
+            'class TestCopyOrAddRealFile(TestPyfakefsUnittestBase)'
+            in self.real_string_contents,
+            'Verify real file string contents')
+        self.assertTrue(
+            b'class TestCopyOrAddRealFile(TestPyfakefsUnittestBase)'
+            in self.real_byte_contents,
+            'Verify real file byte contents')
 
-        # note that real_string_contents may differ to fake_file.contents due to newline conversions in open()
+        # note that real_string_contents may differ to fake_file.contents
+        # due to newline conversions in open()
         self.assertEqual(fake_file.byte_contents, self.real_byte_contents)
 
         self.assertEqual(oct(fake_file.st_mode), oct(self.real_stat.st_mode))
         self.assertEqual(fake_file.st_size, self.real_stat.st_size)
-        self.assertAlmostEqual(fake_file.st_ctime, self.real_stat.st_ctime, places=5)
-        self.assertAlmostEqual(fake_file.st_atime, self.real_stat.st_atime, places=5)
+        self.assertAlmostEqual(fake_file.st_ctime,
+                               self.real_stat.st_ctime, places=5)
+        self.assertAlmostEqual(fake_file.st_atime,
+                               self.real_stat.st_atime, places=5)
         self.assertLess(fake_file.st_atime, self.real_stat.st_atime + 10)
-        self.assertAlmostEqual(fake_file.st_mtime, self.real_stat.st_mtime, places=5)
+        self.assertAlmostEqual(fake_file.st_mtime,
+                               self.real_stat.st_mtime, places=5)
         self.assertEqual(fake_file.st_uid, self.real_stat.st_uid)
         self.assertEqual(fake_file.st_gid, self.real_stat.st_gid)
 
     def test_copy_real_file_deprecated_arguments(self):
-        '''Deprecated copyRealFile() arguments'''
+        """Deprecated copyRealFile() arguments"""
         self.assertFalse(self.fs.exists(self.filepath))
         # Specify redundant fake file path
         self.copyRealFile(self.filepath, self.filepath)
@@ -300,28 +311,31 @@ class TestCopyOrAddRealFile(TestPyfakefsUnittestBase):
             self.copyRealFile(self.filepath, create_missing_dirs=False)
 
     def test_add_real_file(self):
-        '''Add a real file to the fake file system to be read on demand'''
+        """Add a real file to the fake file system to be read on demand"""
 
-        # this tests only the basic functionality inside a unit test, more thorough tests
-        # are done in fake_filesystem_test.RealFileSystemAccessTest
+        # this tests only the basic functionality inside a unit test, more
+        # thorough tests are done in
+        # fake_filesystem_test.RealFileSystemAccessTest
         fake_file = self.fs.add_real_file(self.filepath)
         self.assertTrue(self.fs.exists(self.filepath))
         self.assertIsNone(fake_file._byte_contents)
         self.assertEqual(self.real_byte_contents, fake_file.byte_contents)
 
     def test_add_real_directory(self):
-        '''Add a real directory and the contained files to the fake file system
-        to be read on demand'''
+        """Add a real directory and the contained files to the fake file system
+        to be read on demand"""
 
-        # this tests only the basic functionality inside a unit test, more thorough tests
-        # are done in fake_filesystem_test.RealFileSystemAccessTest
+        # This tests only the basic functionality inside a unit test,
+        # more thorough tests are done in
+        # fake_filesystem_test.RealFileSystemAccessTest.
         # Note: this test fails (add_real_directory raises) if 'genericpath'
         # is not added to SKIPNAMES
         root_path = os.path.split(os.path.dirname(self.filepath))[0]
         real_dir_path = os.path.join(root_path, 'pyfakefs')
         self.fs.add_real_directory(real_dir_path)
         self.assertTrue(self.fs.exists(real_dir_path))
-        self.assertTrue(self.fs.exists(os.path.join(real_dir_path, 'fake_filesystem.py')))
+        self.assertTrue(self.fs.exists(
+            os.path.join(real_dir_path, 'fake_filesystem.py')))
 
 
 class TestPyfakefsTestCase(unittest.TestCase):
@@ -335,7 +349,8 @@ class TestPyfakefsTestCase(unittest.TestCase):
     def test_test_case_type(self):
         self.assertIsInstance(self.test_case, unittest.TestCase)
 
-        self.assertIsInstance(self.test_case, fake_filesystem_unittest.TestCaseMixin)
+        self.assertIsInstance(self.test_case,
+                              fake_filesystem_unittest.TestCaseMixin)
 
 
 if __name__ == "__main__":

@@ -19,12 +19,13 @@
 Test the :py:class`pyfakefs.example` module to demonstrate the usage of the
 :py:class`pyfakefs.fake_filesystem_unittest.TestCase` base class.
 
-Fake filesystem functions like `create_file()`, `create_dir()` or `symlink()`
-are often used to set up file structures at the beginning of a test.
-While you could also use the familiar `open()`, `os.mkdirs()` and similar functions,
-these functions can make the test code shorter and more readable.
-`create_file()` is particularly convenient because it creates all parent directories
-and allows you to specify the contents or the size of the file.
+Fake filesystem functions like `create_file()`, `create_dir()` or
+`create_symlink()` are often used to set up file structures at the beginning
+of a test.
+While you could also use the familiar `open()`, `os.mkdirs()` and similar
+functions, these functions can make the test code shorter and more readable.
+`create_file()` is particularly convenient because it creates all parent
+directories and allows you to specify the contents or the size of the file.
 """
 
 import io
@@ -39,7 +40,8 @@ from tests import example  # The module under test
 
 def load_tests(loader, tests, ignore):
     """Load the pyfakefs/example.py doctest tests into unittest."""
-    return fake_filesystem_unittest.load_doctests(loader, tests, ignore, example)
+    return fake_filesystem_unittest.load_doctests(
+        loader, tests, ignore, example)
 
 
 class TestExample(fake_filesystem_unittest.TestCase):  # pylint: disable=R0904
@@ -53,12 +55,12 @@ class TestExample(fake_filesystem_unittest.TestCase):  # pylint: disable=R0904
         """Invoke the :py:class:`pyfakefs.fake_filesystem_unittest.TestCase`
         `self.setUp()` method.  This defines:
 
-        * Attribute `self.fs`, an instance of \
-          :py:class:`pyfakefs.fake_filesystem.FakeFilesystem`.  This is useful \
+        * Attribute `self.fs`, an instance of
+          :py:class:`pyfakefs.fake_filesystem.FakeFilesystem`. This is useful
           for creating test files.
-        * Attribute `self.stubs`, an instance of \
-          :py:class:`pyfakefs.mox3_stubout.StubOutForTesting`.  Use this if you need to
-          define additional stubs.
+        * Attribute `self.stubs`, an instance of
+          :py:class:`pyfakefs.mox3_stubout.StubOutForTesting`. Use this if
+          you need to define additional stubs.
         """
 
         # This is before setUpPyfakefs(), so still using the real file system
@@ -73,7 +75,8 @@ class TestExample(fake_filesystem_unittest.TestCase):  # pylint: disable=R0904
         pass
 
     def test_create_file(self):
-        """Test example.create_file() which uses `open()` and `file.write()`."""
+        """Test example.create_file() which uses `open()` and `file.write()`.
+        """
         self.assertFalse(os.path.isdir('/test'))
         os.mkdir('/test')
         self.assertTrue(os.path.isdir('/test'))
@@ -111,9 +114,11 @@ class TestExample(fake_filesystem_unittest.TestCase):  # pylint: disable=R0904
         is_windows = sys.platform.startswith('win')
         matching_paths = sorted(example.get_glob('/test/dir1/dir*'))
         if is_windows:
-            self.assertEqual(matching_paths, [r'\test\dir1\dir2a', r'\test\dir1\dir2b'])
+            self.assertEqual(matching_paths,
+                             [r'\test\dir1\dir2a', r'\test\dir1\dir2b'])
         else:
-            self.assertEqual(matching_paths, ['/test/dir1/dir2a', '/test/dir1/dir2b'])
+            self.assertEqual(matching_paths,
+                             ['/test/dir1/dir2a', '/test/dir1/dir2b'])
 
     def test_rm_tree(self):
         """Test example.rm_tree() using `shutil.rmtree()`."""
@@ -132,7 +137,8 @@ class TestExample(fake_filesystem_unittest.TestCase):  # pylint: disable=R0904
         """Test example.scandir() which uses `os.scandir()`.
 
         The os module has been replaced with the fake os module so the
-        fake filesystem path entries are returned instead of `os.DirEntry` objects.
+        fake filesystem path entries are returned instead of `os.DirEntry`
+        objects.
         """
         self.fs.create_file('/test/text.txt')
         self.fs.create_dir('/test/dir')
@@ -146,12 +152,14 @@ class TestExample(fake_filesystem_unittest.TestCase):  # pylint: disable=R0904
         self.assertTrue(entries[1].is_symlink())
         self.assertTrue(entries[2].is_file())
 
-    @unittest.skipIf(not has_scandir, 'Testing only if scandir module is installed')
+    @unittest.skipIf(not has_scandir,
+                     'Testing only if scandir module is installed')
     def test_scandir_scandir(self):
         """Test example.scandir() which uses `scandir.scandir()`.
 
-        The scandir module has been replaced with the fake_scandir module so the
-        fake filesystem path entries are returned instead of `scandir.DirEntry` objects.
+        The scandir module has been replaced with the fake_scandir module so
+        the fake filesystem path entries are returned instead of
+        `scandir.DirEntry` objects.
         """
         self.fs.CreateFile('/test/text.txt')
         self.fs.CreateDirectory('/test/dir')
@@ -168,7 +176,8 @@ class TestExample(fake_filesystem_unittest.TestCase):  # pylint: disable=R0904
         with self.assertRaises(IOError):
             example.file_contents(self.filepath)
         self.fs.add_real_file(self.filepath)
-        self.assertEqual(example.file_contents(self.filepath), self.real_contents)
+        self.assertEqual(example.file_contents(self.filepath),
+                         self.real_contents)
 
 
 if __name__ == "__main__":

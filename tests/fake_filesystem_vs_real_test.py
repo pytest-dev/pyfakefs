@@ -81,7 +81,7 @@ class FakeFilesystemVsRealTest(TestCase):
         # l for symlink, h for hard link
         if file_type in ('l', 'h'):
             real_target, fake_target = (contents, contents)
-            # If it begins with '/', make it relative to the base.    You can't go
+            # If it begins with '/', make it relative to the base. You can't go
             # creating files in / for the real file system.
             if contents.startswith(os.sep):
                 real_target, fake_target = self._Paths(contents[1:])
@@ -93,7 +93,7 @@ class FakeFilesystemVsRealTest(TestCase):
                 self.fake_os.link(fake_target, fake_path)
 
     def setUp(self):
-        # Base paths in the real and test file systems.     We keep them different
+        # Base paths in the real and test file systems. We keep them different
         # so that missing features in the fake don't fall through to the base
         # operations and magically succeed.
         tsname = 'fakefs.%s' % time.time()
@@ -120,8 +120,8 @@ class FakeFilesystemVsRealTest(TestCase):
         self.fake_os.chdir(self.fake_base)
 
     def tearDown(self):
-        # We have to remove all the files from the real FS. Doing the same for the
-        # fake FS is optional, but doing it is an extra sanity check.
+        # We have to remove all the files from the real FS. Doing the same for
+        # the fake FS is optional, but doing it is an extra sanity check.
         os.chdir(tempfile.gettempdir())
         try:
             rev_files = self._created_files[:]
@@ -147,22 +147,26 @@ class FakeFilesystemVsRealTest(TestCase):
 
     def _compare_behaviors(self, method_name, path, real, fake,
                            method_returns_path=False):
-        """Invoke an os method in both real and fake contexts and compare results.
+        """Invoke an os method in both real and fake contexts and compare
+        results.
 
-        Invoke a real filesystem method with a path to a real file and invoke a fake
-        filesystem method with a path to a fake file and compare the results.    We
-        expect some calls to throw Exceptions, so we catch those and compare them.
+        Invoke a real filesystem method with a path to a real file and invoke
+        a fake filesystem method with a path to a fake file and compare the
+        results. We expect some calls to throw Exceptions, so we catch those
+        and compare them.
 
         Args:
-            method_name: Name of method being tested, for use in error messages.
-            path: potential path to a file in the real and fake file systems, passing
-                an empty tuple indicates that no arguments to pass to method.
-            real: built-in system library or method from the built-in system library
-                which takes a path as an arg and returns some value.
+            method_name: Name of method being tested, for use in
+                error messages.
+            path: potential path to a file in the real and fake file systems,
+                passing an empty tuple indicates that no arguments to pass
+                to method.
+            real: built-in system library or method from the built-in system
+                library which takes a path as an arg and returns some value.
             fake: fake_filsystem object or method from a fake_filesystem class
                 which takes a path as an arg and returns some value.
-            method_returns_path: True if the method returns a path, and thus we must
-                compensate for expected difference between real and fake.
+            method_returns_path: True if the method returns a path, and thus we
+                must compensate for expected difference between real and fake.
 
         Returns:
             A description of the difference in behavior, or None.
@@ -210,7 +214,8 @@ class FakeFilesystemVsRealTest(TestCase):
         fake_errno = _get_errno(fake_err)
         if real_errno != fake_errno:
             return '%s(%s): both raised %s, real errno %s, fake errno %s' % (
-                method_name, path, _error_class(real_err), real_errno, fake_errno)
+                method_name, path, _error_class(real_err),
+                real_errno, fake_errno)
         # If the method is supposed to return a full path AND both values
         # begin with the expected full path, then trim it off.
         if method_returns_path:
@@ -229,14 +234,15 @@ class FakeFilesystemVsRealTest(TestCase):
         """Invoke an os method in both real and fake contexts and compare.
 
         For a given method name (from the os module) and a path, compare the
-        behavior of the system provided module against the fake_filesytem module.
+        behavior of the system provided module against the fake_filesystem
+        module.
         We expect results and/or Exceptions raised to be identical.
 
         Args:
             method_name: Name of method being tested.
             path: potential path to a file in the real and fake file systems.
-            method_returns_path: True if the method returns a path, and thus we must
-                compensate for expected difference between real and fake.
+            method_returns_path: True if the method returns a path, and thus we
+                must compensate for expected difference between real and fake.
 
         Returns:
             A description of the difference in behavior, or None.
@@ -257,7 +263,8 @@ class FakeFilesystemVsRealTest(TestCase):
             method_returns_data: True if a method returns some sort of data.
 
         For a given method name (from builtin open) and a path, compare the
-        behavior of the system provided module against the fake_filesytem module.
+        behavior of the system provided module against the fake_filesystem
+        module.
         We expect results and/or Exceptions raised to be identical.
 
         Returns:
@@ -265,47 +272,51 @@ class FakeFilesystemVsRealTest(TestCase):
         """
         with open(path, mode) as real_fh:
             with self.fake_open(path, mode) as fake_fh:
-                return self._compare_behaviors(method_name, data, real_fh, fake_fh,
-                                               method_returns_data)
+                return self._compare_behaviors(
+                    method_name, data, real_fh, fake_fh, method_returns_data)
 
     def DiffOsPathMethodBehavior(self, method_name, path,
                                  method_returns_path=False):
         """Invoke an os.path method in both real and fake contexts and compare.
 
-        For a given method name (from the os.path module) and a path, compare the
-        behavior of the system provided module against the fake_filesytem module.
+        For a given method name (from the os.path module) and a path, compare
+        the behavior of the system provided module against the
+        fake_filesytem module.
         We expect results and/or Exceptions raised to be identical.
 
         Args:
             method_name: Name of method being tested.
             path: potential path to a file in the real and fake file systems.
-            method_returns_path: True if the method returns a path, and thus we must
-                compensate for expected difference between real and fake.
+            method_returns_path: True if the method returns a path, and thus we
+                must compensate for expected difference between real and fake.
 
         Returns:
             A description of the difference in behavior, or None.
         """
-        return self._compare_behaviors(method_name, path, os.path, self.fake_os.path,
+        return self._compare_behaviors(method_name, path, os.path,
+                                       self.fake_os.path,
                                        method_returns_path)
 
     def assertOsPathMethodBehaviorMatches(self, method_name, path,
                                           method_returns_path=False):
-        """Assert that an os.path behaves the same in both real and fake contexts.
+        """Assert that an os.path behaves the same in both real and
+        fake contexts.
 
-        Wraps DiffOsPathMethodBehavior, raising AssertionError if any differences
-        are reported.
+        Wraps DiffOsPathMethodBehavior, raising AssertionError if any
+        differences are reported.
 
         Args:
             method_name: Name of method being tested.
             path: potential path to a file in the real and fake file systems.
-            method_returns_path: True if the method returns a path, and thus we must
-                compensate for expected difference between real and fake.
+            method_returns_path: True if the method returns a path, and thus we
+                must compensate for expected difference between real and fake.
 
         Raises:
             AssertionError if there is any difference in behavior.
         """
         path = sep(path)
-        diff = self.DiffOsPathMethodBehavior(method_name, path, method_returns_path)
+        diff = self.DiffOsPathMethodBehavior(
+            method_name, path, method_returns_path)
         if diff:
             self.fail(diff)
 
@@ -323,10 +334,11 @@ class FakeFilesystemVsRealTest(TestCase):
         if not self.is_windows:
             os_path_method_names.append('islink')
             os_path_method_names.append('lexists')
-        wrapped_methods = [['access', self._access_real, self._access_fake],
-                           ['stat.size', self._StatSizeReal, self._StatSizeFake],
-                           ['lstat.size', self._LstatSizeReal, self._LstatSizeFake]
-                           ]
+        wrapped_methods = [
+            ['access', self._access_real, self._access_fake],
+            ['stat.size', self._StatSizeReal, self._StatSizeFake],
+            ['lstat.size', self._LstatSizeReal, self._LstatSizeFake]
+        ]
 
         differences = []
         for method_name in os_method_names:
@@ -587,14 +599,19 @@ class FakeFilesystemVsRealTest(TestCase):
         self.assertFileHandleBehaviorsMatch('append', 'a', 'other contents')
         self._CreateTestFile('f', 'readplus', 'some contents')
         self._CreateTestFile('f', 'writeplus', 'some contents')
-        self.assertFileHandleBehaviorsMatch('readplus', 'r+', 'other contents')
-        self.assertFileHandleBehaviorsMatch('writeplus', 'w+', 'other contents')
+        self.assertFileHandleBehaviorsMatch(
+            'readplus', 'r+', 'other contents')
+        self.assertFileHandleBehaviorsMatch(
+            'writeplus', 'w+', 'other contents')
         self._CreateTestFile('b', 'binaryread', b'some contents')
         self._CreateTestFile('b', 'binarywrite', b'some contents')
         self._CreateTestFile('b', 'binaryappend', b'some contents')
-        self.assertFileHandleBehaviorsMatch('binaryread', 'rb', b'other contents')
-        self.assertFileHandleBehaviorsMatch('binarywrite', 'wb', b'other contents')
-        self.assertFileHandleBehaviorsMatch('binaryappend', 'ab', b'other contents')
+        self.assertFileHandleBehaviorsMatch(
+            'binaryread', 'rb', b'other contents')
+        self.assertFileHandleBehaviorsMatch(
+            'binarywrite', 'wb', b'other contents')
+        self.assertFileHandleBehaviorsMatch(
+            'binaryappend', 'ab', b'other contents')
         self.assertFileHandleBehaviorsMatch('read', 'rb', 'other contents')
         self.assertFileHandleBehaviorsMatch('write', 'wb', 'other contents')
         self.assertFileHandleBehaviorsMatch('append', 'ab', 'other contents')

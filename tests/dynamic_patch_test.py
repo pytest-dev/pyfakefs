@@ -30,7 +30,7 @@ class TestPyfakefsUnittestBase(fake_filesystem_unittest.TestCase):
 class DynamicImportPatchTest(TestPyfakefsUnittestBase):
     def __init__(self, methodName='runTest'):
         super(DynamicImportPatchTest, self).__init__(methodName,
-            use_dynamic_patch=True)
+                                                     use_dynamic_patch=True)
 
     def testOsPatch(self):
         import os

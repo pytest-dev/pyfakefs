@@ -59,17 +59,21 @@ class StubOutForTestingTest(unittest.TestCase):
 
     def testStuboutMethodWithSet(self):
         non_existing_path = 'non_existing_path'
-        self.assertFalse(mox3_stubout_example.check_if_exists(non_existing_path))
+        self.assertFalse(
+            mox3_stubout_example.check_if_exists(non_existing_path))
         self.stubber.set(os.path, 'exists', lambda x: True)
-        self.assertTrue(mox3_stubout_example.check_if_exists(non_existing_path))
+        self.assertTrue(
+            mox3_stubout_example.check_if_exists(non_existing_path))
         self.stubber.unset_all()
-        self.assertFalse(mox3_stubout_example.check_if_exists(non_existing_path))
+        self.assertFalse(
+            mox3_stubout_example.check_if_exists(non_existing_path))
 
     def testStuboutClassWithSet(self):
         self.assertGreater(mox3_stubout_example.tomorrow().year, 2000)
 
         self.stubber.set(datetime, 'date', GroundhogDate)
-        self.assertEqual(mox3_stubout_example.tomorrow(), datetime.date(1993, 2, 3))
+        self.assertEqual(mox3_stubout_example.tomorrow(),
+                         datetime.date(1993, 2, 3))
 
         self.stubber.unset_all()
         self.assertGreater(mox3_stubout_example.tomorrow().year, 2000)
@@ -94,13 +98,16 @@ class StubOutForTestingTest(unittest.TestCase):
     def testStuboutMethodWithSmartSet(self):
         non_existing_path = 'non_existing_path'
         self.stubber.smart_set(os.path, 'exists', lambda x: True)
-        self.assertTrue(mox3_stubout_example.check_if_exists(non_existing_path))
+        self.assertTrue(
+            mox3_stubout_example.check_if_exists(non_existing_path))
         self.stubber.smart_unset_all()
-        self.assertFalse(mox3_stubout_example.check_if_exists(non_existing_path))
+        self.assertFalse(
+            mox3_stubout_example.check_if_exists(non_existing_path))
 
     def testStuboutClassWithSmartSet(self):
         self.stubber.smart_set(datetime, 'date', GroundhogDate)
-        self.assertEqual(mox3_stubout_example.tomorrow(), datetime.date(1993, 2, 3))
+        self.assertEqual(mox3_stubout_example.tomorrow(),
+                         datetime.date(1993, 2, 3))
 
         self.stubber.smart_unset_all()
         self.assertGreater(mox3_stubout_example.tomorrow().year, 2000)
@@ -117,11 +124,14 @@ class StubOutForTestingTest(unittest.TestCase):
     def testStuboutSubModuleWithSmartSet(self):
         # this one does not work with Set
         non_existing_path = 'non_existing_path'
-        self.assertFalse(mox3_stubout_example.check_if_exists(non_existing_path))
+        self.assertFalse(
+            mox3_stubout_example.check_if_exists(non_existing_path))
         self.stubber.smart_set(os, 'path', ExistingPath)
-        self.assertTrue(mox3_stubout_example.check_if_exists(non_existing_path))
+        self.assertTrue(
+            mox3_stubout_example.check_if_exists(non_existing_path))
         self.stubber.smart_unset_all()
-        self.assertFalse(mox3_stubout_example.check_if_exists(non_existing_path))
+        self.assertFalse(
+            mox3_stubout_example.check_if_exists(non_existing_path))
 
     def testSmartSetRaiseIfUnknownAttribute(self):
         self.assertRaises(AttributeError, self.stubber.smart_set,

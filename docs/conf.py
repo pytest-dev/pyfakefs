@@ -20,7 +20,8 @@
 import os
 import sys
 
-sys.path.insert(0, os.path.split(os.path.dirname(os.path.abspath(__file__)))[0])
+sys.path.insert(
+    0, os.path.split(os.path.dirname(os.path.abspath(__file__)))[0])
 
 # -- General configuration ------------------------------------------------
 
@@ -155,7 +156,7 @@ html_theme_path = ['.']
 # html_logo = None
 
 # The name of an image file (relative to this directory) to use as a favicon of
-# the docs.  This file should be a Windows icon file (.ico) being 16x16 or 32x32
+# the docs. This file should be a Windows icon file (.ico) being 16x16 or 32x32
 # pixels large.
 #
 # html_favicon = None

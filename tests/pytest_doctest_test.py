@@ -42,6 +42,7 @@ passes_too.__doc__ = passes_too.__doc__.replace('>>> os.remove(name)',
 
 fails = make_file_factory('fails', fake=False, result=False)
 
-# Pytest versions below 2.8.6 raise an internal error when running these doctests:
+# Pytest versions below 2.8.6 raise an internal error when running
+# these doctests:
 crashes = make_file_factory('crashes', fake=True, result=False)
 crashes_too = make_file_factory(') SyntaxError', fake=True, result=False)
