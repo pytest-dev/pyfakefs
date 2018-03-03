@@ -176,29 +176,11 @@ class FakeFilesystemVsRealTest(TestCase):
         def _error_class(exc):
             return (exc and exc.__class__.__name__) or 'None'
 
-        real_value = None
-        fake_value = None
-        real_err = None
-        fake_err = None
+        real_err, real_value = self._get_real_value(method_name, path, real)
+        fake_err, fake_value = self._get_fake_value(method_name, path, fake)
+
         method_call = '%s' % method_name
         method_call += '()' if path == () else '(%s)' % path
-        # Catching Exception below gives a lint warning, but it's what we need.
-        try:
-            args = [] if path == () else [path]
-            real_method = real
-            if not callable(real):
-                real_method = getattr(real, method_name)
-            real_value = str(real_method(*args))
-        except Exception as e:  # pylint: disable-msg=W0703
-            real_err = e
-        try:
-            fake_method = fake
-            if not callable(fake):
-                fake_method = getattr(fake, method_name)
-            args = [] if path == () else [path]
-            fake_value = str(fake_method(*args))
-        except Exception as e:  # pylint: disable-msg=W0703
-            fake_err = e
         # We only compare on the error class because the acutal error contents
         # is almost always different because of the file paths.
         if _error_class(real_err) != _error_class(fake_err):
@@ -228,6 +210,33 @@ class FakeFilesystemVsRealTest(TestCase):
             return '%s: real return %s, fake returned %s' % (
                 method_call, real_value, fake_value)
         return None
+
+    def _get_fake_value(self, method_name, path, fake):
+        fake_value = None
+        fake_err = None
+        try:
+            fake_method = fake
+            if not callable(fake):
+                fake_method = getattr(fake, method_name)
+            args = [] if path == () else [path]
+            fake_value = str(fake_method(*args))
+        except Exception as e:  # pylint: disable-msg=W0703
+            fake_err = e
+        return fake_err, fake_value
+
+    def _get_real_value(self, method_name, path, real):
+        real_value = None
+        real_err = None
+        # Catching Exception below gives a lint warning, but it's what we need.
+        try:
+            args = [] if path == () else [path]
+            real_method = real
+            if not callable(real):
+                real_method = getattr(real, method_name)
+            real_value = str(real_method(*args))
+        except Exception as e:  # pylint: disable-msg=W0703
+            real_err = e
+        return real_err, real_value
 
     def assertOsMethodBehaviorMatches(self, method_name, path,
                                       method_returns_path=False):

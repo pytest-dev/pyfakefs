@@ -1105,14 +1105,7 @@ class FakeFilesystem(object):
                     or if the tuple length is not equal to 2.
                 ValueError: If both times and ns are specified.
         """
-        if times is not None and ns is not None:
-            raise ValueError(
-                "utime: you may specify either 'times' or 'ns' but not both")
-        if times is not None and len(times) != 2:
-            raise TypeError(
-                "utime: 'times' must be either a tuple of two ints or None")
-        if ns is not None and len(ns) != 2:
-            raise TypeError("utime: 'ns' must be a tuple of two ints")
+        self._handle_utime_arg_errors(ns, times)
 
         try:
             file_object = self.resolve(path, follow_symlinks, allow_fd=True)
@@ -1138,6 +1131,16 @@ class FakeFilesystem(object):
             current_time = time.time()
             file_object.st_atime = current_time
             file_object.st_mtime = current_time
+
+    def _handle_utime_arg_errors(self, ns, times):
+        if times is not None and ns is not None:
+            raise ValueError(
+                "utime: you may specify either 'times' or 'ns' but not both")
+        if times is not None and len(times) != 2:
+            raise TypeError(
+                "utime: 'times' must be either a tuple of two ints or None")
+        if ns is not None and len(ns) != 2:
+            raise TypeError("utime: 'ns' must be a tuple of two ints")
 
     @Deprecator
     def SetIno(self, path, st_ino):
@@ -1674,66 +1677,6 @@ class FakeFilesystem(object):
             IOError: if `file_path` is '' or a part of the path doesn't exist.
         """
 
-        def _components_to_path(component_folders):
-            sep = (self._path_separator(component_folders[0])
-                   if component_folders else self.path_separator)
-            path = sep.join(component_folders)
-            if not self._starts_with_root_path(path):
-                path = sep + path
-            return path
-
-        def _valid_relative_path(file_path):
-            if self.is_windows_fs:
-                return True
-            slash_dotdot = self._matching_string(
-                file_path, self.path_separator + '..')
-            while file_path and slash_dotdot in file_path:
-                file_path = file_path[:file_path.rfind(slash_dotdot)]
-                if not self.exists(self.absnormpath(file_path)):
-                    return False
-            return True
-
-        def _follow_link(link_path_components, link):
-            """Follow a link w.r.t. a path resolved so far.
-
-            The component is either a real file, which is a no-op, or a
-            symlink. In the case of a symlink, we have to modify the path
-            as built up so far
-              /a/b => ../c  should yield /a/../c (which will normalize to /a/c)
-              /a/b => x     should yield /a/x
-              /a/b => /x/y/z should yield /x/y/z
-            The modified path may land us in a new spot which is itself a
-            link, so we may repeat the process.
-
-            Args:
-                link_path_components: The resolved path built up to the link
-                    so far.
-                link: The link object itself.
-
-            Returns:
-                (string) The updated path resolved after following the link.
-
-            Raises:
-                IOError: if there are too many levels of symbolic link
-            """
-            link_path = link.contents
-            sep = self._path_separator(link_path)
-            # For links to absolute paths, we want to throw out everything
-            # in the path built so far and replace with the link. For relative
-            # links, we have to append the link to what we have so far,
-            if not self._starts_with_root_path(link_path):
-                # Relative path. Append remainder of path to what we have
-                # processed so far, excluding the name of the link itself.
-                # /a/b => ../c  should yield /a/../c
-                # (which will normalize to /c)
-                # /a/b => d should yield a/d
-                components = link_path_components[:-1]
-                components.append(link_path)
-                link_path = sep.join(components)
-            # Don't call self.NormalizePath(), as we don't want to prepend
-            # self.cwd.
-            return self.normpath(link_path)
-
         if (allow_fd and sys.version_info >= (3, 3) and
                 isinstance(file_path, int)):
             return self.get_open_file(file_path).get_object().path
@@ -1743,7 +1686,7 @@ class FakeFilesystem(object):
             # file.open(None) raises TypeError, so mimic that.
             raise TypeError('Expected file system path string, received None')
         file_path = self._to_string(file_path)
-        if not file_path or not _valid_relative_path(file_path):
+        if not file_path or not self._valid_relative_path(file_path):
             # file.open('') raises IOError, so mimic that, and validate that
             # all parts of a relative path exist.
             self.raise_io_error(errno.ENOENT, file_path)
@@ -1751,11 +1694,22 @@ class FakeFilesystem(object):
         if self._is_root_path(file_path):
             return file_path
 
-        current_dir = self.root
         path_components = self._path_components(file_path)
+        resolved_components = self._resolve_components(path_components, raw_io)
+        return self._components_to_path(resolved_components)
 
-        resolved_components = []
+    def _components_to_path(self, component_folders):
+        sep = (self._path_separator(component_folders[0])
+               if component_folders else self.path_separator)
+        path = sep.join(component_folders)
+        if not self._starts_with_root_path(path):
+            path = sep + path
+        return path
+
+    def _resolve_components(self, path_components, raw_io):
+        current_dir = self.root
         link_depth = 0
+        resolved_components = []
         while path_components:
             component = path_components.pop(0)
             resolved_components.append(component)
@@ -1780,8 +1734,8 @@ class FakeFilesystem(object):
                     raise error_class(
                         errno.ELOOP,
                         'Too many levels of symbolic links: \'%s\'' %
-                        _components_to_path(resolved_components))
-                link_path = _follow_link(resolved_components, current_dir)
+                        self._components_to_path(resolved_components))
+                link_path = self._follow_link(resolved_components, current_dir)
 
                 # Following the link might result in the complete replacement
                 # of the current_dir, so we evaluate the entire resulting path.
@@ -1790,7 +1744,59 @@ class FakeFilesystem(object):
                 resolved_components = []
                 current_dir = self.root
                 link_depth += 1
-        return _components_to_path(resolved_components)
+        return resolved_components
+
+    def _valid_relative_path(self, file_path):
+        if self.is_windows_fs:
+            return True
+        slash_dotdot = self._matching_string(
+            file_path, self.path_separator + '..')
+        while file_path and slash_dotdot in file_path:
+            file_path = file_path[:file_path.rfind(slash_dotdot)]
+            if not self.exists(self.absnormpath(file_path)):
+                return False
+        return True
+
+    def _follow_link(self, link_path_components, link):
+        """Follow a link w.r.t. a path resolved so far.
+
+        The component is either a real file, which is a no-op, or a
+        symlink. In the case of a symlink, we have to modify the path
+        as built up so far
+          /a/b => ../c  should yield /a/../c (which will normalize to /a/c)
+          /a/b => x     should yield /a/x
+          /a/b => /x/y/z should yield /x/y/z
+        The modified path may land us in a new spot which is itself a
+        link, so we may repeat the process.
+
+        Args:
+            link_path_components: The resolved path built up to the link
+                so far.
+            link: The link object itself.
+
+        Returns:
+            (string) The updated path resolved after following the link.
+
+        Raises:
+            IOError: if there are too many levels of symbolic link
+        """
+        link_path = link.contents
+        sep = self._path_separator(link_path)
+        # For links to absolute paths, we want to throw out everything
+        # in the path built so far and replace with the link. For relative
+        # links, we have to append the link to what we have so far,
+        if not self._starts_with_root_path(link_path):
+            # Relative path. Append remainder of path to what we have
+            # processed so far, excluding the name of the link itself.
+            # /a/b => ../c  should yield /a/../c
+            # (which will normalize to /c)
+            # /a/b => d should yield a/d
+            components = link_path_components[:-1]
+            components.append(link_path)
+            link_path = sep.join(components)
+        # Don't call self.NormalizePath(), as we don't want to prepend
+        # self.cwd.
+        return self.normpath(link_path)
 
     def get_object_from_normpath(self, file_path):
         """Search for the specified filesystem object within the fake
@@ -1968,69 +1974,14 @@ class FakeFilesystem(object):
 
         old_object = self.lresolve(old_file_path)
         if not self.is_windows_fs:
-            if (self.isdir(old_file_path, follow_symlinks=False) and
-                    self.islink(new_file_path)):
-                self.raise_os_error(errno.ENOTDIR, new_file_path)
-            if (self.isdir(new_file_path, follow_symlinks=False) and
-                    self.islink(old_file_path)):
-                self.raise_os_error(errno.EISDIR, new_file_path)
+            self._handle_posix_dir_link_errors(new_file_path, old_file_path)
 
         if self.exists(new_file_path, check_link=True):
-            if old_file_path == new_file_path:
-                return  # Nothing to do here.
+            new_file_path = self._rename_to_existing_path(
+                force_replace, new_file_path, old_file_path, old_object)
 
-            new_object = self.get_object(new_file_path)
-            if old_object == new_object:
-                do_rename = old_file_path.lower() == new_file_path.lower()
-                if not do_rename:
-                    try:
-                        real_old_path = self.resolve_path(old_file_path)
-                        original_old_path = self._original_path(real_old_path)
-                        real_new_path = self.resolve_path(new_file_path)
-                        if (real_new_path == original_old_path and
-                            (new_file_path == real_old_path) ==
-                                (new_file_path.lower() ==
-                                 real_old_path.lower())):
-                            do_rename = not self.is_macos
-                        else:
-                            do_rename = (real_new_path.lower() ==
-                                         real_old_path.lower())
-                        if do_rename:
-                            # only case is changed in case-insensitive file
-                            # system - do the rename
-                            parent, file_name = self.splitpath(new_file_path)
-                            new_file_path = self.joinpaths(
-                                self._original_path(parent), file_name)
-                    except (IOError, OSError):
-                        # ResolvePath may fail due to symlink loop issues or
-                        # similar - in this case just assume the paths
-                        # to be different
-                        pass
-                if not do_rename:
-                    # hard links to the same file - nothing to do
-                    return
-
-            elif (S_ISDIR(new_object.st_mode) or S_ISLNK(new_object.st_mode)):
-                if self.is_windows_fs:
-                    if force_replace:
-                        self.raise_os_error(errno.EACCES, new_file_path)
-                    else:
-                        self.raise_os_error(errno.EEXIST, new_file_path)
-                if not S_ISLNK(new_object.st_mode):
-                    if new_object.contents:
-                        self.raise_os_error(errno.ENOTEMPTY, new_file_path)
-                    if S_ISREG(old_object.st_mode):
-                        self.raise_os_error(errno.EISDIR, new_file_path)
-            elif S_ISDIR(old_object.st_mode):
-                error = errno.EEXIST if self.is_windows_fs else errno.ENOTDIR
-                self.raise_os_error(error, new_file_path)
-            elif self.is_windows_fs and not force_replace:
-                self.raise_os_error(errno.EEXIST, new_file_path)
-            else:
-                try:
-                    self.remove_object(new_file_path)
-                except IOError as exc:
-                    self.raise_os_error(exc.errno, exc.filename)
+        if not new_file_path:
+            return
 
         old_dir, old_name = self.splitpath(old_file_path)
         new_dir, new_name = self.splitpath(new_file_path)
@@ -2055,6 +2006,84 @@ class FakeFilesystem(object):
             # in case of overwriting remove the old entry first
             new_dir_object.remove_entry(new_name)
         new_dir_object.add_entry(object_to_rename)
+
+    def _handle_posix_dir_link_errors(self, new_file_path, old_file_path):
+        if (self.isdir(old_file_path, follow_symlinks=False) and
+                self.islink(new_file_path)):
+            self.raise_os_error(errno.ENOTDIR, new_file_path)
+        if (self.isdir(new_file_path, follow_symlinks=False) and
+                self.islink(old_file_path)):
+            self.raise_os_error(errno.EISDIR, new_file_path)
+
+    def _rename_to_existing_path(self, force_replace, new_file_path,
+                                 old_file_path, old_object):
+        if old_file_path == new_file_path:
+            new_file_path = None
+            return  # Nothing to do here.
+
+        new_object = self.get_object(new_file_path)
+        if old_object == new_object:
+            new_file_path = self._rename_same_object(
+                new_file_path, old_file_path)
+        elif (S_ISDIR(new_object.st_mode) or S_ISLNK(new_object.st_mode)):
+            self._handle_rename_error_for_dir_or_link(
+                force_replace, new_file_path, new_object, old_object)
+        elif S_ISDIR(old_object.st_mode):
+            error = errno.EEXIST if self.is_windows_fs else errno.ENOTDIR
+            self.raise_os_error(error, new_file_path)
+        elif self.is_windows_fs and not force_replace:
+            self.raise_os_error(errno.EEXIST, new_file_path)
+        else:
+            try:
+                self.remove_object(new_file_path)
+            except IOError as exc:
+                self.raise_os_error(exc.errno, exc.filename)
+        return new_file_path
+
+    def _handle_rename_error_for_dir_or_link(self, force_replace,
+                                             new_file_path, new_object,
+                                             old_object):
+        if self.is_windows_fs:
+            if force_replace:
+                self.raise_os_error(errno.EACCES, new_file_path)
+            else:
+                self.raise_os_error(errno.EEXIST, new_file_path)
+        if not S_ISLNK(new_object.st_mode):
+            if new_object.contents:
+                self.raise_os_error(errno.ENOTEMPTY, new_file_path)
+            if S_ISREG(old_object.st_mode):
+                self.raise_os_error(errno.EISDIR, new_file_path)
+
+    def _rename_same_object(self, new_file_path, old_file_path):
+        do_rename = old_file_path.lower() == new_file_path.lower()
+        if not do_rename:
+            try:
+                real_old_path = self.resolve_path(old_file_path)
+                original_old_path = self._original_path(real_old_path)
+                real_new_path = self.resolve_path(new_file_path)
+                if (real_new_path == original_old_path and
+                        (new_file_path == real_old_path) ==
+                        (new_file_path.lower() ==
+                         real_old_path.lower())):
+                    do_rename = not self.is_macos
+                else:
+                    do_rename = (real_new_path.lower() ==
+                                 real_old_path.lower())
+                if do_rename:
+                    # only case is changed in case-insensitive file
+                    # system - do the rename
+                    parent, file_name = self.splitpath(new_file_path)
+                    new_file_path = self.joinpaths(
+                        self._original_path(parent), file_name)
+            except (IOError, OSError):
+                # ResolvePath may fail due to symlink loop issues or
+                # similar - in this case just assume the paths
+                # to be different
+                pass
+        if not do_rename:
+            # hard links to the same file - nothing to do
+            new_file_path = None
+        return new_file_path
 
     def remove_object(self, file_path):
         """Remove an existing file or directory.
@@ -2886,7 +2915,7 @@ class FakePathModule(object):
         try:
             file_obj = self.filesystem.resolve(path)
             return file_obj.st_mtime
-        except IOError as exc:
+        except IOError:
             self.filesystem.raise_os_error(errno.ENOENT, winerror=3)
 
     def getatime(self, path):
@@ -4400,28 +4429,13 @@ class FakeFileWrapper(object):
         reading = name.startswith('read') or name == 'next'
         truncate = name == 'truncate'
         writing = name.startswith('write') or truncate
+
         if reading or writing:
             self._check_open_file()
         if not self._read and reading:
-            def read_error(*args, **kwargs):
-                """Throw an error unless the argument is zero."""
-                if args and args[0] == 0:
-                    if self._filesystem.is_windows_fs and self.raw_io:
-                        return b'' if self._binary else u''
-                self._raise('File is not open for reading.')
-
-            return read_error
-
+            return self._read_error()
         if not self.allow_update and writing:
-            def write_error(*args, **kwargs):
-                """Throw an error."""
-                if self.raw_io:
-                    if (self._filesystem.is_windows_fs and args
-                            and len(args[0]) == 0):
-                        return 0
-                self._raise('File is not open for writing.')
-
-            return write_error
+            return self._write_error()
 
         if reading:
             self._sync_io()
@@ -4438,6 +4452,27 @@ class FakeFileWrapper(object):
             return self._write_wrapper(name)
 
         return getattr(self._io, name)
+
+    def _read_error(self):
+        def read_error(*args, **kwargs):
+            """Throw an error unless the argument is zero."""
+            if args and args[0] == 0:
+                if self._filesystem.is_windows_fs and self.raw_io:
+                    return b'' if self._binary else u''
+            self._raise('File is not open for reading.')
+
+        return read_error
+
+    def _write_error(self):
+        def write_error(*args, **kwargs):
+            """Throw an error."""
+            if self.raw_io:
+                if (self._filesystem.is_windows_fs and args
+                        and len(args[0]) == 0):
+                    return 0
+            self._raise('File is not open for writing.')
+
+        return write_error
 
     def _is_open(self):
         return (self.filedes < len(self._filesystem.open_files) and
@@ -4578,41 +4613,12 @@ class FakeFileOpen(object):
                 - if permission is denied
             ValueError: for an invalid mode or mode combination
         """
-        orig_modes = mode  # Save original modes for error messages.
         binary = 'b' in mode
-        # Normalize modes. Handle 't' and 'U'.
+        newline, open_modes = self._handle_file_mode(mode, newline, open_modes)
 
-        if ('b' in mode and 't' in mode and
-                (not IS_PY2 or self.filesystem.is_windows_fs)):
-            raise ValueError('Invalid mode: ' + mode)
-        mode = mode.replace('t', '').replace('b', '')
-        if self._py2_newlines and 'U' not in mode:
-            # default mode in open() for Python 2
-            newline = '-'
-        mode = mode.replace('rU', 'r').replace('U', 'r')
-
-        if not self.raw_io:
-            if mode not in _OPEN_MODE_MAP:
-                raise ValueError('Invalid mode: %r' % orig_modes)
-            open_modes = _OpenModes(*_OPEN_MODE_MAP[mode])
-
-        file_object = None
-        filedes = None
-        # opening a file descriptor
-        if isinstance(file_, int):
-            filedes = file_
-            wrapper = self.filesystem.get_open_file(filedes)
-            self._delete_on_close = wrapper.delete_on_close
-            file_object = self.filesystem.get_open_file(filedes).get_object()
-            file_path = file_object.name
-            real_path = file_path
-        else:
-            file_path = file_
-            real_path = self.filesystem.resolve_path(
-                file_path, raw_io=self.raw_io)
-            if self.filesystem.exists(file_path):
-                file_object = self.filesystem.get_object_from_normpath(
-                    real_path)
+        file_object, file_path, filedes, real_path = self._handle_file_arg(
+            file_)
+        if not filedes:
             closefd = True
 
         error_fct = (self.filesystem.raise_os_error if self.raw_io
@@ -4672,6 +4678,44 @@ class FakeFileOpen(object):
         else:
             fakefile.filedes = self.filesystem._add_open_file(fakefile)
         return fakefile
+
+    def _handle_file_arg(self, file_):
+        file_object = None
+        if isinstance(file_, int):
+            # opening a file descriptor
+            filedes = file_
+            wrapper = self.filesystem.get_open_file(filedes)
+            self._delete_on_close = wrapper.delete_on_close
+            file_object = self.filesystem.get_open_file(filedes).get_object()
+            file_path = file_object.name
+            real_path = file_path
+        else:
+            # open a file file by path
+            filedes = None
+            file_path = file_
+            real_path = self.filesystem.resolve_path(
+                file_path, raw_io=self.raw_io)
+            if self.filesystem.exists(file_path):
+                file_object = self.filesystem.get_object_from_normpath(
+                    real_path)
+        return file_object, file_path, filedes, real_path
+
+    def _handle_file_mode(self, mode, newline, open_modes):
+        orig_modes = mode  # Save original modes for error messages.
+        # Normalize modes. Handle 't' and 'U'.
+        if ('b' in mode and 't' in mode and
+                (not IS_PY2 or self.filesystem.is_windows_fs)):
+            raise ValueError('Invalid mode: ' + mode)
+        mode = mode.replace('t', '').replace('b', '')
+        if self._py2_newlines and 'U' not in mode:
+            # default mode in open() for Python 2
+            newline = '-'
+        mode = mode.replace('rU', 'r').replace('U', 'r')
+        if not self.raw_io:
+            if mode not in _OPEN_MODE_MAP:
+                raise ValueError('Invalid mode: %r' % orig_modes)
+            open_modes = _OpenModes(*_OPEN_MODE_MAP[mode])
+        return newline, open_modes
 
 
 def _run_doctest():
