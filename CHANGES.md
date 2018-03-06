@@ -24,12 +24,18 @@ must use pyfakefs 3.3 or earlier.
 #### Infrastructure
   * Changed API to be PEP-8 conform [#186](../../issues/186). Note: The old API is still available.
   * Removed Python 2.6 support [#293](../../issues/293)
+  * Added usage documentation to GitHub Pages
+  * Added contributing guide
+  * Added flake8 tests to Travis CI
 
 #### Fixes
   * Links in base path in `os.scandir` shall not be resolved ([#350](../../issues/350))
+  * Fixed unit tests when run on a computer not having umask set to 0022
   * Correctly handle newline parameter in `open()` for Python 3, added support for universal newline mode in Python 2 ([#339](../../issues/339))
+  * Fixed handling of case-changing rename with symlink under MacOS ([#322](../../issues/322))
   * Creating a file with a path ending with path separator did not raise ([#320](../../issues/320))
   * Fixed more problems related to `flush` ([#302](../../issues/302), [#300](../../issues/300))
+  * Correctly handle opening files more than once ([#343](../../issues/343))
   * Fake `os.lstat()` crashed with several trailing path separators ([#342](../../issues/342))
   * Fixed handling of path components starting with a drive letter([#337](../../issues/337))
   * Symlinks to absolute paths were incorrectly resolved under Windows ([#341](../../issues/341))
