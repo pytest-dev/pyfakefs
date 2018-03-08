@@ -17,7 +17,7 @@ This file provides general usage instructions for pyfakefs.  There is more:
     released on PyPi
   * The [Development documentation](http://jmcgeheeiv.github.io/pyfakefs/master)
     contains the same documentation for the current master branch
-  * The [Release 3.3 documentation](http://jmcgeheeiv.github.io/pyfakefs/3.3)
+  * The [Release 3.3 documentation](http://jmcgeheeiv.github.io/pyfakefs/release33)
     contains usage documentation for the last version of pyfakefs 
     supporting Python 2.6, and for the old-style API (which is still 
     supported but not documented in the current release)
