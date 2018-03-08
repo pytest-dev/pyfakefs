@@ -13,7 +13,9 @@ Contents:
 
    intro
    usage
+   autopatch
    modules
+   api
 
 Indices and tables
 ==================

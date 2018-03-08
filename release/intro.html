@@ -5,16 +5,13 @@
 <html xmlns="http://www.w3.org/1999/xhtml">
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-    
-    <title>Introduction &#8212; pyfakefs 3.3 documentation</title>
-    
-    <link rel="stylesheet" href="_static/nature.css" type="text/css" />
+    <title>Introduction &#8212; pyfakefs 3.4 documentation</title>
+    <link rel="stylesheet" href="_static/pyfakefs.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
-    
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    './',
-        VERSION:     '3.3',
+        VERSION:     '3.4',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true,
@@ -45,7 +42,7 @@
         <li class="right" >
           <a href="index.html" title="Welcome to the pyfakefs documentation!"
              accesskey="P">previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="index.html">pyfakefs 3.3 documentation</a> &#187;</li> 
+        <li class="nav-item nav-item-0"><a href="index.html">pyfakefs 3.4 documentation</a> &#187;</li> 
       </ul>
     </div>  
 
@@ -59,18 +56,33 @@
 <p><a class="reference external" href="https://github.com/jmcgeheeiv/pyfakefs">pyfakefs</a> implements a fake file system that mocks the Python file system modules.
 Using pyfakefs, your tests operate on a fake file system in memory without touching the real disk.
 The software under test requires no modification to work with pyfakefs.</p>
-<p>Note that pyfakefs will not work with Python libraries that use C libraries to access the
-file system, because it cannot patch the underlying C libraries’ file access functions.</p>
-<p>pyfakefs works with CPython 2.6, 2.7, 3.3 and above, on Linux, Windows and OSX (MacOS), and with PyPy2 and PyPy3.
-Note that Python 2.6 support will be removed in the next version.</p>
+<p>pyfakefs works with CPython 2.7, 3.3 and above, on Linux, Windows and OSX (MacOS), and with PyPy2 and PyPy3.</p>
 <p>pyfakefs works with <a class="reference external" href="doc.pytest.org">PyTest</a> version 2.8.6 or above.</p>
 <div class="section" id="installation">
 <h2>Installation<a class="headerlink" href="#installation" title="Permalink to this headline">¶</a></h2>
 <p>pyfakefs is available on <a class="reference external" href="https://pypi.python.org/pypi/pyfakefs/">PyPi</a>.
-It can be installed using pip:</p>
+The latest released version can be installed form pypi:</p>
 <div class="code bash highlight-default"><div class="highlight"><pre><span></span><span class="n">pip</span> <span class="n">install</span> <span class="n">pyfakefs</span>
 </pre></div>
 </div>
+<p>The latest master can be installed form the GitHub sources:</p>
+<div class="code bash highlight-default"><div class="highlight"><pre><span></span><span class="n">pip</span> <span class="n">install</span> <span class="n">git</span><span class="o">+</span><span class="n">https</span><span class="p">:</span><span class="o">//</span><span class="n">github</span><span class="o">.</span><span class="n">com</span><span class="o">/</span><span class="n">jmcgeheeiv</span><span class="o">/</span><span class="n">pyfakefs</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="limitations">
+<h2>Limitations<a class="headerlink" href="#limitations" title="Permalink to this headline">¶</a></h2>
+<p>pyfakefs will not work with Python libraries that use C libraries to access the
+file system, because it cannot patch the underlying C libraries’ file access functions.</p>
+<p>pyfakefs works out of the box only if the faked file system modules are loaded directly,
+e.g. <code class="docutils literal"><span class="pre">import</span> <span class="pre">pathlib</span></code> works, but <code class="docutils literal"><span class="pre">from</span> <span class="pre">pathlib</span> <span class="pre">import</span> <span class="pre">Path</span></code> does not. See
+<a class="reference internal" href="usage.html#customizing-patcher"><span class="std std-ref">Customizing Patcher and TestCase</span></a> for ways to work around this.</p>
+<p>pyfakefs is only tested with CPython and newest PyPy versions, other Python implementations
+will probably not work.</p>
+<p>Differences in the behavior in different Linux distributions or different MacOS or Windows versions
+may not be reflected in the implementation, as well as some OS-specific low-level file
+system behavior. The systems used for automatic tests in <a class="reference external" href="https://travis-ci.org/jmcgeheeiv/pyfakefs">Travis.CI</a> and <a class="reference external" href="https://ci.appveyor.com/project/jmcgeheeiv/pyfakefs">AppVeyor</a> are considered as reference
+systems.</p>
 </div>
 <div class="section" id="history">
 <h2>History<a class="headerlink" href="#history" title="Permalink to this headline">¶</a></h2>
@@ -106,6 +118,7 @@ community actively maintains and extends pyfakefs.</p>
   <ul>
 <li><a class="reference internal" href="#">Introduction</a><ul>
 <li><a class="reference internal" href="#installation">Installation</a></li>
+<li><a class="reference internal" href="#limitations">Limitations</a></li>
 <li><a class="reference internal" href="#history">History</a></li>
 </ul>
 </li>
@@ -153,12 +166,14 @@ community actively maintains and extends pyfakefs.</p>
         <li class="right" >
           <a href="index.html" title="Welcome to the pyfakefs documentation!"
              >previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="index.html">pyfakefs 3.3 documentation</a> &#187;</li> 
+        <li class="nav-item nav-item-0"><a href="index.html">pyfakefs 3.4 documentation</a> &#187;</li> 
       </ul>
     </div>
     <div class="footer" role="contentinfo">
-        &#169; Copyright 2017, John McGehee.
-      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.6.1.
+        &#169; Copyright 2009 Google Inc. All Rights Reserved.
+© Copyright 2014 Altera Corporation. All Rights Reserved.
+© Copyright 2014-2018 John McGehee.
+      Last updated on Feb 10, 2018.
     </div>
   </body>
 </html>

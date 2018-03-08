@@ -1,0 +1,10 @@
+@import url("nature.css");
+
+.code div pre {
+    background-color: #F5F5F5;
+}
+
+.highlight pre {
+    background-color: #F5F5F5;
+}
+
