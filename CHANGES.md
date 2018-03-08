@@ -1,6 +1,14 @@
 # pyfakefs Release Notes
 The release versions are PyPi releases.
 
+## Version 3.5 (as yet unreleased)
+
+#### New Features
+
+#### Infrastructure
+
+#### Fixes
+
 ## [Version 3.4](https://pypi.python.org/pypi/pyfakefs/3.4)
 
 This version of pyfakefs does not support Python 2.6.  Python 2.6 users
