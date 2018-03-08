@@ -10,11 +10,17 @@ pyfakefs works with Linux, Windows and MacOS.
 
 This file provides general usage instructions for pyfakefs.  There is more:
 
-* The [Release documentation](http://jmcgeheeiv.github.io/pyfakefs/release)
-  contains usage documentation for pyfakefs and a description of the 
-  most relevent classes, methods and functions for the last version released on PyPi
-* The [Development documentation](http://jmcgeheeiv.github.io/pyfakefs/master)
-  contains the same documentation for the current master branch
+* The documentation at [GitHub Pages:](http://jmcgeheeiv.github.io/pyfakefs)
+  * The [Release documentation](http://jmcgeheeiv.github.io/pyfakefs/release)
+    contains usage documentation for pyfakefs and a description of the 
+    most relevent classes, methods and functions for the last version 
+    released on PyPi
+  * The [Development documentation](http://jmcgeheeiv.github.io/pyfakefs/master)
+    contains the same documentation for the current master branch
+  * The [Release 3.3 documentation](http://jmcgeheeiv.github.io/pyfakefs/3.3)
+    contains usage documentation for the last version of pyfakefs 
+    supporting Python 2.6, and for the old-style API (which is still 
+    supported but not documented in the current release)
 * The [Release Notes](https://github.com/jmcgeheeiv/pyfakefs/blob/master/CHANGES.md) 
   show a list of changes in the latest versions
 
