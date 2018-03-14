@@ -32,6 +32,7 @@ class FakeDirectoryUnitTest(TestCase):
         self.orig_time = time.time
         time.time = DummyTime(10, 1)
         self.filesystem = fake_filesystem.FakeFilesystem(path_separator='/')
+        self.os = fake_filesystem.FakeOsModule(self.filesystem)
         self.fake_file = fake_filesystem.FakeFile(
             'foobar', contents='dummy_file', filesystem=self.filesystem)
         self.fake_dir = fake_filesystem.FakeDirectory(
@@ -58,6 +59,29 @@ class FakeDirectoryUnitTest(TestCase):
         self.filesystem.root.add_entry(self.fake_dir)
         self.fake_dir.add_entry(self.fake_file)
         self.assertEqual('/somedir/foobar', self.fake_file.path)
+        self.assertEqual('/somedir', self.fake_dir.path)
+
+    def test_path_with_drive(self):
+        self.filesystem.is_windows_fs = True
+        dir_path = 'C:/foo/bar/baz'
+        self.filesystem.create_dir(dir_path)
+        dir_object = self.filesystem.get_object(dir_path)
+        self.assertEqual(dir_path, dir_object.path)
+
+    def test_path_after_chdir(self):
+        dir_path = '/foo/bar/baz'
+        self.filesystem.create_dir(dir_path)
+        self.os.chdir(dir_path)
+        dir_object = self.filesystem.get_object(dir_path)
+        self.assertEqual(dir_path, dir_object.path)
+
+    def test_path_after_chdir_with_drive(self):
+        self.filesystem.is_windows_fs = True
+        dir_path = 'C:/foo/bar/baz'
+        self.filesystem.create_dir(dir_path)
+        self.os.chdir(dir_path)
+        dir_object = self.filesystem.get_object(dir_path)
+        self.assertEqual(dir_path, dir_object.path)
 
     def test_remove_entry(self):
         self.fake_dir.add_entry(self.fake_file)

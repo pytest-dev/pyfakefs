@@ -391,7 +391,18 @@ class FakeFile(object):
             names.insert(0, obj.name)
             obj = obj.parent_dir
         sep = self.filesystem._path_separator(self.name)
-        return self.filesystem.absnormpath(sep.join(names[1:]))
+        if names[0] == sep:
+            names.pop(0)
+            dir_path = sep.join(names)
+            # Windows paths with drive have a root separator entry
+            # which should be removed
+            is_drive = names and len(names[0]) == 2 and names[0][1] == ':'
+            if not is_drive:
+                dir_path = sep + dir_path
+        else:
+            dir_path = sep.join(names)
+        dir_path = self.filesystem.absnormpath(dir_path)
+        return dir_path
 
     @Deprecator('property path')
     def GetPath(self):
