@@ -22,6 +22,7 @@ Test the :py:class`pyfakefs.fake_filesystem_unittest.TestCase` base class.
 import glob
 import io
 import os
+import multiprocessing
 import shutil
 import sys
 import unittest
@@ -351,6 +352,19 @@ class TestPyfakefsTestCase(unittest.TestCase):
 
         self.assertIsInstance(self.test_case,
                               fake_filesystem_unittest.TestCaseMixin)
+
+
+class TestTempFileReload(unittest.TestCase):
+    """Regression test for #356 to make sure that reloading the tempfile
+    does not affect other tests."""
+
+    def test_fakefs(self):
+        with Patcher() as patcher:
+            patcher.fs.CreateFile('/mytempfile', contents='abcd')
+
+    def test_value(self):
+        v = multiprocessing.Value('I', 0)
+        self.assertEqual(v.value, 0)
 
 
 if __name__ == "__main__":

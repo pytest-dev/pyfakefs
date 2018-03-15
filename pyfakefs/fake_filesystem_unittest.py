@@ -305,9 +305,9 @@ class Patcher(object):
             self._skipNames.discard('path')
             self._skipNames.discard('genericpath')
 
-        self._modules_to_reload = [tempfile]
+        self.modules_to_reload = [tempfile]
         if modules_to_reload is not None:
-            self._modules_to_reload.extend(modules_to_reload)
+            self.modules_to_reload.extend(modules_to_reload)
         self._use_dynamic_patch = use_dynamic_patch
 
         # Attributes set by _findModules()
@@ -352,7 +352,7 @@ class Patcher(object):
         self._stubs = None
         self.fs = None
         self.fake_open = None
-        self._fake_modules = {}
+        self.fake_modules = {}
         self._dyn_patcher = None
 
         # _isStale is set by tearDown(), reset by _refresh()
@@ -396,8 +396,8 @@ class Patcher(object):
 
         self.fs = fake_filesystem.FakeFilesystem()
         for name in self._fake_module_classes:
-            self._fake_modules[name] = self._fake_module_classes[name](self.fs)
-        self._fake_modules['path'] = self._fake_modules['os'].path
+            self.fake_modules[name] = self._fake_module_classes[name](self.fs)
+        self.fake_modules['path'] = self.fake_modules['os'].path
         self.fake_open = fake_filesystem.FakeFileOpen(self.fs)
 
         self._isStale = False
@@ -419,12 +419,12 @@ class Patcher(object):
         self._stubs.smart_set(builtins, 'open', self.fake_open)
         for name in self._modules:
             for module, attr in self._modules[name]:
-                self._stubs.smart_set(module, attr, self._fake_modules[name])
+                self._stubs.smart_set(module, attr, self.fake_modules[name])
 
         self._dyn_patcher = DynamicPatcher(self)
         sys.meta_path.insert(0, self._dyn_patcher)
 
-        for module in self._modules_to_reload:
+        for module in self.modules_to_reload:
             if module.__name__ in sys.modules:
                 reload(module)
 
@@ -465,7 +465,7 @@ class DynamicPatcher(object):
     def __init__(self, patcher):
         self._patcher = patcher
         self.sysmodules = {}
-        self.modules = self._patcher._fake_modules
+        self.modules = self._patcher.fake_modules
         if 'path' in self.modules:
             self.modules['os.path'] = self.modules['path']
             del self.modules['path']
@@ -483,6 +483,9 @@ class DynamicPatcher(object):
     def cleanup(self):
         for module in self.sysmodules:
             sys.modules[module] = self.sysmodules[module]
+        for module in self._patcher.modules_to_reload:
+            if module.__name__ in sys.modules:
+                reload(module)
 
     def needs_patch(self, name):
         """Check if the module with the given name shall be replaced."""
