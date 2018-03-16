@@ -112,7 +112,7 @@ from pyfakefs.helpers import is_int_type, is_byte_string, is_unicode_string
 
 __pychecker__ = 'no-reimportself'
 
-__version__ = '3.5'
+__version__ = '3.4.1'
 
 PERM_READ = 0o400  # Read permission bit.
 PERM_WRITE = 0o200  # Write permission bit.

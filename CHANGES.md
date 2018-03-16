@@ -1,14 +1,15 @@
 # pyfakefs Release Notes
 The release versions are PyPi releases.
 
-## Version 3.5 (as yet unreleased)
+## Version 3.4.1 (as yet unreleased)
 
-#### New Features
-
-#### Infrastructure
+This is a bug fix only release.
 
 #### Fixes
-
+  * Missing cleanup after using dynamic patcher let to incorrect behavior of
+   `tempfile` after test execution (regression, see [#356](../../issues/356))
+  * `add_real_directory` does not work after `chdir` (see [#355](../../issues/355))
+  
 ## [Version 3.4](https://pypi.python.org/pypi/pyfakefs/3.4)
 
 This version of pyfakefs does not support Python 2.6.  Python 2.6 users
