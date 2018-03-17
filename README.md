@@ -30,101 +30,12 @@ In your own documentation, please link to pyfakefs using the canonical URL <http
 This URL always points to the most relevant top page for pyfakefs.
 
 ## Usage
-There are several approaches to implementing tests using pyfakefs.
 
-### Automatically find and patch
-The first approach is to allow pyfakefs to automatically find all real file 
-functions and modules, and stub these out with the fake file system functions and modules.  
-This is explained in the pyfakefs wiki page
-[Automatically find and patch file functions and modules](http://jmcgeheeiv.github.io/pyfakefs/master/autopatch.html)
-and demonstrated in files `example.py` and `example_test.py`.
-
-### Patch using the PyTest plugin
-
-If you use [PyTest](https://doc.pytest.org), you will be interested in the PyTest plugin in pyfakefs.
-This automatically patches all file system functions and modules in a manner similar to the
-[automatic find and patch approach](http://jmcgeheeiv.github.io/pyfakefs/master/autopatch.html)
-described above.
-
-The PyTest plugin provides the `fs` fixture for use in your test. For example:
-
-```python
-def my_fakefs_test(fs):
-    # "fs" is the reference to the fake file system
-    fs.create_file('/var/data/xx1.txt')
-    assert os.path.exists('/var/data/xx1.txt')
-```
-
-### Patch using fake_filesystem_unittest.Patcher
-If you are using other means of testing like [nose](http://nose2.readthedocs.io), you can do the
-patching using `fake_filesystem_unittest.Patcher` - the class doing the the actual work
-of replacing the filesystem modules with the fake modules in the first two approaches.
-
-The easiest way is to just use `Patcher` as a context manager:
-
-```python
-from fake_filesystem_unittest import Patcher
-
-with Patcher() as patcher:
-   # access the fake_filesystem object via patcher.fs
-   patcher.fs.create_file('/foo/bar', contents='test')
-
-   # the following code works on the fake filesystem
-   with open('/foo/bar') as f:
-       contents = f.read()
-```
-
-You can also initialize `Patcher` manually:
-
-```python
-from fake_filesystem_unittest import Patcher
-
-patcher = Patcher()
-patcher.setUp()     # called in the initialization code
-...
-patcher.tearDown()  # somewhere in the cleanup code
-```
-
-### Patch using unittest.mock (deprecated)
-
-You can also use ``mock.patch()`` to patch the modules manually. This approach will
-only work for the directly imported modules, therefore it is not suited for testing
-larger code bases. As the other approaches are more convenient, this one is considered
-deprecated.
-You have to create a fake filesystem object, and afterwards fake modules based on this file system
-for the modules you want to patch.
-
-The following modules and functions can be patched:
-
-* `os` and `os.path` by `fake_filessystem.FakeOsModule`
-* `io` by `fake_filessystem.FakeIoModule`
-* `pathlib` by `fake_pathlib.FakePathlibModule`
-* build-in `open()` by `fake_filessystem.FakeFileOpen`
-
-```python
-
-   import pyfakefs.fake_filesystem as fake_fs
-
-   # Create a faked file system
-   fs = fake_fs.FakeFilesystem()
-
-   # Do some setup on the faked file system
-   fs.CreateFile('/foo/bar', contents='test')
-
-   # Replace some built-in file system related modules you use with faked ones
-
-   # Assuming you are using the mock library to ... mock things
-   try:
-       from unittest.mock import patch  # In Python 3, mock is built-in
-   except ImportError:
-       from mock import patch  # Python 2
-
-   # Note that this fake module is based on the fake fs you just created
-   os = fake_fs.FakeOsModule(fs)
-   with patch('mymodule.os', os):
-       fd = os.open('/foo/bar', os.O_RDONLY)
-       contents = os.read(fd, 4)
-```
+pyfakefs has support for `unittest` and `pytest`, but can also be used 
+directly using `fake_filesystem_unittest.Patcher`. Refer to the
+[usage documentation](http://jmcgeheeiv.github.io/pyfakefs/master/usage.html) 
+for more information on test scenarios, test customization and 
+using convenience functions.
 
 ## Installation
 
@@ -159,8 +70,8 @@ pyfakefs is currently automatically tested:
 pyfakefs unit tests are available via two test scripts:
 
 ```bash
-$ python all_tests.py
-$ py.test pytest_plugin_test.py
+$ python -m tests.all_tests
+$ py.test tests/pytest_plugin_test.py
 ```
 
 These scripts are called by `tox` and Travis-CI. `tox` can be used to run tests
