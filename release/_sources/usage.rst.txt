@@ -225,7 +225,7 @@ Python 2.
 
 Access to files in the real file system
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-If you want to have read access to real files or directories , you can map
+If you want to have read access to real files or directories, you can map
 them into the fake file system using ``add_real_file()``,
 ``add_real_directory()`` and ``add_real_paths()``. They take a file path, a
 directory path, or a list of paths, respectively, and make them accessible
@@ -249,7 +249,7 @@ argument ``target_path``.
         def setUp(self):
             self.setUpPyfakefs()
             # make the file accessible in the fake file system
-            self.fs.add_real_directory(self.templates_dirname)
+            self.fs.add_real_directory(self.fixture_path)
 
         def test_using_fixture1(self):
             with open(os.path.join(self.fixture_path, 'fixture1.txt') as f:
@@ -257,13 +257,29 @@ argument ``target_path``.
                 # only at this point
                 contents = f.read()
 
+Handling mount points
+~~~~~~~~~~~~~~~~~~~~~
+Under Linux and MacOS, the root path (``/``) is the only mount point created
+in the fake file system. If you need support for more mount points, you can add
+them using ``add_mount_point()``.
+
+Under Windows, drives and UNC paths are internally handled as mount points.
+Adding a file or directory on another drive or UNC path automatically
+adds a mount point for that drive or UNC path root if needed. Explicitly
+adding mount points shall not be needed under Windows.
+
+A mount point has a separate device ID (``st_dev``) under all systems, and
+some operations (like ``rename``) are not possible for files located on
+different mount points. The fake file system size (if used) is also set per
+mount point.
+
 Setting the file system size
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 If you need to know the file system size in your tests (for example for
 testing cleanup scripts), you can set the fake file system size using
 ``set_disk_usage()``. By default, this sets the total size in bytes of the
 root partition; if you add a path as parameter, the size will be related to
-the mount point (or drive under Windows) the path is related to.
+the mount point (see above) the path is related to.
 
 By default, the size of the fake file system is considered infinite. As soon
 as you set a size, all files will occupy the space according to their size,

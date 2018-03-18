@@ -5,13 +5,13 @@
 <html xmlns="http://www.w3.org/1999/xhtml">
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-    <title>Public Modules and Classes &#8212; pyfakefs 3.4 documentation</title>
+    <title>Public Modules and Classes &#8212; pyfakefs 3.4.1 documentation</title>
     <link rel="stylesheet" href="_static/pyfakefs.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    './',
-        VERSION:     '3.4',
+        VERSION:     '3.4.1',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true,
@@ -42,7 +42,7 @@
         <li class="right" >
           <a href="autopatch.html" title="Automatically find and patch file functions and modules"
              accesskey="P">previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="index.html">pyfakefs 3.4 documentation</a> &#187;</li> 
+        <li class="nav-item nav-item-0"><a href="index.html">pyfakefs 3.4.1 documentation</a> &#187;</li> 
       </ul>
     </div>  
 
@@ -339,7 +339,8 @@ filesystem.</p>
 <dl class="method">
 <dt id="pyfakefs.fake_filesystem.FakeFilesystem.create_file">
 <code class="descname">create_file</code><span class="sig-paren">(</span><em>file_path</em>, <em>st_mode=33206</em>, <em>contents=''</em>, <em>st_size=None</em>, <em>create_missing_dirs=True</em>, <em>apply_umask=False</em>, <em>encoding=None</em>, <em>errors=None</em><span class="sig-paren">)</span><a class="headerlink" href="#pyfakefs.fake_filesystem.FakeFilesystem.create_file" title="Permalink to this definition">¶</a></dt>
-<dd><p>Create file_path, including all the parent directories along the way.</p>
+<dd><p>Create file_path, including all the parent directories along
+the way.</p>
 <p>This helper method can be used to set up tests more easily.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
@@ -459,18 +460,20 @@ the target directory is the same as <cite>source_path</cite>.</li>
 <dl class="method">
 <dt id="pyfakefs.fake_filesystem.FakeFilesystem.add_real_paths">
 <code class="descname">add_real_paths</code><span class="sig-paren">(</span><em>path_list</em>, <em>read_only=True</em>, <em>lazy_dir_read=True</em><span class="sig-paren">)</span><a class="headerlink" href="#pyfakefs.fake_filesystem.FakeFilesystem.add_real_paths" title="Permalink to this definition">¶</a></dt>
-<dd><p>This convenience method adds multiple files and/or directories from the
-real file system to the fake file system. See <cite>add_real_file()</cite> and
+<dd><p>This convenience method adds multiple files and/or directories from
+the real file system to the fake file system. See <cite>add_real_file()</cite> and
 <cite>add_real_directory()</cite>.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
-<li><strong>path_list</strong> – List of file and directory paths in the real file system.</li>
-<li><strong>read_only</strong> – If set, all files and files under under the directories are
-treated as read-only, e.g. a write access raises an exception;
-otherwise, writing to the files changes the fake files only as usually.</li>
+<li><strong>path_list</strong> – List of file and directory paths in the real file
+system.</li>
+<li><strong>read_only</strong> – If set, all files and files under under the directories
+are treated as read-only, e.g. a write access raises an
+exception; otherwise, writing to the files changes the fake
+files only as usually.</li>
 <li><strong>lazy_dir_read</strong> – Uses lazy reading of directory contents if set
 (see <cite>add_real_directory</cite>)</li>
 </ul>
@@ -628,7 +631,8 @@ or if st_size exceeds the available file system space.</p>
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
 <li><strong>name</strong> – name of the file/directory, without parent path information</li>
 <li><strong>perm_bits</strong> – permission bits. defaults to 0o777.</li>
-<li><strong>filesystem</strong> – if set, the fake filesystem where the directory is created</li>
+<li><strong>filesystem</strong> – if set, the fake filesystem where the directory
+is created</li>
 </ul>
 </td>
 </tr>
@@ -643,7 +647,8 @@ or if st_size exceeds the available file system space.</p>
 <dl class="attribute">
 <dt id="pyfakefs.fake_filesystem.FakeDirectory.ordered_dirs">
 <code class="descname">ordered_dirs</code><a class="headerlink" href="#pyfakefs.fake_filesystem.FakeDirectory.ordered_dirs" title="Permalink to this definition">¶</a></dt>
-<dd><p>Return the list of contained directory entry names ordered by creation order.</p>
+<dd><p>Return the list of contained directory entry names ordered by
+creation order.</p>
 </dd></dl>
 
 <dl class="method">
@@ -713,66 +718,11 @@ file system related modules.</p>
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
-<li><strong>methodName</strong> – The name of the test method (same as in
-unittest.TestCase)</li>
-<li><strong>additional_skip_names</strong> – names of modules inside of which no module
-replacement shall be performed, in addition to the names in
-<code class="xref py py-attr docutils literal"><span class="pre">fake_filesystem_unittest.Patcher.SKIPNAMES</span></code>.</li>
-<li><strong>patch_path</strong> – <p>if False, modules named <em>path</em> will not be patched with
-the fake <code class="docutils literal"><span class="pre">os.path</span></code> module. Set this to False when you need
-to import some other module named <code class="docutils literal"><span class="pre">path</span></code>, for example:</p>
-<div class="highlight-default"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">my_module</span> <span class="k">import</span> <span class="n">path</span>
-</pre></div>
-</div>
-<p>Irrespective of patch_path, module <code class="docutils literal"><span class="pre">os.path</span></code> is still
-correctly faked if imported the usual way using <code class="docutils literal"><span class="pre">import</span>
-<span class="pre">os</span></code> or <code class="docutils literal"><span class="pre">import</span> <span class="pre">os.path</span></code>.</p>
-</li>
-<li><strong>modules_to_reload</strong> – <p>A list of modules that need to be reloaded
-to be patched dynamically; may be needed if the module
-imports file system modules under an alias</p>
-<div class="admonition note">
-<p class="first admonition-title">Note</p>
-<p class="last">This is done independently of <cite>use_dynamic_patch</cite></p>
-</div>
-<div class="admonition caution">
-<p class="first admonition-title">Caution</p>
-<p class="last">Reloading modules may have unwanted side effects.</p>
-</div>
-</li>
-<li><strong>use_dynamic_patch</strong> – If <cite>True</cite>, dynamic patching after setup is used
-(for example for modules loaded locally inside of functions).
-Can be switched off if it causes unwanted side effects.</li>
-<li><strong>modules_to_patch</strong> – A dictionary of fake modules mapped to the
-patched module names. Can be used to add patching of modules
-not provided by <cite>pyfakefs</cite>.
-If you want to patch a class in a module imported using
-<cite>from some_module import SomeClass</cite>, you have to specify
-<cite>some_module.Class</cite> as the key for the fake class.</li>
-</ul>
-</td>
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>methodName</strong> – The name of the test method (same as in
+unittest.TestCase)</td>
 </tr>
 </tbody>
 </table>
-<p>If you specify arguments <cite>additional_skip_names</cite> or <cite>patch_path</cite> here
-and you have DocTests, consider also specifying the same arguments to
-<code class="xref py py-func docutils literal"><span class="pre">load_doctests()</span></code>.</p>
-<p>Example usage in derived test classes:</p>
-<div class="highlight-default"><div class="highlight"><pre><span></span><span class="k">class</span> <span class="nc">MyTestCase</span><span class="p">(</span><span class="n">fake_filesystem_unittest</span><span class="o">.</span><span class="n">TestCase</span><span class="p">):</span>
-    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">methodName</span><span class="o">=</span><span class="s1">&#39;runTest&#39;</span><span class="p">):</span>
-        <span class="nb">super</span><span class="p">(</span><span class="n">MyTestCase</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span>
-            <span class="n">methodName</span><span class="o">=</span><span class="n">methodName</span><span class="p">,</span>
-            <span class="n">additional_skip_names</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;posixpath&#39;</span><span class="p">])</span>
-
-<span class="kn">import</span> <span class="nn">sut</span>
-
-<span class="k">class</span> <span class="nc">AnotherTestCase</span><span class="p">(</span><span class="n">fake_filesystem_unittest</span><span class="o">.</span><span class="n">TestCase</span><span class="p">):</span>
-    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">methodName</span><span class="o">=</span><span class="s1">&#39;runTest&#39;</span><span class="p">):</span>
-        <span class="nb">super</span><span class="p">(</span><span class="n">MyTestCase</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span>
-            <span class="n">methodName</span><span class="o">=</span><span class="n">methodName</span><span class="p">,</span> <span class="n">modules_to_reload</span><span class="o">=</span><span class="p">[</span><span class="n">sut</span><span class="p">])</span>
-</pre></div>
-</div>
 <dl class="method">
 <dt id="pyfakefs.fake_filesystem_unittest.TestCase.setUpPyfakefs">
 <code class="descname">setUpPyfakefs</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#pyfakefs.fake_filesystem_unittest.TestCase.setUpPyfakefs" title="Permalink to this definition">¶</a></dt>
@@ -1014,14 +964,14 @@ that is available on pypi.</p>
         <li class="right" >
           <a href="autopatch.html" title="Automatically find and patch file functions and modules"
              >previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="index.html">pyfakefs 3.4 documentation</a> &#187;</li> 
+        <li class="nav-item nav-item-0"><a href="index.html">pyfakefs 3.4.1 documentation</a> &#187;</li> 
       </ul>
     </div>
     <div class="footer" role="contentinfo">
         &#169; Copyright 2009 Google Inc. All Rights Reserved.
 © Copyright 2014 Altera Corporation. All Rights Reserved.
 © Copyright 2014-2018 John McGehee.
-      Last updated on Feb 10, 2018.
+      Last updated on Mar 18, 2018.
     </div>
   </body>
 </html>

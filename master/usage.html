@@ -255,7 +255,7 @@ Python 2.</p>
 </div>
 <div class="section" id="access-to-files-in-the-real-file-system">
 <h3>Access to files in the real file system<a class="headerlink" href="#access-to-files-in-the-real-file-system" title="Permalink to this headline">¶</a></h3>
-<p>If you want to have read access to real files or directories , you can map
+<p>If you want to have read access to real files or directories, you can map
 them into the fake file system using <code class="docutils literal"><span class="pre">add_real_file()</span></code>,
 <code class="docutils literal"><span class="pre">add_real_directory()</span></code> and <code class="docutils literal"><span class="pre">add_real_paths()</span></code>. They take a file path, a
 directory path, or a list of paths, respectively, and make them accessible
@@ -275,7 +275,7 @@ argument <code class="docutils literal"><span class="pre">target_path</span></co
     <span class="k">def</span> <span class="nf">setUp</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">setUpPyfakefs</span><span class="p">()</span>
         <span class="c1"># make the file accessible in the fake file system</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">add_real_directory</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">templates_dirname</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">add_real_directory</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">fixture_path</span><span class="p">)</span>
 
     <span class="k">def</span> <span class="nf">test_using_fixture1</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">fixture_path</span><span class="p">,</span> <span class="s1">&#39;fixture1.txt&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
@@ -285,13 +285,27 @@ argument <code class="docutils literal"><span class="pre">target_path</span></co
 </pre></div>
 </div>
 </div>
+<div class="section" id="handling-mount-points">
+<h3>Handling mount points<a class="headerlink" href="#handling-mount-points" title="Permalink to this headline">¶</a></h3>
+<p>Under Linux and MacOS, the root path (<code class="docutils literal"><span class="pre">/</span></code>) is the only mount point created
+in the fake file system. If you need support for more mount points, you can add
+them using <code class="docutils literal"><span class="pre">add_mount_point()</span></code>.</p>
+<p>Under Windows, drives and UNC paths are internally handled as mount points.
+Adding a file or directory on another drive or UNC path automatically
+adds a mount point for that drive or UNC path root if needed. Explicitly
+adding mount points shall not be needed under Windows.</p>
+<p>A mount point has a separate device ID (<code class="docutils literal"><span class="pre">st_dev</span></code>) under all systems, and
+some operations (like <code class="docutils literal"><span class="pre">rename</span></code>) are not possible for files located on
+different mount points. The fake file system size (if used) is also set per
+mount point.</p>
+</div>
 <div class="section" id="setting-the-file-system-size">
 <h3>Setting the file system size<a class="headerlink" href="#setting-the-file-system-size" title="Permalink to this headline">¶</a></h3>
 <p>If you need to know the file system size in your tests (for example for
 testing cleanup scripts), you can set the fake file system size using
 <code class="docutils literal"><span class="pre">set_disk_usage()</span></code>. By default, this sets the total size in bytes of the
 root partition; if you add a path as parameter, the size will be related to
-the mount point (or drive under Windows) the path is related to.</p>
+the mount point (see above) the path is related to.</p>
 <p>By default, the size of the fake file system is considered infinite. As soon
 as you set a size, all files will occupy the space according to their size,
 and you may fail to create new files if the fake file system is full.</p>
@@ -341,6 +355,7 @@ modeled after <code class="docutils literal"><span class="pre">shutil.disk_usage
 <li><a class="reference internal" href="#using-convenience-methods">Using convenience methods</a><ul>
 <li><a class="reference internal" href="#file-creation-helpers">File creation helpers</a></li>
 <li><a class="reference internal" href="#access-to-files-in-the-real-file-system">Access to files in the real file system</a></li>
+<li><a class="reference internal" href="#handling-mount-points">Handling mount points</a></li>
 <li><a class="reference internal" href="#setting-the-file-system-size">Setting the file system size</a></li>
 </ul>
 </li>
@@ -397,7 +412,7 @@ modeled after <code class="docutils literal"><span class="pre">shutil.disk_usage
         &#169; Copyright 2009 Google Inc. All Rights Reserved.
 © Copyright 2014 Altera Corporation. All Rights Reserved.
 © Copyright 2014-2018 John McGehee.
-      Last updated on Mar 04, 2018.
+      Last updated on Mar 18, 2018.
     </div>
   </body>
 </html>
