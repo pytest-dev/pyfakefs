@@ -17,6 +17,8 @@ import sys
 from copy import copy
 from stat import S_IFLNK
 
+import os
+
 IS_PY2 = sys.version_info[0] < 3
 
 
@@ -43,6 +45,12 @@ def is_unicode_string(val):
         return isinstance(val, unicode)
     except NameError:  # Python 3
         return hasattr(val, 'encode')
+
+
+def make_string_path(dir_name):
+    if sys.version_info >= (3, 6):
+        dir_name = os.fspath(dir_name)
+    return dir_name
 
 
 class FakeStatResult(object):

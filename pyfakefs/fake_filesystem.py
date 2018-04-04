@@ -109,6 +109,7 @@ from pyfakefs.deprecator import Deprecator
 from pyfakefs.fake_scandir import scandir, walk
 from pyfakefs.helpers import FakeStatResult, FileBufferIO, IS_PY2
 from pyfakefs.helpers import is_int_type, is_byte_string, is_unicode_string
+from pyfakefs.helpers import make_string_path
 
 __pychecker__ = 'no-reimportself'
 
@@ -1249,8 +1250,7 @@ class FakeFilesystem(object):
         Returns:
             The normalized path that will be used internally.
         """
-        if sys.version_info >= (3, 6):
-            path = os.fspath(path)
+        path = make_string_path(path)
         return self._normalize_path_sep(path)
 
     def normpath(self, path):
@@ -1427,8 +1427,7 @@ class FakeFilesystem(object):
             an empty string and the full path if drive letters are
             not supported or no drive is present.
         """
-        if sys.version_info >= (3, 6):
-            path = os.fspath(path)
+        path = make_string_path(path)
         if self.is_windows_fs:
             if len(path) >= 2:
                 path = self.normcase(path)
@@ -1623,8 +1622,7 @@ class FakeFilesystem(object):
         """
         if check_link and self.islink(file_path):
             return True
-        if sys.version_info >= (3, 6):
-            file_path = os.fspath(file_path)
+        file_path = make_string_path(file_path)
         if file_path is None:
             raise TypeError
         if not file_path:
@@ -1691,8 +1689,7 @@ class FakeFilesystem(object):
         if (allow_fd and sys.version_info >= (3, 3) and
                 isinstance(file_path, int)):
             return self.get_open_file(file_path).get_object().path
-        if sys.version_info >= (3, 6):
-            file_path = os.fspath(file_path)
+        file_path = make_string_path(file_path)
         if file_path is None:
             # file.open(None) raises TypeError, so mimic that.
             raise TypeError('Expected file system path string, received None')
@@ -1823,8 +1820,7 @@ class FakeFilesystem(object):
         Raises:
             IOError: if the object is not found.
         """
-        if sys.version_info >= (3, 6):
-            file_path = os.fspath(file_path)
+        file_path = make_string_path(file_path)
         if file_path == self.root.name:
             return self.root
 
@@ -1857,8 +1853,7 @@ class FakeFilesystem(object):
         Raises:
             IOError: if the object is not found.
         """
-        if sys.version_info >= (3, 6):
-            file_path = os.fspath(file_path)
+        file_path = make_string_path(file_path)
         file_path = self.absnormpath(self._original_path(file_path))
         return self.get_object_from_normpath(file_path)
 
@@ -1884,8 +1879,7 @@ class FakeFilesystem(object):
                             'os.PathLike (if supported), not int')
 
         if follow_symlinks:
-            if sys.version_info >= (3, 6):
-                file_path = os.fspath(file_path)
+            file_path = make_string_path(file_path)
             return self.get_object_from_normpath(self.resolve_path(file_path))
         return self.lresolve(file_path)
 
@@ -1904,8 +1898,7 @@ class FakeFilesystem(object):
         Raises:
             IOError: if the object is not found.
         """
-        if sys.version_info >= (3, 6):
-            path = os.fspath(path)
+        path = make_string_path(path)
         if path == self.root.name:
             # The root directory will never be a link
             return self.root
@@ -2416,8 +2409,7 @@ class FakeFilesystem(object):
         # resolve the link path only if it is not a link itself
         if not self.islink(file_path):
             file_path = self.resolve_path(file_path)
-        if sys.version_info >= (3, 6):
-            link_target = os.fspath(link_target)
+        link_target = make_string_path(link_target)
         return self.create_file_internally(
             file_path, st_mode=S_IFLNK | PERM_DEF,
             contents=link_target,
@@ -2483,7 +2475,8 @@ class FakeFilesystem(object):
         Raises:
             TypeError: if path is None
             OSError: (with errno=ENOENT) if path is not a valid path, or
-                (with errno=EINVAL) if path is valid, but is not a symlink.
+                (with errno=EINVAL) if path is valid, but is not a symlink,
+                or if the path ends with a path separator (Posix only)
         """
         if path is None:
             raise TypeError
@@ -2493,6 +2486,11 @@ class FakeFilesystem(object):
             self.raise_os_error(exc.errno, path)
         if S_IFMT(link_obj.st_mode) != S_IFLNK:
             self.raise_os_error(errno.EINVAL, path)
+        if not self.is_windows_fs:
+            path = make_string_path(path)
+            if path.endswith(self.path_separator):
+                self.raise_os_error(errno.EINVAL, path)
+
         return link_obj.contents
 
     def makedir(self, dir_name, mode=PERM_DEF):
@@ -2508,8 +2506,7 @@ class FakeFilesystem(object):
             OSError: if the directory name is invalid or parent directory is
                 read only or as per :py:meth:`add_object`.
         """
-        if sys.version_info >= (3, 6):
-            dir_name = os.fspath(dir_name)
+        dir_name = make_string_path(dir_name)
         if self.ends_with_path_separator(dir_name):
             dir_name = dir_name[:-1]
         if not dir_name:
@@ -2592,8 +2589,7 @@ class FakeFilesystem(object):
         Raises:
           TypeError: if path is None
         """
-        if sys.version_info >= (3, 6):
-            path = os.fspath(path)
+        path = make_string_path(path)
         if path is None:
             raise TypeError
         try:
@@ -2878,8 +2874,7 @@ class FakePathModule(object):
         """Return True if path is an absolute pathname."""
         if self.filesystem.is_windows_fs:
             path = self.splitdrive(path)[1]
-        if sys.version_info >= (3, 6):
-            path = os.fspath(path)
+        path = make_string_path(path)
         sep = self.filesystem._path_separator(path)
         altsep = self.filesystem._alternative_path_separator(path)
         if self.filesystem.is_windows_fs:
@@ -2983,9 +2978,7 @@ class FakePathModule(object):
             else:
                 return self.os.getcwd()
 
-        if sys.version_info >= (3, 6):
-            path = os.fspath(path)
-
+        path = make_string_path(path)
         sep = self.filesystem._path_separator(path)
         altsep = self.filesystem._alternative_path_separator(path)
         if not self.isabs(path):
@@ -3029,11 +3022,10 @@ class FakePathModule(object):
         path separator."""
         if not path:
             raise ValueError("no path specified")
-        if sys.version_info >= (3, 6):
-            path = os.fspath(path)
-            if start is not None:
-                start = os.fspath(start)
-        if start is None:
+        path = make_string_path(path)
+        if start is not None:
+            start = make_string_path(start)
+        else:
             start = self.filesystem.cwd
         if self.filesystem.alternative_path_separator is not None:
             path = path.replace(self.filesystem.alternative_path_separator,
@@ -3052,8 +3044,7 @@ class FakePathModule(object):
         """
         if self.filesystem.is_windows_fs:
             return self.abspath(filename)
-        if sys.version_info >= (3, 6):
-            filename = os.fspath(filename)
+        filename = make_string_path(filename)
         path, ok = self._joinrealpath(filename[:0], filename, {})
         return self.abspath(path)
 
@@ -3146,8 +3137,7 @@ class FakePathModule(object):
             Under Windows also returns True for drive and UNC roots
             (independent of their existence).
         """
-        if sys.version_info >= (3, 6):
-            path = os.fspath(path)
+        path = make_string_path(path)
         if not path:
             return False
         normed_path = self.filesystem.absnormpath(path)

@@ -341,6 +341,22 @@ class FakeOsModuleTest(FakeOsModuleTestBase):
         self.assertEqual(stat, self.os.lstat(
             self.base_path + self.path_separator() + self.path_separator()))
 
+    def test_link_ending_with_sep_posix(self):
+        # regression test for #359
+        self.check_posix_only()
+        link_path = self.make_path('foo')
+        self.os.symlink(self.base_path, link_path)
+        self.assert_raises_os_error(errno.EINVAL,
+                                    self.os.readlink, link_path + self.os.sep)
+
+    def test_link_ending_with_sep_windows(self):
+        self.check_windows_only()
+        self.skip_if_symlink_not_supported()
+        link_path = self.make_path('foo')
+        self.os.symlink(self.base_path, link_path)
+        self.assertEqual(self.base_path,
+                         self.os.readlink(link_path + self.os.sep))
+
     @unittest.skipIf(sys.version_info < (3, 3),
                      'file descriptor as path new in Python 3.3')
     def test_lstat_uses_open_fd_as_path(self):

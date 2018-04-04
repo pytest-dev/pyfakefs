@@ -8,6 +8,8 @@ The release versions are PyPi releases.
 #### Infrastructure
 
 #### Fixes
+  * `os.readlink` shall raise under Posix if the argument ends with a path 
+    separator ([#359](../../issues/359))
 
 ## [Version 3.4.1](https://pypi.python.org/pypi/pyfakefs/3.4.1)
 
@@ -39,8 +41,9 @@ must use pyfakefs 3.3 or earlier.
   start with the message issued in the real file system in Unix systems (see [#202](../../issues/202))
   
 #### Infrastructure
-  * Changed API to be PEP-8 conform [#186](../../issues/186). Note: The old API is still available.
-  * Removed Python 2.6 support [#293](../../issues/293)
+  * Changed API to be PEP-8 conform ([#186](../../issues/186)). Note: The old
+    API is still available.
+  * Removed Python 2.6 support ([#293](../../issues/293))
   * Added usage documentation to GitHub Pages
   * Added contributing guide
   * Added flake8 tests to Travis CI

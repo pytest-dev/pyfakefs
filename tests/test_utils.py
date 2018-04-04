@@ -392,3 +392,4 @@ class RealFsTestCase(TestCase, RealFsTestMixin):
             self.os.chdir(os.path.dirname(self.base_path))
             shutil.rmtree(self.base_path, ignore_errors=True)
             self.os.chdir(self.cwd)
+
