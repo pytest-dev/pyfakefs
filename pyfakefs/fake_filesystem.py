@@ -2679,11 +2679,11 @@ class FakeFilesystem(object):
             OSError: if path does not exist.
             OSError: if removal failed.
         """
-        path = self.absnormpath(path)
-        if self.exists(path):
-            obj = self.resolve(path)
+        norm_path = self.absnormpath(path)
+        if self.exists(norm_path):
+            obj = self.resolve(norm_path)
             if S_IFMT(obj.st_mode) == S_IFDIR:
-                link_obj = self.lresolve(path)
+                link_obj = self.lresolve(norm_path)
                 if S_IFMT(link_obj.st_mode) != S_IFLNK:
                     if self.is_windows_fs:
                         error = errno.EACCES
@@ -2691,10 +2691,20 @@ class FakeFilesystem(object):
                         error = errno.EPERM
                     else:
                         error = errno.EISDIR
-                    self.raise_os_error(error, path)
+                    self.raise_os_error(error, norm_path)
+
+                norm_path = make_string_path(norm_path)
+                if path.endswith(self.path_separator):
+                    if self.is_windows_fs:
+                        error = errno.EACCES
+                    elif self.is_macos:
+                        error = errno.EPERM
+                    else:
+                        error = errno.ENOTDIR
+                    self.raise_os_error(error, norm_path)
 
         try:
-            self.remove_object(path)
+            self.remove_object(norm_path)
         except IOError as exc:
             self.raise_os_error(exc.errno, exc.filename)
 

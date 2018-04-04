@@ -341,7 +341,7 @@ class FakeOsModuleTest(FakeOsModuleTestBase):
         self.assertEqual(stat, self.os.lstat(
             self.base_path + self.path_separator() + self.path_separator()))
 
-    def test_link_ending_with_sep_posix(self):
+    def test_read_link_ending_with_sep_posix(self):
         # regression test for #359
         self.check_posix_only()
         link_path = self.make_path('foo')
@@ -349,13 +349,33 @@ class FakeOsModuleTest(FakeOsModuleTestBase):
         self.assert_raises_os_error(errno.EINVAL,
                                     self.os.readlink, link_path + self.os.sep)
 
-    def test_link_ending_with_sep_windows(self):
+    def test_read_link_ending_with_sep_windows(self):
         self.check_windows_only()
         self.skip_if_symlink_not_supported()
         link_path = self.make_path('foo')
         self.os.symlink(self.base_path, link_path)
         self.assertEqual(self.base_path,
                          self.os.readlink(link_path + self.os.sep))
+
+    def check_remove_link_ending_with_sep(self, error_nr):
+        # regression test for #360
+        link_path = self.make_path('foo')
+        self.os.symlink(self.base_path, link_path)
+        self.assert_raises_os_error(error_nr,
+                                    self.os.remove, link_path + self.os.sep)
+
+    def test_remove_link_ending_with_sep_linux(self):
+        self.check_linux_only()
+        self.check_remove_link_ending_with_sep(errno.ENOTDIR)
+
+    def test_remove_link_ending_with_sep_macos(self):
+        self.check_macos_only()
+        self.check_remove_link_ending_with_sep(errno.EPERM)
+
+    def test_remove_link_ending_with_sep_windows(self):
+        self.check_windows_only()
+        self.skip_if_symlink_not_supported()
+        self.check_remove_link_ending_with_sep(errno.EACCES)
 
     @unittest.skipIf(sys.version_info < (3, 3),
                      'file descriptor as path new in Python 3.3')

@@ -8,6 +8,8 @@ The release versions are PyPi releases.
 #### Infrastructure
 
 #### Fixes
+  * `os.remove` shall raise if the argument ends with a path 
+    separator ([#360](../../issues/360))
   * `os.readlink` shall raise under Posix if the argument ends with a path 
     separator ([#359](../../issues/359))
 
