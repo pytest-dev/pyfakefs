@@ -341,6 +341,12 @@ class FakeOsModuleTest(FakeOsModuleTestBase):
         self.assertEqual(stat, self.os.lstat(
             self.base_path + self.path_separator() + self.path_separator()))
 
+    def test_exists_with_trailing_sep(self):
+        # regression test for #364
+        file_path = self.make_path('alpha')
+        self.create_file(file_path)
+        self.assertFalse(self.os.path.exists(file_path + self.os.path.sep))
+
     def test_read_link_ending_with_sep_posix(self):
         # regression test for #359
         self.check_posix_only()

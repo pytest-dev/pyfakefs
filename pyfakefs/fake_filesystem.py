@@ -1627,12 +1627,17 @@ class FakeFilesystem(object):
             raise TypeError
         if not file_path:
             return False
+        ends_with_sep = self.ends_with_path_separator(file_path)
         try:
             file_path = self.resolve_path(file_path)
         except (IOError, OSError):
             return False
         if file_path == self.root.name:
             return True
+
+        # the path separator is removed by resolve_path, so we handle it here
+        if ends_with_sep and self.isfile(file_path):
+            return False
         path_components = self._path_components(file_path)
         current_dir = self.root
         for component in path_components:

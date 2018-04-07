@@ -8,10 +8,12 @@ The release versions are PyPi releases.
 #### Infrastructure
 
 #### Fixes
-  * `os.remove` shall raise if the argument ends with a path 
-    separator ([#360](../../issues/360))
-  * `os.readlink` shall raise under Posix if the argument ends with a path 
-    separator ([#359](../../issues/359))
+  * several fixes for the behavior if using file paths that end with a path 
+  separator:
+    * `os.exists` returned `True` instead of `False` ([#364](../../issues/364))
+    * opening such a file raised wrong exception under Python 2 ([#362](../../issues/362))
+    * `os.remove` did not raise ([#360](../../issues/360))
+    * `os.readlink` did not raise under Posix ([#359](../../issues/359))
 
 ## [Version 3.4.1](https://pypi.python.org/pypi/pyfakefs/3.4.1)
 
