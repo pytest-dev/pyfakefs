@@ -407,22 +407,23 @@ class FakeOsModuleTest(FakeOsModuleTestBase):
             self.assertEqual(errno.ENOENT, os_error.errno)
             self.assertEqual(file_path, os_error.filename)
 
-    def check_open_with_trailing_sep(self, error_nr):
-        # regression test for #362
-        path0 = self.make_path('foo') + self.os.path.sep
-        self.assert_raises_io_error(error_nr, self.open, path0, 'w')
+    def check_open_raises_with_trailing_separator(self, error_nr):
+        file_path = self.make_path('bar') + self.os.sep
+        self.assert_raises_os_error(error_nr, self.os.open,
+                                    file_path,
+                                    os.O_CREAT | os.O_WRONLY | os.O_TRUNC)
 
-    def test_open_with_trailing_sep_linux(self):
+    def test_open_raises_with_trailing_separator_linux(self):
         self.check_linux_only()
-        self.check_open_with_trailing_sep(errno.EISDIR)
+        self.check_open_raises_with_trailing_separator(errno.EISDIR)
 
-    def test_open_with_trailing_sep_macos(self):
+    def test_open_raises_with_trailing_separator_macos(self):
         self.check_macos_only()
-        self.check_open_with_trailing_sep(errno.ENOENT)
+        self.check_open_raises_with_trailing_separator(errno.ENOENT)
 
-    def test_open_with_trailing_sep_windows(self):
+    def test_open_raises_with_trailing_separator_windows(self):
         self.check_windows_only()
-        self.check_open_with_trailing_sep(errno.EINVAL)
+        self.check_open_raises_with_trailing_separator(errno.EINVAL)
 
     def test_readlink(self):
         self.skip_if_symlink_not_supported()

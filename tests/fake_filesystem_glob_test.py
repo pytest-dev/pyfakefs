@@ -64,7 +64,7 @@ class FakeGlobUnitTest(fake_filesystem_unittest.TestCase):
     def test_magic_dir(self):
         self.assertEqual([os.sep + '[Temp]'], glob.glob('/*emp*'))
 
-    def testGlob1(self):
+    def test_glob1(self):
         self.assertEqual(['[Temp]'], glob.glob1('/', '*Tem*'))
 
     def test_has_magic(self):

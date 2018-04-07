@@ -1531,12 +1531,12 @@ class DiskSpaceTest(TestCase):
         self.filesystem.create_file('!foo!bar', contents=u'complicated')
         self.assertEqual((100, 11, 89), self.filesystem.get_disk_usage())
 
-    def testFileSystemSizeAfter2ByteUnicodeStringFileCreation(self):
+    def test_filesystem_size_after_2byte_unicode_file_creation(self):
         self.filesystem.create_file('!foo!bar', contents=u'сложно',
                                     encoding='utf-8')
         self.assertEqual((100, 12, 88), self.filesystem.get_disk_usage())
 
-    def testFileSystemSizeAfter3ByteUnicodeStringFileCreation(self):
+    def test_filesystem_size_after_3byte_unicode_file_creation(self):
         self.filesystem.create_file('!foo!bar', contents=u'複雑',
                                     encoding='utf-8')
         self.assertEqual((100, 6, 94), self.filesystem.get_disk_usage())

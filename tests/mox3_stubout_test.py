@@ -57,7 +57,7 @@ class StubOutForTestingTest(unittest.TestCase):
         super(StubOutForTestingTest, self).setUp()
         self.stubber = mox3_stubout.StubOutForTesting()
 
-    def testStuboutMethodWithSet(self):
+    def test_stubout_method_with_set(self):
         non_existing_path = 'non_existing_path'
         self.assertFalse(
             mox3_stubout_example.check_if_exists(non_existing_path))
@@ -68,7 +68,7 @@ class StubOutForTestingTest(unittest.TestCase):
         self.assertFalse(
             mox3_stubout_example.check_if_exists(non_existing_path))
 
-    def testStuboutClassWithSet(self):
+    def test_stubout_class_with_set(self):
         self.assertGreater(mox3_stubout_example.tomorrow().year, 2000)
 
         self.stubber.set(datetime, 'date', GroundhogDate)
@@ -78,7 +78,7 @@ class StubOutForTestingTest(unittest.TestCase):
         self.stubber.unset_all()
         self.assertGreater(mox3_stubout_example.tomorrow().year, 2000)
 
-    def testStuboutModuleWithSet(self):
+    def test_stubout_module_with_set(self):
         self.assertEqual(10, mox3_stubout_example.fabs(-10))
 
         self.stubber.set(mox3_stubout_example, 'math', NoPanicMath)
@@ -87,7 +87,7 @@ class StubOutForTestingTest(unittest.TestCase):
         self.stubber.unset_all()
         self.assertEqual(10, mox3_stubout_example.fabs(-10))
 
-    def testSetRaiseIfUnknownAttribute(self):
+    def test_set_raise_if_unknown_attribute(self):
         self.assertRaises(AttributeError, self.stubber.set,
                           os.path, 'exists_not', lambda x: True)
         self.assertRaises(AttributeError, self.stubber.set,
@@ -95,7 +95,7 @@ class StubOutForTestingTest(unittest.TestCase):
         self.assertRaises(AttributeError, self.stubber.set,
                           mox3_stubout_example, 'math1', NoPanicMath)
 
-    def testStuboutMethodWithSmartSet(self):
+    def test_stubout_method_with_smart_set(self):
         non_existing_path = 'non_existing_path'
         self.stubber.smart_set(os.path, 'exists', lambda x: True)
         self.assertTrue(
@@ -104,7 +104,7 @@ class StubOutForTestingTest(unittest.TestCase):
         self.assertFalse(
             mox3_stubout_example.check_if_exists(non_existing_path))
 
-    def testStuboutClassWithSmartSet(self):
+    def test_stubout_class_with_smart_set(self):
         self.stubber.smart_set(datetime, 'date', GroundhogDate)
         self.assertEqual(mox3_stubout_example.tomorrow(),
                          datetime.date(1993, 2, 3))
@@ -112,7 +112,7 @@ class StubOutForTestingTest(unittest.TestCase):
         self.stubber.smart_unset_all()
         self.assertGreater(mox3_stubout_example.tomorrow().year, 2000)
 
-    def testStuboutModuleWithSmartSet(self):
+    def test_stubout_module_with_smart_set(self):
         self.assertEqual(10, mox3_stubout_example.fabs(-10))
 
         self.stubber.smart_set(mox3_stubout_example, 'math', NoPanicMath)
@@ -121,7 +121,7 @@ class StubOutForTestingTest(unittest.TestCase):
         self.stubber.smart_unset_all()
         self.assertEqual(10, mox3_stubout_example.fabs(-10))
 
-    def testStuboutSubModuleWithSmartSet(self):
+    def test_stubout_submodule_with_smart_set(self):
         # this one does not work with Set
         non_existing_path = 'non_existing_path'
         self.assertFalse(
@@ -133,7 +133,7 @@ class StubOutForTestingTest(unittest.TestCase):
         self.assertFalse(
             mox3_stubout_example.check_if_exists(non_existing_path))
 
-    def testSmartSetRaiseIfUnknownAttribute(self):
+    def test_smart_set_raise_if_unknown_attribute(self):
         self.assertRaises(AttributeError, self.stubber.smart_set,
                           os.path, 'exists_not', lambda x: True)
         self.assertRaises(AttributeError, self.stubber.smart_set,

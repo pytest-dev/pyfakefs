@@ -92,7 +92,7 @@ class FakeFileOpenTest(FakeFileOpenTestBase):
 
     @unittest.skipIf(sys.version_info >= (3, 0),
                      'Python2 specific string handling')
-    def testByteContentsPy2(self):
+    def test_byte_contents_py2(self):
         file_path = self.make_path('foo')
         byte_fractions = b'\xe2\x85\x93 \xe2\x85\x94 \xe2\x85\x95 \xe2\x85\x96'
         with self.open(file_path, 'w') as f:
@@ -235,7 +235,7 @@ class FakeFileOpenTest(FakeFileOpenTestBase):
         self.assertEqual(contents, result)
 
     @unittest.skipIf(not TestCase.is_python2, 'Python2 specific test')
-    def testExclusiveModeNotValidInPython2(self):
+    def test_exclusive_mode_not_valid_in_python2(self):
         file_path = self.make_path('bar')
         self.assertRaises(ValueError, self.open, file_path, 'x')
         self.assertRaises(ValueError, self.open, file_path, 'xb')
@@ -479,7 +479,7 @@ class FakeFileOpenTest(FakeFileOpenTestBase):
         self.assertEqual(160, st.st_ctime)
         self.assertEqual(160, st.st_mtime)
 
-    def _CreateWithPermission(self, file_path, perm_bits):
+    def create_with_permission(self, file_path, perm_bits):
         self.create_file(file_path)
         self.os.chmod(file_path, perm_bits)
         st = self.os.stat(file_path)
@@ -487,42 +487,42 @@ class FakeFileOpenTest(FakeFileOpenTestBase):
         self.assertTrue(st.st_mode & stat.S_IFREG)
         self.assertFalse(st.st_mode & stat.S_IFDIR)
 
-    def testOpenFlags700(self):
+    def test_open_flags700(self):
         # set up
         self.check_posix_only()
         file_path = self.make_path('target_file')
-        self._CreateWithPermission(file_path, 0o700)
+        self.create_with_permission(file_path, 0o700)
         # actual tests
         self.open(file_path, 'r').close()
         self.open(file_path, 'w').close()
         self.open(file_path, 'w+').close()
         self.assertRaises(ValueError, self.open, file_path, 'INV')
 
-    def testOpenFlags400(self):
+    def test_open_flags400(self):
         # set up
         self.check_posix_only()
         file_path = self.make_path('target_file')
-        self._CreateWithPermission(file_path, 0o400)
+        self.create_with_permission(file_path, 0o400)
         # actual tests
         self.open(file_path, 'r').close()
         self.assert_raises_io_error(errno.EACCES, self.open, file_path, 'w')
         self.assert_raises_io_error(errno.EACCES, self.open, file_path, 'w+')
 
-    def testOpenFlags200(self):
+    def test_open_flags200(self):
         # set up
         self.check_posix_only()
         file_path = self.make_path('target_file')
-        self._CreateWithPermission(file_path, 0o200)
+        self.create_with_permission(file_path, 0o200)
         # actual tests
         self.assertRaises(IOError, self.open, file_path, 'r')
         self.open(file_path, 'w').close()
         self.assertRaises(IOError, self.open, file_path, 'w+')
 
-    def testOpenFlags100(self):
+    def test_open_flags100(self):
         # set up
         self.check_posix_only()
         file_path = self.make_path('target_file')
-        self._CreateWithPermission(file_path, 0o100)
+        self.create_with_permission(file_path, 0o100)
         # actual tests 4
         self.assertRaises(IOError, self.open, file_path, 'r')
         self.assertRaises(IOError, self.open, file_path, 'w')
@@ -665,7 +665,7 @@ class FakeFileOpenTest(FakeFileOpenTestBase):
 
     @unittest.skipIf(sys.version_info < (3, 0),
                      'Python 3 specific string handling')
-    def testIntertwinedReadWritePython3Str(self):
+    def test_intertwined_read_write_python3_str(self):
         file_path = self.make_path('some_file')
         self.create_file(file_path)
 
@@ -725,23 +725,22 @@ class FakeFileOpenTest(FakeFileOpenTestBase):
         file_path = self.os.path.join(file_path, 'baz')
         self.assert_raises_io_error(errno.ENOENT, self.open, file_path, 'w')
 
-    def check_open_raises_with_trailing_separator(self, error_nr):
-        file_path = self.make_path('bar') + self.os.sep
-        self.assert_raises_os_error(error_nr, self.os.open,
-                                    file_path,
-                                    os.O_CREAT | os.O_WRONLY | os.O_TRUNC)
+    def check_open_with_trailing_sep(self, error_nr):
+        # regression test for #362
+        path = self.make_path('foo') + self.os.path.sep
+        self.assert_raises_io_error(error_nr, self.open, path, 'w')
 
-    def test_open_raises_with_trailing_separator_linux(self):
+    def test_open_with_trailing_sep_linux(self):
         self.check_linux_only()
-        self.check_open_raises_with_trailing_separator(errno.EISDIR)
+        self.check_open_with_trailing_sep(errno.EISDIR)
 
-    def test_open_raises_with_trailing_separator_macos(self):
+    def test_open_with_trailing_sep_macos(self):
         self.check_macos_only()
-        self.check_open_raises_with_trailing_separator(errno.ENOENT)
+        self.check_open_with_trailing_sep(errno.ENOENT)
 
-    def test_open_raises_with_trailing_separator_windows(self):
+    def test_open_with_trailing_sep_windows(self):
         self.check_windows_only()
-        self.check_open_raises_with_trailing_separator(errno.EINVAL)
+        self.check_open_with_trailing_sep(errno.EINVAL)
 
     def test_can_read_from_block_device(self):
         self.skip_real_fs()
@@ -826,7 +825,7 @@ class FakeFileOpenTest(FakeFileOpenTestBase):
             self.assertEqual(4, f0.tell())
             self.assertEqual(4, self.os.path.getsize(file_path))
 
-    def testTellFlushesInPython3(self):
+    def test_tell_flushes_in_python3(self):
         # Regression test for #288
         self.check_linux_and_windows()
         file_path = self.make_path('foo')
@@ -845,7 +844,7 @@ class FakeFileOpenTest(FakeFileOpenTestBase):
             self.assertEqual('', f0.read())
             self.assertEqual(4, self.os.path.getsize(file_path))
 
-    def testReadFlushesUnderWindowsInPython3(self):
+    def test_read_flushes_under_windows_in_python3(self):
         # Regression test for #278
         self.check_windows_only()
         file_path = self.make_path('foo')
@@ -1571,7 +1570,7 @@ class OpenWithInvalidFlagsRealFsTest(OpenWithInvalidFlagsTest):
 
 
 class ResolvePathTest(FakeFileOpenTestBase):
-    def __WriteToFile(self, file_name):
+    def _write_to_file(self, file_name):
         fh = self.open(file_name, 'w')
         fh.write('x')
         fh.close()
@@ -1583,14 +1582,14 @@ class ResolvePathTest(FakeFileOpenTestBase):
         self.assertRaises(IOError, self.open, '', 'w')
 
     def test_normal_path(self):
-        self.__WriteToFile('foo')
+        self._write_to_file('foo')
         self.assertTrue(self.filesystem.exists('foo'))
 
     def test_link_within_same_directory(self):
         self.skip_if_symlink_not_supported()
         final_target = '!foo!baz'
         self.filesystem.create_symlink('!foo!bar', 'baz')
-        self.__WriteToFile('!foo!bar')
+        self._write_to_file('!foo!bar')
         self.assertTrue(self.filesystem.exists(final_target))
         self.assertEqual(1, self.os.stat(final_target)[stat.ST_SIZE])
 
@@ -1599,7 +1598,7 @@ class ResolvePathTest(FakeFileOpenTestBase):
         final_target = '!foo!baz!bip'
         self.filesystem.create_dir('!foo!baz')
         self.filesystem.create_symlink('!foo!bar', 'baz!bip')
-        self.__WriteToFile('!foo!bar')
+        self._write_to_file('!foo!bar')
         self.assertTrue(self.filesystem.exists(final_target))
         self.assertEqual(1, self.os.stat(final_target)[stat.ST_SIZE])
         self.assertTrue(self.filesystem.exists('!foo!baz'))
@@ -1613,7 +1612,7 @@ class ResolvePathTest(FakeFileOpenTestBase):
         self.filesystem.create_dir('!foo')
         self.filesystem.create_dir('!baz')
         self.filesystem.create_symlink('!foo!bar', '..!baz')
-        self.__WriteToFile('!foo!bar!bip')
+        self._write_to_file('!foo!bar!bip')
         self.assertTrue(self.filesystem.exists(final_target))
         self.assertEqual(1, self.os.stat(final_target)[stat.ST_SIZE])
         self.assertTrue(self.filesystem.exists('!foo!bar'))
@@ -1623,7 +1622,7 @@ class ResolvePathTest(FakeFileOpenTestBase):
         final_target = '!foo!baz!bip'
         self.filesystem.create_dir('!foo!baz')
         self.filesystem.create_symlink('!foo!bar', final_target)
-        self.__WriteToFile('!foo!bar')
+        self._write_to_file('!foo!bar')
         self.assertTrue(self.filesystem.exists(final_target))
 
     def test_relative_links_work_after_chdir(self):
@@ -1642,7 +1641,7 @@ class ResolvePathTest(FakeFileOpenTestBase):
         self.assertEqual('!foo!baz!bip',
                          self.filesystem.resolve_path('bar'))
 
-        self.__WriteToFile('!foo!bar')
+        self._write_to_file('!foo!bar')
         self.assertTrue(self.filesystem.exists(final_target))
 
     def test_absolute_links_work_after_chdir(self):
@@ -1662,7 +1661,7 @@ class ResolvePathTest(FakeFileOpenTestBase):
         self.assertEqual('!foo!baz!bip',
                          self.filesystem.resolve_path('bar'))
 
-        self.__WriteToFile('!foo!bar')
+        self._write_to_file('!foo!bar')
         self.assertTrue(self.filesystem.exists(final_target))
 
     def test_chdir_through_relative_link(self):
@@ -1698,7 +1697,7 @@ class ResolvePathTest(FakeFileOpenTestBase):
         self.skip_if_symlink_not_supported()
         self.filesystem.create_symlink('!foo!bar', 'link')
         self.filesystem.create_symlink('!foo!link', 'baz')
-        self.__WriteToFile('!foo!baz')
+        self._write_to_file('!foo!baz')
         fh = self.open('!foo!bar', 'r')
         self.assertEqual('x', fh.read())
 
@@ -1707,7 +1706,7 @@ class ResolvePathTest(FakeFileOpenTestBase):
         final_target = '!foo!baz'
         self.filesystem.create_symlink('!foo!bar', 'link')
         self.filesystem.create_symlink('!foo!link', 'baz')
-        self.__WriteToFile('!foo!bar')
+        self._write_to_file('!foo!bar')
         self.assertTrue(self.filesystem.exists(final_target))
 
     def test_multiple_links(self):
@@ -1724,14 +1723,14 @@ class ResolvePathTest(FakeFileOpenTestBase):
 
         final_target = '!a!link1!c!link2!e'
         self.assertFalse(self.filesystem.exists(final_target))
-        self.__WriteToFile('!a!b!c!d!e')
+        self._write_to_file('!a!b!c!d!e')
         self.assertTrue(self.filesystem.exists(final_target))
 
     def test_utime_link(self):
         """os.utime() and os.stat() via symbolic link (issue #49)"""
         self.skip_if_symlink_not_supported()
         self.filesystem.create_dir('!foo!baz')
-        self.__WriteToFile('!foo!baz!bip')
+        self._write_to_file('!foo!baz!bip')
         link_name = '!foo!bar'
         self.filesystem.create_symlink(link_name, '!foo!baz!bip')
 

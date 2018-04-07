@@ -32,21 +32,21 @@ class DynamicImportPatchTest(TestPyfakefsUnittestBase):
         super(DynamicImportPatchTest, self).__init__(methodName,
                                                      use_dynamic_patch=True)
 
-    def testOsPatch(self):
+    def test_os_patch(self):
         import os
 
         os.mkdir('test')
         self.assertTrue(self.fs.exists('test'))
         self.assertTrue(os.path.exists('test'))
 
-    def testOsImportAsPatch(self):
+    def test_os_import_as_patch(self):
         import os as _os
 
         _os.mkdir('test')
         self.assertTrue(self.fs.exists('test'))
         self.assertTrue(_os.path.exists('test'))
 
-    def testOsPathPatch(self):
+    def test_os_path_patch(self):
         import os.path
 
         os.mkdir('test')
@@ -54,14 +54,14 @@ class DynamicImportPatchTest(TestPyfakefsUnittestBase):
         self.assertTrue(os.path.exists('test'))
 
     @unittest.skipIf(sys.version_info < (3, 3), 'disk_usage new in Python 3.3')
-    def testShutilPatch(self):
+    def test_shutil_patch(self):
         import shutil
 
         self.fs.set_disk_usage(100)
         self.assertEqual(100, shutil.disk_usage('/').total)
 
     @unittest.skipIf(sys.version_info < (3, 4), 'pathlib new in Python 3.4')
-    def testPathlibPatch(self):
+    def test_pathlib_patch(self):
         import pathlib
 
         file_path = 'test.txt'
@@ -74,7 +74,7 @@ class DynamicImportPatchTest(TestPyfakefsUnittestBase):
         self.assertEqual('test', file_object.contents)
 
     @unittest.skipIf(sys.version_info < (3, 4), 'pathlib new in Python 3.4')
-    def testPathlibPathPatch(self):
+    def test_pathlib_path_patch(self):
         from pathlib import Path
 
         file_path = 'test.txt'

@@ -205,7 +205,7 @@ class FakeShutilModuleTest(RealFsTestCase):
         self.assertAlmostEqual(src_stat.st_atime, dst_stat.st_atime, places=2)
         self.assertAlmostEqual(src_stat.st_mtime, dst_stat.st_mtime, places=2)
 
-    def testCopy2(self):
+    def test_copy2(self):
         src_file = self.make_path('xyzzy')
         self.create_file(src_file)
         os.chmod(src_file, 0o750)

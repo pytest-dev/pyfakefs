@@ -4422,7 +4422,7 @@ class FakeFileWrapper(object):
         io_attr = getattr(self._io, name)
 
         def write_wrapper(*args, **kwargs):
-            """Wrap truncate call to call flush after truncate."""
+            """Wrap all write calls to the stream object."""
             ret_value = io_attr(*args, **kwargs)
             if not IS_PY2:
                 return ret_value
