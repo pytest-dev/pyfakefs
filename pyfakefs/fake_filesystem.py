@@ -4653,7 +4653,7 @@ class FakeFileOpen(object):
                 error = (errno.EINVAL if self.filesystem.is_windows_fs
                          else errno.ENOENT if self.filesystem.is_macos
                          else errno.EISDIR)
-                self.filesystem.raise_os_error(error, file_path)
+                error_fct(error, file_path)
             file_object = self.filesystem.create_file_internally(
                 real_path, create_missing_dirs=False,
                 apply_umask=True, raw_io=self.raw_io)

@@ -407,6 +407,23 @@ class FakeOsModuleTest(FakeOsModuleTestBase):
             self.assertEqual(errno.ENOENT, os_error.errno)
             self.assertEqual(file_path, os_error.filename)
 
+    def check_open_with_trailing_sep(self, error_nr):
+        # regression test for #362
+        path0 = self.make_path('foo') + self.os.path.sep
+        self.assert_raises_io_error(error_nr, self.open, path0, 'w')
+
+    def test_open_with_trailing_sep_linux(self):
+        self.check_linux_only()
+        self.check_open_with_trailing_sep(errno.EISDIR)
+
+    def test_open_with_trailing_sep_macos(self):
+        self.check_macos_only()
+        self.check_open_with_trailing_sep(errno.ENOENT)
+
+    def test_open_with_trailing_sep_windows(self):
+        self.check_windows_only()
+        self.check_open_with_trailing_sep(errno.EINVAL)
+
     def test_readlink(self):
         self.skip_if_symlink_not_supported()
         link_path = self.make_path('foo', 'bar', 'baz')
