@@ -1909,6 +1909,7 @@ class FakeFilesystem(object):
             return self.root
 
         # remove trailing separator
+        ends_with_sep = self.ends_with_path_separator(path)
         while self.ends_with_path_separator(path):
             path = path[:-1]
         path = self._original_path(path)
@@ -1923,7 +1924,11 @@ class FakeFilesystem(object):
                 if not self.is_windows_fs and isinstance(parent_obj, FakeFile):
                     self.raise_io_error(errno.ENOTDIR, path)
                 self.raise_io_error(errno.ENOENT, path)
-            return parent_obj.get_entry(child_name)
+            obj = parent_obj.get_entry(child_name)
+            if (not self.is_windows_fs and ends_with_sep and
+                    not isinstance(obj, FakeDirectory)):
+                self.raise_os_error(errno.EINVAL, path)
+            return obj
         except KeyError:
             self.raise_io_error(errno.ENOENT, path)
 
@@ -2491,10 +2496,6 @@ class FakeFilesystem(object):
             self.raise_os_error(exc.errno, path)
         if S_IFMT(link_obj.st_mode) != S_IFLNK:
             self.raise_os_error(errno.EINVAL, path)
-        if not self.is_windows_fs:
-            path = make_string_path(path)
-            if path.endswith(self.path_separator):
-                self.raise_os_error(errno.EINVAL, path)
 
         return link_obj.contents
 

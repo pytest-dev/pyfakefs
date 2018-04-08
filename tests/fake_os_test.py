@@ -363,6 +363,19 @@ class FakeOsModuleTest(FakeOsModuleTestBase):
         self.assertEqual(self.base_path,
                          self.os.readlink(link_path + self.os.sep))
 
+    def test_symlink_with_trailing_sep_windows(self):
+        self.check_windows_only()
+        self.skip_if_symlink_not_supported()
+        link_path = self.make_path('foo')
+        self.os.symlink(self.base_path, link_path)
+        self.assertTrue(self.os.path.islink(link_path + self.os.path.sep))
+
+    def test_symlink_with_trailing_sep_posix(self):
+        self.check_posix_only()
+        link_path = self.make_path('foo')
+        self.os.symlink(self.base_path, link_path)
+        self.assertFalse(self.os.path.islink(link_path + self.os.path.sep))
+
     def check_remove_link_ending_with_sep(self, error_nr):
         # regression test for #360
         link_path = self.make_path('foo')
