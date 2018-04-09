@@ -361,6 +361,14 @@ class FakeOsModuleTest(FakeOsModuleTestBase):
         self.assert_raises_os_error(errno.EINVAL,
                                     self.os.readlink, link_path + self.os.sep)
 
+    def test_lstat_symlink_with_trailing_sep(self):
+        # regression test for #366
+        self.skip_if_symlink_not_supported()
+        link_path = self.make_path('foo')
+        self.os.symlink(self.base_path, link_path)
+        # used to raise
+        self.assertTrue(self.os.lstat(link_path + self.os.sep).st_mode)
+
     def test_read_link_ending_with_sep_windows(self):
         self.check_windows_only()
         self.skip_if_symlink_not_supported()

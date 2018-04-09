@@ -1627,17 +1627,16 @@ class FakeFilesystem(object):
             raise TypeError
         if not file_path:
             return False
-        ends_with_sep = self.ends_with_path_separator(file_path)
         try:
+            if (self.ends_with_path_separator(file_path) and
+                    self.isfile(file_path)):
+                return False
             file_path = self.resolve_path(file_path)
         except (IOError, OSError):
             return False
         if file_path == self.root.name:
             return True
 
-        # the path separator is removed by resolve_path, so we handle it here
-        if ends_with_sep and self.isfile(file_path):
-            return False
         path_components = self._path_components(file_path)
         current_dir = self.root
         for component in path_components:
@@ -1862,7 +1861,8 @@ class FakeFilesystem(object):
         file_path = self.absnormpath(self._original_path(file_path))
         return self.get_object_from_normpath(file_path)
 
-    def resolve(self, file_path, follow_symlinks=True, allow_fd=False):
+    def resolve(self, file_path, follow_symlinks=True, allow_fd=False,
+                allow_trailing_separator=True):
         """Search for the specified filesystem object, resolving all links.
 
         Args:
@@ -1870,6 +1870,9 @@ class FakeFilesystem(object):
             follow_symlinks: If `False`, the link itself is resolved,
                 otherwise the object linked to.
             allow_fd: If `True`, `file_path` may be an open file descriptor
+            allow_trailing_separator: If False and file_path is ending with
+                a separator and not pointing to a directory, raises OSError
+                under Posix.
 
         Returns:
           The FakeFile object corresponding to `file_path`.
@@ -1886,9 +1889,9 @@ class FakeFilesystem(object):
         if follow_symlinks:
             file_path = make_string_path(file_path)
             return self.get_object_from_normpath(self.resolve_path(file_path))
-        return self.lresolve(file_path)
+        return self.lresolve(file_path, allow_trailing_separator)
 
-    def lresolve(self, path):
+    def lresolve(self, path, allow_trailing_separator=True):
         """Search for the specified object, resolving only parent links.
 
         This is analogous to the stat/lstat difference.  This resolves links
@@ -1896,6 +1899,9 @@ class FakeFilesystem(object):
 
         Args:
             path: Specifies target FakeFile object to retrieve.
+            allow_trailing_separator: If False and file_path is ending with
+                a separator and not pointing to a directory, raises OSError
+                under Posix.
 
         Returns:
             The FakeFile object corresponding to path.
@@ -1925,8 +1931,8 @@ class FakeFilesystem(object):
                     self.raise_io_error(errno.ENOTDIR, path)
                 self.raise_io_error(errno.ENOENT, path)
             obj = parent_obj.get_entry(child_name)
-            if (not self.is_windows_fs and ends_with_sep and
-                    not isinstance(obj, FakeDirectory)):
+            if (not self.is_windows_fs and not allow_trailing_separator and
+                    ends_with_sep and not isinstance(obj, FakeDirectory)):
                 self.raise_os_error(errno.EINVAL, path)
             return obj
         except KeyError:
@@ -2491,7 +2497,7 @@ class FakeFilesystem(object):
         if path is None:
             raise TypeError
         try:
-            link_obj = self.lresolve(path)
+            link_obj = self.lresolve(path, allow_trailing_separator=False)
         except IOError as exc:
             self.raise_os_error(exc.errno, path)
         if S_IFMT(link_obj.st_mode) != S_IFLNK:
@@ -2599,7 +2605,8 @@ class FakeFilesystem(object):
         if path is None:
             raise TypeError
         try:
-            obj = self.resolve(path, follow_symlinks)
+            obj = self.resolve(path, follow_symlinks,
+                               allow_trailing_separator=False)
             if obj:
                 return S_IFMT(obj.st_mode) == st_flag
         except (IOError, OSError):
