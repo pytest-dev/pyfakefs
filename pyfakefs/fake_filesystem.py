@@ -2513,7 +2513,7 @@ class FakeFilesystem(object):
                 read only or as per :py:meth:`add_object`.
         """
         dir_name = make_string_path(dir_name)
-        if self.ends_with_path_separator(dir_name):
+        while self.ends_with_path_separator(dir_name):
             dir_name = dir_name[:-1]
         if not dir_name:
             self.raise_os_error(errno.ENOENT, '')

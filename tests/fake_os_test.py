@@ -345,7 +345,13 @@ class FakeOsModuleTest(FakeOsModuleTestBase):
         # regression test for #364
         file_path = self.make_path('alpha')
         self.create_file(file_path)
-        self.assertFalse(self.os.path.exists(file_path + self.os.path.sep))
+        self.assertFalse(self.os.path.exists(file_path + self.os.sep))
+
+    def test_mkdir_with_trailing_sep(self):
+        # regression test for #367
+        dir_path = self.make_path('foo')
+        self.os.mkdir(dir_path + self.os.sep + self.os.sep)
+        self.assertTrue(self.os.path.exists(dir_path))
 
     def test_read_link_ending_with_sep_posix(self):
         # regression test for #359
