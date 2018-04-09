@@ -1588,6 +1588,7 @@ class FakeFilesystem(object):
 
     def ends_with_path_separator(self, file_path):
         """Return True if ``file_path`` ends with a valid path separator."""
+        file_path = make_string_path(file_path)
         return (file_path and
                 (file_path.endswith(self._path_separator(file_path)) or
                  self.alternative_path_separator is not None and
@@ -2889,6 +2890,11 @@ class FakePathModule(object):
         """
         try:
             file_obj = self.filesystem.resolve(path)
+            if (self.filesystem.ends_with_path_separator(path) and
+                    S_IFMT(file_obj.st_mode) != S_IFDIR):
+                error_nr = (errno.EINVAL if self.filesystem.is_windows_fs
+                            else errno.ENOTDIR)
+                self.filesystem.raise_os_error(error_nr, path)
             return file_obj.st_size
         except IOError as exc:
             raise os.error(exc.errno, exc.strerror)

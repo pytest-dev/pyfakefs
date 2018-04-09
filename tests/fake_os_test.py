@@ -390,6 +390,20 @@ class FakeOsModuleTest(FakeOsModuleTestBase):
         self.os.symlink(self.base_path, link_path)
         self.assertFalse(self.os.path.islink(link_path + self.os.path.sep))
 
+    def check_getsize_raises_with_trailing_separator(self, error_nr):
+        file_path = self.make_path('bar')
+        self.create_file(file_path)
+        self.assert_raises_os_error(error_nr, self.os.path.getsize,
+                                    file_path + self.os.sep)
+
+    def test_getsize_raises_with_trailing_separator_posix(self):
+        self.check_posix_only()
+        self.check_getsize_raises_with_trailing_separator(errno.ENOTDIR)
+
+    def test_getsize_raises_with_trailing_separator_windows(self):
+        self.check_windows_only()
+        self.check_getsize_raises_with_trailing_separator(errno.EINVAL)
+
     def check_remove_link_ending_with_sep(self, error_nr):
         # regression test for #360
         link_path = self.make_path('foo')
