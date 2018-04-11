@@ -1064,11 +1064,22 @@ class FakeFilesystem(object):
         try:
             file_object = self.resolve(
                 entry_path, follow_symlinks, allow_fd=True)
+            self.raise_for_filepath_ending_with_separator(entry_path,
+                                                          file_object)
+
             return file_object.stat_result.copy()
         except IOError as io_error:
             winerror = (io_error.winerror if hasattr(io_error, 'winerror')
                         else io_error.errno)
             self.raise_os_error(io_error.errno, entry_path, winerror=winerror)
+
+    def raise_for_filepath_ending_with_separator(self, entry_path,
+                                                 file_object):
+        if (self.ends_with_path_separator(entry_path) and
+                S_ISREG(file_object.st_mode)):
+            error_nr = (errno.EINVAL if self.is_windows_fs
+                        else errno.ENOTDIR)
+            self.raise_os_error(error_nr, entry_path)
 
     def chmod(self, path, mode, follow_symlinks=True):
         """Change the permissions of a file as encoded in integer mode.
@@ -1588,6 +1599,8 @@ class FakeFilesystem(object):
 
     def ends_with_path_separator(self, file_path):
         """Return True if ``file_path`` ends with a valid path separator."""
+        if is_int_type(file_path):
+            return False
         file_path = make_string_path(file_path)
         return (file_path and
                 (file_path.endswith(self._path_separator(file_path)) or
@@ -2716,6 +2729,8 @@ class FakeFilesystem(object):
                     else:
                         error = errno.ENOTDIR
                     self.raise_os_error(error, norm_path)
+            else:
+                self.raise_for_filepath_ending_with_separator(path, obj)
 
         try:
             self.remove_object(norm_path)

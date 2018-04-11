@@ -472,6 +472,36 @@ class FakeOsModuleTest(FakeOsModuleTestBase):
         self.check_windows_only()
         self.check_open_raises_with_trailing_separator(errno.EINVAL)
 
+    def check_stat_with_trailing_separator(self, error_nr):
+        # regression test for #376
+        file_path = self.make_path('foo')
+        self.create_file(file_path)
+        self.assert_raises_os_error(error_nr, self.os.stat,
+                                    file_path + self.os.sep)
+
+    def test_stat_with_trailing_separator_posix(self):
+        self.check_posix_only()
+        self.check_stat_with_trailing_separator(errno.ENOTDIR)
+
+    def test_stat_with_trailing_separator_windows(self):
+        self.check_windows_only()
+        self.check_stat_with_trailing_separator(errno.EINVAL)
+
+    def check_remove_with_trailing_separator(self, error_nr):
+        # regression test for #377
+        file_path = self.make_path('foo')
+        self.create_file(file_path)
+        self.assert_raises_os_error(error_nr, self.os.remove,
+                                    file_path + self.os.sep)
+
+    def test_remove_with_trailing_separator_posix(self):
+        self.check_posix_only()
+        self.check_remove_with_trailing_separator(errno.ENOTDIR)
+
+    def test_remove_with_trailing_separator_windows(self):
+        self.check_windows_only()
+        self.check_remove_with_trailing_separator(errno.EINVAL)
+
     def test_readlink(self):
         self.skip_if_symlink_not_supported()
         link_path = self.make_path('foo', 'bar', 'baz')
