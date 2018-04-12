@@ -361,8 +361,18 @@ class FakeOsModuleTest(FakeOsModuleTestBase):
         self.assert_raises_os_error(errno.EINVAL,
                                     self.os.readlink, link_path + self.os.sep)
 
-    def test_lstat_symlink_with_trailing_sep(self):
+    def test_lstat_symlink_with_trailing_sep_linux(self):
         # regression test for #366
+        self.check_linux_only()
+        self.skip_if_symlink_not_supported()
+        link_path = self.make_path('foo')
+        self.os.symlink(self.base_path, link_path)
+        # used to raise
+        self.assertTrue(self.os.lstat(link_path + self.os.sep).st_mode)
+
+    def test_lstat_symlink_with_trailing_sep_macos(self):
+        # regression test for #366
+        self.check_macos_only()
         self.skip_if_symlink_not_supported()
         link_path = self.make_path('foo')
         self.os.symlink(self.base_path, link_path)
@@ -377,18 +387,31 @@ class FakeOsModuleTest(FakeOsModuleTestBase):
         self.assertEqual(self.base_path,
                          self.os.readlink(link_path + self.os.sep))
 
-    def test_symlink_with_trailing_sep_windows(self):
+    def test_islink_with_trailing_sep_windows(self):
         self.check_windows_only()
         self.skip_if_symlink_not_supported()
         link_path = self.make_path('foo')
         self.os.symlink(self.base_path, link_path)
         self.assertTrue(self.os.path.islink(link_path + self.os.path.sep))
 
-    def test_symlink_with_trailing_sep_posix(self):
-        self.check_posix_only()
+    def test_islink_with_trailing_sep_linux(self):
+        self.check_linux_only()
         link_path = self.make_path('foo')
         self.os.symlink(self.base_path, link_path)
-        self.assertFalse(self.os.path.islink(link_path + self.os.path.sep))
+        self.assertFalse(self.os.path.islink(link_path + self.os.sep))
+
+    def test_islink_with_trailing_sep_macos(self):
+        self.check_macos_only()
+        link_path = self.make_path('foo')
+        self.os.symlink(self.base_path, link_path)
+        self.assertFalse(self.os.path.islink(link_path + self.os.sep))
+
+    def test_islink_with_trailing_separator_macos(self):
+        # regression test for #373
+        self.check_macos_only()
+        file_path = self.make_path('foo')
+        self.os.symlink(file_path, file_path)
+        self.assertTrue(self.os.path.islink(file_path + self.os.sep))
 
     def check_getsize_raises_with_trailing_separator(self, error_nr):
         file_path = self.make_path('bar')
@@ -471,6 +494,47 @@ class FakeOsModuleTest(FakeOsModuleTestBase):
     def test_open_raises_with_trailing_separator_windows(self):
         self.check_windows_only()
         self.check_open_raises_with_trailing_separator(errno.EINVAL)
+
+    def test_lexists_with_trailing_separator_linux_windows(self):
+        self.check_linux_and_windows()
+        self.skip_if_symlink_not_supported()
+        file_path = self.make_path('foo')
+        self.os.symlink(file_path, file_path)
+        self.assertFalse(self.os.path.lexists(file_path + self.os.sep))
+
+    def test_lexists_with_trailing_separator_macos(self):
+        # regression test for #373
+        self.check_macos_only()
+        file_path = self.make_path('foo')
+        self.os.symlink(file_path, file_path)
+        self.assertTrue(self.os.path.lexists(file_path + self.os.sep))
+
+    def test_islink_with_trailing_separator_linux_windows(self):
+        self.check_linux_and_windows()
+        self.skip_if_symlink_not_supported()
+        file_path = self.make_path('foo')
+        self.os.symlink(file_path, file_path)
+        self.assertFalse(self.os.path.islink(file_path + self.os.sep))
+
+    def test_islink_with_trailing_separator_macos(self):
+        # regression test for #373
+        self.check_macos_only()
+        file_path = self.make_path('foo')
+        self.os.symlink(file_path, file_path)
+        self.assertTrue(self.os.path.islink(file_path + self.os.sep))
+
+    def test_isfile_with_trailing_separator_linux_windows(self):
+        self.check_linux_and_windows()
+        file_path = self.make_path('foo')
+        self.create_file(file_path)
+        self.assertFalse(self.os.path.isfile(file_path + self.os.sep))
+
+    def test_isfile_with_trailing_separator_macos(self):
+        # regression test for #374
+        self.check_macos_only()
+        file_path = self.make_path('foo')
+        self.create_file(file_path)
+        self.assertFalse(self.os.path.isfile(file_path + self.os.sep))
 
     def check_stat_with_trailing_separator(self, error_nr):
         # regression test for #376
