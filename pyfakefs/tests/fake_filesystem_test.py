@@ -24,7 +24,7 @@ import time
 import unittest
 
 from pyfakefs import fake_filesystem
-from tests.test_utils import DummyTime, TestCase
+from pyfakefs.tests.test_utils import DummyTime, TestCase
 
 
 class FakeDirectoryUnitTest(TestCase):
@@ -1337,9 +1337,8 @@ class NormalizeCaseTest(TestCase):
     def test_normalize_case_for_lazily_added_empty_file(self):
         # regression test for specific issue with added empty real files
         filesystem = fake_filesystem.FakeFilesystem()
-        root_path = os.path.split(
+        real_dir_path = os.path.split(
             os.path.dirname(os.path.abspath(__file__)))[0]
-        real_dir_path = os.path.join(root_path, 'pyfakefs')
         filesystem.add_real_directory(real_dir_path)
         initPyPath = os.path.join(real_dir_path, '__init__.py')
         self.assertEqual(initPyPath,
@@ -1793,8 +1792,9 @@ class RealFileSystemAccessTest(TestCase):
         # use the real path separator to work with the real file system
         self.filesystem = fake_filesystem.FakeFilesystem()
         self.fake_open = fake_filesystem.FakeFileOpen(self.filesystem)
-        self.root_path = os.path.split(
+        self.pyfakefs_path = os.path.split(
             os.path.dirname(os.path.abspath(__file__)))[0]
+        self.root_path = os.path.split(self.pyfakefs_path)[0]
 
     def test_add_non_existing_real_file_raises(self):
         nonexisting_path = os.path.join('nonexisting', 'test.txt')
@@ -1893,15 +1893,15 @@ class RealFileSystemAccessTest(TestCase):
                                   target_path='/foo/bar')
 
     def test_add_existing_real_directory_read_only(self):
-        real_dir_path = os.path.join(self.root_path, 'pyfakefs')
-        self.filesystem.add_real_directory(real_dir_path)
-        self.assertTrue(self.filesystem.exists(real_dir_path))
+        self.filesystem.add_real_directory(self.pyfakefs_path)
+        self.assertTrue(self.filesystem.exists(self.pyfakefs_path))
         self.assertTrue(self.filesystem.exists(
-            os.path.join(real_dir_path, 'fake_filesystem.py')))
+            os.path.join(self.pyfakefs_path, 'fake_filesystem.py')))
         self.assertTrue(self.filesystem.exists(
-            os.path.join(real_dir_path, 'fake_pathlib.py')))
+            os.path.join(self.pyfakefs_path, 'fake_pathlib.py')))
 
-        file_path = os.path.join(real_dir_path, 'fake_filesystem_shutil.py')
+        file_path = os.path.join(self.pyfakefs_path,
+                                 'fake_filesystem_shutil.py')
         fake_file = self.filesystem.resolve(file_path)
         self.check_fake_file_stat(fake_file, file_path)
         self.check_read_only_file(fake_file, file_path)
@@ -1910,7 +1910,7 @@ class RealFileSystemAccessTest(TestCase):
         self.filesystem.add_real_directory(self.root_path)
         self.assertTrue(
             self.filesystem.exists(
-                os.path.join(self.root_path, 'tests',
+                os.path.join(self.root_path, 'pyfakefs', 'tests',
                              'fake_filesystem_test.py')))
         self.assertTrue(
             self.filesystem.exists(
@@ -1932,11 +1932,11 @@ class RealFileSystemAccessTest(TestCase):
                                            target_path='/foo/bar')
         self.assertFalse(
             self.filesystem.exists(
-                os.path.join(self.root_path, 'tests',
+                os.path.join(self.pyfakefs_path, 'tests',
                              'fake_filesystem_test.py')))
         self.assertTrue(
             self.filesystem.exists(
-                os.path.join('foo', 'bar', 'tests',
+                os.path.join('foo', 'bar', 'pyfakefs', 'tests',
                              'fake_filesystem_test.py')))
         self.assertFalse(
             self.filesystem.exists(
@@ -1975,55 +1975,54 @@ class RealFileSystemAccessTest(TestCase):
 
     def test_add_existing_real_directory_not_lazily(self):
         disk_size = 1024 * 1024 * 1024
-        real_dir_path = os.path.join(self.root_path, 'pyfakefs')
-        self.filesystem.set_disk_usage(disk_size, real_dir_path)
-        self.filesystem.add_real_directory(real_dir_path, lazy_read=False)
+        self.filesystem.set_disk_usage(disk_size, self.pyfakefs_path)
+        self.filesystem.add_real_directory(self.pyfakefs_path, lazy_read=False)
 
         # the directory has been read, so the file sizes have
         # been subtracted from the free space
-        self.assertGreater(disk_size,
-                           self.filesystem.get_disk_usage(real_dir_path).free)
+        self.assertGreater(disk_size, self.filesystem.get_disk_usage(
+            self.pyfakefs_path).free)
 
     def test_add_existing_real_directory_read_write(self):
-        real_dir_path = os.path.join(self.root_path, 'pyfakefs')
-        self.filesystem.add_real_directory(real_dir_path, read_only=False)
-        self.assertTrue(self.filesystem.exists(real_dir_path))
+        self.filesystem.add_real_directory(self.pyfakefs_path, read_only=False)
+        self.assertTrue(self.filesystem.exists(self.pyfakefs_path))
         self.assertTrue(self.filesystem.exists(
-            os.path.join(real_dir_path, 'fake_filesystem.py')))
+            os.path.join(self.pyfakefs_path, 'fake_filesystem.py')))
         self.assertTrue(self.filesystem.exists(
-            os.path.join(real_dir_path, 'fake_pathlib.py')))
+            os.path.join(self.pyfakefs_path, 'fake_pathlib.py')))
 
-        file_path = os.path.join(real_dir_path, 'pytest_plugin.py')
+        file_path = os.path.join(self.pyfakefs_path, 'pytest_plugin.py')
         fake_file = self.filesystem.resolve(file_path)
         self.check_fake_file_stat(fake_file, file_path)
         self.check_writable_file(fake_file, file_path)
 
     def test_add_existing_real_paths_read_only(self):
         real_file_path = os.path.realpath(__file__)
-        real_dir_path = os.path.join(self.root_path, 'pyfakefs')
-        self.filesystem.add_real_paths([real_file_path, real_dir_path])
+        fixture_path = os.path.join(self.pyfakefs_path, 'tests', 'fixtures')
+        self.filesystem.add_real_paths([real_file_path, fixture_path])
 
         fake_file = self.filesystem.resolve(real_file_path)
         self.check_fake_file_stat(fake_file, real_file_path)
         self.check_read_only_file(fake_file, real_file_path)
 
-        real_file_path = os.path.join(real_dir_path,
-                                      'fake_filesystem_shutil.py')
+        real_file_path = os.path.join(fixture_path,
+                                      'module_with_attributes.py')
         fake_file = self.filesystem.resolve(real_file_path)
         self.check_fake_file_stat(fake_file, real_file_path)
         self.check_read_only_file(fake_file, real_file_path)
 
     def test_add_existing_real_paths_read_write(self):
         real_file_path = os.path.realpath(__file__)
-        real_dir_path = os.path.join(self.root_path, 'pyfakefs')
-        self.filesystem.add_real_paths([real_file_path, real_dir_path],
+        fixture_path = os.path.join(self.pyfakefs_path, 'tests', 'fixtures')
+        self.filesystem.add_real_paths([real_file_path, fixture_path],
                                        read_only=False)
 
         fake_file = self.filesystem.resolve(real_file_path)
         self.check_fake_file_stat(fake_file, real_file_path)
         self.check_writable_file(fake_file, real_file_path)
 
-        real_file_path = os.path.join(real_dir_path, 'fake_pathlib.py')
+        real_file_path = os.path.join(fixture_path,
+                                      'module_with_attributes.py')
         fake_file = self.filesystem.resolve(real_file_path)
         self.check_fake_file_stat(fake_file, real_file_path)
         self.check_writable_file(fake_file, real_file_path)

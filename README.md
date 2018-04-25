@@ -70,8 +70,8 @@ pyfakefs is currently automatically tested:
 pyfakefs unit tests are available via two test scripts:
 
 ```bash
-$ python -m tests.all_tests
-$ py.test tests/pytest_plugin_test.py
+$ python -m pyfakefs.tests.all_tests
+$ python -m pytest pyfakefs/tests/pytest_plugin_test.py
 ```
 
 These scripts are called by `tox` and Travis-CI. `tox` can be used to run tests

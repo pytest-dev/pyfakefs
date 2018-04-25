@@ -6,8 +6,10 @@ The release versions are PyPi releases.
 #### New Features
 
 #### Infrastructure
+  * moved tests into package
 
 #### Fixes
+  * `add_real_directory` did not behave correctly for nested paths
   * several fixes for the behavior if using file paths that end with a path 
   separator:
     * `os.exists` returned `True` instead of `False` ([#364](../../issues/364))

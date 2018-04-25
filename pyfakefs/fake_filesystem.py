@@ -2303,8 +2303,9 @@ class FakeFilesystem(object):
             new_dir.st_ino = self._last_ino
         else:
             new_dir = self.create_dir(target_path)
-            new_base = new_dir.path
             for base, _, files in os.walk(source_path):
+                new_base = os.path.join(new_dir.path,
+                                        os.path.relpath(base, source_path))
                 for fileEntry in files:
                     self.add_real_file(os.path.join(base, fileEntry),
                                        read_only,

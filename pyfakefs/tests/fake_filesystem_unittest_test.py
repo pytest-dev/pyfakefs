@@ -30,8 +30,8 @@ from unittest import TestCase
 
 from pyfakefs import fake_filesystem_unittest, fake_filesystem
 from pyfakefs.fake_filesystem_unittest import Patcher
-import tests.import_as_example
-from tests.fixtures import module_with_attributes
+import pyfakefs.tests.import_as_example
+from pyfakefs.tests.fixtures import module_with_attributes
 
 if sys.version_info >= (3, 4):
     import pathlib
@@ -141,7 +141,7 @@ class TestPyfakefsUnittest(TestPyfakefsUnittestBase):  # pylint: disable=R0904
 
 class TestImportAsOtherName(fake_filesystem_unittest.TestCase):
     def __init__(self, methodName='RunTest'):
-        modules_to_load = [tests.import_as_example]
+        modules_to_load = [pyfakefs.tests.import_as_example]
         super(TestImportAsOtherName, self).__init__(
             methodName, modules_to_reload=modules_to_load)
 
@@ -152,7 +152,7 @@ class TestImportAsOtherName(fake_filesystem_unittest.TestCase):
         file_path = '/foo/bar/baz'
         self.fs.create_file(file_path)
         self.assertTrue(self.fs.exists(file_path))
-        self.assertTrue(tests.import_as_example.check_if_exists(file_path))
+        self.assertTrue(pyfakefs.tests.import_as_example.check_if_exists(file_path))
 
 
 class TestAttributesWithFakeModuleNames(TestPyfakefsUnittestBase):
@@ -232,7 +232,7 @@ if sys.version_info >= (3, 4):
             file_path = '/foo/bar'
             self.fs.create_dir(file_path)
             self.assertTrue(
-                tests.import_as_example.check_if_path_exists(file_path))
+                pyfakefs.tests.import_as_example.check_if_path_exists(file_path))
 
 
 class PatchAsOtherNameTest(TestPyfakefsUnittestBase):
@@ -248,7 +248,7 @@ class PatchAsOtherNameTest(TestPyfakefsUnittestBase):
         file_path = '/foo/bar'
         self.fs.create_dir(file_path)
         self.assertTrue(
-            tests.import_as_example.check_if_exists(file_path))
+            pyfakefs.tests.import_as_example.check_if_exists(file_path))
 
 
 class TestCopyOrAddRealFile(TestPyfakefsUnittestBase):
@@ -331,8 +331,7 @@ class TestCopyOrAddRealFile(TestPyfakefsUnittestBase):
         # fake_filesystem_test.RealFileSystemAccessTest.
         # Note: this test fails (add_real_directory raises) if 'genericpath'
         # is not added to SKIPNAMES
-        root_path = os.path.split(os.path.dirname(self.filepath))[0]
-        real_dir_path = os.path.join(root_path, 'pyfakefs')
+        real_dir_path = os.path.split(os.path.dirname(self.filepath))[0]
         self.fs.add_real_directory(real_dir_path)
         self.assertTrue(self.fs.exists(real_dir_path))
         self.assertTrue(self.fs.exists(

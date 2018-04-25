@@ -28,7 +28,7 @@ from pyfakefs import fake_filesystem
 from pyfakefs.fake_filesystem import FakeFileOpen
 from pyfakefs.fake_filesystem_unittest import has_scandir
 
-from tests.test_utils import DummyTime, TestCase, RealFsTestCase
+from pyfakefs.tests.test_utils import DummyTime, TestCase, RealFsTestCase
 
 
 class FakeOsModuleTestBase(RealFsTestCase):

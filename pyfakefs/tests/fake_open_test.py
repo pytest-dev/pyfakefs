@@ -27,7 +27,7 @@ import time
 import unittest
 
 from pyfakefs import fake_filesystem
-from tests.test_utils import DummyTime, TestCase, RealFsTestCase
+from pyfakefs.tests.test_utils import DummyTime, TestCase, RealFsTestCase
 
 
 class FakeFileOpenTestBase(RealFsTestCase):

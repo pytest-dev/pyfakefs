@@ -19,20 +19,20 @@
 import sys
 import unittest
 
-from tests import dynamic_patch_test
-from tests import fake_open_test
-from tests import fake_os_test
-from tests import example_test
-from tests import fake_filesystem_glob_test
-from tests import fake_filesystem_shutil_test
-from tests import fake_filesystem_test
-from tests import fake_filesystem_unittest_test
-from tests import fake_tempfile_test
-from tests import fake_filesystem_vs_real_test
-from tests import mox3_stubout_test
+from pyfakefs.tests import dynamic_patch_test
+from pyfakefs.tests import fake_open_test
+from pyfakefs.tests import fake_os_test
+from pyfakefs.tests import example_test
+from pyfakefs.tests import fake_filesystem_glob_test
+from pyfakefs.tests import fake_filesystem_shutil_test
+from pyfakefs.tests import fake_filesystem_test
+from pyfakefs.tests import fake_filesystem_unittest_test
+from pyfakefs.tests import fake_tempfile_test
+from pyfakefs.tests import fake_filesystem_vs_real_test
+from pyfakefs.tests import mox3_stubout_test
 
 if sys.version_info >= (3, 4):
-    from tests import fake_pathlib_test
+    from pyfakefs.tests import fake_pathlib_test
 
 
 class AllTests(unittest.TestSuite):
