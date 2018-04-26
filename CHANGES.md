@@ -7,6 +7,7 @@ The release versions are PyPi releases.
 
 #### Infrastructure
   * moved tests into package
+  * use README.md in pypi ([#358](../../issues/358))
 
 #### Fixes
   * `add_real_directory` did not behave correctly for nested paths

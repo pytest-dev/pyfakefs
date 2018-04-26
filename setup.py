@@ -15,6 +15,9 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+import os
+
+from setuptools import setup, find_packages
 
 from pyfakefs.fake_filesystem import __version__
 
@@ -25,18 +28,10 @@ DESCRIPTION = ('pyfakefs implements a fake file system that mocks '
 
 URL = "http://pyfakefs.org"
 
-try:
-    import pypandoc
+BASE_PATH = os.path.abspath(os.path.dirname(__file__))
+with open(os.path.join(BASE_PATH, 'README.md')) as f:
+    LONG_DESCRIPTION = f.read()
 
-    LONG_DESCRIPTION = pypandoc.convert('README.md', 'rst')
-    with open('README.rst', 'w') as f:
-        f.write(LONG_DESCRIPTION)
-except ImportError:
-    LONG_DESCRIPTION = (
-        'Using pyfakefs, your tests operate on a fake file system in memory '
-        'without touching the real disk. The software under test requires '
-        'no modification to work with pyfakefs.'
-    )
 
 CLASSIFIERS = [
     'Development Status :: 5 - Production/Stable',
@@ -80,17 +75,11 @@ params = dict(
     maintainer_email=MAINTAINER_EMAIL,
     description=DESCRIPTION,
     long_description=LONG_DESCRIPTION,
+    long_description_content_type='text/markdown',
     keywords=KEYWORDS,
     url=URL,
     classifiers=CLASSIFIERS,
-    packages=[
-        'pyfakefs'
-    ]
+    packages=find_packages(exclude=['docs'])
 )
 
-try:
-    from setuptools import setup
-except ImportError:
-    from distutils.core import setup
-
-setup(**params)  # pylint: disable = W0142
+setup(**params)
