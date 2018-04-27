@@ -10,6 +10,7 @@ The release versions are PyPi releases.
   * use README.md in pypi ([#358](../../issues/358))
 
 #### Fixes
+  * `closed` attribute was not implemented in fake file ([#380](../../issues/380))
   * `add_real_directory` did not behave correctly for nested paths
   * several fixes for the behavior if using file paths that end with a path 
   separator:

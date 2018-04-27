@@ -892,6 +892,17 @@ class FakeFileOpenTest(FakeFileOpenTestBase):
         # Regression test for #295
         self.check_seek_outside_and_truncate_sets_size('a')
 
+    def test_closed(self):
+        file_path = self.make_path('foo')
+        f = self.open(file_path, 'w')
+        self.assertFalse(f.closed)
+        f.close()
+        self.assertTrue(f.closed)
+        f = self.open(file_path)
+        self.assertFalse(f.closed)
+        f.close()
+        self.assertTrue(f.closed)
+
     def test_closing_closed_file_does_nothing(self):
         # Regression test for #299
         file_path = self.make_path('baz')
@@ -901,6 +912,7 @@ class FakeFileOpenTest(FakeFileOpenTestBase):
             # would close f1 if not handled
             f0.close()
             self.assertEqual('', f1.read())
+
 
     @unittest.skipIf(TestCase.is_python2,
                      'closefd argument not available in Python2')

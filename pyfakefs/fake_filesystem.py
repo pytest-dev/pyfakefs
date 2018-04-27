@@ -4251,6 +4251,11 @@ class FakeFileWrapper(object):
         if self.delete_on_close:
             self._filesystem.remove_object(self.get_object().path)
 
+    @property
+    def closed(self):
+        """Simulate the `closed` attribute on file."""
+        return not self._is_open()
+
     def flush(self):
         """Flush file contents to 'disk'."""
         self._check_open_file()
