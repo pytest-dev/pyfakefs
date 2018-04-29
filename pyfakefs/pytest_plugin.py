@@ -8,11 +8,14 @@ def my_fakefs_test(fs):
     fs.create_file('/var/data/xx1.txt')
     assert os.path.exists('/var/data/xx1.txt')
 """
+import linecache
+
 import py
 import pytest
 from pyfakefs.fake_filesystem_unittest import Patcher
 
 Patcher.SKIPMODULES.add(py)  # Ignore pytest components when faking filesystem
+Patcher.SKIPMODULES.add(linecache)  # Seems to be used by pytest internally
 
 
 @pytest.fixture
