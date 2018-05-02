@@ -1064,8 +1064,8 @@ class FakeFilesystem(object):
         try:
             file_object = self.resolve(
                 entry_path, follow_symlinks, allow_fd=True)
-            self.raise_for_filepath_ending_with_separator(entry_path,
-                                                          file_object)
+            self.raise_for_filepath_ending_with_separator(
+                entry_path, file_object, follow_symlinks)
 
             return file_object.stat_result.copy()
         except IOError as io_error:
@@ -1074,12 +1074,29 @@ class FakeFilesystem(object):
             self.raise_os_error(io_error.errno, entry_path, winerror=winerror)
 
     def raise_for_filepath_ending_with_separator(self, entry_path,
-                                                 file_object):
-        if (self.ends_with_path_separator(entry_path) and
-                S_ISREG(file_object.st_mode)):
-            error_nr = (errno.EINVAL if self.is_windows_fs
-                        else errno.ENOTDIR)
-            self.raise_os_error(error_nr, entry_path)
+                                                 file_object,
+                                                 follow_symlinks=True,
+                                                 macos_handling=False):
+        if self.ends_with_path_separator(entry_path):
+            if S_ISLNK(file_object.st_mode):
+                try:
+                    link_object = self.resolve(entry_path)
+                except (IOError, OSError):
+                    if self.is_macos:
+                        return
+                    raise
+                if not follow_symlinks or self.is_windows_fs or self.is_macos:
+                    file_object = link_object
+            if self.is_windows_fs:
+                is_error = S_ISREG(file_object.st_mode)
+            elif self.is_macos and macos_handling:
+                is_error = not S_ISLNK(file_object.st_mode)
+            else:
+                is_error = not S_ISDIR(file_object.st_mode)
+            if is_error:
+                error_nr = (errno.EINVAL if self.is_windows_fs
+                            else errno.ENOTDIR)
+                self.raise_os_error(error_nr, entry_path)
 
     def chmod(self, path, mode, follow_symlinks=True):
         """Change the permissions of a file as encoded in integer mode.
@@ -1603,10 +1620,19 @@ class FakeFilesystem(object):
             return False
         file_path = make_string_path(file_path)
         return (file_path and
+                file_path not in (self.path_separator,
+                                  self.alternative_path_separator) and
                 (file_path.endswith(self._path_separator(file_path)) or
                  self.alternative_path_separator is not None and
                  file_path.endswith(
                      self._alternative_path_separator(file_path))))
+
+    def is_filepath_ending_with_separator(self, path):
+        if not self.ends_with_path_separator(path):
+            return False
+        while self.ends_with_path_separator(path):
+            path = path[:-1]
+        return self.isfile(path)
 
     def _directory_content(self, directory, component):
         if not isinstance(directory, FakeDirectory):
@@ -1642,8 +1668,7 @@ class FakeFilesystem(object):
         if not file_path:
             return False
         try:
-            if (self.ends_with_path_separator(file_path) and
-                    self.isfile(file_path)):
+            if self.is_filepath_ending_with_separator(file_path):
                 return False
             file_path = self.resolve_path(file_path)
         except (IOError, OSError):
@@ -2621,8 +2646,10 @@ class FakeFilesystem(object):
             raise TypeError
         try:
             obj = self.resolve(path, follow_symlinks,
-                               allow_trailing_separator=False)
+                               allow_trailing_separator=True)
             if obj:
+                self.raise_for_filepath_ending_with_separator(
+                    path, obj, macos_handling=True)
                 return S_IFMT(obj.st_mode) == st_flag
         except (IOError, OSError):
             return False
