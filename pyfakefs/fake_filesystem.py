@@ -2459,8 +2459,20 @@ class FakeFilesystem(object):
         if self.ends_with_path_separator(file_path):
             if self.exists(file_path):
                 self.raise_os_error(errno.EEXIST, file_path)
-            if not self.is_windows_fs:
-                self.raise_os_error(errno.ENOENT, file_path)
+            if self.exists(link_target):
+                if not self.is_windows_fs:
+                    self.raise_os_error(errno.ENOENT, file_path)
+            else:
+                if self.is_windows_fs:
+                    self.raise_os_error(errno.EINVAL, link_target)
+                elif self.is_macos:
+                    # to avoid EEXIST exception, remove the link
+                    # if it already exists
+                    if self.exists(file_path, check_link=True):
+                        self.remove_object(file_path)
+                else:
+                    self.raise_os_error(errno.EEXIST, link_target)
+
 
         # resolve the link path only if it is not a link itself
         if not self.islink(file_path):
