@@ -612,6 +612,31 @@ class FakeOsModuleTest(FakeOsModuleTestBase):
         self.skip_if_symlink_not_supported()
         self.assertRaises(TypeError, self.os.readlink, None)
 
+    def test_broken_symlink_with_trailing_separator_linux(self):
+        self.check_linux_only()
+        file_path = self.make_path('foo')
+        link_path = self.make_path('link')
+        self.os.symlink(file_path, link_path)
+        self.assert_raises_os_error(errno.EEXIST, self.os.symlink,
+            link_path + self.os.sep, link_path + self.os.sep)
+
+    def test_broken_symlink_with_trailing_separator_macos(self):
+        # regression test for #371
+        self.check_macos_only()
+        file_path = self.make_path('foo')
+        link_path = self.make_path('link')
+        self.os.symlink(file_path, link_path)
+        self.os.symlink(link_path + self.os.sep, link_path + self.os.sep)
+
+    def test_broken_symlink_with_trailing_separator_windows(self):
+        self.check_windows_only()
+        self.skip_if_symlink_not_supported()
+        file_path = self.make_path('foo')
+        link_path = self.make_path('link')
+        self.os.symlink(file_path, link_path)
+        self.assert_raises_os_error(errno.EINVAL, self.os.symlink,
+            link_path + self.os.sep, link_path + self.os.sep)
+
     def test_readlink_with_links_in_path(self):
         self.skip_if_symlink_not_supported()
         self.create_symlink(self.make_path('meyer', 'lemon', 'pie'),
