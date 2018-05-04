@@ -62,7 +62,7 @@ class TestCase(unittest.TestCase):
             expression(*args, **kwargs)
             self.fail('No exception was raised, IOError expected')
         except IOError as exc:
-            self.assertEqual(exc.errno, subtype)
+            self.assertEqual(subtype, exc.errno)
 
     def assert_raises_os_error(self, subtype, expression, *args, **kwargs):
         """Asserts that a specific subtype of OSError is raised."""
@@ -70,7 +70,7 @@ class TestCase(unittest.TestCase):
             expression(*args, **kwargs)
             self.fail('No exception was raised, OSError expected')
         except OSError as exc:
-            self.assertEqual(exc.errno, subtype)
+            self.assertEqual(subtype, exc.errno)
 
 
 class RealFsTestMixin(object):
