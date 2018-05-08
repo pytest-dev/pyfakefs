@@ -353,7 +353,7 @@ class FakeOsModuleTest(FakeOsModuleTestBase):
         self.os.mkdir(dir_path + self.os.sep + self.os.sep)
         self.assertTrue(self.os.path.exists(dir_path))
 
-    def test_read_link_ending_with_sep_posix(self):
+    def test_readlink_ending_with_sep_posix(self):
         # regression test for #359
         self.check_posix_only()
         link_path = self.make_path('foo')
@@ -379,7 +379,7 @@ class FakeOsModuleTest(FakeOsModuleTestBase):
         # used to raise
         self.assertTrue(self.os.lstat(link_path + self.os.sep).st_mode)
 
-    def test_read_link_ending_with_sep_windows(self):
+    def test_readlink_ending_with_sep_windows(self):
         self.check_windows_only()
         self.skip_if_symlink_not_supported()
         link_path = self.make_path('foo')
@@ -636,6 +636,27 @@ class FakeOsModuleTest(FakeOsModuleTestBase):
         self.os.symlink(file_path, link_path)
         self.assert_raises_os_error(errno.EINVAL, self.os.symlink,
             link_path + self.os.sep, link_path + self.os.sep)
+
+    def test_circular_readlink_with_trailing_separator_372_linux(self):
+        self.check_linux_only()
+        file_path = self.make_path('foo')
+        self.os.symlink(file_path, file_path)
+        self.assert_raises_os_error(errno.ELOOP, self.os.readlink,
+                                    file_path + self.os.sep)
+
+    def test_circular_readlink_with_trailing_separator_372_macos(self):
+        self.check_macos_only()
+        file_path = self.make_path('foo')
+        self.os.symlink(file_path, file_path)
+        print(self.os.readlink(file_path + self.os.sep))
+
+    def test_circular_readlink_with_trailing_separator_372_windows(self):
+        self.check_windows_only()
+        self.skip_if_symlink_not_supported()
+        file_path = self.make_path('foo')
+        self.os.symlink(file_path, file_path)
+        self.assert_raises_os_error(errno.EINVAL, self.os.readlink,
+                                    file_path + self.os.sep)
 
     def test_readlink_with_links_in_path(self):
         self.skip_if_symlink_not_supported()
