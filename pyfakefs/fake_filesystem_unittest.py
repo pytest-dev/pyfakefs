@@ -161,7 +161,7 @@ class TestCaseMixin(object):
     """
 
     additional_skip_names = None
-    patch_patch = True
+    patch_path = True
     modules_to_reload = None
     use_dynamic_patch = True
     modules_to_patch = None

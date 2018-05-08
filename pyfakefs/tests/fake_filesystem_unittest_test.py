@@ -366,5 +366,13 @@ class TestTempFileReload(unittest.TestCase):
         self.assertEqual(v.value, 0)
 
 
+class TestPyfakefsTestCaseMixin(unittest.TestCase, fake_filesystem_unittest.TestCaseMixin):
+    def test_set_up_pyfakefs(self):
+        self.setUpPyfakefs()
+
+        self.assertTrue(hasattr(self, 'fs'))
+        self.assertIsInstance(self.fs, fake_filesystem.FakeFilesystem)
+
+
 if __name__ == "__main__":
     unittest.main()
