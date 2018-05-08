@@ -1900,8 +1900,7 @@ class FakeFilesystem(object):
         file_path = self.absnormpath(self._original_path(file_path))
         return self.get_object_from_normpath(file_path)
 
-    def resolve(self, file_path, follow_symlinks=True, allow_fd=False,
-                allow_trailing_separator=True):
+    def resolve(self, file_path, follow_symlinks=True, allow_fd=False):
         """Search for the specified filesystem object, resolving all links.
 
         Args:
@@ -1909,9 +1908,6 @@ class FakeFilesystem(object):
             follow_symlinks: If `False`, the link itself is resolved,
                 otherwise the object linked to.
             allow_fd: If `True`, `file_path` may be an open file descriptor
-            allow_trailing_separator: If False and file_path is ending with
-                a separator and not pointing to a directory, raises OSError
-                under Posix.
 
         Returns:
           The FakeFile object corresponding to `file_path`.
@@ -1928,9 +1924,9 @@ class FakeFilesystem(object):
         if follow_symlinks:
             file_path = make_string_path(file_path)
             return self.get_object_from_normpath(self.resolve_path(file_path))
-        return self.lresolve(file_path, allow_trailing_separator)
+        return self.lresolve(file_path)
 
-    def lresolve(self, path, allow_trailing_separator=True):
+    def lresolve(self, path):
         """Search for the specified object, resolving only parent links.
 
         This is analogous to the stat/lstat difference.  This resolves links
@@ -1938,9 +1934,6 @@ class FakeFilesystem(object):
 
         Args:
             path: Specifies target FakeFile object to retrieve.
-            allow_trailing_separator: If False and file_path is ending with
-                a separator and not pointing to a directory, raises OSError
-                under Posix.
 
         Returns:
             The FakeFile object corresponding to path.
@@ -1969,11 +1962,7 @@ class FakeFilesystem(object):
                 if not self.is_windows_fs and isinstance(parent_obj, FakeFile):
                     self.raise_io_error(errno.ENOTDIR, path)
                 self.raise_io_error(errno.ENOENT, path)
-            obj = parent_obj.get_entry(child_name)
-            if (not self.is_windows_fs and not allow_trailing_separator and
-                    ends_with_sep and not isinstance(obj, FakeDirectory)):
-                self.raise_os_error(errno.EINVAL, path)
-            return obj
+            return parent_obj.get_entry(child_name)
         except KeyError:
             self.raise_io_error(errno.ENOENT, path)
 
@@ -2549,11 +2538,19 @@ class FakeFilesystem(object):
         if path is None:
             raise TypeError
         try:
-            link_obj = self.lresolve(path, allow_trailing_separator=False)
+            link_obj = self.lresolve(path)
         except IOError as exc:
             self.raise_os_error(exc.errno, path)
         if S_IFMT(link_obj.st_mode) != S_IFLNK:
             self.raise_os_error(errno.EINVAL, path)
+
+        if self.ends_with_path_separator(path):
+            if not self.is_windows_fs and self.exists(path):
+                self.raise_os_error(errno.EINVAL, path)
+            if not self.is_macos and not self.exists(link_obj.path):
+                error = errno.EINVAL if self.is_windows_fs else errno.ELOOP
+                self.raise_os_error(error, link_obj.path)
+
 
         return link_obj.contents
 
@@ -2657,8 +2654,7 @@ class FakeFilesystem(object):
         if path is None:
             raise TypeError
         try:
-            obj = self.resolve(path, follow_symlinks,
-                               allow_trailing_separator=True)
+            obj = self.resolve(path, follow_symlinks)
             if obj:
                 self.raise_for_filepath_ending_with_separator(
                     path, obj, macos_handling=True)
