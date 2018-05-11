@@ -1212,6 +1212,10 @@ class FakeOsModuleTest(FakeOsModuleTestBase):
         self.check_macos_only()
         self.check_append_mode_tell_after_truncate(7)
 
+    def test_dir_with_trailing_sep_is_dir(self):
+        # regression test for #387
+        self.assertTrue(self, self.os.path.isdir(self.base_path + self.os.sep))
+
     def test_rename_dir(self):
         """Test a rename of a directory."""
         directory = self.make_path('xyzzy')
