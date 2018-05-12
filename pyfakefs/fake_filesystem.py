@@ -2657,7 +2657,7 @@ class FakeFilesystem(object):
             obj = self.resolve(path, follow_symlinks)
             if obj:
                 self.raise_for_filepath_ending_with_separator(
-                    path, obj, macos_handling=True)
+                    path, obj, macos_handling=not follow_symlinks)
                 return S_IFMT(obj.st_mode) == st_flag
         except (IOError, OSError):
             return False
