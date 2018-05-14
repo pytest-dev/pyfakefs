@@ -2125,6 +2125,20 @@ class FakeOsModuleTest(FakeOsModuleTestBase):
         # does not raise under Windows
         self.os.symlink(self.base_path, dir_path + self.os.sep)
 
+    def test_broken_symlink_with_trailing_sep_posix(self):
+        # Regression test for #390
+        self.check_linux_only()
+        path0 = self.make_path('foo') + self.os.sep
+        self.assert_raises_os_error(
+            errno.ENOENT, self.os.symlink, path0, path0)
+
+    def test_broken_symlink_with_trailing_sep_windows(self):
+        self.check_windows_only()
+        self.skip_if_symlink_not_supported()
+        path0 = self.make_path('foo') + self.os.sep
+        self.assert_raises_os_error(
+            errno.EINVAL, self.os.symlink, path0, path0)
+
     # hard link related tests
     def test_link_bogus(self):
         # trying to create a link from a non-existent file should fail
