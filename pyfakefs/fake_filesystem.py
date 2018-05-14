@@ -1630,9 +1630,7 @@ class FakeFilesystem(object):
     def is_filepath_ending_with_separator(self, path):
         if not self.ends_with_path_separator(path):
             return False
-        while self.ends_with_path_separator(path):
-            path = path[:-1]
-        return self.isfile(path)
+        return self.isfile(self._path_without_trailing_separators(path))
 
     def _directory_content(self, directory, component):
         if not isinstance(directory, FakeDirectory):
@@ -1947,9 +1945,7 @@ class FakeFilesystem(object):
             return self.root
 
         # remove trailing separator
-        ends_with_sep = self.ends_with_path_separator(path)
-        while self.ends_with_path_separator(path):
-            path = path[:-1]
+        path = self._path_without_trailing_separators(path)
         path = self._original_path(path)
 
         parent_directory, child_name = self.splitpath(path)
@@ -2454,7 +2450,11 @@ class FakeFilesystem(object):
             else:
                 if self.is_windows_fs:
                     self.raise_os_error(errno.EINVAL, link_target)
-                elif self.is_macos:
+                if not self.exists(
+                        self._path_without_trailing_separators(file_path),
+                        check_link=True):
+                    self.raise_os_error(errno.ENOENT, link_target)
+                if self.is_macos:
                     # to avoid EEXIST exception, remove the link
                     # if it already exists
                     if self.exists(file_path, check_link=True):
@@ -2568,8 +2568,7 @@ class FakeFilesystem(object):
                 read only or as per :py:meth:`add_object`.
         """
         dir_name = make_string_path(dir_name)
-        while self.ends_with_path_separator(dir_name):
-            dir_name = dir_name[:-1]
+        dir_name = self._path_without_trailing_separators(dir_name)
         if not dir_name:
             self.raise_os_error(errno.ENOENT, '')
 
@@ -2596,6 +2595,11 @@ class FakeFilesystem(object):
 
         self.add_object(
             head, FakeDirectory(tail, mode & ~self.umask, filesystem=self))
+
+    def _path_without_trailing_separators(self, path):
+        while self.ends_with_path_separator(path):
+            path = path[:-1]
+        return path
 
     def makedirs(self, dir_name, mode=PERM_DEF, exist_ok=False):
         """Create a leaf Fake directory and create any non-existent
