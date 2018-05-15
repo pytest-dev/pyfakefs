@@ -2011,6 +2011,7 @@ class FakeFilesystem(object):
             OSError: if the file would be moved to another filesystem
                 (e.g. mount point).
         """
+        ends_with_sep = self.ends_with_path_separator(old_file_path)
         old_file_path = self._original_path(self.absnormpath(old_file_path))
         new_file_path = self.absnormpath(new_file_path)
         if not self.exists(old_file_path, check_link=True):
@@ -2018,11 +2019,13 @@ class FakeFilesystem(object):
 
         old_object = self.lresolve(old_file_path)
         if not self.is_windows_fs:
-            self._handle_posix_dir_link_errors(new_file_path, old_file_path)
+            self._handle_posix_dir_link_errors(
+                new_file_path, old_file_path, ends_with_sep)
 
         if self.exists(new_file_path, check_link=True):
             new_file_path = self._rename_to_existing_path(
-                force_replace, new_file_path, old_file_path, old_object)
+                force_replace, new_file_path, old_file_path,
+                old_object, ends_with_sep)
 
         if not new_file_path:
             return
@@ -2051,18 +2054,21 @@ class FakeFilesystem(object):
             new_dir_object.remove_entry(new_name)
         new_dir_object.add_entry(object_to_rename)
 
-    def _handle_posix_dir_link_errors(self, new_file_path, old_file_path):
+    def _handle_posix_dir_link_errors(self, new_file_path, old_file_path,
+                                      ends_with_sep):
         if (self.isdir(old_file_path, follow_symlinks=False) and
                 self.islink(new_file_path)):
             self.raise_os_error(errno.ENOTDIR, new_file_path)
         if (self.isdir(new_file_path, follow_symlinks=False) and
                 self.islink(old_file_path)):
-            self.raise_os_error(errno.EISDIR, new_file_path)
+            if ends_with_sep and self.is_macos:
+                return
+            error = errno.ENOTDIR if ends_with_sep else errno.EISDIR
+            self.raise_os_error(error, new_file_path)
 
     def _rename_to_existing_path(self, force_replace, new_file_path,
-                                 old_file_path, old_object):
+                                 old_file_path, old_object, ends_with_sep):
         if old_file_path == new_file_path:
-            new_file_path = None
             return  # Nothing to do here.
 
         new_object = self.get_object(new_file_path)
@@ -2071,7 +2077,8 @@ class FakeFilesystem(object):
                 new_file_path, old_file_path)
         elif (S_ISDIR(new_object.st_mode) or S_ISLNK(new_object.st_mode)):
             self._handle_rename_error_for_dir_or_link(
-                force_replace, new_file_path, new_object, old_object)
+                force_replace, new_file_path,
+                new_object, old_object, ends_with_sep)
         elif S_ISDIR(old_object.st_mode):
             error = errno.EEXIST if self.is_windows_fs else errno.ENOTDIR
             self.raise_os_error(error, new_file_path)
@@ -2086,7 +2093,7 @@ class FakeFilesystem(object):
 
     def _handle_rename_error_for_dir_or_link(self, force_replace,
                                              new_file_path, new_object,
-                                             old_object):
+                                             old_object, ends_with_sep):
         if self.is_windows_fs:
             if force_replace:
                 self.raise_os_error(errno.EACCES, new_file_path)
@@ -2094,7 +2101,8 @@ class FakeFilesystem(object):
                 self.raise_os_error(errno.EEXIST, new_file_path)
         if not S_ISLNK(new_object.st_mode):
             if new_object.contents:
-                self.raise_os_error(errno.ENOTEMPTY, new_file_path)
+                if not ends_with_sep or not self.is_macos:
+                    self.raise_os_error(errno.ENOTEMPTY, new_file_path)
             if S_ISREG(old_object.st_mode):
                 self.raise_os_error(errno.EISDIR, new_file_path)
 
