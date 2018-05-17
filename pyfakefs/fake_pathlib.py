@@ -228,8 +228,8 @@ class _FakeFlavour(pathlib._Flavour):
         return parts
 
     def _resolve_posix(self, path, strict):
-        """Original implementation in Python 3.6."""
         sep = self.sep
+        accessor = path._accessor
         seen = {}
 
         def _resolve(path, rest):
@@ -251,27 +251,23 @@ class _FakeFlavour(pathlib._Flavour):
                     if path is not None:
                         # use cached value
                         continue
-                    # The symlink is not resolved, so we must have a
-                    # symlink loop.
+                    # The symlink is not resolved, so we must have a symlink loop.
                     raise RuntimeError("Symlink loop from %r" % newpath)
                 # Resolve the symbolic link
                 try:
                     target = self.filesystem.readlink(newpath)
-                except OSError as exc:
-                    if exc.errno != errno.EINVAL:
-                        if strict:
-                            raise
-                        else:
-                            return newpath
-                    # Not a symlink
+                except OSError as e:
+                    if e.errno != errno.EINVAL and strict:
+                        raise
+                    # Not a symlink, or non-strict mode. We just leave the path
+                    # untouched.
                     path = newpath
                 else:
-                    seen[newpath] = None  # not resolved symlink
+                    seen[newpath] = None # not resolved symlink
                     path = _resolve(path, target)
-                    seen[newpath] = path  # resolved symlink
+                    seen[newpath] = path # resolved symlink
 
             return path
-
         # NOTE: according to POSIX, getcwd() cannot contain path components
         # which are symlinks.
         base = '' if path.is_absolute() else self.filesystem.cwd

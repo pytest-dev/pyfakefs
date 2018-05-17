@@ -406,10 +406,10 @@ class FakePathlibFileObjectPropertyTest(RealPathlibTestCase):
 
     @unittest.skipIf(sys.version_info < (3, 6),
                      'Changed behavior in Python 3.6')
-    def test_resolve_nonexisting_file_before_36(self):
+    def test_resolve_nonexisting_file_after_36(self):
         path = self.path(
             self.make_path('/path', 'to', 'file', 'this can not exist'))
-        self.assertTrue(path, path.resolve())
+        self.assertEqual(path, path.resolve())
         self.assertRaises(FileNotFoundError, path.resolve, strict=True)
 
     def test_cwd(self):
