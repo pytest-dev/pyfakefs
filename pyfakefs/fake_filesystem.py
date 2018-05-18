@@ -2567,10 +2567,16 @@ class FakeFilesystem(object):
         if self.ends_with_path_separator(path):
             if not self.is_windows_fs and self.exists(path):
                 self.raise_os_error(errno.EINVAL, path)
-            if not self.is_macos and not self.exists(link_obj.path):
-                error = errno.EINVAL if self.is_windows_fs else errno.ELOOP
+            if not self.exists(link_obj.path):
+                if self.is_windows_fs:
+                    error = errno.EINVAL
+                elif link_obj.path == link_obj.contents:
+                    if self.is_macos:
+                        return
+                    error = errno.ELOOP
+                else:
+                    error = errno.ENOENT
                 self.raise_os_error(error, link_obj.path)
-
 
         return link_obj.contents
 
