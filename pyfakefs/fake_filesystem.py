@@ -2077,6 +2077,10 @@ class FakeFilesystem(object):
                 return
             error = errno.ENOTDIR if ends_with_sep else errno.EISDIR
             self.raise_os_error(error, new_file_path)
+        if (ends_with_sep and self.islink(old_file_path) and
+                old_file_path == new_file_path and not self.is_windows_fs):
+            self.raise_os_error(errno.ENOTDIR, new_file_path)
+
 
     def _rename_to_existing_path(self, force_replace, new_file_path,
                                  old_file_path, old_object, ends_with_sep):

@@ -650,7 +650,7 @@ class FakeOsModuleTest(FakeOsModuleTestBase):
         self.check_macos_only()
         file_path = self.make_path('foo')
         self.os.symlink(file_path, file_path)
-        print(self.os.readlink(file_path + self.os.sep))
+        self.os.readlink(file_path + self.os.sep)
 
     def test_circular_readlink_with_trailing_separator_windows(self):
         # Regression test for #372
@@ -2256,7 +2256,22 @@ class FakeOsModuleTest(FakeOsModuleTestBase):
         link_path = self.create_broken_link_path_with_trailing_sep()
         self.assertFalse(self.os.path.lexists(link_path))
 
-    # hard link related tests
+    def test_rename_link_with_trailing_sep_to_self_windows(self):
+        self.check_windows_only()
+        self.skip_if_symlink_not_supported()
+        path = self.make_path('foo')
+        self.os.symlink(self.base_path, path)
+        self.os.rename(path + self.os.sep, path)  # no error
+
+    def test_rename_link_with_trailing_sep_to_self_posix(self):
+        # Regression test for #395
+        self.check_posix_only()
+        path = self.make_path('foo')
+        self.os.symlink(self.base_path, path)
+        self.assert_raises_os_error(
+            errno.ENOTDIR, self.os.rename, path + self.os.sep, path)
+
+        # hard link related tests
     def test_link_bogus(self):
         # trying to create a link from a non-existent file should fail
         self.skip_if_symlink_not_supported()
