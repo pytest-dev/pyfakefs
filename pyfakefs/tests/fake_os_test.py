@@ -2162,6 +2162,71 @@ class FakeOsModuleTest(FakeOsModuleTestBase):
         self.assert_raises_os_error(errno.EEXIST, self.os.rename,
                                     path + self.os.sep, self.base_path)
 
+    def create_broken_link_path_with_trailing_sep(self):
+        # Regression tests for #396
+        self.skip_if_symlink_not_supported()
+        link_path = self.make_path('link')
+        target_path = self.make_path('target')
+        self.os.symlink(target_path, link_path)
+        link_path += self.os.sep
+        return link_path
+
+    def test_lstat_broken_link_with_trailing_sep_linux(self):
+        self.check_linux_only()
+        link_path = self.create_broken_link_path_with_trailing_sep()
+        self.assert_raises_os_error(errno.ENOENT, self.os.lstat, link_path)
+
+    def test_lstat_broken_link_with_trailing_sep_macos(self):
+        self.check_macos_only()
+        link_path = self.create_broken_link_path_with_trailing_sep()
+        self.assert_raises_os_error(errno.ENOENT, self.os.lstat, link_path)
+
+    def test_lstat_broken_link_with_trailing_sep_windows(self):
+        self.check_windows_only()
+        link_path = self.create_broken_link_path_with_trailing_sep()
+        self.assert_raises_os_error(errno.EINVAL, self.os.lstat, link_path)
+
+    def test_remove_broken_link_with_trailing_sep_linux(self):
+        self.check_linux_only()
+        link_path = self.create_broken_link_path_with_trailing_sep()
+        self.assert_raises_os_error(errno.ENOTDIR, self.os.remove, link_path)
+
+    def test_remove_broken_link_with_trailing_sep_macos(self):
+        self.check_macos_only()
+        link_path = self.create_broken_link_path_with_trailing_sep()
+        self.assert_raises_os_error(errno.ENOENT, self.os.remove, link_path)
+
+    def test_remove_broken_link_with_trailing_sep_windows(self):
+        self.check_windows_only()
+        link_path = self.create_broken_link_path_with_trailing_sep()
+        self.assert_raises_os_error(errno.EINVAL, self.os.remove, link_path)
+
+    def test_rename_broken_link_with_trailing_sep_linux(self):
+        self.check_linux_only()
+        link_path = self.create_broken_link_path_with_trailing_sep()
+        self.assert_raises_os_error(
+            errno.ENOTDIR, self.os.rename, link_path, self.make_path('target'))
+
+    def test_rename_broken_link_with_trailing_sep_macos(self):
+        self.check_macos_only()
+        link_path = self.create_broken_link_path_with_trailing_sep()
+        self.assert_raises_os_error(
+            errno.ENOENT, self.os.rename, link_path, self.make_path('target'))
+
+    def test_rename_broken_link_with_trailing_sep_windows(self):
+        self.check_windows_only()
+        link_path = self.create_broken_link_path_with_trailing_sep()
+        self.assert_raises_os_error(
+            errno.EINVAL, self.os.rename, link_path, self.make_path('target'))
+
+    def test_islink_broken_link_with_trailing_sep(self):
+        link_path = self.create_broken_link_path_with_trailing_sep()
+        self.assertFalse(self.os.path.islink(link_path))
+
+    def test_lexists_broken_link_with_trailing_sep(self):
+        link_path = self.create_broken_link_path_with_trailing_sep()
+        self.assertFalse(self.os.path.lexists(link_path))
+
     # hard link related tests
     def test_link_bogus(self):
         # trying to create a link from a non-existent file should fail
