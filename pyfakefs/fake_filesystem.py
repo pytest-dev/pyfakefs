@@ -1081,9 +1081,11 @@ class FakeFilesystem(object):
             if S_ISLNK(file_object.st_mode):
                 try:
                     link_object = self.resolve(entry_path)
-                except (IOError, OSError):
-                    if self.is_macos:
+                except (IOError, OSError) as exc:
+                    if self.is_macos and exc.errno != errno.ENOENT:
                         return
+                    if self.is_windows_fs:
+                        self.raise_os_error(errno.EINVAL, entry_path)
                     raise
                 if not follow_symlinks or self.is_windows_fs or self.is_macos:
                     file_object = link_object
@@ -2016,6 +2018,8 @@ class FakeFilesystem(object):
         new_file_path = self.absnormpath(new_file_path)
         if not self.exists(old_file_path, check_link=True):
             self.raise_os_error(errno.ENOENT, old_file_path, 2)
+        if ends_with_sep:
+            self._handle_broken_link_with_trailing_sep(old_file_path)
 
         old_object = self.lresolve(old_file_path)
         if not self.is_windows_fs:
@@ -2053,6 +2057,14 @@ class FakeFilesystem(object):
             # in case of overwriting remove the old entry first
             new_dir_object.remove_entry(new_name)
         new_dir_object.add_entry(object_to_rename)
+
+    def _handle_broken_link_with_trailing_sep(self, path):
+        # note that the check for trailing sep has to be done earlier
+        if self.islink(path):
+            if not self.exists(path):
+                error = (errno.ENOENT if self.is_macos else
+                         errno.EINVAL if self.is_windows_fs else errno.ENOTDIR)
+                self.raise_os_error(error, path)
 
     def _handle_posix_dir_link_errors(self, new_file_path, old_file_path,
                                       ends_with_sep):
@@ -2755,6 +2767,8 @@ class FakeFilesystem(object):
             OSError: if removal failed.
         """
         norm_path = self.absnormpath(path)
+        if self.ends_with_path_separator(path):
+            self._handle_broken_link_with_trailing_sep(norm_path)
         if self.exists(norm_path):
             obj = self.resolve(norm_path)
             if S_IFMT(obj.st_mode) == S_IFDIR:
