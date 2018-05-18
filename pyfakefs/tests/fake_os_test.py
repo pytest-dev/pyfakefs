@@ -637,20 +637,23 @@ class FakeOsModuleTest(FakeOsModuleTestBase):
         self.assert_raises_os_error(errno.EINVAL, self.os.symlink,
             link_path + self.os.sep, link_path + self.os.sep)
 
-    def test_circular_readlink_with_trailing_separator_372_linux(self):
+    def test_circular_readlink_with_trailing_separator_linux(self):
+        # Regression test for #372
         self.check_linux_only()
         file_path = self.make_path('foo')
         self.os.symlink(file_path, file_path)
         self.assert_raises_os_error(errno.ELOOP, self.os.readlink,
                                     file_path + self.os.sep)
 
-    def test_circular_readlink_with_trailing_separator_372_macos(self):
+    def test_circular_readlink_with_trailing_separator_macos(self):
+        # Regression test for #372
         self.check_macos_only()
         file_path = self.make_path('foo')
         self.os.symlink(file_path, file_path)
         print(self.os.readlink(file_path + self.os.sep))
 
-    def test_circular_readlink_with_trailing_separator_372_windows(self):
+    def test_circular_readlink_with_trailing_separator_windows(self):
+        # Regression test for #372
         self.check_windows_only()
         self.skip_if_symlink_not_supported()
         file_path = self.make_path('foo')
@@ -2218,6 +2221,16 @@ class FakeOsModuleTest(FakeOsModuleTestBase):
         link_path = self.create_broken_link_path_with_trailing_sep()
         self.assert_raises_os_error(
             errno.EINVAL, self.os.rename, link_path, self.make_path('target'))
+
+    def test_readlink_broken_link_with_trailing_sep_posix(self):
+        self.check_posix_only()
+        link_path = self.create_broken_link_path_with_trailing_sep()
+        self.assert_raises_os_error(errno.ENOENT, self.os.readlink, link_path)
+
+    def test_readlink_broken_link_with_trailing_sep_windows(self):
+        self.check_windows_only()
+        link_path = self.create_broken_link_path_with_trailing_sep()
+        self.assert_raises_os_error(errno.EINVAL, self.os.readlink, link_path)
 
     def test_islink_broken_link_with_trailing_sep(self):
         link_path = self.create_broken_link_path_with_trailing_sep()
