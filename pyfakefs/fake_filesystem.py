@@ -2594,6 +2594,7 @@ class FakeFilesystem(object):
                 read only or as per :py:meth:`add_object`.
         """
         dir_name = make_string_path(dir_name)
+        ends_with_sep = self.ends_with_path_separator(dir_name)
         dir_name = self._path_without_trailing_separators(dir_name)
         if not dir_name:
             self.raise_os_error(errno.ENOENT, '')
@@ -2616,7 +2617,11 @@ class FakeFilesystem(object):
                 error_nr = errno.EACCES
             else:
                 error_nr = errno.EEXIST
-            self.raise_os_error(error_nr, dir_name)
+            if ends_with_sep and self.is_macos and not self.exists(dir_name):
+                # to avoid EEXIST exception, remove the link
+                self.remove_object(dir_name)
+            else:
+                self.raise_os_error(error_nr, dir_name)
         head, tail = self.splitpath(dir_name)
 
         self.add_object(
@@ -2644,7 +2649,14 @@ class FakeFilesystem(object):
             OSError: if the directory already exists and exist_ok=False,
                 or as per :py:meth:`create_dir`.
         """
+        ends_with_sep = self.ends_with_path_separator(dir_name)
         dir_name = self.absnormpath(dir_name)
+        if (ends_with_sep and self.is_macos and
+                self.exists(dir_name, check_link=True) and
+                not self.exists(dir_name)):
+            # to avoid EEXIST exception, remove the link
+            self.remove_object(dir_name)
+
         path_components = self._path_components(dir_name)
 
         # Raise a permission denied error if the first existing directory

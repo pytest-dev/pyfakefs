@@ -2189,6 +2189,22 @@ class FakeOsModuleTest(FakeOsModuleTestBase):
         link_path = self.create_broken_link_path_with_trailing_sep()
         self.assert_raises_os_error(errno.EINVAL, self.os.lstat, link_path)
 
+    def test_mkdir_broken_link_with_trailing_sep_linux_windows(self):
+        self.check_linux_and_windows()
+        link_path = self.create_broken_link_path_with_trailing_sep()
+        self.assert_raises_os_error(errno.EEXIST, self.os.mkdir, link_path)
+        self.assert_raises_os_error(errno.EEXIST, self.os.makedirs, link_path)
+
+    def test_mkdir_broken_link_with_trailing_sep_macos(self):
+        self.check_macos_only()
+        link_path = self.create_broken_link_path_with_trailing_sep()
+        self.os.mkdir(link_path)  # no error
+
+    def test_makedirs_broken_link_with_trailing_sep_macos(self):
+        self.check_macos_only()
+        link_path = self.create_broken_link_path_with_trailing_sep()
+        self.os.makedirs(link_path)  # no error
+
     def test_remove_broken_link_with_trailing_sep_linux(self):
         self.check_linux_only()
         link_path = self.create_broken_link_path_with_trailing_sep()
