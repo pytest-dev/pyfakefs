@@ -2271,7 +2271,28 @@ class FakeOsModuleTest(FakeOsModuleTestBase):
         self.assert_raises_os_error(
             errno.ENOTDIR, self.os.rename, path + self.os.sep, path)
 
-        # hard link related tests
+    def check_open_broken_symlink_to_path_with_trailing_sep(self, error):
+        # Regression tests for #397
+        self.skip_if_symlink_not_supported()
+        target_path = self.make_path('target') + self.os.sep
+        link_path = self.make_path('link')
+        self.os.symlink(target_path, link_path)
+        self.assert_raises_io_error(error, self.open, link_path, 'a')
+        self.assert_raises_io_error(error, self.open, link_path, 'w')
+
+    def test_open_broken_symlink_to_path_with_trailing_sep_linux(self):
+        self.check_linux_only()
+        self.check_open_broken_symlink_to_path_with_trailing_sep(errno.EISDIR)
+
+    def test_open_broken_symlink_to_path_with_trailing_sep_macos(self):
+        self.check_macos_only()
+        self.check_open_broken_symlink_to_path_with_trailing_sep(errno.ENOENT)
+
+    def test_open_broken_symlink_to_path_with_trailing_sep_windows(self):
+        self.check_windows_only()
+        self.check_open_broken_symlink_to_path_with_trailing_sep(errno.EINVAL)
+
+    # hard link related tests
     def test_link_bogus(self):
         # trying to create a link from a non-existent file should fail
         self.skip_if_symlink_not_supported()
