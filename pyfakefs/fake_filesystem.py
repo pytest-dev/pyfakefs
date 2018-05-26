@@ -4772,7 +4772,13 @@ class FakeFileOpen(object):
         else:
             if open_modes.must_exist:
                 error_fct(errno.ENOENT, file_path)
-            if self.filesystem.ends_with_path_separator(file_path):
+            if self.filesystem.islink(file_path):
+                link_object = self.filesystem.resolve(file_path,
+                                                      follow_symlinks=False)
+                target_path = link_object.contents
+            else:
+                target_path = file_path
+            if self.filesystem.ends_with_path_separator(target_path):
                 error = (errno.EINVAL if self.filesystem.is_windows_fs
                          else errno.ENOENT if self.filesystem.is_macos
                          else errno.EISDIR)
