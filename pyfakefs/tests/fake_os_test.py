@@ -2292,6 +2292,22 @@ class FakeOsModuleTest(FakeOsModuleTestBase):
         self.check_windows_only()
         self.check_open_broken_symlink_to_path_with_trailing_sep(errno.EINVAL)
 
+    def check_link_path_ending_with_sep(self, error):
+        self.skip_if_symlink_not_supported()
+        file_path = self.make_path('foo')
+        link_path = self.make_path('link')
+        with self.open(file_path, 'w'):
+            self.assert_raises_os_error(
+                error, self.os.link, file_path + self.os.sep, link_path)
+
+    def test_link_path_ending_with_sep_posix(self):
+        self.check_posix_only()
+        self.check_link_path_ending_with_sep(errno.ENOTDIR)
+
+    def test_link_path_ending_with_sep_windows(self):
+        self.check_windows_only()
+        self.check_link_path_ending_with_sep(errno.EINVAL)
+
     # hard link related tests
     def test_link_bogus(self):
         # trying to create a link from a non-existent file should fail

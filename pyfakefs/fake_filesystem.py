@@ -2528,6 +2528,10 @@ class FakeFilesystem(object):
         if not self.exists(new_parent_directory):
             self.raise_os_error(errno.ENOENT, new_parent_directory)
 
+        if self.ends_with_path_separator(old_path):
+            error = errno.EINVAL if self.is_windows_fs else errno.ENOTDIR
+            self.raise_os_error(error, old_path)
+
         # Retrieve the target file
         try:
             old_file = self.resolve(old_path)
