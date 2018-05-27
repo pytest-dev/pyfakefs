@@ -2322,6 +2322,34 @@ class FakeOsModuleTest(FakeOsModuleTestBase):
         self.check_windows_only()
         self.check_rename_to_path_ending_with_sep(errno.EINVAL)
 
+    def test_rmdir_link_with_trailing_sep_linux(self):
+        self.check_linux_only()
+        dir_path = self.make_path('foo')
+        self.os.mkdir(dir_path)
+        link_path = self.make_path('link')
+        self.os.symlink(dir_path, link_path)
+        self.assert_raises_os_error(
+            errno.ENOTDIR, self.os.rmdir, link_path + self.os.sep)
+
+    def test_rmdir_link_with_trailing_sep_macos(self):
+        self.check_macos_only()
+        dir_path = self.make_path('foo')
+        self.os.mkdir(dir_path)
+        link_path = self.make_path('link')
+        self.os.symlink(dir_path, link_path)
+        self.os.rmdir(link_path + self.os.sep)
+        self.assertFalse(self.os.path.exists(link_path))
+
+    def test_rmdir_link_with_trailing_sep_windows(self):
+        self.check_windows_only()
+        self.skip_if_symlink_not_supported()
+        dir_path = self.make_path('foo')
+        self.os.mkdir(dir_path)
+        link_path = self.make_path('link')
+        self.os.symlink(dir_path, link_path)
+        self.os.rmdir(link_path + self.os.sep)
+        self.assertFalse(self.os.path.exists(link_path))
+
     # hard link related tests
     def test_link_bogus(self):
         # trying to create a link from a non-existent file should fail

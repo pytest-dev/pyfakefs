@@ -2845,12 +2845,14 @@ class FakeFilesystem(object):
         if target_directory in (b'.', u'.'):
             error_nr = errno.EACCES if self.is_windows_fs else errno.EINVAL
             self.raise_os_error(error_nr, target_directory)
+        ends_with_sep = self.ends_with_path_separator(target_directory)
         target_directory = self.absnormpath(target_directory)
         if self.confirmdir(target_directory):
             if not self.is_windows_fs and self.islink(target_directory):
                 if allow_symlink:
                     return
-                self.raise_os_error(errno.ENOTDIR, target_directory)
+                if not ends_with_sep or not self.is_macos:
+                    self.raise_os_error(errno.ENOTDIR, target_directory)
 
             dir_object = self.resolve(target_directory)
             if dir_object.contents:
