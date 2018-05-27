@@ -2308,6 +2308,20 @@ class FakeOsModuleTest(FakeOsModuleTestBase):
         self.check_windows_only()
         self.check_link_path_ending_with_sep(errno.EINVAL)
 
+    def check_rename_to_path_ending_with_sep(self, error):
+        file_path = self.make_path('foo')
+        with self.open(file_path, 'w'):
+            self.assert_raises_os_error(
+                error, self.os.rename, file_path + self.os.sep, file_path)
+
+    def test_rename_to_path_ending_with_sep_posix(self):
+        self.check_posix_only()
+        self.check_rename_to_path_ending_with_sep(errno.ENOTDIR)
+
+    def test_rename_to_path_ending_with_sep_windows(self):
+        self.check_windows_only()
+        self.check_rename_to_path_ending_with_sep(errno.EINVAL)
+
     # hard link related tests
     def test_link_bogus(self):
         # trying to create a link from a non-existent file should fail

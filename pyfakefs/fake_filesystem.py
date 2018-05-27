@@ -2084,10 +2084,13 @@ class FakeFilesystem(object):
 
     def _rename_to_existing_path(self, force_replace, new_file_path,
                                  old_file_path, old_object, ends_with_sep):
+        new_object = self.get_object(new_file_path)
         if old_file_path == new_file_path:
+            if not S_ISLNK(new_object.st_mode) and ends_with_sep:
+                error = errno.EINVAL if self.is_windows_fs else errno.ENOTDIR
+                self.raise_os_error(error, old_file_path)
             return  # Nothing to do here.
 
-        new_object = self.get_object(new_file_path)
         if old_object == new_object:
             new_file_path = self._rename_same_object(
                 new_file_path, old_file_path)
