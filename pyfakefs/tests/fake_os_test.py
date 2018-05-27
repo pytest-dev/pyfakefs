@@ -2293,6 +2293,7 @@ class FakeOsModuleTest(FakeOsModuleTestBase):
         self.check_open_broken_symlink_to_path_with_trailing_sep(errno.EINVAL)
 
     def check_link_path_ending_with_sep(self, error):
+        # Regression tests for #399
         self.skip_if_symlink_not_supported()
         file_path = self.make_path('foo')
         link_path = self.make_path('link')
@@ -2309,6 +2310,7 @@ class FakeOsModuleTest(FakeOsModuleTestBase):
         self.check_link_path_ending_with_sep(errno.EINVAL)
 
     def check_rename_to_path_ending_with_sep(self, error):
+        # Regression tests for #400
         file_path = self.make_path('foo')
         with self.open(file_path, 'w'):
             self.assert_raises_os_error(
@@ -2332,6 +2334,7 @@ class FakeOsModuleTest(FakeOsModuleTestBase):
             errno.ENOTDIR, self.os.rmdir, link_path + self.os.sep)
 
     def test_rmdir_link_with_trailing_sep_macos(self):
+        # Regression test for #398
         self.check_macos_only()
         dir_path = self.make_path('foo')
         self.os.mkdir(dir_path)
@@ -2349,6 +2352,34 @@ class FakeOsModuleTest(FakeOsModuleTestBase):
         self.os.symlink(dir_path, link_path)
         self.os.rmdir(link_path + self.os.sep)
         self.assertFalse(self.os.path.exists(link_path))
+
+    def test_readlink_circular_link_with_trailing_sep_linux(self):
+        self.check_linux_only()
+        path1 = self.make_path('foo')
+        path0 = self.make_path('bar')
+        self.os.symlink(path0, path1)
+        self.os.symlink(path1, path0)
+        self.assert_raises_os_error(
+            errno.ELOOP, self.os.readlink, path0 + self.os.sep)
+
+    def test_readlink_circular_link_with_trailing_sep_macos(self):
+        # Regression test for #392
+        self.check_macos_only()
+        path1 = self.make_path('foo')
+        path0 = self.make_path('bar')
+        self.os.symlink(path0, path1)
+        self.os.symlink(path1, path0)
+        self.assertEqual(path0, self.os.readlink(path0 + self.os.sep))
+
+    def test_readlink_circular_link_with_trailing_sep_windows(self):
+        self.check_windows_only()
+        self.skip_if_symlink_not_supported()
+        path1 = self.make_path('foo')
+        path0 = self.make_path('bar')
+        self.os.symlink(path0, path1)
+        self.os.symlink(path1, path0)
+        self.assert_raises_os_error(
+            errno.EINVAL, self.os.readlink, path0 + self.os.sep)
 
     # hard link related tests
     def test_link_bogus(self):

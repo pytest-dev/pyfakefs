@@ -1781,11 +1781,10 @@ class FakeFilesystem(object):
                 # check. It is just a quick hack to prevent us from looping
                 # forever on cycles.
                 if link_depth > _MAX_LINK_DEPTH:
-                    error_class = OSError if raw_io else IOError
-                    raise error_class(
-                        errno.ELOOP,
-                        'Too many levels of symbolic links: \'%s\'' %
-                        self._components_to_path(resolved_components))
+                    error_fct = (self.raise_os_error if raw_io
+                                 else self.raise_io_error)
+                    error_fct(errno.ELOOP,
+                              self._components_to_path(resolved_components))
                 link_path = self._follow_link(resolved_components, current_dir)
 
                 # Following the link might result in the complete replacement
@@ -2551,6 +2550,13 @@ class FakeFilesystem(object):
         self.add_object(new_parent_directory, old_file)
         return old_file
 
+    def _is_circular_link(self, link_obj):
+        try:
+            self.resolve_path(link_obj.contents)
+        except (IOError, OSError) as exc:
+            return exc.errno == errno.ELOOP
+        return False
+
     def readlink(self, path):
         """Read the target of a symlink.
 
@@ -2581,9 +2587,9 @@ class FakeFilesystem(object):
             if not self.exists(link_obj.path):
                 if self.is_windows_fs:
                     error = errno.EINVAL
-                elif link_obj.path == link_obj.contents:
+                elif self._is_circular_link(link_obj):
                     if self.is_macos:
-                        return
+                        return link_obj.path
                     error = errno.ELOOP
                 else:
                     error = errno.ENOENT

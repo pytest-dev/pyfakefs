@@ -10,14 +10,33 @@ The release versions are PyPi releases.
   * use README.md in pypi ([#358](../../issues/358))
 
 #### Fixes
+  *  `pathlib.Path.resolve()` behaved incorrectly if the path does not exist
+  ([#401](../../issues/401))
   * `closed` attribute was not implemented in fake file ([#380](../../issues/380))
   * `add_real_directory` did not behave correctly for nested paths
-  * several fixes for the behavior if using file paths that end with a path 
-  separator:
-    * `os.exists` returned `True` instead of `False` ([#364](../../issues/364))
-    * opening such a file raised wrong exception under Python 2 ([#362](../../issues/362))
-    * `os.remove` did not raise ([#360](../../issues/360))
-    * `os.readlink` did not raise under Posix ([#359](../../issues/359))
+  * the following functions did not behave correctly for paths ending with a 
+  path separator (found by @agroce using [tstl](https://github.com/agroce/tstl)):
+    * `os.rename` ([#400](../../issues/400))
+    * `os.link` ([#399](../../issues/399))
+    * `os.rmdir` ([#398](../../issues/398))
+    * `os.mkdir`, `os.makedirs` ([#396](../../issues/396))
+    * `os.rename` ([#391](../../issues/391), [#395](../../issues/395), 
+    [#396](../../issues/396))
+    * `os.symlink` ([#371](../../issues/371), [#390](../../issues/390))
+    * `os.path.isdir` ([#387](../../issues/387))
+    * `open` ([#362](../../issues/362), [#369](../../issues/369),  
+    [#397](../../issues/397))
+    * `os.path.lexists`, `os.path.islink` ([#365](../../issues/365), 
+    [#373](../../issues/373), [#396](../../issues/396))
+    * `os.remove` ([#360](../../issues/360), [#377](../../issues/377), 
+    [#396](../../issues/396))
+    * `os.stat` ([#376](../../issues/376))
+    * `os.path.isfile` ([#374](../../issues/374))
+    * `os.path.getsize` ([#368](../../issues/368))
+    * `os.lstat` ([#366](../../issues/366))
+    * `os.path.exists` ([#364](../../issues/364))
+    * `os.readlink` ([#359](../../issues/359), [#372](../../issues/372)
+    [#392](../../issues/392))
 
 ## [Version 3.4.1](https://pypi.python.org/pypi/pyfakefs/3.4.1)
 
