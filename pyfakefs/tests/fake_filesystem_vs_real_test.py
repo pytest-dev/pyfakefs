@@ -378,7 +378,8 @@ class FakeFilesystemVsRealTest(TestCase):
         other_method_names = ['truncate', 'flush', 'close']
         differences = []
         for method_name in write_method_names:
-            diff = self.diff_open_method_behavior(method_name, path, mode, data)
+            diff = self.diff_open_method_behavior(
+                method_name, path, mode, data)
             if diff:
                 differences.append(diff)
         for method_name in read_method_names + other_method_names:

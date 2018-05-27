@@ -2080,7 +2080,6 @@ class FakeFilesystem(object):
                 old_file_path == new_file_path and not self.is_windows_fs):
             self.raise_os_error(errno.ENOTDIR, new_file_path)
 
-
     def _rename_to_existing_path(self, force_replace, new_file_path,
                                  old_file_path, old_object, ends_with_sep):
         new_object = self.get_object(new_file_path)
@@ -2487,7 +2486,6 @@ class FakeFilesystem(object):
                         self.remove_object(file_path)
                 else:
                     self.raise_os_error(errno.EEXIST, link_target)
-
 
         # resolve the link path only if it is not a link itself
         if not self.islink(file_path):

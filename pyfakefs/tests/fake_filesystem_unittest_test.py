@@ -152,7 +152,8 @@ class TestImportAsOtherName(fake_filesystem_unittest.TestCase):
         file_path = '/foo/bar/baz'
         self.fs.create_file(file_path)
         self.assertTrue(self.fs.exists(file_path))
-        self.assertTrue(pyfakefs.tests.import_as_example.check_if_exists(file_path))
+        self.assertTrue(
+            pyfakefs.tests.import_as_example.check_if_exists(file_path))
 
 
 class TestAttributesWithFakeModuleNames(TestPyfakefsUnittestBase):
@@ -232,7 +233,8 @@ if sys.version_info >= (3, 4):
             file_path = '/foo/bar'
             self.fs.create_dir(file_path)
             self.assertTrue(
-                pyfakefs.tests.import_as_example.check_if_path_exists(file_path))
+                pyfakefs.tests.import_as_example.check_if_path_exists(
+                    file_path))
 
 
 class PatchAsOtherNameTest(TestPyfakefsUnittestBase):
@@ -366,7 +368,8 @@ class TestTempFileReload(unittest.TestCase):
         self.assertEqual(v.value, 0)
 
 
-class TestPyfakefsTestCaseMixin(unittest.TestCase, fake_filesystem_unittest.TestCaseMixin):
+class TestPyfakefsTestCaseMixin(unittest.TestCase,
+                                fake_filesystem_unittest.TestCaseMixin):
     def test_set_up_pyfakefs(self):
         self.setUpPyfakefs()
 

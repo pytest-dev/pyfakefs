@@ -406,13 +406,6 @@ class FakeOsModuleTest(FakeOsModuleTestBase):
         self.os.symlink(self.base_path, link_path)
         self.assertFalse(self.os.path.islink(link_path + self.os.sep))
 
-    def test_islink_with_trailing_separator_macos(self):
-        # regression test for #373
-        self.check_macos_only()
-        file_path = self.make_path('foo')
-        self.os.symlink(file_path, file_path)
-        self.assertTrue(self.os.path.islink(file_path + self.os.sep))
-
     def check_getsize_raises_with_trailing_separator(self, error_nr):
         file_path = self.make_path('bar')
         self.create_file(file_path)
@@ -618,7 +611,8 @@ class FakeOsModuleTest(FakeOsModuleTestBase):
         link_path = self.make_path('link')
         self.os.symlink(file_path, link_path)
         self.assert_raises_os_error(errno.EEXIST, self.os.symlink,
-            link_path + self.os.sep, link_path + self.os.sep)
+                                    link_path + self.os.sep,
+                                    link_path + self.os.sep)
 
     def test_broken_symlink_with_trailing_separator_macos(self):
         # regression test for #371
@@ -635,7 +629,8 @@ class FakeOsModuleTest(FakeOsModuleTestBase):
         link_path = self.make_path('link')
         self.os.symlink(file_path, link_path)
         self.assert_raises_os_error(errno.EINVAL, self.os.symlink,
-            link_path + self.os.sep, link_path + self.os.sep)
+                                    link_path + self.os.sep,
+                                    link_path + self.os.sep)
 
     def test_circular_readlink_with_trailing_separator_linux(self):
         # Regression test for #372

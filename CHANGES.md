@@ -24,7 +24,7 @@ The release versions are PyPi releases.
     [#396](../../issues/396))
     * `os.symlink` ([#371](../../issues/371), [#390](../../issues/390))
     * `os.path.isdir` ([#387](../../issues/387))
-    * `open` ([#362](../../issues/362), [#369](../../issues/369),  
+    * `open` ([#362](../../issues/362), [#369](../../issues/369), 
     [#397](../../issues/397))
     * `os.path.lexists`, `os.path.islink` ([#365](../../issues/365), 
     [#373](../../issues/373), [#396](../../issues/396))
@@ -35,7 +35,7 @@ The release versions are PyPi releases.
     * `os.path.getsize` ([#368](../../issues/368))
     * `os.lstat` ([#366](../../issues/366))
     * `os.path.exists` ([#364](../../issues/364))
-    * `os.readlink` ([#359](../../issues/359), [#372](../../issues/372)
+    * `os.readlink` ([#359](../../issues/359), [#372](../../issues/372), 
     [#392](../../issues/392))
 
 ## [Version 3.4.1](https://pypi.python.org/pypi/pyfakefs/3.4.1)

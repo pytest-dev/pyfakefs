@@ -913,7 +913,6 @@ class FakeFileOpenTest(FakeFileOpenTestBase):
             f0.close()
             self.assertEqual('', f1.read())
 
-
     @unittest.skipIf(TestCase.is_python2,
                      'closefd argument not available in Python2')
     def test_closing_file_with_different_close_mode(self):
