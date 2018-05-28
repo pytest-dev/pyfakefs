@@ -205,7 +205,6 @@ replacements.</li>
 <dd><p>The umask used for newly created files, see <cite>os.umask</cite>.</p>
 </dd></dl>
 
-<p>init.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />
@@ -254,14 +253,17 @@ in bytes. Defaults to infinite size.</li>
 <dt id="pyfakefs.fake_filesystem.FakeFilesystem.get_disk_usage">
 <code class="descname">get_disk_usage</code><span class="sig-paren">(</span><em>path=None</em><span class="sig-paren">)</span><a class="headerlink" href="#pyfakefs.fake_filesystem.FakeFilesystem.get_disk_usage" title="Permalink to this definition">¶</a></dt>
 <dd><p>Return the total, used and free disk space in bytes as named tuple,
-or placeholder values simulating unlimited space if not set.
-Note: This matches the return value of shutil.disk_usage().</p>
+or placeholder values simulating unlimited space if not set.</p>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">This matches the return value of shutil.disk_usage().</p>
+</div>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>path</strong> – The disk space is returned for the file system device where
-path resides.
+<cite>path</cite> resides.
 Defaults to the root path (e.g. ‘/’ on Unix systems).</td>
 </tr>
 </tbody>
@@ -280,7 +282,7 @@ Example usage: set the size of an auto-mounted Windows drive.</p>
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
 <li><strong>total_size</strong> – The new total size of the filesystem in bytes.</li>
 <li><strong>path</strong> – The disk space is changed for the file system device where
-path resides.
+<cite>path</cite> resides.
 Defaults to the root path (e.g. ‘/’ on Unix systems).</li>
 </ul>
 </td>
@@ -301,9 +303,9 @@ filesystem.</p>
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>file_path</strong> – Specifies target FakeFile object to retrieve.</td>
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>file_path</strong> – Specifies the target FakeFile object to retrieve.</td>
 </tr>
-<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">The FakeFile object corresponding to file_path.</td>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">The FakeFile object corresponding to <cite>file_path</cite>.</td>
 </tr>
 <tr class="field-odd field"><th class="field-name">Raises:</th><td class="field-body"><code class="xref py py-exc docutils literal"><span class="pre">IOError</span></code> – if the object is not found.</td>
 </tr>
@@ -314,7 +316,7 @@ filesystem.</p>
 <dl class="method">
 <dt id="pyfakefs.fake_filesystem.FakeFilesystem.create_dir">
 <code class="descname">create_dir</code><span class="sig-paren">(</span><em>directory_path</em>, <em>perm_bits=511</em><span class="sig-paren">)</span><a class="headerlink" href="#pyfakefs.fake_filesystem.FakeFilesystem.create_dir" title="Permalink to this definition">¶</a></dt>
-<dd><p>Create directory_path, and all the parent directories.</p>
+<dd><p>Create <cite>directory_path</cite>, and all the parent directories.</p>
 <p>Helper method to set up your test faster.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
@@ -339,7 +341,7 @@ filesystem.</p>
 <dl class="method">
 <dt id="pyfakefs.fake_filesystem.FakeFilesystem.create_file">
 <code class="descname">create_file</code><span class="sig-paren">(</span><em>file_path</em>, <em>st_mode=33206</em>, <em>contents=''</em>, <em>st_size=None</em>, <em>create_missing_dirs=True</em>, <em>apply_umask=False</em>, <em>encoding=None</em>, <em>errors=None</em><span class="sig-paren">)</span><a class="headerlink" href="#pyfakefs.fake_filesystem.FakeFilesystem.create_file" title="Permalink to this definition">¶</a></dt>
-<dd><p>Create file_path, including all the parent directories along
+<dd><p>Create <cite>file_path</cite>, including all the parent directories along
 the way.</p>
 <p>This helper method can be used to set up tests more easily.</p>
 <table class="docutils field-list" frame="void" rules="none">
@@ -376,7 +378,7 @@ for serialization.</li>
 <dl class="method">
 <dt id="pyfakefs.fake_filesystem.FakeFilesystem.add_real_file">
 <code class="descname">add_real_file</code><span class="sig-paren">(</span><em>source_path</em>, <em>read_only=True</em>, <em>target_path=None</em><span class="sig-paren">)</span><a class="headerlink" href="#pyfakefs.fake_filesystem.FakeFilesystem.add_real_file" title="Permalink to this definition">¶</a></dt>
-<dd><p>Create file_path, including all the parent directories along the
+<dd><p>Create <cite>file_path</cite>, including all the parent directories along the
 way, for an existing real file. The contents of the real file are read
 only on demand.</p>
 <table class="docutils field-list" frame="void" rules="none">
@@ -529,20 +531,22 @@ file_path will be created</li>
 <dd><p>Provides the appearance of a real file.</p>
 <dl class="docutils">
 <dt>Attributes currently faked out:</dt>
-<dd>st_mode: user-specified, otherwise S_IFREG
-st_ctime: the time.time() timestamp of the file change time (updated
-each time a file’s attributes is modified).
-st_atime: the time.time() timestamp when the file was last accessed.
-st_mtime: the time.time() timestamp when the file was last modified.
-st_size: the size of the file
-st_nlink: the number of hard links to the file
-st_ino: the inode number - a unique number identifying the file
-st_dev: a unique number identifying the (fake) file system device
-the file belongs to</dd>
+<dd><ul class="first last simple">
+<li><cite>st_mode</cite>: user-specified, otherwise S_IFREG</li>
+<li><cite>st_ctime</cite>: the time.time() timestamp of the file change time (updated
+each time a file’s attributes is modified).</li>
+<li><cite>st_atime</cite>: the time.time() timestamp when the file was last accessed.</li>
+<li><cite>st_mtime</cite>: the time.time() timestamp when the file was last modified.</li>
+<li><cite>st_size</cite>: the size of the file</li>
+<li><cite>st_nlink</cite>: the number of hard links to the file</li>
+<li><cite>st_ino</cite>: the inode number - a unique number identifying the file</li>
+<li><cite>st_dev</cite>: a unique number identifying the (fake) file system device
+the file belongs to</li>
+</ul>
+</dd>
 </dl>
-<p>Other attributes needed by os.stat are assigned a default value of None.
-These include: st_uid, st_gid</p>
-<p>init.</p>
+<p>Other attributes needed by <cite>os.stat</cite> are assigned a default value of
+<cite>None</cite>. These include <cite>st_uid</cite> and <cite>st_gid</cite>.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />
@@ -578,7 +582,7 @@ for serialization.</li>
 <dl class="method">
 <dt id="pyfakefs.fake_filesystem.FakeFile.is_large_file">
 <code class="descname">is_large_file</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#pyfakefs.fake_filesystem.FakeFile.is_large_file" title="Permalink to this definition">¶</a></dt>
-<dd><p>Return True if this file was initialized with size but no contents.</p>
+<dd><p>Return <cite>True</cite> if this file was initialized with size but no contents.</p>
 </dd></dl>
 
 <dl class="method">
@@ -597,8 +601,8 @@ If not given, the locale preferred encoding is used.</li>
 </ul>
 </td>
 </tr>
-<tr class="field-even field"><th class="field-name">Raises:</th><td class="field-body"><p class="first last"><code class="xref py py-exc docutils literal"><span class="pre">IOError</span></code> – if the st_size is not a non-negative integer,
-or if st_size exceeds the available file system space.</p>
+<tr class="field-even field"><th class="field-name">Raises:</th><td class="field-body"><p class="first last"><code class="xref py py-exc docutils literal"><span class="pre">IOError</span></code> – if <cite>st_size</cite> is not a non-negative integer,
+or if it exceeds the available file system space.</p>
 </td>
 </tr>
 </tbody>
@@ -614,7 +618,7 @@ or if st_size exceeds the available file system space.</p>
 <dl class="attribute">
 <dt id="pyfakefs.fake_filesystem.FakeFile.size">
 <code class="descname">size</code><a class="headerlink" href="#pyfakefs.fake_filesystem.FakeFile.size" title="Permalink to this definition">¶</a></dt>
-<dd><p>Returns the size in bytes of the file contents.</p>
+<dd><p>Return the size in bytes of the file contents.</p>
 </dd></dl>
 
 </dd></dl>
@@ -623,7 +627,6 @@ or if st_size exceeds the available file system space.</p>
 <dt id="pyfakefs.fake_filesystem.FakeDirectory">
 <em class="property">class </em><code class="descclassname">pyfakefs.fake_filesystem.</code><code class="descname">FakeDirectory</code><span class="sig-paren">(</span><em>name</em>, <em>perm_bits=511</em>, <em>filesystem=None</em><span class="sig-paren">)</span><a class="headerlink" href="#pyfakefs.fake_filesystem.FakeDirectory" title="Permalink to this definition">¶</a></dt>
 <dd><p>Provides the appearance of a real directory.</p>
-<p>init.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />
@@ -819,7 +822,6 @@ FakeOsModule docstring for details.</p>
 <dd><p>Faked <cite>file()</cite> and <cite>open()</cite> function replacements.</p>
 <p>Returns FakeFile objects in a FakeFilesystem in place of the <cite>file()</cite>
 or <cite>open()</cite> function.</p>
-<p>init.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />
@@ -971,7 +973,7 @@ that is available on pypi.</p>
         &#169; Copyright 2009 Google Inc. All Rights Reserved.
 © Copyright 2014 Altera Corporation. All Rights Reserved.
 © Copyright 2014-2018 John McGehee.
-      Last updated on Mar 18, 2018.
+      Last updated on May 28, 2018.
     </div>
   </body>
 </html>

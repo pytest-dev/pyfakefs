@@ -60,7 +60,7 @@
 <h3>Patch using fake_filesystem_unittest<a class="headerlink" href="#patch-using-fake-filesystem-unittest" title="Permalink to this headline">¶</a></h3>
 <p>If you are using the Python <code class="docutils literal"><span class="pre">unittest</span></code> package, the easiest approach is to
 use test classes derived from <code class="docutils literal"><span class="pre">fake_filesystem_unittest.TestCase</span></code>.</p>
-<p>If you call <code class="docutils literal"><span class="pre">setUpPyfakefs()</span></code> in your <code class="docutils literal"><span class="pre">SetUp()</span></code>, <code class="docutils literal"><span class="pre">pyfakefs</span></code> will
+<p>If you call <code class="docutils literal"><span class="pre">setUpPyfakefs()</span></code> in your <code class="docutils literal"><span class="pre">setUp()</span></code>, <code class="docutils literal"><span class="pre">pyfakefs</span></code> will
 automatically find all real file functions and modules, and stub these out
 with the fake file system functions and modules:</p>
 <div class="code python highlight-default"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">fake_filesystem_unittest</span> <span class="k">import</span> <span class="n">TestCase</span>
@@ -261,7 +261,7 @@ them into the fake file system using <code class="docutils literal"><span class=
 directory path, or a list of paths, respectively, and make them accessible
 from the fake file system. By default, the contents of the mapped files and
 directories are read only on demand, so that mapping them is relatively
-cheap. The access to the files is by default read-only, but even even if you
+cheap. The access to the files is by default read-only, but even if you
 add them using <code class="docutils literal"><span class="pre">read_only=False</span></code>, the files are written only in the fake
 system (e.g. in memory). The real files are never changed.</p>
 <p><code class="docutils literal"><span class="pre">add_real_file()</span></code> and <code class="docutils literal"><span class="pre">add_real_directory()</span></code> also allow you to map a
@@ -412,7 +412,7 @@ modeled after <code class="docutils literal"><span class="pre">shutil.disk_usage
         &#169; Copyright 2009 Google Inc. All Rights Reserved.
 © Copyright 2014 Altera Corporation. All Rights Reserved.
 © Copyright 2014-2018 John McGehee.
-      Last updated on Mar 18, 2018.
+      Last updated on May 28, 2018.
     </div>
   </body>
 </html>
