@@ -2013,7 +2013,7 @@ class FakeFilesystem(object):
                 (e.g. mount point).
         """
         ends_with_sep = self.ends_with_path_separator(old_file_path)
-        old_file_path = self._original_path(self.absnormpath(old_file_path))
+        old_file_path = self.absnormpath(old_file_path)
         new_file_path = self.absnormpath(new_file_path)
         if not self.exists(old_file_path, check_link=True):
             self.raise_os_error(errno.ENOENT, old_file_path, 2)
@@ -2134,7 +2134,10 @@ class FakeFilesystem(object):
                         (new_file_path == real_old_path) ==
                         (new_file_path.lower() ==
                          real_old_path.lower())):
-                    do_rename = not self.is_macos
+                    real_object = self.resolve(old_file_path,
+                                               follow_symlinks=False)
+                    do_rename = (os.path.basename(old_file_path) ==
+                                 real_object.name or not self.is_macos)
                 else:
                     do_rename = (real_new_path.lower() ==
                                  real_old_path.lower())

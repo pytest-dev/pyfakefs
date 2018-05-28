@@ -21,7 +21,7 @@ The release versions are PyPi releases.
     * `os.rmdir` ([#398](../../issues/398))
     * `os.mkdir`, `os.makedirs` ([#396](../../issues/396))
     * `os.rename` ([#391](../../issues/391), [#395](../../issues/395), 
-    [#396](../../issues/396))
+    [#396](../../issues/396), [#389](../../issues/389))
     * `os.symlink` ([#371](../../issues/371), [#390](../../issues/390))
     * `os.path.isdir` ([#387](../../issues/387))
     * `open` ([#362](../../issues/362), [#369](../../issues/369), 

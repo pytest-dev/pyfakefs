@@ -2160,6 +2160,18 @@ class FakeOsModuleTest(FakeOsModuleTestBase):
         self.assert_raises_os_error(errno.EEXIST, self.os.rename,
                                     path + self.os.sep, self.base_path)
 
+    def test_rename_symlink_to_other_case(self):
+        # Regression test for #389
+        self.skip_if_symlink_not_supported()
+        link_path = self.make_path('foo')
+        self.os.symlink(self.base_path, link_path)
+        link_to_link_path = self.make_path('BAR')
+        self.os.symlink(link_path, link_to_link_path)
+        new_link_to_link_path = self.os.path.join(link_path, 'bar')
+        self.os.rename(link_to_link_path, new_link_to_link_path)
+        self.assertEqual(['bar', 'foo'],
+                         sorted(self.os.listdir(new_link_to_link_path)))
+
     def create_broken_link_path_with_trailing_sep(self):
         # Regression tests for #396
         self.skip_if_symlink_not_supported()
