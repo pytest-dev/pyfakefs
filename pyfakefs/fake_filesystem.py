@@ -190,19 +190,19 @@ class FakeFile(object):
     """Provides the appearance of a real file.
 
     Attributes currently faked out:
-        st_mode: user-specified, otherwise S_IFREG
-        st_ctime: the time.time() timestamp of the file change time (updated
+      * `st_mode`: user-specified, otherwise S_IFREG
+      * `st_ctime`: the time.time() timestamp of the file change time (updated
         each time a file's attributes is modified).
-        st_atime: the time.time() timestamp when the file was last accessed.
-        st_mtime: the time.time() timestamp when the file was last modified.
-        st_size: the size of the file
-        st_nlink: the number of hard links to the file
-        st_ino: the inode number - a unique number identifying the file
-        st_dev: a unique number identifying the (fake) file system device
+      * `st_atime`: the time.time() timestamp when the file was last accessed.
+      * `st_mtime`: the time.time() timestamp when the file was last modified.
+      * `st_size`: the size of the file
+      * `st_nlink`: the number of hard links to the file
+      * `st_ino`: the inode number - a unique number identifying the file
+      * `st_dev`: a unique number identifying the (fake) file system device
         the file belongs to
 
-    Other attributes needed by os.stat are assigned a default value of None.
-    These include: st_uid, st_gid
+    Other attributes needed by `os.stat` are assigned a default value of
+    `None`. These include `st_uid` and `st_gid`.
     """
     stat_types = (
         'st_mode', 'st_ino', 'st_dev', 'st_nlink', 'st_uid', 'st_gid',
@@ -212,8 +212,7 @@ class FakeFile(object):
 
     def __init__(self, name, st_mode=S_IFREG | PERM_DEF_FILE,
                  contents=None, filesystem=None, encoding=None, errors=None):
-        """init.
-
+        """
         Args:
             name: Name of the file/directory, without parent path information
             st_mode: The stat.S_IF* constant representing the file type (i.e.
@@ -319,7 +318,7 @@ class FakeFile(object):
             self.filesystem.raise_io_error(errno.ENOSPC, self.name)
 
     def is_large_file(self):
-        """Return True if this file was initialized with size but no contents.
+        """Return `True` if this file was initialized with size but no contents.
         """
         return self._byte_contents is None
 
@@ -368,8 +367,8 @@ class FakeFile(object):
                     If not given, the locale preferred encoding is used.
 
         Raises:
-          IOError: if the st_size is not a non-negative integer,
-                   or if st_size exceeds the available file system space.
+          IOError: if `st_size` is not a non-negative integer,
+                   or if it exceeds the available file system space.
         """
         self.encoding = encoding
         self._set_initial_contents(contents)
@@ -379,7 +378,7 @@ class FakeFile(object):
 
     @property
     def size(self):
-        """Returns the size in bytes of the file contents.
+        """Return the size in bytes of the file contents.
         """
         return self.st_size
 
@@ -511,8 +510,7 @@ class FakeFileFromRealFile(FakeFile):
     """
 
     def __init__(self, file_path, filesystem):
-        """init.
-
+        """
         Args:
             file_path: Path to the existing file.
             filesystem: The fake filesystem where the file is created.
@@ -544,8 +542,7 @@ class FakeDirectory(FakeFile):
     """Provides the appearance of a real directory."""
 
     def __init__(self, name, perm_bits=PERM_DEF, filesystem=None):
-        """init.
-
+        """
         Args:
             name:  name of the file/directory, without parent path information
             perm_bits: permission bits. defaults to 0o777.
@@ -709,8 +706,7 @@ class FakeDirectoryFromRealDirectory(FakeDirectory):
 
     def __init__(self, source_path, filesystem, read_only,
                  target_path=None):
-        """init.
-
+        """
         Args:
             source_path: Full directory path.
             filesystem: The fake filesystem where the directory is created.
@@ -781,8 +777,7 @@ class FakeFilesystem(object):
     """
 
     def __init__(self, path_separator=os.path.sep, total_size=None):
-        """init.
-
+        """
         Args:
             path_separator:  optional substitute for os.path.sep
             total_size: if not None, the total size in bytes of the
@@ -982,11 +977,12 @@ class FakeFilesystem(object):
     def get_disk_usage(self, path=None):
         """Return the total, used and free disk space in bytes as named tuple,
         or placeholder values simulating unlimited space if not set.
-        Note: This matches the return value of shutil.disk_usage().
+        
+        .. note:: This matches the return value of shutil.disk_usage().
 
         Args:
             path: The disk space is returned for the file system device where
-                path resides.
+                `path` resides.
                 Defaults to the root path (e.g. '/' on Unix systems).
         """
         DiskUsage = namedtuple('usage', 'total, used, free')
@@ -1010,7 +1006,7 @@ class FakeFilesystem(object):
             total_size: The new total size of the filesystem in bytes.
 
             path: The disk space is changed for the file system device where
-                path resides.
+                `path` resides.
                 Defaults to the root path (e.g. '/' on Unix systems).
 
         Raises:
@@ -1887,10 +1883,10 @@ class FakeFilesystem(object):
         filesystem.
 
         Args:
-            file_path: Specifies target FakeFile object to retrieve.
+            file_path: Specifies the target FakeFile object to retrieve.
 
         Returns:
-            The FakeFile object corresponding to file_path.
+            The FakeFile object corresponding to `file_path`.
 
         Raises:
             IOError: if the object is not found.
@@ -2181,7 +2177,7 @@ class FakeFilesystem(object):
             self.raise_io_error(errno.ENOTDIR, file_path)
 
     def create_dir(self, directory_path, perm_bits=PERM_DEF):
-        """Create directory_path, and all the parent directories.
+        """Create `directory_path`, and all the parent directories.
 
         Helper method to set up your test faster.
 
@@ -2229,7 +2225,7 @@ class FakeFilesystem(object):
     def create_file(self, file_path, st_mode=S_IFREG | PERM_DEF_FILE,
                     contents='', st_size=None, create_missing_dirs=True,
                     apply_umask=False, encoding=None, errors=None):
-        """Create file_path, including all the parent directories along
+        """Create `file_path`, including all the parent directories along
         the way.
 
         This helper method can be used to set up tests more easily.
@@ -2258,7 +2254,7 @@ class FakeFilesystem(object):
             apply_umask, encoding, errors)
 
     def add_real_file(self, source_path, read_only=True, target_path=None):
-        """Create file_path, including all the parent directories along the
+        """Create `file_path`, including all the parent directories along the
         way, for an existing real file. The contents of the real file are read
         only on demand.
 
@@ -4700,8 +4696,7 @@ class FakeFileOpen(object):
 
     def __init__(self, filesystem, delete_on_close=False,
                  use_io=False, raw_io=False):
-        """init.
-
+        """
         Args:
           filesystem:  FakeFilesystem used to provide file system information
           delete_on_close:  optional boolean, deletes file on close()

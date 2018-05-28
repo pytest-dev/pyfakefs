@@ -10,7 +10,7 @@ Patch using fake_filesystem_unittest
 If you are using the Python ``unittest`` package, the easiest approach is to
 use test classes derived from ``fake_filesystem_unittest.TestCase``.
 
-If you call ``setUpPyfakefs()`` in your ``SetUp()``, ``pyfakefs`` will
+If you call ``setUpPyfakefs()`` in your ``setUp()``, ``pyfakefs`` will
 automatically find all real file functions and modules, and stub these out
 with the fake file system functions and modules:
 
@@ -231,7 +231,7 @@ them into the fake file system using ``add_real_file()``,
 directory path, or a list of paths, respectively, and make them accessible
 from the fake file system. By default, the contents of the mapped files and
 directories are read only on demand, so that mapping them is relatively
-cheap. The access to the files is by default read-only, but even even if you
+cheap. The access to the files is by default read-only, but even if you
 add them using ``read_only=False``, the files are written only in the fake
 system (e.g. in memory). The real files are never changed.
 
