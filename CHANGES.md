@@ -4,7 +4,10 @@ The release versions are PyPi releases.
 ## Version 3.5 (As yet unreleased)
 
 #### New Features
-
+  * added support for path-like objects as arguments in `create_file()`, 
+  `create_dir()`, `create_symlink()`, `add_real_file()` and 
+  `add_real_directory()` (Python >= 3.6, see [#409](../../issues/409))
+  
 #### Infrastructure
   * moved tests into package
   * use README.md in pypi ([#358](../../issues/358))

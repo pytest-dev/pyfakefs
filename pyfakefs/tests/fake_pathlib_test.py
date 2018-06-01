@@ -27,7 +27,7 @@ import stat
 import sys
 import unittest
 
-from pyfakefs import fake_pathlib
+from pyfakefs import fake_pathlib, fake_filesystem
 from pyfakefs.tests.test_utils import RealFsTestCase
 
 is_windows = sys.platform == 'win32'
@@ -908,6 +908,62 @@ class FakePathlibUsageInOsFunctionsTest(RealPathlibTestCase):
 class RealPathlibUsageInOsFunctionsTest(FakePathlibUsageInOsFunctionsTest):
     def use_real_fs(self):
         return True
+
+
+@unittest.skipIf(sys.version_info < (3, 6),
+                 'Path-like objects new in Python 3.6')
+class FakeFilesystemPathLikeObjectTest(unittest.TestCase):
+
+    def setUp(self):
+        self.filesystem = fake_filesystem.FakeFilesystem(path_separator='/')
+        self.pathlib = fake_pathlib.FakePathlibModule(self.filesystem)
+        self.os = fake_filesystem.FakeOsModule(self.filesystem)
+
+    def test_create_dir_with_pathlib_path(self):
+        dir_path_string = 'foo/bar/baz'
+        dir_path = self.pathlib.Path(dir_path_string)
+        self.filesystem.create_dir(dir_path)
+        self.assertTrue(self.os.path.exists(dir_path_string))
+        self.assertEqual(stat.S_IFDIR,
+                         self.os.stat(dir_path_string).st_mode & stat.S_IFDIR)
+
+    def test_create_file_with_pathlib_path(self):
+        file_path_string = 'foo/bar/baz'
+        file_path = self.pathlib.Path(file_path_string)
+        self.filesystem.create_file(file_path)
+        self.assertTrue(self.os.path.exists(file_path_string))
+        self.assertEqual(stat.S_IFREG,
+                         self.os.stat(file_path_string).st_mode & stat.S_IFREG)
+
+    def test_create_symlink_with_pathlib_path(self):
+        file_path = self.pathlib.Path('foo/bar/baz')
+        link_path_string = 'foo/link'
+        link_path = self.pathlib.Path(link_path_string)
+        self.filesystem.create_symlink(link_path, file_path)
+        self.assertTrue(self.os.path.lexists(link_path_string))
+        self.assertEqual(stat.S_IFLNK,
+                         self.os.lstat(link_path_string).st_mode &
+                         stat.S_IFLNK)
+
+    def test_add_existing_real_file_with_pathlib_path(self):
+        real_file_path_string = os.path.abspath(__file__)
+        real_file_path = self.pathlib.Path(real_file_path_string)
+        self.filesystem.add_real_file(real_file_path)
+        fake_filepath_string = real_file_path_string.replace(
+            os.sep, self.os.sep)
+        self.assertTrue(self.os.path.exists(fake_filepath_string))
+        self.assertEqual(stat.S_IFREG, self.os.stat(
+            fake_filepath_string).st_mode & stat.S_IFREG)
+
+    def test_add_existing_real_directory_with_pathlib_path(self):
+        real_dirpath_string = os.path.dirname(os.path.abspath(__file__))
+        real_dir_path = self.pathlib.Path(real_dirpath_string)
+        self.filesystem.add_real_directory(real_dir_path)
+        fake_dirpath_string = real_dirpath_string.replace(
+            os.sep, self.os.sep)
+        self.assertTrue(self.os.path.exists(fake_dirpath_string))
+        self.assertEqual(stat.S_IFDIR, self.os.stat(
+            fake_dirpath_string).st_mode & stat.S_IFDIR)
 
 
 if __name__ == '__main__':
