@@ -2176,6 +2176,12 @@ class FakeFilesystem(object):
         except AttributeError:
             self.raise_io_error(errno.ENOTDIR, file_path)
 
+    def make_string_path(self, path):
+        path = make_string_path(path)
+        os_sep = self._matching_string(path, os.sep)
+        fake_sep = self._matching_string(path, self.path_separator)
+        return path.replace(os_sep, fake_sep)
+
     def create_dir(self, directory_path, perm_bits=PERM_DEF):
         """Create `directory_path`, and all the parent directories.
 
@@ -2191,6 +2197,7 @@ class FakeFilesystem(object):
         Raises:
             OSError: if the directory already exists.
         """
+        directory_path = self.make_string_path(directory_path)
         directory_path = self.absnormpath(directory_path)
         self._auto_mount_drive_if_needed(directory_path)
         if self.exists(directory_path, check_link=True):
@@ -2279,6 +2286,8 @@ class FakeFilesystem(object):
             that `pyfakefs` must not modify the real file system.
         """
         target_path = target_path or source_path
+        source_path = make_string_path(source_path)
+        target_path = self.make_string_path(target_path)
         real_stat = os.stat(source_path)
         fake_file = self.create_file_internally(target_path,
                                                 read_from_real_fs=True)
@@ -2398,6 +2407,7 @@ class FakeFilesystem(object):
             raw_io: `True` if called from low-level API (`os.open`)
         """
         error_class = OSError if raw_io else IOError
+        file_path = self.make_string_path(file_path)
         file_path = self.absnormpath(file_path)
         if not is_int_type(st_mode):
             raise TypeError(
@@ -2464,6 +2474,8 @@ class FakeFilesystem(object):
                           "on Windows before Python 3.2")
 
         # the link path cannot end with a path separator
+        file_path = self.make_string_path(file_path)
+        link_target = self.make_string_path(link_target)
         file_path = self.normcase(file_path)
         if self.ends_with_path_separator(file_path):
             if self.exists(file_path):
