@@ -2114,7 +2114,8 @@ class FakeFilesystem(object):
                 self.raise_os_error(errno.EEXIST, new_file_path)
         if not S_ISLNK(new_object.st_mode):
             if new_object.contents:
-                if not ends_with_sep or not self.is_macos:
+                if (not S_ISLNK(old_object.st_mode) or
+                        not ends_with_sep or not self.is_macos):
                     self.raise_os_error(errno.ENOTEMPTY, new_file_path)
             if S_ISREG(old_object.st_mode):
                 self.raise_os_error(errno.EISDIR, new_file_path)

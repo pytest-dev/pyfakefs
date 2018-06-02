@@ -1214,6 +1214,20 @@ class FakeOsModuleTest(FakeOsModuleTestBase):
         # regression test for #387
         self.assertTrue(self, self.os.path.isdir(self.base_path + self.os.sep))
 
+    def check_rename_dir_with_trailing_sep(self, error):
+        dir_path = self.make_path('dir') + self.os.sep
+        self.os.mkdir(dir_path)
+        self.assert_raises_os_error(error,
+                                    self.os.rename, dir_path, self.base_path)
+
+    def test_rename_dir_with_trailing_sep_posix(self):
+        self.check_posix_only()
+        self.check_rename_dir_with_trailing_sep(errno.ENOTEMPTY)
+
+    def test_rename_dir_with_trailing_sep_windows(self):
+        self.check_windows_only()
+        self.check_rename_dir_with_trailing_sep(errno.EEXIST)
+
     def test_rename_dir(self):
         """Test a rename of a directory."""
         directory = self.make_path('xyzzy')
