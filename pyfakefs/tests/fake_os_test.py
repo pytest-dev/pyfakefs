@@ -1221,6 +1221,7 @@ class FakeOsModuleTest(FakeOsModuleTestBase):
                                     self.os.rename, dir_path, self.base_path)
 
     def test_rename_dir_with_trailing_sep_posix(self):
+        # regression test for #406
         self.check_posix_only()
         self.check_rename_dir_with_trailing_sep(errno.ENOTEMPTY)
 
@@ -2329,6 +2330,24 @@ class FakeOsModuleTest(FakeOsModuleTestBase):
     def test_link_path_ending_with_sep_windows(self):
         self.check_windows_only()
         self.check_link_path_ending_with_sep(errno.EINVAL)
+
+    def test_link_to_path_ending_with_sep_posix(self):
+        # regression test for #407
+        self.check_posix_only()
+        path0 = self.make_path('foo') + self.os.sep
+        path1 = self.make_path('bar')
+        with self.open(path1, 'w'):
+            self.assert_raises_os_error(errno.ENOENT,
+                                        self.os.link, path1, path0)
+
+    def test_link_to_path_ending_with_sep_windows(self):
+        self.check_windows_only()
+        self.skip_if_symlink_not_supported()
+        path0 = self.make_path('foo') + self.os.sep
+        path1 = self.make_path('bar')
+        with self.open(path1, 'w'):
+            self.os.link(path1, path0)
+            self.assertTrue(self.os.path.exists(path1))
 
     def check_rename_to_path_ending_with_sep(self, error):
         # Regression tests for #400

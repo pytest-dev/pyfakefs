@@ -2544,6 +2544,9 @@ class FakeFilesystem(object):
             error = errno.EINVAL if self.is_windows_fs else errno.ENOTDIR
             self.raise_os_error(error, old_path)
 
+        if not self.is_windows_fs and self.ends_with_path_separator(new_path):
+            self.raise_os_error(errno.ENOENT, old_path)
+
         # Retrieve the target file
         try:
             old_file = self.resolve(old_path)

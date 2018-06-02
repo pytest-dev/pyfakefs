@@ -20,7 +20,7 @@ The release versions are PyPi releases.
   * the following functions did not behave correctly for paths ending with a 
   path separator (found by @agroce using [tstl](https://github.com/agroce/tstl)):
     * `os.rename` ([#400](../../issues/400))
-    * `os.link` ([#399](../../issues/399))
+    * `os.link` ([#399](../../issues/399), [#407](../../issues/407))
     * `os.rmdir` ([#398](../../issues/398))
     * `os.mkdir`, `os.makedirs` ([#396](../../issues/396))
     * `os.rename` ([#391](../../issues/391), [#395](../../issues/395), 
