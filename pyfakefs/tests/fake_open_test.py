@@ -1268,6 +1268,25 @@ class FakeFileOpenLineEndingTest(FakeFileOpenTestBase):
         with self.open(file_path, mode='rb') as f:
             self.assertEqual(b'1\r\r2\r3\r4', f.read())
 
+    def test_binary_readline(self):
+        file_path = self.make_path('some_file')
+        file_contents = b'\x80\n\x80\r\x80\r\n\x80'
+
+        def chunk_line():
+            px = ix = 0
+            while px < len(file_contents):
+                ix = file_contents.find(b'\n', px)
+                if ix == -1:
+                    yield file_contents[px:]
+                    return
+                yield file_contents[px:ix+1]
+                px = ix + 1
+
+        chunked_contents = list(chunk_line())
+        self.create_file(file_path, contents=file_contents)
+        with self.open(file_path, mode='rb') as f:
+            self.assertEqual(chunked_contents, list(f))
+
 
 class RealFileOpenLineEndingTest(FakeFileOpenLineEndingTest):
     def use_real_fs(self):
