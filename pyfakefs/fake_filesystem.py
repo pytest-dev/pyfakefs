@@ -4549,6 +4549,7 @@ class FakeFileWrapper(object):
             if self._append:
                 self._io.seek(self._read_seek, self._read_whence)
             size = io_attr(*args, **kwargs)
+            self.flush()
             if not self.is_stream:
                 self.file_object.SetSize(size)
                 buffer_size = len(self._io.getvalue())
