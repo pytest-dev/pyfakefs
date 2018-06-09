@@ -13,6 +13,14 @@ The release versions are PyPi releases.
   * use README.md in pypi ([#358](../../issues/358))
 
 #### Fixes
+  * `tell` after `seek` gave incorrect result in append mode 
+  ([#363](../../issues/363))
+  * a failing pytest did not display the test function correctly 
+  ([#381](../../issues/381))
+  * flushing file contents after truncate was incorrect under some conditions 
+  ([#412](../../issues/412))
+  * `readline()` did not work correctly in binary mode 
+  ([#411](../../issues/411))
   *  `pathlib.Path.resolve()` behaved incorrectly if the path does not exist
   ([#401](../../issues/401))
   * `closed` attribute was not implemented in fake file ([#380](../../issues/380))

@@ -1210,6 +1210,13 @@ class FakeOsModuleTest(FakeOsModuleTestBase):
         self.check_macos_only()
         self.check_append_mode_tell_after_truncate(7)
 
+    def test_tell_after_seek_in_append_mode(self):
+        # Regression test for #363
+        file_path = self.make_path('foo')
+        with self.open(file_path, 'a') as f:
+            f.seek(1)
+            self.assertEqual(1, f.tell())
+
     def test_dir_with_trailing_sep_is_dir(self):
         # regression test for #387
         self.assertTrue(self, self.os.path.isdir(self.base_path + self.os.sep))

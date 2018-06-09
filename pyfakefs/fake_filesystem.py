@@ -4420,7 +4420,7 @@ class FakeFileWrapper(object):
         self._check_open_file()
         if self._flushes_after_tell():
             self.flush()
-            if self._read_seek:
+            if 0 < self._read_seek < self._flush_pos:
                 self._read_seek = self._flush_pos
                 self._read_whence = 0
 
