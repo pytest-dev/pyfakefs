@@ -31,6 +31,7 @@ Patcher.SKIPMODULES.add(py)  # Ignore pytest components when faking filesystem
 Patcher.SKIPMODULES.add(linecache)
 linecache.open = builtins.open
 
+
 @pytest.fixture
 def fs(request):
     """ Fake filesystem. """

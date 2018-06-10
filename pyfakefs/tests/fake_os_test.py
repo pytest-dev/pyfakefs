@@ -1275,7 +1275,7 @@ class FakeOsModuleTest(FakeOsModuleTestBase):
         new_file_path = self.os.path.join(directory, 'plugh_new')
         self.create_file(old_file_path)
         old_file = self.filesystem.get_object(old_file_path)
-        old_file.SetMTime(old_file.st_mtime - 3600)
+        old_file.st_mtime = old_file.st_mtime - 3600
         self.os.chown(old_file_path, 200, 200)
         self.os.chmod(old_file_path, 0o222)
         self.create_file(new_file_path)

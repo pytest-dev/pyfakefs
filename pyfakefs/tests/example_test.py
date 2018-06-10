@@ -161,8 +161,8 @@ class TestExample(fake_filesystem_unittest.TestCase):  # pylint: disable=R0904
         the fake filesystem path entries are returned instead of
         `scandir.DirEntry` objects.
         """
-        self.fs.CreateFile('/test/text.txt')
-        self.fs.CreateDirectory('/test/dir')
+        self.fs.create_file('/test/text.txt')
+        self.fs.create_dir('/test/dir')
 
         entries = sorted(example.scan_dir('/test'), key=lambda e: e.name)
         self.assertEqual(2, len(entries))

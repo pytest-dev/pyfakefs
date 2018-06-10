@@ -40,7 +40,7 @@ if sys.version_info >= (3, 4):
 class TestPatcher(TestCase):
     def test_context_manager(self):
         with Patcher() as patcher:
-            patcher.fs.CreateFile('/foo/bar', contents='test')
+            patcher.fs.create_file('/foo/bar', contents='test')
             with open('/foo/bar') as f:
                 contents = f.read()
             self.assertEqual('test', contents)
@@ -361,7 +361,7 @@ class TestTempFileReload(unittest.TestCase):
 
     def test_fakefs(self):
         with Patcher() as patcher:
-            patcher.fs.CreateFile('/mytempfile', contents='abcd')
+            patcher.fs.create_file('/mytempfile', contents='abcd')
 
     def test_value(self):
         v = multiprocessing.Value('I', 0)

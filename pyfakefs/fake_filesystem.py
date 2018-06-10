@@ -639,7 +639,7 @@ class FakeDirectory(FakeFile):
                 or (Windows only) the file is open.
         """
         pathname_name = self._normalized_entryname(pathname_name)
-        entry = self.GetEntry(pathname_name)
+        entry = self.get_entry(pathname_name)
         if self.filesystem.is_windows_fs:
             if entry.st_mode & PERM_WRITE == 0:
                 self.filesystem.raise_os_error(errno.EACCES, pathname_name)
@@ -977,7 +977,7 @@ class FakeFilesystem(object):
     def get_disk_usage(self, path=None):
         """Return the total, used and free disk space in bytes as named tuple,
         or placeholder values simulating unlimited space if not set.
-        
+
         .. note:: This matches the return value of shutil.disk_usage().
 
         Args:
@@ -3004,7 +3004,7 @@ class FakePathModule(object):
         Returns:
           bool (if file exists).
         """
-        return self.filesystem.Exists(path, check_link=True)
+        return self.filesystem.exists(path, check_link=True)
 
     def getsize(self, path):
         """Return the file object size in bytes.
