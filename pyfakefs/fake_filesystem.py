@@ -4533,6 +4533,15 @@ class FakeFileWrapper(object):
 
         return other_wrapper
 
+    def _adapt_size_for_related_files(self, size):
+        for open_files in self._filesystem.open_files[3:]:
+            if open_files is not None:
+                for open_file in open_files:
+                    if (open_file is not self and
+                            self.file_object == open_file.file_object and
+                            open_file._append):
+                        open_file._read_seek += size
+
     def _truncate_wrapper(self):
         """Wrap truncate() to allow flush after truncate.
 
@@ -4548,14 +4557,17 @@ class FakeFileWrapper(object):
             size = io_attr(*args, **kwargs)
             self.flush()
             if not self.is_stream:
-                self.file_object.SetSize(size)
+                self.file_object.size = size
                 buffer_size = len(self._io.getvalue())
                 if buffer_size < size:
                     self._io.seek(buffer_size)
                     self._io.write('\0' * (size - buffer_size))
-                    self.file_object.SetContents(
+                    self.file_object.set_contents(
                         self._io.getvalue(), self._encoding)
                     self._flush_pos = size
+                    if self._filesystem.is_macos or sys.version_info[0] > 2:
+                        self._adapt_size_for_related_files(size - buffer_size)
+
             self.flush()
             if not IS_PY2:
                 return size
