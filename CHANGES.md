@@ -9,7 +9,7 @@ The release versions are PyPi releases.
 
 #### Fixes
 
-## Version 3.4.3(https://pypi.python.org/pypi/pyfakefs/3.4.3)
+## [Version 3.4.3](https://pypi.python.org/pypi/pyfakefs/3.4.3)
 
 This is mostly a bug fix release, mainly for bugs found by 
 [@agroce](https://github.com/agroce) using [tstl](https://github.com/agroce/tstl). 
