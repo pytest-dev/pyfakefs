@@ -113,7 +113,7 @@ from pyfakefs.helpers import make_string_path
 
 __pychecker__ = 'no-reimportself'
 
-__version__ = '3.4.3'
+__version__ = '3.5'
 
 PERM_READ = 0o400  # Read permission bit.
 PERM_WRITE = 0o200  # Write permission bit.
