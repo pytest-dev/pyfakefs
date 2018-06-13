@@ -12,13 +12,13 @@ pyfakefs works with `PyTest <doc.pytest.org>`__ version 2.8.6 or above.
 Installation
 ------------
 pyfakefs is available on `PyPi <https://pypi.python.org/pypi/pyfakefs/>`__.
-The latest released version can be installed form pypi:
+The latest released version can be installed from pypi:
 
 .. code:: bash
 
    pip install pyfakefs
 
-The latest master can be installed form the GitHub sources:
+The latest master can be installed from the GitHub sources:
 
 .. code:: bash
 
@@ -45,10 +45,11 @@ systems.
 
 History
 -------
-pyfakefs.py was initially developed at Google by Mike Bland as a modest
+pyfakefs was initially developed at Google by
+`Mike Bland <https://mike-bland.com/about.html>`__ as a modest
 fake implementation of core Python modules. It was introduced to all of
 Google in September 2006. Since then, it has been enhanced to extend its
-functionality and usefulness. At last count, pyfakefs is used in over
+functionality and usefulness. At last count, pyfakefs was used in over
 2,000 Python tests at Google.
 
 Google released pyfakefs to the public in 2011 as Google Code project

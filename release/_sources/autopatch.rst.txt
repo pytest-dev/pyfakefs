@@ -2,7 +2,9 @@
 
 Automatically find and patch file functions and modules
 =======================================================
-The ``fake_filesystem_unittest`` module automatically finds all real file functions and modules, and stubs them out with the fake file system functions and modules.  The pyfakefs source code contains files demonstrate this usage model:
+The ``fake_filesystem_unittest`` module automatically finds all real file
+functions and modules, and stubs them out with the fake file system functions and modules.
+The pyfakefs source code contains files that demonstrate this usage model:
 
 - ``example.py`` is the software under test. In production, it uses the
   real file system.
