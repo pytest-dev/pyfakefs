@@ -1,7 +1,7 @@
 # pyfakefs Release Notes
 The release versions are PyPi releases.
 
-## Version 3.4.2(https://pypi.python.org/pypi/pyfakefs/3.4.2)
+## Version 3.4.3(https://pypi.python.org/pypi/pyfakefs/3.4.3)
 
 This is mostly a bug fix release, mainly for bugs found by 
 [@agroce](https://github.com/agroce) using [tstl](https://github.com/agroce/tstl). 
