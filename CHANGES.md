@@ -1,8 +1,11 @@
 # pyfakefs Release Notes
 The release versions are PyPi releases.
 
-## Version 3.5 (As yet unreleased)
+## Version 3.4.2(https://pypi.python.org/pypi/pyfakefs/3.4.2)
 
+This is mostly a bug fix release, mainly for bugs found by 
+[@agroce](https://github.com/agroce) using [tstl](https://github.com/agroce/tstl). 
+ 
 #### New Features
   * added support for path-like objects as arguments in `create_file()`, 
   `create_dir()`, `create_symlink()`, `add_real_file()` and 
