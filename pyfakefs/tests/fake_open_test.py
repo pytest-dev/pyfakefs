@@ -971,6 +971,13 @@ class FakeFileOpenTest(FakeFileOpenTestBase):
         with self.open(file_path, 'rb') as f:
             self.assertEqual(b'test', f.read())
 
+    def test_write_devnull(self):
+        for mode in ('r+', 'w', 'w+', 'a', 'a+'):
+            with self.open(self.os.devnull, mode) as f:
+                f.write('test')
+            with self.open(self.os.devnull) as f:
+                self.assertEqual('', f.read())
+
 
 class RealFileOpenTest(FakeFileOpenTest):
     def use_real_fs(self):

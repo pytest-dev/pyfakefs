@@ -107,7 +107,7 @@ from stat import S_IFREG, S_IFDIR, S_ISLNK, S_IFMT, S_ISDIR, S_IFLNK, S_ISREG
 
 from pyfakefs.deprecator import Deprecator
 from pyfakefs.fake_scandir import scandir, walk
-from pyfakefs.helpers import FakeStatResult, FileBufferIO, IS_PY2
+from pyfakefs.helpers import FakeStatResult, FileBufferIO, IS_PY2, NullFileBufferIO
 from pyfakefs.helpers import is_int_type, is_byte_string, is_unicode_string
 from pyfakefs.helpers import make_string_path
 
@@ -498,6 +498,19 @@ class FakeFile(object):
         self.st_ino = st_ino
 
 
+class FakeNullFile(FakeFile):
+    def __init__(self, filesystem):
+        devnull = '/dev/nul' if filesystem.is_windows_fs else '/dev/nul'
+        super(FakeNullFile, self).__init__(devnull, filesystem=filesystem, contents=b'')
+
+    @property
+    def byte_contents(self):
+        return b''
+
+    def _set_initial_contents(self, contents):
+        pass
+
+
 Deprecator.add(FakeFile, FakeFile.set_large_file_size, 'SetLargeFileSize')
 Deprecator.add(FakeFile, FakeFile.set_contents, 'SetContents')
 Deprecator.add(FakeFile, FakeFile.is_large_file, 'IsLargeFile')
@@ -825,6 +838,7 @@ class FakeFilesystem(object):
         self.mount_points = {}
         self.add_mount_point(self.root.name, total_size)
         self._add_standard_streams()
+        self.dev_null = FakeNullFile(self)
 
     def reset(self, total_size=None):
         """Remove all file system contents and reset the root."""
@@ -1663,6 +1677,8 @@ class FakeFilesystem(object):
             raise TypeError
         if not file_path:
             return False
+        if file_path == self.dev_null.name:
+            return not self.is_windows_fs
         try:
             if self.is_filepath_ending_with_separator(file_path):
                 return False
@@ -1740,7 +1756,8 @@ class FakeFilesystem(object):
         file_path = self.absnormpath(self._original_path(file_path))
         if self._is_root_path(file_path):
             return file_path
-
+        if file_path == self.dev_null.name:
+            return file_path
         path_components = self._path_components(file_path)
         resolved_components = self._resolve_components(path_components, raw_io)
         return self._components_to_path(resolved_components)
@@ -1861,6 +1878,8 @@ class FakeFilesystem(object):
         file_path = make_string_path(file_path)
         if file_path == self.root.name:
             return self.root
+        if file_path == self.dev_null.name:
+            return self.dev_null
 
         file_path = self._original_path(file_path)
         path_components = self._path_components(file_path)
@@ -3360,6 +3379,8 @@ class FakeOsModule(object):
     my_os_module = fake_filesystem.FakeOsModule(filesystem)
     """
 
+    devnull = None
+
     def __init__(self, filesystem, os_path_module=None):
         """Also exposes self.path (to fake os.path).
 
@@ -3382,6 +3403,8 @@ class FakeOsModule(object):
             self.fdopen = self._fdopen_ver2
         else:
             self.fdopen = self._fdopen
+        self.__class__.devnull = ('/dev/nul' if filesystem.is_windows_fs
+                                  else '/dev/nul')
 
     def _fdopen(self, *args, **kwargs):
         """Redirector to open() builtin function.
@@ -3506,7 +3529,8 @@ class FakeOsModule(object):
         fake_file = FakeFileOpen(
             self.filesystem, delete_on_close=delete_on_close, raw_io=True)(
             file_path, str_flags, open_modes=open_modes)
-        self.chmod(file_path, mode)
+        if fake_file.file_object != self.filesystem.dev_null:
+            self.chmod(file_path, mode)
         return fake_file.fileno()
 
     def close(self, file_des):
@@ -4294,7 +4318,9 @@ class FakeFileWrapper(object):
         contents = file_object.byte_contents
         self._encoding = encoding or locale.getpreferredencoding(False)
         errors = errors or 'strict'
-        self._io = FileBufferIO(contents, linesep=filesystem.line_separator(),
+        buffer_class = (NullFileBufferIO if file_object == filesystem.dev_null
+                        else FileBufferIO)
+        self._io = buffer_class(contents, linesep=filesystem.line_separator(),
                                 binary=binary, encoding=encoding,
                                 newline=newline, errors=errors)
 
@@ -4868,11 +4894,15 @@ class FakeFileOpen(object):
             # open a file file by path
             filedes = None
             file_path = file_
-            real_path = self.filesystem.resolve_path(
-                file_path, raw_io=self.raw_io)
-            if self.filesystem.exists(file_path):
-                file_object = self.filesystem.get_object_from_normpath(
-                    real_path)
+            if file_path == self.filesystem.dev_null.name:
+                file_object = self.filesystem.dev_null
+                real_path = file_path
+            else:
+                real_path = self.filesystem.resolve_path(
+                    file_path, raw_io=self.raw_io)
+                if self.filesystem.exists(file_path):
+                    file_object = self.filesystem.get_object_from_normpath(
+                        real_path)
         return file_object, file_path, filedes, real_path
 
     def _handle_file_mode(self, mode, newline, open_modes):

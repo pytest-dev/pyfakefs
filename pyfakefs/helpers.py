@@ -260,7 +260,7 @@ class FileBufferIO(object):
         self.binary = binary
         self._bytestream = io.BytesIO()
         if contents is not None:
-            self._bytestream.write(self.encoded_string(contents))
+            self.putvalue(contents)
             self._bytestream.seek(0)
 
     def encoding(self):
@@ -377,7 +377,7 @@ class FileBufferIO(object):
             raise TypeError('Incorrect type for writing')
         contents = self.convert_newlines_for_writing(s)
         length = len(contents)
-        self._bytestream.write(self.encoded_string(contents))
+        self.putvalue(contents)
         return length
 
     def writelines(self, lines):
@@ -399,3 +399,9 @@ class FileBufferIO(object):
 
     def __getattr__(self, name):
         return getattr(self._bytestream, name)
+
+
+class NullFileBufferIO(FileBufferIO):
+    """Special stream for null device. Does nothing on writing."""
+    def putvalue(self, s):
+        pass

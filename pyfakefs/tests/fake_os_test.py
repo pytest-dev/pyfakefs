@@ -4156,6 +4156,23 @@ class FakeOsModuleLowLevelFileOpTest(FakeOsModuleTestBase):
         self.os.close(fd2)
         self.os.close(fd3)
 
+    def test_devnull_posix(self):
+        self.check_posix_only()
+        self.assertTrue(self.os.path.exists(self.os.devnull))
+
+    def test_devnull_windows(self):
+        self.check_windows_only()
+        self.assertFalse(self.os.path.exists(self.os.devnull))
+
+    def test_write_devnull(self):
+        fd = self.os.open(self.os.devnull, os.O_RDWR)
+        self.assertEqual(4, self.os.write(fd, b'test'))
+        self.assertEqual(b'', self.os.read(fd, 4))
+        self.os.close(fd)
+        fd = self.os.open(self.os.devnull, os.O_RDONLY)
+        self.assertEqual(b'', self.os.read(fd, 4))
+        self.os.close(fd)
+
 
 class RealOsModuleLowLevelFileOpTest(FakeOsModuleLowLevelFileOpTest):
     def use_real_fs(self):

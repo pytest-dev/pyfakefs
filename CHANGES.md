@@ -4,6 +4,7 @@ The release versions are PyPi releases.
 ## Version 3.5 (as yet unreleased)
 
 #### New Features
+  * added support for null device ([#418](../../issues/418))
   
 #### Infrastructure
 
