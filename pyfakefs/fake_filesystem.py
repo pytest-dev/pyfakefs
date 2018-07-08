@@ -557,10 +557,10 @@ class FakeDirectory(FakeFile):
 
     def set_contents(self, contents, encoding=None):
         if self.filesystem.is_windows_fs and not IS_PY2:
-            error_class = OSError
+            error_fct = self.filesystem.raise_os_error
         else:
-            error_class = IOError
-        raise error_class(errno.EISDIR, 'Trying to write to directory')
+            error_fct = self.filesystem.raise_io_error
+        raise error_fct(errno.EISDIR, self.path)
 
     @property
     def contents(self):
@@ -1243,7 +1243,7 @@ class FakeFilesystem(object):
             raise TypeError('an integer is required')
         if (file_des >= len(self.open_files) or
                 self.open_files[file_des] is None):
-            self.raise_os_error(errno.EBADF)
+            self.raise_os_error(errno.EBADF, str(file_des))
         return self.open_files[file_des][0]
 
     def has_open_file(self, file_object):
@@ -1959,7 +1959,7 @@ class FakeFilesystem(object):
         except KeyError:
             self.raise_io_error(errno.ENOENT, path)
 
-    def add_object(self, file_path, file_object, error_class=OSError):
+    def add_object(self, file_path, file_object, error_fct=None):
         """Add a fake file or directory into the filesystem at file_path.
 
         Args:
@@ -1972,15 +1972,14 @@ class FakeFilesystem(object):
             IOError or OSError: if file_path does not correspond to a
                 directory.
         """
+        error_fct = error_fct or self.raise_os_error
         if not file_path:
             target_directory = self.root
         else:
             target_directory = self.resolve(file_path)
             if not S_ISDIR(target_directory.st_mode):
                 error = errno.ENOENT if self.is_windows_fs else errno.ENOTDIR
-                raise error_class(error,
-                                  'Not a directory in the fake filesystem',
-                                  file_path)
+                error_fct(error, file_path)
         target_directory.add_entry(file_object)
 
     def rename(self, old_file_path, new_file_path, force_replace=False):
@@ -2407,7 +2406,7 @@ class FakeFilesystem(object):
                 file system on demand.
             raw_io: `True` if called from low-level API (`os.open`)
         """
-        error_class = OSError if raw_io else IOError
+        error_fct = self.raise_os_error if raw_io else self.raise_io_error
         file_path = self.make_string_path(file_path)
         file_path = self.absnormpath(file_path)
         if not is_int_type(st_mode):
@@ -2422,8 +2421,7 @@ class FakeFilesystem(object):
         self._auto_mount_drive_if_needed(parent_directory)
         if not self.exists(parent_directory):
             if not create_missing_dirs:
-                raise error_class(
-                    errno.ENOENT, 'No such fake directory', parent_directory)
+                error_fct(errno.ENOENT, parent_directory)
             self.create_dir(parent_directory)
         else:
             parent_directory = self._original_path(parent_directory)
@@ -2437,7 +2435,7 @@ class FakeFilesystem(object):
 
         self._last_ino += 1
         file_object.st_ino = self._last_ino
-        self.add_object(parent_directory, file_object, error_class)
+        self.add_object(parent_directory, file_object, error_fct)
 
         if (not read_from_real_fs and
                 (contents is not None or st_size is not None)):
@@ -3558,7 +3556,7 @@ class FakeOsModule(object):
         """
         file_handle = self.filesystem.get_open_file(file_des)
         if isinstance(file_handle, FakeDirWrapper):
-            self.filesystem.raise_os_error(errno.EBADF)
+            self.filesystem.raise_os_error(errno.EBADF, file_handle.file_path)
         file_handle.raw_io = True
         file_handle._sync_io()
         file_handle.update_flush_pos()
@@ -4213,7 +4211,7 @@ class FakeOsModule(object):
         if self.filesystem.is_windows_fs:
             if (not hasattr(file_object, 'allow_update') or
                     not file_object.allow_update):
-                self.filesystem.raise_os_error(errno.EBADF)
+                self.filesystem.raise_os_error(errno.EBADF, file_object.file_path)
 
     def fdatasync(self, file_des):
         """Perform fdatasync for a fake file (in other words, do nothing).
@@ -4284,7 +4282,7 @@ class FakeFileWrapper(object):
                  newline=None, binary=True, closefd=True, encoding=None,
                  errors=None, raw_io=False, is_stream=False, use_io=True):
         self.file_object = file_object
-        self._file_path = file_path
+        self.file_path = file_path
         self._append = append
         self._read = read
         self.allow_update = update
@@ -4332,7 +4330,7 @@ class FakeFileWrapper(object):
 
     def _raise(self, message):
         if self.raw_io:
-            self._filesystem.raise_os_error(errno.EBADF)
+            self._filesystem.raise_os_error(errno.EBADF, self.file_path)
         if IS_PY2:
             raise IOError(message)
         raise io.UnsupportedOperation(message)
@@ -4596,7 +4594,7 @@ class FakeFileWrapper(object):
 
     def __getattr__(self, name):
         if self.file_object.is_large_file():
-            raise FakeLargeFileIoException(self._file_path)
+            raise FakeLargeFileIoException(self.file_path)
 
         reading = name.startswith('read') or name == 'next'
         truncate = name == 'truncate'
@@ -4690,7 +4688,7 @@ class FakeDirWrapper(object):
 
     def __init__(self, file_object, file_path, filesystem):
         self.file_object = file_object
-        self._file_path = file_path
+        self.file_path = file_path
         self._filesystem = filesystem
         self.filedes = None
 
