@@ -14,6 +14,7 @@ build: off
 
 test_script:
   - "%PYTHON%\\python.exe -m pyfakefs.tests.all_tests"
-  - "%PYTHON%\\python.exe -m pytest pyfakefs\\tests\\pytest_plugin_test.py"
-  - "%PYTHON%\\python.exe -m pytest pyfakefs\\tests\\pytest_plugin_failing_test.py > testresult.txt | echo."
-  - "%PYTHON%\\python.exe -m pytest pyfakefs\\tests\\pytest_check_failed_plugin_test.py"
+  - "%PYTHON%\\python.exe -m pytest pyfakefs\\tests\\pytest\\pytest_plugin_test.py"
+  - IF "C:\\Python36-x64"=="%PYTHON%" "%PYTHON%\\python.exe -m pytest pyfakefs\\tests\\pytest\\pytest_fixture_test.py"
+  - "%PYTHON%\\python.exe -m pytest pyfakefs\\tests\\pytest\\pytest_plugin_failing_test.py > testresult.txt | echo."
+  - "%PYTHON%\\python.exe -m pytest pyfakefs\\tests\\pytest\\pytest_check_failed_plugin_test.py"

@@ -96,7 +96,7 @@ patching does not work for some module.
 .. note:: If you need these arguments in ``PyTest``, you have to
   use ``Patcher`` directly instead of the ``fs`` fixture. Alternatively,
   you can add your own fixture with the needed parameters (see
-  ``pytest_plugin.py`` for a possible implementation).
+  ``pyfakefs.tests.pytest.conftest.py`` for a possible implementation).
 
 modules_to_reload
 ~~~~~~~~~~~~~~~~~
