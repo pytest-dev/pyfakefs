@@ -135,10 +135,12 @@ provide a few additional arguments for fine-tuning. These are only needed if
 patching does not work for some module.</p>
 <div class="admonition note">
 <p class="first admonition-title">Note</p>
-<p class="last">If you need these arguments in <code class="docutils literal"><span class="pre">PyTest</span></code>, you have to
+<p>If you need these arguments in <code class="docutils literal"><span class="pre">PyTest</span></code>, you have to
 use <code class="docutils literal"><span class="pre">Patcher</span></code> directly instead of the <code class="docutils literal"><span class="pre">fs</span></code> fixture. Alternatively,
-you can add your own fixture with the needed parameters (see
-<code class="docutils literal"><span class="pre">pyfakefs.tests.pytest.conftest.py</span></code> for a possible implementation).</p>
+you can add your own fixture with the needed parameters.</p>
+<p class="last">An example for both approches can be found in
+<a class="reference external" href="https://github.com/jmcgeheeiv/pyfakefs/blob/master/pyfakefs/tests/pytest/pytest_fixture_test.py">pytest_fixture_test.py</a>
+with the example fixture in <a class="reference external" href="https://github.com/jmcgeheeiv/pyfakefs/blob/master/pyfakefs/tests/pytest/conftest.py">conftest.py</a>.</p>
 </div>
 <div class="section" id="modules-to-reload">
 <h3>modules_to_reload<a class="headerlink" href="#modules-to-reload" title="Permalink to this headline">¶</a></h3>
@@ -412,7 +414,7 @@ modeled after <code class="docutils literal"><span class="pre">shutil.disk_usage
         &#169; Copyright 2009 Google Inc. All Rights Reserved.
 © Copyright 2014 Altera Corporation. All Rights Reserved.
 © Copyright 2014-2018 John McGehee.
-      Last updated on Jul 23, 2018.
+      Last updated on Jul 24, 2018.
     </div>
   </body>
 </html>
