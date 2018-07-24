@@ -95,8 +95,11 @@ patching does not work for some module.
 
 .. note:: If you need these arguments in ``PyTest``, you have to
   use ``Patcher`` directly instead of the ``fs`` fixture. Alternatively,
-  you can add your own fixture with the needed parameters (see
-  ``pyfakefs.tests.pytest.conftest.py`` for a possible implementation).
+  you can add your own fixture with the needed parameters.
+
+  An example for both approches can be found in
+  `pytest_fixture_test.py <https://github.com/jmcgeheeiv/pyfakefs/blob/master/pyfakefs/tests/pytest/pytest_fixture_test.py>`__
+  with the example fixture in `conftest.py <https://github.com/jmcgeheeiv/pyfakefs/blob/master/pyfakefs/tests/pytest/conftest.py>`__.
 
 modules_to_reload
 ~~~~~~~~~~~~~~~~~
