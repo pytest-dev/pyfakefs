@@ -504,7 +504,7 @@ class FakePath(pathlib.Path):
         """
         if self._closed:
             self._raise_closed()
-        return FakeFileOpen(self.filesystem)(
+        return FakeFileOpen(self.filesystem, use_io=True)(
             self._path(), mode, buffering, encoding, errors, newline)
 
     if sys.version_info >= (3, 5) or pathlib2:
