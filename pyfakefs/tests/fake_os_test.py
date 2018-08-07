@@ -26,7 +26,7 @@ import unittest
 
 from pyfakefs import fake_filesystem
 from pyfakefs.fake_filesystem import FakeFileOpen
-from pyfakefs.fake_filesystem_unittest import has_scandir
+from pyfakefs.extra_packages import use_scandir, use_scandir_package
 
 from pyfakefs.tests.test_utils import DummyTime, TestCase, RealFsTestCase
 
@@ -4602,8 +4602,7 @@ class StatPropagationTest(TestCase):
         fh.close()
 
 
-@unittest.skipIf(sys.version_info < (3, 5) and not has_scandir,
-                 'os.scandir was introduced in Python 3.5')
+@unittest.skipIf(not use_scandir, 'os.scandir was introduced in Python 3.5')
 class FakeScandirTest(FakeOsModuleTestBase):
     def setUp(self):
         super(FakeScandirTest, self).setUp()
@@ -4611,7 +4610,7 @@ class FakeScandirTest(FakeOsModuleTestBase):
                                   not self.use_real_fs() and
                                   not self.is_python2)
 
-        if has_scandir:
+        if use_scandir_package:
             if self.use_real_fs():
                 from scandir import scandir
             else:
@@ -4693,10 +4692,10 @@ class FakeScandirTest(FakeOsModuleTestBase):
         link_path = self.make_path('A', 'C')
         self.os.symlink(dir_path, link_path)
         self.assertEqual([self.os.path.join(link_path, 'D')],
-                         [f.path for f in self.os.scandir(link_path)])
+                         [f.path for f in self.scandir(link_path)])
 
     def test_inode(self):
-        if has_scandir and self.is_windows and self.use_real_fs():
+        if use_scandir and self.is_windows and self.use_real_fs():
             self.skipTest(
                 'inode seems not to work in scandir module under Windows')
         self.assertEqual(self.os.stat(self.dir_path).st_ino,

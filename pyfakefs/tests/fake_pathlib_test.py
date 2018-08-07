@@ -21,16 +21,33 @@ Note that many of the tests are directly taken from examples in the
 python docs.
 """
 
+import errno
 import os
-import pathlib
 import stat
 import sys
 import unittest
 
 from pyfakefs import fake_pathlib, fake_filesystem
-from pyfakefs.tests.test_utils import RealFsTestCase
+from pyfakefs.extra_packages import pathlib, pathlib2
+from pyfakefs.helpers import text_type
+from pyfakefs.tests.test_utils import RealFsTestCase, TestCase
 
 is_windows = sys.platform == 'win32'
+
+
+def needs_pathlib_35():
+    if sys.version_info < (3, 5) and not pathlib2:
+        raise unittest.SkipTest('New in version 3.5')
+
+
+def needs_pathlib_36():
+    if sys.version_info < (3, 6) and not pathlib2:
+        raise unittest.SkipTest('Changed behavior in Python 3.6')
+
+
+def before_pathlib_36():
+    if sys.version_info >= (3, 6) or pathlib2:
+        raise unittest.SkipTest('Changed behavior in Python 3.6')
 
 
 class RealPathlibTestCase(RealFsTestCase):
@@ -38,6 +55,20 @@ class RealPathlibTestCase(RealFsTestCase):
         super(RealPathlibTestCase, self).__init__(methodName)
         self.pathlib = pathlib
         self.path = None
+
+    def assertRaisesFileExistsError(self, callableObj, *args, **kwargs):
+        if TestCase.is_python2:
+            self.assert_raises_os_error(
+                errno.EEXIST, callableObj, *args, **kwargs)
+        else:
+            self.assertRaises(FileExistsError, callableObj, *args, **kwargs)
+
+    def assertRaisesFileNotFoundError(self, callableObj, *args, **kwargs):
+        if TestCase.is_python2:
+            self.assert_raises_os_error(
+                errno.ENOENT, callableObj, *args, **kwargs)
+        else:
+            self.assertRaises(FileNotFoundError, callableObj, *args, **kwargs)
 
     def setUp(self):
         super(RealPathlibTestCase, self).setUp()
@@ -382,35 +413,33 @@ class FakePathlibFileObjectPropertyTest(RealPathlibTestCase):
             self.path(
                 self.os.path.realpath(self.make_path('antoine', 'setup.py'))))
 
-    @unittest.skipIf(sys.version_info >= (3, 6),
-                     'Changed behavior in Python 3.6')
     def test_resolve_nonexisting_file(self):
+        before_pathlib_36()
         path = self.path('/foo/bar')
-        self.assertRaises(FileNotFoundError, path.resolve)
+        self.assertRaisesFileNotFoundError(path.resolve)
 
-    @unittest.skipIf(not is_windows or sys.version_info >= (3, 6),
-                     'Changed behavior in Python 3.6')
+    @unittest.skipIf(not is_windows, 'Windows specific behavior')
     def test_resolve_file_as_parent_windows(self):
+        before_pathlib_36()
         self.check_windows_only()
         self.create_file(self.make_path('a_file'))
         path = self.path(self.make_path('a_file', 'this can not exist'))
-        self.assertRaises(FileNotFoundError, path.resolve)
+        self.assertRaisesFileNotFoundError(path.resolve)
 
-    @unittest.skipIf(is_windows or sys.version_info >= (3, 6),
-                     'Changed behavior in Python 3.6')
+    @unittest.skipIf(is_windows, 'POSIX specific behavior')
     def test_resolve_file_as_parent_posix(self):
+        before_pathlib_36()
         self.check_posix_only()
         self.create_file(self.make_path('a_file'))
         path = self.path(self.make_path('', 'a_file', 'this can not exist'))
         self.assertRaises(NotADirectoryError, path.resolve)
 
-    @unittest.skipIf(sys.version_info < (3, 6),
-                     'Changed behavior in Python 3.6')
     def test_resolve_nonexisting_file_after_36(self):
+        needs_pathlib_36()
         path = self.path(
             self.make_path('/path', 'to', 'file', 'this can not exist'))
         self.assertEqual(path, path.resolve())
-        self.assertRaises(FileNotFoundError, path.resolve, strict=True)
+        self.assertRaisesFileNotFoundError(path.resolve, strict=True)
 
     def test_cwd(self):
         dir_path = self.make_path('jane')
@@ -419,8 +448,8 @@ class FakePathlibFileObjectPropertyTest(RealPathlibTestCase):
         self.assertEqual(self.path.cwd(),
                          self.path(self.os.path.realpath(dir_path)))
 
-    @unittest.skipIf(sys.version_info < (3, 5), 'New in version 3.5')
     def test_expanduser(self):
+        needs_pathlib_35()
         if is_windows:
             self.assertEqual(self.path('~').expanduser(),
                              self.path(
@@ -429,8 +458,8 @@ class FakePathlibFileObjectPropertyTest(RealPathlibTestCase):
             self.assertEqual(self.path('~').expanduser(),
                              self.path(os.environ['HOME']))
 
-    @unittest.skipIf(sys.version_info < (3, 5), 'New in version 3.5')
     def test_home(self):
+        needs_pathlib_35()
         if is_windows:
             self.assertEqual(self.path.home(),
                              self.path(
@@ -467,35 +496,53 @@ class FakePathlibPathFileOperationTest(RealPathlibTestCase):
 
     def test_open(self):
         self.create_dir(self.make_path('foo'))
-        self.assertRaises(OSError,
+        self.assertRaises(IOError if TestCase.is_python2 else OSError,
                           self.path(self.make_path('foo', 'bar.txt')).open)
         self.path(self.make_path('foo', 'bar.txt')).open('w').close()
         self.assertTrue(self.os.path.exists(self.make_path('foo', 'bar.txt')))
 
-    @unittest.skipIf(sys.version_info < (3, 5), 'New in version 3.5')
     def test_read_text(self):
+        needs_pathlib_35()
+        self.create_file(self.make_path('text_file'), contents='foo')
+        file_path = self.path(self.make_path('text_file'))
+        self.assertEqual(file_path.read_text(), 'foo')
+
+    @unittest.skipIf(sys.version_info < (3, 0),
+                     'Python 3 specific string handling')
+    def test_read_text_with_encoding(self):
+        needs_pathlib_35()
         self.create_file(self.make_path('text_file'),
                          contents='ерунда', encoding='cyrillic')
         file_path = self.path(self.make_path('text_file'))
         self.assertEqual(file_path.read_text(encoding='cyrillic'), 'ерунда')
 
-    @unittest.skipIf(sys.version_info < (3, 5), 'New in version 3.5')
     def test_write_text(self):
+        needs_pathlib_35()
+        path_name = self.make_path('text_file')
+        file_path = self.path(path_name)
+        file_path.write_text(text_type('foo'))
+        self.assertTrue(self.os.path.exists(path_name))
+        self.check_contents(path_name, 'foo')
+
+    @unittest.skipIf(sys.version_info < (3, 0),
+                     'Python 3 specific string handling')
+    def test_write_text_with_encoding(self):
+        needs_pathlib_35()
         path_name = self.make_path('text_file')
         file_path = self.path(path_name)
         file_path.write_text('ανοησίες', encoding='greek')
         self.assertTrue(self.os.path.exists(path_name))
         self.check_contents(path_name, 'ανοησίες'.encode('greek'))
 
-    @unittest.skipIf(sys.version_info < (3, 5), 'New in version 3.5')
     def test_read_bytes(self):
+        needs_pathlib_35()
         path_name = self.make_path('binary_file')
         self.create_file(path_name, contents=b'Binary file contents')
         file_path = self.path(path_name)
         self.assertEqual(file_path.read_bytes(), b'Binary file contents')
 
-    @unittest.skipIf(sys.version_info < (3, 5), 'New in version 3.5')
     def test_write_bytes(self):
+        needs_pathlib_35()
         path_name = self.make_path('binary_file')
         file_path = self.path(path_name)
         file_path.write_bytes(b'Binary file contents')
@@ -510,6 +557,8 @@ class FakePathlibPathFileOperationTest(RealPathlibTestCase):
         self.assertFalse(self.os.path.exists(file_name))
         self.check_contents(new_file_name, 'test')
 
+    @unittest.skipIf(sys.version_info < (3, 3),
+                     'Path.replace() available since Python 3.3')
     def test_replace(self):
         self.create_file(self.make_path('foo', 'bar.txt'), contents='test')
         self.create_file(self.make_path('bar', 'old.txt'), contents='replaced')
@@ -536,12 +585,12 @@ class FakePathlibPathFileOperationTest(RealPathlibTestCase):
         file_name = self.make_path('foo', 'bar.txt')
         self.create_file(file_name, contents='test')
         file_path = self.path(file_name)
-        self.assertRaises(FileExistsError, file_path.touch, exist_ok=False)
+        self.assertRaisesFileExistsError(file_path.touch, exist_ok=False)
         file_path.touch()
         self.check_contents(file_name, 'test')
 
-    @unittest.skipIf(sys.version_info < (3, 5), 'New in version 3.5')
     def test_samefile(self):
+        needs_pathlib_35()
         file_name = self.make_path('foo', 'bar.txt')
         self.create_file(file_name)
         file_name2 = self.make_path('foo', 'baz.txt')
@@ -576,21 +625,20 @@ class FakePathlibPathFileOperationTest(RealPathlibTestCase):
 
     def test_mkdir(self):
         dir_name = self.make_path('foo', 'bar')
-        self.assertRaises(FileNotFoundError, self.path(dir_name).mkdir)
+        self.assertRaisesFileNotFoundError(self.path(dir_name).mkdir)
         self.path(dir_name).mkdir(parents=True)
         self.assertTrue(self.os.path.exists(dir_name))
-        self.assertRaises(FileExistsError, self.path(dir_name).mkdir)
+        self.assertRaisesFileExistsError(self.path(dir_name).mkdir)
 
-    @unittest.skipIf(sys.version_info < (3, 5),
-                     'exist_ok argument new in Python 3.5')
     def test_mkdir_exist_ok(self):
+        needs_pathlib_35()
         dir_name = self.make_path('foo', 'bar')
         self.create_dir(dir_name)
         self.path(dir_name).mkdir(exist_ok=True)
         file_name = self.os.path.join(dir_name, 'baz')
         self.create_file(file_name)
-        self.assertRaises(FileExistsError, self.path(file_name).mkdir,
-                          exist_ok=True)
+        self.assertRaisesFileExistsError(self.path(file_name).mkdir,
+                                         exist_ok=True)
 
     def test_rmdir(self):
         dir_name = self.make_path('foo', 'bar')

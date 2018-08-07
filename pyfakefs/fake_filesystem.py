@@ -107,9 +107,10 @@ from stat import S_IFREG, S_IFDIR, S_ISLNK, S_IFMT, S_ISDIR, S_IFLNK, S_ISREG
 
 from pyfakefs.deprecator import Deprecator
 from pyfakefs.fake_scandir import scandir, walk
+from pyfakefs.extra_packages import use_scandir
 from pyfakefs.helpers import FakeStatResult, FileBufferIO, IS_PY2, NullFileBufferIO
 from pyfakefs.helpers import is_int_type, is_byte_string, is_unicode_string
-from pyfakefs.helpers import make_string_path
+from pyfakefs.helpers import make_string_path, text_type
 
 __pychecker__ = 'no-reimportself'
 
@@ -121,11 +122,6 @@ PERM_EXE = 0o100  # Execute permission bit.
 PERM_DEF = 0o777  # Default permission bits.
 PERM_DEF_FILE = 0o666  # Default permission bits (regular file)
 PERM_ALL = 0o7777  # All permission bits.
-
-try:
-    text_type = unicode  # Python 2
-except NameError:
-    text_type = str      # Python 3
 
 _OpenModes = namedtuple(
     'open_modes',
@@ -3693,7 +3689,7 @@ class FakeOsModule(object):
             used by shutil."""
             return []
 
-    if sys.version_info >= (3, 5):
+    if use_scandir:
         def scandir(self, path=''):
             """Return an iterator of DirEntry objects corresponding to the
             entries in the directory given by path.

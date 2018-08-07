@@ -18,6 +18,8 @@ package.
 """
 import sys
 
+from pyfakefs.extra_packages import use_scandir_package
+
 
 class DirEntry(object):
     """Emulates os.DirEntry. Note that we did not enforce keyword only
@@ -107,7 +109,8 @@ class ScanDirIter:
     def __init__(self, filesystem, path):
         self.filesystem = filesystem
         if isinstance(path, int):
-            if sys.version_info < (3, 7) or self.filesystem.is_windows_fs:
+            if not use_scandir_package and (
+                    sys.version_info < (3, 7) or self.filesystem.is_windows_fs):
                 raise NotImplementedError(
                     'scandir does not support file descriptor '
                     'path argument')

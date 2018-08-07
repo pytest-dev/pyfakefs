@@ -39,6 +39,7 @@ was eliminated in Python 3.
 import os
 import glob
 import shutil
+import sys
 
 try:
     import scandir
@@ -144,8 +145,10 @@ def scan_dir(path):
     """Return a list of directory entries for the given path."""
     if has_scandir:
         return list(scandir.scandir(path))
-    else:
+    elif sys.version_info >= (3, 5):
         return list(os.scandir(path))
+    else:
+        raise NotImplementedError
 
 
 def file_contents(path):

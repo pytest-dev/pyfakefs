@@ -17,6 +17,7 @@ import sys
 import unittest
 
 from pyfakefs import fake_filesystem_unittest
+from pyfakefs.extra_packages import pathlib
 
 
 class TestPyfakefsUnittestBase(fake_filesystem_unittest.TestCase):
@@ -60,10 +61,8 @@ class DynamicImportPatchTest(TestPyfakefsUnittestBase):
         self.fs.set_disk_usage(100)
         self.assertEqual(100, shutil.disk_usage('/').total)
 
-    @unittest.skipIf(sys.version_info < (3, 4), 'pathlib new in Python 3.4')
+    @unittest.skipIf(not pathlib, 'pathlib new in Python 3.4')
     def test_pathlib_patch(self):
-        import pathlib
-
         file_path = 'test.txt'
         path = pathlib.Path(file_path)
         with path.open('w') as f:
@@ -73,12 +72,10 @@ class DynamicImportPatchTest(TestPyfakefsUnittestBase):
         file_object = self.fs.get_object(file_path)
         self.assertEqual('test', file_object.contents)
 
-    @unittest.skipIf(sys.version_info < (3, 4), 'pathlib new in Python 3.4')
+    @unittest.skipIf(not pathlib, 'pathlib new in Python 3.4')
     def test_pathlib_path_patch(self):
-        from pathlib import Path
-
         file_path = 'test.txt'
-        path = Path(file_path)
+        path = pathlib.Path(file_path)
         with path.open('w') as f:
             f.write('test')
 
