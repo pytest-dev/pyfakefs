@@ -522,7 +522,7 @@ class FakePath(pathlib.Path):
             """
             Open the fake file in text mode, read it, and close the file.
             """
-            with FakeFileOpen(self.filesystem)(self._path(), mode='r',
+            with FakeFileOpen(self.filesystem, use_io=True)(self._path(), mode='r',
                                                encoding=encoding,
                                                errors=errors) as f:
                 return f.read()
@@ -558,7 +558,7 @@ class FakePath(pathlib.Path):
             if not isinstance(data, text_type):
                 raise TypeError('data must be str, not %s' %
                                 data.__class__.__name__)
-            with FakeFileOpen(self.filesystem)(self._path(), mode='w',
+            with FakeFileOpen(self.filesystem, use_io=True)(self._path(), mode='w',
                                                encoding=encoding,
                                                errors=errors) as f:
                 return f.write(data)
