@@ -438,7 +438,9 @@ class FakePathlibFileObjectPropertyTest(RealPathlibTestCase):
         needs_pathlib_36()
         path = self.path(
             self.make_path('/path', 'to', 'file', 'this can not exist'))
-        self.assertEqual(path, path.resolve())
+        # kludge to avoid https://github.com/mcmtroffaes/pathlib2/issues/45
+        if not (pathlib2 and TestCase.is_windows and sys.version_info < (3, 2)):
+            self.assertEqual(path, path.resolve())
         self.assertRaisesFileNotFoundError(path.resolve, strict=True)
 
     def test_cwd(self):
