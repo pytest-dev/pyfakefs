@@ -8,7 +8,7 @@ environment:
 
 install:
   - "%PYTHON%\\python.exe -m pip install -r requirements.txt"
-  - "%PYTHON%\\python.exe -m pip install -r extra_requirements.txt.txt"
+  - "%PYTHON%\\python.exe -m pip install -r extra_requirements.txt"
   - "%PYTHON%\\python.exe -m pip install ."
 
 build: off
