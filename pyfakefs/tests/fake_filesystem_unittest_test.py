@@ -260,7 +260,10 @@ class TestCopyOrAddRealFile(TestPyfakefsUnittestBase):
 
     @classmethod
     def setUpClass(cls):
-        cls.filepath = os.path.abspath(__file__)
+        filename = __file__
+        if filename.endswith('.pyc'):  # happens on windows / py27
+            filename = filename[:-1]
+        cls.filepath = os.path.abspath(filename)
         with open(cls.filepath) as f:
             cls.real_string_contents = f.read()
         with open(cls.filepath, 'rb') as f:
