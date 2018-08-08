@@ -4602,7 +4602,7 @@ class StatPropagationTest(TestCase):
         fh.close()
 
 
-@unittest.skipIf(not use_scandir, 'os.scandir was introduced in Python 3.5')
+@unittest.skipIf(not use_scandir, 'only run if scandir is available')
 class FakeScandirTest(FakeOsModuleTestBase):
     def setUp(self):
         super(FakeScandirTest, self).setUp()

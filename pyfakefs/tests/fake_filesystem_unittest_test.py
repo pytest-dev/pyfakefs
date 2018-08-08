@@ -125,7 +125,7 @@ class TestPyfakefsUnittest(TestPyfakefsUnittestBase):  # pylint: disable=R0904
         shutil.rmtree('/test/dir1')
         self.assertFalse(self.fs.exists('/test/dir1'))
 
-    @unittest.skipIf(not pathlib, "pathlib new in Python 3.4")
+    @unittest.skipIf(not pathlib, "only run if pathlib is available")
     def test_fakepathlib(self):
         with pathlib.Path('/fake_file.txt') as p:
             with p.open('w') as f:

@@ -35,17 +35,17 @@ from pyfakefs.tests.test_utils import RealFsTestCase, TestCase
 is_windows = sys.platform == 'win32'
 
 
-def needs_pathlib_35():
+def skip_if_pathlib_35_not_available():
     if sys.version_info < (3, 5) and not pathlib2:
         raise unittest.SkipTest('New in version 3.5')
 
 
-def needs_pathlib_36():
+def skip_if_pathlib_36_not_available():
     if sys.version_info < (3, 6) and not pathlib2:
         raise unittest.SkipTest('Changed behavior in Python 3.6')
 
 
-def before_pathlib_36():
+def skip_if_pathlib_36_is_available():
     if sys.version_info >= (3, 6) or pathlib2:
         raise unittest.SkipTest('Changed behavior in Python 3.6')
 
@@ -55,20 +55,6 @@ class RealPathlibTestCase(RealFsTestCase):
         super(RealPathlibTestCase, self).__init__(methodName)
         self.pathlib = pathlib
         self.path = None
-
-    def assertRaisesFileExistsError(self, callableObj, *args, **kwargs):
-        if TestCase.is_python2:
-            self.assert_raises_os_error(
-                errno.EEXIST, callableObj, *args, **kwargs)
-        else:
-            self.assertRaises(FileExistsError, callableObj, *args, **kwargs)
-
-    def assertRaisesFileNotFoundError(self, callableObj, *args, **kwargs):
-        if TestCase.is_python2:
-            self.assert_raises_os_error(
-                errno.ENOENT, callableObj, *args, **kwargs)
-        else:
-            self.assertRaises(FileNotFoundError, callableObj, *args, **kwargs)
 
     def setUp(self):
         super(RealPathlibTestCase, self).setUp()
@@ -414,34 +400,34 @@ class FakePathlibFileObjectPropertyTest(RealPathlibTestCase):
                 self.os.path.realpath(self.make_path('antoine', 'setup.py'))))
 
     def test_resolve_nonexisting_file(self):
-        before_pathlib_36()
+        skip_if_pathlib_36_is_available()
         path = self.path('/foo/bar')
-        self.assertRaisesFileNotFoundError(path.resolve)
+        self.assert_raises_os_error(errno.ENOENT, path.resolve)
 
     @unittest.skipIf(not is_windows, 'Windows specific behavior')
     def test_resolve_file_as_parent_windows(self):
-        before_pathlib_36()
+        skip_if_pathlib_36_is_available()
         self.check_windows_only()
         self.create_file(self.make_path('a_file'))
         path = self.path(self.make_path('a_file', 'this can not exist'))
-        self.assertRaisesFileNotFoundError(path.resolve)
+        self.assert_raises_os_error(errno.ENOENT, path.resolve)
 
     @unittest.skipIf(is_windows, 'POSIX specific behavior')
     def test_resolve_file_as_parent_posix(self):
-        before_pathlib_36()
+        skip_if_pathlib_36_is_available()
         self.check_posix_only()
         self.create_file(self.make_path('a_file'))
         path = self.path(self.make_path('', 'a_file', 'this can not exist'))
         self.assertRaises(NotADirectoryError, path.resolve)
 
     def test_resolve_nonexisting_file_after_36(self):
-        needs_pathlib_36()
+        skip_if_pathlib_36_not_available()
         path = self.path(
             self.make_path('/path', 'to', 'file', 'this can not exist'))
         # kludge to avoid https://github.com/mcmtroffaes/pathlib2/issues/45
         if not (pathlib2 and TestCase.is_windows and sys.version_info < (3, 2)):
             self.assertEqual(path, path.resolve())
-        self.assertRaisesFileNotFoundError(path.resolve, strict=True)
+        self.assert_raises_os_error(errno.ENOENT, path.resolve, strict=True)
 
     def test_cwd(self):
         dir_path = self.make_path('jane')
@@ -451,7 +437,7 @@ class FakePathlibFileObjectPropertyTest(RealPathlibTestCase):
                          self.path(self.os.path.realpath(dir_path)))
 
     def test_expanduser(self):
-        needs_pathlib_35()
+        skip_if_pathlib_35_not_available()
         if is_windows:
             self.assertEqual(self.path('~').expanduser(),
                              self.path(
@@ -461,7 +447,7 @@ class FakePathlibFileObjectPropertyTest(RealPathlibTestCase):
                              self.path(os.environ['HOME']))
 
     def test_home(self):
-        needs_pathlib_35()
+        skip_if_pathlib_35_not_available()
         if is_windows:
             self.assertEqual(self.path.home(),
                              self.path(
@@ -498,13 +484,13 @@ class FakePathlibPathFileOperationTest(RealPathlibTestCase):
 
     def test_open(self):
         self.create_dir(self.make_path('foo'))
-        self.assertRaises(IOError if TestCase.is_python2 else OSError,
+        self.assertRaises(IOError,
                           self.path(self.make_path('foo', 'bar.txt')).open)
         self.path(self.make_path('foo', 'bar.txt')).open('w').close()
         self.assertTrue(self.os.path.exists(self.make_path('foo', 'bar.txt')))
 
     def test_read_text(self):
-        needs_pathlib_35()
+        skip_if_pathlib_35_not_available()
         self.create_file(self.make_path('text_file'), contents='foo')
         file_path = self.path(self.make_path('text_file'))
         self.assertEqual(file_path.read_text(), 'foo')
@@ -512,14 +498,14 @@ class FakePathlibPathFileOperationTest(RealPathlibTestCase):
     @unittest.skipIf(sys.version_info < (3, 0),
                      'Python 3 specific string handling')
     def test_read_text_with_encoding(self):
-        needs_pathlib_35()
+        skip_if_pathlib_35_not_available()
         self.create_file(self.make_path('text_file'),
                          contents='ерунда', encoding='cyrillic')
         file_path = self.path(self.make_path('text_file'))
         self.assertEqual(file_path.read_text(encoding='cyrillic'), 'ерунда')
 
     def test_write_text(self):
-        needs_pathlib_35()
+        skip_if_pathlib_35_not_available()
         path_name = self.make_path('text_file')
         file_path = self.path(path_name)
         file_path.write_text(text_type('foo'))
@@ -529,7 +515,7 @@ class FakePathlibPathFileOperationTest(RealPathlibTestCase):
     @unittest.skipIf(sys.version_info < (3, 0),
                      'Python 3 specific string handling')
     def test_write_text_with_encoding(self):
-        needs_pathlib_35()
+        skip_if_pathlib_35_not_available()
         path_name = self.make_path('text_file')
         file_path = self.path(path_name)
         file_path.write_text('ανοησίες', encoding='greek')
@@ -537,14 +523,14 @@ class FakePathlibPathFileOperationTest(RealPathlibTestCase):
         self.check_contents(path_name, 'ανοησίες'.encode('greek'))
 
     def test_read_bytes(self):
-        needs_pathlib_35()
+        skip_if_pathlib_35_not_available()
         path_name = self.make_path('binary_file')
         self.create_file(path_name, contents=b'Binary file contents')
         file_path = self.path(path_name)
         self.assertEqual(file_path.read_bytes(), b'Binary file contents')
 
     def test_write_bytes(self):
-        needs_pathlib_35()
+        skip_if_pathlib_35_not_available()
         path_name = self.make_path('binary_file')
         file_path = self.path(path_name)
         file_path.write_bytes(b'Binary file contents')
@@ -587,12 +573,12 @@ class FakePathlibPathFileOperationTest(RealPathlibTestCase):
         file_name = self.make_path('foo', 'bar.txt')
         self.create_file(file_name, contents='test')
         file_path = self.path(file_name)
-        self.assertRaisesFileExistsError(file_path.touch, exist_ok=False)
+        self.assert_raises_os_error(errno.EEXIST, file_path.touch, exist_ok=False)
         file_path.touch()
         self.check_contents(file_name, 'test')
 
     def test_samefile(self):
-        needs_pathlib_35()
+        skip_if_pathlib_35_not_available()
         file_name = self.make_path('foo', 'bar.txt')
         self.create_file(file_name)
         file_name2 = self.make_path('foo', 'baz.txt')
@@ -627,19 +613,20 @@ class FakePathlibPathFileOperationTest(RealPathlibTestCase):
 
     def test_mkdir(self):
         dir_name = self.make_path('foo', 'bar')
-        self.assertRaisesFileNotFoundError(self.path(dir_name).mkdir)
+        self.assert_raises_os_error(errno.ENOENT, self.path(dir_name).mkdir)
         self.path(dir_name).mkdir(parents=True)
         self.assertTrue(self.os.path.exists(dir_name))
-        self.assertRaisesFileExistsError(self.path(dir_name).mkdir)
+        self.assert_raises_os_error(errno.EEXIST, self.path(dir_name).mkdir)
 
     def test_mkdir_exist_ok(self):
-        needs_pathlib_35()
+        skip_if_pathlib_35_not_available()
         dir_name = self.make_path('foo', 'bar')
         self.create_dir(dir_name)
         self.path(dir_name).mkdir(exist_ok=True)
         file_name = self.os.path.join(dir_name, 'baz')
         self.create_file(file_name)
-        self.assertRaisesFileExistsError(self.path(file_name).mkdir,
+        self.assert_raises_os_error(errno.EEXIST,
+                                         self.path(file_name).mkdir,
                                          exist_ok=True)
 
     def test_rmdir(self):

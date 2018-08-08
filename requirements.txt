@@ -1,3 +1,1 @@
-pathlib2>=2.3.2
 pytest>=2.8.6
-scandir>=1.8

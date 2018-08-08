@@ -61,7 +61,7 @@ class DynamicImportPatchTest(TestPyfakefsUnittestBase):
         self.fs.set_disk_usage(100)
         self.assertEqual(100, shutil.disk_usage('/').total)
 
-    @unittest.skipIf(not pathlib, 'pathlib new in Python 3.4')
+    @unittest.skipIf(not pathlib, 'only run if pathlib is available')
     def test_pathlib_patch(self):
         file_path = 'test.txt'
         path = pathlib.Path(file_path)
@@ -72,7 +72,7 @@ class DynamicImportPatchTest(TestPyfakefsUnittestBase):
         file_object = self.fs.get_object(file_path)
         self.assertEqual('test', file_object.contents)
 
-    @unittest.skipIf(not pathlib, 'pathlib new in Python 3.4')
+    @unittest.skipIf(not pathlib, 'only run if pathlib is available')
     def test_pathlib_path_patch(self):
         file_path = 'test.txt'
         path = pathlib.Path(file_path)
