@@ -4693,7 +4693,7 @@ class FakeScandirTest(FakeOsModuleTestBase):
         link_path = self.make_path('A', 'C')
         self.os.symlink(dir_path, link_path)
         self.assertEqual([self.os.path.join(link_path, 'D')],
-                         [f.path for f in self.os.scandir(link_path)])
+                         [f.path for f in self.scandir(link_path)])
 
     def test_inode(self):
         if has_scandir and self.is_windows and self.use_real_fs():

@@ -543,6 +543,13 @@ class FakeFilesystemUnitTest(TestCase):
         self.assertTrue(stat.S_IFREG & new_file.st_mode)
         self.assertEqual(new_file, retval)
 
+    def test_empty_file_created_for_none_contents(self):
+        fake_open = fake_filesystem.FakeFileOpen(self.filesystem)
+        path = 'foo/bar/baz'
+        self.filesystem.create_file(path, contents=None)
+        with fake_open(path) as f:
+            self.assertEqual('', f.read())
+
     def test_create_file_with_incorrect_mode_type(self):
         self.assertRaises(TypeError, self.filesystem.create_file, 'foo', 'bar')
 
