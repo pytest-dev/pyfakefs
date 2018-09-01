@@ -4693,7 +4693,7 @@ class FakeScandirTest(FakeOsModuleTestBase):
         link_path = self.make_path('A', 'C')
         self.os.symlink(dir_path, link_path)
         self.assertEqual([self.os.path.join(link_path, 'D')],
-                         [f.path for f in self.os.scandir(link_path)])
+                         [f.path for f in self.scandir(link_path)])
 
     def test_inode(self):
         if has_scandir and self.is_windows and self.use_real_fs():
@@ -4771,3 +4771,46 @@ class FakeScandirFdTest(FakeScandirTest):
 class RealScandirFdTest(FakeScandirFdTest):
     def use_real_fs(self):
         return True
+
+
+@unittest.skipIf(TestCase.is_python2,
+                 reason='Xattr only supported in Linux/Python 3')
+class FakeExtendedAttributeTest(FakeOsModuleTestBase):
+    def setUp(self):
+        super(FakeExtendedAttributeTest, self).setUp()
+        self.check_linux_only()
+        self.dir_path = self.make_path('foo')
+        self.file_path = self.os.path.join(self.dir_path, 'bar')
+        self.create_file(self.file_path)
+
+    def test_empty_xattr(self):
+        self.assertEqual([], self.os.listxattr(self.dir_path))
+        self.assertEqual([], self.os.listxattr(self.file_path))
+
+    def test_setxattr(self):
+        self.assertRaises(TypeError, self.os.setxattr,
+                                    self.file_path, 'test', 'value')
+        self.assert_raises_os_error(errno.EEXIST, self.os.setxattr,
+                                    self.file_path, 'test', b'value',
+                                    self.os.XATTR_REPLACE)
+        self.os.setxattr(self.file_path, 'test', b'value')
+        self.assertEqual(b'value', self.os.getxattr(self.file_path, 'test'))
+        self.assert_raises_os_error(errno.ENODATA, self.os.setxattr,
+                                    self.file_path, 'test', b'value',
+                                    self.os.XATTR_CREATE)
+
+    def test_removeattr(self):
+        self.os.removexattr(self.file_path, 'test')
+        self.assertEqual([], self.os.listxattr(self.file_path))
+        self.os.setxattr(self.file_path, b'test', b'value')
+        self.assertEqual(['test'], self.os.listxattr(self.file_path))
+        self.assertEqual(b'value', self.os.getxattr(self.file_path, 'test'))
+        self.os.removexattr(self.file_path, 'test')
+        self.assertEqual([], self.os.listxattr(self.file_path))
+        self.assertIsNone(self.os.getxattr(self.file_path, 'test'))
+
+    def test_default_path(self):
+        self.os.chdir(self.dir_path)
+        self.os.setxattr(self.dir_path, b'test', b'value')
+        self.assertEqual(['test'], self.os.listxattr())
+        self.assertEqual(b'value', self.os.getxattr(self.dir_path, 'test'))

@@ -241,6 +241,8 @@ class FakeFile(object):
             len(self._byte_contents) if self._byte_contents is not None else 0)
         self.epoch = 0
         self.parent_dir = None
+        # Linux/Python 3 specific: extended file system attributes
+        self.xattr = {}
 
     @property
     def byte_contents(self):
@@ -839,6 +841,10 @@ class FakeFilesystem(object):
         self.add_mount_point(self.root.name, total_size)
         self._add_standard_streams()
         self.dev_null = FakeNullFile(self)
+
+    @property
+    def is_linux(self):
+        return not self.is_windows_fs and not self.is_macos
 
     def reset(self, total_size=None):
         """Remove all file system contents and reset the root."""
@@ -3687,11 +3693,121 @@ class FakeOsModule(object):
         """
         return self.filesystem.listdir(target_directory)
 
-    if sys.platform.startswith('linux') and sys.version_info >= (3, 3):
+    if sys.version_info >= (3, 3):
+        XATTR_CREATE = 1
+        XATTR_REPLACE = 2
+
+        def getxattr(self, path, attribute, follow_symlinks=True):
+            """Return the value of the given extended filesystem attribute for
+            `path`.
+
+            Args:
+                path: File path, file descriptor or path-like object (for
+                    Python >= 3.6).
+                attribute: (str or bytes) The attribute name.
+                follow_symlinks: (bool) If True (the default), symlinks in the
+                    path are traversed.
+
+            Returns:
+                The contents of the extended attribute as bytes or None if
+                the attribute does not exist.
+
+            Raises:
+                OSError: if the path does not exist.
+            """
+            if not self.filesystem.is_linux:
+                raise AttributeError(
+                    "module 'os' has no attribute 'getxattr'")
+
+            if isinstance(attribute, bytes):
+                attribute = attribute.decode(sys.getfilesystemencoding())
+            file_obj = self.filesystem.resolve(path, follow_symlinks,
+                                               allow_fd=True)
+            return file_obj.xattr.get(attribute)
+
         def listxattr(self, path=None, follow_symlinks=True):
-            """Dummy implementation that returns an empty list -
-            used by shutil."""
-            return []
+            """Return a list of the extended filesystem attributes on `path`.
+
+            Args:
+                path: File path, file descriptor or path-like object (for
+                    Python >= 3.6). If None, the current directory is used.
+                follow_symlinks: (bool) If True (the default), symlinks in the
+                    path are traversed.
+
+            Returns:
+                A list of all attribute names for the given path as str.
+
+            Raises:
+                OSError: if the path does not exist.
+            """
+            if not self.filesystem.is_linux:
+                raise AttributeError(
+                    "module 'os' has no attribute 'listxattr'")
+
+            if path is None:
+                path = self.getcwd()
+            file_obj = self.filesystem.resolve(path, follow_symlinks,
+                                               allow_fd=True)
+            return list(file_obj.xattr.keys())
+
+        def removexattr(self, path, attribute, follow_symlinks=True):
+            """Removes the extended filesystem attribute attribute from `path`.
+
+            Args:
+                path: File path, file descriptor or path-like object (for
+                    Python >= 3.6).
+                attribute: (str or bytes) The attribute name.
+                follow_symlinks: (bool) If True (the default), symlinks in the
+                    path are traversed.
+
+            Raises:
+                OSError: if the path does not exist.
+            """
+            if not self.filesystem.is_linux:
+                raise AttributeError(
+                    "module 'os' has no attribute 'removexattr'")
+
+            if isinstance(attribute, bytes):
+                attribute = attribute.decode(sys.getfilesystemencoding())
+            file_obj = self.filesystem.resolve(path, follow_symlinks,
+                                               allow_fd=True)
+            if attribute in file_obj.xattr:
+                del file_obj.xattr[attribute]
+
+        def setxattr(self, path, attribute, value,
+                     flags=0, follow_symlinks=True):
+            """Sets the value of the given extended filesystem attribute for
+            `path`.
+
+            Args:
+                path: File path, file descriptor or path-like object (for
+                    Python >= 3.6).
+                attribute: The attribute name (str or bytes).
+                value: (byte-like) The value to be set.
+                follow_symlinks: (bool) If True (the default), symlinks in the
+                    path are traversed.
+
+            Raises:
+                OSError: if the path does not exist.
+                TypeError: if `value` is not a byte-like object.
+            """
+            if not self.filesystem.is_linux:
+                raise AttributeError(
+                    "module 'os' has no attribute 'setxattr'")
+
+            if isinstance(attribute, bytes):
+                attribute = attribute.decode(sys.getfilesystemencoding())
+            if not is_byte_string(value):
+                raise TypeError('a bytes-like object is required')
+            file_obj = self.filesystem.resolve(path, follow_symlinks,
+                                               allow_fd=True)
+            exists = attribute in file_obj.xattr
+            if exists and flags == self.XATTR_CREATE:
+                self.filesystem.raise_os_error(errno.ENODATA, file_obj.path)
+            if not exists and flags == self.XATTR_REPLACE:
+                self.filesystem.raise_os_error(errno.EEXIST, file_obj.path)
+            file_obj.xattr[attribute] = value
+
 
     if sys.version_info >= (3, 5):
         def scandir(self, path=''):
