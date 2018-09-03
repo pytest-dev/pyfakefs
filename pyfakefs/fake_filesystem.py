@@ -2255,8 +2255,11 @@ class FakeFilesystem(object):
         Args:
             file_path: The path to the file to create.
             st_mode: The stat constant representing the file type.
-            contents: The contents of the file.
-            st_size: The file size; only valid if contents not given.
+            contents: the contents of the file. If not given and st_size is
+                None, an empty file is assumed.
+            st_size: file size; only valid if contents not given. If given,
+                the file is considered to be in "large file mode" and trying
+                to read from or write to the file will result in an exception.
             create_missing_dirs: If `True`, auto create missing directories.
             apply_umask: `True` if the current umask must be applied
                 on `st_mode`.
@@ -2409,8 +2412,11 @@ class FakeFilesystem(object):
         Args:
             file_path: path to the file to create.
             st_mode: the stat.S_IF constant representing the file type.
-            contents: the contents of the file.
-            st_size: file size; only valid if contents not given.
+            contents: the contents of the file. If not given and st_size is
+                None, an empty file is assumed.
+            st_size: file size; only valid if contents not given. If given,
+                the file is considered to be in "large file mode" and trying
+                to read from or write to the file will result in an exception.
             create_missing_dirs: if True, auto create missing directories.
             apply_umask: whether or not the current umask must be applied
                 on st_mode.
@@ -2452,6 +2458,8 @@ class FakeFilesystem(object):
         file_object.st_ino = self._last_ino
         self.add_object(parent_directory, file_object, error_fct)
 
+        if st_size is None and contents is None:
+            contents = ''
         if (not read_from_real_fs and
                 (contents is not None or st_size is not None)):
             try:
