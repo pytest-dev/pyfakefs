@@ -4,6 +4,7 @@ The release versions are PyPi releases.
 ## Version 3.5 (as yet unreleased)
 
 #### New Features
+  * added pathlib2 support ([#408](../../issues/408)) ([#422](../../issues/422))
   * added some support for extended filesystem attributes under Linux 
   ([#423](../../issues/423)) 
   * added support for null device ([#418](../../issues/418))
