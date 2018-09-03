@@ -63,17 +63,13 @@ except ImportError:
 from pyfakefs import fake_filesystem
 from pyfakefs import fake_filesystem_shutil
 from pyfakefs import mox3_stubout
+from pyfakefs.extra_packages import pathlib, use_scandir
 
-if sys.version_info >= (3, 4):
+if pathlib:
     from pyfakefs import fake_pathlib
 
-
-try:
-    import scandir  # noqa: F401 import used to set has_scandir
-    import fake_scandir
-    has_scandir = True
-except ImportError:
-    has_scandir = False
+if use_scandir:
+    from pyfakefs import fake_scandir
 
 if sys.version_info < (3, ):
     import __builtin__ as builtins  # pylint: disable=import-error
@@ -284,11 +280,10 @@ class Patcher(object):
     assert None in SKIPMODULES, ("sys.modules contains 'None' values;"
                                  " must skip them.")
 
-    HAS_PATHLIB = sys.version_info >= (3, 4)
     IS_WINDOWS = sys.platform in ('win32', 'cygwin')
 
     SKIPNAMES = {'os', 'path', 'io', 'genericpath'}
-    if HAS_PATHLIB:
+    if pathlib:
         SKIPNAMES.add('pathlib')
 
     def __init__(self, additional_skip_names=None, patch_path=True,
@@ -321,10 +316,10 @@ class Patcher(object):
             'shutil': fake_filesystem_shutil.FakeShutilModule,
             'io': fake_filesystem.FakeIoModule,
         }
-        if self.HAS_PATHLIB:
+        if pathlib:
             self._fake_module_classes[
                 'pathlib'] = fake_pathlib.FakePathlibModule
-        if has_scandir:
+        if use_scandir:
             self._fake_module_classes[
                 'scandir'] = fake_scandir.FakeScanDirModule
 

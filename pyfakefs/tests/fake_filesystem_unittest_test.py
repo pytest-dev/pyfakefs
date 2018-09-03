@@ -29,12 +29,10 @@ import unittest
 from unittest import TestCase
 
 from pyfakefs import fake_filesystem_unittest, fake_filesystem
+from pyfakefs.extra_packages import pathlib
 from pyfakefs.fake_filesystem_unittest import Patcher
 import pyfakefs.tests.import_as_example
 from pyfakefs.tests.fixtures import module_with_attributes
-
-if sys.version_info >= (3, 4):
-    import pathlib
 
 
 class TestPatcher(TestCase):
@@ -127,7 +125,7 @@ class TestPyfakefsUnittest(TestPyfakefsUnittestBase):  # pylint: disable=R0904
         shutil.rmtree('/test/dir1')
         self.assertFalse(self.fs.exists('/test/dir1'))
 
-    @unittest.skipIf(sys.version_info < (3, 4), "pathlib new in Python 3.4")
+    @unittest.skipIf(not pathlib, "only run if pathlib is available")
     def test_fakepathlib(self):
         with pathlib.Path('/fake_file.txt') as p:
             with p.open('w') as f:
@@ -206,7 +204,7 @@ class TestPatchPathUnittestPassing(TestPyfakefsUnittestBase):
         self.assertEqual(2, path.floor(2.5))
 
 
-if sys.version_info >= (3, 4):
+if pathlib:
     class FakePathlibPathModule(object):
         """Patches `pathlib.Path` by passing all calls to FakePathlibModule."""
         fake_pathlib = None
@@ -262,7 +260,10 @@ class TestCopyOrAddRealFile(TestPyfakefsUnittestBase):
 
     @classmethod
     def setUpClass(cls):
-        cls.filepath = os.path.abspath(__file__)
+        filename = __file__
+        if filename.endswith('.pyc'):  # happens on windows / py27
+            filename = filename[:-1]
+        cls.filepath = os.path.abspath(filename)
         with open(cls.filepath) as f:
             cls.real_string_contents = f.read()
         with open(cls.filepath, 'rb') as f:

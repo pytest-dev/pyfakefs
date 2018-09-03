@@ -1,0 +1,13 @@
+# "pathlib2" and "scandir" are backports of new standard modules,  pyfakefs will
+# use them if available when running on older Python versions.
+#
+# They are dependencies of pytest when Python < 3.6 so we sometimes get them via
+# requirements.txt, this file makes them explicit dependencies for testing &
+# development.
+#
+# Older versions might work ok, the versions chosen here are just the latest
+# available at the time of writing.
+
+pathlib2>=2.3.2
+
+scandir>=1.8

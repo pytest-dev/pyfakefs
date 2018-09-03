@@ -17,15 +17,18 @@ to be patched under another name.
 import os as my_os
 
 try:
-    from pathlib import Path
+    import pathlib
 except ImportError:
-    Path = None
+    try:
+        import pathlib2 as pathlib
+    except ImportError:
+        pathlib = None
 
 
 def check_if_exists(filepath):
     return my_os.path.exists(filepath)
 
 
-if Path is not None:
+if pathlib:
     def check_if_path_exists(filepath):
-        return Path(filepath).exists()
+        return pathlib.Path(filepath).exists()

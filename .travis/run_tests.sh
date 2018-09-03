@@ -18,3 +18,4 @@ flake8 . $EXCLUDES --count --select=E901,E999,F821,F822,F823 --show-source --sta
 # exit-zero treats all errors as warnings
 flake8 . $EXCLUDES --count --exit-zero --max-complexity=12 --statistics
 python -m pyfakefs.tests.all_tests
+python -m pyfakefs.tests.all_tests_without_extra_packages

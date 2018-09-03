@@ -22,6 +22,12 @@ import os
 IS_PY2 = sys.version_info[0] < 3
 
 
+try:
+    text_type = unicode  # Python 2
+except NameError:
+    text_type = str      # Python 3
+
+
 def is_int_type(val):
     """Return True if `val` is of integer type."""
     try:               # Python 2
@@ -35,7 +41,7 @@ def is_byte_string(val):
     string."""
     if not IS_PY2:
         return not hasattr(val, 'encode')
-    return isinstance(val, str)
+    return isinstance(val, (memoryview, str))
 
 
 def is_unicode_string(val):

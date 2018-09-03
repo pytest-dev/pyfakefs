@@ -19,6 +19,7 @@
 import sys
 import unittest
 
+from pyfakefs.extra_packages import pathlib
 from pyfakefs.tests import dynamic_patch_test
 from pyfakefs.tests import fake_open_test
 from pyfakefs.tests import fake_os_test
@@ -31,7 +32,7 @@ from pyfakefs.tests import fake_tempfile_test
 from pyfakefs.tests import fake_filesystem_vs_real_test
 from pyfakefs.tests import mox3_stubout_test
 
-if sys.version_info >= (3, 4):
+if pathlib:
     from pyfakefs.tests import fake_pathlib_test
 
 
@@ -53,7 +54,7 @@ class AllTests(unittest.TestSuite):
             loader.loadTestsFromModule(mox3_stubout_test),
             loader.loadTestsFromModule(dynamic_patch_test),
         ])
-        if sys.version_info >= (3, 4):
+        if pathlib:
             self.addTests([
                 loader.loadTestsFromModule(fake_pathlib_test)
             ])

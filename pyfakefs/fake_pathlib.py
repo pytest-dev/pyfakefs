@@ -30,8 +30,11 @@ get the properties of the underlying fake filesystem.
 """
 
 import os
-import pathlib
-from urllib.parse import quote_from_bytes as urlquote_from_bytes
+
+try:
+    from urllib.parse import quote_from_bytes as urlquote_from_bytes
+except ImportError:
+    from urllib import quote as urlquote_from_bytes
 
 import sys
 
@@ -40,6 +43,8 @@ import functools
 import errno
 
 from pyfakefs import fake_scandir
+from pyfakefs.extra_packages import use_scandir, pathlib, pathlib2
+from pyfakefs.helpers import text_type
 from pyfakefs.fake_filesystem import FakeFileOpen, FakeFilesystem
 
 
@@ -91,7 +96,7 @@ class _FakeAccessor(pathlib._Accessor):  # pylint: disable=protected-access
 
     chmod = _wrap_strfunc(FakeFilesystem.chmod)
 
-    if sys.version_info >= (3, 6):
+    if use_scandir:
         scandir = _wrap_strfunc(fake_scandir.scandir)
 
     if hasattr(os, "lchmod"):
@@ -280,13 +285,13 @@ class _FakeFlavour(pathlib._Flavour):
         previous_s = None
         if strict:
             if not self.filesystem.exists(path):
-                raise FileNotFoundError(path)
+                self.filesystem.raise_os_error(errno.ENOENT, path)
             return self.filesystem.resolve_path(path)
         else:
             while True:
                 try:
                     path = self.filesystem.resolve_path(path)
-                except FileNotFoundError:
+                except IOError:
                     previous_s = path
                     path = self.filesystem.splitpath(path)[0]
                 else:
@@ -472,11 +477,14 @@ class FakePath(pathlib.Path):
         Raises:
             IOError: if the path doesn't exist (strict=True or Python < 3.6)
         """
-        if strict is None:
-            strict = sys.version_info < (3, 6)
-        elif sys.version_info < (3, 6):
-            raise TypeError(
-                "resolve() got an unexpected keyword argument 'strict'")
+        if sys.version_info >= (3, 6) or pathlib2:
+            if strict is None:
+                strict = False
+        else:
+            if strict is not None:
+                raise TypeError(
+                    "resolve() got an unexpected keyword argument 'strict'")
+            strict = True
         if self._closed:
             self._raise_closed()
         path = self._flavour.resolve(self, strict=strict)
@@ -496,10 +504,10 @@ class FakePath(pathlib.Path):
         """
         if self._closed:
             self._raise_closed()
-        return FakeFileOpen(self.filesystem)(
+        return FakeFileOpen(self.filesystem, use_io=True)(
             self._path(), mode, buffering, encoding, errors, newline)
 
-    if sys.version_info >= (3, 5):
+    if sys.version_info >= (3, 5) or pathlib2:
         def read_bytes(self):
             """Open the fake file in bytes mode, read it, and close the file.
 
@@ -514,7 +522,7 @@ class FakePath(pathlib.Path):
             """
             Open the fake file in text mode, read it, and close the file.
             """
-            with FakeFileOpen(self.filesystem)(self._path(), mode='r',
+            with FakeFileOpen(self.filesystem, use_io=True)(self._path(), mode='r',
                                                encoding=encoding,
                                                errors=errors) as f:
                 return f.read()
@@ -542,14 +550,15 @@ class FakePath(pathlib.Path):
                     default locale encoding is used
                 errors: ignored
             Raises:
-                TypeError: if data is not of type 'str'
+                TypeError: if data is not of type 'str' (Python 3) or 'unicode'
+                    (Python 2)
                 IOError: if the target object is a directory, the path is
                     invalid or permission is denied.
             """
-            if not isinstance(data, str):
+            if not isinstance(data, text_type):
                 raise TypeError('data must be str, not %s' %
                                 data.__class__.__name__)
-            with FakeFileOpen(self.filesystem)(self._path(), mode='w',
+            with FakeFileOpen(self.filesystem, use_io=True)(self._path(), mode='w',
                                                encoding=encoding,
                                                errors=errors) as f:
                 return f.write(data)
@@ -599,7 +608,9 @@ class FakePath(pathlib.Path):
                 happens, otherwise FileExistError is raised
 
         Raises:
-            FileExistsError if the file exists and exits_ok is False.
+            OSError: (Python 2 only) if the file exists and exits_ok is False.
+            FileExistsError: (Python 3 only) if the file exists and exits_ok is
+                False.
         """
         if self._closed:
             self._raise_closed()
@@ -607,7 +618,7 @@ class FakePath(pathlib.Path):
             if exist_ok:
                 self.filesystem.utime(self._path(), None)
             else:
-                raise FileExistsError
+                self.filesystem.raise_os_error(errno.EEXIST, self._path())
         else:
             fake_file = self.open('w')
             fake_file.close()

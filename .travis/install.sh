@@ -45,4 +45,5 @@ if [[ $TRAVIS_OS_NAME == 'osx' ]]; then
 fi
 
 pip install -r requirements.txt
+pip install -r extra_requirements.txt
 pip install .
