@@ -378,5 +378,19 @@ class TestPyfakefsTestCaseMixin(unittest.TestCase,
         self.assertIsInstance(self.fs, fake_filesystem.FakeFilesystem)
 
 
+class TestShutilWithZipfile(fake_filesystem_unittest.TestCase):
+    """Regression test for #427."""
+    def setUp(self):
+        self.setUpPyfakefs()
+        self.fs.create_file('foo/bar')
+
+    def test_a(self):
+        shutil.make_archive('archive', 'zip', root_dir='foo')
+
+    def test_b(self):
+        # used to fail because 'bar' could not be found
+        shutil.make_archive('archive', 'zip', root_dir='foo')
+
+
 if __name__ == "__main__":
     unittest.main()

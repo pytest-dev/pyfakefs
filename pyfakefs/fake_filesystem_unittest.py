@@ -41,6 +41,7 @@ import inspect
 import sys
 import tempfile
 import unittest
+import zipfile  # import here to make sure it gets correctly stubbed, see #427
 
 from pyfakefs.deprecator import Deprecator
 
