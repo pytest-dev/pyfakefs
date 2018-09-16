@@ -175,30 +175,14 @@ class TestAttributesWithFakeModuleNames(TestPyfakefsUnittestBase):
 import math as path  # noqa: E402 wanted import not at top
 
 
-class TestPatchPathUnittestFailing(TestPyfakefsUnittestBase):
-    """Tests the default behavior regarding the argument patch_path:
-       An own path module (in this case an alias to math) cannot be imported,
-       because it is faked by FakePathModule
-    """
-
-    def __init__(self, methodName='runTest'):
-        super(TestPatchPathUnittestFailing, self).__init__(methodName,
-                                                           patch_path=True)
-
-    @unittest.expectedFailure
-    def test_own_path_module(self):
-        self.assertEqual(2, path.floor(2.5))
-
-
-class TestPatchPathUnittestPassing(TestPyfakefsUnittestBase):
-    """Tests the behavior with patch_path set to False:
+class TestPathNotPatchedIfNotOsPath(TestPyfakefsUnittestBase):
+    """Tests that `path` is not patched if it is not `os.path`.
        An own path module (in this case an alias to math) can be imported
        and used.
     """
 
     def __init__(self, methodName='runTest'):
-        super(TestPatchPathUnittestPassing, self).__init__(methodName,
-                                                           patch_path=False)
+        super(TestPathNotPatchedIfNotOsPath, self).__init__(methodName)
 
     def test_own_path_module(self):
         self.assertEqual(2, path.floor(2.5))

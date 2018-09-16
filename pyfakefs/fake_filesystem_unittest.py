@@ -79,19 +79,16 @@ else:
 
 
 def load_doctests(loader, tests, ignore, module,
-                  additional_skip_names=None,
-                  patch_path=True):  # pylint: disable=unused-argument
+                  additional_skip_names=None):  # pylint: disable=unused-argument
     """Load the doctest tests for the specified module into unittest.
         Args:
             loader, tests, ignore : arguments passed in from `load_tests()`
             module: module under test
             additional_skip_names: see :py:class:`TestCase` for an explanation
-            patch_path: see :py:class:`TestCase` for an explanation
 
     File `example_test.py` in the pyfakefs release provides a usage example.
     """
-    _patcher = Patcher(additional_skip_names=additional_skip_names,
-                       patch_path=patch_path)
+    _patcher = Patcher(additional_skip_names=additional_skip_names)
     globs = _patcher.replace_globs(vars(module))
     tests.addTests(doctest.DocTestSuite(module,
                                         globs=globs,
@@ -108,15 +105,6 @@ class TestCaseMixin(object):
         additional_skip_names: names of modules inside of which no module
             replacement shall be performed, in addition to the names in
             :py:attr:`fake_filesystem_unittest.Patcher.SKIPNAMES`.
-        patch_path: if False, modules named *path* will not be patched with
-            the fake ``os.path`` module. Set this to False when you need
-            to import some other module named ``path``, for example::
-
-                from my_module import path
-
-            Irrespective of patch_path, module ``os.path`` is still
-            correctly faked if imported the usual way using ``import
-            os`` or ``import os.path``.
         modules_to_reload: A list of modules that need to be reloaded
             to be patched dynamically; may be needed if the module
             imports file system modules under an alias
@@ -134,8 +122,8 @@ class TestCaseMixin(object):
             `from some_module import SomeClass`, you have to specify
             `some_module.Class` as the key for the fake class.
 
-    If you specify attributes `additional_skip_names` or `patch_path` here
-    and you have DocTests, consider also specifying the same arguments to
+    If you specify the attribute `additional_skip_names` here
+    and you have DocTests, consider also specifying the same argument to
     :py:func:`load_doctests`.
 
     Example usage in derived test classes::
@@ -158,7 +146,6 @@ class TestCaseMixin(object):
     """
 
     additional_skip_names = None
-    patch_path = True
     modules_to_reload = None
     use_dynamic_patch = True
     modules_to_patch = None
@@ -177,7 +164,6 @@ class TestCaseMixin(object):
         """
         self._stubber = Patcher(
             additional_skip_names=self.additional_skip_names,
-            patch_path=self.patch_path,
             use_dynamic_patch=self.use_dynamic_patch,
             modules_to_reload=self.modules_to_reload,
             modules_to_patch=self.modules_to_patch)
@@ -193,7 +179,6 @@ class TestCase(unittest.TestCase, TestCaseMixin):
 
     def __init__(self, methodName='runTest',
                  additional_skip_names=None,
-                 patch_path=True,
                  modules_to_reload=None,
                  use_dynamic_patch=True,
                  modules_to_patch=None):
@@ -207,7 +192,6 @@ class TestCase(unittest.TestCase, TestCaseMixin):
         super(TestCase, self).__init__(methodName)
 
         self.additional_skip_names = additional_skip_names
-        self.patch_path = patch_path
         self.modules_to_reload = modules_to_reload
         self.use_dynamic_patch = use_dynamic_patch
         self.modules_to_patch = modules_to_patch
@@ -287,7 +271,7 @@ class Patcher(object):
     if pathlib:
         SKIPNAMES.add('pathlib')
 
-    def __init__(self, additional_skip_names=None, patch_path=True,
+    def __init__(self, additional_skip_names=None,
                  modules_to_reload=None, use_dynamic_patch=True,
                  modules_to_patch=None):
         """For a description of the arguments, see TestCase.__init__"""
@@ -296,10 +280,6 @@ class Patcher(object):
 
         if additional_skip_names is not None:
             self._skipNames.update(additional_skip_names)
-        self._patchPath = patch_path
-        if not patch_path:
-            self._skipNames.discard('path')
-            self._skipNames.discard('genericpath')
 
         self.modules_to_reload = [tempfile]
         if modules_to_reload is not None:
@@ -335,9 +315,7 @@ class Patcher(object):
         self._modules = {}
         for name in self._fake_module_classes:
             self._modules[name] = set()
-
-        if self._patchPath:
-            self._modules['path'] = set()
+        self._modules['path'] = set()
 
         self._find_modules()
 
@@ -382,6 +360,10 @@ class Patcher(object):
                         (inspect.ismodule(mod) or
                          inspect.isclass(mod) and
                          mod.__module__ == self._class_modules.get(mod_name))):
+                    # special handling for path: check for correct name
+                    if (mod_name == 'path' and
+                            mod.__name__ not in ('ntpath', 'posixpath')):
+                        continue
                     self._modules[mod_name].add((module, mod_name))
 
     def _refresh(self):
@@ -439,7 +421,6 @@ class Patcher(object):
         for name in self._fake_module_classes:
             if name in globs:
                 globs[name] = self._fake_module_classes[name](self.fs)
-        if self._patchPath:
             globs['path'] = globs['os'].path
         return globs
 

@@ -122,8 +122,7 @@ The following imports of ``os`` and ``pathlib.Path`` will not be patched by
   from pathlib import Path
 
 .. note:: There is one exception to that: importing ``os.path`` like
-  ``from os import path`` will work, because it is handled by ``pyfakefs``
-  (see also ``patch_path`` below).
+  ``from os import path`` will work, because it is handled by ``pyfakefs``.
 
 If adding the module containing these imports to ``modules_to_reload``, they
 will be correctly patched.
@@ -169,13 +168,6 @@ Here is an example of how to implement ``MyFakePath``:
 
         def __getattr__(self, name):
             return getattr(self.fake_pathlib.Path, name)
-
-patch_path
-~~~~~~~~~~
-This is True by default, meaning that modules named ``path`` are patched as
-``os.path``. If this clashes with another module of the same name, it can be
-switched off (and imports like ``from os import path`` will not be patched).
-
 
 additional_skip_names
 ~~~~~~~~~~~~~~~~~~~~~
