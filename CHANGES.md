@@ -6,6 +6,7 @@ The release versions are PyPi releases.
 #### New Features
   * parameter `patch_path` has been removed from `UnitTest` and `Patcher`, 
     the correct patching of `path` imports is now done automatically
+  * `UnitTest` /`Patcher` arguments can now also be set in `setUpPyfakefs()`
   * added pathlib2 support ([#408](../../issues/408)) ([#422](../../issues/422))
   * added some support for extended filesystem attributes under Linux 
   ([#423](../../issues/423)) 
