@@ -154,19 +154,35 @@ class TestCaseMixin(object):
     def fs(self):
         return self._stubber.fs
 
-    def setUpPyfakefs(self):
+    def setUpPyfakefs(self,
+                      additional_skip_names=None,
+                      use_dynamic_patch=None,
+                      modules_to_reload=None,
+                      modules_to_patch=None):
         """Bind the file-related modules to the :py:class:`pyfakefs` fake file
         system instead of the real file system.  Also bind the fake `open()`
         function, and on Python 2, the `file()` function.
 
         Invoke this at the beginning of the `setUp()` method in your unit test
         class.
+        For the arguments, see the `TestCaseMixin` attribute description.
+        If any of the arguments is not None, it overwrites the settings for
+        the current test case. Settings the arguments here may be a more
+        convenient way to adapt the setting than overwriting `__init__()`.
         """
+        if additional_skip_names is None:
+            additional_skip_names = self.additional_skip_names
+        if use_dynamic_patch is None:
+            use_dynamic_patch = self.use_dynamic_patch
+        if modules_to_reload is None:
+            modules_to_reload = self.modules_to_reload
+        if modules_to_patch is None:
+            modules_to_patch = self.modules_to_patch
         self._stubber = Patcher(
-            additional_skip_names=self.additional_skip_names,
-            use_dynamic_patch=self.use_dynamic_patch,
-            modules_to_reload=self.modules_to_reload,
-            modules_to_patch=self.modules_to_patch)
+            additional_skip_names=additional_skip_names,
+            use_dynamic_patch=use_dynamic_patch,
+            modules_to_reload=modules_to_reload,
+            modules_to_patch=modules_to_patch)
 
         self._stubber.setUp()
         self.addCleanup(self._stubber.tearDown)

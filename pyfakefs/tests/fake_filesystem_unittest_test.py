@@ -137,14 +137,23 @@ class TestPyfakefsUnittest(TestPyfakefsUnittestBase):  # pylint: disable=R0904
             self.assertTrue(self.fs.exists('/fake_file.txt'))
 
 
-class TestImportAsOtherName(fake_filesystem_unittest.TestCase):
-    def __init__(self, methodName='RunTest'):
-        modules_to_load = [pyfakefs.tests.import_as_example]
-        super(TestImportAsOtherName, self).__init__(
-            methodName, modules_to_reload=modules_to_load)
-
+class TestImportAsOtherNameInit(fake_filesystem_unittest.TestCase):
     def setUp(self):
-        self.setUpPyfakefs()
+        self.setUpPyfakefs(
+            modules_to_reload=[pyfakefs.tests.import_as_example])
+
+    def test_file_exists(self):
+        file_path = '/foo/bar/baz'
+        self.fs.create_file(file_path)
+        self.assertTrue(self.fs.exists(file_path))
+        self.assertTrue(
+            pyfakefs.tests.import_as_example.check_if_exists(file_path))
+
+
+class TestImportAsOtherNameSetup(fake_filesystem_unittest.TestCase):
+    def setUp(self):
+        self.setUpPyfakefs(
+            modules_to_reload=[pyfakefs.tests.import_as_example])
 
     def test_file_exists(self):
         file_path = '/foo/bar/baz'
@@ -180,10 +189,6 @@ class TestPathNotPatchedIfNotOsPath(TestPyfakefsUnittestBase):
        An own path module (in this case an alias to math) can be imported
        and used.
     """
-
-    def __init__(self, methodName='runTest'):
-        super(TestPathNotPatchedIfNotOsPath, self).__init__(methodName)
-
     def test_own_path_module(self):
         self.assertEqual(2, path.floor(2.5))
 

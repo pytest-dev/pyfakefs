@@ -92,6 +92,9 @@ Customizing Patcher and TestCase
 Both ``fake_filesystem_unittest.Patcher`` and ``fake_filesystem_unittest.TestCase``
 provide a few additional arguments for fine-tuning. These are only needed if
 patching does not work for some module.
+In case of ``fake_filesystem_unittest.TestCase``, these arguments can either
+ be set in the TestCase instance initialization, or in the call of
+``setUpPyfakefs()``.
 
 .. note:: If you need these arguments in ``PyTest``, you have to
   use ``Patcher`` directly instead of the ``fs`` fixture. Alternatively,
