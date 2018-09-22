@@ -25,7 +25,7 @@ import time
 import unittest
 
 from pyfakefs import fake_filesystem
-from pyfakefs.fake_filesystem import FakeFileOpen
+from pyfakefs.fake_filesystem import FakeFileOpen, set_uid
 from pyfakefs.extra_packages import use_scandir, use_scandir_package
 
 from pyfakefs.tests.test_utils import DummyTime, TestCase, RealFsTestCase
@@ -54,6 +54,7 @@ class FakeOsModuleTest(FakeOsModuleTestBase):
         super(FakeOsModuleTest, self).setUp()
         self.rwx = self.os.R_OK | self.os.W_OK | self.os.X_OK
         self.rw = self.os.R_OK | self.os.W_OK
+        set_uid(None)
 
     def test_chdir(self):
         """chdir should work on a directory."""
@@ -225,6 +226,9 @@ class FakeOsModuleTest(FakeOsModuleTestBase):
         self.os.fdopen(fileno1, 'r')
         exception = OSError if self.is_python2 else IOError
         self.assertRaises(exception, self.os.fdopen, fileno1, 'w')
+        set_uid(0)
+        self.os.fdopen(fileno1, 'w')
+        self.os.close(fileno1)
 
     def test_fstat(self):
         directory = self.make_path('xyzzy')
@@ -1603,6 +1607,10 @@ class FakeOsModuleTest(FakeOsModuleTestBase):
 
         directory = self.make_path('a', 'b')
         self.assert_raises_os_error(errno.EACCES, self.os.mkdir, directory)
+        if not self.use_real_fs():
+            set_uid(0)
+            self.os.mkdir(directory)
+            self.assertTrue(self.os.path.exists(directory))
 
     def test_mkdir_with_with_symlink_parent(self):
         self.check_posix_only()
@@ -1672,7 +1680,12 @@ class FakeOsModuleTest(FakeOsModuleTestBase):
         self.os.chmod(directory, 0o400)
 
         directory = self.make_path('a', 'b')
+        set_uid(None)
         self.assertRaises(Exception, self.os.makedirs, directory)
+        if not self.use_real_fs():
+            set_uid(0)
+            self.os.makedirs(directory)
+            self.assertTrue(self.os.path.exists(directory))
 
     @unittest.skipIf(sys.version_info < (3, 2),
                      'os.makedirs(exist_ok) argument new in version 3.2')
@@ -2670,7 +2683,10 @@ class FakeOsModuleTestCaseInsensitiveFS(FakeOsModuleTestBase):
         self.os.fdopen(fileno1)
         self.os.fdopen(fileno1, 'r')
         exception = OSError if self.is_python2 else IOError
+        set_uid(None)
         self.assertRaises(exception, self.os.fdopen, fileno1, 'w')
+        set_uid(0)
+        self.os.fdopen(fileno1, 'w')
 
     def test_stat(self):
         directory = self.make_path('xyzzy')

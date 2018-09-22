@@ -161,6 +161,16 @@ FAKE_PATH_MODULE_DEPRECATION = (
 )
 
 NR_STD_STREAMS = 3
+USER_ID = None
+
+
+def set_uid(uid):
+    global USER_ID
+    USER_ID = uid
+
+
+def is_root():
+    return USER_ID == 0
 
 
 class FakeLargeFileIoException(Exception):
@@ -607,7 +617,8 @@ class FakeDirectory(FakeFile):
             OSError: if the directory has no write permission (Posix only)
             OSError: if the file or directory to be added already exists
         """
-        if not self.st_mode & PERM_WRITE and not self.filesystem.is_windows_fs:
+        if (not is_root() and not self.st_mode & PERM_WRITE and
+                not self.filesystem.is_windows_fs):
             exception = IOError if IS_PY2 else OSError
             raise exception(errno.EACCES, 'Permission Denied', self.path)
 
@@ -668,7 +679,8 @@ class FakeDirectory(FakeFile):
             if self.filesystem.has_open_file(entry):
                 self.filesystem.raise_os_error(errno.EACCES, pathname_name)
         else:
-            if self.st_mode & (PERM_WRITE | PERM_EXE) != PERM_WRITE | PERM_EXE:
+            if (not is_root() and (self.st_mode & (PERM_WRITE | PERM_EXE) !=
+                                   PERM_WRITE | PERM_EXE)):
                 self.filesystem.raise_os_error(errno.EACCES, pathname_name)
 
         if recursive and isinstance(entry, FakeDirectory):
@@ -3681,7 +3693,7 @@ class FakeOsModule(object):
         directory = self.filesystem.resolve(target_directory)
         # A full implementation would check permissions all the way
         # up the tree.
-        if not directory.st_mode | PERM_EXE:
+        if not is_root() and not directory.st_mode | PERM_EXE:
             self.filesystem.raise_os_error(errno.EACCES, directory)
         self.filesystem.cwd = target_directory
 
@@ -4973,9 +4985,11 @@ class FakeFileOpen(object):
                  not self.filesystem.is_windows_fs)):
             error_fct(errno.EEXIST, file_path)
         if file_object:
-            if ((open_modes.can_read and not file_object.st_mode & PERM_READ)
-                    or (open_modes.can_write and
-                        not file_object.st_mode & PERM_WRITE)):
+            if (not is_root() and
+                    ((open_modes.can_read and
+                      not file_object.st_mode & PERM_READ)
+                     or (open_modes.can_write and
+                         not file_object.st_mode & PERM_WRITE))):
                 error_fct(errno.EACCES, file_path)
             if open_modes.can_write:
                 if open_modes.truncate:

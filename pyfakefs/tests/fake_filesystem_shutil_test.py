@@ -25,6 +25,7 @@ import sys
 import unittest
 
 from pyfakefs import fake_filesystem_unittest
+from pyfakefs.fake_filesystem import set_uid
 from pyfakefs.tests.test_utils import RealFsTestMixin
 
 is_windows = sys.platform == 'win32'
@@ -355,6 +356,10 @@ class RealShutilModuleTest(FakeShutilModuleTest):
 
 
 class FakeCopyFileTest(RealFsTestCase):
+    def tearDown(self):
+        set_uid(None)
+        super(FakeCopyFileTest, self).tearDown()
+
     def test_common_case(self):
         src_file = self.make_path('xyzzy')
         dst_file = self.make_path('xyzzy_copy')
@@ -410,6 +415,12 @@ class FakeCopyFileTest(RealFsTestCase):
         self.assertTrue(os.path.exists(src_file))
         self.assertTrue(os.path.exists(dst_file))
         self.assertRaises(IOError, shutil.copyfile, src_file, dst_file)
+        if not self.use_real_fs():
+            set_uid(0)
+            shutil.copyfile(src_file, dst_file)
+            self.assertTrue(self.os.path.exists(dst_file))
+            with self.open(dst_file) as f:
+                self.assertEqual('contents of source file', f.read())
         os.chmod(dst_file, 0o666)
 
     @unittest.skipIf(is_windows, 'Posix specific behavior')

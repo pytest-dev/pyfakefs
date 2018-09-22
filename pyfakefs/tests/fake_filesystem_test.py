@@ -24,6 +24,7 @@ import time
 import unittest
 
 from pyfakefs import fake_filesystem
+from pyfakefs.fake_filesystem import set_uid
 from pyfakefs.tests.test_utils import DummyTime, TestCase
 
 
@@ -259,6 +260,7 @@ class FakeFilesystemUnitTest(TestCase):
             'foobaz', filesystem=self.filesystem)
         self.fake_grandchild = fake_filesystem.FakeDirectory(
             'quux', filesystem=self.filesystem)
+        set_uid(None)
 
     def test_new_filesystem(self):
         self.assertEqual('/', self.filesystem.path_separator)
@@ -491,6 +493,9 @@ class FakeFilesystemUnitTest(TestCase):
         else:
             self.assert_raises_os_error(errno.EACCES,
                                         self.filesystem.create_file, file_path)
+        set_uid(0)
+        self.filesystem.create_file(file_path)
+        self.assertTrue(self.filesystem.exists(file_path))
 
     def test_create_file_in_read_only_directory_possible_in_windows(self):
         self.filesystem.is_windows_fs = True
@@ -1802,6 +1807,7 @@ class RealFileSystemAccessTest(TestCase):
         self.pyfakefs_path = os.path.split(
             os.path.dirname(os.path.abspath(__file__)))[0]
         self.root_path = os.path.split(self.pyfakefs_path)[0]
+        set_uid(None)
 
     def test_add_non_existing_real_file_raises(self):
         nonexisting_path = os.path.join('nonexisting', 'test.txt')
