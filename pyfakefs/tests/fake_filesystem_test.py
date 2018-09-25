@@ -2035,5 +2035,36 @@ class RealFileSystemAccessTest(TestCase):
         self.check_writable_file(fake_file, real_file_path)
 
 
+class FileSideEffectTests(TestCase):
+    def side_effect(self):
+        test_case = self
+        test_case.side_effect_called = False
+
+        def __side_effect(file_object):
+            test_case.side_effect_called = True
+            test_case.side_effect_file_object_content = file_object.contents
+        return __side_effect
+
+    def setUp(self):
+        # use the real path separator to work with the real file system
+        self.filesystem = fake_filesystem.FakeFilesystem()
+        self.filesystem.create_file('/a/b/file_one',
+                                    side_effect=self.side_effect())
+
+    def test_side_effect_called(self):
+        fake_open = fake_filesystem.FakeFileOpen(self.filesystem)
+        self.side_effect_called = False
+        with fake_open('/a/b/file_one', 'w') as handle:
+            handle.write('foo')
+        self.assertTrue(self.side_effect_called)
+
+    def test_side_effect_file_object(self):
+        fake_open = fake_filesystem.FakeFileOpen(self.filesystem)
+        self.side_effect_called = False
+        with fake_open('/a/b/file_one', 'w') as handle:
+            handle.write('foo')
+        self.assertEquals(self.side_effect_file_object_content, 'foo')
+
+
 if __name__ == '__main__':
     unittest.main()
