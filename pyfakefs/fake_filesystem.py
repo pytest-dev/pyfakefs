@@ -207,7 +207,8 @@ class FakeFile(object):
     )
 
     def __init__(self, name, st_mode=S_IFREG | PERM_DEF_FILE,
-                 contents=None, filesystem=None, encoding=None, errors=None):
+                 contents=None, filesystem=None, encoding=None, errors=None,
+                 side_effect=None):
         """
         Args:
             name: Name of the file/directory, without parent path information
@@ -220,12 +221,13 @@ class FakeFile(object):
             encoding: If contents is a unicode string, the encoding used
                 for serialization.
             errors: The error mode used for encoding/decoding errors.
+            side_effect: TODO
         """
         # to be backwards compatible regarding argument order, we raise on None
         if filesystem is None:
             raise ValueError('filesystem shall not be None')
         self.filesystem = filesystem
-
+        self._side_effect = side_effect
         self.name = name
         self.stat_result = FakeStatResult(
             filesystem.is_windows_fs, time.time())
@@ -373,6 +375,8 @@ class FakeFile(object):
         current_time = time.time()
         self.st_ctime = current_time
         self.st_mtime = current_time
+        if self._side_effect is not None:
+            self._side_effect(self)
 
     @property
     def size(self):
@@ -520,7 +524,7 @@ class FakeFileFromRealFile(FakeFile):
     The contents of the file are read on demand only.
     """
 
-    def __init__(self, file_path, filesystem):
+    def __init__(self, file_path, filesystem, side_effect=None):
         """
         Args:
             file_path: Path to the existing file.
@@ -531,7 +535,8 @@ class FakeFileFromRealFile(FakeFile):
             OSError: if the file already exists in the fake file system.
         """
         super(FakeFileFromRealFile, self).__init__(
-            name=os.path.basename(file_path), filesystem=filesystem)
+            name=os.path.basename(file_path), filesystem=filesystem,
+            side_effect=side_effect)
         self.contents_read = False
 
     @property
@@ -2252,7 +2257,8 @@ class FakeFilesystem(object):
 
     def create_file(self, file_path, st_mode=S_IFREG | PERM_DEF_FILE,
                     contents='', st_size=None, create_missing_dirs=True,
-                    apply_umask=False, encoding=None, errors=None):
+                    apply_umask=False, encoding=None, errors=None,
+                    side_effect=None):
         """Create `file_path`, including all the parent directories along
         the way.
 
@@ -2272,6 +2278,7 @@ class FakeFilesystem(object):
             encoding: If `contents` is a unicode string, the encoding used
                 for serialization.
             errors: The error mode used for encoding/decoding errors.
+            side_effect: TODO
 
         Returns:
             The newly created FakeFile object.
@@ -2282,7 +2289,7 @@ class FakeFilesystem(object):
         """
         return self.create_file_internally(
             file_path, st_mode, contents, st_size, create_missing_dirs,
-            apply_umask, encoding, errors)
+            apply_umask, encoding, errors, side_effect=side_effect)
 
     def add_real_file(self, source_path, read_only=True, target_path=None):
         """Create `file_path`, including all the parent directories along the
@@ -2411,7 +2418,8 @@ class FakeFilesystem(object):
                                contents='', st_size=None,
                                create_missing_dirs=True,
                                apply_umask=False, encoding=None, errors=None,
-                               read_from_real_fs=False, raw_io=False):
+                               read_from_real_fs=False, raw_io=False,
+                               side_effect=None):
         """Internal fake file creator that supports both normal fake files
         and fake files based on real files.
 
@@ -2432,6 +2440,7 @@ class FakeFilesystem(object):
             read_from_real_fs: if True, the contents are read from the real
                 file system on demand.
             raw_io: `True` if called from low-level API (`os.open`)
+            side_effect: TODO
         """
         error_fct = self.raise_os_error if raw_io else self.raise_io_error
         file_path = self.make_string_path(file_path)
@@ -2455,10 +2464,12 @@ class FakeFilesystem(object):
         if apply_umask:
             st_mode &= ~self.umask
         if read_from_real_fs:
-            file_object = FakeFileFromRealFile(file_path, filesystem=self)
+            file_object = FakeFileFromRealFile(file_path, filesystem=self,
+                                               side_effect=side_effect)
         else:
             file_object = FakeFile(new_file, st_mode, filesystem=self,
-                                   encoding=encoding, errors=errors)
+                                   encoding=encoding, errors=errors,
+                                   side_effect=side_effect)
 
         self._last_ino += 1
         file_object.st_ino = self._last_ino
