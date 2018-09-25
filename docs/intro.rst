@@ -30,9 +30,9 @@ Limitations
 pyfakefs will not work with Python libraries that use C libraries to access the
 file system, because it cannot patch the underlying C libraries' file access functions.
 
-pyfakefs works out of the box only if the faked file system modules are loaded directly,
-e.g. ``import pathlib`` works, but ``from pathlib import Path`` does not. See
-:ref:`customizing_patcher` for ways to work around this.
+Depending on the kind of import statements used, pyfakefs may not patch the
+file system modules automatically. See :ref:`customizing_patcher` for more
+information and ways to work around this.
 
 pyfakefs is only tested with CPython and newest PyPy versions, other Python implementations
 will probably not work.
