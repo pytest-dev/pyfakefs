@@ -221,7 +221,8 @@ class FakeFile(object):
             encoding: If contents is a unicode string, the encoding used
                 for serialization.
             errors: The error mode used for encoding/decoding errors.
-            side_effect: TODO
+            side_effect: function handle that is executed when file is written,
+                must accept the file object as an argument.
         """
         # to be backwards compatible regarding argument order, we raise on None
         if filesystem is None:
@@ -2278,7 +2279,8 @@ class FakeFilesystem(object):
             encoding: If `contents` is a unicode string, the encoding used
                 for serialization.
             errors: The error mode used for encoding/decoding errors.
-            side_effect: TODO
+            side_effect: function handle that is executed when file is written,
+                must accept the file object as an argument.
 
         Returns:
             The newly created FakeFile object.
@@ -2440,7 +2442,8 @@ class FakeFilesystem(object):
             read_from_real_fs: if True, the contents are read from the real
                 file system on demand.
             raw_io: `True` if called from low-level API (`os.open`)
-            side_effect: TODO
+            side_effect: function handle that is executed when file is written,
+                must accept the file object as an argument.
         """
         error_fct = self.raise_os_error if raw_io else self.raise_io_error
         file_path = self.make_string_path(file_path)
