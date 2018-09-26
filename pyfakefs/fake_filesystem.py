@@ -360,6 +360,7 @@ class FakeFile(object):
 
     def set_contents(self, contents, encoding=None):
         """Sets the file contents and size and increases the modification time.
+        Also executes the side_effects if available.
 
         Args:
           contents: (str, bytes, unicode) new content of file.
