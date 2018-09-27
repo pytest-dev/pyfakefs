@@ -95,8 +95,11 @@ patching does not work for some module.
 
 .. note:: If you need these arguments in ``PyTest``, you have to
   use ``Patcher`` directly instead of the ``fs`` fixture. Alternatively,
-  you can add your own fixture with the needed parameters (see
-  ``pytest_plugin.py`` for a possible implementation).
+  you can add your own fixture with the needed parameters.
+
+  An example for both approches can be found in
+  `pytest_fixture_test.py <https://github.com/jmcgeheeiv/pyfakefs/blob/master/pyfakefs/tests/pytest/pytest_fixture_test.py>`__
+  with the example fixture in `conftest.py <https://github.com/jmcgeheeiv/pyfakefs/blob/master/pyfakefs/tests/pytest/conftest.py>`__.
 
 modules_to_reload
 ~~~~~~~~~~~~~~~~~
@@ -119,8 +122,7 @@ The following imports of ``os`` and ``pathlib.Path`` will not be patched by
   from pathlib import Path
 
 .. note:: There is one exception to that: importing ``os.path`` like
-  ``from os import path`` will work, because it is handled by ``pyfakefs``
-  (see also ``patch_path`` below).
+  ``from os import path`` will work, because it is handled by ``pyfakefs``.
 
 If adding the module containing these imports to ``modules_to_reload``, they
 will be correctly patched.
@@ -166,13 +168,6 @@ Here is an example of how to implement ``MyFakePath``:
 
         def __getattr__(self, name):
             return getattr(self.fake_pathlib.Path, name)
-
-patch_path
-~~~~~~~~~~
-This is True by default, meaning that modules named ``path`` are patched as
-``os.path``. If this clashes with another module of the same name, it can be
-switched off (and imports like ``from os import path`` will not be patched).
-
 
 additional_skip_names
 ~~~~~~~~~~~~~~~~~~~~~

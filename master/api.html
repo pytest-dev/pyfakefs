@@ -4,28 +4,19 @@
 
 <html xmlns="http://www.w3.org/1999/xhtml">
   <head>
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     <title>API Notes &#8212; pyfakefs 3.5dev documentation</title>
     <link rel="stylesheet" href="_static/pyfakefs.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
-    <script type="text/javascript">
-      var DOCUMENTATION_OPTIONS = {
-        URL_ROOT:    './',
-        VERSION:     '3.5dev',
-        COLLAPSE_INDEX: false,
-        FILE_SUFFIX: '.html',
-        HAS_SOURCE:  true,
-        SOURCELINK_SUFFIX: '.txt'
-      };
-    </script>
+    <script type="text/javascript" id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
     <script type="text/javascript" src="_static/jquery.js"></script>
     <script type="text/javascript" src="_static/underscore.js"></script>
     <script type="text/javascript" src="_static/doctools.js"></script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
     <link rel="prev" title="Public Modules and Classes" href="modules.html" /> 
-  </head>
-  <body>
+  </head><body>
     <div class="related" role="navigation" aria-label="related navigation">
       <h3>Navigation</h3>
       <ul>
@@ -49,15 +40,15 @@
             
   <div class="section" id="api-notes">
 <h1>API Notes<a class="headerlink" href="#api-notes" title="Permalink to this headline">¶</a></h1>
-<p>With <code class="docutils literal"><span class="pre">pyfakefs</span> <span class="pre">3.4</span></code>, the public API has changed to be PEP-8 conform.
+<p>With <code class="docutils literal notranslate"><span class="pre">pyfakefs</span> <span class="pre">3.4</span></code>, the public API has changed to be PEP-8 conform.
 The old API is still supported, and no deprecation warning is issued on usage.
 However, if you want to be sure to use the new API, you can add such warnings by using:</p>
-<div class="code python highlight-default"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">pyfakefs.deprecator</span> <span class="k">import</span> <span class="n">Deprecator</span>
+<div class="code python highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">pyfakefs.deprecator</span> <span class="k">import</span> <span class="n">Deprecator</span>
 
 <span class="n">Deprecator</span><span class="o">.</span><span class="n">show_warnings</span> <span class="o">=</span> <span class="kc">True</span>
 </pre></div>
 </div>
-<p>In some later version of <code class="docutils literal"><span class="pre">pyfakefs</span></code> we plan to enable the deprecation warnings by default.</p>
+<p>In some later version of <code class="docutils literal notranslate"><span class="pre">pyfakefs</span></code> we plan to enable the deprecation warnings by default.</p>
 <p>Here is a list of selected changes:</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
@@ -101,12 +92,14 @@ However, if you want to be sure to use the new API, you can add such warnings by
    </div>
 <div id="searchbox" style="display: none" role="search">
   <h3>Quick search</h3>
+    <div class="searchformwrapper">
     <form class="search" action="search.html" method="get">
-      <div><input type="text" name="q" /></div>
-      <div><input type="submit" value="Go" /></div>
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
       <input type="hidden" name="check_keywords" value="yes" />
       <input type="hidden" name="area" value="default" />
     </form>
+    </div>
 </div>
 <script type="text/javascript">$('#searchbox').show(0);</script>
         </div>
@@ -132,7 +125,7 @@ However, if you want to be sure to use the new API, you can add such warnings by
         &#169; Copyright 2009 Google Inc. All Rights Reserved.
 © Copyright 2014 Altera Corporation. All Rights Reserved.
 © Copyright 2014-2018 John McGehee.
-      Last updated on Jun 13, 2018.
+      Last updated on Sep 26, 2018.
     </div>
   </body>
 </html>

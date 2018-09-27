@@ -4,20 +4,12 @@
 
 <html xmlns="http://www.w3.org/1999/xhtml">
   <head>
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     <title>Public Modules and Classes &#8212; pyfakefs 3.5dev documentation</title>
     <link rel="stylesheet" href="_static/pyfakefs.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
-    <script type="text/javascript">
-      var DOCUMENTATION_OPTIONS = {
-        URL_ROOT:    './',
-        VERSION:     '3.5dev',
-        COLLAPSE_INDEX: false,
-        FILE_SUFFIX: '.html',
-        HAS_SOURCE:  true,
-        SOURCELINK_SUFFIX: '.txt'
-      };
-    </script>
+    <script type="text/javascript" id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
     <script type="text/javascript" src="_static/jquery.js"></script>
     <script type="text/javascript" src="_static/underscore.js"></script>
     <script type="text/javascript" src="_static/doctools.js"></script>
@@ -25,8 +17,7 @@
     <link rel="search" title="Search" href="search.html" />
     <link rel="next" title="API Notes" href="api.html" />
     <link rel="prev" title="Automatically find and patch file functions and modules" href="autopatch.html" /> 
-  </head>
-  <body>
+  </head><body>
     <div class="related" role="navigation" aria-label="related navigation">
       <h3>Navigation</h3>
       <ul>
@@ -55,7 +46,7 @@
 <h1>Public Modules and Classes<a class="headerlink" href="#public-modules-and-classes" title="Permalink to this headline">¶</a></h1>
 <div class="admonition note">
 <p class="first admonition-title">Note</p>
-<p class="last">Only public classes and methods interesting to <code class="docutils literal"><span class="pre">pyfakefs</span></code>
+<p class="last">Only public classes and methods interesting to <code class="docutils literal notranslate"><span class="pre">pyfakefs</span></code>
 users are shown. Methods that mimic the behavior of standard Python
 functions and classes that are only needed internally are not listed.</p>
 </div>
@@ -67,16 +58,16 @@ functions and classes that are only needed internally are not listed.</p>
 <col class="field-body" />
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Includes:</th><td class="field-body"><ul class="first simple">
-<li><a class="reference internal" href="#pyfakefs.fake_filesystem.FakeFile" title="pyfakefs.fake_filesystem.FakeFile"><code class="xref py py-class docutils literal"><span class="pre">FakeFile</span></code></a>: Provides the appearance of a real file.</li>
-<li><a class="reference internal" href="#pyfakefs.fake_filesystem.FakeDirectory" title="pyfakefs.fake_filesystem.FakeDirectory"><code class="xref py py-class docutils literal"><span class="pre">FakeDirectory</span></code></a>: Provides the appearance of a real directory.</li>
-<li><a class="reference internal" href="#pyfakefs.fake_filesystem.FakeFilesystem" title="pyfakefs.fake_filesystem.FakeFilesystem"><code class="xref py py-class docutils literal"><span class="pre">FakeFilesystem</span></code></a>: Provides the appearance of a real directory
+<li><a class="reference internal" href="#pyfakefs.fake_filesystem.FakeFile" title="pyfakefs.fake_filesystem.FakeFile"><code class="xref py py-class docutils literal notranslate"><span class="pre">FakeFile</span></code></a>: Provides the appearance of a real file.</li>
+<li><a class="reference internal" href="#pyfakefs.fake_filesystem.FakeDirectory" title="pyfakefs.fake_filesystem.FakeDirectory"><code class="xref py py-class docutils literal notranslate"><span class="pre">FakeDirectory</span></code></a>: Provides the appearance of a real directory.</li>
+<li><a class="reference internal" href="#pyfakefs.fake_filesystem.FakeFilesystem" title="pyfakefs.fake_filesystem.FakeFilesystem"><code class="xref py py-class docutils literal notranslate"><span class="pre">FakeFilesystem</span></code></a>: Provides the appearance of a real directory
 hierarchy.</li>
-<li><a class="reference internal" href="#pyfakefs.fake_filesystem.FakeOsModule" title="pyfakefs.fake_filesystem.FakeOsModule"><code class="xref py py-class docutils literal"><span class="pre">FakeOsModule</span></code></a>: Uses <a class="reference internal" href="#pyfakefs.fake_filesystem.FakeFilesystem" title="pyfakefs.fake_filesystem.FakeFilesystem"><code class="xref py py-class docutils literal"><span class="pre">FakeFilesystem</span></code></a> to provide a
-fake <code class="xref py py-mod docutils literal"><span class="pre">os</span></code> module replacement.</li>
-<li><a class="reference internal" href="#pyfakefs.fake_filesystem.FakeIoModule" title="pyfakefs.fake_filesystem.FakeIoModule"><code class="xref py py-class docutils literal"><span class="pre">FakeIoModule</span></code></a>: Uses <a class="reference internal" href="#pyfakefs.fake_filesystem.FakeFilesystem" title="pyfakefs.fake_filesystem.FakeFilesystem"><code class="xref py py-class docutils literal"><span class="pre">FakeFilesystem</span></code></a> to provide a
-fake <code class="docutils literal"><span class="pre">io</span></code> module replacement.</li>
-<li><a class="reference internal" href="#pyfakefs.fake_filesystem.FakePathModule" title="pyfakefs.fake_filesystem.FakePathModule"><code class="xref py py-class docutils literal"><span class="pre">FakePathModule</span></code></a>:  Faked <code class="docutils literal"><span class="pre">os.path</span></code> module replacement.</li>
-<li><a class="reference internal" href="#pyfakefs.fake_filesystem.FakeFileOpen" title="pyfakefs.fake_filesystem.FakeFileOpen"><code class="xref py py-class docutils literal"><span class="pre">FakeFileOpen</span></code></a>:  Faked <code class="docutils literal"><span class="pre">file()</span></code> and <code class="docutils literal"><span class="pre">open()</span></code> function
+<li><a class="reference internal" href="#pyfakefs.fake_filesystem.FakeOsModule" title="pyfakefs.fake_filesystem.FakeOsModule"><code class="xref py py-class docutils literal notranslate"><span class="pre">FakeOsModule</span></code></a>: Uses <a class="reference internal" href="#pyfakefs.fake_filesystem.FakeFilesystem" title="pyfakefs.fake_filesystem.FakeFilesystem"><code class="xref py py-class docutils literal notranslate"><span class="pre">FakeFilesystem</span></code></a> to provide a
+fake <code class="xref py py-mod docutils literal notranslate"><span class="pre">os</span></code> module replacement.</li>
+<li><a class="reference internal" href="#pyfakefs.fake_filesystem.FakeIoModule" title="pyfakefs.fake_filesystem.FakeIoModule"><code class="xref py py-class docutils literal notranslate"><span class="pre">FakeIoModule</span></code></a>: Uses <a class="reference internal" href="#pyfakefs.fake_filesystem.FakeFilesystem" title="pyfakefs.fake_filesystem.FakeFilesystem"><code class="xref py py-class docutils literal notranslate"><span class="pre">FakeFilesystem</span></code></a> to provide a
+fake <code class="docutils literal notranslate"><span class="pre">io</span></code> module replacement.</li>
+<li><a class="reference internal" href="#pyfakefs.fake_filesystem.FakePathModule" title="pyfakefs.fake_filesystem.FakePathModule"><code class="xref py py-class docutils literal notranslate"><span class="pre">FakePathModule</span></code></a>:  Faked <code class="docutils literal notranslate"><span class="pre">os.path</span></code> module replacement.</li>
+<li><a class="reference internal" href="#pyfakefs.fake_filesystem.FakeFileOpen" title="pyfakefs.fake_filesystem.FakeFileOpen"><code class="xref py py-class docutils literal notranslate"><span class="pre">FakeFileOpen</span></code></a>:  Faked <code class="docutils literal notranslate"><span class="pre">file()</span></code> and <code class="docutils literal notranslate"><span class="pre">open()</span></code> function
 replacements.</li>
 </ul>
 </td>
@@ -85,20 +76,20 @@ replacements.</li>
 </tr>
 </tbody>
 </table>
-<div class="highlight-default"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">pyfakefs</span> <span class="k">import</span> <span class="n">fake_filesystem</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">pyfakefs</span> <span class="k">import</span> <span class="n">fake_filesystem</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">filesystem</span> <span class="o">=</span> <span class="n">fake_filesystem</span><span class="o">.</span><span class="n">FakeFilesystem</span><span class="p">()</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">os_module</span> <span class="o">=</span> <span class="n">fake_filesystem</span><span class="o">.</span><span class="n">FakeOsModule</span><span class="p">(</span><span class="n">filesystem</span><span class="p">)</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">pathname</span> <span class="o">=</span> <span class="s1">&#39;/a/new/dir/new-file&#39;</span>
 </pre></div>
 </div>
 <p>Create a new file object, creating parent directory objects as needed:</p>
-<div class="highlight-default"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">os_module</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">pathname</span><span class="p">)</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">os_module</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">pathname</span><span class="p">)</span>
 <span class="go">False</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">new_file</span> <span class="o">=</span> <span class="n">filesystem</span><span class="o">.</span><span class="n">create_file</span><span class="p">(</span><span class="n">pathname</span><span class="p">)</span>
 </pre></div>
 </div>
 <p>File objects can’t be overwritten:</p>
-<div class="highlight-default"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">os_module</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">pathname</span><span class="p">)</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">os_module</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">pathname</span><span class="p">)</span>
 <span class="go">True</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="k">try</span><span class="p">:</span>
 <span class="gp">... </span>  <span class="n">filesystem</span><span class="o">.</span><span class="n">create_file</span><span class="p">(</span><span class="n">pathname</span><span class="p">)</span>
@@ -108,20 +99,20 @@ replacements.</li>
 </pre></div>
 </div>
 <p>Remove a file object:</p>
-<div class="highlight-default"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">filesystem</span><span class="o">.</span><span class="n">remove_object</span><span class="p">(</span><span class="n">pathname</span><span class="p">)</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">filesystem</span><span class="o">.</span><span class="n">remove_object</span><span class="p">(</span><span class="n">pathname</span><span class="p">)</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">os_module</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">pathname</span><span class="p">)</span>
 <span class="go">False</span>
 </pre></div>
 </div>
 <p>Create a new file object at the previous path:</p>
-<div class="highlight-default"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">beatles_file</span> <span class="o">=</span> <span class="n">filesystem</span><span class="o">.</span><span class="n">create_file</span><span class="p">(</span><span class="n">pathname</span><span class="p">,</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">beatles_file</span> <span class="o">=</span> <span class="n">filesystem</span><span class="o">.</span><span class="n">create_file</span><span class="p">(</span><span class="n">pathname</span><span class="p">,</span>
 <span class="gp">... </span>    <span class="n">contents</span><span class="o">=</span><span class="s1">&#39;Dear Prudence</span><span class="se">\n</span><span class="s1">Won</span><span class="se">\&#39;</span><span class="s1">t you come out to play?</span><span class="se">\n</span><span class="s1">&#39;</span><span class="p">)</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">os_module</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">pathname</span><span class="p">)</span>
 <span class="go">True</span>
 </pre></div>
 </div>
 <p>Use the FakeFileOpen class to read fake file objects:</p>
-<div class="highlight-default"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">file_module</span> <span class="o">=</span> <span class="n">fake_filesystem</span><span class="o">.</span><span class="n">FakeFileOpen</span><span class="p">(</span><span class="n">filesystem</span><span class="p">)</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">file_module</span> <span class="o">=</span> <span class="n">fake_filesystem</span><span class="o">.</span><span class="n">FakeFileOpen</span><span class="p">(</span><span class="n">filesystem</span><span class="p">)</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="k">for</span> <span class="n">line</span> <span class="ow">in</span> <span class="n">file_module</span><span class="p">(</span><span class="n">pathname</span><span class="p">):</span>
 <span class="gp">... </span>    <span class="nb">print</span><span class="p">(</span><span class="n">line</span><span class="o">.</span><span class="n">rstrip</span><span class="p">())</span>
 <span class="gp">...</span>
@@ -130,7 +121,7 @@ replacements.</li>
 </pre></div>
 </div>
 <p>File objects cannot be treated like directory objects:</p>
-<div class="highlight-default"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="k">try</span><span class="p">:</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="k">try</span><span class="p">:</span>
 <span class="gp">... </span>  <span class="n">os_module</span><span class="o">.</span><span class="n">listdir</span><span class="p">(</span><span class="n">pathname</span><span class="p">)</span>
 <span class="gp">... </span><span class="k">except</span> <span class="ne">OSError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
 <span class="gp">... </span>  <span class="k">assert</span> <span class="n">e</span><span class="o">.</span><span class="n">errno</span> <span class="o">==</span> <span class="n">errno</span><span class="o">.</span><span class="n">ENOTDIR</span><span class="p">,</span> <span class="s1">&#39;unexpected errno: </span><span class="si">%d</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="n">e</span><span class="o">.</span><span class="n">errno</span>
@@ -138,12 +129,12 @@ replacements.</li>
 </pre></div>
 </div>
 <p>The FakeOsModule can list fake directory objects:</p>
-<div class="highlight-default"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">os_module</span><span class="o">.</span><span class="n">listdir</span><span class="p">(</span><span class="n">os_module</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">dirname</span><span class="p">(</span><span class="n">pathname</span><span class="p">))</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">os_module</span><span class="o">.</span><span class="n">listdir</span><span class="p">(</span><span class="n">os_module</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">dirname</span><span class="p">(</span><span class="n">pathname</span><span class="p">))</span>
 <span class="go">[&#39;new-file&#39;]</span>
 </pre></div>
 </div>
 <p>The FakeOsModule also supports stat operations:</p>
-<div class="highlight-default"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">stat</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">stat</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">stat</span><span class="o">.</span><span class="n">S_ISREG</span><span class="p">(</span><span class="n">os_module</span><span class="o">.</span><span class="n">stat</span><span class="p">(</span><span class="n">pathname</span><span class="p">)</span><span class="o">.</span><span class="n">st_mode</span><span class="p">)</span>
 <span class="go">True</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">stat</span><span class="o">.</span><span class="n">S_ISDIR</span><span class="p">(</span><span class="n">os_module</span><span class="o">.</span><span class="n">stat</span><span class="p">(</span><span class="n">os_module</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">dirname</span><span class="p">(</span><span class="n">pathname</span><span class="p">))</span><span class="o">.</span><span class="n">st_mode</span><span class="p">)</span>
@@ -190,7 +181,7 @@ replacements.</li>
 <dl class="attribute">
 <dt id="pyfakefs.fake_filesystem.FakeFilesystem.root">
 <code class="descname">root</code><a class="headerlink" href="#pyfakefs.fake_filesystem.FakeFilesystem.root" title="Permalink to this definition">¶</a></dt>
-<dd><p>The root <a class="reference internal" href="#pyfakefs.fake_filesystem.FakeDirectory" title="pyfakefs.fake_filesystem.FakeDirectory"><code class="xref py py-class docutils literal"><span class="pre">FakeDirectory</span></code></a> entry of the file system.</p>
+<dd><p>The root <a class="reference internal" href="#pyfakefs.fake_filesystem.FakeDirectory" title="pyfakefs.fake_filesystem.FakeDirectory"><code class="xref py py-class docutils literal notranslate"><span class="pre">FakeDirectory</span></code></a> entry of the file system.</p>
 </dd></dl>
 
 <dl class="attribute">
@@ -219,7 +210,7 @@ root filesystem.</li>
 </tbody>
 </table>
 <p>Example usage to emulate real file systems:</p>
-<div class="highlight-default"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">filesystem</span> <span class="o">=</span> <span class="n">FakeFilesystem</span><span class="p">(</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">filesystem</span> <span class="o">=</span> <span class="n">FakeFilesystem</span><span class="p">(</span>
 <span class="gp">... </span>    <span class="n">alt_path_separator</span><span class="o">=</span><span class="s1">&#39;/&#39;</span> <span class="k">if</span> <span class="n">_is_windows</span> <span class="k">else</span> <span class="kc">None</span><span class="p">)</span>
 </pre></div>
 </div>
@@ -242,7 +233,7 @@ in bytes. Defaults to infinite size.</li>
 <tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first">The newly created mount point dict.</p>
 </td>
 </tr>
-<tr class="field-odd field"><th class="field-name">Raises:</th><td class="field-body"><p class="first last"><code class="xref py py-exc docutils literal"><span class="pre">OSError</span></code> – if trying to mount an existing mount point again.</p>
+<tr class="field-odd field"><th class="field-name">Raises:</th><td class="field-body"><p class="first last"><code class="xref py py-exc docutils literal notranslate"><span class="pre">OSError</span></code> – if trying to mount an existing mount point again.</p>
 </td>
 </tr>
 </tbody>
@@ -287,7 +278,7 @@ Defaults to the root path (e.g. ‘/’ on Unix systems).</li>
 </ul>
 </td>
 </tr>
-<tr class="field-even field"><th class="field-name">Raises:</th><td class="field-body"><p class="first last"><code class="xref py py-exc docutils literal"><span class="pre">IOError</span></code> – if the new space is smaller than the used size.</p>
+<tr class="field-even field"><th class="field-name">Raises:</th><td class="field-body"><p class="first last"><code class="xref py py-exc docutils literal notranslate"><span class="pre">IOError</span></code> – if the new space is smaller than the used size.</p>
 </td>
 </tr>
 </tbody>
@@ -307,7 +298,7 @@ filesystem.</p>
 </tr>
 <tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">The FakeFile object corresponding to <cite>file_path</cite>.</td>
 </tr>
-<tr class="field-odd field"><th class="field-name">Raises:</th><td class="field-body"><code class="xref py py-exc docutils literal"><span class="pre">IOError</span></code> – if the object is not found.</td>
+<tr class="field-odd field"><th class="field-name">Raises:</th><td class="field-body"><code class="xref py py-exc docutils literal notranslate"><span class="pre">IOError</span></code> – if the object is not found.</td>
 </tr>
 </tbody>
 </table>
@@ -331,7 +322,7 @@ filesystem.</p>
 <tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first">The newly created FakeDirectory object.</p>
 </td>
 </tr>
-<tr class="field-odd field"><th class="field-name">Raises:</th><td class="field-body"><p class="first last"><code class="xref py py-exc docutils literal"><span class="pre">OSError</span></code> – if the directory already exists.</p>
+<tr class="field-odd field"><th class="field-name">Raises:</th><td class="field-body"><p class="first last"><code class="xref py py-exc docutils literal notranslate"><span class="pre">OSError</span></code> – if the directory already exists.</p>
 </td>
 </tr>
 </tbody>
@@ -351,8 +342,11 @@ the way.</p>
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
 <li><strong>file_path</strong> – The path to the file to create.</li>
 <li><strong>st_mode</strong> – The stat constant representing the file type.</li>
-<li><strong>contents</strong> – The contents of the file.</li>
-<li><strong>st_size</strong> – The file size; only valid if contents not given.</li>
+<li><strong>contents</strong> – the contents of the file. If not given and st_size is
+None, an empty file is assumed.</li>
+<li><strong>st_size</strong> – file size; only valid if contents not given. If given,
+the file is considered to be in “large file mode” and trying
+to read from or write to the file will result in an exception.</li>
 <li><strong>create_missing_dirs</strong> – If <cite>True</cite>, auto create missing directories.</li>
 <li><strong>apply_umask</strong> – <cite>True</cite> if the current umask must be applied
 on <cite>st_mode</cite>.</li>
@@ -366,8 +360,8 @@ for serialization.</li>
 </td>
 </tr>
 <tr class="field-odd field"><th class="field-name">Raises:</th><td class="field-body"><ul class="first last simple">
-<li><code class="xref py py-exc docutils literal"><span class="pre">IOError</span></code> – if the file already exists.</li>
-<li><code class="xref py py-exc docutils literal"><span class="pre">IOError</span></code> – if the containing directory is required and missing.</li>
+<li><code class="xref py py-exc docutils literal notranslate"><span class="pre">IOError</span></code> – if the file already exists.</li>
+<li><code class="xref py py-exc docutils literal notranslate"><span class="pre">IOError</span></code> – if the containing directory is required and missing.</li>
 </ul>
 </td>
 </tr>
@@ -399,8 +393,8 @@ otherwise it is equal to <cite>source_path</cite>.</li>
 </td>
 </tr>
 <tr class="field-odd field"><th class="field-name">Raises:</th><td class="field-body"><ul class="first last simple">
-<li><code class="xref py py-exc docutils literal"><span class="pre">OSError</span></code> – if the file does not exist in the real file system.</li>
-<li><code class="xref py py-exc docutils literal"><span class="pre">IOError</span></code> – if the file already exists in the fake file system.</li>
+<li><code class="xref py py-exc docutils literal notranslate"><span class="pre">OSError</span></code> – if the file does not exist in the real file system.</li>
+<li><code class="xref py py-exc docutils literal notranslate"><span class="pre">IOError</span></code> – if the file already exists in the fake file system.</li>
 </ul>
 </td>
 </tr>
@@ -450,8 +444,8 @@ the target directory is the same as <cite>source_path</cite>.</li>
 </td>
 </tr>
 <tr class="field-odd field"><th class="field-name">Raises:</th><td class="field-body"><ul class="first last simple">
-<li><code class="xref py py-exc docutils literal"><span class="pre">OSError</span></code> – if the directory does not exist in the real file system.</li>
-<li><code class="xref py py-exc docutils literal"><span class="pre">IOError</span></code> – if the directory already exists in the fake file system.</li>
+<li><code class="xref py py-exc docutils literal notranslate"><span class="pre">OSError</span></code> – if the directory does not exist in the real file system.</li>
+<li><code class="xref py py-exc docutils literal notranslate"><span class="pre">IOError</span></code> – if the directory already exists in the fake file system.</li>
 </ul>
 </td>
 </tr>
@@ -482,9 +476,9 @@ files only as usually.</li>
 </td>
 </tr>
 <tr class="field-even field"><th class="field-name">Raises:</th><td class="field-body"><ul class="first last simple">
-<li><code class="xref py py-exc docutils literal"><span class="pre">OSError</span></code> – if any of the files and directories in the list
+<li><code class="xref py py-exc docutils literal notranslate"><span class="pre">OSError</span></code> – if any of the files and directories in the list
 does not exist in the real file system.</li>
-<li><code class="xref py py-exc docutils literal"><span class="pre">OSError</span></code> – if any of the files and directories in the list
+<li><code class="xref py py-exc docutils literal notranslate"><span class="pre">OSError</span></code> – if any of the files and directories in the list
 already exists in the fake file system.</li>
 </ul>
 </td>
@@ -513,9 +507,9 @@ file_path will be created</li>
 </td>
 </tr>
 <tr class="field-odd field"><th class="field-name">Raises:</th><td class="field-body"><ul class="first last simple">
-<li><code class="xref py py-exc docutils literal"><span class="pre">OSError</span></code> – if the symlink could not be created
-(see <a class="reference internal" href="#pyfakefs.fake_filesystem.FakeFilesystem.create_file" title="pyfakefs.fake_filesystem.FakeFilesystem.create_file"><code class="xref py py-meth docutils literal"><span class="pre">create_file()</span></code></a>).</li>
-<li><code class="xref py py-exc docutils literal"><span class="pre">OSError</span></code> – if on Windows before Python 3.2.</li>
+<li><code class="xref py py-exc docutils literal notranslate"><span class="pre">OSError</span></code> – if the symlink could not be created
+(see <a class="reference internal" href="#pyfakefs.fake_filesystem.FakeFilesystem.create_file" title="pyfakefs.fake_filesystem.FakeFilesystem.create_file"><code class="xref py py-meth docutils literal notranslate"><span class="pre">create_file()</span></code></a>).</li>
+<li><code class="xref py py-exc docutils literal notranslate"><span class="pre">OSError</span></code> – if on Windows before Python 3.2.</li>
 </ul>
 </td>
 </tr>
@@ -601,7 +595,7 @@ If not given, the locale preferred encoding is used.</li>
 </ul>
 </td>
 </tr>
-<tr class="field-even field"><th class="field-name">Raises:</th><td class="field-body"><p class="first last"><code class="xref py py-exc docutils literal"><span class="pre">IOError</span></code> – if <cite>st_size</cite> is not a non-negative integer,
+<tr class="field-even field"><th class="field-name">Raises:</th><td class="field-body"><p class="first last"><code class="xref py py-exc docutils literal notranslate"><span class="pre">IOError</span></code> – if <cite>st_size</cite> is not a non-negative integer,
 or if it exceeds the available file system space.</p>
 </td>
 </tr>
@@ -666,7 +660,7 @@ creation order.</p>
 </tr>
 <tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">The fake file or directory object.</td>
 </tr>
-<tr class="field-odd field"><th class="field-name">Raises:</th><td class="field-body"><code class="xref py py-exc docutils literal"><span class="pre">KeyError</span></code> – if no child exists by the specified name.</td>
+<tr class="field-odd field"><th class="field-name">Raises:</th><td class="field-body"><code class="xref py py-exc docutils literal notranslate"><span class="pre">KeyError</span></code> – if no child exists by the specified name.</td>
 </tr>
 </tbody>
 </table>
@@ -689,8 +683,8 @@ are deleted first. Used to propagate removal errors
 </td>
 </tr>
 <tr class="field-even field"><th class="field-name">Raises:</th><td class="field-body"><ul class="first last simple">
-<li><code class="xref py py-exc docutils literal"><span class="pre">KeyError</span></code> – if no child exists by the specified name.</li>
-<li><code class="xref py py-exc docutils literal"><span class="pre">OSError</span></code> – if user lacks permission to delete the file,
+<li><code class="xref py py-exc docutils literal notranslate"><span class="pre">KeyError</span></code> – if no child exists by the specified name.</li>
+<li><code class="xref py py-exc docutils literal notranslate"><span class="pre">OSError</span></code> – if user lacks permission to delete the file,
 or (Windows only) the file is open.</li>
 </ul>
 </td>
@@ -712,7 +706,7 @@ or (Windows only) the file is open.</li>
 <h2>Unittest module classes<a class="headerlink" href="#unittest-module-classes" title="Permalink to this headline">¶</a></h2>
 <dl class="class">
 <dt id="pyfakefs.fake_filesystem_unittest.TestCase">
-<em class="property">class </em><code class="descclassname">pyfakefs.fake_filesystem_unittest.</code><code class="descname">TestCase</code><span class="sig-paren">(</span><em>methodName='runTest'</em>, <em>additional_skip_names=None</em>, <em>patch_path=True</em>, <em>modules_to_reload=None</em>, <em>use_dynamic_patch=True</em>, <em>modules_to_patch=None</em><span class="sig-paren">)</span><a class="headerlink" href="#pyfakefs.fake_filesystem_unittest.TestCase" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><code class="descclassname">pyfakefs.fake_filesystem_unittest.</code><code class="descname">TestCase</code><span class="sig-paren">(</span><em>methodName='runTest'</em>, <em>additional_skip_names=None</em>, <em>modules_to_reload=None</em>, <em>use_dynamic_patch=True</em>, <em>modules_to_patch=None</em><span class="sig-paren">)</span><a class="headerlink" href="#pyfakefs.fake_filesystem_unittest.TestCase" title="Permalink to this definition">¶</a></dt>
 <dd><p>Test case class that automatically replaces file-system related
 modules by fake implementations.</p>
 <p>Creates the test class instance and the stubber used to stub out
@@ -729,7 +723,7 @@ unittest.TestCase)</td>
 <dl class="method">
 <dt id="pyfakefs.fake_filesystem_unittest.TestCase.setUpPyfakefs">
 <code class="descname">setUpPyfakefs</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#pyfakefs.fake_filesystem_unittest.TestCase.setUpPyfakefs" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bind the file-related modules to the <code class="xref py py-class docutils literal"><span class="pre">pyfakefs</span></code> fake file
+<dd><p>Bind the file-related modules to the <code class="xref py py-class docutils literal notranslate"><span class="pre">pyfakefs</span></code> fake file
 system instead of the real file system.  Also bind the fake <cite>open()</cite>
 function, and on Python 2, the <cite>file()</cite> function.</p>
 <p>Invoke this at the beginning of the <cite>setUp()</cite> method in your unit test
@@ -740,13 +734,13 @@ class.</p>
 
 <dl class="class">
 <dt id="pyfakefs.fake_filesystem_unittest.Patcher">
-<em class="property">class </em><code class="descclassname">pyfakefs.fake_filesystem_unittest.</code><code class="descname">Patcher</code><span class="sig-paren">(</span><em>additional_skip_names=None</em>, <em>patch_path=True</em>, <em>modules_to_reload=None</em>, <em>use_dynamic_patch=True</em>, <em>modules_to_patch=None</em><span class="sig-paren">)</span><a class="headerlink" href="#pyfakefs.fake_filesystem_unittest.Patcher" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><code class="descclassname">pyfakefs.fake_filesystem_unittest.</code><code class="descname">Patcher</code><span class="sig-paren">(</span><em>additional_skip_names=None</em>, <em>modules_to_reload=None</em>, <em>use_dynamic_patch=True</em>, <em>modules_to_patch=None</em><span class="sig-paren">)</span><a class="headerlink" href="#pyfakefs.fake_filesystem_unittest.Patcher" title="Permalink to this definition">¶</a></dt>
 <dd><p>Instantiate a stub creator to bind and un-bind the file-related modules to
-the <code class="xref py py-mod docutils literal"><span class="pre">pyfakefs</span></code> fake modules.</p>
-<p>The arguments are explained in <a class="reference internal" href="#pyfakefs.fake_filesystem_unittest.TestCase" title="pyfakefs.fake_filesystem_unittest.TestCase"><code class="xref py py-class docutils literal"><span class="pre">TestCase</span></code></a>.</p>
-<p><a class="reference internal" href="#pyfakefs.fake_filesystem_unittest.Patcher" title="pyfakefs.fake_filesystem_unittest.Patcher"><code class="xref py py-class docutils literal"><span class="pre">Patcher</span></code></a> is used in <a class="reference internal" href="#pyfakefs.fake_filesystem_unittest.TestCase" title="pyfakefs.fake_filesystem_unittest.TestCase"><code class="xref py py-class docutils literal"><span class="pre">TestCase</span></code></a>.  <a class="reference internal" href="#pyfakefs.fake_filesystem_unittest.Patcher" title="pyfakefs.fake_filesystem_unittest.Patcher"><code class="xref py py-class docutils literal"><span class="pre">Patcher</span></code></a>
+the <code class="xref py py-mod docutils literal notranslate"><span class="pre">pyfakefs</span></code> fake modules.</p>
+<p>The arguments are explained in <a class="reference internal" href="#pyfakefs.fake_filesystem_unittest.TestCase" title="pyfakefs.fake_filesystem_unittest.TestCase"><code class="xref py py-class docutils literal notranslate"><span class="pre">TestCase</span></code></a>.</p>
+<p><a class="reference internal" href="#pyfakefs.fake_filesystem_unittest.Patcher" title="pyfakefs.fake_filesystem_unittest.Patcher"><code class="xref py py-class docutils literal notranslate"><span class="pre">Patcher</span></code></a> is used in <a class="reference internal" href="#pyfakefs.fake_filesystem_unittest.TestCase" title="pyfakefs.fake_filesystem_unittest.TestCase"><code class="xref py py-class docutils literal notranslate"><span class="pre">TestCase</span></code></a>.  <a class="reference internal" href="#pyfakefs.fake_filesystem_unittest.Patcher" title="pyfakefs.fake_filesystem_unittest.Patcher"><code class="xref py py-class docutils literal notranslate"><span class="pre">Patcher</span></code></a>
 also works as a context manager for PyTest:</p>
-<div class="highlight-default"><div class="highlight"><pre><span></span><span class="k">with</span> <span class="n">Patcher</span><span class="p">():</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="k">with</span> <span class="n">Patcher</span><span class="p">():</span>
     <span class="n">doStuff</span><span class="p">()</span>
 </pre></div>
 </div>
@@ -754,7 +748,7 @@ also works as a context manager for PyTest:</p>
 <dl class="method">
 <dt id="pyfakefs.fake_filesystem_unittest.Patcher.setUp">
 <code class="descname">setUp</code><span class="sig-paren">(</span><em>doctester=None</em><span class="sig-paren">)</span><a class="headerlink" href="#pyfakefs.fake_filesystem_unittest.Patcher.setUp" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bind the file-related modules to the <code class="xref py py-mod docutils literal"><span class="pre">pyfakefs</span></code> fake
+<dd><p>Bind the file-related modules to the <code class="xref py py-mod docutils literal notranslate"><span class="pre">pyfakefs</span></code> fake
 modules real ones.  Also bind the fake <cite>file()</cite> and <cite>open()</cite> functions.</p>
 </dd></dl>
 
@@ -895,8 +889,8 @@ my_io_module = fake_filesystem.FakeIoModule(filesystem)</p>
 <dd><p>Uses FakeFilesystem to provide a fake <cite>scandir</cite> module replacement.</p>
 <div class="admonition note">
 <p class="first admonition-title">Note</p>
-<p class="last">The <code class="docutils literal"><span class="pre">scandir</span></code> function is a part of the standard <code class="docutils literal"><span class="pre">os</span></code> module
-since Python 3.5. This class handles the separate <code class="docutils literal"><span class="pre">scandir</span></code> module
+<p class="last">The <code class="docutils literal notranslate"><span class="pre">scandir</span></code> function is a part of the standard <code class="docutils literal notranslate"><span class="pre">os</span></code> module
+since Python 3.5. This class handles the separate <code class="docutils literal notranslate"><span class="pre">scandir</span></code> module
 that is available on pypi.</p>
 </div>
 <p>You need a fake_filesystem to use this:
@@ -939,12 +933,14 @@ that is available on pypi.</p>
    </div>
 <div id="searchbox" style="display: none" role="search">
   <h3>Quick search</h3>
+    <div class="searchformwrapper">
     <form class="search" action="search.html" method="get">
-      <div><input type="text" name="q" /></div>
-      <div><input type="submit" value="Go" /></div>
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
       <input type="hidden" name="check_keywords" value="yes" />
       <input type="hidden" name="area" value="default" />
     </form>
+    </div>
 </div>
 <script type="text/javascript">$('#searchbox').show(0);</script>
         </div>
@@ -973,7 +969,7 @@ that is available on pypi.</p>
         &#169; Copyright 2009 Google Inc. All Rights Reserved.
 © Copyright 2014 Altera Corporation. All Rights Reserved.
 © Copyright 2014-2018 John McGehee.
-      Last updated on Jun 13, 2018.
+      Last updated on Sep 27, 2018.
     </div>
   </body>
 </html>
