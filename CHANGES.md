@@ -3,6 +3,9 @@ The release versions are PyPi releases.
 
 ## Version 3.5 (as yet unreleased)
 
+This version of pyfakefs does not support Python 3.3. Python 3.3 users shall 
+keep using pyfakefs 3.4.3, or upgrade to a newer Python version.
+
 #### New Features
   * parameter `patch_path` has been removed from `UnitTest` and `Patcher`, 
     the correct patching of `path` imports is now done automatically
