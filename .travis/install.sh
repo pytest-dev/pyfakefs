@@ -17,10 +17,6 @@ if [[ $TRAVIS_OS_NAME == 'osx' ]]; then
             curl -O https://bootstrap.pypa.io/get-pip.py
             python get-pip.py --user
             ;;
-        py33)
-            pyenv install 3.3.5
-            pyenv global 3.3.5
-            ;;
         py34)
             pyenv install 3.4.4
             pyenv global 3.4.4
@@ -30,8 +26,12 @@ if [[ $TRAVIS_OS_NAME == 'osx' ]]; then
             pyenv global 3.5.4
             ;;
         py36)
-            pyenv install 3.6.3
-            pyenv global 3.6.3
+            pyenv install 3.6.6
+            pyenv global 3.6.6
+            ;;
+        py37)
+            pyenv install 3.7.0
+            pyenv global 3.7.0
             ;;
         pypy*)
             pyenv install "$PYPY_VERSION"
