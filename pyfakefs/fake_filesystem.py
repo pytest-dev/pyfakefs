@@ -341,12 +341,17 @@ class FakeFile(object):
            Called internally after initial file creation.
 
         Args:
-          contents: string, new content of file.
+            contents: string, new content of file.
+
+        Returns:
+            True if the contents have been changed.
+
         Raises:
-          IOError: if the st_size is not a non-negative integer,
+              IOError: if the st_size is not a non-negative integer,
                    or if st_size exceeds the available file system space
         """
         contents = self._encode_contents(contents)
+        changed = self._byte_contents != contents
         st_size = len(contents)
 
         if self._byte_contents:
@@ -357,6 +362,7 @@ class FakeFile(object):
         self._byte_contents = contents
         self.st_size = st_size
         self.epoch += 1
+        return changed
 
     def set_contents(self, contents, encoding=None):
         """Sets the file contents and size and increases the modification time.
@@ -373,12 +379,10 @@ class FakeFile(object):
                    or if it exceeds the available file system space.
         """
         self.encoding = encoding
-        self._set_initial_contents(contents)
-        current_time = time.time()
-        self.st_ctime = current_time
-        self.st_mtime = current_time
+        changed = self._set_initial_contents(contents)
         if self._side_effect is not None:
             self._side_effect(self)
+        return changed
 
     @property
     def size(self):
@@ -4450,6 +4454,7 @@ class FakeFileWrapper(object):
         self.raw_io = raw_io
         self._binary = binary
         self.is_stream = is_stream
+        self._changed = False
         contents = file_object.byte_contents
         self._encoding = encoding or locale.getpreferredencoding(False)
         errors = errors or 'strict'
@@ -4514,6 +4519,8 @@ class FakeFileWrapper(object):
         # for raw io, all writes are flushed immediately
         if self.allow_update and not self.raw_io:
             self.flush()
+            if self._filesystem.is_windows_fs and self._changed:
+                self.file_object.st_mtime = time.time()
         if self._closefd:
             self._filesystem._close_open_file(self.filedes)
         else:
@@ -4541,7 +4548,13 @@ class FakeFileWrapper(object):
                 self.update_flush_pos()
             else:
                 self._io.flush()
-            self.file_object.set_contents(contents, self._encoding)
+            if self.file_object.set_contents(contents, self._encoding):
+                if self._filesystem.is_windows_fs:
+                    self._changed = True
+                else:
+                    current_time = time.time()
+                    self.file_object.st_ctime = current_time
+                    self.file_object.st_mtime = current_time
             self._file_epoch = self.file_object.epoch
 
             if not self.is_stream:
@@ -4772,6 +4785,8 @@ class FakeFileWrapper(object):
             self._sync_io()
             if self._flushes_after_read():
                 self.flush()
+            if not self._filesystem.is_windows_fs:
+                self.file_object.st_atime = time.time()
         if truncate:
             return self._truncate_wrapper()
         if self._append:
@@ -4992,6 +5007,12 @@ class FakeFileOpen(object):
         # If you print obj.name, the argument to open() must be printed.
         # Not the abspath, not the filename, but the actual argument.
         file_object.opened_as = file_path
+        if open_modes.truncate:
+            current_time = time.time()
+            file_object.st_mtime = current_time
+            if not self.filesystem.is_windows_fs:
+                file_object.st_ctime = current_time
+
 
         fakefile = FakeFileWrapper(file_object,
                                    file_path,

@@ -424,61 +424,6 @@ class FakeFileOpenTest(FakeFileOpenTestBase):
             fake_file.seek(0)
             self.assertEqual('new contents here', fake_file.read())
 
-    def test_open_st_ctime(self):
-        # set up
-        self.skip_real_fs()
-        time.time = DummyTime(100, 10)
-        file_path = self.make_path('some_file')
-        self.assertFalse(self.os.path.exists(file_path))
-        # tests
-        fake_file = self.open(file_path, 'w')
-        time.time.start()
-        st = self.os.stat(file_path)
-        self.assertEqual(100, st.st_ctime)
-        self.assertEqual(100, st.st_mtime)
-        fake_file.close()
-        st = self.os.stat(file_path)
-        self.assertEqual(110, st.st_ctime)
-        self.assertEqual(110, st.st_mtime)
-
-        fake_file = self.open(file_path, 'w')
-        st = self.os.stat(file_path)
-        # truncating the file cause an additional stat update
-        self.assertEqual(120, st.st_ctime)
-        self.assertEqual(120, st.st_mtime)
-        fake_file.close()
-        st = self.os.stat(file_path)
-        self.assertEqual(130, st.st_ctime)
-        self.assertEqual(130, st.st_mtime)
-
-        fake_file = self.open(file_path, 'w+')
-        st = self.os.stat(file_path)
-        self.assertEqual(140, st.st_ctime)
-        self.assertEqual(140, st.st_mtime)
-        fake_file.close()
-        st = self.os.stat(file_path)
-        self.assertEqual(150, st.st_ctime)
-        self.assertEqual(150, st.st_mtime)
-
-        fake_file = self.open(file_path, 'a')
-        st = self.os.stat(file_path)
-        # not updating m_time or c_time here, since no truncating.
-        self.assertEqual(150, st.st_ctime)
-        self.assertEqual(150, st.st_mtime)
-        fake_file.close()
-        st = self.os.stat(file_path)
-        self.assertEqual(160, st.st_ctime)
-        self.assertEqual(160, st.st_mtime)
-
-        fake_file = self.open(file_path, 'r')
-        st = self.os.stat(file_path)
-        self.assertEqual(160, st.st_ctime)
-        self.assertEqual(160, st.st_mtime)
-        fake_file.close()
-        st = self.os.stat(file_path)
-        self.assertEqual(160, st.st_ctime)
-        self.assertEqual(160, st.st_mtime)
-
     def create_with_permission(self, file_path, perm_bits):
         self.create_file(file_path)
         self.os.chmod(file_path, perm_bits)
