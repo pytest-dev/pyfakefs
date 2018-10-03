@@ -20,7 +20,7 @@ import sys
 import unittest
 
 from pyfakefs.extra_packages import pathlib
-from pyfakefs.tests import dynamic_patch_test
+from pyfakefs.tests import dynamic_patch_test, fake_stat_time_test
 from pyfakefs.tests import fake_open_test
 from pyfakefs.tests import fake_os_test
 from pyfakefs.tests import example_test
@@ -46,6 +46,7 @@ class AllTests(unittest.TestSuite):
             loader.loadTestsFromModule(fake_filesystem_glob_test),
             loader.loadTestsFromModule(fake_filesystem_shutil_test),
             loader.loadTestsFromModule(fake_os_test),
+            loader.loadTestsFromModule(fake_stat_time_test),
             loader.loadTestsFromModule(fake_open_test),
             loader.loadTestsFromModule(fake_tempfile_test),
             loader.loadTestsFromModule(fake_filesystem_vs_real_test),

@@ -350,7 +350,6 @@ class RealFsTestMixin(object):
                 if not self.filesystem.exists(self.base_path):
                     self.filesystem.create_dir(self.base_path)
                 if old_base_path is not None:
-
                     self.setUpFileSystem()
 
 

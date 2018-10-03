@@ -18,6 +18,8 @@ keep using pyfakefs 3.4.3, or upgrade to a newer Python version.
 #### Infrastructure
 
 #### Fixes
+  * file timestamps are now updated more according to the real behavior
+    ([#435](../../issues/435))
 
 ## [Version 3.4.3](https://pypi.python.org/pypi/pyfakefs/3.4.3)
 
