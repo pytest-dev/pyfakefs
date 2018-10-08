@@ -7,6 +7,7 @@ This version of pyfakefs does not support Python 3.3. Python 3.3 users shall
 keep using pyfakefs 3.4.3, or upgrade to a newer Python version.
 
 #### New Features
+  * added side_effect option to fake files ([#433](../../pull/433))
   * parameter `patch_path` has been removed from `UnitTest` and `Patcher`, 
     the correct patching of `path` imports is now done automatically
   * `UnitTest` /`Patcher` arguments can now also be set in `setUpPyfakefs()`
