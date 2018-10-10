@@ -10,15 +10,16 @@ def my_fakefs_test(fs):
 """
 
 import linecache
+import sys
 
 import py
 import pytest
 
 from pyfakefs.fake_filesystem_unittest import Patcher
 
-try:
+if sys.version_info >= (3,):
     import builtins
-except ImportError:
+else:
     import __builtin__ as builtins
 
 Patcher.SKIPMODULES.add(py)  # Ignore pytest components when faking filesystem
