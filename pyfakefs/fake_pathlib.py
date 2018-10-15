@@ -670,3 +670,18 @@ class FakePathlibModule(object):
     def __getattr__(self, name):
         """Forwards any unfaked calls to the standard pathlib module."""
         return getattr(self._pathlib_module, name)
+
+
+class FakePathlibPathModule(object):
+    """Patches `pathlib.Path` by passing all calls to FakePathlibModule."""
+    fake_pathlib = None
+
+    def __init__(self, filesystem):
+        if self.fake_pathlib is None:
+            self.__class__.fake_pathlib = FakePathlibModule(filesystem)
+
+    def __call__(self, *args, **kwargs):
+        return self.fake_pathlib.Path(*args, **kwargs)
+
+    def __getattr__(self, name):
+        return getattr(self.fake_pathlib.Path, name)
