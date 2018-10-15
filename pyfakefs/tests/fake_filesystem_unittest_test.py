@@ -194,28 +194,8 @@ class TestPathNotPatchedIfNotOsPath(TestPyfakefsUnittestBase):
 
 
 if pathlib:
-    class FakePathlibPathModule(object):
-        """Patches `pathlib.Path` by passing all calls to FakePathlibModule."""
-        fake_pathlib = None
-
-        def __init__(self, filesystem):
-            if self.fake_pathlib is None:
-                from pyfakefs.fake_pathlib import FakePathlibModule
-                self.__class__.fake_pathlib = FakePathlibModule(filesystem)
-
-        def __call__(self, *args, **kwargs):
-            return self.fake_pathlib.Path(*args, **kwargs)
-
-        def __getattr__(self, name):
-            return getattr(self.fake_pathlib.Path, name)
-
     class PatchPathlibPathTest(TestPyfakefsUnittestBase):
-        """Shows how to patch a class inside a module."""
-        def __init__(self, methodName='RunTest'):
-            modules_to_patch = {'pathlib.Path': FakePathlibPathModule}
-            super(PatchPathlibPathTest, self).__init__(
-                methodName, modules_to_patch=modules_to_patch)
-
+        """Shows that pathlib.Path is correctly patched."""
         def test_path_exists(self):
             file_path = '/foo/bar'
             self.fs.create_dir(file_path)
