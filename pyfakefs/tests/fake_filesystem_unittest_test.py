@@ -138,9 +138,13 @@ class TestPyfakefsUnittest(TestPyfakefsUnittestBase):  # pylint: disable=R0904
 
 
 class TestImportAsOtherNameInit(fake_filesystem_unittest.TestCase):
+    def __init__(self, methodName='RunTest'):
+        modules_to_load = [pyfakefs.tests.import_as_example]
+        super(TestImportAsOtherNameInit, self).__init__(
+            methodName, modules_to_reload=modules_to_load)
+
     def setUp(self):
-        self.setUpPyfakefs(
-            modules_to_reload=[pyfakefs.tests.import_as_example])
+        self.setUpPyfakefs()
 
     def test_file_exists(self):
         file_path = '/foo/bar/baz'
