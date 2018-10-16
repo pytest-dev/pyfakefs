@@ -123,7 +123,10 @@ deprecated and will not be described in detail.</p>
 <span id="customizing-patcher"></span><h2>Customizing Patcher and TestCase<a class="headerlink" href="#customizing-patcher-and-testcase" title="Permalink to this headline">¶</a></h2>
 <p>Both <code class="docutils literal notranslate"><span class="pre">fake_filesystem_unittest.Patcher</span></code> and <code class="docutils literal notranslate"><span class="pre">fake_filesystem_unittest.TestCase</span></code>
 provide a few additional arguments for fine-tuning. These are only needed if
-patching does not work for some module.</p>
+patching does not work for some module.
+In case of <code class="docutils literal notranslate"><span class="pre">fake_filesystem_unittest.TestCase</span></code>, these arguments can either
+be set in the TestCase instance initialization, or in the call of
+<code class="docutils literal notranslate"><span class="pre">setUpPyfakefs()</span></code>.</p>
 <div class="admonition note">
 <p class="first admonition-title">Note</p>
 <p>If you need these arguments in <code class="docutils literal notranslate"><span class="pre">PyTest</span></code>, you have to
@@ -142,16 +145,16 @@ to patch modules not imported directly.</p>
 <span class="kn">import</span> <span class="nn">pathlib.Path</span>
 </pre></div>
 </div>
-<p>The following imports of <code class="docutils literal notranslate"><span class="pre">os</span></code> and <code class="docutils literal notranslate"><span class="pre">pathlib.Path</span></code> will not be patched by
-<code class="docutils literal notranslate"><span class="pre">pyfakefs</span></code>, however:</p>
+<p>The following import of <code class="docutils literal notranslate"><span class="pre">os</span></code> will not be patched by <code class="docutils literal notranslate"><span class="pre">pyfakefs</span></code>, however:</p>
 <div class="code python highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">os</span> <span class="k">as</span> <span class="nn">my_os</span>
-<span class="kn">from</span> <span class="nn">pathlib</span> <span class="k">import</span> <span class="n">Path</span>
 </pre></div>
 </div>
 <div class="admonition note">
 <p class="first admonition-title">Note</p>
-<p class="last">There is one exception to that: importing <code class="docutils literal notranslate"><span class="pre">os.path</span></code> like
-<code class="docutils literal notranslate"><span class="pre">from</span> <span class="pre">os</span> <span class="pre">import</span> <span class="pre">path</span></code> will work, because it is handled by <code class="docutils literal notranslate"><span class="pre">pyfakefs</span></code>.</p>
+<p class="last">There are two exceptions to that: importing <code class="docutils literal notranslate"><span class="pre">os.path</span></code> like
+<code class="docutils literal notranslate"><span class="pre">from</span> <span class="pre">os</span> <span class="pre">import</span> <span class="pre">path</span></code> will work, because it is handled by <code class="docutils literal notranslate"><span class="pre">pyfakefs</span></code>.
+The same is true for <code class="docutils literal notranslate"><span class="pre">pathlib.Path</span></code> if imported like <code class="docutils literal notranslate"><span class="pre">from</span> <span class="pre">pathlib</span> <span class="pre">import</span>
+<span class="pre">Path</span></code>.</p>
 </div>
 <p>If adding the module containing these imports to <code class="docutils literal notranslate"><span class="pre">modules_to_reload</span></code>, they
 will be correctly patched.</p>
@@ -161,35 +164,30 @@ will be correctly patched.</p>
 <p>This also allows patching modules that are not patched out of the box, in
 this case by adding a fake module implementation for a module name. The
 argument is a dictionary of fake modules mapped to the names to be faked.
-This can be used to fake modules imported as another name directly. For the
-<code class="docutils literal notranslate"><span class="pre">os</span></code> import above you could also use:</p>
-<div class="code python highlight-default notranslate"><div class="highlight"><pre><span></span><span class="k">with</span> <span class="n">Patcher</span><span class="p">(</span><span class="n">modules_to_patch</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;my_os&#39;</span><span class="p">:</span> <span class="n">fake_filesystem</span><span class="o">.</span><span class="n">FakeOsModule</span><span class="p">}):</span>
-    <span class="n">test_something</span><span class="p">()</span>
-</pre></div>
-</div>
-<p>For the second example (<code class="docutils literal notranslate"><span class="pre">from</span> <span class="pre">pathlib</span> <span class="pre">import</span> <span class="pre">Path</span></code>) the syntax is slightly
-different:</p>
-<div class="code python highlight-default notranslate"><div class="highlight"><pre><span></span><span class="k">with</span> <span class="n">Patcher</span><span class="p">(</span><span class="n">modules_to_patch</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;pathlib.Path&#39;</span><span class="p">:</span> <span class="n">MyFakePath</span><span class="p">}):</span>
-    <span class="n">test_something</span><span class="p">()</span>
-</pre></div>
-</div>
-<p>This will fake the class <code class="docutils literal notranslate"><span class="pre">Path</span></code> inside the module <code class="docutils literal notranslate"><span class="pre">pathlib</span></code>, if imported
-as <code class="docutils literal notranslate"><span class="pre">Path</span></code>.
-Here is an example of how to implement <code class="docutils literal notranslate"><span class="pre">MyFakePath</span></code>:</p>
-<div class="code python highlight-default notranslate"><div class="highlight"><pre><span></span><span class="k">class</span> <span class="nc">MyFakePath</span><span class="p">():</span>
-    <span class="sd">&quot;&quot;&quot;Patches `pathlib.Path` by passing all calls to FakePathlibModule.&quot;&quot;&quot;</span>
-    <span class="n">fake_pathlib</span> <span class="o">=</span> <span class="kc">None</span>
+This can be used to fake out modules that use OS-specific file system calls
+as in the following example:</p>
+<div class="code python highlight-default notranslate"><div class="highlight"><pre><span></span><span class="k">class</span> <span class="nc">FakeLocks</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+<span class="sd">&quot;&quot;&quot;django.core.files.locks uses low level OS functions, fake it.&quot;&quot;&quot;</span>
+<span class="n">_locks_module</span> <span class="o">=</span> <span class="n">django</span><span class="o">.</span><span class="n">core</span><span class="o">.</span><span class="n">files</span><span class="o">.</span><span class="n">locks</span>
 
-    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">filesystem</span><span class="p">):</span>
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">fake_pathlib</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="kn">from</span> <span class="nn">pyfakefs.fake_pathlib</span> <span class="k">import</span> <span class="n">FakePathlibModule</span>
-            <span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="n">fake_pathlib</span> <span class="o">=</span> <span class="n">FakePathlibModule</span><span class="p">(</span><span class="n">filesystem</span><span class="p">)</span>
+<span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">fs</span><span class="p">):</span>
+<span class="sd">&quot;&quot;&quot;Each fake module expects the fake file system as an __init__ parameter.&quot;&quot;&quot;</span>
+    <span class="k">pass</span>
 
-    <span class="k">def</span> <span class="nf">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">fake_pathlib</span><span class="o">.</span><span class="n">Path</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+<span class="nd">@staticmethod</span>
+<span class="k">def</span> <span class="nf">lock</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="n">flags</span><span class="p">):</span>
+    <span class="k">return</span> <span class="kc">True</span>
 
-    <span class="k">def</span> <span class="nf">__getattr__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">):</span>
-        <span class="k">return</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">fake_pathlib</span><span class="o">.</span><span class="n">Path</span><span class="p">,</span> <span class="n">name</span><span class="p">)</span>
+<span class="nd">@staticmethod</span>
+<span class="k">def</span> <span class="nf">unlock</span><span class="p">(</span><span class="n">f</span><span class="p">):</span>
+    <span class="k">return</span> <span class="kc">True</span>
+
+<span class="k">def</span> <span class="nf">__getattr__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">):</span>
+    <span class="k">return</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_locks_module</span><span class="p">,</span> <span class="n">name</span><span class="p">)</span>
+
+
+<span class="k">with</span> <span class="n">Patcher</span><span class="p">(</span><span class="n">modules_to_patch</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;locks&#39;</span><span class="p">:</span> <span class="n">FakeLocks</span><span class="p">}):</span>
+    <span class="n">test_django_stuff</span><span class="p">()</span>
 </pre></div>
 </div>
 </div>
@@ -399,7 +397,7 @@ modeled after <code class="docutils literal notranslate"><span class="pre">shuti
         &#169; Copyright 2009 Google Inc. All Rights Reserved.
 © Copyright 2014 Altera Corporation. All Rights Reserved.
 © Copyright 2014-2018 John McGehee.
-      Last updated on Sep 27, 2018.
+      Last updated on Oct 16, 2018.
     </div>
   </body>
 </html>

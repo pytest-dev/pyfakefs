@@ -331,7 +331,7 @@ filesystem.</p>
 
 <dl class="method">
 <dt id="pyfakefs.fake_filesystem.FakeFilesystem.create_file">
-<code class="descname">create_file</code><span class="sig-paren">(</span><em>file_path</em>, <em>st_mode=33206</em>, <em>contents=''</em>, <em>st_size=None</em>, <em>create_missing_dirs=True</em>, <em>apply_umask=False</em>, <em>encoding=None</em>, <em>errors=None</em><span class="sig-paren">)</span><a class="headerlink" href="#pyfakefs.fake_filesystem.FakeFilesystem.create_file" title="Permalink to this definition">¶</a></dt>
+<code class="descname">create_file</code><span class="sig-paren">(</span><em>file_path</em>, <em>st_mode=33206</em>, <em>contents=''</em>, <em>st_size=None</em>, <em>create_missing_dirs=True</em>, <em>apply_umask=False</em>, <em>encoding=None</em>, <em>errors=None</em>, <em>side_effect=None</em><span class="sig-paren">)</span><a class="headerlink" href="#pyfakefs.fake_filesystem.FakeFilesystem.create_file" title="Permalink to this definition">¶</a></dt>
 <dd><p>Create <cite>file_path</cite>, including all the parent directories along
 the way.</p>
 <p>This helper method can be used to set up tests more easily.</p>
@@ -353,6 +353,8 @@ on <cite>st_mode</cite>.</li>
 <li><strong>encoding</strong> – If <cite>contents</cite> is a unicode string, the encoding used
 for serialization.</li>
 <li><strong>errors</strong> – The error mode used for encoding/decoding errors.</li>
+<li><strong>side_effect</strong> – function handle that is executed when file is written,
+must accept the file object as an argument.</li>
 </ul>
 </td>
 </tr>
@@ -521,7 +523,7 @@ file_path will be created</li>
 
 <dl class="class">
 <dt id="pyfakefs.fake_filesystem.FakeFile">
-<em class="property">class </em><code class="descclassname">pyfakefs.fake_filesystem.</code><code class="descname">FakeFile</code><span class="sig-paren">(</span><em>name</em>, <em>st_mode=33206</em>, <em>contents=None</em>, <em>filesystem=None</em>, <em>encoding=None</em>, <em>errors=None</em><span class="sig-paren">)</span><a class="headerlink" href="#pyfakefs.fake_filesystem.FakeFile" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><code class="descclassname">pyfakefs.fake_filesystem.</code><code class="descname">FakeFile</code><span class="sig-paren">(</span><em>name</em>, <em>st_mode=33206</em>, <em>contents=None</em>, <em>filesystem=None</em>, <em>encoding=None</em>, <em>errors=None</em>, <em>side_effect=None</em><span class="sig-paren">)</span><a class="headerlink" href="#pyfakefs.fake_filesystem.FakeFile" title="Permalink to this definition">¶</a></dt>
 <dd><p>Provides the appearance of a real file.</p>
 <dl class="docutils">
 <dt>Attributes currently faked out:</dt>
@@ -556,6 +558,8 @@ FakeFile or FakeDirectory objects for FakeDirectory objects</li>
 <li><strong>encoding</strong> – If contents is a unicode string, the encoding used
 for serialization.</li>
 <li><strong>errors</strong> – The error mode used for encoding/decoding errors.</li>
+<li><strong>side_effect</strong> – function handle that is executed when file is written,
+must accept the file object as an argument.</li>
 </ul>
 </td>
 </tr>
@@ -582,7 +586,8 @@ for serialization.</li>
 <dl class="method">
 <dt id="pyfakefs.fake_filesystem.FakeFile.set_contents">
 <code class="descname">set_contents</code><span class="sig-paren">(</span><em>contents</em>, <em>encoding=None</em><span class="sig-paren">)</span><a class="headerlink" href="#pyfakefs.fake_filesystem.FakeFile.set_contents" title="Permalink to this definition">¶</a></dt>
-<dd><p>Sets the file contents and size and increases the modification time.</p>
+<dd><p>Sets the file contents and size and increases the modification time.
+Also executes the side_effects if available.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />
@@ -722,12 +727,16 @@ unittest.TestCase)</td>
 </table>
 <dl class="method">
 <dt id="pyfakefs.fake_filesystem_unittest.TestCase.setUpPyfakefs">
-<code class="descname">setUpPyfakefs</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#pyfakefs.fake_filesystem_unittest.TestCase.setUpPyfakefs" title="Permalink to this definition">¶</a></dt>
+<code class="descname">setUpPyfakefs</code><span class="sig-paren">(</span><em>additional_skip_names=None</em>, <em>use_dynamic_patch=None</em>, <em>modules_to_reload=None</em>, <em>modules_to_patch=None</em><span class="sig-paren">)</span><a class="headerlink" href="#pyfakefs.fake_filesystem_unittest.TestCase.setUpPyfakefs" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bind the file-related modules to the <code class="xref py py-class docutils literal notranslate"><span class="pre">pyfakefs</span></code> fake file
 system instead of the real file system.  Also bind the fake <cite>open()</cite>
 function, and on Python 2, the <cite>file()</cite> function.</p>
 <p>Invoke this at the beginning of the <cite>setUp()</cite> method in your unit test
-class.</p>
+class.
+For the arguments, see the <cite>TestCaseMixin</cite> attribute description.
+If any of the arguments is not None, it overwrites the settings for
+the current test case. Settings the arguments here may be a more
+convenient way to adapt the setting than overwriting <cite>__init__()</cite>.</p>
 </dd></dl>
 
 </dd></dl>
@@ -969,7 +978,7 @@ that is available on pypi.</p>
         &#169; Copyright 2009 Google Inc. All Rights Reserved.
 © Copyright 2014 Altera Corporation. All Rights Reserved.
 © Copyright 2014-2018 John McGehee.
-      Last updated on Sep 27, 2018.
+      Last updated on Oct 16, 2018.
     </div>
   </body>
 </html>
