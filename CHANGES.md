@@ -9,6 +9,7 @@ keep using pyfakefs 3.4.3, or upgrade to a newer Python version.
 #### New Features
   * a module imported as another name (`import os as _os`) is now correctly 
     patched without the need of additional parameters
+  * added possibility to set root user ([#431](../../issues/431))
   * automatically patch `Path` if imported like `from pathlib import Path` 
     ([#440](../../issues/440))
   * added side_effect option to fake files ([#433](../../pull/433))
