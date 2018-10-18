@@ -61,8 +61,9 @@ For example, pyfakefs will not work with [`lxml`](http://lxml.de/).  In this cas
 
 pyfakefs is currently automatically tested:
 * On Linux, with Python 2.7, and 3.4 to 3.7, using [Travis](https://travis-ci.org/jmcgeheeiv/pyfakefs)
-* On MacOS, with Python 2.7, 3.6 and 3.7, also using [Travis](https://travis-ci.org/jmcgeheeiv/pyfakefs).
-  The Linux/MacOS build is currently [![Build Status](https://travis-ci.org/jmcgeheeiv/pyfakefs.svg)](https://travis-ci.org/jmcgeheeiv/pyfakefs).
+  [![Build Status](https://travis-ci.org/jmcgeheeiv/pyfakefs.svg)](https://travis-ci.org/jmcgeheeiv/pyfakefs).
+* On MacOS, with Python 2.7, 3.6 and 3.7, also using [Travis](https://travis-ci.org/jmcgeheeiv/pyfakefs)
+  [![Build Status](https://travis-ci.org/jmcgeheeiv/pyfakefs.svg)](https://travis-ci.org/jmcgeheeiv/pyfakefs).
 * On Windows, with Python 2.7, and 3.4 to 3.7 using [Appveyor](https://ci.appveyor.com/project/jmcgeheeiv/pyfakefs).
   The Windows build is currently [![Build status](https://ci.appveyor.com/api/projects/status/4o8j21ufuo056873/branch/master?svg=true)](https://ci.appveyor.com/project/jmcgeheeiv/pyfakefs/branch/master).
 
