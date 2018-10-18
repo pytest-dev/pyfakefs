@@ -89,22 +89,22 @@ deprecated and will not be described in detail.
 
 Customizing Patcher and TestCase
 --------------------------------
-Pyfakefs automatically patches file system related modules
+Pyfakefs automatically patches file system related modules that are:
 
-- if they are imported directly, e.g:
+- imported directly, for example:
 
 .. code:: python
 
   import os
   import pathlib.Path
 
-- if they are imported under another name:
+- imported as another name:
 
 .. code:: python
 
   import os as my_os
 
-- if there are imported using one of these two specially handled statements:
+- imported using one of these two specially handled statements:
 
 .. code:: python
 
@@ -115,10 +115,10 @@ There are other cases where automatic patching does not work.
 Both ``fake_filesystem_unittest.Patcher`` and ``fake_filesystem_unittest.TestCase``
 provide a few additional arguments to handle such cases.
 In case of ``fake_filesystem_unittest.TestCase``, these arguments can either
-be set in the TestCase instance initialization, or in the call of
+be set in the TestCase instance initialization, or when you call
 ``setUpPyfakefs()``.
 
-.. note:: If you need these arguments in ``PyTest``, you have to
+.. note:: If you need these arguments in ``PyTest``, you must
   use ``Patcher`` directly instead of the ``fs`` fixture. Alternatively,
   you can add your own fixture with the needed parameters.
 
