@@ -77,6 +77,7 @@ if sys.version_info < (3, ):
 else:
     import builtins
 
+PATH_MODULE = 'ntpath' if sys.platform == 'win32' else 'posixpath'
 
 def load_doctests(loader, tests, ignore, module,
                   additional_skip_names=None):  # pylint: disable=unused-argument
@@ -313,6 +314,10 @@ class Patcher(object):
             'shutil': fake_filesystem_shutil.FakeShutilModule,
             'io': fake_filesystem.FakeIoModule,
         }
+
+        # class modules maps class names against a list of modules they can
+        # be contained in - this allows for alternative modules like
+        # `pathlib` and `pathlib2`
         self._class_modules = {}
         if pathlib:
             self._fake_module_classes[
@@ -320,7 +325,7 @@ class Patcher(object):
             self._fake_module_classes[
                 'Path'] = fake_pathlib.FakePathlibPathModule
             mod_name = 'pathlib2' if pathlib2 is not None else 'pathlib'
-            self._class_modules['Path'] = mod_name
+            self._class_modules['Path'] = [mod_name]
         if use_scandir:
             self._fake_module_classes[
                 'scandir'] = fake_scandir.FakeScanDirModule
@@ -329,20 +334,12 @@ class Patcher(object):
             for name, fake_module in modules_to_patch.items():
                 if '.' in name:
                     module_name, name = name.split('.')
-                    self._class_modules[name] = module_name
+                    self._class_modules.setdefault(name, []).append(
+                        module_name)
                 self._fake_module_classes[name] = fake_module
 
-        self._modules = {}
-        for name in self._fake_module_classes:
-            self._modules[name] = set()
-        self._modules['path'] = set()
-
-        self._find_modules()
-
-        assert None not in vars(self).values(), \
-            "_findModules() missed the initialization of an instance variable"
-
         # Attributes set by _refresh()
+        self._modules = {}
         self._stubs = None
         self.fs = None
         self.fake_open = None
@@ -369,22 +366,26 @@ class Patcher(object):
         Later, `setUp()` will stub these with the fake file system
         modules.
         """
+        module_names = list(self._fake_module_classes.keys()) + [PATH_MODULE]
         for name, module in set(sys.modules.items()):
-            if (module in self.SKIPMODULES or
-                    (not inspect.ismodule(module)) or
-                    name.split('.')[0] in self._skipNames):
+            try:
+                if (module in self.SKIPMODULES or
+                        not inspect.ismodule(module) or
+                        module.__name__.split('.')[0] in self._skipNames):
+                    continue
+            except AttributeError:
+                # workaround for some py (part of pytest) versions
+                # where py.error has no __name__ attribute
+                # see https://github.com/pytest-dev/py/issues/73
                 continue
-            for mod_name in self._modules:
-                mod = module.__dict__.get(mod_name)
-                if (mod is not None and
-                        (inspect.ismodule(mod) or
-                         inspect.isclass(mod) and
-                         mod.__module__ == self._class_modules.get(mod_name))):
-                    # special handling for path: check for correct name
-                    if (mod_name == 'path' and
-                            mod.__name__ not in ('ntpath', 'posixpath')):
-                        continue
-                    self._modules[mod_name].add((module, mod_name))
+            modules = {name: mod for name, mod in module.__dict__.items()
+                       if inspect.ismodule(mod) and
+                       mod.__name__ in module_names
+                       or inspect.isclass(mod) and
+                       mod.__module__ in self._class_modules.get(name, [])}
+            for name, mod in modules.items():
+                self._modules.setdefault(name, set()).add((module,
+                                                           mod.__name__))
 
     def _refresh(self):
         """Renew the fake file system and set the _isStale flag to `False`."""
@@ -395,7 +396,7 @@ class Patcher(object):
         self.fs = fake_filesystem.FakeFilesystem()
         for name in self._fake_module_classes:
             self.fake_modules[name] = self._fake_module_classes[name](self.fs)
-        self.fake_modules['path'] = self.fake_modules['os'].path
+        self.fake_modules[PATH_MODULE] = self.fake_modules['os'].path
         self.fake_open = fake_filesystem.FakeFileOpen(self.fs)
 
         self._isStale = False
@@ -417,7 +418,7 @@ class Patcher(object):
         self._stubs.smart_set(builtins, 'open', self.fake_open)
         for name in self._modules:
             for module, attr in self._modules[name]:
-                self._stubs.smart_set(module, attr, self.fake_modules[name])
+                self._stubs.smart_set(module, name, self.fake_modules[attr])
 
         self._dyn_patcher = DynamicPatcher(self)
         sys.meta_path.insert(0, self._dyn_patcher)
@@ -441,7 +442,6 @@ class Patcher(object):
         for name in self._fake_module_classes:
             if name in globs:
                 globs[name] = self._fake_module_classes[name](self.fs)
-            globs['path'] = globs['os'].path
         return globs
 
     def tearDown(self, doctester=None):
@@ -463,9 +463,6 @@ class DynamicPatcher(object):
         self._patcher = patcher
         self.sysmodules = {}
         self.modules = self._patcher.fake_modules
-        if 'path' in self.modules:
-            self.modules['os.path'] = self.modules['path']
-            del self.modules['path']
 
         # remove all modules that have to be patched from `sys.modules`,
         # otherwise the find_... methods will not be called

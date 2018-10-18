@@ -89,43 +89,49 @@ deprecated and will not be described in detail.
 
 Customizing Patcher and TestCase
 --------------------------------
-Both ``fake_filesystem_unittest.Patcher`` and ``fake_filesystem_unittest.TestCase``
-provide a few additional arguments for fine-tuning. These are only needed if
-patching does not work for some module.
-In case of ``fake_filesystem_unittest.TestCase``, these arguments can either
-be set in the TestCase instance initialization, or in the call of
-``setUpPyfakefs()``.
+Pyfakefs automatically patches file system related modules that are:
 
-.. note:: If you need these arguments in ``PyTest``, you have to
-  use ``Patcher`` directly instead of the ``fs`` fixture. Alternatively,
-  you can add your own fixture with the needed parameters.
-
-  An example for both approches can be found in
-  `pytest_fixture_test.py <https://github.com/jmcgeheeiv/pyfakefs/blob/master/pyfakefs/tests/pytest/pytest_fixture_test.py>`__
-  with the example fixture in `conftest.py <https://github.com/jmcgeheeiv/pyfakefs/blob/master/pyfakefs/tests/pytest/conftest.py>`__.
-
-modules_to_reload
-~~~~~~~~~~~~~~~~~
-This allows to pass a list of modules that shall be reloaded, thus allowing
-to patch modules not imported directly.
-
-Pyfakefs automatically patches modules only if they are imported directly, e.g:
+- imported directly, for example:
 
 .. code:: python
 
   import os
   import pathlib.Path
 
-The following import of ``os`` will not be patched by ``pyfakefs``, however:
+- imported as another name:
 
 .. code:: python
 
   import os as my_os
 
-.. note:: There are two exceptions to that: importing ``os.path`` like
-  ``from os import path`` will work, because it is handled by ``pyfakefs``.
-  The same is true for ``pathlib.Path`` if imported like ``from pathlib import
-  Path``.
+- imported using one of these two specially handled statements:
+
+.. code:: python
+
+  from os import path
+  from pathlib import Path
+
+There are other cases where automatic patching does not work.
+Both ``fake_filesystem_unittest.Patcher`` and ``fake_filesystem_unittest.TestCase``
+provide a few additional arguments to handle such cases.
+In case of ``fake_filesystem_unittest.TestCase``, these arguments can either
+be set in the TestCase instance initialization, or when you call
+``setUpPyfakefs()``.
+
+.. note:: If you need these arguments in ``PyTest``, you must
+  use ``Patcher`` directly instead of the ``fs`` fixture. Alternatively,
+  you can add your own fixture with the needed parameters.
+
+  An example for both approaches can be found in
+  `pytest_fixture_test.py <https://github.com/jmcgeheeiv/pyfakefs/blob/master/pyfakefs/tests/pytest/pytest_fixture_test.py>`__
+  with the example fixture in `conftest.py <https://github.com/jmcgeheeiv/pyfakefs/blob/master/pyfakefs/tests/pytest/conftest.py>`__.
+
+
+modules_to_reload
+~~~~~~~~~~~~~~~~~
+This allows to pass a list of modules that shall be reloaded, thus allowing
+to patch modules not patched automatically.
+
 
 If adding the module containing these imports to ``modules_to_reload``, they
 will be correctly patched.
@@ -174,7 +180,8 @@ use_dynamic_patch
 ~~~~~~~~~~~~~~~~~
 If ``True`` (the default), dynamic patching after setup is used (for example
 for modules loaded locally inside of functions).
-Can be switched off if it causes unwanted side effects.
+Can be switched off if it causes unwanted side effects. This parameter may
+be removed in the future if no use case turns up for it.
 
 Using convenience methods
 -------------------------

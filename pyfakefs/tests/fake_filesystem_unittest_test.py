@@ -53,7 +53,7 @@ class TestPyfakefsUnittestBase(fake_filesystem_unittest.TestCase):
 class TestPyfakefsUnittest(TestPyfakefsUnittestBase):  # pylint: disable=R0904
     """Test the `pyfakefs.fake_filesystem_unittest.TestCase` base class."""
 
-    @unittest.skipIf(sys.version_info > (2, ),
+    @unittest.skipIf(sys.version_info > (2,),
                      "file() was removed in Python 3")
     def test_file(self):
         """Fake `file()` function is bound"""
@@ -61,7 +61,7 @@ class TestPyfakefsUnittest(TestPyfakefsUnittestBase):  # pylint: disable=R0904
         with file('/fake_file.txt', 'w') as f:  # noqa: F821 is only run on Py2
             f.write("This test file was created using the file() function.\n")
         self.assertTrue(self.fs.exists('/fake_file.txt'))
-        with file('/fake_file.txt') as f:       # noqa: F821 is only run on Py2
+        with file('/fake_file.txt') as f:  # noqa: F821 is only run on Py2
             content = f.read()
         self.assertEqual(content, 'This test file was created using the '
                                   'file() function.\n')
@@ -137,34 +137,28 @@ class TestPyfakefsUnittest(TestPyfakefsUnittestBase):  # pylint: disable=R0904
             self.assertTrue(self.fs.exists('/fake_file.txt'))
 
 
-class TestImportAsOtherNameInit(fake_filesystem_unittest.TestCase):
-    def __init__(self, methodName='RunTest'):
-        modules_to_load = [pyfakefs.tests.import_as_example]
-        super(TestImportAsOtherNameInit, self).__init__(
-            methodName, modules_to_reload=modules_to_load)
-
-    def setUp(self):
-        self.setUpPyfakefs()
-
-    def test_file_exists(self):
+class TestPatchingImports(TestPyfakefsUnittestBase):
+    def test_import_as_other_name(self):
         file_path = '/foo/bar/baz'
         self.fs.create_file(file_path)
         self.assertTrue(self.fs.exists(file_path))
         self.assertTrue(
-            pyfakefs.tests.import_as_example.check_if_exists(file_path))
+            pyfakefs.tests.import_as_example.check_if_exists1(file_path))
 
-
-class TestImportAsOtherNameSetup(fake_filesystem_unittest.TestCase):
-    def setUp(self):
-        self.setUpPyfakefs(
-            modules_to_reload=[pyfakefs.tests.import_as_example])
-
-    def test_file_exists(self):
+    def test_import_path_from_os(self):
+        """Make sure `from os import path` patches `path`."""
         file_path = '/foo/bar/baz'
         self.fs.create_file(file_path)
         self.assertTrue(self.fs.exists(file_path))
         self.assertTrue(
-            pyfakefs.tests.import_as_example.check_if_exists(file_path))
+            pyfakefs.tests.import_as_example.check_if_exists2(file_path))
+
+    if pathlib:
+        def test_import_path_from_pathlib(self):
+            file_path = '/foo/bar'
+            self.fs.create_dir(file_path)
+            self.assertTrue(
+                pyfakefs.tests.import_as_example.check_if_exists3(file_path))
 
 
 class TestAttributesWithFakeModuleNames(TestPyfakefsUnittestBase):
@@ -193,35 +187,25 @@ class TestPathNotPatchedIfNotOsPath(TestPyfakefsUnittestBase):
        An own path module (in this case an alias to math) can be imported
        and used.
     """
+
     def test_own_path_module(self):
         self.assertEqual(2, path.floor(2.5))
 
 
-if pathlib:
-    class PatchPathlibPathTest(TestPyfakefsUnittestBase):
-        """Shows that pathlib.Path is correctly patched."""
-        def test_path_exists(self):
-            file_path = '/foo/bar'
-            self.fs.create_dir(file_path)
-            self.assertTrue(
-                pyfakefs.tests.import_as_example.check_if_path_exists(
-                    file_path))
-
-
-class PatchAsOtherNameTest(TestPyfakefsUnittestBase):
-    """Patches a module imported under another name using `modules_to_patch`.
-    This is an alternative to reloading the module.
+class ReloadModuleTest(fake_filesystem_unittest.TestCase):
+    """Make sure that reloading a module allows patching of classes not
+    patched automatically.
     """
-    def __init__(self, methodName='RunTest'):
-        modules_to_patch = {'my_os': fake_filesystem.FakeOsModule}
-        super(PatchAsOtherNameTest, self).__init__(
-            methodName, modules_to_patch=modules_to_patch)
+    def setUp(self):
+        """Set up the fake file system"""
+        self.setUpPyfakefs(
+            modules_to_reload=[pyfakefs.tests.import_as_example])
 
     def test_path_exists(self):
         file_path = '/foo/bar'
         self.fs.create_dir(file_path)
         self.assertTrue(
-            pyfakefs.tests.import_as_example.check_if_exists(file_path))
+            pyfakefs.tests.import_as_example.check_if_exists4(file_path))
 
 
 class TestCopyOrAddRealFile(TestPyfakefsUnittestBase):
@@ -353,6 +337,7 @@ class TestPyfakefsTestCaseMixin(unittest.TestCase,
 
 class TestShutilWithZipfile(fake_filesystem_unittest.TestCase):
     """Regression test for #427."""
+
     def setUp(self):
         self.setUpPyfakefs()
         self.fs.create_file('foo/bar')
