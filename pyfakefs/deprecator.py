@@ -18,15 +18,15 @@ import warnings
 class Deprecator(object):
     """Decorator class for adding deprecated functions.
 
-    Warnings are switched off by default.
-    To enable deprecation warnings, use:
+    Warnings are switched on by default.
+    To disable deprecation warnings, use:
 
     >>>  from pyfakefs.deprecator import Deprecator
     >>>
-    >>>  Deprecator.show_warnings = True
+    >>>  Deprecator.show_warnings = False
     """
 
-    show_warnings = False
+    show_warnings = True
 
     def __init__(self, use_instead=None, func_name=None):
         self.use_instead = use_instead

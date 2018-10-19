@@ -3,8 +3,15 @@ The release versions are PyPi releases.
 
 ## Version 3.5 (as yet unreleased)
 
-This version of pyfakefs does not support Python 3.3. Python 3.3 users shall 
-keep using pyfakefs 3.4.3, or upgrade to a newer Python version.
+#### Changes
+  * This version of pyfakefs does not support Python 3.3. Python 3.3 users 
+    must keep using pyfakefs 3.4.3, or upgrade to a newer Python version.
+  * The deprecation warnings for the old API are now switched on by default.
+    To switch them off for legacy code, use:
+    ```python
+    from pyfakefs.deprecator import Deprecator
+    Deprecator.show_warnings = False
+    ```
 
 #### New Features
   * a module imported as another name (`import os as _os`) is now correctly 
@@ -21,8 +28,6 @@ keep using pyfakefs 3.4.3, or upgrade to a newer Python version.
   ([#423](../../issues/423)) 
   * added support for null device ([#418](../../issues/418))
   
-#### Infrastructure
-
 #### Fixes
   * file timestamps are now updated more according to the real behavior
     ([#435](../../issues/435))
