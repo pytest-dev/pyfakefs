@@ -66,9 +66,9 @@ The latest released version can be installed from pypi:</p>
 <h2>Limitations<a class="headerlink" href="#limitations" title="Permalink to this headline">¶</a></h2>
 <p>pyfakefs will not work with Python libraries that use C libraries to access the
 file system, because it cannot patch the underlying C libraries’ file access functions.</p>
-<p>pyfakefs works out of the box only if the faked file system modules are loaded directly,
-e.g. <code class="docutils literal notranslate"><span class="pre">import</span> <span class="pre">pathlib</span></code> works, but <code class="docutils literal notranslate"><span class="pre">from</span> <span class="pre">pathlib</span> <span class="pre">import</span> <span class="pre">Path</span></code> does not. See
-<a class="reference internal" href="usage.html#customizing-patcher"><span class="std std-ref">Customizing Patcher and TestCase</span></a> for ways to work around this.</p>
+<p>Depending on the kind of import statements used, pyfakefs may not patch the
+file system modules automatically. See <a class="reference internal" href="usage.html#customizing-patcher"><span class="std std-ref">Customizing Patcher and TestCase</span></a> for more
+information and ways to work around this.</p>
 <p>pyfakefs is only tested with CPython and newest PyPy versions, other Python implementations
 will probably not work.</p>
 <p>Differences in the behavior in different Linux distributions or different MacOS or Windows versions
@@ -168,7 +168,7 @@ community actively maintains and extends pyfakefs.</p>
         &#169; Copyright 2009 Google Inc. All Rights Reserved.
 © Copyright 2014 Altera Corporation. All Rights Reserved.
 © Copyright 2014-2018 John McGehee.
-      Last updated on Oct 16, 2018.
+      Last updated on Oct 19, 2018.
     </div>
   </body>
 </html>

@@ -121,41 +121,46 @@ deprecated and will not be described in detail.</p>
 </div>
 <div class="section" id="customizing-patcher-and-testcase">
 <span id="customizing-patcher"></span><h2>Customizing Patcher and TestCase<a class="headerlink" href="#customizing-patcher-and-testcase" title="Permalink to this headline">¶</a></h2>
-<p>Both <code class="docutils literal notranslate"><span class="pre">fake_filesystem_unittest.Patcher</span></code> and <code class="docutils literal notranslate"><span class="pre">fake_filesystem_unittest.TestCase</span></code>
-provide a few additional arguments for fine-tuning. These are only needed if
-patching does not work for some module.
+<p>Pyfakefs automatically patches file system related modules that are:</p>
+<ul class="simple">
+<li>imported directly, for example:</li>
+</ul>
+<div class="code python highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">os</span>
+<span class="kn">import</span> <span class="nn">pathlib.Path</span>
+</pre></div>
+</div>
+<ul class="simple">
+<li>imported as another name:</li>
+</ul>
+<div class="code python highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">os</span> <span class="k">as</span> <span class="nn">my_os</span>
+</pre></div>
+</div>
+<ul class="simple">
+<li>imported using one of these two specially handled statements:</li>
+</ul>
+<div class="code python highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">os</span> <span class="k">import</span> <span class="n">path</span>
+<span class="kn">from</span> <span class="nn">pathlib</span> <span class="k">import</span> <span class="n">Path</span>
+</pre></div>
+</div>
+<p>There are other cases where automatic patching does not work.
+Both <code class="docutils literal notranslate"><span class="pre">fake_filesystem_unittest.Patcher</span></code> and <code class="docutils literal notranslate"><span class="pre">fake_filesystem_unittest.TestCase</span></code>
+provide a few additional arguments to handle such cases.
 In case of <code class="docutils literal notranslate"><span class="pre">fake_filesystem_unittest.TestCase</span></code>, these arguments can either
-be set in the TestCase instance initialization, or in the call of
+be set in the TestCase instance initialization, or when you call
 <code class="docutils literal notranslate"><span class="pre">setUpPyfakefs()</span></code>.</p>
 <div class="admonition note">
 <p class="first admonition-title">Note</p>
-<p>If you need these arguments in <code class="docutils literal notranslate"><span class="pre">PyTest</span></code>, you have to
+<p>If you need these arguments in <code class="docutils literal notranslate"><span class="pre">PyTest</span></code>, you must
 use <code class="docutils literal notranslate"><span class="pre">Patcher</span></code> directly instead of the <code class="docutils literal notranslate"><span class="pre">fs</span></code> fixture. Alternatively,
 you can add your own fixture with the needed parameters.</p>
-<p class="last">An example for both approches can be found in
+<p class="last">An example for both approaches can be found in
 <a class="reference external" href="https://github.com/jmcgeheeiv/pyfakefs/blob/master/pyfakefs/tests/pytest/pytest_fixture_test.py">pytest_fixture_test.py</a>
 with the example fixture in <a class="reference external" href="https://github.com/jmcgeheeiv/pyfakefs/blob/master/pyfakefs/tests/pytest/conftest.py">conftest.py</a>.</p>
 </div>
 <div class="section" id="modules-to-reload">
 <h3>modules_to_reload<a class="headerlink" href="#modules-to-reload" title="Permalink to this headline">¶</a></h3>
 <p>This allows to pass a list of modules that shall be reloaded, thus allowing
-to patch modules not imported directly.</p>
-<p>Pyfakefs automatically patches modules only if they are imported directly, e.g:</p>
-<div class="code python highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">os</span>
-<span class="kn">import</span> <span class="nn">pathlib.Path</span>
-</pre></div>
-</div>
-<p>The following import of <code class="docutils literal notranslate"><span class="pre">os</span></code> will not be patched by <code class="docutils literal notranslate"><span class="pre">pyfakefs</span></code>, however:</p>
-<div class="code python highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">os</span> <span class="k">as</span> <span class="nn">my_os</span>
-</pre></div>
-</div>
-<div class="admonition note">
-<p class="first admonition-title">Note</p>
-<p class="last">There are two exceptions to that: importing <code class="docutils literal notranslate"><span class="pre">os.path</span></code> like
-<code class="docutils literal notranslate"><span class="pre">from</span> <span class="pre">os</span> <span class="pre">import</span> <span class="pre">path</span></code> will work, because it is handled by <code class="docutils literal notranslate"><span class="pre">pyfakefs</span></code>.
-The same is true for <code class="docutils literal notranslate"><span class="pre">pathlib.Path</span></code> if imported like <code class="docutils literal notranslate"><span class="pre">from</span> <span class="pre">pathlib</span> <span class="pre">import</span>
-<span class="pre">Path</span></code>.</p>
-</div>
+to patch modules not patched automatically.</p>
 <p>If adding the module containing these imports to <code class="docutils literal notranslate"><span class="pre">modules_to_reload</span></code>, they
 will be correctly patched.</p>
 </div>
@@ -201,7 +206,8 @@ helpful in some special situations.</p>
 <h3>use_dynamic_patch<a class="headerlink" href="#use-dynamic-patch" title="Permalink to this headline">¶</a></h3>
 <p>If <code class="docutils literal notranslate"><span class="pre">True</span></code> (the default), dynamic patching after setup is used (for example
 for modules loaded locally inside of functions).
-Can be switched off if it causes unwanted side effects.</p>
+Can be switched off if it causes unwanted side effects. This parameter may
+be removed in the future if no use case turns up for it.</p>
 </div>
 </div>
 <div class="section" id="using-convenience-methods">
@@ -397,7 +403,7 @@ modeled after <code class="docutils literal notranslate"><span class="pre">shuti
         &#169; Copyright 2009 Google Inc. All Rights Reserved.
 © Copyright 2014 Altera Corporation. All Rights Reserved.
 © Copyright 2014-2018 John McGehee.
-      Last updated on Oct 16, 2018.
+      Last updated on Oct 19, 2018.
     </div>
   </body>
 </html>
