@@ -258,6 +258,13 @@ class FakeScanDirModule(object):
     `fake_scandir_module = fake_filesystem.FakeScanDirModule(filesystem)`
     """
 
+    @staticmethod
+    def dir():
+        """Return the list of patched function names. Used for patching
+        functions imported from the module.
+        """
+        return 'scandir', 'walk'
+
     def __init__(self, filesystem):
         self.filesystem = filesystem
 

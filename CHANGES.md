@@ -14,15 +14,19 @@ The release versions are PyPi releases.
     ```
 
 #### New Features
-  * a module imported as another name (`import os as _os`) is now correctly 
-    patched without the need of additional parameters
+  * improved automatic patching:
+    * automatically patch methods of a patched file system module imported like 
+      `from os.path import exists`
+    * a module imported as another name (`import os as _os`) is now correctly 
+      patched without the need of additional parameters 
+      ([#434](../../pull/434))
+    * automatically patch `Path` if imported like `from pathlib import Path` 
+      ([#440](../../issues/440))
+    * parameter `patch_path` has been removed from `UnitTest` and `Patcher`, 
+      the correct patching of `path` imports is now done automatically
+    * `UnitTest` /`Patcher` arguments can now also be set in `setUpPyfakefs()`
   * added possibility to set root user ([#431](../../issues/431))
-  * automatically patch `Path` if imported like `from pathlib import Path` 
-    ([#440](../../issues/440))
   * added side_effect option to fake files ([#433](../../pull/433))
-  * parameter `patch_path` has been removed from `UnitTest` and `Patcher`, 
-    the correct patching of `path` imports is now done automatically
-  * `UnitTest` /`Patcher` arguments can now also be set in `setUpPyfakefs()`
   * added pathlib2 support ([#408](../../issues/408)) ([#422](../../issues/422))
   * added some support for extended filesystem attributes under Linux 
   ([#423](../../issues/423)) 

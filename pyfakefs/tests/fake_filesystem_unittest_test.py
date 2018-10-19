@@ -160,6 +160,18 @@ class TestPatchingImports(TestPyfakefsUnittestBase):
             self.assertTrue(
                 pyfakefs.tests.import_as_example.check_if_exists3(file_path))
 
+    def test_import_function_from_os_path(self):
+        file_path = '/foo/bar'
+        self.fs.create_dir(file_path)
+        self.assertTrue(
+            pyfakefs.tests.import_as_example.check_if_exists5(file_path))
+
+    def test_import_function_from_os(self):
+        file_path = '/foo/bar'
+        self.fs.create_file(file_path, contents=b'abc')
+        stat_result = pyfakefs.tests.import_as_example.file_stat(file_path)
+        self.assertEqual(3, stat_result.st_size)
+
 
 class TestAttributesWithFakeModuleNames(TestPyfakefsUnittestBase):
     """Test that module attributes with names like `path` or `io` are not
