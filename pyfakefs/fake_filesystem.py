@@ -3026,6 +3026,23 @@ class FakePathModule(object):
     """
     _OS_PATH_COPY = _copy_module(os.path)
 
+    @staticmethod
+    def dir():
+        """Return the list of patched function names. Used for patching
+        functions imported from the module.
+        """
+        dir = [
+            'abspath', 'dirname', 'exists', 'expanduser', 'getatime',
+            'getctime', 'getmtime', 'getsize', 'isabs', 'isdir', 'isfile',
+            'islink', 'ismount', 'join', 'lexists', 'normcase', 'normpath',
+            'realpath', 'relpath', 'split', 'splitdrive'
+        ]
+        if IS_PY2:
+            dir.append('walk')
+        if sys.platform != 'win32' or not IS_PY2:
+            dir.append('samefile')
+        return dir
+
     def __init__(self, filesystem, os_module=None):
         """Init.
 
@@ -3421,6 +3438,31 @@ class FakeOsModule(object):
     """
 
     devnull = None
+
+    @staticmethod
+    def dir():
+        """Return the list of patched function names. Used for patching
+        functions imported from the module.
+        """
+        dir = [
+            'access', 'chdir', 'chmod', 'chown', 'close', 'fstat', 'fsync',
+            'getcwd', 'lchmod', 'link', 'listdir', 'lstat', 'makedirs',
+            'mkdir', 'mknod', 'open', 'read', 'readlink', 'remove',
+            'removedirs', 'rename', 'rmdir', 'stat', 'symlink', 'umask',
+            'unlink', 'utime', 'walk', 'write'
+        ]
+        if IS_PY2:
+            dir += ['getcwdu']
+        else:
+            dir += ['getcwdb', 'replace']
+            if sys.platform.startswith('linux'):
+                dir += [
+                    'fdatasync','getxattr', 'listxattr',
+                       'removexattr', 'setxattr'
+                ]
+        if use_scandir:
+            dir += ['scandir']
+        return dir
 
     def __init__(self, filesystem, os_path_module=None):
         """Also exposes self.path (to fake os.path).
@@ -3842,7 +3884,6 @@ class FakeOsModule(object):
             if not exists and flags == self.XATTR_REPLACE:
                 self.filesystem.raise_os_error(errno.EEXIST, file_obj.path)
             file_obj.xattr[attribute] = value
-
 
     if use_scandir:
         def scandir(self, path=''):
@@ -4419,6 +4460,15 @@ class FakeIoModule(object):
     filesystem = fake_filesystem.FakeFilesystem()
     my_io_module = fake_filesystem.FakeIoModule(filesystem)
     """
+
+    @staticmethod
+    def dir():
+        """Return the list of patched function names. Used for patching
+        functions imported from the module.
+        """
+        # `open` would clash with build-in `open`, so don't patch it
+        # if imported like `from io import open`
+        return ()
 
     def __init__(self, filesystem):
         """

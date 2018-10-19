@@ -15,7 +15,9 @@ Example module that is used for testing modules that import file system modules
 to be patched under another name.
 """
 from os import path
+from os.path import exists
 import os as my_os
+from os import stat
 
 try:
     from pathlib import Path
@@ -45,3 +47,13 @@ if Path:
 def check_if_exists4(filepath, exists=my_os.path.exists):
     # this is a similar case as in the tempfile implementation under Posix
     return exists(filepath)
+
+
+def check_if_exists5(filepath):
+    # tests patching `exists` imported from os.path
+    return exists(filepath)
+
+
+def file_stat(filepath):
+    # tests patching `stat` imported from os
+    return stat(filepath)

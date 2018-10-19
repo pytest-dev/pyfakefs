@@ -77,6 +77,7 @@ if sys.version_info < (3, ):
 else:
     import builtins
 
+OS_MODULE = 'nt' if sys.platform == 'win32' else 'posix'
 PATH_MODULE = 'ntpath' if sys.platform == 'win32' else 'posixpath'
 
 def load_doctests(loader, tests, ignore, module,
@@ -284,7 +285,7 @@ class Patcher(object):
 
     IS_WINDOWS = sys.platform in ('win32', 'cygwin')
 
-    SKIPNAMES = {'os', 'path', 'io', 'genericpath'}
+    SKIPNAMES = {'os', 'path', 'io', 'genericpath', OS_MODULE, PATH_MODULE}
     if pathlib:
         SKIPNAMES.add('pathlib')
 
@@ -338,8 +339,32 @@ class Patcher(object):
                         module_name)
                 self._fake_module_classes[name] = fake_module
 
+        # handle patching function imported separately like
+        # `from os import stat`
+        # each patched function name has to be looked up separately
+        self._fake_module_functions = {}
+        for mod_name, fake_module in self._fake_module_classes.items():
+            modnames = (
+                (mod_name, OS_MODULE) if mod_name == 'os' else (mod_name,)
+            )
+            for fct_name in fake_module.dir():
+                self._fake_module_functions[fct_name] = (
+                    modnames,
+                    getattr(fake_module, fct_name),
+                    mod_name
+                )
+        # special handling for functions in os.path
+        fake_module = fake_filesystem.FakePathModule
+        for fct_name in fake_module.dir():
+            self._fake_module_functions[fct_name] = (
+                ('genericpath', PATH_MODULE),
+                getattr(fake_module, fct_name),
+                PATH_MODULE
+            )
+
         # Attributes set by _refresh()
         self._modules = {}
+        self._fct_modules = {}
         self._stubs = None
         self.fs = None
         self.fake_open = None
@@ -366,6 +391,12 @@ class Patcher(object):
         Later, `setUp()` will stub these with the fake file system
         modules.
         """
+        def is_fct(module, name):
+            fct = module.__dict__.get(name)
+            return (fct is not None and
+                    (inspect.isfunction(fct) or inspect.isbuiltin(fct)) and
+                    fct.__module__ in self._fake_module_functions[name][0])
+
         module_names = list(self._fake_module_classes.keys()) + [PATH_MODULE]
         for name, module in set(sys.modules.items()):
             try:
@@ -378,6 +409,7 @@ class Patcher(object):
                 # where py.error has no __name__ attribute
                 # see https://github.com/pytest-dev/py/issues/73
                 continue
+
             modules = {name: mod for name, mod in module.__dict__.items()
                        if inspect.ismodule(mod) and
                        mod.__name__ in module_names
@@ -386,6 +418,11 @@ class Patcher(object):
             for name, mod in modules.items():
                 self._modules.setdefault(name, set()).add((module,
                                                            mod.__name__))
+
+            functions = [name for name in self._fake_module_functions
+                         if is_fct(module, name)]
+            for name in functions:
+                self._fct_modules.setdefault(name, set()).add(module)
 
     def _refresh(self):
         """Renew the fake file system and set the _isStale flag to `False`."""
@@ -416,9 +453,16 @@ class Patcher(object):
             # file() was eliminated in Python3
             self._stubs.smart_set(builtins, 'file', self.fake_open)
         self._stubs.smart_set(builtins, 'open', self.fake_open)
-        for name in self._modules:
-            for module, attr in self._modules[name]:
+        for name, modules in self._modules.items():
+            for module, attr in modules:
                 self._stubs.smart_set(module, name, self.fake_modules[attr])
+
+        for name, modules in self._fct_modules.items():
+            _, method, mod_name = self._fake_module_functions[name]
+            fake_module = self.fake_modules[mod_name]
+            attr = method.__get__(fake_module, fake_module.__class__)
+            for module in modules:
+                self._stubs.smart_set(module, name, attr)
 
         self._dyn_patcher = DynamicPatcher(self)
         sys.meta_path.insert(0, self._dyn_patcher)

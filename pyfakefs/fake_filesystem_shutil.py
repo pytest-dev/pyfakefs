@@ -30,10 +30,21 @@ work fine with the fake file system if `os`/`os.path` are patched.
 import shutil
 import sys
 
+from pyfakefs.helpers import IS_PY2
+
 
 class FakeShutilModule(object):
     """Uses a FakeFilesystem to provide a fake replacement for shutil module.
     """
+
+    @staticmethod
+    def dir():
+        """Return the list of patched function names. Used for patching
+        functions imported from the module.
+        """
+        if not IS_PY2:
+            return 'disk_usage',
+        return ()
 
     def __init__(self, filesystem):
         """Construct fake shutil module using the fake filesystem.
