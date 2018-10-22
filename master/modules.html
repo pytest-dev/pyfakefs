@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-    <title>Public Modules and Classes &#8212; pyfakefs 3.5dev documentation</title>
+    <title>Public Modules and Classes &#8212; pyfakefs 3.6dev documentation</title>
     <link rel="stylesheet" href="_static/pyfakefs.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
     <script type="text/javascript" id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
@@ -33,7 +33,7 @@
         <li class="right" >
           <a href="autopatch.html" title="Automatically find and patch file functions and modules"
              accesskey="P">previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="index.html">pyfakefs 3.5dev documentation</a> &#187;</li> 
+        <li class="nav-item nav-item-0"><a href="index.html">pyfakefs 3.6dev documentation</a> &#187;</li> 
       </ul>
     </div>  
 
@@ -141,6 +141,22 @@ replacements.</li>
 <span class="go">True</span>
 </pre></div>
 </div>
+<dl class="function">
+<dt id="pyfakefs.fake_filesystem.set_uid">
+<code class="descclassname">pyfakefs.fake_filesystem.</code><code class="descname">set_uid</code><span class="sig-paren">(</span><em>uid</em><span class="sig-paren">)</span><a class="headerlink" href="#pyfakefs.fake_filesystem.set_uid" title="Permalink to this definition">¶</a></dt>
+<dd><p>Set the global user id. Currently only used to differentiate between
+a normal user and the root user (uid 0).
+For the root user, some permission restrictions are ignored.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>uid</strong> – (int) the user ID of the user calling the file system functions.</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
 </div>
 <div class="section" id="fake-filesystem-classes">
 <h2>Fake filesystem classes<a class="headerlink" href="#fake-filesystem-classes" title="Permalink to this headline">¶</a></h2>
@@ -543,6 +559,17 @@ the file belongs to</li>
 </dl>
 <p>Other attributes needed by <cite>os.stat</cite> are assigned a default value of
 <cite>None</cite>. These include <cite>st_uid</cite> and <cite>st_gid</cite>.</p>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p>The resolution for <cite>st_ctime</cite>, <cite>st_mtime</cite> and <cite>st_atime</cite> in the
+real file system depends on the used file system (for example it is
+only 1s for HFS+ and older Linux file systems, but much higher for
+ext4 and NTFS). This is currently ignored by pyfakefs, which uses
+the resolution of <cite>time.time()</cite>.</p>
+<p class="last">Under Windows, <cite>st_atime</cite> is not updated for performance reasons by
+default. pyfakefs never updates <cite>st_atime</cite> under Windows, assuming
+the default setting.</p>
+</div>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />
@@ -877,7 +904,9 @@ my_io_module = fake_filesystem.FakeIoModule(filesystem)</p>
 <dl class="class">
 <dt id="pyfakefs.fake_pathlib.FakePathlibModule">
 <em class="property">class </em><code class="descclassname">pyfakefs.fake_pathlib.</code><code class="descname">FakePathlibModule</code><span class="sig-paren">(</span><em>filesystem</em><span class="sig-paren">)</span><a class="headerlink" href="#pyfakefs.fake_pathlib.FakePathlibModule" title="Permalink to this definition">¶</a></dt>
-<dd><p>Uses FakeFilesystem to provide a fake pathlib module replacement.</p>
+<dd><p>Uses FakeFilesystem to provide a fake pathlib module replacement.
+Can be used to replace both the standard <cite>pathlib</cite> module and the
+<cite>pathlib2</cite> package available on PyPi.</p>
 <p>You need a fake_filesystem to use this:
 <cite>filesystem = fake_filesystem.FakeFilesystem()</cite>
 <cite>fake_pathlib_module = fake_filesystem.FakePathlibModule(filesystem)</cite></p>
@@ -971,7 +1000,7 @@ that is available on pypi.</p>
         <li class="right" >
           <a href="autopatch.html" title="Automatically find and patch file functions and modules"
              >previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="index.html">pyfakefs 3.5dev documentation</a> &#187;</li> 
+        <li class="nav-item nav-item-0"><a href="index.html">pyfakefs 3.6dev documentation</a> &#187;</li> 
       </ul>
     </div>
     <div class="footer" role="contentinfo">

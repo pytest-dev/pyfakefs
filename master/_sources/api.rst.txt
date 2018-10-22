@@ -2,16 +2,16 @@ API Notes
 =========
 
 With ``pyfakefs 3.4``, the public API has changed to be PEP-8 conform.
-The old API is still supported, and no deprecation warning is issued on usage.
-However, if you want to be sure to use the new API, you can add such warnings by using:
+The old API is deprecated, and will be removed in some future version of
+pyfakefs.
+You can suppress the deprecation warnings for legacy code with the following
+code:
 
 .. code:: python
 
     from pyfakefs.deprecator import Deprecator
 
-    Deprecator.show_warnings = True
-
-In some later version of ``pyfakefs`` we plan to enable the deprecation warnings by default.
+    Deprecator.show_warnings = False
 
 Here is a list of selected changes:
 

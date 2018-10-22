@@ -57,7 +57,8 @@ Google released pyfakefs to the public in 2011 as Google Code project
 `pyfakefs <http://code.google.com/p/pyfakefs/>`__:
 
 * Fork `jmcgeheeiv-pyfakefs <http://code.google.com/p/jmcgeheeiv-pyfakefs/>`__
-  added `direct support for unittest and doctest <../../wiki/Automatically-find-and-patch-file-functions-and-modules>`__
+  added direct support for unittest and doctest as described in
+  :ref:`auto_patch`
 * Fork `shiffdane-jmcgeheeiv-pyfakefs <http://code.google.com/p/shiffdane-jmcgeheeiv-pyfakefs/>`__
   added further corrections
 
