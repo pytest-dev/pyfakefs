@@ -627,6 +627,8 @@ class FakePath(pathlib.Path):
 
 class FakePathlibModule(object):
     """Uses FakeFilesystem to provide a fake pathlib module replacement.
+    Can be used to replace both the standard `pathlib` module and the
+    `pathlib2` package available on PyPi.
 
     You need a fake_filesystem to use this:
     `filesystem = fake_filesystem.FakeFilesystem()`

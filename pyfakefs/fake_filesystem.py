@@ -165,11 +165,19 @@ USER_ID = None
 
 
 def set_uid(uid):
+    """Set the global user id. Currently only used to differentiate between
+    a normal user and the root user (uid 0).
+    For the root user, some permission restrictions are ignored.
+
+    Args:
+        uid: (int) the user ID of the user calling the file system functions.
+    """
     global USER_ID
     USER_ID = uid
 
 
 def is_root():
+    """Return True if the current user is the root user."""
     return USER_ID == 0
 
 
@@ -209,6 +217,16 @@ class FakeFile(object):
 
     Other attributes needed by `os.stat` are assigned a default value of
     `None`. These include `st_uid` and `st_gid`.
+
+    .. note:: The resolution for `st_ctime`, `st_mtime` and `st_atime` in the
+        real file system depends on the used file system (for example it is
+        only 1s for HFS+ and older Linux file systems, but much higher for
+        ext4 and NTFS). This is currently ignored by pyfakefs, which uses
+        the resolution of `time.time()`.
+
+        Under Windows, `st_atime` is not updated for performance reasons by
+        default. pyfakefs never updates `st_atime` under Windows, assuming
+        the default setting.
     """
     stat_types = (
         'st_mode', 'st_ino', 'st_dev', 'st_nlink', 'st_uid', 'st_gid',

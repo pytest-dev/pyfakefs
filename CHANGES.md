@@ -14,9 +14,9 @@ The release versions are PyPi releases.
     ```
 
 #### New Features
-  * improved automatic patching:
+  * Improved automatic patching:
     * automatically patch methods of a patched file system module imported like 
-      `from os.path import exists`
+      `from os.path import exists` ([#443](../../pull/443))
     * a module imported as another name (`import os as _os`) is now correctly 
       patched without the need of additional parameters 
       ([#434](../../pull/434))
@@ -24,17 +24,27 @@ The release versions are PyPi releases.
       ([#440](../../issues/440))
     * parameter `patch_path` has been removed from `UnitTest` and `Patcher`, 
       the correct patching of `path` imports is now done automatically
+      ([#429](../../pull/429))
     * `UnitTest` /`Patcher` arguments can now also be set in `setUpPyfakefs()`
-  * added possibility to set root user ([#431](../../issues/431))
+      ([#430](../../pull/430))
+  * added possibility to set user ID ([#431](../../issues/431))
   * added side_effect option to fake files ([#433](../../pull/433))
-  * added pathlib2 support ([#408](../../issues/408)) ([#422](../../issues/422))
   * added some support for extended filesystem attributes under Linux 
-  ([#423](../../issues/423)) 
+    ([#423](../../issues/423)) 
+  * handle `contents=None` in `create_file()` as empty contents if size not 
+    set ([#424](../../issues/424))
+  * added pathlib2 support ([#408](../../issues/408)) ([#422](../../issues/422))
   * added support for null device ([#418](../../issues/418))
-  
+  * improved error message for "Bad file descriptor in fake filesystem"
+    ([#419](../../issues/419))
+    
 #### Fixes
+  * fixed pytest when both pyfakefs and future are installed 
+    ([#441](../../issues/441))
   * file timestamps are now updated more according to the real behavior
     ([#435](../../issues/435))
+  * fixed a problem related with patching shutil functions using zipfile 
+    ([#427](../../issues/427))  
 
 ## [Version 3.4.3](https://pypi.python.org/pypi/pyfakefs/3.4.3)
 

@@ -140,8 +140,9 @@ modules_to_reload
 This allows to pass a list of modules that shall be reloaded, thus allowing
 to patch modules not patched automatically.
 
-Here is a simple example for a default argument that is not patched
-automatically:
+A common example for failed automatic patching is the assignment of file
+system functions to a variable, as shown in the following example with
+default argument assignment:
 
 .. code:: python
 
@@ -167,6 +168,7 @@ as in the following example:
 
   def __init__(self, fs):
   """Each fake module expects the fake file system as an __init__ parameter."""
+      # for a real example, fs can be saved here and used in the implementation
       pass
 
   @staticmethod
