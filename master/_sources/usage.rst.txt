@@ -111,6 +111,14 @@ Pyfakefs automatically patches file system related modules that are:
   from os import path
   from pathlib import Path
 
+Additionally, functions from file system related modules are patched
+automatically if imported like:
+
+.. code:: python
+
+  from os.path import exists
+  from os import stat
+
 There are other cases where automatic patching does not work.
 Both ``fake_filesystem_unittest.Patcher`` and ``fake_filesystem_unittest.TestCase``
 provide a few additional arguments to handle such cases.
@@ -132,8 +140,15 @@ modules_to_reload
 This allows to pass a list of modules that shall be reloaded, thus allowing
 to patch modules not patched automatically.
 
+Here is a simple example for a default argument that is not patched
+automatically:
 
-If adding the module containing these imports to ``modules_to_reload``, they
+.. code:: python
+
+  def check_if_exists(filepath, file_exists=os.path.exists):
+      return file_exists(filepath)
+
+If adding the module containing this code to ``modules_to_reload``, it
 will be correctly patched.
 
 modules_to_patch

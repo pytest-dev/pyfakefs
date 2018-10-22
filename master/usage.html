@@ -142,6 +142,12 @@ deprecated and will not be described in detail.</p>
 <span class="kn">from</span> <span class="nn">pathlib</span> <span class="k">import</span> <span class="n">Path</span>
 </pre></div>
 </div>
+<p>Additionally, functions from file system related modules are patched
+automatically if imported like:</p>
+<div class="code python highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">os.path</span> <span class="k">import</span> <span class="n">exists</span>
+<span class="kn">from</span> <span class="nn">os</span> <span class="k">import</span> <span class="n">stat</span>
+</pre></div>
+</div>
 <p>There are other cases where automatic patching does not work.
 Both <code class="docutils literal notranslate"><span class="pre">fake_filesystem_unittest.Patcher</span></code> and <code class="docutils literal notranslate"><span class="pre">fake_filesystem_unittest.TestCase</span></code>
 provide a few additional arguments to handle such cases.
@@ -161,7 +167,13 @@ with the example fixture in <a class="reference external" href="https://github.c
 <h3>modules_to_reload<a class="headerlink" href="#modules-to-reload" title="Permalink to this headline">¶</a></h3>
 <p>This allows to pass a list of modules that shall be reloaded, thus allowing
 to patch modules not patched automatically.</p>
-<p>If adding the module containing these imports to <code class="docutils literal notranslate"><span class="pre">modules_to_reload</span></code>, they
+<p>Here is a simple example for a default argument that is not patched
+automatically:</p>
+<div class="code python highlight-default notranslate"><div class="highlight"><pre><span></span><span class="k">def</span> <span class="nf">check_if_exists</span><span class="p">(</span><span class="n">filepath</span><span class="p">,</span> <span class="n">file_exists</span><span class="o">=</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">):</span>
+    <span class="k">return</span> <span class="n">file_exists</span><span class="p">(</span><span class="n">filepath</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>If adding the module containing this code to <code class="docutils literal notranslate"><span class="pre">modules_to_reload</span></code>, it
 will be correctly patched.</p>
 </div>
 <div class="section" id="modules-to-patch">
@@ -403,7 +415,7 @@ modeled after <code class="docutils literal notranslate"><span class="pre">shuti
         &#169; Copyright 2009 Google Inc. All Rights Reserved.
 © Copyright 2014 Altera Corporation. All Rights Reserved.
 © Copyright 2014-2018 John McGehee.
-      Last updated on Oct 19, 2018.
+      Last updated on Oct 22, 2018.
     </div>
   </body>
 </html>
