@@ -288,35 +288,32 @@ class FakeFile(object):
     @property
     def st_ctime(self):
         """Return the creation time of the fake file."""
-        return (self._st_ctime if FakeOsModule.stat_float_times()
-                else int(self._st_ctime))
+        return self.stat_result.st_ctime
 
     @property
     def st_atime(self):
         """Return the access time of the fake file."""
-        return (self._st_atime if FakeOsModule.stat_float_times()
-                else int(self._st_atime))
+        return self.stat_result.st_atime
 
     @property
     def st_mtime(self):
         """Return the modification time of the fake file."""
-        return (self._st_mtime if FakeOsModule.stat_float_times()
-                else int(self._st_mtime))
+        return self.stat_result.st_mtime
 
     @st_ctime.setter
     def st_ctime(self, val):
         """Set the creation time of the fake file."""
-        self._st_ctime = val
+        self.stat_result.st_ctime = val
 
     @st_atime.setter
     def st_atime(self, val):
         """Set the access time of the fake file."""
-        self._st_atime = val
+        self.stat_result.st_atime = val
 
     @st_mtime.setter
     def st_mtime(self, val):
         """Set the modification time of the fake file."""
-        self._st_mtime = val
+        self.stat_result.st_mtime = val
 
     def set_large_file_size(self, st_size):
         """Sets the self.st_size attribute and replaces self.content with None.
@@ -510,7 +507,9 @@ class FakeFile(object):
 
     def __getattr__(self, item):
         """Forward some properties to stat_result."""
-        return getattr(self.stat_result, item)
+        if item in self.stat_types:
+            return getattr(self.stat_result, item)
+        return super(FakeFile, self).__getattr__(item)
 
     def __setattr__(self, key, value):
         """Forward some properties to stat_result."""

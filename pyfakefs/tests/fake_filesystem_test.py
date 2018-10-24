@@ -633,6 +633,15 @@ class FakeFilesystemUnitTest(TestCase):
         self.filesystem.is_windows_fs = False
         self.check_directory_access_on_file(errno.ENOTDIR)
 
+    def test_pickle_fs(self):
+        """Regression test for #445"""
+        import pickle
+        self.filesystem.open_files = []
+        p = pickle.dumps(self.filesystem)
+        fs = pickle.loads(p)
+        self.assertEqual(str(fs.root), str(self.filesystem.root))
+        self.assertEqual(fs.mount_points, self.filesystem.mount_points)
+
 
 class CaseInsensitiveFakeFilesystemTest(TestCase):
     def setUp(self):

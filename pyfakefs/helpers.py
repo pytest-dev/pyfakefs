@@ -71,7 +71,7 @@ class FakeStatResult(object):
     _stat_float_times = sys.version_info >= (2, 5)
 
     def __init__(self, is_windows, initial_time=None):
-        self.use_float = self.stat_float_times
+        self._use_float = None
         self.st_mode = None
         self.st_ino = None
         self.st_dev = None
@@ -86,6 +86,16 @@ class FakeStatResult(object):
             self._st_atime_ns = None
         self._st_mtime_ns = self._st_atime_ns
         self._st_ctime_ns = self._st_atime_ns
+
+    @property
+    def use_float(self):
+        if self._use_float is None:
+            return self.stat_float_times()
+        return self._use_float
+
+    @use_float.setter
+    def use_float(self, val):
+        self._use_float = val
 
     def __eq__(self, other):
         return (
@@ -106,12 +116,11 @@ class FakeStatResult(object):
         return not self == other
 
     def copy(self):
-        """Return a copy where the float usage is hard-coded to mimic the behavior
-        of the real os.stat_result.
+        """Return a copy where the float usage is hard-coded to mimic the
+        behavior of the real os.stat_result.
         """
-        use_float = self.use_float()
         stat_result = copy(self)
-        stat_result.use_float = lambda: use_float
+        stat_result.use_float = self.use_float
         return stat_result
 
     def set_from_stat_result(self, stat_result):
@@ -152,19 +161,19 @@ class FakeStatResult(object):
     def st_ctime(self):
         """Return the creation time in seconds."""
         ctime = self._st_ctime_ns / 1e9
-        return ctime if self.use_float() else int(ctime)
+        return ctime if self.use_float else int(ctime)
 
     @property
     def st_atime(self):
         """Return the access time in seconds."""
         atime = self._st_atime_ns / 1e9
-        return atime if self.use_float() else int(atime)
+        return atime if self.use_float else int(atime)
 
     @property
     def st_mtime(self):
         """Return the modification time in seconds."""
         mtime = self._st_mtime_ns / 1e9
-        return mtime if self.use_float() else int(mtime)
+        return mtime if self.use_float else int(mtime)
 
     @st_ctime.setter
     def st_ctime(self, val):

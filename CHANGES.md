@@ -6,6 +6,8 @@ The release versions are PyPi releases.
 #### New Features
 
 #### Fixes
+  * fixed recursion error on unpickling the fake file system 
+    ([#445](../../issues/445))
 
 ## [Version 3.5](https://pypi.python.org/pypi/pyfakefs/3.5)
 
