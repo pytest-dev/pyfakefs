@@ -2397,6 +2397,7 @@ class FakeFilesystem(object):
             OSError: if the directory does not exist in the real file system.
             IOError: if the directory already exists in the fake file system.
         """
+        source_path = self._path_without_trailing_separators(source_path)
         if not os.path.exists(source_path):
             self.raise_io_error(errno.ENOENT, source_path)
         target_path = target_path or source_path

@@ -8,6 +8,7 @@ The release versions are PyPi releases.
 #### Fixes
   * fixed recursion error on unpickling the fake file system 
     ([#445](../../issues/445))
+  * allow trailing path in `add_real_directory` ([#446](../../issues/446))
 
 ## [Version 3.5](https://pypi.python.org/pypi/pyfakefs/3.5)
 

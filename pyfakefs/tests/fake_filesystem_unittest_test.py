@@ -309,6 +309,14 @@ class TestCopyOrAddRealFile(TestPyfakefsUnittestBase):
         self.assertTrue(self.fs.exists(
             os.path.join(real_dir_path, 'fake_filesystem.py')))
 
+    def test_add_real_directory_with_backslash(self):
+        """Add a real directory ending with a path separator."""
+        real_dir_path = os.path.split(os.path.dirname(self.filepath))[0]
+        self.fs.add_real_directory(real_dir_path + os.sep)
+        self.assertTrue(self.fs.exists(real_dir_path))
+        self.assertTrue(self.fs.exists(
+            os.path.join(real_dir_path, 'fake_filesystem.py')))
+
 
 class TestPyfakefsTestCase(unittest.TestCase):
     def setUp(self):
