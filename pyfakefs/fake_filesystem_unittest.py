@@ -189,6 +189,23 @@ class TestCaseMixin(object):
         self._stubber.setUp()
         self.addCleanup(self._stubber.tearDown)
 
+    def pause(self):
+        """Pause the patching of the file system modules until `resume` is
+        called. After that call, all file system calls are executed in the
+        real file system.
+        Calling pause() twice is silently ignored.
+
+        """
+        self._stubber.pause()
+
+    def resume(self):
+        """Resume the patching of the file system modules if `pause` has
+        been called before. After that call, all file system calls are
+        executed in the fake file system.
+        Does nothing if patching is not paused.
+        """
+        self._stubber.resume()
+
 
 class TestCase(unittest.TestCase, TestCaseMixin):
     """Test case class that automatically replaces file-system related
@@ -371,6 +388,7 @@ class Patcher(object):
 
         # _isStale is set by tearDown(), reset by _refresh()
         self._isStale = True
+        self._patching = False
 
     def __enter__(self):
         """Context manager for usage outside of
@@ -428,7 +446,7 @@ class Patcher(object):
             self._stubs.smart_unset_all()
         self._stubs = mox3_stubout.StubOutForTesting()
 
-        self.fs = fake_filesystem.FakeFilesystem()
+        self.fs = fake_filesystem.FakeFilesystem(patcher=self)
         for name in self._fake_module_classes:
             self.fake_modules[name] = self._fake_module_classes[name](self.fs)
         self.fake_modules[PATH_MODULE] = self.fake_modules['os'].path
@@ -447,35 +465,36 @@ class Patcher(object):
         if doctester is not None:
             doctester.globs = self.replace_globs(doctester.globs)
 
-        if sys.version_info < (3, ):
-            # file() was eliminated in Python3
-            self._stubs.smart_set(builtins, 'file', self.fake_open)
-        self._stubs.smart_set(builtins, 'open', self.fake_open)
-        for name, modules in self._modules.items():
-            for module, attr in modules:
-                self._stubs.smart_set(module, name, self.fake_modules[attr])
-
-        for name, modules in self._fct_modules.items():
-            _, method, mod_name = self._fake_module_functions[name]
-            fake_module = self.fake_modules[mod_name]
-            attr = method.__get__(fake_module, fake_module.__class__)
-            for module in modules:
-                self._stubs.smart_set(module, name, attr)
-
-        self._dyn_patcher = DynamicPatcher(self)
-        sys.meta_path.insert(0, self._dyn_patcher)
-
-        for module in self.modules_to_reload:
-            if module.__name__ in sys.modules:
-                reload(module)
-
-        if not self._use_dynamic_patch:
-            self._dyn_patcher.cleanup()
-            sys.meta_path.pop(0)
+        self.start_patching()
 
         # the temp directory is assumed to exist at least in `tempfile1`,
         # so we create it here for convenience
         self.fs.create_dir(temp_dir)
+
+    def start_patching(self):
+        if not self._patching:
+            self._patching = True
+            if sys.version_info < (3,):
+                # file() was eliminated in Python3
+                self._stubs.smart_set(builtins, 'file', self.fake_open)
+            self._stubs.smart_set(builtins, 'open', self.fake_open)
+            for name, modules in self._modules.items():
+                for module, attr in modules:
+                    self._stubs.smart_set(module, name, self.fake_modules[attr])
+            for name, modules in self._fct_modules.items():
+                _, method, mod_name = self._fake_module_functions[name]
+                fake_module = self.fake_modules[mod_name]
+                attr = method.__get__(fake_module, fake_module.__class__)
+                for module in modules:
+                    self._stubs.smart_set(module, name, attr)
+            self._dyn_patcher = DynamicPatcher(self)
+            sys.meta_path.insert(0, self._dyn_patcher)
+            for module in self.modules_to_reload:
+                if module.__name__ in sys.modules:
+                    reload(module)
+            if not self._use_dynamic_patch:
+                self._dyn_patcher.cleanup()
+                sys.meta_path.pop(0)
 
     def replace_globs(self, globs_):
         globs = globs_.copy()
@@ -488,11 +507,33 @@ class Patcher(object):
 
     def tearDown(self, doctester=None):
         """Clear the fake filesystem bindings created by `setUp()`."""
-        self._isStale = True
-        self._stubs.smart_unset_all()
-        if self._use_dynamic_patch:
-            self._dyn_patcher.cleanup()
-            sys.meta_path.pop(0)
+        self.stop_patching()
+
+    def stop_patching(self):
+        if self._patching:
+            self._isStale = True
+            self._patching = False
+            self._stubs.smart_unset_all()
+            if self._use_dynamic_patch:
+                self._dyn_patcher.cleanup()
+                sys.meta_path.pop(0)
+
+    def pause(self):
+        """Pause the patching of the file system modules until `resume` is
+        called. After that call, all file system calls are executed in the
+        real file system.
+        Calling pause() twice is silently ignored.
+
+        """
+        self.stop_patching()
+
+    def resume(self):
+        """Resume the patching of the file system modules if `pause` has
+        been called before. After that call, all file system calls are
+        executed in the fake file system.
+        Does nothing if patching is not paused.
+        """
+        self.start_patching()
 
 
 class DynamicPatcher(object):

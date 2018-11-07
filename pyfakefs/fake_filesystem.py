@@ -838,9 +838,12 @@ class FakeFilesystem(object):
         root: The root :py:class:`FakeDirectory` entry of the file system.
         cwd: The current working directory path.
         umask: The umask used for newly created files, see `os.umask`.
+        patcher: Holds the Patcher object if created from it. Allows access
+        to the patcher object if using the pytest fs fixture.
     """
 
-    def __init__(self, path_separator=os.path.sep, total_size=None):
+    def __init__(self, path_separator=os.path.sep, total_size=None,
+                 patcher=None):
         """
         Args:
             path_separator:  optional substitute for os.path.sep
@@ -855,6 +858,7 @@ class FakeFilesystem(object):
         """
         self.path_separator = path_separator
         self.alternative_path_separator = os.path.altsep
+        self.patcher = patcher
         if path_separator != os.sep:
             self.alternative_path_separator = None
 
@@ -907,6 +911,35 @@ class FakeFilesystem(object):
         self.mount_points = {}
         self.add_mount_point(self.root.name, total_size)
         self._add_standard_streams()
+
+    def pause(self):
+        """Pause the patching of the file system modules until `resume` is
+        called. After that call, all file system calls are executed in the
+        real file system.
+        Calling pause() twice is silently ignored.
+        Only allowed if the file system object was created by a
+        Patcher object. This is also the case for the pytest `fs` fixture.
+
+        Raises:
+            RuntimeError: if the file system was not created by a Patcher.
+        """
+        if self.patcher is None:
+            raise RuntimeError('pause() can only be called from a fake file '
+                               'system object created by a Patcher object')
+        self.patcher.pause()
+
+    def resume(self):
+        """Resume the patching of the file system modules if `pause` has
+        been called before. After that call, all file system calls are
+        executed in the fake file system.
+        Does nothing if patching is not paused.
+        Raises:
+            RuntimeError: if the file system has not been created by `Patcher`.
+        """
+        if self.patcher is None:
+            raise RuntimeError('resume() can only be called from a fake file '
+                               'system object created by a Patcher object')
+        self.patcher.resume()
 
     def line_separator(self):
         return '\r\n' if self.is_windows_fs else '\n'
