@@ -25,6 +25,7 @@ import os
 import multiprocessing
 import shutil
 import sys
+import tempfile
 import unittest
 from unittest import TestCase
 
@@ -278,6 +279,64 @@ class PatchModuleTest(fake_filesystem_unittest.TestCase):
         self.fs.create_file(file_path, contents=b'test')
         self.assertEqual(
             4, pyfakefs.tests.import_as_example.system_stat(file_path).st_size)
+
+
+class PauseResumeTest(TestPyfakefsUnittestBase):
+    def test_pause_resume(self):
+        fake_temp_file = tempfile.NamedTemporaryFile()
+        self.assertTrue(self.fs.exists(fake_temp_file.name))
+        self.assertTrue(os.path.exists(fake_temp_file.name))
+        self.pause()
+        self.assertTrue(self.fs.exists(fake_temp_file.name))
+        self.assertFalse(os.path.exists(fake_temp_file.name))
+        real_temp_file = tempfile.NamedTemporaryFile()
+        self.assertFalse(self.fs.exists(real_temp_file.name))
+        self.assertTrue(os.path.exists(real_temp_file.name))
+        self.resume()
+        self.assertFalse(os.path.exists(real_temp_file.name))
+        self.assertTrue(os.path.exists(fake_temp_file.name))
+
+    def test_pause_resume_fs(self):
+        fake_temp_file = tempfile.NamedTemporaryFile()
+        self.assertTrue(self.fs.exists(fake_temp_file.name))
+        self.assertTrue(os.path.exists(fake_temp_file.name))
+        # resume does nothing if not paused
+        self.fs.resume()
+        self.assertTrue(os.path.exists(fake_temp_file.name))
+        self.fs.pause()
+        self.assertTrue(self.fs.exists(fake_temp_file.name))
+        self.assertFalse(os.path.exists(fake_temp_file.name))
+        real_temp_file = tempfile.NamedTemporaryFile()
+        self.assertFalse(self.fs.exists(real_temp_file.name))
+        self.assertTrue(os.path.exists(real_temp_file.name))
+        # pause does nothing if already paused
+        self.fs.pause()
+        self.assertFalse(self.fs.exists(real_temp_file.name))
+        self.assertTrue(os.path.exists(real_temp_file.name))
+        self.fs.resume()
+        self.assertFalse(os.path.exists(real_temp_file.name))
+        self.assertTrue(os.path.exists(fake_temp_file.name))
+
+    def test_pause_resume_without_patcher(self):
+        fs = fake_filesystem.FakeFilesystem()
+        self.assertRaises(RuntimeError, fs.resume)
+
+
+class PauseResumePatcherTest(fake_filesystem_unittest.TestCase):
+    def test_pause_resume(self):
+        with Patcher() as p:
+            fake_temp_file = tempfile.NamedTemporaryFile()
+            self.assertTrue(p.fs.exists(fake_temp_file.name))
+            self.assertTrue(os.path.exists(fake_temp_file.name))
+            p.pause()
+            self.assertTrue(p.fs.exists(fake_temp_file.name))
+            self.assertFalse(os.path.exists(fake_temp_file.name))
+            real_temp_file = tempfile.NamedTemporaryFile()
+            self.assertFalse(p.fs.exists(real_temp_file.name))
+            self.assertTrue(os.path.exists(real_temp_file.name))
+            p.resume()
+            self.assertFalse(os.path.exists(real_temp_file.name))
+            self.assertTrue(os.path.exists(fake_temp_file.name))
 
 
 class TestCopyOrAddRealFile(TestPyfakefsUnittestBase):

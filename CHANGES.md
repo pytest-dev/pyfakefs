@@ -4,6 +4,8 @@ The release versions are PyPi releases.
 ## Version 3.6 (as yet unreleased)
 
 #### New Features
+  * added support for pause/resume of patching the file system modules 
+    ([#448](../../issues/448))
   * allow to set current group ID, set current user ID and group ID as 
     `st_uid` and `st_gid` in new files ([#449](../../issues/449))
 
@@ -45,7 +47,7 @@ The release versions are PyPi releases.
     ([#423](../../issues/423)) 
   * handle `contents=None` in `create_file()` as empty contents if size not 
     set ([#424](../../issues/424))
-  * added pathlib2 support ([#408](../../issues/408)) ([#422](../../issues/422))
+  * added `pathlib2` support ([#408](../../issues/408)) ([#422](../../issues/422))
   * added support for null device ([#418](../../issues/418))
   * improved error message for "Bad file descriptor in fake filesystem"
     ([#419](../../issues/419))
@@ -55,7 +57,7 @@ The release versions are PyPi releases.
     ([#441](../../issues/441))
   * file timestamps are now updated more according to the real behavior
     ([#435](../../issues/435))
-  * fixed a problem related with patching shutil functions using zipfile 
+  * fixed a problem related to patching `shutil` functions using `zipfile` 
     ([#427](../../issues/427))  
 
 ## [Version 3.4.3](https://pypi.python.org/pypi/pyfakefs/3.4.3)

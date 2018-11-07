@@ -46,9 +46,9 @@ if Path:
         return Path(filepath).exists()
 
 
-def check_if_exists4(filepath, exists=my_os.path.exists):
+def check_if_exists4(filepath, file_exists=my_os.path.exists):
     # this is a similar case as in the tempfile implementation under Posix
-    return exists(filepath)
+    return file_exists(filepath)
 
 
 def check_if_exists5(filepath):
