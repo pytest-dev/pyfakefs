@@ -357,7 +357,7 @@ class RealShutilModuleTest(FakeShutilModuleTest):
 
 class FakeCopyFileTest(RealFsTestCase):
     def tearDown(self):
-        set_uid(None)
+        set_uid(1)
         super(FakeCopyFileTest, self).tearDown()
 
     def test_common_case(self):

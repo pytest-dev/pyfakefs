@@ -161,12 +161,13 @@ FAKE_PATH_MODULE_DEPRECATION = (
 )
 
 NR_STD_STREAMS = 3
-USER_ID = None
+USER_ID = 1
+GROUP_ID = 1
 
 
 def set_uid(uid):
-    """Set the global user id. Currently only used to differentiate between
-    a normal user and the root user (uid 0).
+    """Set the global user id. This is used as st_uid for new files
+    and to differentiate between a normal user and the root user (uid 0).
     For the root user, some permission restrictions are ignored.
 
     Args:
@@ -174,6 +175,17 @@ def set_uid(uid):
     """
     global USER_ID
     USER_ID = uid
+
+
+def set_gid(gid):
+    """Set the global group id. This is only used to set st_gid for new files,
+    no permision checks are performed.
+
+    Args:
+        gid: (int) the group ID of the user calling the file system functions.
+    """
+    global GROUP_ID
+    GROUP_ID = gid
 
 
 def is_root():
@@ -214,9 +226,10 @@ class FakeFile(object):
       * `st_ino`: the inode number - a unique number identifying the file
       * `st_dev`: a unique number identifying the (fake) file system device
         the file belongs to
-
-    Other attributes needed by `os.stat` are assigned a default value of
-    `None`. These include `st_uid` and `st_gid`.
+      * `st_uid`: always set to USER_ID, which can be changed globally using
+            `set_uid`
+      * `st_gid`: always set to GROUP_ID, which can be changed globally using
+            `set_gid`
 
     .. note:: The resolution for `st_ctime`, `st_mtime` and `st_atime` in the
         real file system depends on the used file system (for example it is
@@ -259,7 +272,7 @@ class FakeFile(object):
         self._side_effect = side_effect
         self.name = name
         self.stat_result = FakeStatResult(
-            filesystem.is_windows_fs, time.time())
+            filesystem.is_windows_fs, USER_ID, GROUP_ID, time.time())
         self.stat_result.st_mode = st_mode
         self.encoding = encoding
         self.errors = errors or 'strict'

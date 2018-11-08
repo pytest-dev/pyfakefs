@@ -70,14 +70,14 @@ class FakeStatResult(object):
         long_type = int   # Python 3
     _stat_float_times = sys.version_info >= (2, 5)
 
-    def __init__(self, is_windows, initial_time=None):
+    def __init__(self, is_windows, user_id, group_id, initial_time=None):
         self._use_float = None
         self.st_mode = None
         self.st_ino = None
         self.st_dev = None
         self.st_nlink = 0
-        self.st_uid = None
-        self.st_gid = None
+        self.st_uid = user_id
+        self.st_gid = group_id
         self._st_size = None
         self.is_windows = is_windows
         if initial_time is not None:

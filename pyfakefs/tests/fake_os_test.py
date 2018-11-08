@@ -54,7 +54,7 @@ class FakeOsModuleTest(FakeOsModuleTestBase):
         super(FakeOsModuleTest, self).setUp()
         self.rwx = self.os.R_OK | self.os.W_OK | self.os.X_OK
         self.rw = self.os.R_OK | self.os.W_OK
-        set_uid(None)
+        set_uid(1)
 
     def test_chdir(self):
         """chdir should work on a directory."""
@@ -1680,7 +1680,7 @@ class FakeOsModuleTest(FakeOsModuleTestBase):
         self.os.chmod(directory, 0o400)
 
         directory = self.make_path('a', 'b')
-        set_uid(None)
+        set_uid(1)
         self.assertRaises(Exception, self.os.makedirs, directory)
         if not self.use_real_fs():
             set_uid(0)
@@ -2683,7 +2683,7 @@ class FakeOsModuleTestCaseInsensitiveFS(FakeOsModuleTestBase):
         self.os.fdopen(fileno1)
         self.os.fdopen(fileno1, 'r')
         exception = OSError if self.is_python2 else IOError
-        set_uid(None)
+        set_uid(1)
         self.assertRaises(exception, self.os.fdopen, fileno1, 'w')
         set_uid(0)
         self.os.fdopen(fileno1, 'w')

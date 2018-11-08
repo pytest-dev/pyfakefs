@@ -24,7 +24,7 @@ import time
 import unittest
 
 from pyfakefs import fake_filesystem
-from pyfakefs.fake_filesystem import set_uid
+from pyfakefs.fake_filesystem import set_uid, set_gid
 from pyfakefs.tests.test_utils import DummyTime, TestCase
 
 
@@ -260,7 +260,7 @@ class FakeFilesystemUnitTest(TestCase):
             'foobaz', filesystem=self.filesystem)
         self.fake_grandchild = fake_filesystem.FakeDirectory(
             'quux', filesystem=self.filesystem)
-        set_uid(None)
+        set_uid(1)
 
     def test_new_filesystem(self):
         self.assertEqual('/', self.filesystem.path_separator)
@@ -545,8 +545,21 @@ class FakeFilesystemUnitTest(TestCase):
         self.assertTrue(self.filesystem.exists(os.path.dirname(path)))
         new_file = self.filesystem.get_object(path)
         self.assertEqual(os.path.basename(path), new_file.name)
-        self.assertTrue(stat.S_IFREG & new_file.st_mode)
+        self.assertEqual(1, new_file.st_uid)
+        self.assertEqual(1, new_file.st_gid)
         self.assertEqual(new_file, retval)
+
+    def test_create_file_with_changed_ids(self):
+        path = 'foo/bar/baz'
+        set_uid(42)
+        set_gid(2)
+        retval = self.filesystem.create_file(path)
+        self.assertTrue(self.filesystem.exists(path))
+        new_file = self.filesystem.get_object(path)
+        self.assertEqual(42, new_file.st_uid)
+        self.assertEqual(2, new_file.st_gid)
+        set_uid(1)
+        set_gid(1)
 
     def test_empty_file_created_for_none_contents(self):
         fake_open = fake_filesystem.FakeFileOpen(self.filesystem)
@@ -1816,7 +1829,7 @@ class RealFileSystemAccessTest(TestCase):
         self.pyfakefs_path = os.path.split(
             os.path.dirname(os.path.abspath(__file__)))[0]
         self.root_path = os.path.split(self.pyfakefs_path)[0]
-        set_uid(None)
+        set_uid(1)
 
     def test_add_non_existing_real_file_raises(self):
         nonexisting_path = os.path.join('nonexisting', 'test.txt')

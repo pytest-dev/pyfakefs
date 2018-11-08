@@ -4,6 +4,8 @@ The release versions are PyPi releases.
 ## Version 3.6 (as yet unreleased)
 
 #### New Features
+  * allow to set current group ID, set current user ID and group ID as 
+    `st_uid` and `st_gid` in new files ([#449](../../issues/449))
 
 #### Fixes
   * fixed using `modules_to_patch` with modules without `dir()`

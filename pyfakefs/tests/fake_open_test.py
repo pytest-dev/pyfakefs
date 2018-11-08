@@ -40,7 +40,7 @@ class FakeFileOpenTest(FakeFileOpenTestBase):
     def setUp(self):
         super(FakeFileOpenTest, self).setUp()
         self.orig_time = time.time
-        set_uid(None)
+        set_uid(1)
 
     def tearDown(self):
         super(FakeFileOpenTest, self).tearDown()
