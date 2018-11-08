@@ -4479,15 +4479,6 @@ class FakeIoModule(object):
     my_io_module = fake_filesystem.FakeIoModule(filesystem)
     """
 
-    @staticmethod
-    def dir():
-        """Return the list of patched function names. Used for patching
-        functions imported from the module.
-        """
-        # `open` would clash with build-in `open`, so don't patch it
-        # if imported like `from io import open`
-        return ()
-
     def __init__(self, filesystem):
         """
         Args:

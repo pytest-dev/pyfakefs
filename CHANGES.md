@@ -6,6 +6,8 @@ The release versions are PyPi releases.
 #### New Features
 
 #### Fixes
+  * fixed using `modules_to_patch` with modules without `dir()`
+    ([#450](../../issues/450))
   * fixed recursion error on unpickling the fake file system 
     ([#445](../../issues/445))
   * allow trailing path in `add_real_directory` ([#446](../../issues/446))

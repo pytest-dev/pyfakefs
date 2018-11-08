@@ -347,12 +347,14 @@ class Patcher(object):
             modnames = (
                 (mod_name, OS_MODULE) if mod_name == 'os' else (mod_name,)
             )
-            for fct_name in fake_module.dir():
-                self._fake_module_functions[fct_name] = (
-                    modnames,
-                    getattr(fake_module, fct_name),
-                    mod_name
-                )
+            if (hasattr(fake_module, 'dir') and
+                    inspect.isfunction(fake_module.dir)):
+                for fct_name in fake_module.dir():
+                    self._fake_module_functions[fct_name] = (
+                        modnames,
+                        getattr(fake_module, fct_name),
+                        mod_name
+                    )
         # special handling for functions in os.path
         fake_module = fake_filesystem.FakePathModule
         for fct_name in fake_module.dir():

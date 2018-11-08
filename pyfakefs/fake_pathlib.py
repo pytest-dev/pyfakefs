@@ -635,13 +635,6 @@ class FakePathlibModule(object):
     `fake_pathlib_module = fake_filesystem.FakePathlibModule(filesystem)`
     """
 
-    @staticmethod
-    def dir():
-        """Return an empty list as `Path` methods will always be called
-        on the instances.
-        """
-        return ()
-
     def __init__(self, filesystem):
         """
         Initializes the module with the given filesystem.
@@ -684,10 +677,6 @@ class FakePathlibModule(object):
 class FakePathlibPathModule(object):
     """Patches `pathlib.Path` by passing all calls to FakePathlibModule."""
     fake_pathlib = None
-
-    @staticmethod
-    def dir():
-        return ()
 
     def __init__(self, filesystem):
         if self.fake_pathlib is None:
