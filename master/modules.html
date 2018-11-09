@@ -144,14 +144,29 @@ replacements.</li>
 <dl class="function">
 <dt id="pyfakefs.fake_filesystem.set_uid">
 <code class="descclassname">pyfakefs.fake_filesystem.</code><code class="descname">set_uid</code><span class="sig-paren">(</span><em>uid</em><span class="sig-paren">)</span><a class="headerlink" href="#pyfakefs.fake_filesystem.set_uid" title="Permalink to this definition">¶</a></dt>
-<dd><p>Set the global user id. Currently only used to differentiate between
-a normal user and the root user (uid 0).
+<dd><p>Set the global user id. This is used as st_uid for new files
+and to differentiate between a normal user and the root user (uid 0).
 For the root user, some permission restrictions are ignored.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>uid</strong> – (int) the user ID of the user calling the file system functions.</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="pyfakefs.fake_filesystem.set_gid">
+<code class="descclassname">pyfakefs.fake_filesystem.</code><code class="descname">set_gid</code><span class="sig-paren">(</span><em>gid</em><span class="sig-paren">)</span><a class="headerlink" href="#pyfakefs.fake_filesystem.set_gid" title="Permalink to this definition">¶</a></dt>
+<dd><p>Set the global group id. This is only used to set st_gid for new files,
+no permision checks are performed.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>gid</strong> – (int) the group ID of the user calling the file system functions.</td>
 </tr>
 </tbody>
 </table>
@@ -554,11 +569,19 @@ each time a file’s attributes is modified).</li>
 <li><cite>st_ino</cite>: the inode number - a unique number identifying the file</li>
 <li><cite>st_dev</cite>: a unique number identifying the (fake) file system device
 the file belongs to</li>
+<li><dl class="first docutils">
+<dt><cite>st_uid</cite>: always set to USER_ID, which can be changed globally using</dt>
+<dd><cite>set_uid</cite></dd>
+</dl>
+</li>
+<li><dl class="first docutils">
+<dt><cite>st_gid</cite>: always set to GROUP_ID, which can be changed globally using</dt>
+<dd><cite>set_gid</cite></dd>
+</dl>
+</li>
 </ul>
 </dd>
 </dl>
-<p>Other attributes needed by <cite>os.stat</cite> are assigned a default value of
-<cite>None</cite>. These include <cite>st_uid</cite> and <cite>st_gid</cite>.</p>
 <div class="admonition note">
 <p class="first admonition-title">Note</p>
 <p>The resolution for <cite>st_ctime</cite>, <cite>st_mtime</cite> and <cite>st_atime</cite> in the
@@ -1007,7 +1030,7 @@ that is available on pypi.</p>
         &#169; Copyright 2009 Google Inc. All Rights Reserved.
 © Copyright 2014 Altera Corporation. All Rights Reserved.
 © Copyright 2014-2018 John McGehee.
-      Last updated on Oct 22, 2018.
+      Last updated on Nov 09, 2018.
     </div>
   </body>
 </html>
