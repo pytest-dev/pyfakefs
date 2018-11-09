@@ -205,7 +205,7 @@ as in the following example:</p>
     <span class="k">return</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_locks_module</span><span class="p">,</span> <span class="n">name</span><span class="p">)</span>
 
 
-<span class="k">with</span> <span class="n">Patcher</span><span class="p">(</span><span class="n">modules_to_patch</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;locks&#39;</span><span class="p">:</span> <span class="n">FakeLocks</span><span class="p">}):</span>
+<span class="k">with</span> <span class="n">Patcher</span><span class="p">(</span><span class="n">modules_to_patch</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;django.core.files.locks&#39;</span><span class="p">:</span> <span class="n">FakeLocks</span><span class="p">}):</span>
     <span class="n">test_django_stuff</span><span class="p">()</span>
 </pre></div>
 </div>
