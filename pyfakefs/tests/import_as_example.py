@@ -19,6 +19,8 @@ from os.path import exists
 import os as my_os
 from os import stat
 
+import sys
+
 try:
     from pathlib import Path
 except ImportError:
@@ -57,3 +59,11 @@ def check_if_exists5(filepath):
 def file_stat(filepath):
     # tests patching `stat` imported from os
     return stat(filepath)
+
+
+def system_stat(filepath):
+    if sys.platform == 'win32':
+        from nt import stat as system_stat
+    else:
+        from posix import stat as system_stat
+    return system_stat(filepath)

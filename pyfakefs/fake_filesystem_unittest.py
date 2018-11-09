@@ -333,10 +333,6 @@ class Patcher(object):
 
         if modules_to_patch is not None:
             for name, fake_module in modules_to_patch.items():
-                if '.' in name:
-                    module_name, name = name.split('.')
-                    self._class_modules.setdefault(name, []).append(
-                        module_name)
                 self._fake_module_classes[name] = fake_module
 
         # handle patching function imported separately like

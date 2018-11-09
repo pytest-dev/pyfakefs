@@ -204,10 +204,35 @@ class TestPathNotPatchedIfNotOsPath(TestPyfakefsUnittestBase):
         self.assertEqual(2, path.floor(2.5))
 
 
+class FailedPatchingTest(fake_filesystem_unittest.TestCase):
+    """Negative tests: make sure the tests for `modules_to_reload` and
+    `modules_to_patch` fail if not providing the arguments.
+    """
+
+    def setUp(self):
+        """Set up the fake file system"""
+        self.setUpPyfakefs()
+
+    @unittest.expectedFailure
+    def test_system_stat(self):
+        file_path = '/foo/bar'
+        self.fs.create_file(file_path, contents=b'test')
+        self.assertEqual(
+            4, pyfakefs.tests.import_as_example.system_stat(file_path).st_size)
+
+    @unittest.expectedFailure
+    def test_path_exists(self):
+        file_path = '/foo/bar'
+        self.fs.create_dir(file_path)
+        self.assertTrue(
+            pyfakefs.tests.import_as_example.check_if_exists4(file_path))
+
+
 class ReloadModuleTest(fake_filesystem_unittest.TestCase):
     """Make sure that reloading a module allows patching of classes not
     patched automatically.
     """
+
     def setUp(self):
         """Set up the fake file system"""
         self.setUpPyfakefs(
@@ -218,6 +243,41 @@ class ReloadModuleTest(fake_filesystem_unittest.TestCase):
         self.fs.create_dir(file_path)
         self.assertTrue(
             pyfakefs.tests.import_as_example.check_if_exists4(file_path))
+
+
+class FakeExampleModule(object):
+    """Used to patch a function that uses system-specific functions that
+    cannot be patched automatically."""
+    _orig_module = pyfakefs.tests.import_as_example
+
+    def __init__(self, fs):
+        pass
+
+    def system_stat(self, filepath):
+        return os.stat(filepath)
+
+    def __getattr__(self, name):
+        """Forwards any non-faked calls to the standard module."""
+        return getattr(self._orig_module, name)
+
+
+class PatchModuleTest(fake_filesystem_unittest.TestCase):
+    """Make sure that reloading a module allows patching of classes not
+    patched automatically.
+    """
+
+    def setUp(self):
+        """Set up the fake file system"""
+        # self.setUpPyfakefs()
+        self.setUpPyfakefs(
+            modules_to_patch={
+                'pyfakefs.tests.import_as_example': FakeExampleModule})
+
+    def test_system_stat(self):
+        file_path = '/foo/bar'
+        self.fs.create_file(file_path, contents=b'test')
+        self.assertEqual(
+            4, pyfakefs.tests.import_as_example.system_stat(file_path).st_size)
 
 
 class TestCopyOrAddRealFile(TestPyfakefsUnittestBase):
