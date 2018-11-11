@@ -4,13 +4,22 @@ The release versions are PyPi releases.
 ## Version 3.6 (as yet unreleased)
 
 #### New Features
+
+#### Fixes
+
+
+## [Version 3.5.2](https://pypi.python.org/pypi/pyfakefs/3.5.2)
+
+This is mostly a bug-fix release.
+
+#### New Features
   * added support for pause/resume of patching the file system modules 
     ([#448](../../issues/448))
   * allow to set current group ID, set current user ID and group ID as 
     `st_uid` and `st_gid` in new files ([#449](../../issues/449))
 
 #### Fixes
-  * fixed using `modules_to_patch` ([#450](../../issues/450))
+  * fixed using `modules_to_patch` (regression, see [#450](../../issues/450))
   * fixed recursion error on unpickling the fake file system 
     ([#445](../../issues/445))
   * allow trailing path in `add_real_directory` ([#446](../../issues/446))
