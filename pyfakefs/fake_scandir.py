@@ -110,7 +110,8 @@ class ScanDirIter:
         self.filesystem = filesystem
         if isinstance(path, int):
             if not use_scandir_package and (
-                    sys.version_info < (3, 7) or self.filesystem.is_windows_fs):
+                    sys.version_info < (3, 7) or
+                    self.filesystem.is_windows_fs):
                 raise NotImplementedError(
                     'scandir does not support file descriptor '
                     'path argument')

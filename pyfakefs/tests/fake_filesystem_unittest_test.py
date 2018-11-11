@@ -181,8 +181,6 @@ class TestAttributesWithFakeModuleNames(TestPyfakefsUnittestBase):
 
     def test_attributes(self):
         """Attributes of module under test are not patched"""
-        global path
-
         self.assertEqual(module_with_attributes.os, 'os attribute value')
         self.assertEqual(module_with_attributes.path, 'path attribute value')
         self.assertEqual(module_with_attributes.pathlib,
@@ -205,14 +203,10 @@ class TestPathNotPatchedIfNotOsPath(TestPyfakefsUnittestBase):
         self.assertEqual(2, path.floor(2.5))
 
 
-class FailedPatchingTest(fake_filesystem_unittest.TestCase):
+class FailedPatchingTest(TestPyfakefsUnittestBase):
     """Negative tests: make sure the tests for `modules_to_reload` and
     `modules_to_patch` fail if not providing the arguments.
     """
-
-    def setUp(self):
-        """Set up the fake file system"""
-        self.setUpPyfakefs()
 
     @unittest.expectedFailure
     def test_system_stat(self):

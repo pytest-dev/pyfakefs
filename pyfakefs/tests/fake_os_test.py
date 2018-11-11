@@ -4804,7 +4804,7 @@ class FakeExtendedAttributeTest(FakeOsModuleTestBase):
 
     def test_setxattr(self):
         self.assertRaises(TypeError, self.os.setxattr,
-                                    self.file_path, 'test', 'value')
+                          self.file_path, 'test', 'value')
         self.assert_raises_os_error(errno.EEXIST, self.os.setxattr,
                                     self.file_path, 'test', b'value',
                                     self.os.XATTR_REPLACE)

@@ -108,10 +108,11 @@ from stat import S_IFREG, S_IFDIR, S_ISLNK, S_IFMT, S_ISDIR, S_IFLNK, S_ISREG
 from pyfakefs.deprecator import Deprecator
 from pyfakefs.fake_scandir import scandir, walk
 from pyfakefs.extra_packages import use_scandir
-from pyfakefs.helpers import FakeStatResult, FileBufferIO, IS_PY2, NullFileBufferIO
-from pyfakefs.helpers import is_int_type, is_byte_string, is_unicode_string
-from pyfakefs.helpers import make_string_path, text_type
-
+from pyfakefs.helpers import (
+    FakeStatResult, FileBufferIO, IS_PY2, NullFileBufferIO,
+    is_int_type, is_byte_string, is_unicode_string,
+    make_string_path, text_type
+)
 __pychecker__ = 'no-reimportself'
 
 __version__ = '3.6'
@@ -549,7 +550,8 @@ class FakeFile(object):
 class FakeNullFile(FakeFile):
     def __init__(self, filesystem):
         devnull = '/dev/nul' if filesystem.is_windows_fs else '/dev/nul'
-        super(FakeNullFile, self).__init__(devnull, filesystem=filesystem, contents=b'')
+        super(FakeNullFile, self).__init__(
+            devnull, filesystem=filesystem, contents=b'')
 
     @property
     def byte_contents(self):
@@ -3521,8 +3523,8 @@ class FakeOsModule(object):
             dir += ['getcwdb', 'replace']
             if sys.platform.startswith('linux'):
                 dir += [
-                    'fdatasync','getxattr', 'listxattr',
-                       'removexattr', 'setxattr'
+                    'fdatasync', 'getxattr', 'listxattr',
+                    'removexattr', 'setxattr'
                 ]
         if use_scandir:
             dir += ['scandir']
@@ -4491,7 +4493,8 @@ class FakeOsModule(object):
         if self.filesystem.is_windows_fs:
             if (not hasattr(file_object, 'allow_update') or
                     not file_object.allow_update):
-                self.filesystem.raise_os_error(errno.EBADF, file_object.file_path)
+                self.filesystem.raise_os_error(
+                    errno.EBADF, file_object.file_path)
 
     def fdatasync(self, file_des):
         """Perform fdatasync for a fake file (in other words, do nothing).
@@ -5131,7 +5134,6 @@ class FakeFileOpen(object):
             file_object.st_mtime = current_time
             if not self.filesystem.is_windows_fs:
                 file_object.st_ctime = current_time
-
 
         fakefile = FakeFileWrapper(file_object,
                                    file_path,

@@ -41,7 +41,7 @@ import inspect
 import sys
 import tempfile
 import unittest
-import zipfile  # import here to make sure it gets correctly stubbed, see #427
+import zipfile  # noqa: F401 make sure it gets correctly stubbed, see #427
 
 from pyfakefs.deprecator import Deprecator
 
@@ -80,17 +80,24 @@ else:
 OS_MODULE = 'nt' if sys.platform == 'win32' else 'posix'
 PATH_MODULE = 'ntpath' if sys.platform == 'win32' else 'posixpath'
 
+
 def load_doctests(loader, tests, ignore, module,
-                  additional_skip_names=None):  # pylint: disable=unused-argument
+                  additional_skip_names=None,
+                  use_dynamic_patch=True,
+                  modules_to_reload=None,
+                  modules_to_patch=None):  # pylint: disable=unused-argument
     """Load the doctest tests for the specified module into unittest.
         Args:
             loader, tests, ignore : arguments passed in from `load_tests()`
             module: module under test
-            additional_skip_names: see :py:class:`TestCase` for an explanation
+            remaining args: see :py:class:`TestCase` for an explanation
 
     File `example_test.py` in the pyfakefs release provides a usage example.
     """
-    _patcher = Patcher(additional_skip_names=additional_skip_names)
+    _patcher = Patcher(additional_skip_names=additional_skip_names,
+                       use_dynamic_patch=use_dynamic_patch,
+                       modules_to_reload=modules_to_reload,
+                       modules_to_patch=modules_to_patch)
     globs = _patcher.replace_globs(vars(module))
     tests.addTests(doctest.DocTestSuite(module,
                                         globs=globs,
@@ -480,7 +487,8 @@ class Patcher(object):
             self._stubs.smart_set(builtins, 'open', self.fake_open)
             for name, modules in self._modules.items():
                 for module, attr in modules:
-                    self._stubs.smart_set(module, name, self.fake_modules[attr])
+                    self._stubs.smart_set(
+                        module, name, self.fake_modules[attr])
             for name, modules in self._fct_modules.items():
                 _, method, mod_name = self._fake_module_functions[name]
                 fake_module = self.fake_modules[mod_name]

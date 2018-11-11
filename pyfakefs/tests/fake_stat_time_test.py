@@ -607,3 +607,7 @@ class TestFakeModeRPlus(FakeStatTestBase):
 class TestRealModeRPlus(TestFakeModeRPlus):
     def use_real_fs(self):
         return True
+
+
+if __name__ == '__main__':
+    unittest.main()

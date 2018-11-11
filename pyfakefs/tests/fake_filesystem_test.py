@@ -553,7 +553,7 @@ class FakeFilesystemUnitTest(TestCase):
         path = 'foo/bar/baz'
         set_uid(42)
         set_gid(2)
-        retval = self.filesystem.create_file(path)
+        self.filesystem.create_file(path)
         self.assertTrue(self.filesystem.exists(path))
         new_file = self.filesystem.get_object(path)
         self.assertEqual(42, new_file.st_uid)

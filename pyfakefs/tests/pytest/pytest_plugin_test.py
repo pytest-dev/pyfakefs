@@ -21,4 +21,3 @@ def test_pause_resume(fs):
     fs.resume()
     assert not os.path.exists(real_temp_file.name)
     assert os.path.exists(fake_temp_file.name)
-

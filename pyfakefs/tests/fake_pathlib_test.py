@@ -425,7 +425,9 @@ class FakePathlibFileObjectPropertyTest(RealPathlibTestCase):
         path = self.path(
             self.make_path('/path', 'to', 'file', 'this can not exist'))
         # kludge to avoid https://github.com/mcmtroffaes/pathlib2/issues/45
-        if not (pathlib2 and TestCase.is_windows and sys.version_info < (3, 2)):
+        if not (pathlib2 and
+                TestCase.is_windows and
+                sys.version_info < (3, 2)):
             self.assertEqual(path, path.resolve())
         self.assert_raises_os_error(errno.ENOENT, path.resolve, strict=True)
 
@@ -573,7 +575,8 @@ class FakePathlibPathFileOperationTest(RealPathlibTestCase):
         file_name = self.make_path('foo', 'bar.txt')
         self.create_file(file_name, contents='test')
         file_path = self.path(file_name)
-        self.assert_raises_os_error(errno.EEXIST, file_path.touch, exist_ok=False)
+        self.assert_raises_os_error(
+            errno.EEXIST, file_path.touch, exist_ok=False)
         file_path.touch()
         self.check_contents(file_name, 'test')
 
@@ -626,8 +629,8 @@ class FakePathlibPathFileOperationTest(RealPathlibTestCase):
         file_name = self.os.path.join(dir_name, 'baz')
         self.create_file(file_name)
         self.assert_raises_os_error(errno.EEXIST,
-                                         self.path(file_name).mkdir,
-                                         exist_ok=True)
+                                    self.path(file_name).mkdir,
+                                    exist_ok=True)
 
     def test_rmdir(self):
         dir_name = self.make_path('foo', 'bar')

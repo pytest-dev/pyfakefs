@@ -28,7 +28,7 @@ import unittest
 
 from pyfakefs import fake_filesystem
 from pyfakefs.fake_filesystem import set_uid
-from pyfakefs.tests.test_utils import DummyTime, TestCase, RealFsTestCase
+from pyfakefs.tests.test_utils import TestCase, RealFsTestCase
 
 
 class FakeFileOpenTestBase(RealFsTestCase):
@@ -631,7 +631,7 @@ class FakeFileOpenTest(FakeFileOpenTestBase):
 
         with self.open(file_path, 'a', encoding='utf-8') as writer:
             with self.open(file_path, 'r', encoding='utf-8') as reader:
-                writes = ['привет', 'мир\n', 'где-то\за', 'радугой']
+                writes = ['привет', 'мир\n', 'где-то\nза', 'радугой']
                 reads = []
                 # when writes are flushes, they are piped to the reader
                 for write in writes:
@@ -1778,3 +1778,7 @@ class ResolvePathTest(FakeFileOpenTestBase):
         self.filesystem.is_windows_fs = True
         self.assertEqual('!!foo!bar!baz',
                          self.filesystem.resolve_path('!!foo!bar!baz!!'))
+
+
+if __name__ == '__main__':
+    unittest.main()
