@@ -183,7 +183,7 @@ as in the following example:
       return getattr(self._locks_module, name)
 
 
-  with Patcher(modules_to_patch={'locks': FakeLocks}):
+  with Patcher(modules_to_patch={'django.core.files.locks': FakeLocks}):
       test_django_stuff()
 
 

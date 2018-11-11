@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-    <title>Public Modules and Classes &#8212; pyfakefs 3.5 documentation</title>
+    <title>Public Modules and Classes &#8212; pyfakefs 3.5.2 documentation</title>
     <link rel="stylesheet" href="_static/pyfakefs.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
     <script type="text/javascript" id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
@@ -33,7 +33,7 @@
         <li class="right" >
           <a href="autopatch.html" title="Automatically find and patch file functions and modules"
              accesskey="P">previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="index.html">pyfakefs 3.5 documentation</a> &#187;</li> 
+        <li class="nav-item nav-item-0"><a href="index.html">pyfakefs 3.5.2 documentation</a> &#187;</li> 
       </ul>
     </div>  
 
@@ -144,8 +144,8 @@ replacements.</li>
 <dl class="function">
 <dt id="pyfakefs.fake_filesystem.set_uid">
 <code class="descclassname">pyfakefs.fake_filesystem.</code><code class="descname">set_uid</code><span class="sig-paren">(</span><em>uid</em><span class="sig-paren">)</span><a class="headerlink" href="#pyfakefs.fake_filesystem.set_uid" title="Permalink to this definition">¶</a></dt>
-<dd><p>Set the global user id. Currently only used to differentiate between
-a normal user and the root user (uid 0).
+<dd><p>Set the global user id. This is used as st_uid for new files
+and to differentiate between a normal user and the root user (uid 0).
 For the root user, some permission restrictions are ignored.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
@@ -157,12 +157,27 @@ For the root user, some permission restrictions are ignored.</p>
 </table>
 </dd></dl>
 
+<dl class="function">
+<dt id="pyfakefs.fake_filesystem.set_gid">
+<code class="descclassname">pyfakefs.fake_filesystem.</code><code class="descname">set_gid</code><span class="sig-paren">(</span><em>gid</em><span class="sig-paren">)</span><a class="headerlink" href="#pyfakefs.fake_filesystem.set_gid" title="Permalink to this definition">¶</a></dt>
+<dd><p>Set the global group id. This is only used to set st_gid for new files,
+no permision checks are performed.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>gid</strong> – (int) the group ID of the user calling the file system functions.</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
 </div>
 <div class="section" id="fake-filesystem-classes">
 <h2>Fake filesystem classes<a class="headerlink" href="#fake-filesystem-classes" title="Permalink to this headline">¶</a></h2>
 <dl class="class">
 <dt id="pyfakefs.fake_filesystem.FakeFilesystem">
-<em class="property">class </em><code class="descclassname">pyfakefs.fake_filesystem.</code><code class="descname">FakeFilesystem</code><span class="sig-paren">(</span><em>path_separator='\'</em>, <em>total_size=None</em><span class="sig-paren">)</span><a class="headerlink" href="#pyfakefs.fake_filesystem.FakeFilesystem" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><code class="descclassname">pyfakefs.fake_filesystem.</code><code class="descname">FakeFilesystem</code><span class="sig-paren">(</span><em>path_separator='\'</em>, <em>total_size=None</em>, <em>patcher=None</em><span class="sig-paren">)</span><a class="headerlink" href="#pyfakefs.fake_filesystem.FakeFilesystem" title="Permalink to this definition">¶</a></dt>
 <dd><p>Provides the appearance of a real directory tree for unit testing.</p>
 <dl class="attribute">
 <dt id="pyfakefs.fake_filesystem.FakeFilesystem.path_separator">
@@ -212,6 +227,17 @@ For the root user, some permission restrictions are ignored.</p>
 <dd><p>The umask used for newly created files, see <cite>os.umask</cite>.</p>
 </dd></dl>
 
+<dl class="attribute">
+<dt id="pyfakefs.fake_filesystem.FakeFilesystem.patcher">
+<code class="descname">patcher</code><a class="headerlink" href="#pyfakefs.fake_filesystem.FakeFilesystem.patcher" title="Permalink to this definition">¶</a></dt>
+<dd><p>Holds the Patcher object if created from it. Allows access</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt>
+<code class="descname">to the patcher object if using the pytest fs fixture.</code></dt>
+<dd></dd></dl>
+
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />
@@ -230,6 +256,35 @@ root filesystem.</li>
 <span class="gp">... </span>    <span class="n">alt_path_separator</span><span class="o">=</span><span class="s1">&#39;/&#39;</span> <span class="k">if</span> <span class="n">_is_windows</span> <span class="k">else</span> <span class="kc">None</span><span class="p">)</span>
 </pre></div>
 </div>
+<dl class="method">
+<dt id="pyfakefs.fake_filesystem.FakeFilesystem.pause">
+<code class="descname">pause</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#pyfakefs.fake_filesystem.FakeFilesystem.pause" title="Permalink to this definition">¶</a></dt>
+<dd><p>Pause the patching of the file system modules until <cite>resume</cite> is
+called. After that call, all file system calls are executed in the
+real file system.
+Calling pause() twice is silently ignored.
+Only allowed if the file system object was created by a
+Patcher object. This is also the case for the pytest <cite>fs</cite> fixture.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Raises:</th><td class="field-body"><code class="xref py py-exc docutils literal notranslate"><span class="pre">RuntimeError</span></code> – if the file system was not created by a Patcher.</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="pyfakefs.fake_filesystem.FakeFilesystem.resume">
+<code class="descname">resume</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#pyfakefs.fake_filesystem.FakeFilesystem.resume" title="Permalink to this definition">¶</a></dt>
+<dd><p>Resume the patching of the file system modules if <cite>pause</cite> has
+been called before. After that call, all file system calls are
+executed in the fake file system.
+Does nothing if patching is not paused.
+:raises: <code class="xref py py-exc docutils literal notranslate"><span class="pre">RuntimeError</span></code> – if the file system has not been created by <cite>Patcher</cite>.</p>
+</dd></dl>
+
 <dl class="method">
 <dt id="pyfakefs.fake_filesystem.FakeFilesystem.add_mount_point">
 <code class="descname">add_mount_point</code><span class="sig-paren">(</span><em>path</em>, <em>total_size=None</em><span class="sig-paren">)</span><a class="headerlink" href="#pyfakefs.fake_filesystem.FakeFilesystem.add_mount_point" title="Permalink to this definition">¶</a></dt>
@@ -554,11 +609,19 @@ each time a file’s attributes is modified).</li>
 <li><cite>st_ino</cite>: the inode number - a unique number identifying the file</li>
 <li><cite>st_dev</cite>: a unique number identifying the (fake) file system device
 the file belongs to</li>
+<li><dl class="first docutils">
+<dt><cite>st_uid</cite>: always set to USER_ID, which can be changed globally using</dt>
+<dd><cite>set_uid</cite></dd>
+</dl>
+</li>
+<li><dl class="first docutils">
+<dt><cite>st_gid</cite>: always set to GROUP_ID, which can be changed globally using</dt>
+<dd><cite>set_gid</cite></dd>
+</dl>
+</li>
 </ul>
 </dd>
 </dl>
-<p>Other attributes needed by <cite>os.stat</cite> are assigned a default value of
-<cite>None</cite>. These include <cite>st_uid</cite> and <cite>st_gid</cite>.</p>
 <div class="admonition note">
 <p class="first admonition-title">Note</p>
 <p>The resolution for <cite>st_ctime</cite>, <cite>st_mtime</cite> and <cite>st_atime</cite> in the
@@ -753,6 +816,24 @@ unittest.TestCase)</td>
 </tbody>
 </table>
 <dl class="method">
+<dt id="pyfakefs.fake_filesystem_unittest.TestCase.pause">
+<code class="descname">pause</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#pyfakefs.fake_filesystem_unittest.TestCase.pause" title="Permalink to this definition">¶</a></dt>
+<dd><p>Pause the patching of the file system modules until <cite>resume</cite> is
+called. After that call, all file system calls are executed in the
+real file system.
+Calling pause() twice is silently ignored.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="pyfakefs.fake_filesystem_unittest.TestCase.resume">
+<code class="descname">resume</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#pyfakefs.fake_filesystem_unittest.TestCase.resume" title="Permalink to this definition">¶</a></dt>
+<dd><p>Resume the patching of the file system modules if <cite>pause</cite> has
+been called before. After that call, all file system calls are
+executed in the fake file system.
+Does nothing if patching is not paused.</p>
+</dd></dl>
+
+<dl class="method">
 <dt id="pyfakefs.fake_filesystem_unittest.TestCase.setUpPyfakefs">
 <code class="descname">setUpPyfakefs</code><span class="sig-paren">(</span><em>additional_skip_names=None</em>, <em>use_dynamic_patch=None</em>, <em>modules_to_reload=None</em>, <em>modules_to_patch=None</em><span class="sig-paren">)</span><a class="headerlink" href="#pyfakefs.fake_filesystem_unittest.TestCase.setUpPyfakefs" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bind the file-related modules to the <code class="xref py py-class docutils literal notranslate"><span class="pre">pyfakefs</span></code> fake file
@@ -792,6 +873,24 @@ modules real ones.  Also bind the fake <cite>file()</cite> and <cite>open()</cit
 <dt id="pyfakefs.fake_filesystem_unittest.Patcher.tearDown">
 <code class="descname">tearDown</code><span class="sig-paren">(</span><em>doctester=None</em><span class="sig-paren">)</span><a class="headerlink" href="#pyfakefs.fake_filesystem_unittest.Patcher.tearDown" title="Permalink to this definition">¶</a></dt>
 <dd><p>Clear the fake filesystem bindings created by <cite>setUp()</cite>.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="pyfakefs.fake_filesystem_unittest.Patcher.pause">
+<code class="descname">pause</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#pyfakefs.fake_filesystem_unittest.Patcher.pause" title="Permalink to this definition">¶</a></dt>
+<dd><p>Pause the patching of the file system modules until <cite>resume</cite> is
+called. After that call, all file system calls are executed in the
+real file system.
+Calling pause() twice is silently ignored.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="pyfakefs.fake_filesystem_unittest.Patcher.resume">
+<code class="descname">resume</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#pyfakefs.fake_filesystem_unittest.Patcher.resume" title="Permalink to this definition">¶</a></dt>
+<dd><p>Resume the patching of the file system modules if <cite>pause</cite> has
+been called before. After that call, all file system calls are
+executed in the fake file system.
+Does nothing if patching is not paused.</p>
 </dd></dl>
 
 </dd></dl>
@@ -1000,14 +1099,14 @@ that is available on pypi.</p>
         <li class="right" >
           <a href="autopatch.html" title="Automatically find and patch file functions and modules"
              >previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="index.html">pyfakefs 3.5 documentation</a> &#187;</li> 
+        <li class="nav-item nav-item-0"><a href="index.html">pyfakefs 3.5.2 documentation</a> &#187;</li> 
       </ul>
     </div>
     <div class="footer" role="contentinfo">
         &#169; Copyright 2009 Google Inc. All Rights Reserved.
 © Copyright 2014 Altera Corporation. All Rights Reserved.
 © Copyright 2014-2018 John McGehee.
-      Last updated on Oct 22, 2018.
+      Last updated on Nov 11, 2018.
     </div>
   </body>
 </html>

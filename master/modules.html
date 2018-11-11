@@ -177,7 +177,7 @@ no permision checks are performed.</p>
 <h2>Fake filesystem classes<a class="headerlink" href="#fake-filesystem-classes" title="Permalink to this headline">¶</a></h2>
 <dl class="class">
 <dt id="pyfakefs.fake_filesystem.FakeFilesystem">
-<em class="property">class </em><code class="descclassname">pyfakefs.fake_filesystem.</code><code class="descname">FakeFilesystem</code><span class="sig-paren">(</span><em>path_separator='\'</em>, <em>total_size=None</em><span class="sig-paren">)</span><a class="headerlink" href="#pyfakefs.fake_filesystem.FakeFilesystem" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><code class="descclassname">pyfakefs.fake_filesystem.</code><code class="descname">FakeFilesystem</code><span class="sig-paren">(</span><em>path_separator='\'</em>, <em>total_size=None</em>, <em>patcher=None</em><span class="sig-paren">)</span><a class="headerlink" href="#pyfakefs.fake_filesystem.FakeFilesystem" title="Permalink to this definition">¶</a></dt>
 <dd><p>Provides the appearance of a real directory tree for unit testing.</p>
 <dl class="attribute">
 <dt id="pyfakefs.fake_filesystem.FakeFilesystem.path_separator">
@@ -227,6 +227,17 @@ no permision checks are performed.</p>
 <dd><p>The umask used for newly created files, see <cite>os.umask</cite>.</p>
 </dd></dl>
 
+<dl class="attribute">
+<dt id="pyfakefs.fake_filesystem.FakeFilesystem.patcher">
+<code class="descname">patcher</code><a class="headerlink" href="#pyfakefs.fake_filesystem.FakeFilesystem.patcher" title="Permalink to this definition">¶</a></dt>
+<dd><p>Holds the Patcher object if created from it. Allows access</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt>
+<code class="descname">to the patcher object if using the pytest fs fixture.</code></dt>
+<dd></dd></dl>
+
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />
@@ -245,6 +256,35 @@ root filesystem.</li>
 <span class="gp">... </span>    <span class="n">alt_path_separator</span><span class="o">=</span><span class="s1">&#39;/&#39;</span> <span class="k">if</span> <span class="n">_is_windows</span> <span class="k">else</span> <span class="kc">None</span><span class="p">)</span>
 </pre></div>
 </div>
+<dl class="method">
+<dt id="pyfakefs.fake_filesystem.FakeFilesystem.pause">
+<code class="descname">pause</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#pyfakefs.fake_filesystem.FakeFilesystem.pause" title="Permalink to this definition">¶</a></dt>
+<dd><p>Pause the patching of the file system modules until <cite>resume</cite> is
+called. After that call, all file system calls are executed in the
+real file system.
+Calling pause() twice is silently ignored.
+Only allowed if the file system object was created by a
+Patcher object. This is also the case for the pytest <cite>fs</cite> fixture.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Raises:</th><td class="field-body"><code class="xref py py-exc docutils literal notranslate"><span class="pre">RuntimeError</span></code> – if the file system was not created by a Patcher.</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="pyfakefs.fake_filesystem.FakeFilesystem.resume">
+<code class="descname">resume</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#pyfakefs.fake_filesystem.FakeFilesystem.resume" title="Permalink to this definition">¶</a></dt>
+<dd><p>Resume the patching of the file system modules if <cite>pause</cite> has
+been called before. After that call, all file system calls are
+executed in the fake file system.
+Does nothing if patching is not paused.
+:raises: <code class="xref py py-exc docutils literal notranslate"><span class="pre">RuntimeError</span></code> – if the file system has not been created by <cite>Patcher</cite>.</p>
+</dd></dl>
+
 <dl class="method">
 <dt id="pyfakefs.fake_filesystem.FakeFilesystem.add_mount_point">
 <code class="descname">add_mount_point</code><span class="sig-paren">(</span><em>path</em>, <em>total_size=None</em><span class="sig-paren">)</span><a class="headerlink" href="#pyfakefs.fake_filesystem.FakeFilesystem.add_mount_point" title="Permalink to this definition">¶</a></dt>
@@ -776,6 +816,24 @@ unittest.TestCase)</td>
 </tbody>
 </table>
 <dl class="method">
+<dt id="pyfakefs.fake_filesystem_unittest.TestCase.pause">
+<code class="descname">pause</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#pyfakefs.fake_filesystem_unittest.TestCase.pause" title="Permalink to this definition">¶</a></dt>
+<dd><p>Pause the patching of the file system modules until <cite>resume</cite> is
+called. After that call, all file system calls are executed in the
+real file system.
+Calling pause() twice is silently ignored.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="pyfakefs.fake_filesystem_unittest.TestCase.resume">
+<code class="descname">resume</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#pyfakefs.fake_filesystem_unittest.TestCase.resume" title="Permalink to this definition">¶</a></dt>
+<dd><p>Resume the patching of the file system modules if <cite>pause</cite> has
+been called before. After that call, all file system calls are
+executed in the fake file system.
+Does nothing if patching is not paused.</p>
+</dd></dl>
+
+<dl class="method">
 <dt id="pyfakefs.fake_filesystem_unittest.TestCase.setUpPyfakefs">
 <code class="descname">setUpPyfakefs</code><span class="sig-paren">(</span><em>additional_skip_names=None</em>, <em>use_dynamic_patch=None</em>, <em>modules_to_reload=None</em>, <em>modules_to_patch=None</em><span class="sig-paren">)</span><a class="headerlink" href="#pyfakefs.fake_filesystem_unittest.TestCase.setUpPyfakefs" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bind the file-related modules to the <code class="xref py py-class docutils literal notranslate"><span class="pre">pyfakefs</span></code> fake file
@@ -815,6 +873,24 @@ modules real ones.  Also bind the fake <cite>file()</cite> and <cite>open()</cit
 <dt id="pyfakefs.fake_filesystem_unittest.Patcher.tearDown">
 <code class="descname">tearDown</code><span class="sig-paren">(</span><em>doctester=None</em><span class="sig-paren">)</span><a class="headerlink" href="#pyfakefs.fake_filesystem_unittest.Patcher.tearDown" title="Permalink to this definition">¶</a></dt>
 <dd><p>Clear the fake filesystem bindings created by <cite>setUp()</cite>.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="pyfakefs.fake_filesystem_unittest.Patcher.pause">
+<code class="descname">pause</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#pyfakefs.fake_filesystem_unittest.Patcher.pause" title="Permalink to this definition">¶</a></dt>
+<dd><p>Pause the patching of the file system modules until <cite>resume</cite> is
+called. After that call, all file system calls are executed in the
+real file system.
+Calling pause() twice is silently ignored.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="pyfakefs.fake_filesystem_unittest.Patcher.resume">
+<code class="descname">resume</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#pyfakefs.fake_filesystem_unittest.Patcher.resume" title="Permalink to this definition">¶</a></dt>
+<dd><p>Resume the patching of the file system modules if <cite>pause</cite> has
+been called before. After that call, all file system calls are
+executed in the fake file system.
+Does nothing if patching is not paused.</p>
 </dd></dl>
 
 </dd></dl>
@@ -1030,7 +1106,7 @@ that is available on pypi.</p>
         &#169; Copyright 2009 Google Inc. All Rights Reserved.
 © Copyright 2014 Altera Corporation. All Rights Reserved.
 © Copyright 2014-2018 John McGehee.
-      Last updated on Nov 09, 2018.
+      Last updated on Nov 11, 2018.
     </div>
   </body>
 </html>

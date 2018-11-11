@@ -7,7 +7,7 @@ Public Modules and Classes
 Fake filesystem module
 ----------------------
 .. automodule:: pyfakefs.fake_filesystem
-    :members: set_uid
+    :members: set_uid, set_gid
 
 Fake filesystem classes
 -----------------------
@@ -16,7 +16,7 @@ Fake filesystem classes
         get_disk_usage, set_disk_usage,
         add_real_directory, add_real_file, add_real_paths,
         create_dir, create_file, create_symlink,
-        get_object
+        get_object, pause, resume
 
 .. autoclass:: pyfakefs.fake_filesystem.FakeFile
     :members: byte_contents, contents, set_contents,
@@ -29,10 +29,10 @@ Unittest module classes
 -----------------------
 
 .. autoclass:: pyfakefs.fake_filesystem_unittest.TestCase
-    :members: fs, setUpPyfakefs
+    :members: fs, setUpPyfakefs, pause, resume
 
 .. autoclass:: pyfakefs.fake_filesystem_unittest.Patcher
-    :members: setUp, tearDown
+    :members: setUp, tearDown, pause, resume
 
 Faked module classes
 --------------------
