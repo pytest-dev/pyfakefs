@@ -4528,6 +4528,13 @@ class FakeIoModule(object):
     my_io_module = fake_filesystem.FakeIoModule(filesystem)
     """
 
+    @staticmethod
+    def dir():
+        """Return the list of patched function names. Used for patching
+        functions imported from the module.
+        """
+        return 'open',
+
     def __init__(self, filesystem):
         """
         Args:
@@ -4551,6 +4558,24 @@ class FakeIoModule(object):
     def __getattr__(self, name):
         """Forwards any unfaked calls to the standard io module."""
         return getattr(self._io_module, name)
+
+
+class FakeBuiltinModule(object):
+    """Uses FakeFilesystem to provide a fake built-in open replacement.
+    """
+    def __init__(self, filesystem):
+        """
+        Args:
+            filesystem: FakeFilesystem used to provide
+                file system information.
+        """
+        self.filesystem = filesystem
+
+    def open(self, *args, **kwargs):
+        """Redirect the call to FakeFileOpen.
+        See FakeFileOpen.call() for description.
+        """
+        return FakeFileOpen(self.filesystem)(*args, **kwargs)
 
 
 class FakeFileWrapper(object):

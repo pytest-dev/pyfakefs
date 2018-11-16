@@ -43,6 +43,8 @@ import tempfile
 import unittest
 import zipfile  # noqa: F401 make sure it gets correctly stubbed, see #427
 
+from pyfakefs.helpers import IS_PY2, IS_PYPY
+
 from pyfakefs.deprecator import Deprecator
 
 try:
@@ -79,6 +81,7 @@ else:
 
 OS_MODULE = 'nt' if sys.platform == 'win32' else 'posix'
 PATH_MODULE = 'ntpath' if sys.platform == 'win32' else 'posixpath'
+BUILTIN_MODULE = '__builtin__' if IS_PY2 else 'buildins'
 
 
 def load_doctests(loader, tests, ignore, module,
@@ -319,6 +322,8 @@ class Patcher(object):
         """For a description of the arguments, see TestCase.__init__"""
 
         self._skipNames = self.SKIPNAMES.copy()
+        # save the original open function for use in pytest plugin
+        self.original_open = open
 
         if additional_skip_names is not None:
             self._skipNames.update(additional_skip_names)
@@ -339,6 +344,15 @@ class Patcher(object):
             'shutil': fake_filesystem_shutil.FakeShutilModule,
             'io': fake_filesystem.FakeIoModule,
         }
+        if IS_PY2 or IS_PYPY:
+            # in Python 2 io.open, the module is referenced as _io
+            self._fake_module_classes['_io'] = fake_filesystem.FakeIoModule
+
+        # No need to patch builtins in Python 3 - builtin open
+        # is an alias for io.open
+        if IS_PY2 or IS_PYPY:
+            self._fake_module_classes[
+                BUILTIN_MODULE] = fake_filesystem.FakeBuiltinModule
 
         # class modules maps class names against a list of modules they can
         # be contained in - this allows for alternative modules like
@@ -364,32 +378,37 @@ class Patcher(object):
         # each patched function name has to be looked up separately
         self._fake_module_functions = {}
         for mod_name, fake_module in self._fake_module_classes.items():
-            modnames = (
-                (mod_name, OS_MODULE) if mod_name == 'os' else (mod_name,)
-            )
             if (hasattr(fake_module, 'dir') and
                     inspect.isfunction(fake_module.dir)):
                 for fct_name in fake_module.dir():
-                    self._fake_module_functions[fct_name] = (
-                        modnames,
-                        getattr(fake_module, fct_name),
-                        mod_name
-                    )
+                    module_attr = (getattr(fake_module, fct_name), mod_name)
+                    self._fake_module_functions.setdefault(
+                        fct_name, {})[mod_name] = module_attr
+                    if mod_name == 'os':
+                        self._fake_module_functions.setdefault(
+                            fct_name, {})[OS_MODULE] = module_attr
+
         # special handling for functions in os.path
         fake_module = fake_filesystem.FakePathModule
         for fct_name in fake_module.dir():
-            self._fake_module_functions[fct_name] = (
-                ('genericpath', PATH_MODULE),
-                getattr(fake_module, fct_name),
-                PATH_MODULE
-            )
+            module_attr = (getattr(fake_module, fct_name), PATH_MODULE)
+            self._fake_module_functions.setdefault(
+                fct_name, {})['genericpath'] = module_attr
+            self._fake_module_functions.setdefault(
+                fct_name, {})[PATH_MODULE] = module_attr
+
+        # special handling for built-in open
+        self._fake_module_functions.setdefault(
+            'open', {})[BUILTIN_MODULE] = (
+            fake_filesystem.FakeBuiltinModule.open,
+            BUILTIN_MODULE
+        )
 
         # Attributes set by _refresh()
         self._modules = {}
         self._fct_modules = {}
         self._stubs = None
         self.fs = None
-        self.fake_open = None
         self.fake_modules = {}
         self._dyn_patcher = None
 
@@ -441,10 +460,10 @@ class Patcher(object):
                          inspect.isbuiltin(fct)) and
                          fct.__name__ in self._fake_module_functions and
                          fct.__module__ in self._fake_module_functions[
-                             fct.__name__][0]}
+                             fct.__name__]}
             for name, fct in functions.items():
                 self._fct_modules.setdefault(
-                    (name, fct.__name__), set()).add(module)
+                    (name, fct.__name__, fct.__module__), set()).add(module)
 
     def _refresh(self):
         """Renew the fake file system and set the _isStale flag to `False`."""
@@ -456,7 +475,6 @@ class Patcher(object):
         for name in self._fake_module_classes:
             self.fake_modules[name] = self._fake_module_classes[name](self.fs)
         self.fake_modules[PATH_MODULE] = self.fake_modules['os'].path
-        self.fake_open = fake_filesystem.FakeFileOpen(self.fs)
 
         self._isStale = False
 
@@ -480,16 +498,21 @@ class Patcher(object):
     def start_patching(self):
         if not self._patching:
             self._patching = True
-            if sys.version_info < (3,):
-                # file() was eliminated in Python3
-                self._stubs.smart_set(builtins, 'file', self.fake_open)
-            self._stubs.smart_set(builtins, 'open', self.fake_open)
+            if IS_PYPY:
+                # patching open via _fct_modules does not work in PyPy
+                self._stubs.smart_set(builtins, 'open',
+                                      self.fake_modules[BUILTIN_MODULE].open)
+            if IS_PY2:
+                # file is not a function and has to be handled separately 
+                self._stubs.smart_set(builtins, 'file',
+                                      self.fake_modules[BUILTIN_MODULE].open)
+
             for name, modules in self._modules.items():
                 for module, attr in modules:
                     self._stubs.smart_set(
                         module, name, self.fake_modules[attr])
-            for (name, fct_name), modules in self._fct_modules.items():
-                _, method, mod_name = self._fake_module_functions[fct_name]
+            for (name, ft_name, ft_mod), modules in self._fct_modules.items():
+                method, mod_name = self._fake_module_functions[ft_name][ft_mod]
                 fake_module = self.fake_modules[mod_name]
                 attr = method.__get__(fake_module, fake_module.__class__)
                 for module in modules:

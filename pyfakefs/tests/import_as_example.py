@@ -20,6 +20,12 @@ from os import stat
 from os import stat as my_stat
 from os.path import exists
 from os.path import exists as my_exists
+from io import open as io_open
+
+try:
+    from builtins import open as bltn_open
+except ImportError:
+    from __builtin__ import open as bltn_open
 
 import sys
 
@@ -79,3 +85,13 @@ def system_stat(filepath):
     else:
         from posix import stat as system_stat
     return system_stat(filepath)
+
+
+def file_contents1(filepath):
+    with bltn_open(filepath) as f:
+        return f.read()
+
+
+def file_contents2(filepath):
+    with io_open(filepath) as f:
+        return f.read()

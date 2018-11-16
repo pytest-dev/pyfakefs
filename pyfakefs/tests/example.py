@@ -29,8 +29,8 @@ The modules related to file handling are bound to the respective fake modules:
 
 The `open()` built-in is bound to the fake `open()`:
 
->>> open     #doctest: +ELLIPSIS
-<pyfakefs.fake_filesystem.FakeFileOpen object...>
+>>> open      #doctest: +ELLIPSIS
+<bound method Fake...Module.open of <pyfakefs.fake_filesystem.Fake...>
 
 In Python 2 the `file()` built-in is also bound to the fake `open()`.  `file()`
 was eliminated in Python 3.

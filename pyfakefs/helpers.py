@@ -13,6 +13,7 @@
 """Helper classes use for fake file system implementation."""
 import io
 import locale
+import platform
 import sys
 from copy import copy
 from stat import S_IFLNK
@@ -20,7 +21,7 @@ from stat import S_IFLNK
 import os
 
 IS_PY2 = sys.version_info[0] < 3
-
+IS_PYPY = platform.python_implementation() == 'PyPy'
 
 try:
     text_type = unicode  # Python 2

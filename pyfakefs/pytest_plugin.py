@@ -10,17 +10,12 @@ def my_fakefs_test(fs):
 """
 
 import linecache
-import sys
+import tokenize
 
 import py
 import pytest
 
 from pyfakefs.fake_filesystem_unittest import Patcher
-
-if sys.version_info >= (3,):
-    import builtins
-else:
-    import __builtin__ as builtins
 
 Patcher.SKIPMODULES.add(py)  # Ignore pytest components when faking filesystem
 
@@ -28,9 +23,9 @@ Patcher.SKIPMODULES.add(py)  # Ignore pytest components when faking filesystem
 # to get traceback information before test tear down.
 # In order to make sure that reading the test file is not faked,
 # we both skip faking the module, and add the build-in open() function
-# as a local function in the module
+# as a local function in the module (used in Python 2).
+# In Python 3, we also have to set back the cached open function in tokenize.
 Patcher.SKIPMODULES.add(linecache)
-linecache.open = builtins.open
 
 
 @pytest.fixture
@@ -38,5 +33,7 @@ def fs(request):
     """ Fake filesystem. """
     patcher = Patcher()
     patcher.setUp()
+    linecache.open = patcher.original_open
+    tokenize._builtin_open = patcher.original_open
     request.addfinalizer(patcher.tearDown)
     return patcher.fs
