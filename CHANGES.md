@@ -4,6 +4,8 @@ The release versions are PyPi releases.
 ## Version 3.6 (as yet unreleased)
 
 #### New Features
+  * automatically patch file system methods imported as another name like 
+    `from os.path import exists as my_exists`
 
 #### Fixes
 

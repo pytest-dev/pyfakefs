@@ -414,12 +414,6 @@ class Patcher(object):
         Later, `setUp()` will stub these with the fake file system
         modules.
         """
-        def is_fct(module, name):
-            fct = module.__dict__.get(name)
-            return (fct is not None and
-                    (inspect.isfunction(fct) or inspect.isbuiltin(fct)) and
-                    fct.__module__ in self._fake_module_functions[name][0])
-
         module_names = list(self._fake_module_classes.keys()) + [PATH_MODULE]
         for name, module in set(sys.modules.items()):
             try:
@@ -442,10 +436,15 @@ class Patcher(object):
                 self._modules.setdefault(name, set()).add((module,
                                                            mod.__name__))
 
-            functions = [name for name in self._fake_module_functions
-                         if is_fct(module, name)]
-            for name in functions:
-                self._fct_modules.setdefault(name, set()).add(module)
+            functions = {name: fct for name, fct in module.__dict__.items()
+                         if (inspect.isfunction(fct) or
+                         inspect.isbuiltin(fct)) and
+                         fct.__name__ in self._fake_module_functions and
+                         fct.__module__ in self._fake_module_functions[
+                             fct.__name__][0]}
+            for name, fct in functions.items():
+                self._fct_modules.setdefault(
+                    (name, fct.__name__), set()).add(module)
 
     def _refresh(self):
         """Renew the fake file system and set the _isStale flag to `False`."""
@@ -489,8 +488,8 @@ class Patcher(object):
                 for module, attr in modules:
                     self._stubs.smart_set(
                         module, name, self.fake_modules[attr])
-            for name, modules in self._fct_modules.items():
-                _, method, mod_name = self._fake_module_functions[name]
+            for (name, fct_name), modules in self._fct_modules.items():
+                _, method, mod_name = self._fake_module_functions[fct_name]
                 fake_module = self.fake_modules[mod_name]
                 attr = method.__get__(fake_module, fake_module.__class__)
                 for module in modules:
