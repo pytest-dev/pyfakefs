@@ -33,6 +33,7 @@ from pyfakefs import fake_filesystem_unittest, fake_filesystem
 from pyfakefs.extra_packages import pathlib
 from pyfakefs.fake_filesystem_unittest import Patcher
 import pyfakefs.tests.import_as_example
+from pyfakefs.helpers import IS_PYPY, IS_PY2
 from pyfakefs.tests.fixtures import module_with_attributes
 
 
@@ -54,7 +55,7 @@ class TestPyfakefsUnittestBase(fake_filesystem_unittest.TestCase):
 class TestPyfakefsUnittest(TestPyfakefsUnittestBase):  # pylint: disable=R0904
     """Test the `pyfakefs.fake_filesystem_unittest.TestCase` base class."""
 
-    @unittest.skipIf(sys.version_info > (2,),
+    @unittest.skipIf(sys.version_info[0] > 2,
                      "file() was removed in Python 3")
     def test_file(self):
         """Fake `file()` function is bound"""
@@ -184,6 +185,19 @@ class TestPatchingImports(TestPyfakefsUnittestBase):
         self.fs.create_file(file_path, contents=b'abc')
         stat_result = pyfakefs.tests.import_as_example.file_stat2(file_path)
         self.assertEqual(3, stat_result.st_size)
+
+    @unittest.skipIf(IS_PYPY and IS_PY2, 'Not working for PyPy2')
+    def test_import_open_as_other_name(self):
+        file_path = '/foo/bar'
+        self.fs.create_file(file_path, contents=b'abc')
+        contents = pyfakefs.tests.import_as_example.file_contents1(file_path)
+        self.assertEqual('abc', contents)
+
+    def test_import_io_open_as_other_name(self):
+        file_path = '/foo/bar'
+        self.fs.create_file(file_path, contents=b'abc')
+        contents = pyfakefs.tests.import_as_example.file_contents2(file_path)
+        self.assertEqual('abc', contents)
 
 
 class TestAttributesWithFakeModuleNames(TestPyfakefsUnittestBase):
