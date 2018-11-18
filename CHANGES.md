@@ -6,6 +6,7 @@ The release versions are PyPi releases.
 #### New Features
   * automatically patch file system methods imported as another name like 
     `from os.path import exists as my_exists`, including builtin `open` 
+    and `io.open`
 
 #### Fixes
 

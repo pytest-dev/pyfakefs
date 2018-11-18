@@ -119,6 +119,14 @@ automatically if imported like:
   from os.path import exists
   from os import stat
 
+This also works if importing the functions as another name:
+
+.. code:: python
+
+  from os.path import exists as my_exists
+  from io import open as io_open
+  from builtins import open as bltn_open
+
 There are other cases where automatic patching does not work.
 Both ``fake_filesystem_unittest.Patcher`` and ``fake_filesystem_unittest.TestCase``
 provide a few additional arguments to handle such cases.

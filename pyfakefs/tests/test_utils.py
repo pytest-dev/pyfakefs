@@ -250,7 +250,7 @@ class RealFsTestMixin(object):
                 self.os.symlink(self.base_path, link_path)
                 TestCase.symlinks_can_be_tested = True
                 self.os.remove(link_path)
-            except OSError:
+            except (OSError, NotImplementedError):
                 TestCase.symlinks_can_be_tested = False
         return TestCase.symlinks_can_be_tested
 

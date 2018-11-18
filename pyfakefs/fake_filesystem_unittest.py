@@ -81,7 +81,7 @@ else:
 
 OS_MODULE = 'nt' if sys.platform == 'win32' else 'posix'
 PATH_MODULE = 'ntpath' if sys.platform == 'win32' else 'posixpath'
-BUILTIN_MODULE = '__builtin__' if IS_PY2 else 'buildins'
+BUILTIN_MODULE = '__builtin__' if IS_PY2 else 'fake_builtin'
 
 
 def load_doctests(loader, tests, ignore, module,

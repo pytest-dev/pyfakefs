@@ -186,7 +186,8 @@ class TestPatchingImports(TestPyfakefsUnittestBase):
         stat_result = pyfakefs.tests.import_as_example.file_stat2(file_path)
         self.assertEqual(3, stat_result.st_size)
 
-    @unittest.skipIf(IS_PYPY and IS_PY2, 'Not working for PyPy2')
+    @unittest.skipIf(IS_PYPY and IS_PY2,
+                     'Not working for PyPy2 as it is implemented via file')
     def test_import_open_as_other_name(self):
         file_path = '/foo/bar'
         self.fs.create_file(file_path, contents=b'abc')
