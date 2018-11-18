@@ -148,6 +148,12 @@ automatically if imported like:</p>
 <span class="kn">from</span> <span class="nn">os</span> <span class="k">import</span> <span class="n">stat</span>
 </pre></div>
 </div>
+<p>This also works if importing the functions as another name:</p>
+<div class="code python highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">os.path</span> <span class="k">import</span> <span class="n">exists</span> <span class="k">as</span> <span class="n">my_exists</span>
+<span class="kn">from</span> <span class="nn">io</span> <span class="k">import</span> <span class="nb">open</span> <span class="k">as</span> <span class="n">io_open</span>
+<span class="kn">from</span> <span class="nn">builtins</span> <span class="k">import</span> <span class="nb">open</span> <span class="k">as</span> <span class="n">bltn_open</span>
+</pre></div>
+</div>
 <p>There are other cases where automatic patching does not work.
 Both <code class="docutils literal notranslate"><span class="pre">fake_filesystem_unittest.Patcher</span></code> and <code class="docutils literal notranslate"><span class="pre">fake_filesystem_unittest.TestCase</span></code>
 provide a few additional arguments to handle such cases.
@@ -417,7 +423,7 @@ modeled after <code class="docutils literal notranslate"><span class="pre">shuti
         &#169; Copyright 2009 Google Inc. All Rights Reserved.
 © Copyright 2014 Altera Corporation. All Rights Reserved.
 © Copyright 2014-2018 John McGehee.
-      Last updated on Nov 11, 2018.
+      Last updated on Nov 18, 2018.
     </div>
   </body>
 </html>
