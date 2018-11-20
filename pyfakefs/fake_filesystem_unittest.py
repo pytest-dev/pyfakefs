@@ -81,7 +81,7 @@ else:
 
 OS_MODULE = 'nt' if sys.platform == 'win32' else 'posix'
 PATH_MODULE = 'ntpath' if sys.platform == 'win32' else 'posixpath'
-BUILTIN_MODULE = '__builtin__' if IS_PY2 else 'fake_builtin'
+BUILTIN_MODULE = '__builtin__'
 
 
 def load_doctests(loader, tests, ignore, module,
@@ -128,15 +128,11 @@ class TestCaseMixin(object):
             (for example for modules loaded locally inside of functions).
             Can be switched off if it causes unwanted side effects.
         modules_to_patch: A dictionary of fake modules mapped to the
-            patched module names. Can be used to add patching of modules
-            not provided by `pyfakefs`.
-            If you want to patch a class in a module imported using
-            `from some_module import SomeClass`, you have to specify
-            `some_module.Class` as the key for the fake class.
+            fully qualified patched module names. Can be used to add patching
+            of modules not provided by `pyfakefs`.
 
-    If you specify the attribute `additional_skip_names` here
-    and you have DocTests, consider also specifying the same argument to
-    :py:func:`load_doctests`.
+    If you specify some of these attributes here and you have DocTests,
+    consider also specifying the same arguments to :py:func:`load_doctests`.
 
     Example usage in derived test classes::
 
@@ -219,7 +215,9 @@ class TestCaseMixin(object):
 
 class TestCase(unittest.TestCase, TestCaseMixin):
     """Test case class that automatically replaces file-system related
-    modules by fake implementations.
+    modules by fake implementations. Inherits :py:class:`TestCaseMixin`.
+
+    The arguments are explained in :py:class:`TestCaseMixin`.
     """
 
     def __init__(self, methodName='runTest',
@@ -227,7 +225,7 @@ class TestCase(unittest.TestCase, TestCaseMixin):
                  modules_to_reload=None,
                  use_dynamic_patch=True,
                  modules_to_patch=None):
-        """Creates the test class instance and the stubber used to stub out
+        """Creates the test class instance and the patcher used to stub out
         file system related modules.
 
         Args:
@@ -294,10 +292,10 @@ class Patcher(object):
     Instantiate a stub creator to bind and un-bind the file-related modules to
     the :py:mod:`pyfakefs` fake modules.
 
-    The arguments are explained in :py:class:`TestCase`.
+    The arguments are explained in :py:class:`TestCaseMixin`.
 
-    :py:class:`Patcher` is used in :py:class:`TestCase`.  :py:class:`Patcher`
-    also works as a context manager for PyTest::
+    :py:class:`Patcher` is used in :py:class:`TestCaseMixin`.
+    :py:class:`Patcher` also works as a context manager for other tests::
 
         with Patcher():
             doStuff()
@@ -350,7 +348,7 @@ class Patcher(object):
 
         # No need to patch builtins in Python 3 - builtin open
         # is an alias for io.open
-        if IS_PY2 or IS_PYPY:
+        if IS_PY2:
             self._fake_module_classes[
                 BUILTIN_MODULE] = fake_filesystem.FakeBuiltinModule
 
@@ -397,12 +395,13 @@ class Patcher(object):
             self._fake_module_functions.setdefault(
                 fct_name, {})[PATH_MODULE] = module_attr
 
-        # special handling for built-in open
-        self._fake_module_functions.setdefault(
-            'open', {})[BUILTIN_MODULE] = (
-            fake_filesystem.FakeBuiltinModule.open,
-            BUILTIN_MODULE
-        )
+        if IS_PY2:
+            # special handling for built-in open in Python 2
+            self._fake_module_functions.setdefault(
+                'open', {})[BUILTIN_MODULE] = (
+                fake_filesystem.FakeBuiltinModule.open,
+                BUILTIN_MODULE
+            )
 
         # Attributes set by _refresh()
         self._modules = {}
@@ -498,12 +497,12 @@ class Patcher(object):
     def start_patching(self):
         if not self._patching:
             self._patching = True
-            if IS_PYPY:
-                # patching open via _fct_modules does not work in PyPy
-                self._stubs.smart_set(builtins, 'open',
-                                      self.fake_modules[BUILTIN_MODULE].open)
             if IS_PY2:
-                # file is not a function and has to be handled separately 
+                if IS_PYPY:
+                    # patching open via _fct_modules does not work in PyPy2
+                    self._stubs.smart_set(builtins, 'open',
+                                          self.fake_modules[BUILTIN_MODULE].open)
+                # file is not a function and has to be handled separately
                 self._stubs.smart_set(builtins, 'file',
                                       self.fake_modules[BUILTIN_MODULE].open)
 
