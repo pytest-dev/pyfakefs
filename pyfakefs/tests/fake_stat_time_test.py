@@ -284,7 +284,7 @@ class FakeStatTestBase(RealFsTestCase):
         self.assertEqual(read.st_ctime, closed.st_ctime)
 
         self.assertEqual(before.st_atime, opened.st_atime)
-        self.assertLessExceptWindows(opened.st_atime, read.st_atime)
+        self.assertLessEqual(opened.st_atime, read.st_atime)
         self.assertEqual(read.st_atime, closed.st_atime)
 
         self.assertEqual(before.st_mtime, opened.st_mtime)
@@ -301,7 +301,7 @@ class FakeStatTestBase(RealFsTestCase):
         self.assertEqual(created.st_ctime, read.st_ctime)
         self.assertEqual(read.st_ctime, closed.st_ctime)
 
-        self.assertLessExceptWindows(created.st_atime, read.st_atime)
+        self.assertLessEqual(created.st_atime, read.st_atime)
         self.assertEqual(read.st_atime, closed.st_atime)
 
         self.assertEqual(created.st_mtime, read.st_mtime)
@@ -443,7 +443,7 @@ class TestFakeModeWPlus(FakeStatTestBase):
         self.assertEqual(read.st_ctime, closed.st_ctime)
 
         self.assertEqual(before.st_atime, opened.st_atime)
-        self.assertLessExceptWindows(opened.st_atime, read.st_atime)
+        self.assertLessEqual(opened.st_atime, read.st_atime)
         self.assertEqual(read.st_atime, closed.st_atime)
 
         self.assertLess(before.st_mtime, opened.st_mtime)
@@ -558,7 +558,7 @@ class TestFakeModeR(FakeStatTestBase):
         self.assertEqual(flushed.st_ctime, closed.st_ctime)
 
         self.assertEqual(before.st_atime, opened.st_atime)
-        self.assertLessExceptWindows(opened.st_atime, read.st_atime)
+        self.assertLessEqual(opened.st_atime, read.st_atime)
         self.assertEqual(read.st_atime, flushed.st_atime)
         self.assertEqual(flushed.st_atime, closed.st_atime)
 

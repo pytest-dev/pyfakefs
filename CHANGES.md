@@ -9,7 +9,8 @@ The release versions are PyPi releases.
     and `io.open`
 
 #### Fixes
-
+  * make tests for access time less strict to account for file systems that 
+    do not change it immediately ([#453](../../issues/453))
 
 ## [Version 3.5.2](https://pypi.python.org/pypi/pyfakefs/3.5.2)
 
