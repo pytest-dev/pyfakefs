@@ -800,42 +800,73 @@ or (Windows only) the file is open.</li>
 <div class="section" id="unittest-module-classes">
 <h2>Unittest module classes<a class="headerlink" href="#unittest-module-classes" title="Permalink to this headline">¶</a></h2>
 <dl class="class">
-<dt id="pyfakefs.fake_filesystem_unittest.TestCase">
-<em class="property">class </em><code class="descclassname">pyfakefs.fake_filesystem_unittest.</code><code class="descname">TestCase</code><span class="sig-paren">(</span><em>methodName='runTest'</em>, <em>additional_skip_names=None</em>, <em>modules_to_reload=None</em>, <em>use_dynamic_patch=True</em>, <em>modules_to_patch=None</em><span class="sig-paren">)</span><a class="headerlink" href="#pyfakefs.fake_filesystem_unittest.TestCase" title="Permalink to this definition">¶</a></dt>
-<dd><p>Test case class that automatically replaces file-system related
+<dt id="pyfakefs.fake_filesystem_unittest.TestCaseMixin">
+<em class="property">class </em><code class="descclassname">pyfakefs.fake_filesystem_unittest.</code><code class="descname">TestCaseMixin</code><a class="headerlink" href="#pyfakefs.fake_filesystem_unittest.TestCaseMixin" title="Permalink to this definition">¶</a></dt>
+<dd><p>Test case mixin that automatically replaces file-system related
 modules by fake implementations.</p>
-<p>Creates the test class instance and the stubber used to stub out
-file system related modules.</p>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>methodName</strong> – The name of the test method (same as in
-unittest.TestCase)</td>
-</tr>
-</tbody>
-</table>
-<dl class="method">
-<dt id="pyfakefs.fake_filesystem_unittest.TestCase.pause">
-<code class="descname">pause</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#pyfakefs.fake_filesystem_unittest.TestCase.pause" title="Permalink to this definition">¶</a></dt>
-<dd><p>Pause the patching of the file system modules until <cite>resume</cite> is
-called. After that call, all file system calls are executed in the
-real file system.
-Calling pause() twice is silently ignored.</p>
+<dl class="attribute">
+<dt id="pyfakefs.fake_filesystem_unittest.TestCaseMixin.additional_skip_names">
+<code class="descname">additional_skip_names</code><a class="headerlink" href="#pyfakefs.fake_filesystem_unittest.TestCaseMixin.additional_skip_names" title="Permalink to this definition">¶</a></dt>
+<dd><p>names of modules inside of which no module
+replacement shall be performed, in addition to the names in
+<code class="xref py py-attr docutils literal notranslate"><span class="pre">fake_filesystem_unittest.Patcher.SKIPNAMES</span></code>.</p>
 </dd></dl>
 
-<dl class="method">
-<dt id="pyfakefs.fake_filesystem_unittest.TestCase.resume">
-<code class="descname">resume</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#pyfakefs.fake_filesystem_unittest.TestCase.resume" title="Permalink to this definition">¶</a></dt>
-<dd><p>Resume the patching of the file system modules if <cite>pause</cite> has
-been called before. After that call, all file system calls are
-executed in the fake file system.
-Does nothing if patching is not paused.</p>
+<dl class="attribute">
+<dt id="pyfakefs.fake_filesystem_unittest.TestCaseMixin.modules_to_reload">
+<code class="descname">modules_to_reload</code><a class="headerlink" href="#pyfakefs.fake_filesystem_unittest.TestCaseMixin.modules_to_reload" title="Permalink to this definition">¶</a></dt>
+<dd><p>A list of modules that need to be reloaded
+to be patched dynamically; may be needed if the module
+imports file system modules under an alias</p>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">This is done independently of <cite>use_dynamic_patch</cite></p>
+</div>
+<div class="admonition caution">
+<p class="first admonition-title">Caution</p>
+<p class="last">Reloading modules may have unwanted side effects.</p>
+</div>
 </dd></dl>
 
+<dl class="attribute">
+<dt id="pyfakefs.fake_filesystem_unittest.TestCaseMixin.use_dynamic_patch">
+<code class="descname">use_dynamic_patch</code><a class="headerlink" href="#pyfakefs.fake_filesystem_unittest.TestCaseMixin.use_dynamic_patch" title="Permalink to this definition">¶</a></dt>
+<dd><p>If <cite>True</cite>, dynamic patching after setup is used
+(for example for modules loaded locally inside of functions).
+Can be switched off if it causes unwanted side effects.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="pyfakefs.fake_filesystem_unittest.TestCaseMixin.modules_to_patch">
+<code class="descname">modules_to_patch</code><a class="headerlink" href="#pyfakefs.fake_filesystem_unittest.TestCaseMixin.modules_to_patch" title="Permalink to this definition">¶</a></dt>
+<dd><p>A dictionary of fake modules mapped to the
+fully qualified patched module names. Can be used to add patching
+of modules not provided by <cite>pyfakefs</cite>.</p>
+</dd></dl>
+
+<p>If you specify some of these attributes here and you have DocTests,
+consider also specifying the same arguments to <code class="xref py py-func docutils literal notranslate"><span class="pre">load_doctests()</span></code>.</p>
+<p>Example usage in derived test classes:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">unittest</span> <span class="k">import</span> <span class="n">TestCase</span>
+<span class="kn">from</span> <span class="nn">fake_filesystem_unittest</span> <span class="k">import</span> <span class="n">TestCaseMixin</span>
+
+<span class="k">class</span> <span class="nc">MyTestCase</span><span class="p">(</span><span class="n">TestCase</span><span class="p">,</span> <span class="n">TestCaseMixin</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">methodName</span><span class="o">=</span><span class="s1">&#39;runTest&#39;</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">MyTestCase</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span>
+            <span class="n">methodName</span><span class="o">=</span><span class="n">methodName</span><span class="p">,</span>
+            <span class="n">additional_skip_names</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;posixpath&#39;</span><span class="p">])</span>
+
+<span class="kn">import</span> <span class="nn">sut</span>
+
+<span class="k">class</span> <span class="nc">AnotherTestCase</span><span class="p">(</span><span class="n">TestCase</span><span class="p">,</span> <span class="n">TestCaseMixin</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">methodName</span><span class="o">=</span><span class="s1">&#39;runTest&#39;</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">MyTestCase</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span>
+            <span class="n">methodName</span><span class="o">=</span><span class="n">methodName</span><span class="p">,</span> <span class="n">modules_to_reload</span><span class="o">=</span><span class="p">[</span><span class="n">sut</span><span class="p">])</span>
+</pre></div>
+</div>
 <dl class="method">
-<dt id="pyfakefs.fake_filesystem_unittest.TestCase.setUpPyfakefs">
-<code class="descname">setUpPyfakefs</code><span class="sig-paren">(</span><em>additional_skip_names=None</em>, <em>use_dynamic_patch=None</em>, <em>modules_to_reload=None</em>, <em>modules_to_patch=None</em><span class="sig-paren">)</span><a class="headerlink" href="#pyfakefs.fake_filesystem_unittest.TestCase.setUpPyfakefs" title="Permalink to this definition">¶</a></dt>
+<dt id="pyfakefs.fake_filesystem_unittest.TestCaseMixin.setUpPyfakefs">
+<code class="descname">setUpPyfakefs</code><span class="sig-paren">(</span><em>additional_skip_names=None</em>, <em>use_dynamic_patch=None</em>, <em>modules_to_reload=None</em>, <em>modules_to_patch=None</em><span class="sig-paren">)</span><a class="headerlink" href="#pyfakefs.fake_filesystem_unittest.TestCaseMixin.setUpPyfakefs" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bind the file-related modules to the <code class="xref py py-class docutils literal notranslate"><span class="pre">pyfakefs</span></code> fake file
 system instead of the real file system.  Also bind the fake <cite>open()</cite>
 function, and on Python 2, the <cite>file()</cite> function.</p>
@@ -847,6 +878,43 @@ the current test case. Settings the arguments here may be a more
 convenient way to adapt the setting than overwriting <cite>__init__()</cite>.</p>
 </dd></dl>
 
+<dl class="method">
+<dt id="pyfakefs.fake_filesystem_unittest.TestCaseMixin.pause">
+<code class="descname">pause</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#pyfakefs.fake_filesystem_unittest.TestCaseMixin.pause" title="Permalink to this definition">¶</a></dt>
+<dd><p>Pause the patching of the file system modules until <cite>resume</cite> is
+called. After that call, all file system calls are executed in the
+real file system.
+Calling pause() twice is silently ignored.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="pyfakefs.fake_filesystem_unittest.TestCaseMixin.resume">
+<code class="descname">resume</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#pyfakefs.fake_filesystem_unittest.TestCaseMixin.resume" title="Permalink to this definition">¶</a></dt>
+<dd><p>Resume the patching of the file system modules if <cite>pause</cite> has
+been called before. After that call, all file system calls are
+executed in the fake file system.
+Does nothing if patching is not paused.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="pyfakefs.fake_filesystem_unittest.TestCase">
+<em class="property">class </em><code class="descclassname">pyfakefs.fake_filesystem_unittest.</code><code class="descname">TestCase</code><span class="sig-paren">(</span><em>methodName='runTest'</em>, <em>additional_skip_names=None</em>, <em>modules_to_reload=None</em>, <em>use_dynamic_patch=True</em>, <em>modules_to_patch=None</em><span class="sig-paren">)</span><a class="headerlink" href="#pyfakefs.fake_filesystem_unittest.TestCase" title="Permalink to this definition">¶</a></dt>
+<dd><p>Test case class that automatically replaces file-system related
+modules by fake implementations. Inherits <a class="reference internal" href="#pyfakefs.fake_filesystem_unittest.TestCaseMixin" title="pyfakefs.fake_filesystem_unittest.TestCaseMixin"><code class="xref py py-class docutils literal notranslate"><span class="pre">TestCaseMixin</span></code></a>.</p>
+<p>The arguments are explained in <a class="reference internal" href="#pyfakefs.fake_filesystem_unittest.TestCaseMixin" title="pyfakefs.fake_filesystem_unittest.TestCaseMixin"><code class="xref py py-class docutils literal notranslate"><span class="pre">TestCaseMixin</span></code></a>.</p>
+<p>Creates the test class instance and the patcher used to stub out
+file system related modules.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>methodName</strong> – The name of the test method (same as in
+unittest.TestCase)</td>
+</tr>
+</tbody>
+</table>
 </dd></dl>
 
 <dl class="class">
@@ -854,9 +922,9 @@ convenient way to adapt the setting than overwriting <cite>__init__()</cite>.</p
 <em class="property">class </em><code class="descclassname">pyfakefs.fake_filesystem_unittest.</code><code class="descname">Patcher</code><span class="sig-paren">(</span><em>additional_skip_names=None</em>, <em>modules_to_reload=None</em>, <em>use_dynamic_patch=True</em>, <em>modules_to_patch=None</em><span class="sig-paren">)</span><a class="headerlink" href="#pyfakefs.fake_filesystem_unittest.Patcher" title="Permalink to this definition">¶</a></dt>
 <dd><p>Instantiate a stub creator to bind and un-bind the file-related modules to
 the <code class="xref py py-mod docutils literal notranslate"><span class="pre">pyfakefs</span></code> fake modules.</p>
-<p>The arguments are explained in <a class="reference internal" href="#pyfakefs.fake_filesystem_unittest.TestCase" title="pyfakefs.fake_filesystem_unittest.TestCase"><code class="xref py py-class docutils literal notranslate"><span class="pre">TestCase</span></code></a>.</p>
-<p><a class="reference internal" href="#pyfakefs.fake_filesystem_unittest.Patcher" title="pyfakefs.fake_filesystem_unittest.Patcher"><code class="xref py py-class docutils literal notranslate"><span class="pre">Patcher</span></code></a> is used in <a class="reference internal" href="#pyfakefs.fake_filesystem_unittest.TestCase" title="pyfakefs.fake_filesystem_unittest.TestCase"><code class="xref py py-class docutils literal notranslate"><span class="pre">TestCase</span></code></a>.  <a class="reference internal" href="#pyfakefs.fake_filesystem_unittest.Patcher" title="pyfakefs.fake_filesystem_unittest.Patcher"><code class="xref py py-class docutils literal notranslate"><span class="pre">Patcher</span></code></a>
-also works as a context manager for PyTest:</p>
+<p>The arguments are explained in <a class="reference internal" href="#pyfakefs.fake_filesystem_unittest.TestCaseMixin" title="pyfakefs.fake_filesystem_unittest.TestCaseMixin"><code class="xref py py-class docutils literal notranslate"><span class="pre">TestCaseMixin</span></code></a>.</p>
+<p><a class="reference internal" href="#pyfakefs.fake_filesystem_unittest.Patcher" title="pyfakefs.fake_filesystem_unittest.Patcher"><code class="xref py py-class docutils literal notranslate"><span class="pre">Patcher</span></code></a> is used in <a class="reference internal" href="#pyfakefs.fake_filesystem_unittest.TestCaseMixin" title="pyfakefs.fake_filesystem_unittest.TestCaseMixin"><code class="xref py py-class docutils literal notranslate"><span class="pre">TestCaseMixin</span></code></a>.
+<a class="reference internal" href="#pyfakefs.fake_filesystem_unittest.Patcher" title="pyfakefs.fake_filesystem_unittest.Patcher"><code class="xref py py-class docutils literal notranslate"><span class="pre">Patcher</span></code></a> also works as a context manager for other tests:</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="k">with</span> <span class="n">Patcher</span><span class="p">():</span>
     <span class="n">doStuff</span><span class="p">()</span>
 </pre></div>
@@ -1106,7 +1174,7 @@ that is available on pypi.</p>
         &#169; Copyright 2009 Google Inc. All Rights Reserved.
 © Copyright 2014 Altera Corporation. All Rights Reserved.
 © Copyright 2014-2018 John McGehee.
-      Last updated on Nov 18, 2018.
+      Last updated on Nov 22, 2018.
     </div>
   </body>
 </html>
