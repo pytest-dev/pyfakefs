@@ -4,6 +4,15 @@ The release versions are PyPi releases.
 ## Version 3.6 (as yet unreleased)
 
 #### New Features
+
+#### Fixes
+
+## [Version 3.5.3](https://pypi.python.org/pypi/pyfakefs/3.5.3)
+
+This is a minor release to have a version with passing tests for OpenSUSE 
+packaging.
+
+#### New Features
   * automatically patch file system methods imported as another name like 
     `from os.path import exists as my_exists`, including builtin `open` 
     and `io.open`
