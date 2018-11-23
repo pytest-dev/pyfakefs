@@ -9,7 +9,13 @@ A clear and concise description of what the bug is.
 Please provide a stack trace if available.
 
 **How To Reproduce**
-A unit test or a minimal code example that reproduces the problem.
+Please provide a unit test or a minimal code snippet that reproduces the 
+problem.
 
-**Enviroment**
-Please enter you OS, the Python version and the version of pyfakefs.
+** Your enviroment**
+Please run the following and paste the output.
+```bash
+python -c "import platform; print(platform.platform())"
+python -c "import sys; print('Python', sys.version)"
+python -c "from pyfakefs.fake_filesystem import __version__; print('pyfakefs', __version__)"
+```
