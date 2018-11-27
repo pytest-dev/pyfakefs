@@ -69,9 +69,12 @@ pyfakefs is currently automatically tested:
 
 ### Running pyfakefs unit tests
 
-pyfakefs unit tests are available via two test scripts:
+pyfakefs unit tests can be run using `unittest` or `pytest`:
 
 ```bash
+$ cd pyfakefs/
+$ export PYTHONPATH=$PWD
+
 $ python -m pyfakefs.tests.all_tests
 $ python -m pytest pyfakefs/tests/pytest_plugin_test.py
 ```
