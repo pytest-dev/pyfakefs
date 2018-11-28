@@ -25,7 +25,7 @@ import sys
 import unittest
 
 from pyfakefs import fake_filesystem_unittest
-from pyfakefs.fake_filesystem import set_uid
+from pyfakefs.fake_filesystem import is_root
 from pyfakefs.tests.test_utils import RealFsTestMixin
 
 is_windows = sys.platform == 'win32'
@@ -103,9 +103,13 @@ class FakeShutilModuleTest(RealFsTestCase):
         file_path = os.path.join(dir_path, 'baz')
         self.create_file(file_path)
         self.os.chmod(dir_path, 0o555)
-        self.assertRaises(OSError, shutil.rmtree, dir_path)
-        self.assertTrue(os.path.exists(file_path))
-        self.os.chmod(dir_path, 0o777)
+        if not is_root():
+            self.assertRaises(OSError, shutil.rmtree, dir_path)
+            self.assertTrue(os.path.exists(file_path))
+            self.os.chmod(dir_path, 0o777)
+        else:
+            shutil.rmtree(dir_path)
+            self.assertFalse(os.path.exists(file_path))
 
     @unittest.skipIf(is_windows, 'Posix specific behavior')
     def test_rmtree_with_open_file_posix(self):
@@ -357,7 +361,6 @@ class RealShutilModuleTest(FakeShutilModuleTest):
 
 class FakeCopyFileTest(RealFsTestCase):
     def tearDown(self):
-        set_uid(1)
         super(FakeCopyFileTest, self).tearDown()
 
     def test_common_case(self):
@@ -414,13 +417,15 @@ class FakeCopyFileTest(RealFsTestCase):
         os.chmod(dst_file, 0o400)
         self.assertTrue(os.path.exists(src_file))
         self.assertTrue(os.path.exists(dst_file))
-        self.assertRaises(IOError, shutil.copyfile, src_file, dst_file)
-        if not self.use_real_fs():
-            set_uid(0)
+
+        if is_root():
             shutil.copyfile(src_file, dst_file)
             self.assertTrue(self.os.path.exists(dst_file))
             with self.open(dst_file) as f:
                 self.assertEqual('contents of source file', f.read())
+        else:
+            self.assertRaises(IOError, shutil.copyfile, src_file, dst_file)
+
         os.chmod(dst_file, 0o666)
 
     @unittest.skipIf(is_windows, 'Posix specific behavior')
@@ -435,8 +440,13 @@ class FakeCopyFileTest(RealFsTestCase):
         os.chmod(dst_dir, 0o555)
         self.assertTrue(os.path.exists(src_file))
         self.assertTrue(os.path.exists(dst_dir))
-        exception = OSError if sys.version_info[0] > 2 else IOError
-        self.assertRaises(exception, shutil.copyfile, src_file, dst_file)
+        if not is_root():
+            exception = OSError if sys.version_info[0] > 2 else IOError
+            self.assertRaises(exception, shutil.copyfile, src_file, dst_file)
+        else:
+            shutil.copyfile(src_file, dst_file)
+            self.assertTrue(os.path.exists(dst_file))
+            self.check_contents(dst_file, src_contents)
 
     def test_raises_if_src_doesnt_exist(self):
         src_file = self.make_path('xyzzy')
@@ -453,7 +463,12 @@ class FakeCopyFileTest(RealFsTestCase):
         self.create_file(src_file, contents=src_contents)
         os.chmod(src_file, 0o000)
         self.assertTrue(os.path.exists(src_file))
-        self.assertRaises(IOError, shutil.copyfile, src_file, dst_file)
+        if not is_root():
+            self.assertRaises(IOError, shutil.copyfile, src_file, dst_file)
+        else:
+            shutil.copyfile(src_file, dst_file)
+            self.assertTrue(os.path.exists(dst_file))
+            self.check_contents(dst_file, src_contents)
 
     def test_raises_if_src_is_a_directory(self):
         src_file = self.make_path('xyzzy')
