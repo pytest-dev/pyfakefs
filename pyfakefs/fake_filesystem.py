@@ -111,12 +111,11 @@ from pyfakefs.extra_packages import use_scandir
 from pyfakefs.helpers import (
     FakeStatResult, FileBufferIO, IS_PY2, NullFileBufferIO,
     is_int_type, is_byte_string, is_unicode_string,
-    make_string_path, text_type
+    make_string_path, text_type, IS_WIN
 )
 
 if sys.version_info[0] < 3:
     import __builtin__
-
 
 __pychecker__ = 'no-reimportself'
 
@@ -167,8 +166,8 @@ FAKE_PATH_MODULE_DEPRECATION = (
 )
 
 NR_STD_STREAMS = 3
-USER_ID = 1
-GROUP_ID = 1
+USER_ID = 1 if IS_WIN else os.getuid()
+GROUP_ID = 1 if IS_WIN else os.getgid()
 
 
 def set_uid(uid):
@@ -4282,6 +4281,8 @@ class FakeOsModule(object):
             if os_error.errno == errno.ENOENT:
                 return False
             raise
+        if is_root():
+            mode &= ~os.W_OK
         return (mode & ((stat_result.st_mode >> 6) & 7)) == mode
 
     def chmod(self, path, mode, dir_fd=None, follow_symlinks=None):
@@ -4423,7 +4424,7 @@ class FakeOsModule(object):
             # note that a default value of 0o600 without a device type is
             # documented - this is not how it seems to work
             mode = S_IFREG | 0o600
-        if device or not mode & S_IFREG:
+        if device or not mode & S_IFREG and not is_root():
             self.filesystem.raise_os_error(errno.EPERM)
 
         filename = self._path_with_dir_fd(filename, self.mknod, dir_fd)

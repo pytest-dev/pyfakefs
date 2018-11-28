@@ -22,6 +22,7 @@ import os
 
 IS_PY2 = sys.version_info[0] < 3
 IS_PYPY = platform.python_implementation() == 'PyPy'
+IS_WIN = sys.platform == 'win32'
 
 try:
     text_type = unicode  # Python 2

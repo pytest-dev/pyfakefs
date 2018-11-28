@@ -10,6 +10,7 @@ The release versions are PyPi releases.
 #### Fixes
   * fixed `AttributeError` shown while displaying `fs` in a failing pytest 
     in Python 2
+  * fixed permission handling for root user 
 
 ## [Version 3.5.3](https://pypi.python.org/pypi/pyfakefs/3.5.3)
 

@@ -25,7 +25,7 @@ import time
 import unittest
 
 from pyfakefs import fake_filesystem
-from pyfakefs.fake_filesystem import FakeFileOpen, set_uid
+from pyfakefs.fake_filesystem import FakeFileOpen, is_root
 from pyfakefs.extra_packages import use_scandir, use_scandir_package
 
 from pyfakefs.tests.test_utils import DummyTime, TestCase, RealFsTestCase
@@ -54,7 +54,6 @@ class FakeOsModuleTest(FakeOsModuleTestBase):
         super(FakeOsModuleTest, self).setUp()
         self.rwx = self.os.R_OK | self.os.W_OK | self.os.X_OK
         self.rw = self.os.R_OK | self.os.W_OK
-        set_uid(1)
 
     def test_chdir(self):
         """chdir should work on a directory."""
@@ -224,11 +223,12 @@ class FakeOsModuleTest(FakeOsModuleTestBase):
         fileno1 = fake_file1.fileno()
         self.os.fdopen(fileno1)
         self.os.fdopen(fileno1, 'r')
-        exception = OSError if self.is_python2 else IOError
-        self.assertRaises(exception, self.os.fdopen, fileno1, 'w')
-        set_uid(0)
-        self.os.fdopen(fileno1, 'w')
-        self.os.close(fileno1)
+        if not is_root():
+            exception = OSError if self.is_python2 else IOError
+            self.assertRaises(exception, self.os.fdopen, fileno1, 'w')
+        else:
+            self.os.fdopen(fileno1, 'w')
+            self.os.close(fileno1)
 
     def test_fstat(self):
         directory = self.make_path('xyzzy')
@@ -754,9 +754,19 @@ class FakeOsModuleTest(FakeOsModuleTestBase):
         path = self.os.path.join(parent_dir, 'bar')
         self.create_file(path)
         self.os.chmod(parent_dir, 0o666)  # missing execute permission
-        self.assert_raises_os_error(errno.EACCES, self.os.remove, path)
+        if not is_root():
+            self.assert_raises_os_error(errno.EACCES, self.os.remove, path)
+        else:
+            self.os.remove(path)
+            self.assertFalse(self.os.path.exists(path))
+            self.create_file(path)
         self.os.chmod(parent_dir, 0o555)  # missing write permission
-        self.assert_raises_os_error(errno.EACCES, self.os.remove, path)
+        if not is_root():
+            self.assert_raises_os_error(errno.EACCES, self.os.remove, path)
+        else:
+            self.os.remove(path)
+            self.assertFalse(self.os.path.exists(path))
+            self.create_file(path)
         self.os.chmod(parent_dir, 0o333)
         self.os.remove(path)
         self.assertFalse(self.os.path.exists(path))
@@ -1606,9 +1616,9 @@ class FakeOsModuleTest(FakeOsModuleTestBase):
         self.os.chmod(directory, 0o400)
 
         directory = self.make_path('a', 'b')
-        self.assert_raises_os_error(errno.EACCES, self.os.mkdir, directory)
-        if not self.use_real_fs():
-            set_uid(0)
+        if not is_root():
+            self.assert_raises_os_error(errno.EACCES, self.os.mkdir, directory)
+        else:
             self.os.mkdir(directory)
             self.assertTrue(self.os.path.exists(directory))
 
@@ -1680,10 +1690,9 @@ class FakeOsModuleTest(FakeOsModuleTestBase):
         self.os.chmod(directory, 0o400)
 
         directory = self.make_path('a', 'b')
-        set_uid(1)
-        self.assertRaises(Exception, self.os.makedirs, directory)
-        if not self.use_real_fs():
-            set_uid(0)
+        if not is_root():
+            self.assertRaises(Exception, self.os.makedirs, directory)
+        else:
             self.os.makedirs(directory)
             self.assertTrue(self.os.path.exists(directory))
 
@@ -1795,10 +1804,14 @@ class FakeOsModuleTest(FakeOsModuleTestBase):
         # actual tests
         self.assertTrue(self.os.access(path, self.os.F_OK))
         self.assertTrue(self.os.access(path, self.os.R_OK))
-        self.assertFalse(self.os.access(path, self.os.W_OK))
         self.assertFalse(self.os.access(path, self.os.X_OK))
         self.assertFalse(self.os.access(path, self.rwx))
-        self.assertFalse(self.os.access(path, self.rw))
+        if is_root():
+            self.assertTrue(self.os.access(path, self.os.W_OK))
+            self.assertTrue(self.os.access(path, self.rw))
+        else:
+            self.assertFalse(self.os.access(path, self.os.W_OK))
+            self.assertFalse(self.os.access(path, self.rw))
 
     @unittest.skipIf(sys.version_info < (3, 3),
                      'follow_symlinks new in Python 3.3')
@@ -1814,10 +1827,14 @@ class FakeOsModuleTest(FakeOsModuleTestBase):
         # test file
         self.assertTrue(self.os.access(link_path, self.os.F_OK))
         self.assertTrue(self.os.access(link_path, self.os.R_OK))
-        self.assertFalse(self.os.access(link_path, self.os.W_OK))
+        if is_root():
+            self.assertTrue(self.os.access(link_path, self.os.W_OK))
+            self.assertTrue(self.os.access(link_path, self.rw))
+        else:
+            self.assertFalse(self.os.access(link_path, self.os.W_OK))
+            self.assertFalse(self.os.access(link_path, self.rw))
         self.assertFalse(self.os.access(link_path, self.os.X_OK))
         self.assertFalse(self.os.access(link_path, self.rwx))
-        self.assertFalse(self.os.access(link_path, self.rw))
 
         # test link itself
         self.assertTrue(
@@ -2114,8 +2131,12 @@ class FakeOsModuleTest(FakeOsModuleTestBase):
     def test_mknod_raises_if_unsupported_options(self):
         self.check_posix_only()
         filename = 'abcde'
-        self.assert_raises_os_error(errno.EPERM, self.os.mknod, filename,
-                                    stat.S_IFCHR)
+        if not is_root():
+            self.assert_raises_os_error(errno.EPERM, self.os.mknod, filename,
+                                        stat.S_IFCHR)
+        else:
+            self.os.mknod(filename, stat.S_IFCHR)
+            self.os.remove(filename)
 
     def test_mknod_raises_if_parent_is_not_a_directory(self):
         self.check_linux_only()
@@ -2683,10 +2704,10 @@ class FakeOsModuleTestCaseInsensitiveFS(FakeOsModuleTestBase):
         self.os.fdopen(fileno1)
         self.os.fdopen(fileno1, 'r')
         exception = OSError if self.is_python2 else IOError
-        set_uid(1)
-        self.assertRaises(exception, self.os.fdopen, fileno1, 'w')
-        set_uid(0)
-        self.os.fdopen(fileno1, 'w')
+        if not is_root():
+            self.assertRaises(exception, self.os.fdopen, fileno1, 'w')
+        else:
+            self.os.fdopen(fileno1, 'w')
 
     def test_stat(self):
         directory = self.make_path('xyzzy')

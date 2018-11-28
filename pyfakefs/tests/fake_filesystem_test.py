@@ -24,7 +24,8 @@ import time
 import unittest
 
 from pyfakefs import fake_filesystem
-from pyfakefs.fake_filesystem import set_uid, set_gid
+from pyfakefs.fake_filesystem import set_uid, set_gid, is_root
+from pyfakefs.helpers import IS_WIN
 from pyfakefs.tests.test_utils import DummyTime, TestCase
 
 
@@ -260,7 +261,6 @@ class FakeFilesystemUnitTest(TestCase):
             'foobaz', filesystem=self.filesystem)
         self.fake_grandchild = fake_filesystem.FakeDirectory(
             'quux', filesystem=self.filesystem)
-        set_uid(1)
 
     def test_new_filesystem(self):
         self.assertEqual('/', self.filesystem.path_separator)
@@ -487,15 +487,19 @@ class FakeFilesystemUnitTest(TestCase):
         dir_path = '/foo/bar'
         self.filesystem.create_dir(dir_path, perm_bits=0o555)
         file_path = dir_path + '/baz'
-        if sys.version_info[0] < 3:
-            self.assert_raises_io_error(errno.EACCES,
-                                        self.filesystem.create_file, file_path)
+
+        if not is_root():
+            if sys.version_info[0] < 3:
+                self.assert_raises_io_error(errno.EACCES,
+                                            self.filesystem.create_file,
+                                            file_path)
+            else:
+                self.assert_raises_os_error(errno.EACCES,
+                                            self.filesystem.create_file,
+                                            file_path)
         else:
-            self.assert_raises_os_error(errno.EACCES,
-                                        self.filesystem.create_file, file_path)
-        set_uid(0)
-        self.filesystem.create_file(file_path)
-        self.assertTrue(self.filesystem.exists(file_path))
+            self.filesystem.create_file(file_path)
+            self.assertTrue(self.filesystem.exists(file_path))
 
     def test_create_file_in_read_only_directory_possible_in_windows(self):
         self.filesystem.is_windows_fs = True
@@ -545,8 +549,12 @@ class FakeFilesystemUnitTest(TestCase):
         self.assertTrue(self.filesystem.exists(os.path.dirname(path)))
         new_file = self.filesystem.get_object(path)
         self.assertEqual(os.path.basename(path), new_file.name)
-        self.assertEqual(1, new_file.st_uid)
-        self.assertEqual(1, new_file.st_gid)
+        if IS_WIN:
+            self.assertEqual(1, new_file.st_uid)
+            self.assertEqual(1, new_file.st_gid)
+        else:
+            self.assertEqual(os.getuid(), new_file.st_uid)
+            self.assertEqual(os.getgid(), new_file.st_gid)
         self.assertEqual(new_file, retval)
 
     def test_create_file_with_changed_ids(self):
@@ -558,8 +566,8 @@ class FakeFilesystemUnitTest(TestCase):
         new_file = self.filesystem.get_object(path)
         self.assertEqual(42, new_file.st_uid)
         self.assertEqual(2, new_file.st_gid)
-        set_uid(1)
-        set_gid(1)
+        set_uid(1 if IS_WIN else os.getuid())
+        set_gid(1 if IS_WIN else os.getgid())
 
     def test_empty_file_created_for_none_contents(self):
         fake_open = fake_filesystem.FakeFileOpen(self.filesystem)
@@ -1829,7 +1837,6 @@ class RealFileSystemAccessTest(TestCase):
         self.pyfakefs_path = os.path.split(
             os.path.dirname(os.path.abspath(__file__)))[0]
         self.root_path = os.path.split(self.pyfakefs_path)[0]
-        set_uid(1)
 
     def test_add_non_existing_real_file_raises(self):
         nonexisting_path = os.path.join('nonexisting', 'test.txt')
@@ -1881,8 +1888,12 @@ class RealFileSystemAccessTest(TestCase):
         with open(real_file_path, 'rb') as f:
             real_contents = f.read()
         self.assertEqual(fake_file.byte_contents, real_contents)
-        self.assert_raises_io_error(
-            errno.EACCES, self.fake_open, real_file_path, 'w')
+        if not is_root():
+            self.assert_raises_io_error(
+                errno.EACCES, self.fake_open, real_file_path, 'w')
+        else:
+            with self.fake_open(real_file_path, 'w'):
+                pass
 
     def check_writable_file(self, fake_file, real_file_path):
         with open(real_file_path, 'rb') as f:

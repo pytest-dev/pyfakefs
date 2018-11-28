@@ -27,7 +27,7 @@ import time
 import unittest
 
 from pyfakefs import fake_filesystem
-from pyfakefs.fake_filesystem import set_uid
+from pyfakefs.fake_filesystem import is_root
 from pyfakefs.tests.test_utils import TestCase, RealFsTestCase
 
 
@@ -40,7 +40,6 @@ class FakeFileOpenTest(FakeFileOpenTestBase):
     def setUp(self):
         super(FakeFileOpenTest, self).setUp()
         self.orig_time = time.time
-        set_uid(1)
 
     def tearDown(self):
         super(FakeFileOpenTest, self).tearDown()
@@ -452,10 +451,10 @@ class FakeFileOpenTest(FakeFileOpenTestBase):
         self.create_with_permission(file_path, 0o400)
         # actual tests
         self.open(file_path, 'r').close()
-        self.assert_raises_io_error(errno.EACCES, self.open, file_path, 'w')
-        self.assert_raises_io_error(errno.EACCES, self.open, file_path, 'w+')
-        if not self.use_real_fs():
-            set_uid(0)
+        if not is_root():
+            self.assert_raises_io_error(errno.EACCES, self.open, file_path, 'w')
+            self.assert_raises_io_error(errno.EACCES, self.open, file_path, 'w+')
+        else:
             self.open(file_path, 'w').close()
             self.open(file_path, 'w+').close()
 
@@ -465,11 +464,11 @@ class FakeFileOpenTest(FakeFileOpenTestBase):
         file_path = self.make_path('target_file')
         self.create_with_permission(file_path, 0o200)
         # actual tests
-        self.assertRaises(IOError, self.open, file_path, 'r')
         self.open(file_path, 'w').close()
-        self.assertRaises(IOError, self.open, file_path, 'w+')
-        if not self.use_real_fs():
-            set_uid(0)
+        if not is_root():
+            self.assertRaises(IOError, self.open, file_path, 'r')
+            self.assertRaises(IOError, self.open, file_path, 'w+')
+        else:
             self.open(file_path, 'r').close()
             self.open(file_path, 'w+').close()
 
@@ -479,11 +478,11 @@ class FakeFileOpenTest(FakeFileOpenTestBase):
         file_path = self.make_path('target_file')
         self.create_with_permission(file_path, 0o100)
         # actual tests
-        self.assertRaises(IOError, self.open, file_path, 'r')
-        self.assertRaises(IOError, self.open, file_path, 'w')
-        self.assertRaises(IOError, self.open, file_path, 'w+')
-        if not self.use_real_fs():
-            set_uid(0)
+        if not is_root():
+            self.assertRaises(IOError, self.open, file_path, 'r')
+            self.assertRaises(IOError, self.open, file_path, 'w')
+            self.assertRaises(IOError, self.open, file_path, 'w+')
+        else:
             self.open(file_path, 'r').close()
             self.open(file_path, 'w').close()
             self.open(file_path, 'w+').close()
