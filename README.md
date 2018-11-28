@@ -76,7 +76,8 @@ $ cd pyfakefs/
 $ export PYTHONPATH=$PWD
 
 $ python -m pyfakefs.tests.all_tests
-$ python -m pytest pyfakefs/tests/pytest_plugin_test.py
+$ python -m pyfakefs.tests.all_tests_without_extra_packages
+$ python -m pytest pyfakefs/tests/pytest/pytest_plugin_test.py
 ```
 
 These scripts are called by `tox` and Travis-CI. `tox` can be used to run tests
