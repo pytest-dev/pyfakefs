@@ -69,6 +69,7 @@ pyfakefs is currently automatically tested:
 
 ### Running pyfakefs unit tests
 
+#### On the command line
 pyfakefs unit tests can be run using `unittest` or `pytest`:
 
 ```bash
@@ -85,6 +86,19 @@ locally against supported python versions:
 
 ```bash
 $ tox
+```
+
+#### In a Docker container
+
+The `Dockerfile` at the top of the repository will run the tests on the latest
+Ubuntu version.  Build the container:
+```bash
+cd pyfakefs/
+docker build -t pyfakefs .
+```
+Run the unit tests in the container:
+```bash
+docker run -t pyfakefs
 ```
 
 ### Contributing to pyfakefs
