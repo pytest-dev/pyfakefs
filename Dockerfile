@@ -15,12 +15,18 @@
 # Prerequisites:
 # * Install Docker
 # * Clone pyfakefs
+#
+# To build and run the container:
+#
+#     cd pyfakefs
+#     docker build -t pyfakefs .
+#     docker run   -t pyfakefs
 
-FROM ubuntu:16.04
+FROM ubuntu
 MAINTAINER jmcgeheeiv@users.noreply.github.com
 
 # The Ubuntu base container does not specify a locale.
-# pyfakefs tests require at least Latin1 character set.
+# pyfakefs tests require at least the Latin1 character set.
 RUN apt-get update && apt-get install -y locales
 RUN locale-gen en_US.UTF-8
 ENV LANG en_US.UTF-8
@@ -35,15 +41,14 @@ RUN apt-get clean
 
 RUN useradd -u 1000 pyfakefs
 
-RUN wget https://github.com/jmcgeheeiv/pyfakefs/archive/docker.zip \
-    && unzip docker.zip \
-    && chown -R pyfakefs:pyfakefs /pyfakefs-docker
-WORKDIR /pyfakefs-docker
+RUN wget https://github.com/jmcgeheeiv/pyfakefs/archive/master.zip \
+    && unzip master.zip \
+    && chown -R pyfakefs:pyfakefs /pyfakefs-master
+WORKDIR /pyfakefs-master
 RUN pip3 install -r requirements.txt
 RUN pip3 install -r extra_requirements.txt
 
 USER pyfakefs
-ENV PYTHONPATH /pyfakefs-docker
+ENV PYTHONPATH /pyfakefs-master
 CMD ["python3", "-m", "pyfakefs.tests.all_tests"]
-#CMD ["python3", "-m", "pytest", "pyfakefs/tests/pytest_plugin_test.py"]
 
