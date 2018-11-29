@@ -27,17 +27,23 @@ ENV LANG en_US.UTF-8
 ENV LANGUAGE en_US:en
 ENV LC_ALL en_US.UTF-8
 
-RUN apt-get update && apt-get install -y python3-pip # python3
+RUN apt-get update && apt-get install -y \
+    python3-pip \
+    unzip \
+    wget
 RUN apt-get clean
-COPY . /usr/local/pyfakefs
-WORKDIR /usr/local/pyfakefs
+
+RUN useradd -u 1000 pyfakefs
+
+RUN wget https://github.com/jmcgeheeiv/pyfakefs/archive/docker.zip \
+    && unzip docker.zip \
+    && chown -R pyfakefs:pyfakefs /pyfakefs-docker
+WORKDIR /pyfakefs-docker
 RUN pip3 install -r requirements.txt
 RUN pip3 install -r extra_requirements.txt
 
-RUN useradd -u 1000 pyfakefs
 USER pyfakefs
-
-ENV PYTHONPATH /usr/local/pyfakefs
+ENV PYTHONPATH /pyfakefs-docker
 CMD ["python3", "-m", "pyfakefs.tests.all_tests"]
 #CMD ["python3", "-m", "pytest", "pyfakefs/tests/pytest_plugin_test.py"]
 
