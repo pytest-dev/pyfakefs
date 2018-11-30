@@ -4711,9 +4711,13 @@ class FakeScandirTest(FakeOsModuleTestBase):
                          [f.path for f in self.scandir(link_path)])
 
     def test_inode(self):
-        if use_scandir and self.is_windows and self.use_real_fs():
-            self.skipTest(
-                'inode seems not to work in scandir module under Windows')
+        if use_scandir and self.use_real_fs():
+            if self.is_windows:
+                self.skipTest(
+                    'inode seems not to work in scandir module under Windows')
+            if os.path.exists('/.dockerenv'):
+                self.skipTest(
+                    'inode seems not to work in a Docker container')
         self.assertEqual(self.os.stat(self.dir_path).st_ino,
                          self.dir_entries[0].inode())
         self.assertEqual(self.os.stat(self.file_path).st_ino,
