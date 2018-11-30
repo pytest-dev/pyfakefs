@@ -4,6 +4,7 @@ if [[ $TRAVIS_OS_NAME == 'osx' ]]; then
     source ~/.venv/bin/activate
 fi
 
+if ! [[ $VM == 'Docker' ]]; then
 python --version
 pip --version
 pip install flake8
@@ -19,3 +20,4 @@ flake8 . $EXCLUDES --count --select=E901,E999,F821,F822,F823 --show-source --sta
 flake8 . $EXCLUDES --count --exit-zero --max-complexity=12 --statistics
 python -m pyfakefs.tests.all_tests
 python -m pyfakefs.tests.all_tests_without_extra_packages
+fi

@@ -44,6 +44,8 @@ if [[ $TRAVIS_OS_NAME == 'osx' ]]; then
     source ~/.venv/bin/activate
 fi
 
+if ! [[ $VM == 'Docker' ]]; then
 pip install -r requirements.txt
 pip install -r extra_requirements.txt
 pip install .
+fi

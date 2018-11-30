@@ -43,6 +43,8 @@ matrix:
         - os: osx
           language: generic
           env: PYTHON=py37
+        - language: minimal
+          env: VM=Docker
 
 install:
   - ./.travis/install.sh
@@ -50,3 +52,4 @@ install:
 script:
   - ./.travis/run_tests.sh
   - ./.travis/run_pytest.sh
+  - ./.travis/docker_tests.sh
