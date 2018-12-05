@@ -6,6 +6,8 @@ The release versions are PyPi releases.
 #### New Features
 
 #### Fixes
+  * fixed `AttributeError` shown while displaying `fs` in a failing pytest 
+    in Python 2
 
 ## [Version 3.5.3](https://pypi.python.org/pypi/pyfakefs/3.5.3)
 
@@ -20,7 +22,7 @@ packaging.
 #### Fixes
   * make tests for access time less strict to account for file systems that 
     do not change it immediately ([#453](../../issues/453))
-
+  
 ## [Version 3.5.2](https://pypi.python.org/pypi/pyfakefs/3.5.2)
 
 This is mostly a bug-fix release.

@@ -17,6 +17,7 @@ import pytest
 
 from pyfakefs.fake_filesystem_unittest import Patcher
 
+Patcher.SKIPMODULES.add(pytest)
 Patcher.SKIPMODULES.add(py)  # Ignore pytest components when faking filesystem
 
 # The "linecache" module is used to read the test file in case of test failure
@@ -26,14 +27,15 @@ Patcher.SKIPMODULES.add(py)  # Ignore pytest components when faking filesystem
 # as a local function in the module (used in Python 2).
 # In Python 3, we also have to set back the cached open function in tokenize.
 Patcher.SKIPMODULES.add(linecache)
+Patcher.SKIPMODULES.add(tokenize)
 
 
 @pytest.fixture
-def fs(request):
+def fs():
     """ Fake filesystem. """
     patcher = Patcher()
     patcher.setUp()
     linecache.open = patcher.original_open
     tokenize._builtin_open = patcher.original_open
-    request.addfinalizer(patcher.tearDown)
-    return patcher.fs
+    yield patcher.fs
+    patcher.tearDown()

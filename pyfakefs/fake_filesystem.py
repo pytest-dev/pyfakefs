@@ -113,6 +113,11 @@ from pyfakefs.helpers import (
     is_int_type, is_byte_string, is_unicode_string,
     make_string_path, text_type
 )
+
+if sys.version_info[0] < 3:
+    import __builtin__
+
+
 __pychecker__ = 'no-reimportself'
 
 __version__ = '3.6'
@@ -4570,12 +4575,19 @@ class FakeBuiltinModule(object):
                 file system information.
         """
         self.filesystem = filesystem
+        if IS_PY2:
+            self._builtin_module = __builtin__
 
     def open(self, *args, **kwargs):
         """Redirect the call to FakeFileOpen.
         See FakeFileOpen.call() for description.
         """
         return FakeFileOpen(self.filesystem)(*args, **kwargs)
+
+    if IS_PY2:
+        def __getattr__(self, name):
+            """Forwards any unfaked calls to the standard builtins."""
+            return getattr(self._builtin_module, name)
 
 
 class FakeFileWrapper(object):

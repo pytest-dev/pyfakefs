@@ -11,6 +11,8 @@
 # limitations under the License.
 
 # Example for a custom pytest fixture with an argument to Patcher.
+# Use this as a template if you want to write your own pytest plugin
+# with specific Patcher arguments.
 # See `pytest_plugin.py` for more information.
 
 import linecache
@@ -21,19 +23,21 @@ import pytest
 
 from pyfakefs.fake_filesystem_unittest import Patcher
 
+Patcher.SKIPMODULES.add(pytest)
 Patcher.SKIPMODULES.add(py)
 Patcher.SKIPMODULES.add(linecache)
+Patcher.SKIPMODULES.add(tokenize)
 
 from pyfakefs.fake_filesystem_unittest import Patcher
 from pyfakefs.tests.pytest import example
 
 
 @pytest.fixture
-def fs_reload_example(request):
+def fs_reload_example():
     """ Fake filesystem. """
     patcher = Patcher(modules_to_reload=[example])
     patcher.setUp()
     linecache.open = patcher.original_open
     tokenize._builtin_open = patcher.original_open
-    request.addfinalizer(patcher.tearDown)
-    return patcher.fs
+    yield patcher.fs
+    patcher.tearDown()

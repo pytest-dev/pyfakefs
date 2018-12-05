@@ -16,4 +16,5 @@ def test_failed_testresult_stacktrace():
     assert contents
     print('contents', contents)
     assert '???' not in contents
+    assert 'AttributeError' not in contents
     assert 'def test_fs(fs):' in contents
