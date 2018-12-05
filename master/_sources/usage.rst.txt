@@ -89,7 +89,29 @@ deprecated and will not be described in detail.
 
 Customizing Patcher and TestCase
 --------------------------------
-Pyfakefs automatically patches file system related modules that are:
+
+Both ``fake_filesystem_unittest.Patcher`` and ``fake_filesystem_unittest.TestCase``
+provide a few arguments to handle cases where patching does not work out of
+the box.
+In case of ``fake_filesystem_unittest.TestCase``, these arguments can either
+be set in the TestCase instance initialization, or passed to ``setUpPyfakefs()``.
+
+.. note:: If you need these arguments in ``PyTest``, you must
+  use ``Patcher`` directly instead of the ``fs`` fixture. Alternatively,
+  you can add your own fixture with the needed parameters.
+
+  An example for both approaches can be found in
+  `pytest_fixture_test.py <https://github.com/jmcgeheeiv/pyfakefs/blob/master/pyfakefs/tests/pytest/pytest_fixture_test.py>`__
+  with the example fixture in `conftest.py <https://github.com/jmcgeheeiv/pyfakefs/blob/master/pyfakefs/tests/pytest/conftest.py>`__.
+  We advice to use this example fixture code as a template for your customized
+  pytest plugins.
+
+modules_to_reload
+~~~~~~~~~~~~~~~~~
+Pyfakefs patches modules that are imported before starting the test by
+finding and replacing file system modules in all loaded modules at test
+initialization time.
+This allows to automatically patch file system related modules that are:
 
 - imported directly, for example:
 
@@ -127,46 +149,95 @@ This also works if importing the functions as another name:
   from io import open as io_open
   from builtins import open as bltn_open
 
-There are other cases where automatic patching does not work.
-Both ``fake_filesystem_unittest.Patcher`` and ``fake_filesystem_unittest.TestCase``
-provide a few additional arguments to handle such cases.
-In case of ``fake_filesystem_unittest.TestCase``, these arguments can either
-be set in the TestCase instance initialization, or when you call
-``setUpPyfakefs()``.
+There are a few cases where automatic patching does not work. We know of two
+specific cases where this is the case:
 
-.. note:: If you need these arguments in ``PyTest``, you must
-  use ``Patcher`` directly instead of the ``fs`` fixture. Alternatively,
-  you can add your own fixture with the needed parameters.
-
-  An example for both approaches can be found in
-  `pytest_fixture_test.py <https://github.com/jmcgeheeiv/pyfakefs/blob/master/pyfakefs/tests/pytest/pytest_fixture_test.py>`__
-  with the example fixture in `conftest.py <https://github.com/jmcgeheeiv/pyfakefs/blob/master/pyfakefs/tests/pytest/conftest.py>`__.
-
-
-modules_to_reload
-~~~~~~~~~~~~~~~~~
-This allows to pass a list of modules that shall be reloaded, thus allowing
-to patch modules not patched automatically.
-
-A common example for failed automatic patching is the assignment of file
-system functions to a variable, as shown in the following example with
-default argument assignment:
+- initializing global variables:
 
 .. code:: python
+
+  from pathlib import Path
+
+  path = Path("/example_home")
+
+In this case, ``path`` will hold the real file system path inside the test.
+
+- initializing a default argument:
+
+.. code:: python
+
+  import os
 
   def check_if_exists(filepath, file_exists=os.path.exists):
       return file_exists(filepath)
 
-If adding the module containing this code to ``modules_to_reload``, it
-will be correctly patched.
+Here, ``file_exists`` will not be patched in the test.
+
+To get these cases to work as expected under test, the respective modules
+containing the code shall be added to the ``modules_to_reload`` argument (a
+module list).
+The passed modules will be reloaded, thus allowing pyfakefs to patch them
+dynamically. All modules loaded after the initial patching described above
+will be patched using this second mechanism.
+
+Given tat the example code shown above is located in the file ``example/sut.py``,
+the following code will work:
+
+.. code:: python
+
+  # example using unittest
+  class ReloadModuleTest(fake_filesystem_unittest.TestCase):
+      def setUp(self):
+          self.setUpPyfakefs(modules_to_reload=[example.sut])
+
+      def test_path_exists(self):
+          file_path = '/foo/bar'
+          self.fs.create_dir(file_path)
+          self.assertTrue(example.sut.check_if_exists(file_path))
+
+  # example using Patcher
+  def test_path_exists():
+      with Patcher() as patcher:
+        file_path = '/foo/bar'
+        patcher.fs.create_dir(file_path)
+        assert example.sut.check_if_exists(file_path)
+
+Example using pytest:
+
+.. code:: python
+
+  # conftest.py
+  ...
+  from example import sut
+
+  @pytest.fixture
+  def fs_reload_sut():
+      patcher = Patcher(modules_to_reload=[sut])
+      patcher.setUp()
+      linecache.open = patcher.original_open
+      tokenize._builtin_open = patcher.original_open
+      yield patcher.fs
+      patcher.tearDown()
+
+  # test_code.py
+  ...
+  def test_path_exists(fs_reload_sut):
+      file_path = '/foo/bar'
+      fs_reload_sut.create_dir(file_path)
+      assert example.sut.check_if_exists(file_path)
+
 
 modules_to_patch
 ~~~~~~~~~~~~~~~~
-This also allows patching modules that are not patched out of the box, in
-this case by adding a fake module implementation for a module name. The
-argument is a dictionary of fake modules mapped to the names to be faked.
-This can be used to fake out modules that use OS-specific file system calls
-as in the following example:
+Sometimes there are file system modules in other packages that are not
+patched in standard pyfakefs. To allow patching such modules,
+``modules_to_patch`` can be used by adding a fake module implementation for
+a module name. The argument is a dictionary of fake modules mapped to the
+names to be faked.
+
+This mechanism is used in pyfakefs itself to patch the external modules
+`pathlib2` and `scandir` if present, and the following example shows how to
+fake a module in Django that uses OS file system functions:
 
 .. code:: python
 
@@ -199,14 +270,18 @@ additional_skip_names
 ~~~~~~~~~~~~~~~~~~~~~
 This may be used to add modules that shall not be patched. This is mostly
 used to avoid patching the Python file system modules themselves, but may be
-helpful in some special situations.
+helpful in some special situations. There is also the global
+variable ``Patcher.SKIPNAMES`` that can be extended for that purpose, though
+this seldom be needed (except for own pytest plugins, as shown in example
+mentioned above)
 
 use_dynamic_patch
 ~~~~~~~~~~~~~~~~~
 If ``True`` (the default), dynamic patching after setup is used (for example
 for modules loaded locally inside of functions).
-Can be switched off if it causes unwanted side effects. This parameter may
-be removed in the future if no use case turns up for it.
+Can be switched off if it causes unwanted side effects. This parameter will
+probably removed in the future - it has been added while dynamic patching
+was an experimental feature.
 
 Using convenience methods
 -------------------------
