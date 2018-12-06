@@ -4,6 +4,8 @@ The release versions are PyPi releases.
 ## Version 3.6 (as yet unreleased)
 
 #### New Features
+  * added context manager class `Pause` for pause/resume 
+    (see [#448](../../issues/448))
 
 #### Fixes
   * fixed `AttributeError` shown while displaying `fs` in a failing pytest 

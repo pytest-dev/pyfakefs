@@ -2,6 +2,8 @@
 import os
 import tempfile
 
+from pyfakefs.fake_filesystem_unittest import Pause
+
 
 def test_fs_fixture(fs):
     fs.create_file('/var/data/xx1.txt')
@@ -19,5 +21,18 @@ def test_pause_resume(fs):
     assert not fs.exists(real_temp_file.name)
     assert os.path.exists(real_temp_file.name)
     fs.resume()
+    assert not os.path.exists(real_temp_file.name)
+    assert os.path.exists(fake_temp_file.name)
+
+def test_pause_resume_contextmanager(fs):
+    fake_temp_file = tempfile.NamedTemporaryFile()
+    assert fs.exists(fake_temp_file.name)
+    assert os.path.exists(fake_temp_file.name)
+    with Pause(fs):
+        assert fs.exists(fake_temp_file.name)
+        assert not os.path.exists(fake_temp_file.name)
+        real_temp_file = tempfile.NamedTemporaryFile()
+        assert not fs.exists(real_temp_file.name)
+        assert os.path.exists(real_temp_file.name)
     assert not os.path.exists(real_temp_file.name)
     assert os.path.exists(fake_temp_file.name)

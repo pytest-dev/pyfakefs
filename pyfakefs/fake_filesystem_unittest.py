@@ -565,6 +565,36 @@ class Patcher(object):
         self.start_patching()
 
 
+class Pause(object):
+    """Simple context manager that allows to pause/resume patching the
+    filesystem. Patching is paused in the context manager, and resumed after
+    going out of it's scope.
+    """
+    def __init__(self, caller):
+        """Initializes the context manager with the fake filesystem.
+
+        Args:
+            caller: either the FakeFilesystem instance, the Patcher instance
+                or the pyfakefs test case.
+        """
+        if isinstance(caller, (Patcher, TestCaseMixin)):
+            self._fs = caller.fs
+        elif isinstance(caller, fake_filesystem.FakeFilesystem):
+            self._fs = caller
+        else:
+            raise ValueError('Invalid argument - should be of type '
+                             '"fake_filesystem_unittest.Patcher", '
+                             '"fake_filesystem_unittest.TestCase" '
+                             'or "fake_filesystem.FakeFilesystem"')
+
+    def __enter__(self):
+        self._fs.pause()
+        return self._fs
+
+    def __exit__(self, *args):
+        return self._fs.resume()
+
+
 class DynamicPatcher(object):
     """A file loader that replaces file system related modules by their
     fake implementation if they are loaded after calling `setupPyFakefs()`.

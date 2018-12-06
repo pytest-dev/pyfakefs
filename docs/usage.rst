@@ -272,8 +272,8 @@ This may be used to add modules that shall not be patched. This is mostly
 used to avoid patching the Python file system modules themselves, but may be
 helpful in some special situations. There is also the global
 variable ``Patcher.SKIPNAMES`` that can be extended for that purpose, though
-this seldom be needed (except for own pytest plugins, as shown in example
-mentioned above)
+this seldom shall be needed (except for own pytest plugins, as shown in
+the example mentioned above)
 
 use_dynamic_patch
 ~~~~~~~~~~~~~~~~~
@@ -398,3 +398,45 @@ and you may fail to create new files if the fake file system is full.
 
 To get the file system size, you may use ``get_disk_usage()``, which is
 modeled after ``shutil.disk_usage()``.
+
+Pausing patching
+~~~~~~~~~~~~~~~~
+Sometimes, you may want to access the real filesystem inside the test with
+no patching applied. This can be achieved by using the ``pause/resume``
+functions, which exist in ``fake_filesystem_unittest.Patcher``,
+``fake_filesystem_unittest.TestCase`` and ``fake_filesystem.FakeFilesystem``.
+There is also a context manager class ``fake_filesystem_unittest.Pause``
+which encapsulates the calls to ``pause()`` and ``resume()``.
+
+Here is an example that tests the usage with the pyfakefs pytest fixture:
+
+.. code:: python
+
+    from pyfakefs.fake_filesystem_unittest import Pause
+
+    def test_pause_resume_contextmanager(fs):
+        fake_temp_file = tempfile.NamedTemporaryFile()
+        assert os.path.exists(fake_temp_file.name)
+        fs.pause()
+        assert not os.path.exists(fake_temp_file.name)
+        real_temp_file = tempfile.NamedTemporaryFile()
+        assert os.path.exists(real_temp_file.name)
+        fs.resume()
+        assert not os.path.exists(real_temp_file.name)
+        assert os.path.exists(fake_temp_file.name)
+
+Here is the same code using a context manager:
+
+.. code:: python
+
+    from pyfakefs.fake_filesystem_unittest import Pause
+
+    def test_pause_resume_contextmanager(fs):
+        fake_temp_file = tempfile.NamedTemporaryFile()
+        assert os.path.exists(fake_temp_file.name)
+        with Pause(fs):
+            assert not os.path.exists(fake_temp_file.name)
+            real_temp_file = tempfile.NamedTemporaryFile()
+            assert os.path.exists(real_temp_file.name)
+        assert not os.path.exists(real_temp_file.name)
+        assert os.path.exists(fake_temp_file.name)
