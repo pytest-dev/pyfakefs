@@ -287,8 +287,8 @@ fake a module in Django that uses OS file system functions:</p>
 used to avoid patching the Python file system modules themselves, but may be
 helpful in some special situations. There is also the global
 variable <code class="docutils literal notranslate"><span class="pre">Patcher.SKIPNAMES</span></code> that can be extended for that purpose, though
-this seldom be needed (except for own pytest plugins, as shown in example
-mentioned above)</p>
+this seldom shall be needed (except for own pytest plugins, as shown in
+the example mentioned above)</p>
 </div>
 <div class="section" id="use-dynamic-patch">
 <h3>use_dynamic_patch<a class="headerlink" href="#use-dynamic-patch" title="Permalink to this headline">¶</a></h3>
@@ -404,6 +404,44 @@ and you may fail to create new files if the fake file system is full.</p>
 <p>To get the file system size, you may use <code class="docutils literal notranslate"><span class="pre">get_disk_usage()</span></code>, which is
 modeled after <code class="docutils literal notranslate"><span class="pre">shutil.disk_usage()</span></code>.</p>
 </div>
+<div class="section" id="pausing-patching">
+<h3>Pausing patching<a class="headerlink" href="#pausing-patching" title="Permalink to this headline">¶</a></h3>
+<p>Sometimes, you may want to access the real filesystem inside the test with
+no patching applied. This can be achieved by using the <code class="docutils literal notranslate"><span class="pre">pause/resume</span></code>
+functions, which exist in <code class="docutils literal notranslate"><span class="pre">fake_filesystem_unittest.Patcher</span></code>,
+<code class="docutils literal notranslate"><span class="pre">fake_filesystem_unittest.TestCase</span></code> and <code class="docutils literal notranslate"><span class="pre">fake_filesystem.FakeFilesystem</span></code>.
+There is also a context manager class <code class="docutils literal notranslate"><span class="pre">fake_filesystem_unittest.Pause</span></code>
+which encapsulates the calls to <code class="docutils literal notranslate"><span class="pre">pause()</span></code> and <code class="docutils literal notranslate"><span class="pre">resume()</span></code>.</p>
+<p>Here is an example that tests the usage with the pyfakefs pytest fixture:</p>
+<div class="code python highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">pyfakefs.fake_filesystem_unittest</span> <span class="k">import</span> <span class="n">Pause</span>
+
+<span class="k">def</span> <span class="nf">test_pause_resume_contextmanager</span><span class="p">(</span><span class="n">fs</span><span class="p">):</span>
+    <span class="n">fake_temp_file</span> <span class="o">=</span> <span class="n">tempfile</span><span class="o">.</span><span class="n">NamedTemporaryFile</span><span class="p">()</span>
+    <span class="k">assert</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">fake_temp_file</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
+    <span class="n">fs</span><span class="o">.</span><span class="n">pause</span><span class="p">()</span>
+    <span class="k">assert</span> <span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">fake_temp_file</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
+    <span class="n">real_temp_file</span> <span class="o">=</span> <span class="n">tempfile</span><span class="o">.</span><span class="n">NamedTemporaryFile</span><span class="p">()</span>
+    <span class="k">assert</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">real_temp_file</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
+    <span class="n">fs</span><span class="o">.</span><span class="n">resume</span><span class="p">()</span>
+    <span class="k">assert</span> <span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">real_temp_file</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
+    <span class="k">assert</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">fake_temp_file</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>Here is the same code using a context manager:</p>
+<div class="code python highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">pyfakefs.fake_filesystem_unittest</span> <span class="k">import</span> <span class="n">Pause</span>
+
+<span class="k">def</span> <span class="nf">test_pause_resume_contextmanager</span><span class="p">(</span><span class="n">fs</span><span class="p">):</span>
+    <span class="n">fake_temp_file</span> <span class="o">=</span> <span class="n">tempfile</span><span class="o">.</span><span class="n">NamedTemporaryFile</span><span class="p">()</span>
+    <span class="k">assert</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">fake_temp_file</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
+    <span class="k">with</span> <span class="n">Pause</span><span class="p">(</span><span class="n">fs</span><span class="p">):</span>
+        <span class="k">assert</span> <span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">fake_temp_file</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
+        <span class="n">real_temp_file</span> <span class="o">=</span> <span class="n">tempfile</span><span class="o">.</span><span class="n">NamedTemporaryFile</span><span class="p">()</span>
+        <span class="k">assert</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">real_temp_file</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
+    <span class="k">assert</span> <span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">real_temp_file</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
+    <span class="k">assert</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">fake_temp_file</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
 </div>
 </div>
 
@@ -435,6 +473,7 @@ modeled after <code class="docutils literal notranslate"><span class="pre">shuti
 <li><a class="reference internal" href="#access-to-files-in-the-real-file-system">Access to files in the real file system</a></li>
 <li><a class="reference internal" href="#handling-mount-points">Handling mount points</a></li>
 <li><a class="reference internal" href="#setting-the-file-system-size">Setting the file system size</a></li>
+<li><a class="reference internal" href="#pausing-patching">Pausing patching</a></li>
 </ul>
 </li>
 </ul>
@@ -492,7 +531,7 @@ modeled after <code class="docutils literal notranslate"><span class="pre">shuti
         &#169; Copyright 2009 Google Inc. All Rights Reserved.
 © Copyright 2014 Altera Corporation. All Rights Reserved.
 © Copyright 2014-2018 John McGehee.
-      Last updated on Dec 05, 2018.
+      Last updated on Dec 06, 2018.
     </div>
   </body>
 </html>
