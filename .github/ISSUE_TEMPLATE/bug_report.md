@@ -1,6 +1,9 @@
 ---
 name: Bug report
 about: Create a report to help us improve
+title: ''
+labels: ''
+assignees: ''
 
 ---
 
@@ -12,7 +15,7 @@ Please provide a stack trace if available.
 Please provide a unit test or a minimal code snippet that reproduces the 
 problem.
 
-** Your enviroment**
+**Your enviroment**
 Please run the following and paste the output.
 ```bash
 python -c "import platform; print(platform.platform())"
