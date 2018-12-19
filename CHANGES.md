@@ -11,6 +11,8 @@ The release versions are PyPi releases.
   * fixed `AttributeError` shown while displaying `fs` in a failing pytest 
     in Python 2
   * fixed permission handling for root user 
+  * avoid `AttributeError` triggered by modules without `__module__` attribute
+    (see [#460](../../issues/460))
 
 ## [Version 3.5.3](https://pypi.python.org/pypi/pyfakefs/3.5.3)
 

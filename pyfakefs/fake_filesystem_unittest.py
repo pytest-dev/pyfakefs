@@ -432,6 +432,30 @@ class Patcher(object):
         Later, `setUp()` will stub these with the fake file system
         modules.
         """
+
+        def is_fs_module(mod, name):
+            try:
+                return (inspect.ismodule(mod) and
+                        mod.__name__ in module_names
+                        or inspect.isclass(mod) and
+                        mod.__module__ in self._class_modules.get(name, []))
+            except AttributeError:
+                # handle cases where the module has no __name__ or __module__
+                # attribute - see #460
+                return False
+
+        def is_fs_function(fct):
+            try:
+                return ((inspect.isfunction(fct) or
+                         inspect.isbuiltin(fct)) and
+                        fct.__name__ in self._fake_module_functions and
+                        fct.__module__ in self._fake_module_functions[
+                            fct.__name__])
+            except AttributeError:
+                # handle cases where the function has no __name__ or __module__
+                # attribute
+                return False
+
         module_names = list(self._fake_module_classes.keys()) + [PATH_MODULE]
         for name, module in set(sys.modules.items()):
             try:
@@ -446,20 +470,13 @@ class Patcher(object):
                 continue
 
             modules = {name: mod for name, mod in module.__dict__.items()
-                       if inspect.ismodule(mod) and
-                       mod.__name__ in module_names
-                       or inspect.isclass(mod) and
-                       mod.__module__ in self._class_modules.get(name, [])}
+                       if is_fs_module(mod, name)}
             for name, mod in modules.items():
                 self._modules.setdefault(name, set()).add((module,
                                                            mod.__name__))
 
             functions = {name: fct for name, fct in module.__dict__.items()
-                         if (inspect.isfunction(fct) or
-                         inspect.isbuiltin(fct)) and
-                         fct.__name__ in self._fake_module_functions and
-                         fct.__module__ in self._fake_module_functions[
-                             fct.__name__]}
+                         if is_fs_function(fct)}
             for name, fct in functions.items():
                 self._fct_modules.setdefault(
                     (name, fct.__name__, fct.__module__), set()).add(module)
