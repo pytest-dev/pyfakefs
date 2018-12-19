@@ -4,6 +4,12 @@ The release versions are PyPi releases.
 ## Version 3.6 (as yet unreleased)
 
 #### New Features
+
+#### Fixes
+
+## [Version 3.5.4](https://pypi.python.org/pypi/pyfakefs/3.5.4)
+
+#### New Features
   * added context manager class `Pause` for pause/resume 
     (see [#448](../../issues/448))
 
