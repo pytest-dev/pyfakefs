@@ -7,6 +7,12 @@ The release versions are PyPi releases.
 
 #### Fixes
 
+## [Version 3.5.5](https://pypi.python.org/pypi/pyfakefs/3.5.5)
+
+#### Fixes
+  * removed shebang from test files to avoid packaging warnings 
+   (see [#461](../../issues/461))
+
 ## [Version 3.5.4](https://pypi.python.org/pypi/pyfakefs/3.5.4)
 
 #### New Features

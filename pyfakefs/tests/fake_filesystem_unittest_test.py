@@ -1,5 +1,3 @@
-#! /usr/bin/env python
-#
 # Copyright 2014 Altera Corporation. All Rights Reserved.
 # Copyright 2015-2017 John McGehee
 # Author: John McGehee

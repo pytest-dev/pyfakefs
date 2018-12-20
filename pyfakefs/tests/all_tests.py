@@ -1,5 +1,3 @@
-#! /usr/bin/env python
-#
 # Copyright 2009 Google Inc. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -14,7 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""A test suite that runs all tests for pyfakefs at once."""
+"""A test suite that runs all tests for pyfakefs at once.
+Includes tests with external pathlib2 and scandir packages if installed."""
 
 import sys
 import unittest
