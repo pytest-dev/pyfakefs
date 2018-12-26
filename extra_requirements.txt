@@ -8,6 +8,6 @@
 # Older versions might work ok, the versions chosen here are just the latest
 # available at the time of writing.
 
-pathlib2>=2.3.2
+pathlib2>=2.3.2;python_version<'3.4'
 
-scandir>=1.8
+scandir>=1.8;python_version<'3.5'
