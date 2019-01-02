@@ -16,25 +16,32 @@ If the external module is not present, the build-in module is imported.
 
 try:
     import pathlib2
+
     pathlib = None
 except ImportError:
     try:
         import pathlib
+
         pathlib2 = None
     except ImportError:
         pathlib = None
         pathlib2 = None
 
+use_pathlib = pathlib or pathlib2
 
 try:
     import scandir
-    use_scandir = True
+
     use_scandir_package = True
+    use_builtin_scandir = False
 except ImportError:
     try:
         from os import scandir
-        use_scandir = True
+
+        use_builtin_scandir = True
         use_scandir_package = False
     except ImportError:
-        use_scandir = False
+        use_builtin_scandir = False
         use_scandir_package = False
+
+use_scandir = use_scandir_package or use_builtin_scandir

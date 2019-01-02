@@ -28,7 +28,7 @@ import unittest
 from unittest import TestCase
 
 from pyfakefs import fake_filesystem_unittest, fake_filesystem
-from pyfakefs.extra_packages import pathlib
+from pyfakefs.extra_packages import pathlib, pathlib2, use_pathlib
 from pyfakefs.fake_filesystem_unittest import Patcher, Pause
 import pyfakefs.tests.import_as_example
 from pyfakefs.helpers import IS_PYPY, IS_PY2
@@ -125,9 +125,10 @@ class TestPyfakefsUnittest(TestPyfakefsUnittestBase):  # pylint: disable=R0904
         shutil.rmtree('/test/dir1')
         self.assertFalse(self.fs.exists('/test/dir1'))
 
-    @unittest.skipIf(not pathlib, "only run if pathlib is available")
+    @unittest.skipIf(not use_pathlib, "only run if pathlib is available")
     def test_fakepathlib(self):
-        with pathlib.Path('/fake_file.txt') as p:
+        imported_pathlib = pathlib or pathlib2
+        with imported_pathlib.Path('/fake_file.txt') as p:
             with p.open('w') as f:
                 f.write('text')
         is_windows = sys.platform.startswith('win')

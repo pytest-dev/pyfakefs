@@ -52,7 +52,7 @@ def skip_if_pathlib_36_is_available():
 class RealPathlibTestCase(RealFsTestCase):
     def __init__(self, methodName='runTest'):
         super(RealPathlibTestCase, self).__init__(methodName)
-        self.pathlib = pathlib
+        self.pathlib = pathlib or pathlib2
         self.path = None
 
     def setUp(self):

@@ -17,13 +17,14 @@ import sys
 import unittest
 
 from pyfakefs import fake_filesystem_unittest
-from pyfakefs.extra_packages import pathlib
+from pyfakefs.extra_packages import pathlib, pathlib2, use_pathlib
 
 
 class TestPyfakefsUnittestBase(fake_filesystem_unittest.TestCase):
     def setUp(self):
         """Set up the fake file system"""
         self.setUpPyfakefs()
+        self.pathlib = pathlib or pathlib2
 
 
 @unittest.skipIf((3, ) < sys.version_info < (3, 3),
@@ -61,10 +62,10 @@ class DynamicImportPatchTest(TestPyfakefsUnittestBase):
         self.fs.set_disk_usage(100)
         self.assertEqual(100, shutil.disk_usage('/').total)
 
-    @unittest.skipIf(not pathlib, 'only run if pathlib is available')
+    @unittest.skipIf(not use_pathlib, 'only run if pathlib is available')
     def test_pathlib_patch(self):
         file_path = 'test.txt'
-        path = pathlib.Path(file_path)
+        path = self.pathlib.Path(file_path)
         with path.open('w') as f:
             f.write('test')
 
@@ -72,10 +73,10 @@ class DynamicImportPatchTest(TestPyfakefsUnittestBase):
         file_object = self.fs.get_object(file_path)
         self.assertEqual('test', file_object.contents)
 
-    @unittest.skipIf(not pathlib, 'only run if pathlib is available')
+    @unittest.skipIf(not use_pathlib, 'only run if pathlib is available')
     def test_pathlib_path_patch(self):
         file_path = 'test.txt'
-        path = pathlib.Path(file_path)
+        path = self.pathlib.Path(file_path)
         with path.open('w') as f:
             f.write('test')
 

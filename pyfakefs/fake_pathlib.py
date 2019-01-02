@@ -47,6 +47,9 @@ from pyfakefs.extra_packages import use_scandir, pathlib, pathlib2
 from pyfakefs.helpers import text_type
 from pyfakefs.fake_filesystem import FakeFileOpen, FakeFilesystem
 
+if pathlib is None:
+    pathlib = pathlib2
+
 
 def init_module(filesystem):
     """Initializes the fake module with the fake file system."""

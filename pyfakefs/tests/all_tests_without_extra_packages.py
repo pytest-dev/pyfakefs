@@ -21,15 +21,24 @@ import unittest
 from pyfakefs import extra_packages
 
 if extra_packages.pathlib2:
-    extra_packages.pathlib = None
     extra_packages.pathlib2 = None
+    try:
+        import pathlib
+    except ImportError:
+        pathlib = None
+    extra_packages.pathlib = pathlib
+    extra_packages.use_pathlib = pathlib
 
 if extra_packages.use_scandir_package:
-    extra_packages.use_scandir = False
     extra_packages.use_scandir_package = False
+    try:
+        from os import scandir
+    except ImportError:
+        scandir = None
+    extra_packages.scandir = scandir
+    extra_packages.use_scandir = scandir
 
 from pyfakefs.tests.all_tests import AllTests  # noqa: E402
-
 
 if __name__ == '__main__':
     result = unittest.TextTestRunner(verbosity=2).run(AllTests().suite())
