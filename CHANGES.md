@@ -3,14 +3,15 @@ The release versions are PyPi releases.
 
 ## Version 3.6 (as yet unreleased)
 
-#### Changes
-  * import external `pathlib2` and `scandir` packages first if present
-    (see [#462](../../issues/462))
-    
 #### New Features
 
 #### Fixes
 
+## [Version 3.5.6](https://pypi.python.org/pypi/pyfakefs/3.5.6)
+
+#### Changes
+  * import external `pathlib2` and `scandir` packages first if present
+    (see [#462](../../issues/462))
 
 ## [Version 3.5.5](https://pypi.python.org/pypi/pyfakefs/3.5.5)
 
