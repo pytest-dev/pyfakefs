@@ -119,7 +119,7 @@ if sys.version_info[0] < 3:
 
 __pychecker__ = 'no-reimportself'
 
-__version__ = '3.6'
+__version__ = '3.5.6'
 
 PERM_READ = 0o400  # Read permission bit.
 PERM_WRITE = 0o200  # Write permission bit.
