@@ -270,10 +270,21 @@ additional_skip_names
 ~~~~~~~~~~~~~~~~~~~~~
 This may be used to add modules that shall not be patched. This is mostly
 used to avoid patching the Python file system modules themselves, but may be
-helpful in some special situations. There is also the global
-variable ``Patcher.SKIPNAMES`` that can be extended for that purpose, though
-this seldom shall be needed (except for own pytest plugins, as shown in
-the example mentioned above)
+helpful in some special situations, for example if a testrunner is accessing
+the file system after test setup. A known case is erratic behavior if running a
+debug session in PyCharm with Python 2.7, which can be avoided by adding the
+offending module to ``additional_skip_names``:
+
+.. code:: python
+
+  with Patcher(additional_skip_names=['pydevd']) as patcher:
+      patcher.fs.create_file('foo')
+
+There is also the global variable ``Patcher.SKIPNAMES`` that can be extended
+for that purpose, though this seldom shall be needed (except for own pytest
+plugins, as shown in the example mentioned above). Other than in
+``additional_skip_names``, which is a list of modules names, this is a list
+of modules that have to be imported before.
 
 use_dynamic_patch
 ~~~~~~~~~~~~~~~~~

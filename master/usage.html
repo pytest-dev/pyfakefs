@@ -285,10 +285,19 @@ fake a module in Django that uses OS file system functions:</p>
 <h3>additional_skip_names<a class="headerlink" href="#additional-skip-names" title="Permalink to this headline">¶</a></h3>
 <p>This may be used to add modules that shall not be patched. This is mostly
 used to avoid patching the Python file system modules themselves, but may be
-helpful in some special situations. There is also the global
-variable <code class="docutils literal notranslate"><span class="pre">Patcher.SKIPNAMES</span></code> that can be extended for that purpose, though
-this seldom shall be needed (except for own pytest plugins, as shown in
-the example mentioned above)</p>
+helpful in some special situations, for example if a testrunner is accessing
+the file system after test setup. A known case is erratic behavior if running a
+debug session in PyCharm with Python 2.7, which can be avoided by adding the
+offending module to <code class="docutils literal notranslate"><span class="pre">additional_skip_names</span></code>:</p>
+<div class="code python highlight-default notranslate"><div class="highlight"><pre><span></span><span class="k">with</span> <span class="n">Patcher</span><span class="p">(</span><span class="n">additional_skip_names</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;pydevd&#39;</span><span class="p">])</span> <span class="k">as</span> <span class="n">patcher</span><span class="p">:</span>
+    <span class="n">patcher</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">create_file</span><span class="p">(</span><span class="s1">&#39;foo&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>There is also the global variable <code class="docutils literal notranslate"><span class="pre">Patcher.SKIPNAMES</span></code> that can be extended
+for that purpose, though this seldom shall be needed (except for own pytest
+plugins, as shown in the example mentioned above). Other than in
+<code class="docutils literal notranslate"><span class="pre">additional_skip_names</span></code>, which is a list of modules names, this is a list
+of modules that have to be imported before.</p>
 </div>
 <div class="section" id="use-dynamic-patch">
 <h3>use_dynamic_patch<a class="headerlink" href="#use-dynamic-patch" title="Permalink to this headline">¶</a></h3>
@@ -531,7 +540,7 @@ which encapsulates the calls to <code class="docutils literal notranslate"><span
         &#169; Copyright 2009 Google Inc. All Rights Reserved.
 © Copyright 2014 Altera Corporation. All Rights Reserved.
 © Copyright 2014-2018 John McGehee.
-      Last updated on Jan 13, 2019.
+      Last updated on Jan 15, 2019.
     </div>
   </body>
 </html>
