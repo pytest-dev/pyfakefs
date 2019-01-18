@@ -32,7 +32,6 @@ BASE_PATH = os.path.abspath(os.path.dirname(__file__))
 with open(os.path.join(BASE_PATH, 'README.md')) as f:
     LONG_DESCRIPTION = f.read()
 
-
 CLASSIFIERS = [
     'Development Status :: 5 - Production/Stable',
     'Environment :: Console',
@@ -79,6 +78,7 @@ params = dict(
     keywords=KEYWORDS,
     url=URL,
     classifiers=CLASSIFIERS,
+    test_suite='pyfakefs.tests',
     packages=find_packages(exclude=['docs'])
 )
 
