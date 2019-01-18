@@ -38,6 +38,7 @@ to `:py:class`pyfakefs.fake_filesystem_unittest.TestCase`.
 """
 import doctest
 import inspect
+import os
 import sys
 import tempfile
 import unittest
@@ -300,11 +301,11 @@ class Patcher(object):
         with Patcher():
             doStuff()
     """
-    SKIPMODULES = {None, fake_filesystem, fake_filesystem_shutil, sys}
     '''Stub nothing that is imported within these modules.
     `sys` is included to prevent `sys.path` from being stubbed with the fake
     `os.path`.
     '''
+    SKIPMODULES = {None, fake_filesystem, fake_filesystem_shutil, sys}
     assert None in SKIPMODULES, ("sys.modules contains 'None' values;"
                                  " must skip them.")
 
@@ -315,6 +316,10 @@ class Patcher(object):
         SKIPNAMES.add('pathlib')
     if pathlib2:
         SKIPNAMES.add('pathlib2')
+
+    # exclude the PyCharm debugger as it needs to access the real fs
+    if IS_PY2 and os.environ.get('PYCHARM_HOSTED'):
+        SKIPNAMES.add('pydevd')
 
     def __init__(self, additional_skip_names=None,
                  modules_to_reload=None, use_dynamic_patch=True,
