@@ -369,6 +369,9 @@ class RealFsTestCase(TestCase, RealFsTestMixin):
             self.open = fake_filesystem.FakeFileOpen(self.filesystem)
             self.os = fake_filesystem.FakeOsModule(self.filesystem)
             self.create_basepath()
+        elif not os.environ.get('TEST_REAL_FS'):
+            self.skip_real_fs()
+
         self.setUpFileSystem()
 
     def setUpFileSystem(self):

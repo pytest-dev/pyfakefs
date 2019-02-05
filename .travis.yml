@@ -50,6 +50,7 @@ install:
   - ./.travis/install.sh
 
 script:
+  - export TEST_REAL_FS=1
   - ./.travis/run_tests.sh
   - ./.travis/run_pytest.sh
   - ./.travis/docker_tests.sh

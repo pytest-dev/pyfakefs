@@ -15,6 +15,7 @@ install:
 build: off
 
 test_script:
+  - SET TEST_REAL_FS=1
   - "%PYTHON%\\python.exe -m pyfakefs.tests.all_tests"
   - "%PYTHON%\\python.exe -m pyfakefs.tests.all_tests_without_extra_packages"
   - "%PYTHON%\\python.exe -m pytest pyfakefs\\tests\\pytest\\pytest_plugin_test.py"
