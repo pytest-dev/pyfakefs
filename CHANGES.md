@@ -6,6 +6,9 @@ The release versions are PyPi releases.
 #### New Features
 
 #### Fixes
+  * Regression: `pathlib` did not get patched in the presence of `pathlib2`
+    (see [#467](../../issues/467))
+  
 
 ## [Version 3.5.6](https://pypi.python.org/pypi/pyfakefs/3.5.6)
 

@@ -17,15 +17,14 @@ If the external module is not present, the build-in module is imported.
 try:
     import pathlib2
 
-    pathlib = None
+    pathlib = pathlib2
 except ImportError:
+    pathlib2 = None
+
     try:
         import pathlib
-
-        pathlib2 = None
     except ImportError:
         pathlib = None
-        pathlib2 = None
 
 use_pathlib = pathlib or pathlib2
 

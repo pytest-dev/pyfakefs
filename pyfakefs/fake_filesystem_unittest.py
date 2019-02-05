@@ -364,12 +364,17 @@ class Patcher(object):
         # `pathlib` and `pathlib2`
         self._class_modules = {}
         if use_pathlib:
-            mod_name = 'pathlib2' if pathlib2 is not None else 'pathlib'
+            self._class_modules['Path'] = []
+            if pathlib:
+                self._fake_module_classes[
+                    'pathlib'] = fake_pathlib.FakePathlibModule
+                self._class_modules['Path'].append('pathlib')
+            if pathlib2:
+                self._fake_module_classes[
+                    'pathlib2'] = fake_pathlib.FakePathlibModule
+                self._class_modules['Path'].append('pathlib2')
             self._fake_module_classes[
-                mod_name] = fake_pathlib.FakePathlibModule
-            self._fake_module_classes[
-            'Path'] = fake_pathlib.FakePathlibPathModule
-            self._class_modules['Path'] = [mod_name]
+                'Path'] = fake_pathlib.FakePathlibPathModule
         if use_scandir:
             self._fake_module_classes[
                 'scandir'] = fake_scandir.FakeScanDirModule
