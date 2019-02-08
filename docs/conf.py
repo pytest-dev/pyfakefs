@@ -58,7 +58,7 @@ master_doc = 'index'
 project = 'pyfakefs'
 copyright = '''2009 Google Inc. All Rights Reserved.
 © Copyright 2014 Altera Corporation. All Rights Reserved.
-© Copyright 2014-2018 John McGehee'''
+© Copyright 2014-2019 John McGehee'''
 author = 'John McGehee'
 
 # The version info for the project you're documenting, acts as replacement for

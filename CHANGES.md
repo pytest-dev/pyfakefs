@@ -6,9 +6,21 @@ The release versions are PyPi releases.
 #### New Features
 
 #### Fixes
+
+## [Version 3.5.7](https://pypi.python.org/pypi/pyfakefs/3.5.7)
+
+This is a mostly a bug-fix release.
+
+#### Fixes
   * Regression: `pathlib` did not get patched in the presence of `pathlib2`
     (see [#467](../../issues/467))
+  * fixed errors if running the PyCharm debugger under Python 2 
+    (see [#464](../../issues/464))
   
+#### Infrastructure
+  * do not run real file system tests by default (fixes deployment problem,
+    see [#465](../../issues/465))
+  * make tests run if running `python setup.py test` under Python 2 
 
 ## [Version 3.5.6](https://pypi.python.org/pypi/pyfakefs/3.5.6)
 
