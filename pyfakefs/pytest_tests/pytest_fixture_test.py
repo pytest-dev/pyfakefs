@@ -15,7 +15,7 @@
 
 import pytest
 
-import pyfakefs.tests.pytest.example as example
+import pyfakefs.pytest_tests.example as example
 from pyfakefs.fake_filesystem_unittest import Patcher
 
 

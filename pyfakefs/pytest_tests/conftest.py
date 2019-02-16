@@ -29,7 +29,7 @@ Patcher.SKIPMODULES.add(linecache)
 Patcher.SKIPMODULES.add(tokenize)
 
 from pyfakefs.fake_filesystem_unittest import Patcher
-from pyfakefs.tests.pytest import example
+from pyfakefs.pytest_tests import example
 
 
 @pytest.fixture
