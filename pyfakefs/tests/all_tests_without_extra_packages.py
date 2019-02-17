@@ -25,7 +25,6 @@ if extra_packages.pathlib2:
     except ImportError:
         pathlib = None
     extra_packages.pathlib = pathlib
-    extra_packages.use_pathlib = pathlib
 
 if extra_packages.use_scandir_package:
     extra_packages.use_scandir_package = False

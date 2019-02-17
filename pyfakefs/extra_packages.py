@@ -26,8 +26,6 @@ except ImportError:
     except ImportError:
         pathlib = None
 
-use_pathlib = pathlib or pathlib2
-
 try:
     import scandir
 

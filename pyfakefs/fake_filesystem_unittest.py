@@ -67,9 +67,9 @@ except ImportError:
 from pyfakefs import fake_filesystem
 from pyfakefs import fake_filesystem_shutil
 from pyfakefs import mox3_stubout
-from pyfakefs.extra_packages import pathlib, pathlib2, use_scandir, use_pathlib
+from pyfakefs.extra_packages import pathlib, pathlib2, use_scandir
 
-if use_pathlib:
+if pathlib:
     from pyfakefs import fake_pathlib
 
 if use_scandir:
@@ -363,7 +363,7 @@ class Patcher(object):
         # be contained in - this allows for alternative modules like
         # `pathlib` and `pathlib2`
         self._class_modules = {}
-        if use_pathlib:
+        if pathlib:
             self._class_modules['Path'] = []
             if pathlib:
                 self._fake_module_classes[

@@ -28,7 +28,7 @@ import unittest
 
 from pyfakefs.extra_packages import pathlib, pathlib2
 
-if pathlib is not None or pathlib2 is not None:
+if pathlib is not None:
     from pyfakefs import fake_pathlib, fake_filesystem
     from pyfakefs.helpers import text_type
     from pyfakefs.tests.test_utils import RealFsTestCase, TestCase
@@ -430,7 +430,7 @@ if pathlib is not None or pathlib2 is not None:
             self.create_file(self.make_path('a_file'))
             path = self.path(
                 self.make_path('', 'a_file', 'this can not exist'))
-            self.assertRaises(NotADirectoryError, path.resolve)
+            self.assert_raises_os_error(errno.ENOTDIR, path.resolve)
 
         def test_resolve_nonexisting_file_after_36(self):
             skip_if_pathlib_36_not_available()
