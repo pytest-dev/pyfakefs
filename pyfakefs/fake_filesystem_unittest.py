@@ -329,6 +329,7 @@ class Patcher(object):
         self._skipNames = self.SKIPNAMES.copy()
         # save the original open function for use in pytest plugin
         self.original_open = open
+        self.fake_open = None
 
         if additional_skip_names is not None:
             self._skipNames.update(additional_skip_names)
@@ -352,12 +353,6 @@ class Patcher(object):
         if IS_PY2 or IS_PYPY:
             # in Python 2 io.open, the module is referenced as _io
             self._fake_module_classes['_io'] = fake_filesystem.FakeIoModule
-
-        # No need to patch builtins in Python 3 - builtin open
-        # is an alias for io.open
-        if IS_PY2:
-            self._fake_module_classes[
-                BUILTIN_MODULE] = fake_filesystem.FakeBuiltinModule
 
         # class modules maps class names against a list of modules they can
         # be contained in - this allows for alternative modules like
@@ -407,17 +402,10 @@ class Patcher(object):
             self._fake_module_functions.setdefault(
                 fct_name, {})[PATH_MODULE] = module_attr
 
-        if IS_PY2:
-            # special handling for built-in open in Python 2
-            self._fake_module_functions.setdefault(
-                'open', {})[BUILTIN_MODULE] = (
-                fake_filesystem.FakeBuiltinModule.open,
-                BUILTIN_MODULE
-            )
-
         # Attributes set by _refresh()
         self._modules = {}
         self._fct_modules = {}
+        self._open_functions = {}
         self._stubs = None
         self.fs = None
         self.fake_modules = {}
@@ -456,6 +444,15 @@ class Patcher(object):
                 # attribute - see #460
                 return False
 
+        def is_open_function(fct):
+            try:
+                return ((inspect.isfunction(fct) or
+                         inspect.isbuiltin(fct)) and
+                        fct.__name__ == 'open' and
+                        fct.__module__ == BUILTIN_MODULE)
+            except AttributeError:
+                return False
+
         def is_fs_function(fct):
             try:
                 return ((inspect.isfunction(fct) or
@@ -486,12 +483,18 @@ class Patcher(object):
             for name, mod in modules.items():
                 self._modules.setdefault(name, set()).add((module,
                                                            mod.__name__))
-
             functions = {name: fct for name, fct in module.__dict__.items()
                          if is_fs_function(fct)}
             for name, fct in functions.items():
                 self._fct_modules.setdefault(
                     (name, fct.__name__, fct.__module__), set()).add(module)
+
+            if IS_PY2:
+                open_fcts = {name for name, fct in module.__dict__.items()
+                             if is_open_function(fct)}
+                for name in open_fcts:
+                    self._open_functions.setdefault(name, set()).add(module)
+
 
     def _refresh(self):
         """Renew the fake file system and set the _isStale flag to `False`."""
@@ -503,6 +506,7 @@ class Patcher(object):
         for name in self._fake_module_classes:
             self.fake_modules[name] = self._fake_module_classes[name](self.fs)
         self.fake_modules[PATH_MODULE] = self.fake_modules['os'].path
+        self.fake_open = fake_filesystem.FakeFileOpen(self.fs)
 
         self._isStale = False
 
@@ -526,14 +530,10 @@ class Patcher(object):
     def start_patching(self):
         if not self._patching:
             self._patching = True
+
             if IS_PY2:
-                if IS_PYPY:
-                    # patching open via _fct_modules does not work in PyPy2
-                    self._stubs.smart_set(builtins, 'open',
-                                          self.fake_modules[BUILTIN_MODULE].open)
-                # file is not a function and has to be handled separately
-                self._stubs.smart_set(builtins, 'file',
-                                      self.fake_modules[BUILTIN_MODULE].open)
+                self._stubs.smart_set(builtins, 'open', self.fake_open)
+                self._stubs.smart_set(builtins, 'file', self.fake_open)
 
             for name, modules in self._modules.items():
                 for module, attr in modules:
@@ -545,6 +545,11 @@ class Patcher(object):
                 attr = method.__get__(fake_module, fake_module.__class__)
                 for module in modules:
                     self._stubs.smart_set(module, name, attr)
+            if IS_PY2:
+                for name, modules in self._open_functions.items():
+                    for module in modules:
+                        self._stubs.smart_set(module, name, self.fake_open)
+
             self._dyn_patcher = DynamicPatcher(self)
             sys.meta_path.insert(0, self._dyn_patcher)
             for module in self.modules_to_reload:

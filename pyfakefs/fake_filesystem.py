@@ -4566,31 +4566,6 @@ class FakeIoModule(object):
         return getattr(self._io_module, name)
 
 
-class FakeBuiltinModule(object):
-    """Uses FakeFilesystem to provide a fake built-in open replacement.
-    """
-    def __init__(self, filesystem):
-        """
-        Args:
-            filesystem: FakeFilesystem used to provide
-                file system information.
-        """
-        self.filesystem = filesystem
-        if IS_PY2:
-            self._builtin_module = __builtin__
-
-    def open(self, *args, **kwargs):
-        """Redirect the call to FakeFileOpen.
-        See FakeFileOpen.call() for description.
-        """
-        return FakeFileOpen(self.filesystem)(*args, **kwargs)
-
-    if IS_PY2:
-        def __getattr__(self, name):
-            """Forwards any unfaked calls to the standard builtins."""
-            return getattr(self._builtin_module, name)
-
-
 class FakeFileWrapper(object):
     """Wrapper for a stream object for use by a FakeFile object.
 
