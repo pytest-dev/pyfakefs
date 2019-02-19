@@ -601,6 +601,10 @@ class FakeFileFromRealFile(FakeFile):
         self.st_atime = os.stat(self.file_path).st_atime
         return self._byte_contents
 
+    def set_contents(self, contents, encoding=None):
+        self.contents_read = True
+        super(FakeFileFromRealFile, self).set_contents(contents, encoding)
+
     def is_large_file(self):
         """The contents are never faked."""
         return False

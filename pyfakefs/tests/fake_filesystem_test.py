@@ -1937,6 +1937,16 @@ class RealFileSystemAccessTest(TestCase):
         self.check_fake_file_stat(fake_file, real_file_path,
                                   target_path='/foo/bar')
 
+    def test_write_to_real_file(self):
+        # regression test for #470
+        real_file_path = os.path.abspath(__file__)
+        self.filesystem.add_real_file(real_file_path, read_only=False)
+        with self.fake_open(real_file_path, 'w') as f:
+            f.write('foo')
+
+        with self.fake_open(real_file_path, 'rb') as f:
+            self.assertEqual(b'foo', f.read())
+
     def test_add_existing_real_directory_read_only(self):
         self.filesystem.add_real_directory(self.pyfakefs_path)
         self.assertTrue(self.filesystem.exists(self.pyfakefs_path))

@@ -6,12 +6,14 @@ The release versions are PyPi releases.
 #### New Features
 
 #### Fixes
+  * fixed writing to file added with `add_real_file` 
+    (see [#470](../../issues/470))
   * regression: patching build-in `open` under Python 2 broke unit tests 
-   (see [#469](../../issues/469))
+    (see [#469](../../issues/469))
 
 ## [Version 3.5.7](https://pypi.python.org/pypi/pyfakefs/3.5.7)
 
-This is a mostly a bug-fix release.
+This is mostly a bug-fix release.
 
 #### Fixes
   * regression: `pathlib` did not get patched in the presence of `pathlib2`
