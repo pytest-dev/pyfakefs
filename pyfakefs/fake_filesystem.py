@@ -4553,7 +4553,7 @@ class FakeIoModule(object):
         self.filesystem = filesystem
         self._io_module = io
 
-    def open(self, file_path, mode='r', buffering=-1, encoding=None,
+    def open(self, file, mode='r', buffering=-1, encoding=None,
              errors=None, newline=None, closefd=True, opener=None):
         """Redirect the call to FakeFileOpen.
         See FakeFileOpen.call() for description.
@@ -4562,7 +4562,7 @@ class FakeIoModule(object):
             raise TypeError(
                 "open() got an unexpected keyword argument 'opener'")
         fake_open = FakeFileOpen(self.filesystem, use_io=True)
-        return fake_open(file_path, mode, buffering, encoding, errors,
+        return fake_open(file, mode, buffering, encoding, errors,
                          newline, closefd, opener)
 
     def __getattr__(self, name):
