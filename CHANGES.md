@@ -1,7 +1,7 @@
 # pyfakefs Release Notes
 The release versions are PyPi releases.
 
-## [Version 3.5.7](https://pypi.python.org/pypi/pyfakefs/3.5.7)
+## [Version 3.5.8](https://pypi.python.org/pypi/pyfakefs/3.5.8)
 
 Another bug-fix release that mainly fixes a regression wih Python 2 that has 
 been introduced in version 3.5.3.
