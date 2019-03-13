@@ -3,13 +3,21 @@ The release versions are PyPi releases.
 
 ## Version 3.6 (as yet unreleased)
 
-#### New Features
+## [Version 3.5.8](https://pypi.python.org/pypi/pyfakefs/3.5.8)
+
+Another bug-fix release that mainly fixes a regression wih Python 2 that has 
+been introduced in version 3.5.3.
 
 #### Fixes
-  * fixed writing to file added with `add_real_file` 
-    (see [#470](../../issues/470))
   * regression: patching build-in `open` under Python 2 broke unit tests 
     (see [#469](../../issues/469))
+  * fixed writing to file added with `add_real_file` 
+    (see [#470](../../issues/470))
+  * fixed argument name of `FakeIOModule.open` (see [#471](../../pull/471))
+
+#### Infrastructure
+  * more changes to run tests using `python setup.py test` under Python 2 
+    regardless of `pathlib2` presence
 
 ## [Version 3.5.7](https://pypi.python.org/pypi/pyfakefs/3.5.7)
 
