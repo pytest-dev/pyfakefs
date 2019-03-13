@@ -114,12 +114,9 @@ from pyfakefs.helpers import (
     make_string_path, text_type, IS_WIN
 )
 
-if sys.version_info[0] < 3:
-    import __builtin__
-
 __pychecker__ = 'no-reimportself'
 
-__version__ = '3.6'
+__version__ = '3.5.8'
 
 PERM_READ = 0o400  # Read permission bit.
 PERM_WRITE = 0o200  # Write permission bit.
