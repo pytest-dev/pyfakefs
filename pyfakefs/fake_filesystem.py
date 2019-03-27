@@ -3738,12 +3738,26 @@ class FakeOsModule(object):
         file_handle = self.filesystem.get_open_file(file_des)
         if isinstance(file_handle, FakeDirWrapper):
             self.filesystem.raise_os_error(errno.EBADF, file_handle.file_path)
+
+        if isinstance(file_handle, FakePipeWrapper):
+            return file_handle.write(contents)
+
         file_handle.raw_io = True
         file_handle._sync_io()
         file_handle.update_flush_pos()
         file_handle.write(contents)
         file_handle.flush()
         return len(contents)
+
+    def pipe(self):
+        read_fd, write_fd = os.pipe()
+        read_wrapper = FakePipeWrapper(self.filesystem, read_fd)
+        file_des = self.filesystem._add_open_file(read_wrapper)
+        read_wrapper.filedes = file_des
+        write_wrapper = FakePipeWrapper(self.filesystem, write_fd)
+        file_des = self.filesystem._add_open_file(write_wrapper)
+        write_wrapper.filedes = file_des
+        return read_wrapper.filedes, write_wrapper.filedes
 
     @staticmethod
     def stat_float_times(newvalue=None):
@@ -5017,6 +5031,37 @@ class FakeDirWrapper(object):
     def close(self):
         """Close the directory."""
         self._filesystem._close_open_file(self.filedes)
+
+
+class FakePipeWrapper(object):
+    """Wrapper for a read or write descriptor of a real pipe object to be
+    used in open files list.
+    """
+
+    def __init__(self, filesystem, fd):
+        self._filesystem = filesystem
+        self.fd = fd  # the real file descriptor
+        self.filedes = None
+
+    def get_object(self):
+        return None
+
+    def fileno(self):
+        """Return the fake file descriptor of the pipe object."""
+        return self.filedes
+
+    def read(self, numBytes):
+        """Read from the real pipe."""
+        return os.read(self.fd, numBytes)
+
+    def write(self, contents):
+        """Write to the real pipe."""
+        return os.write(self.fd, contents)
+
+    def close(self):
+        """Close the pipe descriptor."""
+        self._filesystem.open_files[self.filedes].remove(self)
+        os.close(self.fd)
 
 
 Deprecator.add(FakeFileWrapper, FakeFileWrapper.get_object, 'GetObject')

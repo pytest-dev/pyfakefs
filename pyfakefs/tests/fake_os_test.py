@@ -2649,6 +2649,42 @@ class FakeOsModuleTest(FakeOsModuleTestBase):
         self.open(file2, 'w').close()
         self.assert_mode_equal(0o640, self.os.stat(file2).st_mode)
 
+    def test_open_pipe(self):
+        read_fd, write_fd = self.os.pipe()
+        self.os.close(read_fd)
+        self.os.close(write_fd)
+
+    def test_open_pipe_with_existing_fd(self):
+        file1 = self.make_path('file1')
+        fd = self.os.open(file1, os.O_CREAT)
+        read_fd, write_fd = self.os.pipe()
+        self.assertGreater(read_fd, fd)
+        self.os.close(fd)
+        self.os.close(read_fd)
+        self.os.close(write_fd)
+
+    def test_open_file_with_existing_pipe(self):
+        read_fd, write_fd = self.os.pipe()
+        file1 = self.make_path('file1')
+        fd = self.os.open(file1, os.O_CREAT)
+        self.assertGreater(fd, write_fd)
+        self.os.close(read_fd)
+        self.os.close(write_fd)
+        self.os.close(fd)
+
+    def test_write_to_pipe(self):
+        read_fd, write_fd = self.os.pipe()
+        self.os.write(write_fd, b'test')
+        self.assertEqual(b'test', self.os.read(read_fd, 4))
+        self.os.close(read_fd)
+        self.os.close(write_fd)
+
+    def test_write_to_read_fd(self):
+        read_fd, write_fd = self.os.pipe()
+        self.assert_raises_os_error(errno.EBADF,
+                                    self.os.write, read_fd, b'test')
+        self.os.close(read_fd)
+        self.os.close(write_fd)
 
 class RealOsModuleTest(FakeOsModuleTest):
     def use_real_fs(self):
