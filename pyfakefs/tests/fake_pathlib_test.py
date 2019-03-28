@@ -811,7 +811,7 @@ if pathlib is not None:
             self.skip_real_fs()
             dir1 = self.make_path('foo', 'bar1.txt')
             path_obj = self.filesystem.create_file(dir1)
-            path_obj.SetATime(11)
+            path_obj.st_atime = 11
             self.assertEqual(self.os.path.getatime(dir1),
                              self.os.path.getatime(self.path(dir1)))
 

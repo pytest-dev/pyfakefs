@@ -42,6 +42,7 @@ import os
 import sys
 import tempfile
 import unittest
+import warnings
 import zipfile  # noqa: F401 make sure it gets correctly stubbed, see #427
 
 from pyfakefs.helpers import IS_PY2, IS_PYPY
@@ -478,8 +479,16 @@ class Patcher(object):
                 # see https://github.com/pytest-dev/py/issues/73
                 continue
 
-            modules = {name: mod for name, mod in module.__dict__.items()
-                       if is_fs_module(mod, name)}
+            # suppress specific pytest warning - see #466
+            with warnings.catch_warnings():
+                warnings.filterwarnings(
+                    'ignore',
+                    message='The compiler package is deprecated',
+                    category=DeprecationWarning,
+                    module='py'
+                )
+                modules = {name: mod for name, mod in module.__dict__.items()
+                           if is_fs_module(mod, name)}
             for name, mod in modules.items():
                 self._modules.setdefault(name, set()).add((module,
                                                            mod.__name__))

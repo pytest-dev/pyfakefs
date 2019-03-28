@@ -6,6 +6,9 @@ The release versions are PyPi releases.
 #### New Features
   * added support for `os.pipe` (see [#473](../../issues/473))
 
+#### Fixes
+  * avoid pytest warning under Python 2.7 (see [#466](../../issues/466))
+
 ## [Version 3.5.8](https://pypi.python.org/pypi/pyfakefs/3.5.8)
 
 Another bug-fix release that mainly fixes a regression wih Python 2 that has 
