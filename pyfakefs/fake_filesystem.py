@@ -5041,10 +5041,11 @@ class FakePipeWrapper(object):
     def __init__(self, filesystem, fd):
         self._filesystem = filesystem
         self.fd = fd  # the real file descriptor
+        self.file_object = None
         self.filedes = None
 
     def get_object(self):
-        return None
+        return self.file_object
 
     def fileno(self):
         """Return the fake file descriptor of the pipe object."""
