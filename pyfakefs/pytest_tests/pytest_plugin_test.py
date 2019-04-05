@@ -24,6 +24,7 @@ def test_pause_resume(fs):
     assert not os.path.exists(real_temp_file.name)
     assert os.path.exists(fake_temp_file.name)
 
+
 def test_pause_resume_contextmanager(fs):
     fake_temp_file = tempfile.NamedTemporaryFile()
     assert fs.exists(fake_temp_file.name)

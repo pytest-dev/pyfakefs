@@ -185,7 +185,7 @@ if pathlib is not None:
 
 
     class RealPathlibInitializationWithDriveTest(
-        FakePathlibInitializationWithDriveTest):
+            FakePathlibInitializationWithDriveTest):
         def use_real_fs(self):
             return True
 

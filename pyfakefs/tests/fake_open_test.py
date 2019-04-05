@@ -451,8 +451,10 @@ class FakeFileOpenTest(FakeFileOpenTestBase):
         # actual tests
         self.open(file_path, 'r').close()
         if not is_root():
-            self.assert_raises_io_error(errno.EACCES, self.open, file_path, 'w')
-            self.assert_raises_io_error(errno.EACCES, self.open, file_path, 'w+')
+            self.assert_raises_io_error(
+                errno.EACCES, self.open, file_path, 'w')
+            self.assert_raises_io_error(
+                errno.EACCES, self.open, file_path, 'w+')
         else:
             self.open(file_path, 'w').close()
             self.open(file_path, 'w+').close()

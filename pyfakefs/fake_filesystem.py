@@ -114,9 +114,6 @@ from pyfakefs.helpers import (
     make_string_path, text_type, IS_WIN
 )
 
-if sys.version_info[0] < 3:
-    import __builtin__
-
 __pychecker__ = 'no-reimportself'
 
 __version__ = '3.6'

@@ -38,7 +38,6 @@ to `:py:class`pyfakefs.fake_filesystem_unittest.TestCase`.
 """
 import doctest
 import inspect
-import os
 import sys
 import tempfile
 import unittest
@@ -483,7 +482,6 @@ class Patcher(object):
                              if is_open_function(fct)}
                 for name in open_fcts:
                     self._open_functions.setdefault(name, set()).add(module)
-
 
     def _refresh(self):
         """Renew the fake file system and set the _isStale flag to `False`."""

@@ -2686,6 +2686,7 @@ class FakeOsModuleTest(FakeOsModuleTestBase):
         self.os.close(read_fd)
         self.os.close(write_fd)
 
+
 class RealOsModuleTest(FakeOsModuleTest):
     def use_real_fs(self):
         return True

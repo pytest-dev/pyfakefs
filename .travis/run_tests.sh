@@ -17,7 +17,7 @@ if ! [[ $VM == 'Docker' ]]; then
     # stop the build if there are Python syntax errors or undefined names
     flake8 . $EXCLUDES --count --select=E901,E999,F821,F822,F823 --show-source --statistics
     # exit-zero treats all errors as warnings
-    flake8 . $EXCLUDES --count --exit-zero --max-complexity=12 --statistics
+    flake8 . $EXCLUDES --count --exit-zero --max-complexity=12 --statistics --per-file-ignores='pyfakefs/tests/fake_pathlib_test.py:E303'
     echo =======================================================
     echo Running unit tests with extra packages as non-root user
     python -m pyfakefs.tests.all_tests

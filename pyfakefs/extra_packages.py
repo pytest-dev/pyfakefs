@@ -33,7 +33,7 @@ try:
     use_builtin_scandir = False
 except ImportError:
     try:
-        from os import scandir
+        from os import scandir  # noqa: F401
 
         use_builtin_scandir = True
         use_scandir_package = False

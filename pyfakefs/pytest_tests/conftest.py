@@ -28,8 +28,8 @@ Patcher.SKIPMODULES.add(py)
 Patcher.SKIPMODULES.add(linecache)
 Patcher.SKIPMODULES.add(tokenize)
 
-from pyfakefs.fake_filesystem_unittest import Patcher
-from pyfakefs.pytest_tests import example
+from pyfakefs.fake_filesystem_unittest import Patcher  # noqa: E402
+from pyfakefs.pytest_tests import example  # noqa: E402
 
 
 @pytest.fixture
