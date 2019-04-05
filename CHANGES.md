@@ -3,8 +3,11 @@ The release versions are PyPi releases.
 
 ## Version 3.6 (as yet unreleased)
 
+#### Changes
+  * removed unneeded parameter `use_dynamic_patch`
+
 #### New Features
-  * added support for `os.pipe` (see [#473](../../issues/473))
+  * added basic support for `os.pipe` (see [#473](../../issues/473))
 
 #### Fixes
   * avoid pytest warning under Python 2.7 (see [#466](../../issues/466))

@@ -88,7 +88,6 @@ BUILTIN_MODULE = '__builtin__'
 
 def load_doctests(loader, tests, ignore, module,
                   additional_skip_names=None,
-                  use_dynamic_patch=True,
                   modules_to_reload=None,
                   modules_to_patch=None):  # pylint: disable=unused-argument
     """Load the doctest tests for the specified module into unittest.
@@ -100,7 +99,6 @@ def load_doctests(loader, tests, ignore, module,
     File `example_test.py` in the pyfakefs release provides a usage example.
     """
     _patcher = Patcher(additional_skip_names=additional_skip_names,
-                       use_dynamic_patch=use_dynamic_patch,
                        modules_to_reload=modules_to_reload,
                        modules_to_patch=modules_to_patch)
     globs = _patcher.replace_globs(vars(module))
@@ -123,12 +121,7 @@ class TestCaseMixin(object):
             to be patched dynamically; may be needed if the module
             imports file system modules under an alias
 
-            .. note:: This is done independently of `use_dynamic_patch`
-
             .. caution:: Reloading modules may have unwanted side effects.
-        use_dynamic_patch: If `True`, dynamic patching after setup is used
-            (for example for modules loaded locally inside of functions).
-            Can be switched off if it causes unwanted side effects.
         modules_to_patch: A dictionary of fake modules mapped to the
             fully qualified patched module names. Can be used to add patching
             of modules not provided by `pyfakefs`.
@@ -157,7 +150,6 @@ class TestCaseMixin(object):
 
     additional_skip_names = None
     modules_to_reload = None
-    use_dynamic_patch = True
     modules_to_patch = None
 
     @property
@@ -166,7 +158,6 @@ class TestCaseMixin(object):
 
     def setUpPyfakefs(self,
                       additional_skip_names=None,
-                      use_dynamic_patch=None,
                       modules_to_reload=None,
                       modules_to_patch=None):
         """Bind the file-related modules to the :py:class:`pyfakefs` fake file
@@ -182,15 +173,12 @@ class TestCaseMixin(object):
         """
         if additional_skip_names is None:
             additional_skip_names = self.additional_skip_names
-        if use_dynamic_patch is None:
-            use_dynamic_patch = self.use_dynamic_patch
         if modules_to_reload is None:
             modules_to_reload = self.modules_to_reload
         if modules_to_patch is None:
             modules_to_patch = self.modules_to_patch
         self._stubber = Patcher(
             additional_skip_names=additional_skip_names,
-            use_dynamic_patch=use_dynamic_patch,
             modules_to_reload=modules_to_reload,
             modules_to_patch=modules_to_patch)
 
@@ -225,7 +213,6 @@ class TestCase(unittest.TestCase, TestCaseMixin):
     def __init__(self, methodName='runTest',
                  additional_skip_names=None,
                  modules_to_reload=None,
-                 use_dynamic_patch=True,
                  modules_to_patch=None):
         """Creates the test class instance and the patcher used to stub out
         file system related modules.
@@ -238,7 +225,6 @@ class TestCase(unittest.TestCase, TestCaseMixin):
 
         self.additional_skip_names = additional_skip_names
         self.modules_to_reload = modules_to_reload
-        self.use_dynamic_patch = use_dynamic_patch
         self.modules_to_patch = modules_to_patch
 
     @Deprecator('add_real_file')
@@ -318,13 +304,8 @@ class Patcher(object):
     if pathlib2:
         SKIPNAMES.add('pathlib2')
 
-    # exclude the PyCharm debugger as it needs to access the real fs
-    if IS_PY2 and os.environ.get('PYCHARM_HOSTED'):
-        SKIPNAMES.add('pydevd')
-
     def __init__(self, additional_skip_names=None,
-                 modules_to_reload=None, use_dynamic_patch=True,
-                 modules_to_patch=None):
+                 modules_to_reload=None, modules_to_patch=None):
         """For a description of the arguments, see TestCase.__init__"""
 
         self._skipNames = self.SKIPNAMES.copy()
@@ -338,7 +319,6 @@ class Patcher(object):
         self.modules_to_reload = [tempfile]
         if modules_to_reload is not None:
             self.modules_to_reload.extend(modules_to_reload)
-        self._use_dynamic_patch = use_dynamic_patch
 
         # Attributes set by _findModules()
 
@@ -564,9 +544,6 @@ class Patcher(object):
             for module in self.modules_to_reload:
                 if module.__name__ in sys.modules:
                     reload(module)
-            if not self._use_dynamic_patch:
-                self._dyn_patcher.cleanup()
-                sys.meta_path.pop(0)
 
     def replace_globs(self, globs_):
         globs = globs_.copy()
@@ -586,9 +563,8 @@ class Patcher(object):
             self._isStale = True
             self._patching = False
             self._stubs.smart_unset_all()
-            if self._use_dynamic_patch:
-                self._dyn_patcher.cleanup()
-                sys.meta_path.pop(0)
+            self._dyn_patcher.cleanup()
+            sys.meta_path.pop(0)
 
     def pause(self):
         """Pause the patching of the file system modules until `resume` is
