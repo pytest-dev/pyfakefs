@@ -242,29 +242,39 @@ fake a module in Django that uses OS file system functions:
 .. code:: python
 
   class FakeLocks(object):
-  """django.core.files.locks uses low level OS functions, fake it."""
-  _locks_module = django.core.files.locks
+      """django.core.files.locks uses low level OS functions, fake it."""
+      _locks_module = django.core.files.locks
 
-  def __init__(self, fs):
-  """Each fake module expects the fake file system as an __init__ parameter."""
-      # for a real example, fs can be saved here and used in the implementation
-      pass
+      def __init__(self, fs):
+          """Each fake module expects the fake file system as an __init__
+          parameter."""
+          # fs represents the fake filesystem; for a real example, it can be
+          # saved here and used in the implementation
+          pass
 
-  @staticmethod
-  def lock(f, flags):
-      return True
+      @staticmethod
+      def lock(f, flags):
+          return True
 
-  @staticmethod
-  def unlock(f):
-      return True
+      @staticmethod
+      def unlock(f):
+          return True
 
-  def __getattr__(self, name):
-      return getattr(self._locks_module, name)
+      def __getattr__(self, name):
+          return getattr(self._locks_module, name)
 
-
+  ...
+  # test code using Patcher
   with Patcher(modules_to_patch={'django.core.files.locks': FakeLocks}):
       test_django_stuff()
 
+  # test code using unittest
+  class TestUsingDjango(fake_filesystem_unittest.TestCase):
+      def setUp(self):
+          self.setUpPyfakefs(modules_to_patch={'django.core.files.locks': FakeLocks})
+
+      def test_django_stuff()
+          ...
 
 additional_skip_names
 ~~~~~~~~~~~~~~~~~~~~~

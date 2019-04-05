@@ -256,28 +256,39 @@ names to be faked.</p>
 <cite>pathlib2</cite> and <cite>scandir</cite> if present, and the following example shows how to
 fake a module in Django that uses OS file system functions:</p>
 <div class="code python highlight-default notranslate"><div class="highlight"><pre><span></span><span class="k">class</span> <span class="nc">FakeLocks</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
-<span class="sd">&quot;&quot;&quot;django.core.files.locks uses low level OS functions, fake it.&quot;&quot;&quot;</span>
-<span class="n">_locks_module</span> <span class="o">=</span> <span class="n">django</span><span class="o">.</span><span class="n">core</span><span class="o">.</span><span class="n">files</span><span class="o">.</span><span class="n">locks</span>
+    <span class="sd">&quot;&quot;&quot;django.core.files.locks uses low level OS functions, fake it.&quot;&quot;&quot;</span>
+    <span class="n">_locks_module</span> <span class="o">=</span> <span class="n">django</span><span class="o">.</span><span class="n">core</span><span class="o">.</span><span class="n">files</span><span class="o">.</span><span class="n">locks</span>
 
-<span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">fs</span><span class="p">):</span>
-<span class="sd">&quot;&quot;&quot;Each fake module expects the fake file system as an __init__ parameter.&quot;&quot;&quot;</span>
-    <span class="c1"># for a real example, fs can be saved here and used in the implementation</span>
-    <span class="k">pass</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">fs</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Each fake module expects the fake file system as an __init__</span>
+<span class="sd">        parameter.&quot;&quot;&quot;</span>
+        <span class="c1"># fs represents the fake filesystem; for a real example, it can be</span>
+        <span class="c1"># saved here and used in the implementation</span>
+        <span class="k">pass</span>
 
-<span class="nd">@staticmethod</span>
-<span class="k">def</span> <span class="nf">lock</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="n">flags</span><span class="p">):</span>
-    <span class="k">return</span> <span class="kc">True</span>
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">lock</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="n">flags</span><span class="p">):</span>
+        <span class="k">return</span> <span class="kc">True</span>
 
-<span class="nd">@staticmethod</span>
-<span class="k">def</span> <span class="nf">unlock</span><span class="p">(</span><span class="n">f</span><span class="p">):</span>
-    <span class="k">return</span> <span class="kc">True</span>
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">unlock</span><span class="p">(</span><span class="n">f</span><span class="p">):</span>
+        <span class="k">return</span> <span class="kc">True</span>
 
-<span class="k">def</span> <span class="nf">__getattr__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">):</span>
-    <span class="k">return</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_locks_module</span><span class="p">,</span> <span class="n">name</span><span class="p">)</span>
+    <span class="k">def</span> <span class="nf">__getattr__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">):</span>
+        <span class="k">return</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_locks_module</span><span class="p">,</span> <span class="n">name</span><span class="p">)</span>
 
-
+<span class="o">...</span>
+<span class="c1"># test code using Patcher</span>
 <span class="k">with</span> <span class="n">Patcher</span><span class="p">(</span><span class="n">modules_to_patch</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;django.core.files.locks&#39;</span><span class="p">:</span> <span class="n">FakeLocks</span><span class="p">}):</span>
     <span class="n">test_django_stuff</span><span class="p">()</span>
+
+<span class="c1"># test code using unittest</span>
+<span class="k">class</span> <span class="nc">TestUsingDjango</span><span class="p">(</span><span class="n">fake_filesystem_unittest</span><span class="o">.</span><span class="n">TestCase</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">setUp</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">setUpPyfakefs</span><span class="p">(</span><span class="n">modules_to_patch</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;django.core.files.locks&#39;</span><span class="p">:</span> <span class="n">FakeLocks</span><span class="p">})</span>
+
+    <span class="k">def</span> <span class="nf">test_django_stuff</span><span class="p">()</span>
+        <span class="o">...</span>
 </pre></div>
 </div>
 </div>
@@ -540,7 +551,7 @@ which encapsulates the calls to <code class="docutils literal notranslate"><span
         &#169; Copyright 2009 Google Inc. All Rights Reserved.
 © Copyright 2014 Altera Corporation. All Rights Reserved.
 © Copyright 2014-2019 John McGehee.
-      Last updated on Mar 13, 2019.
+      Last updated on Apr 05, 2019.
     </div>
   </body>
 </html>
