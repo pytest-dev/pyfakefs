@@ -43,7 +43,7 @@ class FakeStatTestBase(RealFsTestCase):
 
     def assertLessExceptWindows(self, time1, time2):
         if self.is_windows_fs:
-            self.assertEqual(time1, time2)
+            self.assertLessEqual(time1, time2)
         else:
             self.assertLess(time1, time2)
 
