@@ -818,22 +818,10 @@ replacement shall be performed, in addition to the names in
 <dd><p>A list of modules that need to be reloaded
 to be patched dynamically; may be needed if the module
 imports file system modules under an alias</p>
-<div class="admonition note">
-<p class="first admonition-title">Note</p>
-<p class="last">This is done independently of <cite>use_dynamic_patch</cite></p>
-</div>
 <div class="admonition caution">
 <p class="first admonition-title">Caution</p>
 <p class="last">Reloading modules may have unwanted side effects.</p>
 </div>
-</dd></dl>
-
-<dl class="attribute">
-<dt id="pyfakefs.fake_filesystem_unittest.TestCaseMixin.use_dynamic_patch">
-<code class="descname">use_dynamic_patch</code><a class="headerlink" href="#pyfakefs.fake_filesystem_unittest.TestCaseMixin.use_dynamic_patch" title="Permalink to this definition">¶</a></dt>
-<dd><p>If <cite>True</cite>, dynamic patching after setup is used
-(for example for modules loaded locally inside of functions).
-Can be switched off if it causes unwanted side effects.</p>
 </dd></dl>
 
 <dl class="attribute">
@@ -866,7 +854,7 @@ consider also specifying the same arguments to <code class="xref py py-func docu
 </div>
 <dl class="method">
 <dt id="pyfakefs.fake_filesystem_unittest.TestCaseMixin.setUpPyfakefs">
-<code class="descname">setUpPyfakefs</code><span class="sig-paren">(</span><em>additional_skip_names=None</em>, <em>use_dynamic_patch=None</em>, <em>modules_to_reload=None</em>, <em>modules_to_patch=None</em><span class="sig-paren">)</span><a class="headerlink" href="#pyfakefs.fake_filesystem_unittest.TestCaseMixin.setUpPyfakefs" title="Permalink to this definition">¶</a></dt>
+<code class="descname">setUpPyfakefs</code><span class="sig-paren">(</span><em>additional_skip_names=None</em>, <em>modules_to_reload=None</em>, <em>modules_to_patch=None</em>, <em>allow_root_user=True</em><span class="sig-paren">)</span><a class="headerlink" href="#pyfakefs.fake_filesystem_unittest.TestCaseMixin.setUpPyfakefs" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bind the file-related modules to the <code class="xref py py-class docutils literal notranslate"><span class="pre">pyfakefs</span></code> fake file
 system instead of the real file system.  Also bind the fake <cite>open()</cite>
 function, and on Python 2, the <cite>file()</cite> function.</p>
@@ -900,7 +888,7 @@ Does nothing if patching is not paused.</p>
 
 <dl class="class">
 <dt id="pyfakefs.fake_filesystem_unittest.TestCase">
-<em class="property">class </em><code class="descclassname">pyfakefs.fake_filesystem_unittest.</code><code class="descname">TestCase</code><span class="sig-paren">(</span><em>methodName='runTest'</em>, <em>additional_skip_names=None</em>, <em>modules_to_reload=None</em>, <em>use_dynamic_patch=True</em>, <em>modules_to_patch=None</em><span class="sig-paren">)</span><a class="headerlink" href="#pyfakefs.fake_filesystem_unittest.TestCase" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><code class="descclassname">pyfakefs.fake_filesystem_unittest.</code><code class="descname">TestCase</code><span class="sig-paren">(</span><em>methodName='runTest'</em>, <em>additional_skip_names=None</em>, <em>modules_to_reload=None</em>, <em>modules_to_patch=None</em>, <em>allow_root_user=True</em><span class="sig-paren">)</span><a class="headerlink" href="#pyfakefs.fake_filesystem_unittest.TestCase" title="Permalink to this definition">¶</a></dt>
 <dd><p>Test case class that automatically replaces file-system related
 modules by fake implementations. Inherits <a class="reference internal" href="#pyfakefs.fake_filesystem_unittest.TestCaseMixin" title="pyfakefs.fake_filesystem_unittest.TestCaseMixin"><code class="xref py py-class docutils literal notranslate"><span class="pre">TestCaseMixin</span></code></a>.</p>
 <p>The arguments are explained in <a class="reference internal" href="#pyfakefs.fake_filesystem_unittest.TestCaseMixin" title="pyfakefs.fake_filesystem_unittest.TestCaseMixin"><code class="xref py py-class docutils literal notranslate"><span class="pre">TestCaseMixin</span></code></a>.</p>
@@ -919,7 +907,7 @@ unittest.TestCase)</td>
 
 <dl class="class">
 <dt id="pyfakefs.fake_filesystem_unittest.Patcher">
-<em class="property">class </em><code class="descclassname">pyfakefs.fake_filesystem_unittest.</code><code class="descname">Patcher</code><span class="sig-paren">(</span><em>additional_skip_names=None</em>, <em>modules_to_reload=None</em>, <em>use_dynamic_patch=True</em>, <em>modules_to_patch=None</em><span class="sig-paren">)</span><a class="headerlink" href="#pyfakefs.fake_filesystem_unittest.Patcher" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><code class="descclassname">pyfakefs.fake_filesystem_unittest.</code><code class="descname">Patcher</code><span class="sig-paren">(</span><em>additional_skip_names=None</em>, <em>modules_to_reload=None</em>, <em>modules_to_patch=None</em>, <em>allow_root_user=True</em><span class="sig-paren">)</span><a class="headerlink" href="#pyfakefs.fake_filesystem_unittest.Patcher" title="Permalink to this definition">¶</a></dt>
 <dd><p>Instantiate a stub creator to bind and un-bind the file-related modules to
 the <code class="xref py py-mod docutils literal notranslate"><span class="pre">pyfakefs</span></code> fake modules.</p>
 <p>The arguments are explained in <a class="reference internal" href="#pyfakefs.fake_filesystem_unittest.TestCaseMixin" title="pyfakefs.fake_filesystem_unittest.TestCaseMixin"><code class="xref py py-class docutils literal notranslate"><span class="pre">TestCaseMixin</span></code></a>.</p>
@@ -1174,7 +1162,7 @@ that is available on pypi.</p>
         &#169; Copyright 2009 Google Inc. All Rights Reserved.
 © Copyright 2014 Altera Corporation. All Rights Reserved.
 © Copyright 2014-2019 John McGehee.
-      Last updated on Apr 05, 2019.
+      Last updated on Apr 10, 2019.
     </div>
   </body>
 </html>

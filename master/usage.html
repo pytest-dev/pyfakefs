@@ -310,13 +310,12 @@ plugins, as shown in the example mentioned above). Other than in
 <code class="docutils literal notranslate"><span class="pre">additional_skip_names</span></code>, which is a list of modules names, this is a list
 of modules that have to be imported before.</p>
 </div>
-<div class="section" id="use-dynamic-patch">
-<h3>use_dynamic_patch<a class="headerlink" href="#use-dynamic-patch" title="Permalink to this headline">¶</a></h3>
-<p>If <code class="docutils literal notranslate"><span class="pre">True</span></code> (the default), dynamic patching after setup is used (for example
-for modules loaded locally inside of functions).
-Can be switched off if it causes unwanted side effects. This parameter will
-probably removed in the future - it has been added while dynamic patching
-was an experimental feature.</p>
+<div class="section" id="allow-root-user">
+<h3>allow_root_user<a class="headerlink" href="#allow-root-user" title="Permalink to this headline">¶</a></h3>
+<p>This is <code class="docutils literal notranslate"><span class="pre">True</span></code> by default, meaning that the user is considered a root user
+if the real user is a root user (e.g. has the user ID 0). If you want to run
+your tests as a non-root user regardless of the actual user rights, you may
+want to set this to <code class="docutils literal notranslate"><span class="pre">False</span></code>.</p>
 </div>
 </div>
 <div class="section" id="using-convenience-methods">
@@ -485,7 +484,7 @@ which encapsulates the calls to <code class="docutils literal notranslate"><span
 <li><a class="reference internal" href="#modules-to-reload">modules_to_reload</a></li>
 <li><a class="reference internal" href="#modules-to-patch">modules_to_patch</a></li>
 <li><a class="reference internal" href="#additional-skip-names">additional_skip_names</a></li>
-<li><a class="reference internal" href="#use-dynamic-patch">use_dynamic_patch</a></li>
+<li><a class="reference internal" href="#allow-root-user">allow_root_user</a></li>
 </ul>
 </li>
 <li><a class="reference internal" href="#using-convenience-methods">Using convenience methods</a><ul>
@@ -551,7 +550,7 @@ which encapsulates the calls to <code class="docutils literal notranslate"><span
         &#169; Copyright 2009 Google Inc. All Rights Reserved.
 © Copyright 2014 Altera Corporation. All Rights Reserved.
 © Copyright 2014-2019 John McGehee.
-      Last updated on Apr 05, 2019.
+      Last updated on Apr 10, 2019.
     </div>
   </body>
 </html>
