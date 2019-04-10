@@ -190,6 +190,12 @@ def set_gid(gid):
     GROUP_ID = gid
 
 
+def reset_ids():
+    """Set the global user ID and group ID back to default values."""
+    set_uid(1 if IS_WIN else os.getuid())
+    set_gid(1 if IS_WIN else os.getgid())
+
+
 def is_root():
     """Return True if the current user is the root user."""
     return USER_ID == 0

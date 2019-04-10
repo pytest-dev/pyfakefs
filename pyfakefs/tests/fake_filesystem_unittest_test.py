@@ -288,7 +288,6 @@ class PatchModuleTest(fake_filesystem_unittest.TestCase):
 
     def setUp(self):
         """Set up the fake file system"""
-        # self.setUpPyfakefs()
         self.setUpPyfakefs(
             modules_to_patch={
                 'pyfakefs.tests.import_as_example': FakeExampleModule})
@@ -298,6 +297,28 @@ class PatchModuleTest(fake_filesystem_unittest.TestCase):
         self.fs.create_file(file_path, contents=b'test')
         self.assertEqual(
             4, pyfakefs.tests.import_as_example.system_stat(file_path).st_size)
+
+
+class NoRootUserTest(fake_filesystem_unittest.TestCase):
+    """Test allow_root_user argument to setUpPyfakefs."""
+
+    def setUp(self):
+        self.setUpPyfakefs(allow_root_user=False)
+
+    def test_non_root_behavior(self):
+        """Check that fs behaves as non-root user regardless of actual
+        user rights.
+        """
+        self.fs.is_windows_fs = False
+        dir_path = '/foo/bar'
+        self.fs.create_dir(dir_path, perm_bits=0o555)
+        file_path = dir_path + 'baz'
+        self.assertRaises(IOError, self.fs.create_file, file_path)
+
+        file_path = '/baz'
+        self.fs.create_file(file_path)
+        os.chmod(file_path, 0o400)
+        self.assertRaises(IOError, open, file_path, 'w')
 
 
 class PauseResumeTest(TestPyfakefsUnittestBase):

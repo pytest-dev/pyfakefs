@@ -23,7 +23,7 @@ import time
 import unittest
 
 from pyfakefs import fake_filesystem
-from pyfakefs.fake_filesystem import set_uid, set_gid, is_root
+from pyfakefs.fake_filesystem import set_uid, set_gid, is_root, reset_ids
 from pyfakefs.helpers import IS_WIN
 from pyfakefs.tests.test_utils import DummyTime, TestCase
 
@@ -565,8 +565,7 @@ class FakeFilesystemUnitTest(TestCase):
         new_file = self.filesystem.get_object(path)
         self.assertEqual(42, new_file.st_uid)
         self.assertEqual(2, new_file.st_gid)
-        set_uid(1 if IS_WIN else os.getuid())
-        set_gid(1 if IS_WIN else os.getgid())
+        reset_ids()
 
     def test_empty_file_created_for_none_contents(self):
         fake_open = fake_filesystem.FakeFileOpen(self.filesystem)

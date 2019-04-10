@@ -44,6 +44,8 @@ import unittest
 import warnings
 import zipfile  # noqa: F401 make sure it gets correctly stubbed, see #427
 
+from pyfakefs.fake_filesystem import set_uid, set_gid, reset_ids
+
 from pyfakefs.helpers import IS_PY2, IS_PYPY
 
 from pyfakefs.deprecator import Deprecator
@@ -88,7 +90,8 @@ BUILTIN_MODULE = '__builtin__'
 def load_doctests(loader, tests, ignore, module,
                   additional_skip_names=None,
                   modules_to_reload=None,
-                  modules_to_patch=None):  # pylint: disable=unused-argument
+                  modules_to_patch=None,
+                  allow_root_user=True):  # pylint: disable=unused-argument
     """Load the doctest tests for the specified module into unittest.
         Args:
             loader, tests, ignore : arguments passed in from `load_tests()`
@@ -99,7 +102,8 @@ def load_doctests(loader, tests, ignore, module,
     """
     _patcher = Patcher(additional_skip_names=additional_skip_names,
                        modules_to_reload=modules_to_reload,
-                       modules_to_patch=modules_to_patch)
+                       modules_to_patch=modules_to_patch,
+                       allow_root_user=allow_root_user)
     globs = _patcher.replace_globs(vars(module))
     tests.addTests(doctest.DocTestSuite(module,
                                         globs=globs,
@@ -158,7 +162,8 @@ class TestCaseMixin(object):
     def setUpPyfakefs(self,
                       additional_skip_names=None,
                       modules_to_reload=None,
-                      modules_to_patch=None):
+                      modules_to_patch=None,
+                      allow_root_user=True):
         """Bind the file-related modules to the :py:class:`pyfakefs` fake file
         system instead of the real file system.  Also bind the fake `open()`
         function, and on Python 2, the `file()` function.
@@ -179,7 +184,9 @@ class TestCaseMixin(object):
         self._stubber = Patcher(
             additional_skip_names=additional_skip_names,
             modules_to_reload=modules_to_reload,
-            modules_to_patch=modules_to_patch)
+            modules_to_patch=modules_to_patch,
+            allow_root_user=allow_root_user
+        )
 
         self._stubber.setUp()
         self.addCleanup(self._stubber.tearDown)
@@ -212,7 +219,8 @@ class TestCase(unittest.TestCase, TestCaseMixin):
     def __init__(self, methodName='runTest',
                  additional_skip_names=None,
                  modules_to_reload=None,
-                 modules_to_patch=None):
+                 modules_to_patch=None,
+                 allow_root_user=True):
         """Creates the test class instance and the patcher used to stub out
         file system related modules.
 
@@ -225,6 +233,7 @@ class TestCase(unittest.TestCase, TestCaseMixin):
         self.additional_skip_names = additional_skip_names
         self.modules_to_reload = modules_to_reload
         self.modules_to_patch = modules_to_patch
+        self.allow_root_user = allow_root_user
 
     @Deprecator('add_real_file')
     def copyRealFile(self, real_file_path, fake_file_path=None,
@@ -304,8 +313,14 @@ class Patcher(object):
         SKIPNAMES.add('pathlib2')
 
     def __init__(self, additional_skip_names=None,
-                 modules_to_reload=None, modules_to_patch=None):
+                 modules_to_reload=None, modules_to_patch=None,
+                 allow_root_user=True):
         """For a description of the arguments, see TestCase.__init__"""
+
+        if not allow_root_user:
+            # set non-root IDs even if the real user is root
+            set_uid(1)
+            set_gid(1)
 
         self._skipNames = self.SKIPNAMES.copy()
         # save the original open function for use in pytest plugin
@@ -555,6 +570,7 @@ class Patcher(object):
     def tearDown(self, doctester=None):
         """Clear the fake filesystem bindings created by `setUp()`."""
         self.stop_patching()
+        reset_ids()
 
     def stop_patching(self):
         if self._patching:

@@ -296,6 +296,13 @@ plugins, as shown in the example mentioned above). Other than in
 ``additional_skip_names``, which is a list of modules names, this is a list
 of modules that have to be imported before.
 
+allow_root_user
+~~~~~~~~~~~~~~~
+This is ``True`` by default, meaning that the user is considered a root user
+if the real user is a root user (e.g. has the user ID 0). If you want to run
+your tests as a non-root user regardless of the actual user rights, you may
+want to set this to ``False``.
+
 Using convenience methods
 -------------------------
 While ``pyfakefs`` can be used just with the standard Python file system

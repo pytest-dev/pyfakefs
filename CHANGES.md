@@ -7,6 +7,8 @@ The release versions are PyPi releases.
   * removed unneeded parameter `use_dynamic_patch`
 
 #### New Features
+  * added argument `allow_root_user` to `Patcher` and `UnitTest` to allow
+    forcing non-root access (see [#474](../../issues/474))
   * added basic support for `os.pipe` (see [#473](../../issues/473))
 
 #### Fixes
