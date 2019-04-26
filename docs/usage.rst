@@ -460,3 +460,16 @@ Here is the same code using a context manager:
             assert os.path.exists(real_temp_file.name)
         assert not os.path.exists(real_temp_file.name)
         assert os.path.exists(fake_temp_file.name)
+
+Troubleshooting
+---------------
+
+OS temporary directories
+~~~~~~~~~~~~~~~~~~~~~~~~
+
+As ``pyfakefs`` does not fake the ``tempfile`` module this means that a
+temporary directory is required to ensure ``tempfile`` works correctly, e.g.,
+``tempfile.gettempdir()`` will return a valid value. This means that any
+newly created fake file system will always have either a directory named
+``/tmp`` when running on Linux or Unix systems, ``/var/folders/<hash>/T``
+when running on MacOs and ``C:\Users\<user>\AppData\Local\Temp`` on Windows.
