@@ -468,7 +468,8 @@ OS temporary directories
 ~~~~~~~~~~~~~~~~~~~~~~~~
 
 As ``pyfakefs`` does not fake the ``tempfile`` module this means that a
-temporary directory is required to ensure ``tempfile`` works correctly.
-This means that any newly created fake file system will always have
-either a directory named ``/tmp`` when running on Linux or Unix systems
-or ``/var`` when running on MacOs.
+temporary directory is required to ensure ``tempfile`` works correctly, e.g.,
+``tempfile.gettempdir()`` will return a valid value. This means that any
+newly created fake file system will always have either a directory named
+``/tmp`` when running on Linux or Unix systems, ``/var/folders/<hash>/T``
+when running on MacOs and ``C:\Users\<user>\AppData\Local\Temp`` on Windows.
