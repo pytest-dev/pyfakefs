@@ -462,6 +462,18 @@ which encapsulates the calls to <code class="docutils literal notranslate"><span
 </div>
 </div>
 </div>
+<div class="section" id="troubleshooting">
+<h2>Troubleshooting<a class="headerlink" href="#troubleshooting" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="os-temporary-directories">
+<h3>OS temporary directories<a class="headerlink" href="#os-temporary-directories" title="Permalink to this headline">¶</a></h3>
+<p>As <code class="docutils literal notranslate"><span class="pre">pyfakefs</span></code> does not fake the <code class="docutils literal notranslate"><span class="pre">tempfile</span></code> module this means that a
+temporary directory is required to ensure <code class="docutils literal notranslate"><span class="pre">tempfile</span></code> works correctly, e.g.,
+<code class="docutils literal notranslate"><span class="pre">tempfile.gettempdir()</span></code> will return a valid value. This means that any
+newly created fake file system will always have either a directory named
+<code class="docutils literal notranslate"><span class="pre">/tmp</span></code> when running on Linux or Unix systems, <code class="docutils literal notranslate"><span class="pre">/var/folders/&lt;hash&gt;/T</span></code>
+when running on MacOs and <code class="docutils literal notranslate"><span class="pre">C:\Users\&lt;user&gt;\AppData\Local\Temp</span></code> on Windows.</p>
+</div>
+</div>
 </div>
 
 
@@ -493,6 +505,10 @@ which encapsulates the calls to <code class="docutils literal notranslate"><span
 <li><a class="reference internal" href="#handling-mount-points">Handling mount points</a></li>
 <li><a class="reference internal" href="#setting-the-file-system-size">Setting the file system size</a></li>
 <li><a class="reference internal" href="#pausing-patching">Pausing patching</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#troubleshooting">Troubleshooting</a><ul>
+<li><a class="reference internal" href="#os-temporary-directories">OS temporary directories</a></li>
 </ul>
 </li>
 </ul>
@@ -550,7 +566,7 @@ which encapsulates the calls to <code class="docutils literal notranslate"><span
         &#169; Copyright 2009 Google Inc. All Rights Reserved.
 © Copyright 2014 Altera Corporation. All Rights Reserved.
 © Copyright 2014-2019 John McGehee.
-      Last updated on Apr 10, 2019.
+      Last updated on Apr 26, 2019.
     </div>
   </body>
 </html>
