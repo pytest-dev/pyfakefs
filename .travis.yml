@@ -30,9 +30,13 @@ matrix:
           dist: xenial
           sudo: true
           env: PYTHON=py37
-        - python: pypy2.7-5.8.0
+        - python: pypy2.7-7.0.0
+          dist: xenial
+          sudo: true
           env: PYTHON=pypy2
-        - python: pypy3.5-5.8.0
+        - python: pypy3.5-7.0.0
+          dist: xenial
+          sudo: true
           env: PYTHON=pypy3
         - os: osx
           language: generic

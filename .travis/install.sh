@@ -18,20 +18,20 @@ if [[ $TRAVIS_OS_NAME == 'osx' ]]; then
             python get-pip.py --user
             ;;
         py34)
-            pyenv install 3.4.4
-            pyenv global 3.4.4
+            pyenv install 3.4.10
+            pyenv global 3.4.10
             ;;
         py35)
-            pyenv install 3.5.4
-            pyenv global 3.5.4
+            pyenv install 3.5.7
+            pyenv global 3.5.7
             ;;
         py36)
-            pyenv install 3.6.6
-            pyenv global 3.6.6
+            pyenv install 3.6.8
+            pyenv global 3.6.8
             ;;
         py37)
-            pyenv install 3.7.0
-            pyenv global 3.7.0
+            pyenv install 3.7.3
+            pyenv global 3.7.3
             ;;
         pypy*)
             pyenv install "$PYPY_VERSION"
