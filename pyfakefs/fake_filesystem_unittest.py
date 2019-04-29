@@ -461,7 +461,7 @@ class Patcher(object):
                 return False
 
         module_names = list(self._fake_module_classes.keys()) + [PATH_MODULE]
-        for name, module in set(sys.modules.items()):
+        for name, module in list(sys.modules.items()):
             try:
                 if (module in self.SKIPMODULES or
                         not inspect.ismodule(module) or
