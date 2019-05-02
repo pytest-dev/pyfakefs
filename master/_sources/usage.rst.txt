@@ -464,12 +464,64 @@ Here is the same code using a context manager:
 Troubleshooting
 ---------------
 
+Modules not working with pyfakefs
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Modules may not work with ``pyfakefs`` for several reasons. ``pyfakefs``
+works by patching some file system related modules and functions, specifically:
+
+- most file system related functions in the ``os`` and ``os.path`` modules
+- the ``pathlib`` module
+- the build-in ``open`` function and ``io.open``
+- ``shutil.disk_usage``
+
+Other file system related modules work with ``pyfakefs``, because they use
+exclusively these patched functions, specifically ``shutil`` (except for
+``disk_usage``), ``tempfile``, ``glob`` and ``zipfile``.
+
+A module may not work with ``pyfakefs`` because of one of the following
+reasons:
+
+- It uses a file system related function of the mentioned modules that is
+  not or not correctly patched. Mostly these are functions that are seldom
+  used, but may be used in Python libraries (this has happened for example
+  with a changed implementation of ``shutil`` in Python 3.7). Generally,
+  these shall be handled in issues and we are happy to fix them.
+- It uses file system related functions in a way that will not be patched
+  automatically. This is the case for functions that are executed while
+  reading a module. This case and a possibility to make them work is
+  documented above under ``modules_to_reload``.
+- It uses OS specific file system functions not contained in the Python
+  libraries. These will not work out of the box, and we generally will not
+  support them in ``pyfakefs``. If these functions are used in isolated
+  functions or classes, they may be patched by using the ``modules_to_patch``
+  parameter (see the example for file locks in Django above), and if there
+  are more examples for patches that may be useful, we may add them in the
+  documentation.
+- It uses C libraries to access the file system. There is no way no make
+  such a module work with ``pyfakefs`` - if you want to use it, you have to
+  patch the whole module. In some cases, a library implemented in Python with
+  a similar interface already exists. An example is ``lxml``,
+  which can be substituted with ``ElementTree`` in most cases for testing.
+
+A list of Python modules that are known to not work correctly with
+``pyfakefs`` will be collected here:
+
+- ``multiprocessing`` has several issues (related to points 1 and 3 above).
+  Currently there are no plans to fix this, but this may change in case of
+  sufficient demand.
+
+If you are not sure if a module can be handled, or how to do it, you can
+always write a new issue, of course!
+
 OS temporary directories
 ~~~~~~~~~~~~~~~~~~~~~~~~
 
-As ``pyfakefs`` does not fake the ``tempfile`` module this means that a
-temporary directory is required to ensure ``tempfile`` works correctly, e.g.,
-``tempfile.gettempdir()`` will return a valid value. This means that any
-newly created fake file system will always have either a directory named
-``/tmp`` when running on Linux or Unix systems, ``/var/folders/<hash>/T``
-when running on MacOs and ``C:\Users\<user>\AppData\Local\Temp`` on Windows.
+Tests relying on a completely empty file system on test start will fail.
+As ``pyfakefs`` does not fake the ``tempfile`` module (as described above),
+a temporary directory is required to ensure ``tempfile`` works correctly,
+e.g., that ``tempfile.gettempdir()`` will return a valid value. This
+means that any newly created fake file system will always have either a
+directory named ``/tmp`` when running on Linux or Unix systems,
+``/var/folders/<hash>/T`` when running on MacOs and
+``C:\Users\<user>\AppData\Local\Temp`` on Windows.

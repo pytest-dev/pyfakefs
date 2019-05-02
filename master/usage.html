@@ -464,14 +464,64 @@ which encapsulates the calls to <code class="docutils literal notranslate"><span
 </div>
 <div class="section" id="troubleshooting">
 <h2>Troubleshooting<a class="headerlink" href="#troubleshooting" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="modules-not-working-with-pyfakefs">
+<h3>Modules not working with pyfakefs<a class="headerlink" href="#modules-not-working-with-pyfakefs" title="Permalink to this headline">¶</a></h3>
+<p>Modules may not work with <code class="docutils literal notranslate"><span class="pre">pyfakefs</span></code> for several reasons. <code class="docutils literal notranslate"><span class="pre">pyfakefs</span></code>
+works by patching some file system related modules and functions, specifically:</p>
+<ul class="simple">
+<li>most file system related functions in the <code class="docutils literal notranslate"><span class="pre">os</span></code> and <code class="docutils literal notranslate"><span class="pre">os.path</span></code> modules</li>
+<li>the <code class="docutils literal notranslate"><span class="pre">pathlib</span></code> module</li>
+<li>the build-in <code class="docutils literal notranslate"><span class="pre">open</span></code> function and <code class="docutils literal notranslate"><span class="pre">io.open</span></code></li>
+<li><code class="docutils literal notranslate"><span class="pre">shutil.disk_usage</span></code></li>
+</ul>
+<p>Other file system related modules work with <code class="docutils literal notranslate"><span class="pre">pyfakefs</span></code>, because they use
+exclusively these patched functions, specifically <code class="docutils literal notranslate"><span class="pre">shutil</span></code> (except for
+<code class="docutils literal notranslate"><span class="pre">disk_usage</span></code>), <code class="docutils literal notranslate"><span class="pre">tempfile</span></code>, <code class="docutils literal notranslate"><span class="pre">glob</span></code> and <code class="docutils literal notranslate"><span class="pre">zipfile</span></code>.</p>
+<p>A module may not work with <code class="docutils literal notranslate"><span class="pre">pyfakefs</span></code> because of one of the following
+reasons:</p>
+<ul class="simple">
+<li>It uses a file system related function of the mentioned modules that is
+not or not correctly patched. Mostly these are functions that are seldom
+used, but may be used in Python libraries (this has happened for example
+with a changed implementation of <code class="docutils literal notranslate"><span class="pre">shutil</span></code> in Python 3.7). Generally,
+these shall be handled in issues and we are happy to fix them.</li>
+<li>It uses file system related functions in a way that will not be patched
+automatically. This is the case for functions that are executed while
+reading a module. This case and a possibility to make them work is
+documented above under <code class="docutils literal notranslate"><span class="pre">modules_to_reload</span></code>.</li>
+<li>It uses OS specific file system functions not contained in the Python
+libraries. These will not work out of the box, and we generally will not
+support them in <code class="docutils literal notranslate"><span class="pre">pyfakefs</span></code>. If these functions are used in isolated
+functions or classes, they may be patched by using the <code class="docutils literal notranslate"><span class="pre">modules_to_patch</span></code>
+parameter (see the example for file locks in Django above), and if there
+are more examples for patches that may be useful, we may add them in the
+documentation.</li>
+<li>It uses C libraries to access the file system. There is no way no make
+such a module work with <code class="docutils literal notranslate"><span class="pre">pyfakefs</span></code> - if you want to use it, you have to
+patch the whole module. In some cases, a library implemented in Python with
+a similar interface already exists. An example is <code class="docutils literal notranslate"><span class="pre">lxml</span></code>,
+which can be substituted with <code class="docutils literal notranslate"><span class="pre">ElementTree</span></code> in most cases for testing.</li>
+</ul>
+<p>A list of Python modules that are known to not work correctly with
+<code class="docutils literal notranslate"><span class="pre">pyfakefs</span></code> will be collected here:</p>
+<ul class="simple">
+<li><code class="docutils literal notranslate"><span class="pre">multiprocessing</span></code> has several issues (related to points 1 and 3 above).
+Currently there are no plans to fix this, but this may change in case of
+sufficient demand.</li>
+</ul>
+<p>If you are not sure if a module can be handled, or how to do it, you can
+always write a new issue, of course!</p>
+</div>
 <div class="section" id="os-temporary-directories">
 <h3>OS temporary directories<a class="headerlink" href="#os-temporary-directories" title="Permalink to this headline">¶</a></h3>
-<p>As <code class="docutils literal notranslate"><span class="pre">pyfakefs</span></code> does not fake the <code class="docutils literal notranslate"><span class="pre">tempfile</span></code> module this means that a
-temporary directory is required to ensure <code class="docutils literal notranslate"><span class="pre">tempfile</span></code> works correctly, e.g.,
-<code class="docutils literal notranslate"><span class="pre">tempfile.gettempdir()</span></code> will return a valid value. This means that any
-newly created fake file system will always have either a directory named
-<code class="docutils literal notranslate"><span class="pre">/tmp</span></code> when running on Linux or Unix systems, <code class="docutils literal notranslate"><span class="pre">/var/folders/&lt;hash&gt;/T</span></code>
-when running on MacOs and <code class="docutils literal notranslate"><span class="pre">C:\Users\&lt;user&gt;\AppData\Local\Temp</span></code> on Windows.</p>
+<p>Tests relying on a completely empty file system on test start will fail.
+As <code class="docutils literal notranslate"><span class="pre">pyfakefs</span></code> does not fake the <code class="docutils literal notranslate"><span class="pre">tempfile</span></code> module (as described above),
+a temporary directory is required to ensure <code class="docutils literal notranslate"><span class="pre">tempfile</span></code> works correctly,
+e.g., that <code class="docutils literal notranslate"><span class="pre">tempfile.gettempdir()</span></code> will return a valid value. This
+means that any newly created fake file system will always have either a
+directory named <code class="docutils literal notranslate"><span class="pre">/tmp</span></code> when running on Linux or Unix systems,
+<code class="docutils literal notranslate"><span class="pre">/var/folders/&lt;hash&gt;/T</span></code> when running on MacOs and
+<code class="docutils literal notranslate"><span class="pre">C:\Users\&lt;user&gt;\AppData\Local\Temp</span></code> on Windows.</p>
 </div>
 </div>
 </div>
@@ -508,6 +558,7 @@ when running on MacOs and <code class="docutils literal notranslate"><span class
 </ul>
 </li>
 <li><a class="reference internal" href="#troubleshooting">Troubleshooting</a><ul>
+<li><a class="reference internal" href="#modules-not-working-with-pyfakefs">Modules not working with pyfakefs</a></li>
 <li><a class="reference internal" href="#os-temporary-directories">OS temporary directories</a></li>
 </ul>
 </li>
@@ -566,7 +617,7 @@ when running on MacOs and <code class="docutils literal notranslate"><span class
         &#169; Copyright 2009 Google Inc. All Rights Reserved.
 © Copyright 2014 Altera Corporation. All Rights Reserved.
 © Copyright 2014-2019 John McGehee.
-      Last updated on Apr 26, 2019.
+      Last updated on May 02, 2019.
     </div>
   </body>
 </html>
