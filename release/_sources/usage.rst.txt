@@ -16,7 +16,7 @@ with the fake file system functions and modules:
 
 .. code:: python
 
-    from fake_filesystem_unittest import TestCase
+    from pyfakefs.fake_filesystem_unittest import TestCase
 
     class ExampleTestCase(TestCase):
         def setUp(self):
@@ -57,7 +57,7 @@ The easiest way is to just use ``Patcher`` as a context manager:
 
 .. code:: python
 
-   from fake_filesystem_unittest import Patcher
+   from pyfakefs.fake_filesystem_unittest import Patcher
 
    with Patcher() as patcher:
        # access the fake_filesystem object via patcher.fs
@@ -71,7 +71,7 @@ You can also initialize ``Patcher`` manually:
 
 .. code:: python
 
-   from fake_filesystem_unittest import Patcher
+   from pyfakefs.fake_filesystem_unittest import Patcher
 
    patcher = Patcher()
    patcher.setUp()     # called in the initialization code
@@ -180,8 +180,8 @@ The passed modules will be reloaded, thus allowing pyfakefs to patch them
 dynamically. All modules loaded after the initial patching described above
 will be patched using this second mechanism.
 
-Given tat the example code shown above is located in the file ``example/sut.py``,
-the following code will work:
+Given that the example code shown above is located in the file
+``example/sut.py``, the following code will work:
 
 .. code:: python
 
@@ -242,29 +242,39 @@ fake a module in Django that uses OS file system functions:
 .. code:: python
 
   class FakeLocks(object):
-  """django.core.files.locks uses low level OS functions, fake it."""
-  _locks_module = django.core.files.locks
+      """django.core.files.locks uses low level OS functions, fake it."""
+      _locks_module = django.core.files.locks
 
-  def __init__(self, fs):
-  """Each fake module expects the fake file system as an __init__ parameter."""
-      # for a real example, fs can be saved here and used in the implementation
-      pass
+      def __init__(self, fs):
+          """Each fake module expects the fake file system as an __init__
+          parameter."""
+          # fs represents the fake filesystem; for a real example, it can be
+          # saved here and used in the implementation
+          pass
 
-  @staticmethod
-  def lock(f, flags):
-      return True
+      @staticmethod
+      def lock(f, flags):
+          return True
 
-  @staticmethod
-  def unlock(f):
-      return True
+      @staticmethod
+      def unlock(f):
+          return True
 
-  def __getattr__(self, name):
-      return getattr(self._locks_module, name)
+      def __getattr__(self, name):
+          return getattr(self._locks_module, name)
 
-
+  ...
+  # test code using Patcher
   with Patcher(modules_to_patch={'django.core.files.locks': FakeLocks}):
       test_django_stuff()
 
+  # test code using unittest
+  class TestUsingDjango(fake_filesystem_unittest.TestCase):
+      def setUp(self):
+          self.setUpPyfakefs(modules_to_patch={'django.core.files.locks': FakeLocks})
+
+      def test_django_stuff()
+          ...
 
 additional_skip_names
 ~~~~~~~~~~~~~~~~~~~~~
@@ -288,11 +298,8 @@ of modules that have to be imported before.
 
 use_dynamic_patch
 ~~~~~~~~~~~~~~~~~
-If ``True`` (the default), dynamic patching after setup is used (for example
-for modules loaded locally inside of functions).
-Can be switched off if it causes unwanted side effects. This parameter will
-probably removed in the future - it has been added while dynamic patching
-was an experimental feature.
+This parameter has been added while dynamic patching was an experimental
+feature and is now obsolete. It will be removed in the next version.
 
 Using convenience methods
 -------------------------
@@ -316,7 +323,7 @@ with large files).
 
 .. code:: python
 
-    from fake_filesystem_unittest import TestCase
+    from pyfakefs.fake_filesystem_unittest import TestCase
 
     class ExampleTestCase(TestCase):
         def setUp(self):
@@ -349,7 +356,7 @@ argument ``target_path``.
 
 .. code:: python
 
-    from fake_filesystem_unittest import TestCase
+    from pyfakefs.fake_filesystem_unittest import TestCase
 
     class ExampleTestCase(TestCase):
 
@@ -395,7 +402,7 @@ and you may fail to create new files if the fake file system is full.
 
 .. code:: python
 
-    from fake_filesystem_unittest import TestCase
+    from pyfakefs.fake_filesystem_unittest import TestCase
 
     class ExampleTestCase(TestCase):
 
@@ -451,3 +458,68 @@ Here is the same code using a context manager:
             assert os.path.exists(real_temp_file.name)
         assert not os.path.exists(real_temp_file.name)
         assert os.path.exists(fake_temp_file.name)
+
+Troubleshooting
+---------------
+
+Modules not working with pyfakefs
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Modules may not work with ``pyfakefs`` for several reasons. ``pyfakefs``
+works by patching some file system related modules and functions, specifically:
+
+- most file system related functions in the ``os`` and ``os.path`` modules
+- the ``pathlib`` module
+- the build-in ``open`` function and ``io.open``
+- ``shutil.disk_usage``
+
+Other file system related modules work with ``pyfakefs``, because they use
+exclusively these patched functions, specifically ``shutil`` (except for
+``disk_usage``), ``tempfile``, ``glob`` and ``zipfile``.
+
+A module may not work with ``pyfakefs`` because of one of the following
+reasons:
+
+- It uses a file system related function of the mentioned modules that is
+  not or not correctly patched. Mostly these are functions that are seldom
+  used, but may be used in Python libraries (this has happened for example
+  with a changed implementation of ``shutil`` in Python 3.7). Generally,
+  these shall be handled in issues and we are happy to fix them.
+- It uses file system related functions in a way that will not be patched
+  automatically. This is the case for functions that are executed while
+  reading a module. This case and a possibility to make them work is
+  documented above under ``modules_to_reload``.
+- It uses OS specific file system functions not contained in the Python
+  libraries. These will not work out of the box, and we generally will not
+  support them in ``pyfakefs``. If these functions are used in isolated
+  functions or classes, they may be patched by using the ``modules_to_patch``
+  parameter (see the example for file locks in Django above), and if there
+  are more examples for patches that may be useful, we may add them in the
+  documentation.
+- It uses C libraries to access the file system. There is no way no make
+  such a module work with ``pyfakefs`` - if you want to use it, you have to
+  patch the whole module. In some cases, a library implemented in Python with
+  a similar interface already exists. An example is ``lxml``,
+  which can be substituted with ``ElementTree`` in most cases for testing.
+
+A list of Python modules that are known to not work correctly with
+``pyfakefs`` will be collected here:
+
+- ``multiprocessing`` has several issues (related to points 1 and 3 above).
+  Currently there are no plans to fix this, but this may change in case of
+  sufficient demand.
+
+If you are not sure if a module can be handled, or how to do it, you can
+always write a new issue, of course!
+
+OS temporary directories
+~~~~~~~~~~~~~~~~~~~~~~~~
+
+Tests relying on a completely empty file system on test start will fail.
+As ``pyfakefs`` does not fake the ``tempfile`` module (as described above),
+a temporary directory is required to ensure ``tempfile`` works correctly,
+e.g., that ``tempfile.gettempdir()`` will return a valid value. This
+means that any newly created fake file system will always have either a
+directory named ``/tmp`` when running on Linux or Unix systems,
+``/var/folders/<hash>/T`` when running on MacOs and
+``C:\Users\<user>\AppData\Local\Temp`` on Windows.

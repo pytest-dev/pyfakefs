@@ -54,7 +54,7 @@ use test classes derived from <code class="docutils literal notranslate"><span c
 <p>If you call <code class="docutils literal notranslate"><span class="pre">setUpPyfakefs()</span></code> in your <code class="docutils literal notranslate"><span class="pre">setUp()</span></code>, <code class="docutils literal notranslate"><span class="pre">pyfakefs</span></code> will
 automatically find all real file functions and modules, and stub these out
 with the fake file system functions and modules:</p>
-<div class="code python highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">fake_filesystem_unittest</span> <span class="k">import</span> <span class="n">TestCase</span>
+<div class="code python highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">pyfakefs.fake_filesystem_unittest</span> <span class="k">import</span> <span class="n">TestCase</span>
 
 <span class="k">class</span> <span class="nc">ExampleTestCase</span><span class="p">(</span><span class="n">TestCase</span><span class="p">):</span>
     <span class="k">def</span> <span class="nf">setUp</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
@@ -90,7 +90,7 @@ similar manner as described above.</p>
 patching using <code class="docutils literal notranslate"><span class="pre">fake_filesystem_unittest.Patcher</span></code> - the class doing the actual work
 of replacing the filesystem modules with the fake modules in the first two approaches.</p>
 <p>The easiest way is to just use <code class="docutils literal notranslate"><span class="pre">Patcher</span></code> as a context manager:</p>
-<div class="code python highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">fake_filesystem_unittest</span> <span class="k">import</span> <span class="n">Patcher</span>
+<div class="code python highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">pyfakefs.fake_filesystem_unittest</span> <span class="k">import</span> <span class="n">Patcher</span>
 
 <span class="k">with</span> <span class="n">Patcher</span><span class="p">()</span> <span class="k">as</span> <span class="n">patcher</span><span class="p">:</span>
     <span class="c1"># access the fake_filesystem object via patcher.fs</span>
@@ -102,7 +102,7 @@ of replacing the filesystem modules with the fake modules in the first two appro
 </pre></div>
 </div>
 <p>You can also initialize <code class="docutils literal notranslate"><span class="pre">Patcher</span></code> manually:</p>
-<div class="code python highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">fake_filesystem_unittest</span> <span class="k">import</span> <span class="n">Patcher</span>
+<div class="code python highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">pyfakefs.fake_filesystem_unittest</span> <span class="k">import</span> <span class="n">Patcher</span>
 
 <span class="n">patcher</span> <span class="o">=</span> <span class="n">Patcher</span><span class="p">()</span>
 <span class="n">patcher</span><span class="o">.</span><span class="n">setUp</span><span class="p">()</span>     <span class="c1"># called in the initialization code</span>
@@ -202,8 +202,8 @@ module list).
 The passed modules will be reloaded, thus allowing pyfakefs to patch them
 dynamically. All modules loaded after the initial patching described above
 will be patched using this second mechanism.</p>
-<p>Given tat the example code shown above is located in the file <code class="docutils literal notranslate"><span class="pre">example/sut.py</span></code>,
-the following code will work:</p>
+<p>Given that the example code shown above is located in the file
+<code class="docutils literal notranslate"><span class="pre">example/sut.py</span></code>, the following code will work:</p>
 <div class="code python highlight-default notranslate"><div class="highlight"><pre><span></span><span class="c1"># example using unittest</span>
 <span class="k">class</span> <span class="nc">ReloadModuleTest</span><span class="p">(</span><span class="n">fake_filesystem_unittest</span><span class="o">.</span><span class="n">TestCase</span><span class="p">):</span>
     <span class="k">def</span> <span class="nf">setUp</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
@@ -335,7 +335,7 @@ together with the encoding if needed. Alternatively, you can define a file
 size without contents - in this case, you will not be able to perform
 standard IO operations on the file (may be used to “fill up” the file system
 with large files).</p>
-<div class="code python highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">fake_filesystem_unittest</span> <span class="k">import</span> <span class="n">TestCase</span>
+<div class="code python highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">pyfakefs.fake_filesystem_unittest</span> <span class="k">import</span> <span class="n">TestCase</span>
 
 <span class="k">class</span> <span class="nc">ExampleTestCase</span><span class="p">(</span><span class="n">TestCase</span><span class="p">):</span>
     <span class="k">def</span> <span class="nf">setUp</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
@@ -365,7 +365,7 @@ system (e.g. in memory). The real files are never changed.</p>
 <p><code class="docutils literal notranslate"><span class="pre">add_real_file()</span></code> and <code class="docutils literal notranslate"><span class="pre">add_real_directory()</span></code> also allow you to map a
 file or a directory tree into another location in the fake filesystem via the
 argument <code class="docutils literal notranslate"><span class="pre">target_path</span></code>.</p>
-<div class="code python highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">fake_filesystem_unittest</span> <span class="k">import</span> <span class="n">TestCase</span>
+<div class="code python highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">pyfakefs.fake_filesystem_unittest</span> <span class="k">import</span> <span class="n">TestCase</span>
 
 <span class="k">class</span> <span class="nc">ExampleTestCase</span><span class="p">(</span><span class="n">TestCase</span><span class="p">):</span>
 
@@ -407,7 +407,7 @@ the mount point (see above) the path is related to.</p>
 <p>By default, the size of the fake file system is considered infinite. As soon
 as you set a size, all files will occupy the space according to their size,
 and you may fail to create new files if the fake file system is full.</p>
-<div class="code python highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">fake_filesystem_unittest</span> <span class="k">import</span> <span class="n">TestCase</span>
+<div class="code python highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">pyfakefs.fake_filesystem_unittest</span> <span class="k">import</span> <span class="n">TestCase</span>
 
 <span class="k">class</span> <span class="nc">ExampleTestCase</span><span class="p">(</span><span class="n">TestCase</span><span class="p">):</span>
 
@@ -617,7 +617,7 @@ directory named <code class="docutils literal notranslate"><span class="pre">/tm
         &#169; Copyright 2009 Google Inc. All Rights Reserved.
 © Copyright 2014 Altera Corporation. All Rights Reserved.
 © Copyright 2014-2019 John McGehee.
-      Last updated on May 02, 2019.
+      Last updated on May 06, 2019.
     </div>
   </body>
 </html>

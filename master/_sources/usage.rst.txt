@@ -16,7 +16,7 @@ with the fake file system functions and modules:
 
 .. code:: python
 
-    from fake_filesystem_unittest import TestCase
+    from pyfakefs.fake_filesystem_unittest import TestCase
 
     class ExampleTestCase(TestCase):
         def setUp(self):
@@ -57,7 +57,7 @@ The easiest way is to just use ``Patcher`` as a context manager:
 
 .. code:: python
 
-   from fake_filesystem_unittest import Patcher
+   from pyfakefs.fake_filesystem_unittest import Patcher
 
    with Patcher() as patcher:
        # access the fake_filesystem object via patcher.fs
@@ -71,7 +71,7 @@ You can also initialize ``Patcher`` manually:
 
 .. code:: python
 
-   from fake_filesystem_unittest import Patcher
+   from pyfakefs.fake_filesystem_unittest import Patcher
 
    patcher = Patcher()
    patcher.setUp()     # called in the initialization code
@@ -180,8 +180,8 @@ The passed modules will be reloaded, thus allowing pyfakefs to patch them
 dynamically. All modules loaded after the initial patching described above
 will be patched using this second mechanism.
 
-Given tat the example code shown above is located in the file ``example/sut.py``,
-the following code will work:
+Given that the example code shown above is located in the file
+``example/sut.py``, the following code will work:
 
 .. code:: python
 
@@ -325,7 +325,7 @@ with large files).
 
 .. code:: python
 
-    from fake_filesystem_unittest import TestCase
+    from pyfakefs.fake_filesystem_unittest import TestCase
 
     class ExampleTestCase(TestCase):
         def setUp(self):
@@ -358,7 +358,7 @@ argument ``target_path``.
 
 .. code:: python
 
-    from fake_filesystem_unittest import TestCase
+    from pyfakefs.fake_filesystem_unittest import TestCase
 
     class ExampleTestCase(TestCase):
 
@@ -404,7 +404,7 @@ and you may fail to create new files if the fake file system is full.
 
 .. code:: python
 
-    from fake_filesystem_unittest import TestCase
+    from pyfakefs.fake_filesystem_unittest import TestCase
 
     class ExampleTestCase(TestCase):
 
