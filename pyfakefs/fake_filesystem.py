@@ -852,7 +852,7 @@ class FakeFilesystem(object):
         cwd: The current working directory path.
         umask: The umask used for newly created files, see `os.umask`.
         patcher: Holds the Patcher object if created from it. Allows access
-        to the patcher object if using the pytest fs fixture.
+            to the patcher object if using the pytest fs fixture.
     """
 
     def __init__(self, path_separator=os.path.sep, total_size=None,
