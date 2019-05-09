@@ -4232,11 +4232,11 @@ class FakeOsModule(object):
                 self.filesystem.raise_os_error(e.errno, dir_name)
             raise
 
-    def makedirs(self, dir_name, mode=PERM_DEF, exist_ok=None):
+    def makedirs(self, name, mode=PERM_DEF, exist_ok=None):
         """Create a leaf Fake directory + create any non-existent parent dirs.
 
         Args:
-            dir_name: (str) Name of directory to create.
+            name: (str) Name of directory to create.
             mode: (int) Mode to create directory (and any necessary parent
                 directories) with. This argument defaults to 0o777.
                 The umask is applied to this mode.
@@ -4253,7 +4253,7 @@ class FakeOsModule(object):
         elif sys.version_info < (3, 2):
             raise TypeError("makedir() got an unexpected "
                             "keyword argument 'exist_ok'")
-        self.filesystem.makedirs(dir_name, mode, exist_ok)
+        self.filesystem.makedirs(name, mode, exist_ok)
 
     def _path_with_dir_fd(self, path, fct, dir_fd):
         """Return the path considering dir_fd. Raise on nmvalid parameters."""

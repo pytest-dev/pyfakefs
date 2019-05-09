@@ -1676,7 +1676,7 @@ class FakeOsModuleTest(FakeOsModuleTestBase):
         link_dir = self.os.path.join(base_dir, 'linked')
         self.os.symlink(base_dir, link_dir)
         new_dir = self.os.path.join(link_dir, 'f')
-        self.os.makedirs(new_dir)
+        self.os.makedirs(name=new_dir)
         self.assertTrue(self.os.path.exists(new_dir))
 
     def test_makedirs_raises_if_access_denied(self):
