@@ -265,6 +265,41 @@ class ReloadModuleTest(fake_filesystem_unittest.TestCase):
             pyfakefs.tests.import_as_example.check_if_exists4(file_path))
 
 
+class NoSkipNamesTest(fake_filesystem_unittest.TestCase):
+    """Reference test for additional_skip_names tests:
+     make sure that the module is patched by default."""
+
+    def test_path_exists(self):
+        self.assertTrue(
+            pyfakefs.tests.import_as_example.exists_this_file())
+
+
+class AdditionalSkipNamesTest(fake_filesystem_unittest.TestCase):
+    """Make sure that modules in additional_skip_names are not patched.
+    Passes module name to `additional_skip_names`."""
+
+    def setUp(self):
+        self.setUpPyfakefs(
+            additional_skip_names=['pyfakefs.tests.import_as_example'])
+
+    def test_path_exists(self):
+        self.assertFalse(
+            pyfakefs.tests.import_as_example.exists_this_file())
+
+
+class AdditionalSkipNamesModuleTest(fake_filesystem_unittest.TestCase):
+    """Make sure that modules in additional_skip_names are not patched.
+    Passes module to `additional_skip_names`."""
+
+    def setUp(self):
+        self.setUpPyfakefs(
+            additional_skip_names=[pyfakefs.tests.import_as_example])
+
+    def test_path_exists(self):
+        self.assertFalse(
+            pyfakefs.tests.import_as_example.exists_this_file())
+
+
 class FakeExampleModule(object):
     """Used to patch a function that uses system-specific functions that
     cannot be patched automatically."""

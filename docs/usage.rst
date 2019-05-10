@@ -290,11 +290,18 @@ offending module to ``additional_skip_names``:
   with Patcher(additional_skip_names=['pydevd']) as patcher:
       patcher.fs.create_file('foo')
 
+Alternatively to the module names, the modules themselves may be used:
+
+.. code:: python
+
+  import pydevd
+
+  with Patcher(additional_skip_names=[pydevd]) as patcher:
+      patcher.fs.create_file('foo')
+
 There is also the global variable ``Patcher.SKIPNAMES`` that can be extended
 for that purpose, though this seldom shall be needed (except for own pytest
-plugins, as shown in the example mentioned above). Other than in
-``additional_skip_names``, which is a list of modules names, this is a list
-of modules that have to be imported before.
+plugins, as shown in the example mentioned above).
 
 allow_root_user
 ~~~~~~~~~~~~~~~

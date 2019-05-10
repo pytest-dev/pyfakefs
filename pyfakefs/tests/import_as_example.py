@@ -95,3 +95,8 @@ def file_contents1(filepath):
 def file_contents2(filepath):
     with io_open(filepath) as f:
         return f.read()
+
+
+def exists_this_file():
+    "Returns True in real fs only"
+    return exists(__file__)

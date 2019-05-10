@@ -120,6 +120,7 @@ class TestCaseMixin(object):
         additional_skip_names: names of modules inside of which no module
             replacement shall be performed, in addition to the names in
             :py:attr:`fake_filesystem_unittest.Patcher.SKIPNAMES`.
+            Instead of the module names, the modules themselves may be used.
         modules_to_reload: A list of modules that need to be reloaded
             to be patched dynamically; may be needed if the module
             imports file system modules under an alias
@@ -328,7 +329,9 @@ class Patcher(object):
         self.fake_open = None
 
         if additional_skip_names is not None:
-            self._skipNames.update(additional_skip_names)
+            skip_names = [m.__name__ if inspect.ismodule(m) else m
+                          for m in additional_skip_names]
+            self._skipNames.update(skip_names)
 
         self.modules_to_reload = [tempfile]
         if modules_to_reload is not None:
