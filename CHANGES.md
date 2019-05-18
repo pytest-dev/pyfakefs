@@ -14,6 +14,8 @@ The release versions are PyPi releases.
   * added basic support for `os.pipe` (see [#473](../../issues/473))
 
 #### Fixes
+  * fake `DirEntry` now implements `os.PathLike` in Python >= 3.6
+    (see [#483](../../issues/483))
   * fixed incorrect argument name for `os.makedirs` 
     (see [#481](../../issues/481))
   * avoid pytest warning under Python 2.7 (see [#466](../../issues/466))

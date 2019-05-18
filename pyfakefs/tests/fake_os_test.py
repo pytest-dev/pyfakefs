@@ -25,7 +25,9 @@ import unittest
 
 from pyfakefs import fake_filesystem
 from pyfakefs.fake_filesystem import FakeFileOpen, is_root
-from pyfakefs.extra_packages import use_scandir, use_scandir_package
+from pyfakefs.extra_packages import (
+    use_scandir, use_scandir_package, use_builtin_scandir
+)
 
 from pyfakefs.tests.test_utils import DummyTime, TestCase, RealFsTestCase
 
@@ -4822,6 +4824,13 @@ class FakeScandirTest(FakeOsModuleTestBase):
                              self.dir_entries[3].stat().st_ino)
             self.assertEqual(file_stat.st_dev,
                              self.dir_entries[3].stat().st_dev)
+
+    @unittest.skipIf(sys.version_info < (3, 6) or not use_builtin_scandir,
+                     'Path-like objects have been introduced in Python 3.6')
+    def test_path_like(self):
+        self.assertTrue(isinstance(self.dir_entries[0], os.PathLike))
+        self.assertEqual(self.dir_path, os.fspath(self.dir_entries[0]))
+        self.assertEqual(self.file_path, os.fspath(self.dir_entries[1]))
 
 
 class RealScandirTest(FakeScandirTest):

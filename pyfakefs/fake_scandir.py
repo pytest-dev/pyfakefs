@@ -16,12 +16,18 @@ Works with both the function integrated into the `os` module since Python 3.5
 and the standalone function available in the standalone `scandir` python
 package.
 """
+import os
 import sys
 
-from pyfakefs.extra_packages import use_scandir_package
+from pyfakefs.extra_packages import use_scandir_package, use_builtin_scandir
+
+if sys.version_info >= (3, 6) and use_builtin_scandir:
+    BaseClass = os.PathLike
+else:
+    BaseClass = object
 
 
-class DirEntry(object):
+class DirEntry(BaseClass):
     """Emulates os.DirEntry. Note that we did not enforce keyword only
     arguments."""
 
@@ -100,6 +106,10 @@ class DirEntry(object):
                 file_object.st_nlink = 0
             self._statresult = file_object.stat_result.copy()
         return self._statresult
+
+    if sys.version_info >= (3, 6) and use_builtin_scandir:
+        def __fspath__(self):
+            return self.path
 
 
 class ScanDirIter:
