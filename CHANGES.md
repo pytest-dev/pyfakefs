@@ -12,6 +12,10 @@ The release versions are PyPi releases.
   * added argument `allow_root_user` to `Patcher` and `UnitTest` to allow
     forcing non-root access (see [#474](../../issues/474))
   * added basic support for `os.pipe` (see [#473](../../issues/473))
+  
+#### Infrastructure
+  * added check for correctly installed Python 3 version in Travis.CI
+    (see [#487](../../issues/487))
 
 #### Fixes
   * fake `DirEntry` now implements `os.PathLike` in Python >= 3.6

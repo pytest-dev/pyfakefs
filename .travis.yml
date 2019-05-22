@@ -21,15 +21,23 @@ matrix:
         - python: 2.7
           env: PYTHON=py27
         - python: 3.4
-          env: PYTHON=py34
+          env:
+              - PYTHON=py34
+              - PY_VERSION=3.4.10
         - python: 3.5
-          env: PYTHON=py35
+          env:
+              - PYTHON=py35
+              - PY_VERSION=3.5.7
         - python: 3.6
-          env: PYTHON=py36
+          env:
+              - PYTHON=py36
+              - PY_VERSION=3.6.8
         - python: 3.7
           dist: xenial
           sudo: true
-          env: PYTHON=py37
+          env:
+              - PYTHON=py37
+              - PY_VERSION=3.7.3
         - python: pypy2.7-7.0.0
           dist: xenial
           sudo: true
@@ -43,10 +51,14 @@ matrix:
           env: PYTHON=py27
         - os: osx
           language: generic
-          env: PYTHON=py36
+          env:
+              - PYTHON=py36
+              - PY_VERSION=3.6.8
         - os: osx
           language: generic
-          env: PYTHON=py37
+          env:
+              - PYTHON=py37
+              - PY_VERSION=3.7.3
         - language: minimal
           env: VM=Docker
 
