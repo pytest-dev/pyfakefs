@@ -188,6 +188,19 @@ class FakeFileOpenTest(FakeFileOpenTestBase):
             result = [line.rstrip() for line in fake_file]
         self.assertEqual(contents, result)
 
+    def test_next_over_file(self):
+        contents = [
+            'Live long\n',
+            'and prosper\n'
+        ]
+        result = []
+        file_path = self.make_path('foo.txt')
+        self.create_file(file_path, contents=''.join(contents))
+        with self.open(file_path) as fake_file:
+            result.append(next(fake_file))
+            result.append(next(fake_file))
+        self.assertEqual(contents, result)
+
     def test_open_directory_error(self):
         directory_path = self.make_path('foo')
         self.os.mkdir(directory_path)
