@@ -4988,6 +4988,14 @@ class FakeFileWrapper(object):
             self._raise('File is not open for reading')
         return self._io.__iter__()
 
+    def __next__(self):
+        if not self._read:
+            self._raise('File is not open for reading')
+        return next(self._io)
+
+    if sys.version_info < (3, ):
+        next = __next__
+
 
 class StandardStreamWrapper(object):
     """Wrapper for a system standard stream to be used in open files list.
