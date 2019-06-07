@@ -7,6 +7,8 @@ The release versions are PyPi releases.
   * removed unneeded parameter `use_dynamic_patch`
 
 #### New Features
+  * support for `src_dir_fd` and `dst_dir_fd` arguments in `os.rename`,
+    `os.replace` and `os.link`
   * added possibility to use modules instead of module names for the
     `additional_skip_names` argument (see [#482](../../issues/482))
   * added argument `allow_root_user` to `Patcher` and `UnitTest` to allow
@@ -18,6 +20,7 @@ The release versions are PyPi releases.
     (see [#487](../../issues/487))
 
 #### Fixes
+  * fixed incorrect argument names for some `os` functions
   * fake `DirEntry` now implements `os.PathLike` in Python >= 3.6
     (see [#483](../../issues/483))
   * fixed incorrect argument name for `os.makedirs`

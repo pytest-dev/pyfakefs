@@ -1057,6 +1057,7 @@ class FakeOsModuleTest(FakeOsModuleTestBase):
         link_path = self.os.path.join(base_path, 'slink', 'gamma')
         self.os.link(file_path, link_path)
         self.assertTrue(self.os.path.exists(link_path))
+        self.assertFalse(self.os.path.islink(link_path))
 
     @unittest.skipIf(sys.version_info < (3, 3), 'replace is new in Python 3.3')
     def test_replace_existing_directory_should_raise_under_windows(self):
@@ -4471,13 +4472,21 @@ class FakeOsModuleDirFdTest(FakeOsModuleTestBase):
         self.assertEqual(st[stat.ST_UID], 100)
         self.assertEqual(st[stat.ST_GID], 101)
 
-    def test_link(self):
+    def test_link_src_fd(self):
         self.assertRaises(
             NotImplementedError, self.os.link, 'baz', '/bat',
-            dir_fd=self.dir_fd)
+            src_dir_fd=self.dir_fd)
         self.os.supports_dir_fd.add(os.link)
-        self.os.link('baz', '/bat', dir_fd=self.dir_fd)
+        self.os.link('baz', '/bat', src_dir_fd=self.dir_fd)
         self.assertTrue(self.os.path.exists('/bat'))
+
+    def test_link_dst_fd(self):
+        self.assertRaises(
+            NotImplementedError, self.os.link, 'baz', '/bat',
+            dst_dir_fd=self.dir_fd)
+        self.os.supports_dir_fd.add(os.link)
+        self.os.link('/foo/baz', 'bat', dst_dir_fd=self.dir_fd)
+        self.assertTrue(self.os.path.exists('/foo/bat'))
 
     def test_symlink(self):
         self.assertRaises(
@@ -4534,12 +4543,36 @@ class FakeOsModuleDirFdTest(FakeOsModuleTestBase):
         self.os.mknod('newdir', dir_fd=self.dir_fd)
         self.assertTrue(self.os.path.exists('/foo/newdir'))
 
-    def test_rename(self):
+    def test_rename_src_fd(self):
         self.assertRaises(
             NotImplementedError, self.os.rename, 'baz', '/foo/batz',
-            dir_fd=self.dir_fd)
+            src_dir_fd=self.dir_fd)
         self.os.supports_dir_fd.add(os.rename)
-        self.os.rename('bar', '/foo/batz', dir_fd=self.dir_fd)
+        self.os.rename('bar', '/foo/batz', src_dir_fd=self.dir_fd)
+        self.assertTrue(self.os.path.exists('/foo/batz'))
+
+    def test_rename_dst_fd(self):
+        self.assertRaises(
+            NotImplementedError, self.os.rename, 'baz', '/foo/batz',
+            dst_dir_fd=self.dir_fd)
+        self.os.supports_dir_fd.add(os.rename)
+        self.os.rename('/foo/bar', 'batz', dst_dir_fd=self.dir_fd)
+        self.assertTrue(self.os.path.exists('/foo/batz'))
+
+    def test_replace_src_fd(self):
+        self.assertRaises(
+            NotImplementedError, self.os.rename, 'baz', '/foo/batz',
+            src_dir_fd=self.dir_fd)
+        self.os.supports_dir_fd.add(os.rename)
+        self.os.replace('bar', '/foo/batz', src_dir_fd=self.dir_fd)
+        self.assertTrue(self.os.path.exists('/foo/batz'))
+
+    def test_replace_dst_fd(self):
+        self.assertRaises(
+            NotImplementedError, self.os.rename, 'baz', '/foo/batz',
+            dst_dir_fd=self.dir_fd)
+        self.os.supports_dir_fd.add(os.rename)
+        self.os.replace('/foo/bar', 'batz', dst_dir_fd=self.dir_fd)
         self.assertTrue(self.os.path.exists('/foo/batz'))
 
     def test_remove(self):

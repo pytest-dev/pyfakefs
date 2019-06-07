@@ -2644,12 +2644,14 @@ class FakeFilesystem(object):
             create_missing_dirs=create_missing_dirs,
             raw_io=True)
 
-    def link(self, old_path, new_path):
+    def link(self, old_path, new_path, follow_symlinks=True):
         """Create a hard link at new_path, pointing at old_path.
 
         Args:
             old_path: An existing link to the target file.
             new_path: The destination path to create a new link at.
+            follow_symlinks: If False and old_path is a symlink, link the
+                symlink instead of the object it points to.
 
         Returns:
             The FakeFile object referred to by old_path.
@@ -2684,7 +2686,7 @@ class FakeFilesystem(object):
 
         # Retrieve the target file
         try:
-            old_file = self.resolve(old_path)
+            old_file = self.resolve(old_path, follow_symlinks=follow_symlinks)
         except IOError:
             self.raise_os_error(errno.ENOENT, old_path)
 
@@ -3626,11 +3628,11 @@ class FakeOsModule(object):
             os.umask(mask)
             return mask
 
-    def open(self, file_path, flags, mode=None, dir_fd=None):
+    def open(self, path, flags, mode=None, dir_fd=None):
         """Return the file descriptor for a FakeFile.
 
         Args:
-            file_path: the path to the file
+            path: the path to the file
             flags: low-level bits to indicate io operation
             mode: bits to define default permissions
                 Note: only basic modes are supported, OS-specific modes are
@@ -3647,7 +3649,7 @@ class FakeOsModule(object):
             ValueError: if invalid mode is given
             NotImplementedError: if `os.O_EXCL` is used without `os.O_CREAT`
         """
-        file_path = self._path_with_dir_fd(file_path, self.open, dir_fd)
+        path = self._path_with_dir_fd(path, self.open, dir_fd)
         if mode is None:
             if self.filesystem.is_windows_fs:
                 mode = 0o666
@@ -3667,16 +3669,16 @@ class FakeOsModule(object):
                 'O_EXCL without O_CREAT mode is not supported')
 
         if (not self.filesystem.is_windows_fs and
-                self.filesystem.exists(file_path)):
+                self.filesystem.exists(path)):
             # handle opening directory - only allowed under Posix
             # with read-only mode
-            obj = self.filesystem.resolve(file_path)
+            obj = self.filesystem.resolve(path)
             if isinstance(obj, FakeDirectory):
                 if ((not open_modes.must_exist and
                      not self.filesystem.is_macos)
                         or open_modes.can_write):
-                    self.filesystem.raise_os_error(errno.EISDIR, file_path)
-                dir_wrapper = FakeDirWrapper(obj, file_path, self.filesystem)
+                    self.filesystem.raise_os_error(errno.EISDIR, path)
+                dir_wrapper = FakeDirWrapper(obj, path, self.filesystem)
                 file_des = self.filesystem._add_open_file(dir_wrapper)
                 dir_wrapper.filedes = file_des
                 return file_des
@@ -3688,30 +3690,30 @@ class FakeOsModule(object):
             delete_on_close = flags & os.O_TEMPORARY == os.O_TEMPORARY
         fake_file = FakeFileOpen(
             self.filesystem, delete_on_close=delete_on_close, raw_io=True)(
-            file_path, str_flags, open_modes=open_modes)
+            path, str_flags, open_modes=open_modes)
         if fake_file.file_object != self.filesystem.dev_null:
-            self.chmod(file_path, mode)
+            self.chmod(path, mode)
         return fake_file.fileno()
 
-    def close(self, file_des):
+    def close(self, fd):
         """Close a file descriptor.
 
         Args:
-            file_des: An integer file descriptor for the file object requested.
+            fd: An integer file descriptor for the file object requested.
 
         Raises:
             OSError: bad file descriptor.
             TypeError: if file descriptor is not an integer.
         """
-        file_handle = self.filesystem.get_open_file(file_des)
+        file_handle = self.filesystem.get_open_file(fd)
         file_handle.close()
 
-    def read(self, file_des, num_bytes):
+    def read(self, fd, n):
         """Read number of bytes from a file descriptor, returns bytes read.
 
         Args:
-            file_des: An integer file descriptor for the file object requested.
-            num_bytes: Number of bytes to read from file.
+            fd: An integer file descriptor for the file object requested.
+            n: Number of bytes to read from file.
 
         Returns:
             Bytes read from file.
@@ -3720,15 +3722,15 @@ class FakeOsModule(object):
             OSError: bad file descriptor.
             TypeError: if file descriptor is not an integer.
         """
-        file_handle = self.filesystem.get_open_file(file_des)
+        file_handle = self.filesystem.get_open_file(fd)
         file_handle.raw_io = True
-        return file_handle.read(num_bytes)
+        return file_handle.read(n)
 
-    def write(self, file_des, contents):
+    def write(self, fd, contents):
         """Write string to file descriptor, returns number of bytes written.
 
         Args:
-            file_des: An integer file descriptor for the file object requested.
+            fd: An integer file descriptor for the file object requested.
             contents: String of bytes to write to file.
 
         Returns:
@@ -3738,7 +3740,7 @@ class FakeOsModule(object):
             OSError: bad file descriptor.
             TypeError: if file descriptor is not an integer.
         """
-        file_handle = self.filesystem.get_open_file(file_des)
+        file_handle = self.filesystem.get_open_file(fd)
         if isinstance(file_handle, FakeDirWrapper):
             self.filesystem.raise_os_error(errno.EBADF, file_handle.file_path)
 
@@ -3776,11 +3778,11 @@ class FakeOsModule(object):
         """
         return FakeStatResult.stat_float_times(newvalue)
 
-    def fstat(self, file_des):
+    def fstat(self, fd):
         """Return the os.stat-like tuple for the FakeFile object of file_des.
 
         Args:
-            file_des: The file descriptor of filesystem object to retrieve.
+            fd: The file descriptor of filesystem object to retrieve.
 
         Returns:
             The FakeStatResult object corresponding to entry_path.
@@ -3789,14 +3791,14 @@ class FakeOsModule(object):
             OSError: if the filesystem object doesn't exist.
         """
         # stat should return the tuple representing return value of os.stat
-        file_object = self.filesystem.get_open_file(file_des).get_object()
+        file_object = self.filesystem.get_open_file(fd).get_object()
         return file_object.stat_result.copy()
 
-    def umask(self, new_mask):
+    def umask(self, mask):
         """Change the current umask.
 
         Args:
-            new_mask: (int) The new umask value.
+            mask: (int) The new umask value.
 
         Returns:
             The old umask.
@@ -3804,31 +3806,31 @@ class FakeOsModule(object):
         Raises:
             TypeError: if new_mask is of an invalid type.
         """
-        if not is_int_type(new_mask):
+        if not is_int_type(mask):
             raise TypeError('an integer is required')
         old_umask = self.filesystem.umask
-        self.filesystem.umask = new_mask
+        self.filesystem.umask = mask
         return old_umask
 
-    def chdir(self, target_directory):
+    def chdir(self, path):
         """Change current working directory to target directory.
 
         Args:
-            target_directory: The path to new current working directory.
+            path: The path to new current working directory.
 
         Raises:
             OSError: if user lacks permission to enter the argument directory
                 or if the target is not a directory.
         """
-        target_directory = self.filesystem.resolve_path(
-            target_directory, allow_fd=True)
-        self.filesystem.confirmdir(target_directory)
-        directory = self.filesystem.resolve(target_directory)
+        path = self.filesystem.resolve_path(
+            path, allow_fd=True)
+        self.filesystem.confirmdir(path)
+        directory = self.filesystem.resolve(path)
         # A full implementation would check permissions all the way
         # up the tree.
         if not is_root() and not directory.st_mode | PERM_EXE:
             self.filesystem.raise_os_error(errno.EACCES, directory)
-        self.filesystem.cwd = target_directory
+        self.filesystem.cwd = path
 
     def getcwd(self):
         """Return current working directory."""
@@ -3845,11 +3847,11 @@ class FakeOsModule(object):
             return bytes(
                 self.filesystem.cwd, locale.getpreferredencoding(False))
 
-    def listdir(self, target_directory):
+    def listdir(self, path):
         """Return a list of file names in target_directory.
 
         Args:
-            target_directory: Path to the target directory within the fake
+            path: Path to the target directory within the fake
                 filesystem.
 
         Returns:
@@ -3859,7 +3861,7 @@ class FakeOsModule(object):
         Raises:
           OSError:  if the target is not a directory.
         """
-        return self.filesystem.listdir(target_directory)
+        return self.filesystem.listdir(path)
 
     if sys.version_info >= (3, 3):
         XATTR_CREATE = 1
@@ -3977,7 +3979,7 @@ class FakeOsModule(object):
             file_obj.xattr[attribute] = value
 
     if use_scandir:
-        def scandir(self, path=''):
+        def scandir(self, path='.'):
             """Return an iterator of DirEntry objects corresponding to the
             entries in the directory given by path.
 
@@ -4059,24 +4061,24 @@ class FakeOsModule(object):
         entry_path = self._path_with_dir_fd(entry_path, self.stat, dir_fd)
         return self.filesystem.stat(entry_path, follow_symlinks)
 
-    def lstat(self, entry_path, dir_fd=None):
+    def lstat(self, path, dir_fd=None):
         """Return the os.stat-like tuple for entry_path, not following symlinks.
 
         Args:
-            entry_path:  path to filesystem object to retrieve.
+            path:  path to filesystem object to retrieve.
             dir_fd: If not `None`, the file descriptor of a directory, with
-                `entry_path` being relative to this directory.
+                `path` being relative to this directory.
                 New in Python 3.3.
 
         Returns:
-            the FakeStatResult object corresponding to `entry_path`.
+            the FakeStatResult object corresponding to `path`.
 
         Raises:
             OSError: if the filesystem object doesn't exist.
         """
         # stat should return the tuple representing return value of os.stat
-        entry_path = self._path_with_dir_fd(entry_path, self.lstat, dir_fd)
-        return self.filesystem.stat(entry_path, follow_symlinks=False)
+        path = self._path_with_dir_fd(path, self.lstat, dir_fd)
+        return self.filesystem.stat(path, follow_symlinks=False)
 
     def remove(self, path, dir_fd=None):
         """Remove the FakeFile object at the specified file path.
@@ -4112,18 +4114,21 @@ class FakeOsModule(object):
         path = self._path_with_dir_fd(path, self.unlink, dir_fd)
         self.filesystem.remove(path)
 
-    def rename(self, old_file_path, new_file_path, dir_fd=None):
+    def rename(self, src, dst, src_dir_fd=None, dst_dir_fd=None):
         """Rename a FakeFile object at old_file_path to new_file_path,
         preserving all properties.
         Also replaces existing new_file_path object, if one existed
         (Unix only).
 
         Args:
-            old_file_path: Path to filesystem object to rename.
-            new_file_path: Path to where the filesystem object will live
+            src: Path to filesystem object to rename.
+            dst: Path to where the filesystem object will live
                 after this call.
-            dir_fd: If not `None`, the file descriptor of a directory,
-                with `old_file_path` being relative to this directory.
+            src_dir_fd: If not `None`, the file descriptor of a directory,
+                with `src` being relative to this directory.
+                New in Python 3.3.
+            dst_dir_fd: If not `None`, the file descriptor of a directory,
+                with `dst` being relative to this directory.
                 New in Python 3.3.
 
         Raises:
@@ -4136,68 +4141,72 @@ class FakeOsModule(object):
             OSError: if the file would be moved to another filesystem
                 (e.g. mount point)
         """
-        old_file_path = self._path_with_dir_fd(
-            old_file_path, self.rename, dir_fd)
-        self.filesystem.rename(old_file_path, new_file_path)
+        src = self._path_with_dir_fd(src, self.rename, src_dir_fd)
+        dst = self._path_with_dir_fd(dst, self.rename, dst_dir_fd)
+        self.filesystem.rename(src, dst)
 
     if sys.version_info >= (3, 3):
-        def replace(self, old_file_path, new_file_path):
-            """Renames a FakeFile object at old_file_path to new_file_path,
-            preserving all properties.
-            Also replaces existing new_file_path object, if one existed.
+      def replace(self, src, dst, src_dir_fd=None, dst_dir_fd=None):
+          """Renames a FakeFile object at old_file_path to new_file_path,
+          preserving all properties.
+          Also replaces existing new_file_path object, if one existed.
 
-            Args:
-                old_file_path: Path to filesystem object to rename.
-                new_file_path: Path to where the filesystem object will live
-                    after this call.
+          Arg
+              src: Path to filesystem object to rename.
+              dst: Path to where the filesystem object will live
+                  after this call.
+              src_dir_fd: If not `None`, the file descriptor of a directory,
+                  with `src` being relative to this directory.
+              dst_dir_fd: If not `None`, the file descriptor of a directory,
+                  with `dst` being relative to this directory.
 
-            Raises:
-                OSError: if old_file_path does not exist.
-                OSError: if new_file_path is an existing directory.
-                OSError: if new_file_path is an existing file and could
-                    not be removed
-                OSError: if `dirname(new_file)` does not exist
-                OSError: if the file would be moved to another filesystem
-                    (e.g. mount point)
-            """
-            self.filesystem.rename(
-                old_file_path, new_file_path, force_replace=True)
+          Raises:
+              OSError: if old_file_path does not exist.
+              OSError: if new_file_path is an existing directory.
+              OSError: if new_file_path is an existing file and could
+                  not be removed
+              OSError: if `dirname(new_file)` does not exist
+              OSError: if the file would be moved to another filesystem
+                  (e.g. mount point)
+          """
+          src = self._path_with_dir_fd(src, self.rename, src_dir_fd)
+          dst = self._path_with_dir_fd(dst, self.rename, dst_dir_fd)
+          self.filesystem.rename(src, dst, force_replace=True)
 
-    def rmdir(self, target_directory, dir_fd=None):
+    def rmdir(self, path, dir_fd=None):
         """Remove a leaf Fake directory.
 
         Args:
-            target_directory: (str) Name of directory to remove.
+            path: (str) Name of directory to remove.
             dir_fd: If not `None`, the file descriptor of a directory,
-                with `target_directory` being relative to this directory.
+                with `path` being relative to this directory.
                 New in Python 3.3.
 
         Raises:
-            OSError: if target_directory does not exist or is not a directory,
+            OSError: if `path` does not exist or is not a directory,
             or as per FakeFilesystem.remove_object. Cannot remove '.'.
         """
-        target_directory = self._path_with_dir_fd(
-            target_directory, self.rmdir, dir_fd)
-        self.filesystem.rmdir(target_directory)
+        path = self._path_with_dir_fd(path, self.rmdir, dir_fd)
+        self.filesystem.rmdir(path)
 
-    def removedirs(self, target_directory):
+    def removedirs(self, name):
         """Remove a leaf fake directory and all empty intermediate ones.
 
         Args:
-            target_directory: the directory to be removed.
+            name: the directory to be removed.
 
         Raises:
             OSError: if target_directory does not exist or is not a directory.
             OSError: if target_directory is not empty.
         """
-        target_directory = self.filesystem.absnormpath(target_directory)
-        directory = self.filesystem.confirmdir(target_directory)
+        name = self.filesystem.absnormpath(name)
+        directory = self.filesystem.confirmdir(name)
         if directory.contents:
             self.filesystem.raise_os_error(
-                errno.ENOTEMPTY, self.path.basename(target_directory))
+                errno.ENOTEMPTY, self.path.basename(name))
         else:
-            self.rmdir(target_directory)
-        head, tail = self.path.split(target_directory)
+            self.rmdir(name)
+        head, tail = self.path.split(name)
         if not tail:
             head, tail = self.path.split(head)
         while head and tail:
@@ -4208,28 +4217,28 @@ class FakeOsModule(object):
             self.filesystem.rmdir(head, allow_symlink=True)
             head, tail = self.path.split(head)
 
-    def mkdir(self, dir_name, mode=PERM_DEF, dir_fd=None):
+    def mkdir(self, path, mode=PERM_DEF, dir_fd=None):
         """Create a leaf Fake directory.
 
         Args:
-            dir_name: (str) Name of directory to create.
+            path: (str) Name of directory to create.
                 Relative paths are assumed to be relative to '/'.
             mode: (int) Mode to create directory with.  This argument defaults
                 to 0o777.  The umask is applied to this mode.
             dir_fd: If not `None`, the file descriptor of a directory,
-                with `dir_name` being relative to this directory.
+                with `path` being relative to this directory.
                 New in Python 3.3.
 
         Raises:
             OSError: if the directory name is invalid or parent directory is
                 read only or as per FakeFilesystem.add_object.
         """
-        dir_name = self._path_with_dir_fd(dir_name, self.mkdir, dir_fd)
+        path = self._path_with_dir_fd(path, self.mkdir, dir_fd)
         try:
-            self.filesystem.makedir(dir_name, mode)
+            self.filesystem.makedir(path, mode)
         except IOError as e:
             if e.errno == errno.EACCES:
-                self.filesystem.raise_os_error(e.errno, dir_name)
+                self.filesystem.raise_os_error(e.errno, path)
             raise
 
     def makedirs(self, name, mode=PERM_DEF, exist_ok=None):
@@ -4242,7 +4251,6 @@ class FakeOsModule(object):
                 The umask is applied to this mode.
             exist_ok: (boolean) If exist_ok is False (the default), an OSError
                 is raised if the target directory already exists.
-                New in Python 3.2.
 
         Raises:
             OSError: if the directory already exists and exist_ok=False, or as
@@ -4256,7 +4264,7 @@ class FakeOsModule(object):
         self.filesystem.makedirs(name, mode, exist_ok)
 
     def _path_with_dir_fd(self, path, fct, dir_fd):
-        """Return the path considering dir_fd. Raise on nmvalid parameters."""
+        """Return the path considering dir_fd. Raise on invalid parameters."""
         if dir_fd is not None:
             if sys.version_info < (3, 3):
                 raise TypeError("%s() got an unexpected keyword "
@@ -4418,21 +4426,21 @@ class FakeOsModule(object):
         if gid != -1:
             file_object.st_gid = gid
 
-    def mknod(self, filename, mode=None, device=None, dir_fd=None):
+    def mknod(self, path, mode=None, device=None, dir_fd=None):
         """Create a filesystem node named 'filename'.
 
         Does not support device special files or named pipes as the real os
         module does.
 
         Args:
-            filename: (str) Name of the file to create
+            path: (str) Name of the file to create
             mode: (int) Permissions to use and type of file to be created.
                 Default permissions are 0o666.  Only the stat.S_IFREG file type
                 is supported by the fake implementation.  The umask is applied
                 to this mode.
             device: not supported in fake implementation
             dir_fd: If not `None`, the file descriptor of a directory,
-                with `filename` being relative to this directory.
+                with `path` being relative to this directory.
                 New in Python 3.3.
 
         Raises:
@@ -4448,97 +4456,101 @@ class FakeOsModule(object):
         if device or not mode & S_IFREG and not is_root():
             self.filesystem.raise_os_error(errno.EPERM)
 
-        filename = self._path_with_dir_fd(filename, self.mknod, dir_fd)
-        head, tail = self.path.split(filename)
+        path = self._path_with_dir_fd(path, self.mknod, dir_fd)
+        head, tail = self.path.split(path)
         if not tail:
             if self.filesystem.exists(head, check_link=True):
-                self.filesystem.raise_os_error(errno.EEXIST, filename)
-            self.filesystem.raise_os_error(errno.ENOENT, filename)
+                self.filesystem.raise_os_error(errno.EEXIST, path)
+            self.filesystem.raise_os_error(errno.ENOENT, path)
         if tail in (b'.', u'.', b'..', u'..'):
-            self.filesystem.raise_os_error(errno.ENOENT, filename)
-        if self.filesystem.exists(filename, check_link=True):
-            self.filesystem.raise_os_error(errno.EEXIST, filename)
+            self.filesystem.raise_os_error(errno.ENOENT, path)
+        if self.filesystem.exists(path, check_link=True):
+            self.filesystem.raise_os_error(errno.EEXIST, path)
         try:
             self.filesystem.add_object(head, FakeFile(
                 tail, mode & ~self.filesystem.umask,
                 filesystem=self.filesystem))
         except IOError as e:
-            self.filesystem.raise_os_error(e.errno, filename)
+            self.filesystem.raise_os_error(e.errno, path)
 
-    def symlink(self, link_target, path, dir_fd=None):
+    def symlink(self, src, dst, dir_fd=None):
         """Creates the specified symlink, pointed at the specified link target.
 
         Args:
-            link_target: The target of the symlink.
-            path: Path to the symlink to create.
+            src: The target of the symlink.
+            dst: Path to the symlink to create.
             dir_fd: If not `None`, the file descriptor of a directory,
-                with `link_target` being relative to this directory.
+                with `src` being relative to this directory.
                 New in Python 3.3.
 
         Raises:
             OSError:  if the file already exists.
         """
-        link_target = self._path_with_dir_fd(link_target, self.symlink, dir_fd)
+        src = self._path_with_dir_fd(src, self.symlink, dir_fd)
         self.filesystem.create_symlink(
-            path, link_target, create_missing_dirs=False)
+            dst, src, create_missing_dirs=False)
 
-    def link(self, oldpath, newpath, dir_fd=None):
+    def link(self, src, dst, src_dir_fd=None, dst_dir_fd=None):
         """Create a hard link at new_path, pointing at old_path.
 
         Args:
-            oldpath: An existing link to the target file.
-            newpath: The destination path to create a new link at.
-            dir_fd: If not `None`, the file descriptor of a directory,
-                with `oldpath` being relative to this directory.
+            src: An existing path to the target file.
+            dst: The destination path to create a new link at.
+            src_dir_fd: If not `None`, the file descriptor of a directory,
+                with `src` being relative to this directory.
+                New in Python 3.3.
+            dst_dir_fd: If not `None`, the file descriptor of a directory,
+                with `dst` being relative to this directory.
                 New in Python 3.3.
 
         Returns:
-            The FakeFile object referred to by `oldpath`.
+            The FakeFile object referred to by `src`.
 
         Raises:
             OSError:  if something already exists at new_path.
             OSError:  if the parent directory doesn't exist.
             OSError:  if on Windows before Python 3.2.
         """
-        oldpath = self._path_with_dir_fd(oldpath, self.link, dir_fd)
-        self.filesystem.link(oldpath, newpath)
+        src = self._path_with_dir_fd(src, self.link, src_dir_fd)
+        dst = self._path_with_dir_fd(dst, self.link, dst_dir_fd)
+        self.filesystem.link(src, dst)
 
-    def fsync(self, file_des):
+    def fsync(self, fd):
         """Perform fsync for a fake file (in other words, do nothing).
 
         Args:
-            file_des: The file descriptor of the open file.
+            fd: The file descriptor of the open file.
 
         Raises:
             OSError: file_des is an invalid file descriptor.
             TypeError: file_des is not an integer.
         """
         # Throw an error if file_des isn't valid
-        if 0 <= file_des < NR_STD_STREAMS:
+        if 0 <= fd < NR_STD_STREAMS:
             self.filesystem.raise_os_error(errno.EINVAL)
-        file_object = self.filesystem.get_open_file(file_des)
+        file_object = self.filesystem.get_open_file(fd)
         if self.filesystem.is_windows_fs:
             if (not hasattr(file_object, 'allow_update') or
                     not file_object.allow_update):
                 self.filesystem.raise_os_error(
                     errno.EBADF, file_object.file_path)
 
-    def fdatasync(self, file_des):
+    def fdatasync(self, fd):
         """Perform fdatasync for a fake file (in other words, do nothing).
 
         Args:
-            file_des: The file descriptor of the open file.
+            fd: The file descriptor of the open file.
 
         Raises:
-            OSError: file_des is an invalid file descriptor.
-            TypeError: file_des is not an integer.
+            OSError: `fd` is an invalid file descriptor.
+            TypeError: `fd` is not an integer.
         """
         # Throw an error if file_des isn't valid
         if self.filesystem.is_windows_fs or self.filesystem.is_macos:
             raise AttributeError("module 'os' has no attribute 'fdatasync'")
-        if 0 <= file_des < NR_STD_STREAMS:
+        if 0 <= fd < NR_STD_STREAMS:
             self.filesystem.raise_os_error(errno.EINVAL)
-        self.filesystem.get_open_file(file_des)
+        self.filesystem.get_open_file(fd)
 
     def __getattr__(self, name):
         """Forwards any unfaked calls to the standard os module."""
