@@ -1047,7 +1047,7 @@ class FakeOsModuleTest(FakeOsModuleTestBase):
         self.assertTrue(self.os.path.exists(link_path))
 
     def test_hardlink_works_with_symlink(self):
-        self.check_posix_only()
+        self.skip_if_symlink_not_supported()
         base_path = self.make_path('foo')
         self.create_dir(base_path)
         symlink_path = self.os.path.join(base_path, 'slink')
@@ -3216,7 +3216,7 @@ class FakeOsModuleTestCaseInsensitiveFS(FakeOsModuleTestBase):
         self.os.stat(path)
 
     def test_hardlink_works_with_symlink(self):
-        self.check_posix_only()
+        self.skip_if_symlink_not_supported()
         base_path = self.make_path('foo')
         self.create_dir(base_path)
         symlink_path = self.os.path.join(base_path, 'slink')
