@@ -32,6 +32,8 @@ RUN locale-gen en_US.UTF-8
 ENV LANG en_US.UTF-8
 ENV LANGUAGE en_US:en
 ENV LC_ALL en_US.UTF-8
+ARG github_repo=jmcgeheeiv/pyfakefs
+ARG github_branch=master
 
 RUN apt-get update && apt-get install -y \
     python3-pip \
@@ -41,14 +43,13 @@ RUN apt-get clean
 
 RUN useradd -u 1000 pyfakefs
 
-RUN wget https://github.com/jmcgeheeiv/pyfakefs/archive/master.zip \
-    && unzip master.zip \
-    && chown -R pyfakefs:pyfakefs /pyfakefs-master
-WORKDIR /pyfakefs-master
+RUN wget https://github.com/$github_repo/archive/$github_branch.zip \
+    && unzip $github_branch.zip \
+    && chown -R pyfakefs:pyfakefs /pyfakefs-$github_branch
+WORKDIR /pyfakefs-$github_branch
 RUN pip3 install -r requirements.txt
 RUN pip3 install -r extra_requirements.txt
 
 USER pyfakefs
-ENV PYTHONPATH /pyfakefs-master
+ENV PYTHONPATH /pyfakefs-$github_branch
 CMD ["python3", "-m", "pyfakefs.tests.all_tests"]
-
