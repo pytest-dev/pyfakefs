@@ -521,6 +521,18 @@ directory named <code class="docutils literal notranslate"><span class="pre">/tm
 <code class="docutils literal notranslate"><span class="pre">/var/folders/&lt;hash&gt;/T</span></code> when running on MacOs and
 <code class="docutils literal notranslate"><span class="pre">C:\Users\&lt;user&gt;\AppData\Local\Temp</span></code> on Windows.</p>
 </div>
+<div class="section" id="user-rights">
+<h3>User rights<a class="headerlink" href="#user-rights" title="Permalink to this headline">¶</a></h3>
+<p>If you run pyfakefs tests as root (this happens by default if run in a
+docker container), pyfakefs also behaves as a root user, for example can
+write to write-protected files. This may not be the expected behavior, and
+can be changed.
+Pyfakefs has a rudimentary concept of user rights, which differentiates
+between root user (with the user id 0) and any other user. By default,
+pyfakefs assumes the user id of the current user, but you can change
+that using <code class="docutils literal notranslate"><span class="pre">fake_filesystem.set_uid()</span></code> in your setup. This allows to run
+tests as non-root user in a root user environment and vice verse.</p>
+</div>
 </div>
 </div>
 
@@ -558,6 +570,7 @@ directory named <code class="docutils literal notranslate"><span class="pre">/tm
 <li><a class="reference internal" href="#troubleshooting">Troubleshooting</a><ul>
 <li><a class="reference internal" href="#modules-not-working-with-pyfakefs">Modules not working with pyfakefs</a></li>
 <li><a class="reference internal" href="#os-temporary-directories">OS temporary directories</a></li>
+<li><a class="reference internal" href="#user-rights">User rights</a></li>
 </ul>
 </li>
 </ul>
@@ -615,7 +628,7 @@ directory named <code class="docutils literal notranslate"><span class="pre">/tm
         &#169; Copyright 2009 Google Inc. All Rights Reserved.
 © Copyright 2014 Altera Corporation. All Rights Reserved.
 © Copyright 2014-2019 John McGehee.
-      Last updated on May 06, 2019.
+      Last updated on Jun 21, 2019.
     </div>
   </body>
 </html>

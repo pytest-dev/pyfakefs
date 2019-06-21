@@ -290,11 +290,18 @@ offending module to ``additional_skip_names``:
   with Patcher(additional_skip_names=['pydevd']) as patcher:
       patcher.fs.create_file('foo')
 
+Alternatively to the module names, the modules themselves may be used:
+
+.. code:: python
+
+  import pydevd
+
+  with Patcher(additional_skip_names=[pydevd]) as patcher:
+      patcher.fs.create_file('foo')
+
 There is also the global variable ``Patcher.SKIPNAMES`` that can be extended
 for that purpose, though this seldom shall be needed (except for own pytest
-plugins, as shown in the example mentioned above). Other than in
-``additional_skip_names``, which is a list of modules names, this is a list
-of modules that have to be imported before.
+plugins, as shown in the example mentioned above).
 
 allow_root_user
 ~~~~~~~~~~~~~~~
@@ -525,3 +532,18 @@ means that any newly created fake file system will always have either a
 directory named ``/tmp`` when running on Linux or Unix systems,
 ``/var/folders/<hash>/T`` when running on MacOs and
 ``C:\Users\<user>\AppData\Local\Temp`` on Windows.
+
+User rights
+~~~~~~~~~~~
+
+If you run pyfakefs tests as root (this happens by default if run in a
+docker container), pyfakefs also behaves as a root user, for example can
+write to write-protected files. This may not be the expected behavior, and
+can be changed.
+Pyfakefs has a rudimentary concept of user rights, which differentiates
+between root user (with the user id 0) and any other user. By default,
+pyfakefs assumes the user id of the current user, but you can change
+that using ``fake_filesystem.set_uid()`` in your setup. This allows to run
+tests as non-root user in a root user environment and vice verse.
+Another possibility is the convenience argument ``allow_root_user``
+described above.

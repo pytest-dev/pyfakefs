@@ -304,11 +304,16 @@ offending module to <code class="docutils literal notranslate"><span class="pre"
     <span class="n">patcher</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">create_file</span><span class="p">(</span><span class="s1">&#39;foo&#39;</span><span class="p">)</span>
 </pre></div>
 </div>
+<p>Alternatively to the module names, the modules themselves may be used:</p>
+<div class="code python highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">pydevd</span>
+
+<span class="k">with</span> <span class="n">Patcher</span><span class="p">(</span><span class="n">additional_skip_names</span><span class="o">=</span><span class="p">[</span><span class="n">pydevd</span><span class="p">])</span> <span class="k">as</span> <span class="n">patcher</span><span class="p">:</span>
+    <span class="n">patcher</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">create_file</span><span class="p">(</span><span class="s1">&#39;foo&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
 <p>There is also the global variable <code class="docutils literal notranslate"><span class="pre">Patcher.SKIPNAMES</span></code> that can be extended
 for that purpose, though this seldom shall be needed (except for own pytest
-plugins, as shown in the example mentioned above). Other than in
-<code class="docutils literal notranslate"><span class="pre">additional_skip_names</span></code>, which is a list of modules names, this is a list
-of modules that have to be imported before.</p>
+plugins, as shown in the example mentioned above).</p>
 </div>
 <div class="section" id="allow-root-user">
 <h3>allow_root_user<a class="headerlink" href="#allow-root-user" title="Permalink to this headline">¶</a></h3>
@@ -523,6 +528,20 @@ directory named <code class="docutils literal notranslate"><span class="pre">/tm
 <code class="docutils literal notranslate"><span class="pre">/var/folders/&lt;hash&gt;/T</span></code> when running on MacOs and
 <code class="docutils literal notranslate"><span class="pre">C:\Users\&lt;user&gt;\AppData\Local\Temp</span></code> on Windows.</p>
 </div>
+<div class="section" id="user-rights">
+<h3>User rights<a class="headerlink" href="#user-rights" title="Permalink to this headline">¶</a></h3>
+<p>If you run pyfakefs tests as root (this happens by default if run in a
+docker container), pyfakefs also behaves as a root user, for example can
+write to write-protected files. This may not be the expected behavior, and
+can be changed.
+Pyfakefs has a rudimentary concept of user rights, which differentiates
+between root user (with the user id 0) and any other user. By default,
+pyfakefs assumes the user id of the current user, but you can change
+that using <code class="docutils literal notranslate"><span class="pre">fake_filesystem.set_uid()</span></code> in your setup. This allows to run
+tests as non-root user in a root user environment and vice verse.
+Another possibility is the convenience argument <code class="docutils literal notranslate"><span class="pre">allow_root_user</span></code>
+described above.</p>
+</div>
 </div>
 </div>
 
@@ -560,6 +579,7 @@ directory named <code class="docutils literal notranslate"><span class="pre">/tm
 <li><a class="reference internal" href="#troubleshooting">Troubleshooting</a><ul>
 <li><a class="reference internal" href="#modules-not-working-with-pyfakefs">Modules not working with pyfakefs</a></li>
 <li><a class="reference internal" href="#os-temporary-directories">OS temporary directories</a></li>
+<li><a class="reference internal" href="#user-rights">User rights</a></li>
 </ul>
 </li>
 </ul>
@@ -617,7 +637,7 @@ directory named <code class="docutils literal notranslate"><span class="pre">/tm
         &#169; Copyright 2009 Google Inc. All Rights Reserved.
 © Copyright 2014 Altera Corporation. All Rights Reserved.
 © Copyright 2014-2019 John McGehee.
-      Last updated on May 06, 2019.
+      Last updated on Jun 21, 2019.
     </div>
   </body>
 </html>
