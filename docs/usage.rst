@@ -523,3 +523,16 @@ means that any newly created fake file system will always have either a
 directory named ``/tmp`` when running on Linux or Unix systems,
 ``/var/folders/<hash>/T`` when running on MacOs and
 ``C:\Users\<user>\AppData\Local\Temp`` on Windows.
+
+User rights
+~~~~~~~~~~~
+
+If you run pyfakefs tests as root (this happens by default if run in a
+docker container), pyfakefs also behaves as a root user, for example can
+write to write-protected files. This may not be the expected behavior, and
+can be changed.
+Pyfakefs has a rudimentary concept of user rights, which differentiates
+between root user (with the user id 0) and any other user. By default,
+pyfakefs assumes the user id of the current user, but you can change
+that using ``fake_filesystem.set_uid()`` in your setup. This allows to run
+tests as non-root user in a root user environment and vice verse.
