@@ -2431,7 +2431,7 @@ class FakeFilesystem(object):
                            target_path=None):
         """Create a fake directory corresponding to the real directory at the
         specified path.  Add entries in the fake directory corresponding to
-        the entries in the real directory.
+        the entries in the real directory.  Relative symlinks are supported.
 
         Args:
             source_path: The path to the existing directory.
@@ -2476,8 +2476,29 @@ class FakeFilesystem(object):
             for base, _, files in os.walk(source_path):
                 new_base = os.path.join(new_dir.path,
                                         os.path.relpath(base, source_path))
+                if self._is_link_supported():
+                    for fileEntry in os.listdir(base):
+                        abs_fileEntry = os.path.join(base, fileEntry)
+
+                        if not os.path.islink(abs_fileEntry):
+                            continue
+
+                        target = os.readlink(abs_fileEntry)
+
+                        if target.startswith('./') or target.startswith('../') or target in ('.', '..'):
+                            target = os.path.join(os.path.dirname(abs_fileEntry), target)
+                            target = os.path.normpath(target)
+                        else:
+                            continue
+
+                        if target.startswith(source_path + os.sep) or target == source_path:
+                            self.create_symlink(os.path.join(new_base, fileEntry),
+                                                os.path.join(new_base, target[:len(source_path)]))
                 for fileEntry in files:
-                    self.add_real_file(os.path.join(base, fileEntry),
+                    path = os.path.join(base, fileEntry)
+                    if self._is_link_supported() and os.path.islink(path):
+                        continue
+                    self.add_real_file(path,
                                        read_only,
                                        os.path.join(new_base, fileEntry))
         return new_dir
