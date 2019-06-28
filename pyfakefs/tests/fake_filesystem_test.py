@@ -1974,6 +1974,8 @@ class RealFileSystemAccessTest(TestCase):
             self.filesystem.exists(
                 os.path.join(self.root_path, 'pyfakefs', '__init__.py')))
 
+    @unittest.skipIf(TestCase.is_windows and sys.version_info < (3, 3),
+                     'Links are not supported under Windows before Python 3.3')
     def test_add_existing_real_directory_symlink(self):
         self.filesystem.add_real_directory(os.path.join(self.root_path, 'pyfakefs', 'tests'), lazy_read=False)
         self.assertTrue(
