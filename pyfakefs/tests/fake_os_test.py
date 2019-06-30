@@ -1219,6 +1219,8 @@ class FakeOsModuleTest(FakeOsModuleTestBase):
 
     def test_append_mode_tell_linux_windows(self):
         # Regression test for #300
+        if not self.is_windows and self.is_python2:
+            self.skipTest('Inconsistent behavior under Python 2 in Linux')
         self.check_linux_and_windows()
         tell_result = 5 if self.is_python2 else 7
         self.check_append_mode_tell_after_truncate(tell_result)
