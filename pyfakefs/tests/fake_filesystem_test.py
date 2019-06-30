@@ -2042,7 +2042,7 @@ class RealFileSystemAccessTest(TestCase):
             self.filesystem.exists(
                 os.path.join(self.root_path, 'pyfakefs', 'tests',
                              'fixtures/symlink_file_absolute_outside')))
-        self.assertEquals(
+        self.assertEqual(
             fake_open(os.path.join(self.root_path, 'pyfakefs', 'tests',
                              'fixtures/symlink_file_absolute_outside')).read(),
             'good morning'
