@@ -15,6 +15,7 @@
 
 """Unittest for fake_filesystem module."""
 
+import contextlib
 import errno
 import os
 import stat
@@ -1974,10 +1975,28 @@ class RealFileSystemAccessTest(TestCase):
             self.filesystem.exists(
                 os.path.join(self.root_path, 'pyfakefs', '__init__.py')))
 
+    @contextlib.contextmanager
+    def create_symlinks(self, symlinks):
+        for link in symlinks:
+            os.symlink(link[0], link[1])
+
+        yield
+
+        for link in symlinks:
+            os.unlink(link[1])
+
     @unittest.skipIf(TestCase.is_windows and sys.version_info < (3, 3),
                      'Links are not supported under Windows before Python 3.3')
     def test_add_existing_real_directory_symlink(self):
-        self.filesystem.add_real_directory(os.path.join(self.root_path, 'pyfakefs', 'tests'), lazy_read=False)
+        real_directory = os.path.join(self.root_path, 'pyfakefs', 'tests')
+        symlinks = [
+            ('..', os.path.join(real_directory, 'fixtures', 'symlink_dir_relative')),
+            ('../all_tests.py', os.path.join(real_directory, 'fixtures', 'symlink_file_relative')),
+        ]
+
+        with self.create_symlinks(symlinks):
+            self.filesystem.add_real_directory(real_directory, lazy_read=False)
+
         self.assertTrue(
             self.filesystem.exists(
                 os.path.join(self.root_path, 'pyfakefs', 'tests',
