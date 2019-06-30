@@ -2048,6 +2048,22 @@ class RealFileSystemAccessTest(TestCase):
             'good morning'
         )
 
+    @unittest.skipIf(TestCase.is_windows and sys.version_info < (3, 3),
+                     'Links are not supported under Windows before Python 3.3')
+    def test_add_existing_real_directory_symlink_target_path(self):
+        real_directory = os.path.join(self.root_path, 'pyfakefs', 'tests')
+        symlinks = [
+            ('..', os.path.join(real_directory, 'fixtures', 'symlink_dir_relative')),
+            ('../all_tests.py', os.path.join(real_directory, 'fixtures', 'symlink_file_relative')),
+        ]
+
+        with self.create_symlinks(symlinks):
+            self.filesystem.add_real_directory(real_directory, target_path='/path', lazy_read=False)
+
+        self.assertTrue(self.filesystem.exists('/path/fixtures/symlink_dir_relative'))
+        self.assertTrue(self.filesystem.exists('/path/fixtures/symlink_dir_relative/all_tests.py'))
+        self.assertTrue(self.filesystem.exists('/path/fixtures/symlink_file_relative'))
+
     def test_add_existing_real_directory_tree_to_existing_path(self):
         self.filesystem.create_dir('/foo/bar')
         self.assert_raises_os_error(errno.EEXIST,
