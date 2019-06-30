@@ -1,7 +1,10 @@
 # pyfakefs Release Notes
 The release versions are PyPi releases.
 
-## Version 3.6 (as yet unreleased)
+## Version 3.7 (as yet unreleased)
+
+
+## [Version 3.6](https://pypi.python.org/pypi/pyfakefs/3.6)
 
 #### Changes
   * removed unneeded parameter `use_dynamic_patch`
