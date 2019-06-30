@@ -14,6 +14,8 @@ The release versions are PyPi releases.
   * added argument `allow_root_user` to `Patcher` and `UnitTest` to allow
     forcing non-root access (see [#474](../../issues/474))
   * added basic support for `os.pipe` (see [#473](../../issues/473))
+  * added support for symlinks in `add_real_directory`
+  * added new public method `add_real_symlink`
   
 #### Infrastructure
   * added check for correctly installed Python 3 version in Travis.CI

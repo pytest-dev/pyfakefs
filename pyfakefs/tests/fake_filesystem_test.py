@@ -15,6 +15,7 @@
 
 """Unittest for fake_filesystem module."""
 
+import contextlib
 import errno
 import os
 import stat
@@ -1973,6 +1974,111 @@ class RealFileSystemAccessTest(TestCase):
         self.assertTrue(
             self.filesystem.exists(
                 os.path.join(self.root_path, 'pyfakefs', '__init__.py')))
+
+    @contextlib.contextmanager
+    def create_symlinks(self, symlinks):
+        for link in symlinks:
+            os.symlink(link[0], link[1])
+
+        yield
+
+        for link in symlinks:
+            os.unlink(link[1])
+
+    @unittest.skipIf(TestCase.is_windows and sys.version_info < (3, 3),
+                     'Links are not supported under Windows before Python 3.3')
+    def test_add_existing_real_directory_symlink(self):
+        fake_open = fake_filesystem.FakeFileOpen(self.filesystem)
+        real_directory = os.path.join(self.root_path, 'pyfakefs', 'tests')
+        symlinks = [
+            ('..', os.path.join(real_directory, 'fixtures', 'symlink_dir_relative')),
+            ('../all_tests.py', os.path.join(real_directory, 'fixtures', 'symlink_file_relative')),
+            (real_directory, os.path.join(real_directory, 'fixtures', 'symlink_dir_absolute')),
+            (os.path.join(real_directory, 'all_tests.py'), os.path.join(real_directory, 'fixtures', 'symlink_file_absolute')),
+            ('/etc/something', os.path.join(real_directory, 'fixtures', 'symlink_file_absolute_outside')),
+        ]
+
+        self.filesystem.create_file('/etc/something')
+
+        with fake_open('/etc/something', 'w') as f:
+            f.write('good morning')
+
+        with self.create_symlinks(symlinks):
+            self.filesystem.add_real_directory(real_directory, lazy_read=False)
+
+        for link in symlinks:
+            self.assertTrue(self.filesystem.islink(link[1]))
+
+        # relative
+        self.assertTrue(
+            self.filesystem.exists(
+                os.path.join(self.root_path, 'pyfakefs', 'tests',
+                             'fixtures/symlink_dir_relative')))
+        self.assertTrue(
+            self.filesystem.exists(
+                os.path.join(self.root_path, 'pyfakefs', 'tests',
+                             'fixtures/symlink_dir_relative/all_tests.py')))
+        self.assertTrue(
+            self.filesystem.exists(
+                os.path.join(self.root_path, 'pyfakefs', 'tests',
+                             'fixtures/symlink_file_relative')))
+
+        # absolute
+        self.assertTrue(
+            self.filesystem.exists(
+                os.path.join(self.root_path, 'pyfakefs', 'tests',
+                             'fixtures/symlink_dir_absolute')))
+        self.assertTrue(
+            self.filesystem.exists(
+                os.path.join(self.root_path, 'pyfakefs', 'tests',
+                             'fixtures/symlink_dir_absolute/all_tests.py')))
+        self.assertTrue(
+            self.filesystem.exists(
+                os.path.join(self.root_path, 'pyfakefs', 'tests',
+                             'fixtures/symlink_file_absolute')))
+
+        # outside
+        self.assertTrue(
+            self.filesystem.exists(
+                os.path.join(self.root_path, 'pyfakefs', 'tests',
+                             'fixtures/symlink_file_absolute_outside')))
+        self.assertEqual(
+            fake_open(os.path.join(self.root_path, 'pyfakefs', 'tests',
+                             'fixtures/symlink_file_absolute_outside')).read(),
+            'good morning'
+        )
+
+    @unittest.skipIf(TestCase.is_windows and sys.version_info < (3, 3),
+                     'Links are not supported under Windows before Python 3.3')
+    def test_add_existing_real_directory_symlink_target_path(self):
+        real_directory = os.path.join(self.root_path, 'pyfakefs', 'tests')
+        symlinks = [
+            ('..', os.path.join(real_directory, 'fixtures', 'symlink_dir_relative')),
+            ('../all_tests.py', os.path.join(real_directory, 'fixtures', 'symlink_file_relative')),
+        ]
+
+        with self.create_symlinks(symlinks):
+            self.filesystem.add_real_directory(real_directory, target_path='/path', lazy_read=False)
+
+        self.assertTrue(self.filesystem.exists('/path/fixtures/symlink_dir_relative'))
+        self.assertTrue(self.filesystem.exists('/path/fixtures/symlink_dir_relative/all_tests.py'))
+        self.assertTrue(self.filesystem.exists('/path/fixtures/symlink_file_relative'))
+
+    @unittest.skipIf(TestCase.is_windows and sys.version_info < (3, 3),
+                     'Links are not supported under Windows before Python 3.3')
+    def test_add_existing_real_directory_symlink_lazy_read(self):
+        real_directory = os.path.join(self.root_path, 'pyfakefs', 'tests')
+        symlinks = [
+            ('..', os.path.join(real_directory, 'fixtures', 'symlink_dir_relative')),
+            ('../all_tests.py', os.path.join(real_directory, 'fixtures', 'symlink_file_relative')),
+        ]
+
+        with self.create_symlinks(symlinks):
+            self.filesystem.add_real_directory(real_directory, target_path='/path', lazy_read=True)
+
+            self.assertTrue(self.filesystem.exists('/path/fixtures/symlink_dir_relative'))
+            self.assertTrue(self.filesystem.exists('/path/fixtures/symlink_dir_relative/all_tests.py'))
+            self.assertTrue(self.filesystem.exists('/path/fixtures/symlink_file_relative'))
 
     def test_add_existing_real_directory_tree_to_existing_path(self):
         self.filesystem.create_dir('/foo/bar')
