@@ -2430,10 +2430,10 @@ class FakeFilesystem(object):
         return fake_file
 
     def add_real_symlink(self, source_path, target_path=None):
-        """Create a at source_path (or target_path, if given).  It will point to
-        the same path as the symlink on the real filesystem.  Relative symlink
-        will point relative to their new location.  Absolute symlinks will
-        point to the same, absolute path.
+        """Create a symlink at source_path (or target_path, if given).  It will
+        point to the same path as the symlink on the real filesystem.  Relative
+        symlinks will point relative to their new location.  Absolute symlinks
+        will point to the same, absolute path as on the real filesystem.
 
         Args:
             source_path: The path to the existing symlink.
