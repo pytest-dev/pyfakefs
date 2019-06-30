@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-    <title>Usage &#8212; pyfakefs 3.5.8 documentation</title>
+    <title>Usage &#8212; pyfakefs 3.6 documentation</title>
     <link rel="stylesheet" href="_static/pyfakefs.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
     <script type="text/javascript" id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
@@ -33,7 +33,7 @@
         <li class="right" >
           <a href="intro.html" title="Introduction"
              accesskey="P">previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="index.html">pyfakefs 3.5.8 documentation</a> &#187;</li> 
+        <li class="nav-item nav-item-0"><a href="index.html">pyfakefs 3.6 documentation</a> &#187;</li> 
       </ul>
     </div>  
 
@@ -304,16 +304,23 @@ offending module to <code class="docutils literal notranslate"><span class="pre"
     <span class="n">patcher</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">create_file</span><span class="p">(</span><span class="s1">&#39;foo&#39;</span><span class="p">)</span>
 </pre></div>
 </div>
+<p>Alternatively to the module names, the modules themselves may be used:</p>
+<div class="code python highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">pydevd</span>
+
+<span class="k">with</span> <span class="n">Patcher</span><span class="p">(</span><span class="n">additional_skip_names</span><span class="o">=</span><span class="p">[</span><span class="n">pydevd</span><span class="p">])</span> <span class="k">as</span> <span class="n">patcher</span><span class="p">:</span>
+    <span class="n">patcher</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">create_file</span><span class="p">(</span><span class="s1">&#39;foo&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
 <p>There is also the global variable <code class="docutils literal notranslate"><span class="pre">Patcher.SKIPNAMES</span></code> that can be extended
 for that purpose, though this seldom shall be needed (except for own pytest
-plugins, as shown in the example mentioned above). Other than in
-<code class="docutils literal notranslate"><span class="pre">additional_skip_names</span></code>, which is a list of modules names, this is a list
-of modules that have to be imported before.</p>
+plugins, as shown in the example mentioned above).</p>
 </div>
-<div class="section" id="use-dynamic-patch">
-<h3>use_dynamic_patch<a class="headerlink" href="#use-dynamic-patch" title="Permalink to this headline">¶</a></h3>
-<p>This parameter has been added while dynamic patching was an experimental
-feature and is now obsolete. It will be removed in the next version.</p>
+<div class="section" id="allow-root-user">
+<h3>allow_root_user<a class="headerlink" href="#allow-root-user" title="Permalink to this headline">¶</a></h3>
+<p>This is <code class="docutils literal notranslate"><span class="pre">True</span></code> by default, meaning that the user is considered a root user
+if the real user is a root user (e.g. has the user ID 0). If you want to run
+your tests as a non-root user regardless of the actual user rights, you may
+want to set this to <code class="docutils literal notranslate"><span class="pre">False</span></code>.</p>
 </div>
 </div>
 <div class="section" id="using-convenience-methods">
@@ -353,16 +360,17 @@ Python 2.</p>
 <h3>Access to files in the real file system<a class="headerlink" href="#access-to-files-in-the-real-file-system" title="Permalink to this headline">¶</a></h3>
 <p>If you want to have read access to real files or directories, you can map
 them into the fake file system using <code class="docutils literal notranslate"><span class="pre">add_real_file()</span></code>,
-<code class="docutils literal notranslate"><span class="pre">add_real_directory()</span></code> and <code class="docutils literal notranslate"><span class="pre">add_real_paths()</span></code>. They take a file path, a
-directory path, or a list of paths, respectively, and make them accessible
-from the fake file system. By default, the contents of the mapped files and
-directories are read only on demand, so that mapping them is relatively
-cheap. The access to the files is by default read-only, but even if you
-add them using <code class="docutils literal notranslate"><span class="pre">read_only=False</span></code>, the files are written only in the fake
-system (e.g. in memory). The real files are never changed.</p>
-<p><code class="docutils literal notranslate"><span class="pre">add_real_file()</span></code> and <code class="docutils literal notranslate"><span class="pre">add_real_directory()</span></code> also allow you to map a
-file or a directory tree into another location in the fake filesystem via the
-argument <code class="docutils literal notranslate"><span class="pre">target_path</span></code>.</p>
+<code class="docutils literal notranslate"><span class="pre">add_real_directory()</span></code>, <code class="docutils literal notranslate"><span class="pre">add_real_symlink()</span></code> and <code class="docutils literal notranslate"><span class="pre">add_real_paths()</span></code>.
+They take a file path, a directory path, a symlink path, or a list of paths,
+respectively, and make them accessible from the fake file system. By
+default, the contents of the mapped files and directories are read only on
+demand, so that mapping them is relatively cheap. The access to the files is
+by default read-only, but even if you add them using <code class="docutils literal notranslate"><span class="pre">read_only=False</span></code>,
+the files are written only in the fake system (e.g. in memory). The real
+files are never changed.</p>
+<p><code class="docutils literal notranslate"><span class="pre">add_real_file()</span></code>, <code class="docutils literal notranslate"><span class="pre">add_real_directory()</span></code> and <code class="docutils literal notranslate"><span class="pre">add_real_symlink()</span></code> also
+allow you to map a file or a directory tree into another location in the
+fake filesystem via the argument <code class="docutils literal notranslate"><span class="pre">target_path</span></code>.</p>
 <div class="code python highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">pyfakefs.fake_filesystem_unittest</span> <span class="k">import</span> <span class="n">TestCase</span>
 
 <span class="k">class</span> <span class="nc">ExampleTestCase</span><span class="p">(</span><span class="n">TestCase</span><span class="p">):</span>
@@ -531,7 +539,9 @@ Pyfakefs has a rudimentary concept of user rights, which differentiates
 between root user (with the user id 0) and any other user. By default,
 pyfakefs assumes the user id of the current user, but you can change
 that using <code class="docutils literal notranslate"><span class="pre">fake_filesystem.set_uid()</span></code> in your setup. This allows to run
-tests as non-root user in a root user environment and vice verse.</p>
+tests as non-root user in a root user environment and vice verse.
+Another possibility is the convenience argument <code class="docutils literal notranslate"><span class="pre">allow_root_user</span></code>
+described above.</p>
 </div>
 </div>
 </div>
@@ -556,7 +566,7 @@ tests as non-root user in a root user environment and vice verse.</p>
 <li><a class="reference internal" href="#modules-to-reload">modules_to_reload</a></li>
 <li><a class="reference internal" href="#modules-to-patch">modules_to_patch</a></li>
 <li><a class="reference internal" href="#additional-skip-names">additional_skip_names</a></li>
-<li><a class="reference internal" href="#use-dynamic-patch">use_dynamic_patch</a></li>
+<li><a class="reference internal" href="#allow-root-user">allow_root_user</a></li>
 </ul>
 </li>
 <li><a class="reference internal" href="#using-convenience-methods">Using convenience methods</a><ul>
@@ -621,14 +631,14 @@ tests as non-root user in a root user environment and vice verse.</p>
         <li class="right" >
           <a href="intro.html" title="Introduction"
              >previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="index.html">pyfakefs 3.5.8 documentation</a> &#187;</li> 
+        <li class="nav-item nav-item-0"><a href="index.html">pyfakefs 3.6 documentation</a> &#187;</li> 
       </ul>
     </div>
     <div class="footer" role="contentinfo">
         &#169; Copyright 2009 Google Inc. All Rights Reserved.
 © Copyright 2014 Altera Corporation. All Rights Reserved.
 © Copyright 2014-2019 John McGehee.
-      Last updated on Jun 21, 2019.
+      Last updated on Jun 30, 2019.
     </div>
   </body>
 </html>

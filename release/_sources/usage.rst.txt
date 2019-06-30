@@ -290,16 +290,25 @@ offending module to ``additional_skip_names``:
   with Patcher(additional_skip_names=['pydevd']) as patcher:
       patcher.fs.create_file('foo')
 
+Alternatively to the module names, the modules themselves may be used:
+
+.. code:: python
+
+  import pydevd
+
+  with Patcher(additional_skip_names=[pydevd]) as patcher:
+      patcher.fs.create_file('foo')
+
 There is also the global variable ``Patcher.SKIPNAMES`` that can be extended
 for that purpose, though this seldom shall be needed (except for own pytest
-plugins, as shown in the example mentioned above). Other than in
-``additional_skip_names``, which is a list of modules names, this is a list
-of modules that have to be imported before.
+plugins, as shown in the example mentioned above).
 
-use_dynamic_patch
-~~~~~~~~~~~~~~~~~
-This parameter has been added while dynamic patching was an experimental
-feature and is now obsolete. It will be removed in the next version.
+allow_root_user
+~~~~~~~~~~~~~~~
+This is ``True`` by default, meaning that the user is considered a root user
+if the real user is a root user (e.g. has the user ID 0). If you want to run
+your tests as a non-root user regardless of the actual user rights, you may
+want to set this to ``False``.
 
 Using convenience methods
 -------------------------
@@ -342,17 +351,18 @@ Access to files in the real file system
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 If you want to have read access to real files or directories, you can map
 them into the fake file system using ``add_real_file()``,
-``add_real_directory()`` and ``add_real_paths()``. They take a file path, a
-directory path, or a list of paths, respectively, and make them accessible
-from the fake file system. By default, the contents of the mapped files and
-directories are read only on demand, so that mapping them is relatively
-cheap. The access to the files is by default read-only, but even if you
-add them using ``read_only=False``, the files are written only in the fake
-system (e.g. in memory). The real files are never changed.
+``add_real_directory()``, ``add_real_symlink()`` and ``add_real_paths()``.
+They take a file path, a directory path, a symlink path, or a list of paths,
+respectively, and make them accessible from the fake file system. By
+default, the contents of the mapped files and directories are read only on
+demand, so that mapping them is relatively cheap. The access to the files is
+by default read-only, but even if you add them using ``read_only=False``,
+the files are written only in the fake system (e.g. in memory). The real
+files are never changed.
 
-``add_real_file()`` and ``add_real_directory()`` also allow you to map a
-file or a directory tree into another location in the fake filesystem via the
-argument ``target_path``.
+``add_real_file()``, ``add_real_directory()`` and ``add_real_symlink()`` also
+allow you to map a file or a directory tree into another location in the
+fake filesystem via the argument ``target_path``.
 
 .. code:: python
 
@@ -536,3 +546,5 @@ between root user (with the user id 0) and any other user. By default,
 pyfakefs assumes the user id of the current user, but you can change
 that using ``fake_filesystem.set_uid()`` in your setup. This allows to run
 tests as non-root user in a root user environment and vice verse.
+Another possibility is the convenience argument ``allow_root_user``
+described above.

@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-    <title>Public Modules and Classes &#8212; pyfakefs 3.6dev documentation</title>
+    <title>Public Modules and Classes &#8212; pyfakefs 3.7dev documentation</title>
     <link rel="stylesheet" href="_static/pyfakefs.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
     <script type="text/javascript" id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
@@ -33,7 +33,7 @@
         <li class="right" >
           <a href="autopatch.html" title="Automatically find and patch file functions and modules"
              accesskey="P">previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="index.html">pyfakefs 3.6dev documentation</a> &#187;</li> 
+        <li class="nav-item nav-item-0"><a href="index.html">pyfakefs 3.7dev documentation</a> &#187;</li> 
       </ul>
     </div>  
 
@@ -479,11 +479,45 @@ that <cite>pyfakefs</cite> must not modify the real file system.</p>
 </dd></dl>
 
 <dl class="method">
+<dt id="pyfakefs.fake_filesystem.FakeFilesystem.add_real_symlink">
+<code class="descname">add_real_symlink</code><span class="sig-paren">(</span><em>source_path</em>, <em>target_path=None</em><span class="sig-paren">)</span><a class="headerlink" href="#pyfakefs.fake_filesystem.FakeFilesystem.add_real_symlink" title="Permalink to this definition">¶</a></dt>
+<dd><p>Create a symlink at source_path (or target_path, if given).  It will
+point to the same path as the symlink on the real filesystem.  Relative
+symlinks will point relative to their new location.  Absolute symlinks
+will point to the same, absolute path as on the real filesystem.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>source_path</strong> – The path to the existing symlink.</li>
+<li><strong>target_path</strong> – If given, the name of the symlink in the fake
+fileystem, otherwise, the same as <cite>source_path</cite>.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first">the newly created FakeDirectory object.</p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Raises:</th><td class="field-body"><ul class="first last simple">
+<li><code class="xref py py-exc docutils literal notranslate"><span class="pre">OSError</span></code> – if the directory does not exist in the real file system.</li>
+<li><code class="xref py py-exc docutils literal notranslate"><span class="pre">OSError</span></code> – if the symlink could not be created
+(see <a class="reference internal" href="#pyfakefs.fake_filesystem.FakeFilesystem.create_file" title="pyfakefs.fake_filesystem.FakeFilesystem.create_file"><code class="xref py py-meth docutils literal notranslate"><span class="pre">create_file()</span></code></a>).</li>
+<li><code class="xref py py-exc docutils literal notranslate"><span class="pre">OSError</span></code> – if on Windows before Python 3.2.</li>
+<li><code class="xref py py-exc docutils literal notranslate"><span class="pre">IOError</span></code> – if the directory already exists in the fake file system.</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
 <dt id="pyfakefs.fake_filesystem.FakeFilesystem.add_real_directory">
 <code class="descname">add_real_directory</code><span class="sig-paren">(</span><em>source_path</em>, <em>read_only=True</em>, <em>lazy_read=True</em>, <em>target_path=None</em><span class="sig-paren">)</span><a class="headerlink" href="#pyfakefs.fake_filesystem.FakeFilesystem.add_real_directory" title="Permalink to this definition">¶</a></dt>
 <dd><p>Create a fake directory corresponding to the real directory at the
 specified path.  Add entries in the fake directory corresponding to
-the entries in the real directory.</p>
+the entries in the real directory.  Symlinks are supported.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />
@@ -1152,14 +1186,14 @@ that is available on pypi.</p>
         <li class="right" >
           <a href="autopatch.html" title="Automatically find and patch file functions and modules"
              >previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="index.html">pyfakefs 3.6dev documentation</a> &#187;</li> 
+        <li class="nav-item nav-item-0"><a href="index.html">pyfakefs 3.7dev documentation</a> &#187;</li> 
       </ul>
     </div>
     <div class="footer" role="contentinfo">
         &#169; Copyright 2009 Google Inc. All Rights Reserved.
 © Copyright 2014 Altera Corporation. All Rights Reserved.
 © Copyright 2014-2019 John McGehee.
-      Last updated on Jun 21, 2019.
+      Last updated on Jun 30, 2019.
     </div>
   </body>
 </html>
