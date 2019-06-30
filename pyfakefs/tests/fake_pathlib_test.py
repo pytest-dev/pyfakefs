@@ -436,13 +436,13 @@ if pathlib is not None:
             skip_if_pathlib_36_not_available()
             path = self.path(
                 self.make_path('/path', 'to', 'file', 'this can not exist'))
+            self.assertEqual(path, path.resolve())
             # kludge to avoid https://github.com/mcmtroffaes/pathlib2/issues/45
             if not (pathlib2 and
                     TestCase.is_windows and
                     sys.version_info < (3, 2)):
-                self.assertEqual(path, path.resolve())
-            self.assert_raises_os_error(errno.ENOENT, path.resolve,
-                                        strict=True)
+                self.assert_raises_os_error(errno.ENOENT, path.resolve,
+                                            strict=True)
 
         def test_cwd(self):
             dir_path = self.make_path('jane')
