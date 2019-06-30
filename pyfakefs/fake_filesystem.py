@@ -2485,15 +2485,8 @@ class FakeFilesystem(object):
 
                         target = os.readlink(abs_fileEntry)
 
-                        if target.startswith('./') or target.startswith('../') or target in ('.', '..'):
-                            target = os.path.join(os.path.dirname(abs_fileEntry), target)
-                            target = os.path.normpath(target)
-                        else:
-                            continue
-
-                        if target.startswith(source_path + os.sep) or target == source_path:
-                            self.create_symlink(os.path.join(new_base, fileEntry),
-                                                os.path.join(new_base, target[:len(source_path)]))
+                        self.create_symlink(os.path.join(new_base, fileEntry),
+                                            os.path.join(new_base, target))
                 for fileEntry in files:
                     path = os.path.join(base, fileEntry)
                     if self._is_link_supported() and os.path.islink(path):
