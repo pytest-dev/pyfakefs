@@ -351,17 +351,18 @@ Access to files in the real file system
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 If you want to have read access to real files or directories, you can map
 them into the fake file system using ``add_real_file()``,
-``add_real_directory()`` and ``add_real_paths()``. They take a file path, a
-directory path, or a list of paths, respectively, and make them accessible
-from the fake file system. By default, the contents of the mapped files and
-directories are read only on demand, so that mapping them is relatively
-cheap. The access to the files is by default read-only, but even if you
-add them using ``read_only=False``, the files are written only in the fake
-system (e.g. in memory). The real files are never changed.
+``add_real_directory()``, ``add_real_symlink()`` and ``add_real_paths()``.
+They take a file path, a directory path, a symlink path, or a list of paths,
+respectively, and make them accessible from the fake file system. By
+default, the contents of the mapped files and directories are read only on
+demand, so that mapping them is relatively cheap. The access to the files is
+by default read-only, but even if you add them using ``read_only=False``,
+the files are written only in the fake system (e.g. in memory). The real
+files are never changed.
 
-``add_real_file()`` and ``add_real_directory()`` also allow you to map a
-file or a directory tree into another location in the fake filesystem via the
-argument ``target_path``.
+``add_real_file()``, ``add_real_directory()`` and ``add_real_symlink()`` also
+allow you to map a file or a directory tree into another location in the
+fake filesystem via the argument ``target_path``.
 
 .. code:: python
 
