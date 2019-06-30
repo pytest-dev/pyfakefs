@@ -1997,6 +1997,9 @@ class RealFileSystemAccessTest(TestCase):
         with self.create_symlinks(symlinks):
             self.filesystem.add_real_directory(real_directory, lazy_read=False)
 
+        for link in symlinks:
+            self.assertTrue(self.filesystem.islink(link[1]))
+
         self.assertTrue(
             self.filesystem.exists(
                 os.path.join(self.root_path, 'pyfakefs', 'tests',
