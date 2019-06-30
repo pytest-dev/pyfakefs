@@ -1,7 +1,7 @@
 # pyfakefs Release Notes
 The release versions are PyPi releases.
 
-## Version 3.6 (as yet unreleased)
+## [Version 3.6](https://pypi.python.org/pypi/pyfakefs/3.6)
 
 #### Changes
   * removed unneeded parameter `use_dynamic_patch`
@@ -30,7 +30,7 @@ The release versions are PyPi releases.
   * avoid pytest warning under Python 2.7 (see [#466](../../issues/466))
   * add __next__ to FakeFileWrapper (see [#485](../../issues/485))
 
-## [Version 3.5.8](https://pypi.python.org/pypi/pyfakefs/3.5.8)
+`## [Version 3.5.8](https://pypi.python.org/pypi/pyfakefs/3.5.8)
 
 Another bug-fix release that mainly fixes a regression wih Python 2 that has
 been introduced in version 3.5.3.
