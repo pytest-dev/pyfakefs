@@ -2431,7 +2431,7 @@ class FakeFilesystem(object):
                            target_path=None):
         """Create a fake directory corresponding to the real directory at the
         specified path.  Add entries in the fake directory corresponding to
-        the entries in the real directory.  Relative symlinks are supported.
+        the entries in the real directory.  Symlinks are supported.
 
         Args:
             source_path: The path to the existing directory.
