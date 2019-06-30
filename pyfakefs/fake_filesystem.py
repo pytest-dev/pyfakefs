@@ -823,7 +823,9 @@ class FakeDirectoryFromRealDirectory(FakeDirectory):
             for entry in os.listdir(self.source_path):
                 source_path = os.path.join(self.source_path, entry)
                 target_path = os.path.join(base, entry)
-                if os.path.isdir(source_path):
+                if os.path.islink(source_path):
+                    self.filesystem.add_real_symlink(source_path, target_path)
+                elif os.path.isdir(source_path):
                     self.filesystem.add_real_directory(
                         source_path, self.read_only, target_path=target_path)
                 else:
@@ -2427,6 +2429,38 @@ class FakeFilesystem(object):
                                fake_file.st_dev)
         return fake_file
 
+    def add_real_symlink(self, source_path, target_path=None):
+        """Create a at source_path (or target_path, if given).  It will point to
+        the same path as the symlink on the real filesystem.  Relative symlink
+        will point relative to their new location.  Absolute symlinks will
+        point to the same, absolute path.
+
+        Args:
+            source_path: The path to the existing symlink.
+            target_path: If given, the name of the symlink in the fake
+                fileystem, otherwise, the same as `source_path`.
+
+        Returns:
+            the newly created FakeDirectory object.
+
+        Raises:
+            OSError: if the directory does not exist in the real file system.
+            OSError: if the symlink could not be created
+                (see :py:meth:`create_file`).
+            OSError: if on Windows before Python 3.2.
+            IOError: if the directory already exists in the fake file system.
+        """
+        source_path = self._path_without_trailing_separators(source_path)
+        if not os.path.exists(source_path) and not os.path.islink(source_path):
+            self.raise_os_error(errno.ENOENT, source_path)
+
+        target = os.readlink(source_path)
+
+        if target_path:
+            return self.create_symlink(target_path, target)
+        else:
+            return self.create_symlink(source_path, target)
+
     def add_real_directory(self, source_path, read_only=True, lazy_read=True,
                            target_path=None):
         """Create a fake directory corresponding to the real directory at the
@@ -2483,10 +2517,7 @@ class FakeFilesystem(object):
                         if not os.path.islink(abs_fileEntry):
                             continue
 
-                        target = os.readlink(abs_fileEntry)
-
-                        self.create_symlink(os.path.join(new_base, fileEntry),
-                                            os.path.join(new_base, target))
+                        self.add_real_symlink(abs_fileEntry, os.path.join(new_base, fileEntry))
                 for fileEntry in files:
                     path = os.path.join(base, fileEntry)
                     if self._is_link_supported() and os.path.islink(path):
