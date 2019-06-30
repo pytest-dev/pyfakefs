@@ -43,13 +43,15 @@ RUN apt-get clean
 
 RUN useradd -u 1000 pyfakefs
 
-RUN wget https://github.com/$github_repo/archive/$github_branch.zip \
-    && unzip $github_branch.zip \
-    && chown -R pyfakefs:pyfakefs /pyfakefs-$github_branch
-WORKDIR /pyfakefs-$github_branch
+RUN mkdir -p work \
+    && wget https://github.com/$github_repo/archive/$github_branch.zip \
+    && unzip $github_branch.zip -d work
+RUN WORK_DIR=`ls -d work/*`; mv $WORK_DIR work/pyfakefs
+RUN chown -R pyfakefs:pyfakefs work/pyfakefs
+WORKDIR work/pyfakefs
 RUN pip3 install -r requirements.txt
 RUN pip3 install -r extra_requirements.txt
 
 USER pyfakefs
-ENV PYTHONPATH /pyfakefs-$github_branch
+ENV PYTHONPATH work/pyfakefs
 CMD ["python3", "-m", "pyfakefs.tests.all_tests"]
