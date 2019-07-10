@@ -484,19 +484,22 @@ class Patcher(object):
                     category=DeprecationWarning,
                     module='py'
                 )
-                modules = {name: mod for name, mod in module.__dict__.items()
+                modules = {name: mod for name, mod in
+                           module.__dict__.copy().items()
                            if is_fs_module(mod, name)}
             for name, mod in modules.items():
                 self._modules.setdefault(name, set()).add((module,
                                                            mod.__name__))
-            functions = {name: fct for name, fct in module.__dict__.items()
+            functions = {name: fct for name, fct in
+                         module.__dict__.copy().items()
                          if is_fs_function(fct)}
             for name, fct in functions.items():
                 self._fct_modules.setdefault(
                     (name, fct.__name__, fct.__module__), set()).add(module)
 
             if IS_PY2:
-                open_fcts = {name for name, fct in module.__dict__.items()
+                open_fcts = {name for name, fct in
+                             module.__dict__.copy().items()
                              if is_open_function(fct)}
                 for name in open_fcts:
                     self._open_functions.setdefault(name, set()).add(module)

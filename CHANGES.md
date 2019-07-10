@@ -3,7 +3,11 @@ The release versions are PyPi releases.
 
 ## Version 3.7 (as yet unreleased)
 
-
+### Fixes
+  * avoid rare side effect during module iteration in test setup
+    (see [#338](../../issues/338))
+    
+    
 ## [Version 3.6](https://pypi.python.org/pypi/pyfakefs/3.6)
 
 #### Changes
