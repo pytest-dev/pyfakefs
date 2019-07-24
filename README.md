@@ -1,4 +1,4 @@
-# pyfakefs
+# pyfakefs [![PyPI version](https://badge.fury.io/py/pyfakefs.svg)](https://badge.fury.io/py/pyfakefs)
 pyfakefs implements a fake file system that mocks the Python file system modules.
 Using pyfakefs, your tests operate on a fake file system in memory without
 touching the real disk.  The software under test requires no modification to
@@ -51,9 +51,6 @@ file access functions--the C libraries will always access the real file system.
 For example, pyfakefs will not work with [`lxml`](http://lxml.de/).  In this case
 `lxml` must be replaced with a pure Python alternative such as
 [`xml.etree.ElementTree`](https://docs.python.org/3/library/xml.etree.elementtree.html).
-
-### PyPi
-[pyfakefs is available on PyPi](https://pypi.python.org/pypi/pyfakefs/).
 
 ## Development
 
