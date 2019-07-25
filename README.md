@@ -1,4 +1,5 @@
-# pyfakefs [![PyPI version](https://badge.fury.io/py/pyfakefs.svg)](https://badge.fury.io/py/pyfakefs)
+# pyfakefs [![PyPI version](https://badge.fury.io/py/pyfakefs.svg)](https://badge.fury.io/py/pyfakefs) [![Python version](https://img.shields.io/pypi/pyversions/pyfakefs.svg)](https://img.shields.io/pypi/pyversions/pyfakefs.svg)
+
 pyfakefs implements a fake file system that mocks the Python file system modules.
 Using pyfakefs, your tests operate on a fake file system in memory without
 touching the real disk.  The software under test requires no modification to
@@ -37,9 +38,8 @@ directly using `fake_filesystem_unittest.Patcher`. Refer to the
 for more information on test scenarios, test customization and 
 using convenience functions.
 
-## Installation
 
-### Compatibility
+## Compatibility
 pyfakefs works with CPython 2.7, 3.4 and above, on Linux, Windows and OSX 
 (MacOS), and with PyPy2 and PyPy3.
 
