@@ -40,6 +40,7 @@ class DirEntry(BaseClass):
         self._filesystem = filesystem
         self.name = ''
         self.path = ''
+        self._abspath = ''
         self._inode = None
         self._islink = False
         self._isdir = False
@@ -93,14 +94,14 @@ class DirEntry(BaseClass):
         """
         if follow_symlinks:
             if self._statresult_symlink is None:
-                file_object = self._filesystem.resolve(self.path)
+                file_object = self._filesystem.resolve(self._abspath)
                 if self._filesystem.is_windows_fs:
                     file_object.st_nlink = 0
                 self._statresult_symlink = file_object.stat_result.copy()
             return self._statresult_symlink
 
         if self._statresult is None:
-            file_object = self._filesystem.lresolve(self.path)
+            file_object = self._filesystem.lresolve(self._abspath)
             self._inode = file_object.st_ino
             if self._filesystem.is_windows_fs:
                 file_object.st_nlink = 0
@@ -125,12 +126,15 @@ class ScanDirIter:
                 raise NotImplementedError(
                     'scandir does not support file descriptor '
                     'path argument')
-            path = self.filesystem.get_open_file(path).get_object().path
-
-        self.path = self.filesystem.absnormpath(path)
+            self.abspath = self.filesystem.absnormpath(
+                self.filesystem.get_open_file(path).get_object().path)
+            self.path = ''
+        else:
+            self.abspath = self.filesystem.absnormpath(path)
+            self.path = path
         contents = {}
         try:
-            contents = self.filesystem.confirmdir(path).contents
+            contents = self.filesystem.confirmdir(self.abspath).contents
         except OSError:
             pass
         self.contents_iter = iter(contents)
@@ -147,8 +151,10 @@ class ScanDirIter:
         dir_entry.name = entry
         dir_entry.path = self.filesystem.joinpaths(self.path,
                                                    dir_entry.name)
-        dir_entry._isdir = self.filesystem.isdir(dir_entry.path)
-        dir_entry._islink = self.filesystem.islink(dir_entry.path)
+        dir_entry._abspath = self.filesystem.joinpaths(self.abspath,
+                                                       dir_entry.name)
+        dir_entry._isdir = self.filesystem.isdir(dir_entry._abspath)
+        dir_entry._islink = self.filesystem.islink(dir_entry._abspath)
         return dir_entry
 
     # satisfy both Python 2 and 3
