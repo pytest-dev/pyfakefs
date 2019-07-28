@@ -4714,6 +4714,9 @@ class StatPropagationTest(TestCase):
 
 @unittest.skipIf(not use_scandir, 'only run if scandir is available')
 class FakeScandirTest(FakeOsModuleTestBase):
+    FILE_SIZE = 50
+    LINKED_FILE_SIZE = 10
+
     def setUp(self):
         super(FakeScandirTest, self).setUp()
         self.supports_symlinks = (not self.is_windows or
@@ -4737,35 +4740,56 @@ class FakeScandirTest(FakeOsModuleTestBase):
         link_dir = self.make_path('linked', 'plugh')
         self.linked_file_path = self.os.path.join(link_dir, 'file')
         self.linked_dir_path = self.os.path.join(link_dir, 'dir')
-
-        self.create_dir(self.linked_dir_path)
-        self.create_file(self.linked_file_path, contents=b'a' * 10)
+        self.rel_linked_dir_path = (
+            self.os.path.join('..', '..', 'linked', 'plugh', 'dir'))
+        self.rel_linked_file_path = (
+            self.os.path.join('..', '..', 'linked', 'plugh', 'file'))
         self.dir_path = self.os.path.join(self.directory, 'dir')
-        self.create_dir(self.dir_path)
         self.file_path = self.os.path.join(self.directory, 'file')
-        self.create_file(self.file_path, contents=b'b' * 50)
         self.file_link_path = self.os.path.join(self.directory, 'link_file')
+        self.dir_link_path = self.os.path.join(self.directory, 'link_dir')
+        self.file_rel_link_path = self.os.path.join(self.directory,
+                                                    'rel_link_file')
+        self.dir_rel_link_path = self.os.path.join(self.directory,
+                                                   'rel_link_dir')
+
+        self.create_dir(self.dir_path)
+        self.create_file(self.file_path, contents=b'b' * self.FILE_SIZE)
         if self.supports_symlinks:
-            self.create_symlink(self.file_link_path, self.linked_file_path)
-            self.dir_link_path = self.os.path.join(self.directory, 'link_dir')
+            self.create_dir(self.linked_dir_path)
+            self.create_file(self.linked_file_path,
+                             contents=b'a' * self.LINKED_FILE_SIZE),
             self.create_symlink(self.dir_link_path, self.linked_dir_path)
-        self.dir_entries = [entry for entry in self.scandir(self.directory)]
-        self.dir_entries = sorted(self.dir_entries,
-                                  key=lambda entry: entry.name)
+            self.create_symlink(self.file_link_path, self.linked_file_path)
+            self.create_symlink(self.dir_rel_link_path,
+                                self.rel_linked_dir_path)
+            self.create_symlink(self.file_rel_link_path,
+                                self.rel_linked_file_path)
+
+        self.dir_entries = list(self.do_scandir())
+        self.dir_entries.sort(key=lambda entry: entry.name)
+
+    def do_scandir(self):
+        """Hook to override how scandir is called."""
+        return self.scandir(self.directory)
+
+    def scandir_path(self):
+        """Hook to override the expected scandir() path in DirEntry.path."""
+        return self.directory
 
     def test_paths(self):
         sorted_names = ['dir', 'file']
         if self.supports_symlinks:
-            sorted_names.extend(['link_dir', 'link_file'])
+            sorted_names.extend(['link_dir', 'link_file', 'rel_link_dir',
+                                 'rel_link_file'])
 
         self.assertEqual(len(sorted_names), len(self.dir_entries))
         self.assertEqual(sorted_names,
                          [entry.name for entry in self.dir_entries])
-
-        self.skip_real_fs()
-        # this one does not work in the real fs - will wait for
-        # final 3.7 release to check into this
-        self.assertEqual(self.dir_path, self.dir_entries[0].path)
+        sorted_paths = [self.os.path.join(self.scandir_path(), name)
+                        for name in sorted_names]
+        self.assertEqual(sorted_paths,
+                         [entry.path for entry in self.dir_entries])
 
     def test_isfile(self):
         self.assertFalse(self.dir_entries[0].is_file())
@@ -4777,6 +4801,12 @@ class FakeScandirTest(FakeOsModuleTestBase):
             self.assertTrue(self.dir_entries[3].is_file())
             self.assertFalse(
                 self.dir_entries[3].is_file(follow_symlinks=False))
+            self.assertFalse(self.dir_entries[4].is_file())
+            self.assertFalse(
+                self.dir_entries[4].is_file(follow_symlinks=False))
+            self.assertTrue(self.dir_entries[5].is_file())
+            self.assertFalse(
+                self.dir_entries[5].is_file(follow_symlinks=False))
 
     def test_isdir(self):
         self.assertTrue(self.dir_entries[0].is_dir())
@@ -4786,6 +4816,10 @@ class FakeScandirTest(FakeOsModuleTestBase):
             self.assertFalse(self.dir_entries[2].is_dir(follow_symlinks=False))
             self.assertFalse(self.dir_entries[3].is_dir())
             self.assertFalse(self.dir_entries[3].is_dir(follow_symlinks=False))
+            self.assertTrue(self.dir_entries[4].is_dir())
+            self.assertFalse(self.dir_entries[4].is_dir(follow_symlinks=False))
+            self.assertFalse(self.dir_entries[5].is_dir())
+            self.assertFalse(self.dir_entries[5].is_dir(follow_symlinks=False))
 
     def test_is_link(self):
         if self.supports_symlinks:
@@ -4793,6 +4827,8 @@ class FakeScandirTest(FakeOsModuleTestBase):
             self.assertFalse(self.dir_entries[1].is_symlink())
             self.assertTrue(self.dir_entries[2].is_symlink())
             self.assertTrue(self.dir_entries[3].is_symlink())
+            self.assertTrue(self.dir_entries[4].is_symlink())
+            self.assertTrue(self.dir_entries[5].is_symlink())
 
     def test_path_links_not_resolved(self):
         # regression test for #350
@@ -4821,29 +4857,44 @@ class FakeScandirTest(FakeOsModuleTestBase):
                              self.dir_entries[2].inode())
             self.assertEqual(self.os.lstat(self.file_link_path).st_ino,
                              self.dir_entries[3].inode())
+            self.assertEqual(self.os.lstat(self.dir_rel_link_path).st_ino,
+                             self.dir_entries[4].inode())
+            self.assertEqual(self.os.lstat(self.file_rel_link_path).st_ino,
+                             self.dir_entries[5].inode())
 
-    def check_stat(self, expected_size):
-        self.assertEqual(50, self.dir_entries[1].stat().st_size)
+    def check_stat(self, absolute_symlink_expected_size,
+                   relative_symlink_expected_size):
+        self.assertEqual(self.FILE_SIZE, self.dir_entries[1].stat().st_size)
         self.assertEqual(
             self.os.stat(self.dir_path).st_ctime,
             self.dir_entries[0].stat().st_ctime)
 
         if self.supports_symlinks:
-            self.assertEqual(10, self.dir_entries[3].stat().st_size)
-            self.assertEqual(expected_size,
+            self.assertEqual(self.LINKED_FILE_SIZE,
+                             self.dir_entries[3].stat().st_size)
+            self.assertEqual(absolute_symlink_expected_size,
                              self.dir_entries[3].stat(
                                  follow_symlinks=False).st_size)
             self.assertEqual(
                 self.os.stat(self.linked_dir_path).st_mtime,
                 self.dir_entries[2].stat().st_mtime)
+            self.assertEqual(self.LINKED_FILE_SIZE,
+                             self.dir_entries[5].stat().st_size)
+            self.assertEqual(relative_symlink_expected_size,
+                             self.dir_entries[5].stat(
+                                 follow_symlinks=False).st_size)
+            self.assertEqual(
+                self.os.stat(self.linked_dir_path).st_mtime,
+                self.dir_entries[4].stat().st_mtime)
 
     @unittest.skipIf(TestCase.is_windows, 'POSIX specific behavior')
     def test_stat_posix(self):
-        self.check_stat(len(self.linked_file_path))
+        self.check_stat(len(self.linked_file_path),
+                        len(self.rel_linked_file_path))
 
     @unittest.skipIf(not TestCase.is_windows, 'Windows specific behavior')
     def test_stat_windows(self):
-        self.check_stat(0)
+        self.check_stat(0, 0)
 
     def test_index_access_to_stat_times_returns_int(self):
         self.assertEqual(self.os.stat(self.dir_path)[stat.ST_CTIME],
@@ -4851,6 +4902,8 @@ class FakeScandirTest(FakeOsModuleTestBase):
         if self.supports_symlinks:
             self.assertEqual(self.os.stat(self.linked_dir_path)[stat.ST_MTIME],
                              int(self.dir_entries[2].stat().st_mtime))
+            self.assertEqual(self.os.stat(self.linked_dir_path)[stat.ST_MTIME],
+                             int(self.dir_entries[4].stat().st_mtime))
 
     def test_stat_ino_dev(self):
         if self.supports_symlinks:
@@ -4859,13 +4912,19 @@ class FakeScandirTest(FakeOsModuleTestBase):
                              self.dir_entries[3].stat().st_ino)
             self.assertEqual(file_stat.st_dev,
                              self.dir_entries[3].stat().st_dev)
+            self.assertEqual(file_stat.st_ino,
+                             self.dir_entries[5].stat().st_ino)
+            self.assertEqual(file_stat.st_dev,
+                             self.dir_entries[5].stat().st_dev)
 
     @unittest.skipIf(sys.version_info < (3, 6) or not use_builtin_scandir,
                      'Path-like objects have been introduced in Python 3.6')
     def test_path_like(self):
         self.assertTrue(isinstance(self.dir_entries[0], os.PathLike))
-        self.assertEqual(self.dir_path, os.fspath(self.dir_entries[0]))
-        self.assertEqual(self.file_path, os.fspath(self.dir_entries[1]))
+        self.assertEqual(self.os.path.join(self.scandir_path(), 'dir'),
+                         os.fspath(self.dir_entries[0]))
+        self.assertEqual(self.os.path.join(self.scandir_path(), 'file'),
+                         os.fspath(self.dir_entries[1]))
 
 
 class RealScandirTest(FakeScandirTest):
@@ -4873,22 +4932,51 @@ class RealScandirTest(FakeScandirTest):
         return True
 
 
+class FakeScandirRelTest(FakeScandirTest):
+    def scandir_path(self):
+        # When scandir is called with a relative path, that relative path is
+        # used in the path attribute of the DirEntry objects.
+        return self.os.path.relpath(self.directory)
+
+    def do_scandir(self):
+      return self.scandir(self.os.path.relpath(self.directory))
+
+
+class RealScandirRelTest(FakeScandirRelTest):
+    def use_real_fs(self):
+        return True
+
+
 @unittest.skipIf(sys.version_info < (3, 7) or TestCase.is_windows,
                  'dir_fd support for os.scandir was introduced in Python 3.7')
 class FakeScandirFdTest(FakeScandirTest):
-    def setUp(self):
-        super(FakeScandirFdTest, self).setUp()
-        self.dir_fd = self.os.open(self.directory, os.O_RDONLY)
-        self.dir_entries = [entry for entry in self.scandir(self.dir_fd)]
-        self.dir_entries = sorted(self.dir_entries,
-                                  key=lambda entry: entry.name)
-
     def tearDown(self):
         self.os.close(self.dir_fd)
         super(FakeScandirFdTest, self).tearDown()
 
+    def scandir_path(self):
+        # When scandir is called with a filedescriptor, only the name of the entry
+        # is returned in the path attribute of the DirEntry objects.
+        return ''
+
+    def do_scandir(self):
+      self.dir_fd = self.os.open(self.directory, os.O_RDONLY)
+      return self.scandir(self.dir_fd)
+
 
 class RealScandirFdTest(FakeScandirFdTest):
+    def use_real_fs(self):
+        return True
+
+
+class FakeScandirFdRelTest(FakeScandirFdTest):
+    def do_scandir(self):
+      self.dir_fd = self.os.open(self.os.path.relpath(self.directory),
+                                 os.O_RDONLY)
+      return self.scandir(self.dir_fd)
+
+
+class RealScandirFdRelTest(FakeScandirFdRelTest):
     def use_real_fs(self):
         return True
 
