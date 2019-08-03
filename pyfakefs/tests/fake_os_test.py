@@ -4766,8 +4766,22 @@ class FakeScandirTest(FakeOsModuleTestBase):
             self.create_symlink(self.file_rel_link_path,
                                 self.rel_linked_file_path)
 
+        # Changing the working directory below is to make sure relative paths
+        # to the files and directories created above are reasonable.
+        # Corner-cases about relative paths are better checked in tests created
+        # for that purpose.
+        #
+        # WARNING: This is self.pretest_cwd and not self.cwd as the latter is
+        # used by superclass RealFsTestCase.
+        self.pretest_cwd = self.os.getcwd()
+        self.os.chdir(self.base_path)
+
         self.dir_entries = list(self.do_scandir())
         self.dir_entries.sort(key=lambda entry: entry.name)
+
+    def tearDown(self):
+        self.os.chdir(self.pretest_cwd)
+        super(FakeScandirTest, self).tearDown()
 
     def do_scandir(self):
         """Hook to override how scandir is called."""
