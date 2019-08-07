@@ -1,17 +1,17 @@
 # pyfakefs Release Notes
-The release versions are PyPi releases.
+The released versions correspond to PyPi releases.
 
-## Version 4.0
+## Preview of future Version 4.0
 
-_Note:_ This version will drop support for Python 2.7. It is planned to be 
-released at the end of 2019 or the beginning of 2020.
-We strongly encourage you to switch to Python 3, if not already done, but 
-if you still need Python 2.7, you can still use the latest pyfakefs 3.x 
-version. 
+_Note:_ pyfakefs 4.0 is planned for release at the end of 2019 or the beginning
+of 2020. As pyfakefs 4.0 is a major release, we are giving you advance notice of
+the proposed changes so you can be ready.
 
-This version will also remove the old-style API, which has been deprecated in 
-pyfakefs 3.4.
+  * pyfakefs 4.0 drops support for Python 2.7. If you still need
+    Python 2.7, you can still use the latest pyfakefs 3.x version. 
 
+  * pyfakefs 4.0 version will also remove the old-style API, which was
+     deprecated in pyfakefs 3.4.
 
 ## Version 3.7 (as yet unreleased)
 
