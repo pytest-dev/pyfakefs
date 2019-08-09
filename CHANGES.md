@@ -10,9 +10,6 @@ the proposed changes so you can be ready.
   * pyfakefs 4.0 drops support for Python 2.7. If you still need
     Python 2.7, you can still use the latest pyfakefs 3.x version. 
 
-  * pyfakefs 4.0 version will also remove the old-style API, which was
-     deprecated in pyfakefs 3.4.
-
 ## Version 3.7 (as yet unreleased)
 
 ### Fixes
