@@ -12,10 +12,13 @@ the proposed changes so you can be ready.
 
 ## Version 3.7 (as yet unreleased)
 
+## [Version 3.6.1](https://pypi.python.org/pypi/pyfakefs/3.6.1)
+
 ### Fixes
   * avoid rare side effect during module iteration in test setup
     (see [#338](../../issues/338))
-    
+  * make sure real OS tests are not executed by default 
+    (see [#495](../../issues/495))
     
 ## [Version 3.6](https://pypi.python.org/pypi/pyfakefs/3.6)
 
