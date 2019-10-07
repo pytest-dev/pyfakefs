@@ -1,20 +1,13 @@
 # pyfakefs Release Notes
 The released versions correspond to PyPi releases.
 
-## Preview of future Version 4.0
-
-_Note:_ pyfakefs 4.0 is planned for release at the end of 2019 or the beginning
-of 2020. As pyfakefs 4.0 is a major release, we are giving you advance notice of
-the proposed changes so you can be ready.
-
-  * pyfakefs 4.0 drops support for Python 2.7. If you still need
-    Python 2.7, you can still use the latest pyfakefs 3.x version. 
-
-## Version 3.7 (as yet unreleased)
+## [Version 3.6.1](https://pypi.python.org/pypi/pyfakefs/3.6.1)
 
 ### Fixes
   * avoid rare side effect during module iteration in test setup
     (see [#338](../../issues/338))
+  * make sure real OS tests are not executed by default 
+    (see [#495](../../issues/495))
     
     
 ## [Version 3.6](https://pypi.python.org/pypi/pyfakefs/3.6)
