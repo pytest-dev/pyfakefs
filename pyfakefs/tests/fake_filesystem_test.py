@@ -2003,8 +2003,15 @@ class RealFileSystemAccessTest(TestCase):
         with fake_open('/etc/something', 'w') as f:
             f.write('good morning')
 
-        with self.create_symlinks(symlinks):
-            self.filesystem.add_real_directory(real_directory, lazy_read=False)
+        try:
+            with self.create_symlinks(symlinks):
+                self.filesystem.add_real_directory(
+                    real_directory, lazy_read=False)
+        except OSError:
+            if self.is_windows:
+                raise unittest.SkipTest(
+                    'Symlinks under Windows need admin privileges')
+            raise
 
         for link in symlinks:
             self.assertTrue(self.filesystem.islink(link[1]))
@@ -2057,8 +2064,14 @@ class RealFileSystemAccessTest(TestCase):
             ('../all_tests.py', os.path.join(real_directory, 'fixtures', 'symlink_file_relative')),
         ]
 
-        with self.create_symlinks(symlinks):
-            self.filesystem.add_real_directory(real_directory, target_path='/path', lazy_read=False)
+        try:
+            with self.create_symlinks(symlinks):
+                self.filesystem.add_real_directory(real_directory, target_path='/path', lazy_read=False)
+        except OSError:
+            if self.is_windows:
+                raise unittest.SkipTest(
+                    'Symlinks under Windows need admin privileges')
+            raise
 
         self.assertTrue(self.filesystem.exists('/path/fixtures/symlink_dir_relative'))
         self.assertTrue(self.filesystem.exists('/path/fixtures/symlink_dir_relative/all_tests.py'))
@@ -2073,12 +2086,18 @@ class RealFileSystemAccessTest(TestCase):
             ('../all_tests.py', os.path.join(real_directory, 'fixtures', 'symlink_file_relative')),
         ]
 
-        with self.create_symlinks(symlinks):
-            self.filesystem.add_real_directory(real_directory, target_path='/path', lazy_read=True)
+        try:
+            with self.create_symlinks(symlinks):
+                self.filesystem.add_real_directory(real_directory, target_path='/path', lazy_read=True)
 
-            self.assertTrue(self.filesystem.exists('/path/fixtures/symlink_dir_relative'))
-            self.assertTrue(self.filesystem.exists('/path/fixtures/symlink_dir_relative/all_tests.py'))
-            self.assertTrue(self.filesystem.exists('/path/fixtures/symlink_file_relative'))
+                self.assertTrue(self.filesystem.exists('/path/fixtures/symlink_dir_relative'))
+                self.assertTrue(self.filesystem.exists('/path/fixtures/symlink_dir_relative/all_tests.py'))
+                self.assertTrue(self.filesystem.exists('/path/fixtures/symlink_file_relative'))
+        except OSError:
+            if self.is_windows:
+                raise unittest.SkipTest(
+                    'Symlinks under Windows need admin privileges')
+            raise
 
     def test_add_existing_real_directory_tree_to_existing_path(self):
         self.filesystem.create_dir('/foo/bar')
