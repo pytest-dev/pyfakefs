@@ -26,7 +26,7 @@ import time
 import unittest
 
 from pyfakefs import fake_filesystem
-from pyfakefs.fake_filesystem import is_root
+from pyfakefs.fake_filesystem import is_root, PERM_READ
 from pyfakefs.tests.test_utils import TestCase, RealFsTestCase
 
 
@@ -440,10 +440,11 @@ class FakeFileOpenTest(FakeFileOpenTestBase):
     def create_with_permission(self, file_path, perm_bits):
         self.create_file(file_path)
         self.os.chmod(file_path, perm_bits)
-        st = self.os.stat(file_path)
-        self.assert_mode_equal(perm_bits, st.st_mode)
-        self.assertTrue(st.st_mode & stat.S_IFREG)
-        self.assertFalse(st.st_mode & stat.S_IFDIR)
+        if perm_bits & PERM_READ:
+            st = self.os.stat(file_path)
+            self.assert_mode_equal(perm_bits, st.st_mode)
+            self.assertTrue(st.st_mode & stat.S_IFREG)
+            self.assertFalse(st.st_mode & stat.S_IFDIR)
 
     def test_open_flags700(self):
         # set up

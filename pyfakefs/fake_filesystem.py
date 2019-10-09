@@ -1964,13 +1964,15 @@ class FakeFilesystem(object):
         # self.cwd.
         return self.normpath(link_path)
 
-    def get_object_from_normpath(self, file_path):
+    def get_object_from_normpath(self, file_path, check_read_perm=True):
         """Search for the specified filesystem object within the fake
         filesystem.
 
         Args:
             file_path: Specifies target FakeFile object to retrieve, with a
                 path that has already been normalized/resolved.
+            check_read_perm: If True, raises OSError if a parent directory
+                does not have read permission
 
         Returns:
             The FakeFile object corresponding to file_path.
@@ -1996,16 +1998,21 @@ class FakeFilesystem(object):
                         self.raise_io_error(errno.ENOTDIR, file_path)
                     self.raise_io_error(errno.ENOENT, file_path)
                 target_object = target_object.get_entry(component)
+                if (self.is_macos and check_read_perm and target_object and
+                        not target_object.st_mode & PERM_READ):
+                    self.raise_os_error(errno.EACCES, target_object.path)
         except KeyError:
             self.raise_io_error(errno.ENOENT, file_path)
         return target_object
 
-    def get_object(self, file_path):
+    def get_object(self, file_path, check_read_perm=True):
         """Search for the specified filesystem object within the fake
         filesystem.
 
         Args:
             file_path: Specifies the target FakeFile object to retrieve.
+            check_read_perm: If True, raises OSError if a parent directory
+                does not have read permission under MacOS
 
         Returns:
             The FakeFile object corresponding to `file_path`.
@@ -2015,9 +2022,10 @@ class FakeFilesystem(object):
         """
         file_path = make_string_path(file_path)
         file_path = self.absnormpath(self._original_path(file_path))
-        return self.get_object_from_normpath(file_path)
+        return self.get_object_from_normpath(file_path, check_read_perm)
 
-    def resolve(self, file_path, follow_symlinks=True, allow_fd=False):
+    def resolve(self, file_path, follow_symlinks=True, allow_fd=False,
+                check_read_perm=True):
         """Search for the specified filesystem object, resolving all links.
 
         Args:
@@ -2025,6 +2033,8 @@ class FakeFilesystem(object):
             follow_symlinks: If `False`, the link itself is resolved,
                 otherwise the object linked to.
             allow_fd: If `True`, `file_path` may be an open file descriptor
+            check_read_perm: If True, raises OSError if a parent directory
+                does not have read permission under MacOS
 
         Returns:
           The FakeFile object corresponding to `file_path`.
@@ -2040,7 +2050,8 @@ class FakeFilesystem(object):
 
         if follow_symlinks:
             file_path = make_string_path(file_path)
-            return self.get_object_from_normpath(self.resolve_path(file_path))
+            return self.get_object_from_normpath(self.resolve_path(
+                file_path, check_read_perm), check_read_perm)
         return self.lresolve(file_path)
 
     def lresolve(self, path):
@@ -2077,6 +2088,8 @@ class FakeFilesystem(object):
                 if not self.is_windows_fs and isinstance(parent_obj, FakeFile):
                     self.raise_io_error(errno.ENOTDIR, path)
                 self.raise_io_error(errno.ENOENT, path)
+            if not parent_obj.st_mode & PERM_READ:
+                self.raise_os_error(errno.EACCES, parent_directory)
             return parent_obj.get_entry(child_name)
         except KeyError:
             self.raise_io_error(errno.ENOENT, path)
@@ -2291,7 +2304,7 @@ class FakeFilesystem(object):
             self.raise_os_error(errno.EBUSY, file_path)
         try:
             dirname, basename = self.splitpath(file_path)
-            target_directory = self.resolve(dirname)
+            target_directory = self.resolve(dirname, check_read_perm=False)
             target_directory.remove_entry(basename)
         except KeyError:
             self.raise_io_error(errno.ENOENT, file_path)
@@ -2983,6 +2996,8 @@ class FakeFilesystem(object):
             else:
                 error_nr = errno.ENOTDIR
             self.raise_os_error(error_nr, target_directory, 267)
+        # if not directory.st_mode & PERM_READ:
+        #     self.raise_os_error(errno.EACCES, directory)
         return directory
 
     def remove(self, path):
@@ -3000,7 +3015,7 @@ class FakeFilesystem(object):
         if self.ends_with_path_separator(path):
             self._handle_broken_link_with_trailing_sep(norm_path)
         if self.exists(norm_path):
-            obj = self.resolve(norm_path)
+            obj = self.resolve(norm_path, check_read_perm=False)
             if S_IFMT(obj.st_mode) == S_IFDIR:
                 link_obj = self.lresolve(norm_path)
                 if S_IFMT(link_obj.st_mode) != S_IFLNK:
@@ -5310,7 +5325,7 @@ class FakeFileOpen(object):
                     file_path, raw_io=self.raw_io)
                 if self.filesystem.exists(file_path):
                     file_object = self.filesystem.get_object_from_normpath(
-                        real_path)
+                        real_path, check_read_perm=False)
         return file_object, file_path, filedes, real_path
 
     def _handle_file_mode(self, mode, newline, open_modes):

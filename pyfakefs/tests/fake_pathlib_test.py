@@ -415,6 +415,31 @@ if pathlib is not None:
             path = self.path('/foo/bar')
             self.assert_raises_os_error(errno.ENOENT, path.resolve)
 
+        def test_stat_file_in_unreadable_dir(self):
+            self.check_posix_only()
+            dir_path = self.make_path('some_dir')
+            file_path = self.os.path.join(dir_path, 'some_file')
+            self.create_file(file_path)
+            self.os.chmod(dir_path, 0o000)
+            if self.is_macos:
+                self.assert_raises_os_error(errno.EACCES,
+                                            self.path(file_path).stat)
+            else:
+                self.assertEqual(0, self.path(file_path).stat().st_size)
+
+        def test_iterdir_in_unreadable_dir(self):
+            self.check_posix_only()
+            dir_path = self.make_path('some_dir')
+            file_path = self.os.path.join(dir_path, 'some_file')
+            self.create_file(file_path)
+            self.os.chmod(dir_path, 0o000)
+            iter = self.path(dir_path).iterdir()
+            if self.is_macos:
+                self.assert_raises_os_error(errno.EACCES, list, iter)
+            else:
+                path = str(list(iter)[0])
+                self.assertTrue(path.endswith('some_file'))
+
         @unittest.skipIf(not is_windows, 'Windows specific behavior')
         def test_resolve_file_as_parent_windows(self):
             skip_if_pathlib_36_is_available()
