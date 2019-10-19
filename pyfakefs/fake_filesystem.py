@@ -1176,7 +1176,8 @@ class FakeFilesystem(object):
         # stat should return the tuple representing return value of os.stat
         try:
             file_object = self.resolve(
-                entry_path, follow_symlinks, allow_fd=True)
+                entry_path, follow_symlinks,
+                allow_fd=True, check_read_perm=False)
             self.raise_for_filepath_ending_with_separator(
                 entry_path, file_object, follow_symlinks)
 

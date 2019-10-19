@@ -5057,14 +5057,8 @@ class FakeOsUnreadableDirTest(FakeOsModuleTestBase):
         self.assert_raises_os_error(
             errno.EACCES, self.os.listdir, self.dir_path)
 
-    @unittest.skipIf(TestCase.is_macos, 'Linux behavior')
     def test_stat_file_in_unreadable_dir_linux(self):
         self.assertEqual(0, self.os.stat(self.file_path).st_size)
-
-    @unittest.skipIf(not TestCase.is_macos, 'MacOS behavior')
-    def test_stat_file_in_unreadable_dir_macos(self):
-        self.assert_raises_os_error(
-            errno.EACCES, self.os.stat, self.file_path)
 
 
 class RealOsUnreadableDirTest(FakeOsUnreadableDirTest):
