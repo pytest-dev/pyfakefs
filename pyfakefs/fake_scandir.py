@@ -16,10 +16,12 @@ Works with both the function integrated into the `os` module since Python 3.5
 and the standalone function available in the standalone `scandir` python
 package.
 """
+import errno
 import os
 import sys
 
 from pyfakefs.extra_packages import use_scandir_package, use_builtin_scandir
+from pyfakefs.helpers import IS_PY2
 
 if sys.version_info >= (3, 6) and use_builtin_scandir:
     BaseClass = os.PathLike
@@ -132,11 +134,15 @@ class ScanDirIter:
         else:
             self.abspath = self.filesystem.absnormpath(path)
             self.path = path
-        contents = {}
         try:
             contents = self.filesystem.confirmdir(self.abspath).contents
-        except OSError:
-            pass
+        except OSError as ex:
+            if IS_PY2 and self.filesystem.is_windows_fs:
+                if ex.errno == errno.ENOENT:
+                    # for some reason, under Python 2 / Windows
+                    # raises "No such process" for non-existing path
+                    raise OSError(errno.ESRCH, str(ex), ex.filename)
+            raise
         self.contents_iter = iter(contents)
 
     def __iter__(self):

@@ -12,6 +12,10 @@ the proposed changes so you can be ready.
 
 ## Version 3.7 (as yet unreleased)
 
+### Fixes
+  * raise for `os.scandir` with non-existing directory
+    (see [#498](../../issues/498))
+
 ## [Version 3.6.1](https://pypi.python.org/pypi/pyfakefs/3.6.1)
 
 ### Fixes

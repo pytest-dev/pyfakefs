@@ -23,6 +23,8 @@ import sys
 import time
 import unittest
 
+from pyfakefs.helpers import IS_PY2
+
 from pyfakefs import fake_filesystem
 from pyfakefs.fake_filesystem import FakeFileOpen, is_root
 from pyfakefs.extra_packages import (
@@ -111,6 +113,8 @@ class FakeOsModuleTest(FakeOsModuleTestBase):
         self.assertEqual(self.os.getcwd(), dirname)
 
     def test_listdir(self):
+        self.assert_raises_os_error(
+            errno.ENOENT, self.os.listdir, 'non_existing/fake_dir')
         directory = self.make_path('xyzzy', 'plugh')
         files = ['foo', 'bar', 'baz']
         for f in files:
@@ -4940,6 +4944,18 @@ class FakeScandirTest(FakeOsModuleTestBase):
                          os.fspath(self.dir_entries[0]))
         self.assertEqual(self.os.path.join(self.scandir_path(), 'file'),
                          os.fspath(self.dir_entries[1]))
+
+    @unittest.skipIf(IS_PY2 and TestCase.is_windows,
+                     'Exception subtype differs')
+    def test_non_existing_dir(self):
+        self.assert_raises_os_error(
+            errno.ENOENT, self.scandir, 'non_existing/fake_dir')
+
+    @unittest.skipIf(not IS_PY2 or not TestCase.is_windows,
+                     'Exception subtype differs')
+    def test_non_existing_dir(self):
+        self.assert_raises_os_error(
+            errno.ESRCH, self.scandir, 'non_existing/fake_dir')
 
 
 class RealScandirTest(FakeScandirTest):
