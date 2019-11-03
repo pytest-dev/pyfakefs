@@ -23,7 +23,7 @@ import sys
 import time
 import unittest
 
-from pyfakefs.helpers import IS_PY2
+from pyfakefs.helpers import IS_PY2, IN_DOCKER
 
 from pyfakefs import fake_filesystem
 from pyfakefs.fake_filesystem import FakeFileOpen, is_root
@@ -4864,7 +4864,7 @@ class FakeScandirTest(FakeOsModuleTestBase):
             if self.is_windows:
                 self.skipTest(
                     'inode seems not to work in scandir module under Windows')
-            if os.path.exists('/.dockerenv'):
+            if IN_DOCKER:
                 self.skipTest(
                     'inode seems not to work in a Docker container')
         self.assertEqual(self.os.stat(self.dir_path).st_ino,
@@ -5064,17 +5064,22 @@ class FakeOsUnreadableDirTest(FakeOsModuleTestBase):
         self.create_file(self.file_path)
         self.os.chmod(self.dir_path, 0o000)
 
-    @unittest.skipIf(TestCase.is_macos, 'Linux behavior')
-    def test_listdir_unreadable_dir_linux(self):
-        self.assertEqual(['some_file'], self.os.listdir(self.dir_path))
+    def test_listdir_unreadable_dir(self):
+        if not is_root():
+            self.assert_raises_os_error(
+                errno.EACCES, self.os.listdir, self.dir_path)
+        else:
+            self.assertEqual(['some_file'], self.os.listdir(self.dir_path))
 
-    @unittest.skipIf(not TestCase.is_macos, 'MacOS behavior')
-    def test_listdir_unreadable_dir_macos(self):
-        self.assert_raises_os_error(
-            errno.EACCES, self.os.listdir, self.dir_path)
+    def test_stat_unreadable_dir(self):
+        self.assertEqual(0, self.os.stat(self.dir_path).st_mode & 0o666)
 
-    def test_stat_file_in_unreadable_dir_linux(self):
-        self.assertEqual(0, self.os.stat(self.file_path).st_size)
+    def test_stat_file_in_unreadable_dir(self):
+        if not is_root():
+            self.assert_raises_os_error(
+                errno.EACCES, self.os.stat, self.file_path)
+        else:
+            self.assertEqual(0, self.os.stat(self.file_path).st_size)
 
 
 class RealOsUnreadableDirTest(FakeOsUnreadableDirTest):

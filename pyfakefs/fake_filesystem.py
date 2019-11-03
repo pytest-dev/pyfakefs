@@ -106,13 +106,12 @@ from collections import namedtuple
 from stat import S_IFREG, S_IFDIR, S_ISLNK, S_IFMT, S_ISDIR, S_IFLNK, S_ISREG
 
 from pyfakefs.deprecator import Deprecator
-from pyfakefs.fake_scandir import scandir, walk
 from pyfakefs.extra_packages import use_scandir
+from pyfakefs.fake_scandir import scandir, walk
 from pyfakefs.helpers import (
     FakeStatResult, FileBufferIO, IS_PY2, NullFileBufferIO,
     is_int_type, is_byte_string, is_unicode_string,
-    make_string_path, text_type, IS_WIN
-)
+    make_string_path, text_type, IS_WIN)
 
 __pychecker__ = 'no-reimportself'
 
@@ -1178,6 +1177,12 @@ class FakeFilesystem(object):
             file_object = self.resolve(
                 entry_path, follow_symlinks,
                 allow_fd=True, check_read_perm=False)
+            if not is_root():
+                # make sure stat raises if a parent dir is not readable
+                parent_dir = file_object.parent_dir
+                if parent_dir:
+                    self.get_object(parent_dir.path)
+
             self.raise_for_filepath_ending_with_separator(
                 entry_path, file_object, follow_symlinks)
 
@@ -1999,7 +2004,7 @@ class FakeFilesystem(object):
                         self.raise_io_error(errno.ENOTDIR, file_path)
                     self.raise_io_error(errno.ENOENT, file_path)
                 target_object = target_object.get_entry(component)
-                if (self.is_macos and check_read_perm and target_object and
+                if (not is_root() and check_read_perm and target_object and
                         not target_object.st_mode & PERM_READ):
                     self.raise_os_error(errno.EACCES, target_object.path)
         except KeyError:
@@ -2013,7 +2018,7 @@ class FakeFilesystem(object):
         Args:
             file_path: Specifies the target FakeFile object to retrieve.
             check_read_perm: If True, raises OSError if a parent directory
-                does not have read permission under MacOS
+                does not have read permission
 
         Returns:
             The FakeFile object corresponding to `file_path`.
@@ -2035,7 +2040,7 @@ class FakeFilesystem(object):
                 otherwise the object linked to.
             allow_fd: If `True`, `file_path` may be an open file descriptor
             check_read_perm: If True, raises OSError if a parent directory
-                does not have read permission under MacOS
+                does not have read permission
 
         Returns:
           The FakeFile object corresponding to `file_path`.
@@ -2997,8 +3002,6 @@ class FakeFilesystem(object):
             else:
                 error_nr = errno.ENOTDIR
             self.raise_os_error(error_nr, target_directory, 267)
-        # if not directory.st_mode & PERM_READ:
-        #     self.raise_os_error(errno.EACCES, directory)
         return directory
 
     def remove(self, path):

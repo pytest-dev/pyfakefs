@@ -13,6 +13,8 @@ the proposed changes so you can be ready.
 ## Version 3.7 (as yet unreleased)
 
 ### Fixes
+  * correctly handle missing read permission for parent directory
+    (see [#496](../../issues/496))
   * raise for `os.scandir` with non-existing directory
     (see [#498](../../issues/498))
 

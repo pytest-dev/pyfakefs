@@ -27,6 +27,7 @@ import sys
 import unittest
 
 from pyfakefs.extra_packages import pathlib, pathlib2
+from pyfakefs.fake_filesystem import is_root
 
 if pathlib is not None:
     from pyfakefs import fake_pathlib, fake_filesystem
@@ -421,7 +422,11 @@ if pathlib is not None:
             file_path = self.os.path.join(dir_path, 'some_file')
             self.create_file(file_path)
             self.os.chmod(dir_path, 0o000)
-            self.assertEqual(0, self.path(file_path).stat().st_size)
+            if not is_root():
+                self.assert_raises_os_error(
+                    errno.EACCES, self.path(file_path).stat)
+            else:
+                self.assertEqual(0, self.path(file_path).stat().st_size)
 
         def test_iterdir_in_unreadable_dir(self):
             self.check_posix_only()
@@ -430,7 +435,7 @@ if pathlib is not None:
             self.create_file(file_path)
             self.os.chmod(dir_path, 0o000)
             iter = self.path(dir_path).iterdir()
-            if self.is_macos:
+            if not is_root():
                 self.assert_raises_os_error(errno.EACCES, list, iter)
             else:
                 path = str(list(iter)[0])
