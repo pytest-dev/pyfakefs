@@ -67,6 +67,10 @@ install:
 
 script:
   - export TEST_REAL_FS=1
-  - ./.travis/run_tests.sh
-  - ./.travis/run_pytest.sh
+  - ./.travis/run_tests_with_extra_packages.sh
+  - ./.travis/run_tests_without_extra_packages.sh
+  - ./.travis/run_tests_as_root.sh
+  - ./.travis/run_pytest_fixture_test.sh
+  - ./.travis/run_pytest_plugin_test.sh
+  - ./.travis/run_failed_pytest_plugin_test.sh
   - ./.travis/docker_tests.sh

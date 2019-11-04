@@ -4885,8 +4885,8 @@ class FakeScandirTest(FakeOsModuleTestBase):
                    relative_symlink_expected_size):
         self.assertEqual(self.FILE_SIZE, self.dir_entries[1].stat().st_size)
         self.assertEqual(
-            self.os.stat(self.dir_path).st_ctime,
-            self.dir_entries[0].stat().st_ctime)
+            int(self.os.stat(self.dir_path).st_ctime),
+            int(self.dir_entries[0].stat().st_ctime))
 
         if self.supports_symlinks:
             self.assertEqual(self.LINKED_FILE_SIZE,
@@ -4895,16 +4895,16 @@ class FakeScandirTest(FakeOsModuleTestBase):
                              self.dir_entries[3].stat(
                                  follow_symlinks=False).st_size)
             self.assertEqual(
-                self.os.stat(self.linked_dir_path).st_mtime,
-                self.dir_entries[2].stat().st_mtime)
+                int(self.os.stat(self.linked_dir_path).st_mtime),
+                int(self.dir_entries[2].stat().st_mtime))
             self.assertEqual(self.LINKED_FILE_SIZE,
                              self.dir_entries[5].stat().st_size)
             self.assertEqual(relative_symlink_expected_size,
                              self.dir_entries[5].stat(
                                  follow_symlinks=False).st_size)
             self.assertEqual(
-                self.os.stat(self.linked_dir_path).st_mtime,
-                self.dir_entries[4].stat().st_mtime)
+                int(self.os.stat(self.linked_dir_path).st_mtime),
+                int(self.dir_entries[4].stat().st_mtime))
 
     @unittest.skipIf(TestCase.is_windows, 'POSIX specific behavior')
     def test_stat_posix(self):
