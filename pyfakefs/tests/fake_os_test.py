@@ -4978,7 +4978,8 @@ class RealScandirRelTest(FakeScandirRelTest):
         return True
 
 
-@unittest.skipIf(sys.version_info < (3, 7) or TestCase.is_windows,
+@unittest.skipIf(sys.version_info < (3, 7) or TestCase.is_windows or
+                 use_scandir_package,
                  'dir_fd support for os.scandir was introduced in Python 3.7')
 class FakeScandirFdTest(FakeScandirTest):
     def tearDown(self):
@@ -4986,8 +4987,8 @@ class FakeScandirFdTest(FakeScandirTest):
         super(FakeScandirFdTest, self).tearDown()
 
     def scandir_path(self):
-        # When scandir is called with a filedescriptor, only the name of the entry
-        # is returned in the path attribute of the DirEntry objects.
+        # When scandir is called with a filedescriptor, only the name of the
+        # entry is returned in the path attribute of the DirEntry objects.
         return ''
 
     def do_scandir(self):
