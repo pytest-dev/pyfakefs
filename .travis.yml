@@ -16,61 +16,111 @@
 
 language: python
 
-matrix:
-    include:
-        - python: 2.7
-          env: PYTHON=py27
-        - python: 3.4
-          env:
-              - PYTHON=py34
-              - PY_VERSION=3.4.10
-        - python: 3.5
-          env:
-              - PYTHON=py35
-              - PY_VERSION=3.5.7
-        - python: 3.6
-          env:
-              - PYTHON=py36
-              - PY_VERSION=3.6.8
-        - python: 3.7
-          dist: xenial
-          sudo: true
-          env:
-              - PYTHON=py37
-              - PY_VERSION=3.7.3
-        - python: pypy2.7-7.0.0
-          dist: xenial
-          sudo: true
-          env: PYTHON=pypy2
-        - python: pypy3.5-7.0.0
-          dist: xenial
-          sudo: true
-          env: PYTHON=pypy3
-        - os: osx
-          language: generic
-          env: PYTHON=py27
-        - os: osx
-          language: generic
-          env:
-              - PYTHON=py36
-              - PY_VERSION=3.6.8
-        - os: osx
-          language: generic
-          env:
-              - PYTHON=py37
-              - PY_VERSION=3.7.3
-        - language: minimal
-          env: VM=Docker
-
-install:
+before_script:
   - ./.travis/install.sh
 
-script:
-  - export TEST_REAL_FS=1
-  - ./.travis/run_tests_with_extra_packages.sh
-  - ./.travis/run_tests_without_extra_packages.sh
-  - ./.travis/run_tests_as_root.sh
-  - ./.travis/run_pytest_fixture_test.sh
-  - ./.travis/run_pytest_plugin_test.sh
-  - ./.travis/run_failed_pytest_plugin_test.sh
-  - ./.travis/docker_tests.sh
+jobs:
+  include:
+    - stage: flake8
+      script: ./.travis/run_flake.sh
+
+    - stage: test
+      script:
+        - ./.travis/run_tests.sh
+        - ./.travis/run_pytest_plugin_test.sh
+      python: 2.7
+      env: PYTHON=py27
+
+    - stage: test
+      script:
+        - ./.travis/run_tests.sh
+        - ./.travis/run_pytest_plugin_test.sh
+      python: 3.4
+      env:
+        - PYTHON=py34
+        - PY_VERSION=3.4.10
+
+    - stage: test
+      script:
+        - ./.travis/run_tests.sh
+        - ./.travis/run_pytest_plugin_test.sh
+      python: 3.5
+      env:
+        - PYTHON=py35
+        - PY_VERSION=3.5.7
+
+    - stage: test
+      script:
+        - ./.travis/run_tests.sh
+        - ./.travis/run_pytest_fixture_test.sh
+        - ./.travis/run_pytest_plugin_test.sh
+      python: 3.6
+      env:
+        - PYTHON=py36
+        - PY_VERSION=3.6.8
+
+    - stage: test
+      script:
+        - ./.travis/run_tests.sh
+        - ./.travis/run_pytest_fixture_test.sh
+        - ./.travis/run_pytest_plugin_test.sh
+      python: 3.7
+      dist: xenial
+      sudo: true
+      env:
+        - PYTHON=py37
+        - PY_VERSION=3.7.3
+
+    - stage: test
+      script:
+        - ./.travis/run_tests.sh
+        - ./.travis/run_pytest_plugin_test.sh
+      python: pypy2.7-7.0.0
+      dist: xenial
+      sudo: true
+      env: PYTHON=pypy2
+
+    - stage: test
+      script:
+        - ./.travis/run_tests.sh
+        - ./.travis/run_pytest_plugin_test.sh
+      python: pypy3.5-7.0.0
+      dist: xenial
+      sudo: true
+      env: PYTHON=pypy3
+
+    - stage: test
+      script:
+        - ./.travis/run_tests.sh
+        - ./.travis/run_pytest_plugin_test.sh
+      os: osx
+      language: generic
+      env: PYTHON=py27
+
+    - stage: test
+      script:
+        - ./.travis/run_tests.sh
+        - ./.travis/run_pytest_fixture_test.sh
+        - ./.travis/run_pytest_plugin_test.sh
+      os: osx
+      language: generic
+      env:
+        - PYTHON=py36
+        - PY_VERSION=3.6.8
+
+    - stage: test
+      script:
+        - ./.travis/run_tests.sh
+        - ./.travis/run_pytest_fixture_test.sh
+        - ./.travis/run_pytest_plugin_test.sh
+      os: osx
+      language: generic
+      env:
+        - PYTHON=py37
+        - PY_VERSION=3.7.3
+
+    - stage: test
+      script:
+        - ./.travis/docker_tests.sh
+      language: minimal
+      env: VM=Docker

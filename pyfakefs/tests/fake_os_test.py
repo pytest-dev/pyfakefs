@@ -4736,6 +4736,7 @@ class FakeScandirTest(FakeOsModuleTestBase):
 
                 def fake_scan_dir(p):
                     return pyfakefs.fake_scandir.scandir(self.filesystem, p)
+
                 scandir = fake_scan_dir
         else:
             scandir = self.os.scandir
@@ -4970,7 +4971,7 @@ class FakeScandirRelTest(FakeScandirTest):
         return self.os.path.relpath(self.directory)
 
     def do_scandir(self):
-      return self.scandir(self.os.path.relpath(self.directory))
+        return self.scandir(self.os.path.relpath(self.directory))
 
 
 class RealScandirRelTest(FakeScandirRelTest):
@@ -4992,8 +4993,8 @@ class FakeScandirFdTest(FakeScandirTest):
         return ''
 
     def do_scandir(self):
-      self.dir_fd = self.os.open(self.directory, os.O_RDONLY)
-      return self.scandir(self.dir_fd)
+        self.dir_fd = self.os.open(self.directory, os.O_RDONLY)
+        return self.scandir(self.dir_fd)
 
 
 class RealScandirFdTest(FakeScandirFdTest):
@@ -5003,9 +5004,9 @@ class RealScandirFdTest(FakeScandirFdTest):
 
 class FakeScandirFdRelTest(FakeScandirFdTest):
     def do_scandir(self):
-      self.dir_fd = self.os.open(self.os.path.relpath(self.directory),
-                                 os.O_RDONLY)
-      return self.scandir(self.dir_fd)
+        self.dir_fd = self.os.open(self.os.path.relpath(self.directory),
+                                   os.O_RDONLY)
+        return self.scandir(self.dir_fd)
 
 
 class RealScandirFdRelTest(FakeScandirFdRelTest):
@@ -5086,5 +5087,3 @@ class FakeOsUnreadableDirTest(FakeOsModuleTestBase):
 class RealOsUnreadableDirTest(FakeOsUnreadableDirTest):
     def use_real_fs(self):
         return True
-
-
