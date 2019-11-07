@@ -1991,11 +1991,16 @@ class RealFileSystemAccessTest(TestCase):
         fake_open = fake_filesystem.FakeFileOpen(self.filesystem)
         real_directory = os.path.join(self.root_path, 'pyfakefs', 'tests')
         symlinks = [
-            ('..', os.path.join(real_directory, 'fixtures', 'symlink_dir_relative')),
-            ('../all_tests.py', os.path.join(real_directory, 'fixtures', 'symlink_file_relative')),
-            (real_directory, os.path.join(real_directory, 'fixtures', 'symlink_dir_absolute')),
-            (os.path.join(real_directory, 'all_tests.py'), os.path.join(real_directory, 'fixtures', 'symlink_file_absolute')),
-            ('/etc/something', os.path.join(real_directory, 'fixtures', 'symlink_file_absolute_outside')),
+            ('..', os.path.join(
+                real_directory, 'fixtures', 'symlink_dir_relative')),
+            ('../all_tests.py', os.path.join(
+                real_directory, 'fixtures', 'symlink_file_relative')),
+            (real_directory, os.path.join(
+                real_directory, 'fixtures', 'symlink_dir_absolute')),
+            (os.path.join(real_directory, 'all_tests.py'), os.path.join(
+                real_directory, 'fixtures', 'symlink_file_absolute')),
+            ('/etc/something', os.path.join(
+                real_directory, 'fixtures', 'symlink_file_absolute_outside')),
         ]
 
         self.filesystem.create_file('/etc/something')
@@ -2050,8 +2055,9 @@ class RealFileSystemAccessTest(TestCase):
                 os.path.join(self.root_path, 'pyfakefs', 'tests',
                              'fixtures/symlink_file_absolute_outside')))
         self.assertEqual(
-            fake_open(os.path.join(self.root_path, 'pyfakefs', 'tests',
-                             'fixtures/symlink_file_absolute_outside')).read(),
+            fake_open(os.path.join(
+                self.root_path, 'pyfakefs', 'tests',
+                'fixtures/symlink_file_absolute_outside')).read(),
             'good morning'
         )
 
@@ -2060,39 +2066,51 @@ class RealFileSystemAccessTest(TestCase):
     def test_add_existing_real_directory_symlink_target_path(self):
         real_directory = os.path.join(self.root_path, 'pyfakefs', 'tests')
         symlinks = [
-            ('..', os.path.join(real_directory, 'fixtures', 'symlink_dir_relative')),
-            ('../all_tests.py', os.path.join(real_directory, 'fixtures', 'symlink_file_relative')),
+            ('..', os.path.join(
+                real_directory, 'fixtures', 'symlink_dir_relative')),
+            ('../all_tests.py', os.path.join(
+                real_directory, 'fixtures', 'symlink_file_relative')),
         ]
 
         try:
             with self.create_symlinks(symlinks):
-                self.filesystem.add_real_directory(real_directory, target_path='/path', lazy_read=False)
+                self.filesystem.add_real_directory(
+                    real_directory, target_path='/path', lazy_read=False)
         except OSError:
             if self.is_windows:
                 raise unittest.SkipTest(
                     'Symlinks under Windows need admin privileges')
             raise
 
-        self.assertTrue(self.filesystem.exists('/path/fixtures/symlink_dir_relative'))
-        self.assertTrue(self.filesystem.exists('/path/fixtures/symlink_dir_relative/all_tests.py'))
-        self.assertTrue(self.filesystem.exists('/path/fixtures/symlink_file_relative'))
+        self.assertTrue(self.filesystem.exists(
+            '/path/fixtures/symlink_dir_relative'))
+        self.assertTrue(self.filesystem.exists(
+            '/path/fixtures/symlink_dir_relative/all_tests.py'))
+        self.assertTrue(self.filesystem.exists(
+            '/path/fixtures/symlink_file_relative'))
 
     @unittest.skipIf(TestCase.is_windows and sys.version_info < (3, 3),
                      'Links are not supported under Windows before Python 3.3')
     def test_add_existing_real_directory_symlink_lazy_read(self):
         real_directory = os.path.join(self.root_path, 'pyfakefs', 'tests')
         symlinks = [
-            ('..', os.path.join(real_directory, 'fixtures', 'symlink_dir_relative')),
-            ('../all_tests.py', os.path.join(real_directory, 'fixtures', 'symlink_file_relative')),
+            ('..', os.path.join(
+                real_directory, 'fixtures', 'symlink_dir_relative')),
+            ('../all_tests.py', os.path.join(
+                real_directory, 'fixtures', 'symlink_file_relative')),
         ]
 
         try:
             with self.create_symlinks(symlinks):
-                self.filesystem.add_real_directory(real_directory, target_path='/path', lazy_read=True)
+                self.filesystem.add_real_directory(
+                    real_directory, target_path='/path', lazy_read=True)
 
-                self.assertTrue(self.filesystem.exists('/path/fixtures/symlink_dir_relative'))
-                self.assertTrue(self.filesystem.exists('/path/fixtures/symlink_dir_relative/all_tests.py'))
-                self.assertTrue(self.filesystem.exists('/path/fixtures/symlink_file_relative'))
+                self.assertTrue(self.filesystem.exists(
+                    '/path/fixtures/symlink_dir_relative'))
+                self.assertTrue(self.filesystem.exists(
+                    '/path/fixtures/symlink_dir_relative/all_tests.py'))
+                self.assertTrue(self.filesystem.exists(
+                    '/path/fixtures/symlink_file_relative'))
         except OSError:
             if self.is_windows:
                 raise unittest.SkipTest(

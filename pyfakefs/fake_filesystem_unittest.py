@@ -77,7 +77,7 @@ if pathlib:
 if use_scandir:
     from pyfakefs import fake_scandir
 
-if sys.version_info < (3, ):
+if sys.version_info < (3,):
     import __builtin__ as builtins  # pylint: disable=import-error
 else:
     import builtins
@@ -333,12 +333,35 @@ class Patcher(object):
                           for m in additional_skip_names]
             self._skipNames.update(skip_names)
 
+        self._fake_module_classes = {}
+        self._class_modules = {}
+        self._init_fake_module_classes()
+
         self.modules_to_reload = [tempfile]
         if modules_to_reload is not None:
             self.modules_to_reload.extend(modules_to_reload)
 
-        # Attributes set by _findModules()
+        if modules_to_patch is not None:
+            for name, fake_module in modules_to_patch.items():
+                self._fake_module_classes[name] = fake_module
 
+        self._fake_module_functions = {}
+        self._init_fake_module_functions()
+
+        # Attributes set by _refresh()
+        self._modules = {}
+        self._fct_modules = {}
+        self._open_functions = {}
+        self._stubs = None
+        self.fs = None
+        self.fake_modules = {}
+        self._dyn_patcher = None
+
+        # _isStale is set by tearDown(), reset by _refresh()
+        self._isStale = True
+        self._patching = False
+
+    def _init_fake_module_classes(self):
         # IMPORTANT TESTING NOTE: Whenever you add a new module below, test
         # it by adding an attribute in fixtures/module_with_attributes.py
         # and a test in fake_filesystem_unittest_test.py, class
@@ -355,7 +378,6 @@ class Patcher(object):
         # class modules maps class names against a list of modules they can
         # be contained in - this allows for alternative modules like
         # `pathlib` and `pathlib2`
-        self._class_modules = {}
         if pathlib:
             self._class_modules['Path'] = []
             if pathlib:
@@ -372,14 +394,10 @@ class Patcher(object):
             self._fake_module_classes[
                 'scandir'] = fake_scandir.FakeScanDirModule
 
-        if modules_to_patch is not None:
-            for name, fake_module in modules_to_patch.items():
-                self._fake_module_classes[name] = fake_module
-
+    def _init_fake_module_functions(self):
         # handle patching function imported separately like
         # `from os import stat`
         # each patched function name has to be looked up separately
-        self._fake_module_functions = {}
         for mod_name, fake_module in self._fake_module_classes.items():
             if (hasattr(fake_module, 'dir') and
                     inspect.isfunction(fake_module.dir)):
@@ -400,19 +418,6 @@ class Patcher(object):
             self._fake_module_functions.setdefault(
                 fct_name, {})[PATH_MODULE] = module_attr
 
-        # Attributes set by _refresh()
-        self._modules = {}
-        self._fct_modules = {}
-        self._open_functions = {}
-        self._stubs = None
-        self.fs = None
-        self.fake_modules = {}
-        self._dyn_patcher = None
-
-        # _isStale is set by tearDown(), reset by _refresh()
-        self._isStale = True
-        self._patching = False
-
     def __enter__(self):
         """Context manager for usage outside of
         fake_filesystem_unittest.TestCase.
@@ -425,43 +430,43 @@ class Patcher(object):
     def __exit__(self, exc_type, exc_val, exc_tb):
         self.tearDown()
 
+    def _is_fs_module(self, mod, name, module_names):
+        try:
+            return (inspect.ismodule(mod) and
+                    mod.__name__ in module_names
+                    or inspect.isclass(mod) and
+                    mod.__module__ in self._class_modules.get(name, []))
+        except AttributeError:
+            # handle cases where the module has no __name__ or __module__
+            # attribute - see #460
+            return False
+
+    def _is_open_function(self, fct):
+        try:
+            return ((inspect.isfunction(fct) or
+                     inspect.isbuiltin(fct)) and
+                    fct.__name__ == 'open' and
+                    fct.__module__ == BUILTIN_MODULE)
+        except AttributeError:
+            return False
+
+    def _is_fs_function(self, fct):
+        try:
+            return ((inspect.isfunction(fct) or
+                     inspect.isbuiltin(fct)) and
+                    fct.__name__ in self._fake_module_functions and
+                    fct.__module__ in self._fake_module_functions[
+                        fct.__name__])
+        except AttributeError:
+            # handle cases where the function has no __name__ or __module__
+            # attribute
+            return False
+
     def _find_modules(self):
         """Find and cache all modules that import file system modules.
         Later, `setUp()` will stub these with the fake file system
         modules.
         """
-
-        def is_fs_module(mod, name):
-            try:
-                return (inspect.ismodule(mod) and
-                        mod.__name__ in module_names
-                        or inspect.isclass(mod) and
-                        mod.__module__ in self._class_modules.get(name, []))
-            except AttributeError:
-                # handle cases where the module has no __name__ or __module__
-                # attribute - see #460
-                return False
-
-        def is_open_function(fct):
-            try:
-                return ((inspect.isfunction(fct) or
-                         inspect.isbuiltin(fct)) and
-                        fct.__name__ == 'open' and
-                        fct.__module__ == BUILTIN_MODULE)
-            except AttributeError:
-                return False
-
-        def is_fs_function(fct):
-            try:
-                return ((inspect.isfunction(fct) or
-                         inspect.isbuiltin(fct)) and
-                        fct.__name__ in self._fake_module_functions and
-                        fct.__module__ in self._fake_module_functions[
-                            fct.__name__])
-            except AttributeError:
-                # handle cases where the function has no __name__ or __module__
-                # attribute
-                return False
 
         module_names = list(self._fake_module_classes.keys()) + [PATH_MODULE]
         for name, module in list(sys.modules.items()):
@@ -486,13 +491,13 @@ class Patcher(object):
                 )
                 modules = {name: mod for name, mod in
                            module.__dict__.copy().items()
-                           if is_fs_module(mod, name)}
+                           if self._is_fs_module(mod, name, module_names)}
             for name, mod in modules.items():
                 self._modules.setdefault(name, set()).add((module,
                                                            mod.__name__))
             functions = {name: fct for name, fct in
                          module.__dict__.copy().items()
-                         if is_fs_function(fct)}
+                         if self._is_fs_function(fct)}
             for name, fct in functions.items():
                 self._fct_modules.setdefault(
                     (name, fct.__name__, fct.__module__), set()).add(module)
@@ -500,7 +505,7 @@ class Patcher(object):
             if IS_PY2:
                 open_fcts = {name for name, fct in
                              module.__dict__.copy().items()
-                             if is_open_function(fct)}
+                             if self._is_open_function(fct)}
                 for name in open_fcts:
                     self._open_functions.setdefault(name, set()).add(module)
 
@@ -609,6 +614,7 @@ class Pause(object):
     filesystem. Patching is paused in the context manager, and resumed after
     going out of it's scope.
     """
+
     def __init__(self, caller):
         """Initializes the context manager with the fake filesystem.
 

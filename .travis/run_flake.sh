@@ -2,8 +2,5 @@
 
 pip install flake8
 
-EXCLUDES='--exclude get-pip.py'
-
-# stop the build if there are Python syntax errors or undefined names
-# exit-zero treats all errors as warnings
-flake8 . $EXCLUDES --count --select=E901,E999,F821,F822,F823 --show-source --statistics && flake8 . $EXCLUDES --count --exit-zero --max-complexity=12 --statistics --per-file-ignores='pyfakefs/tests/fake_pathlib_test.py:E303'
+# let the build fail for any flake8 warning
+flake8 . --exclude get-pip.py --max-complexity=13 --statistics

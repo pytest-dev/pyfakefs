@@ -4954,7 +4954,7 @@ class FakeScandirTest(FakeOsModuleTestBase):
 
     @unittest.skipIf(not IS_PY2 or not TestCase.is_windows,
                      'Exception subtype differs')
-    def test_non_existing_dir(self):
+    def test_non_existing_dir_windows_python2(self):
         self.assert_raises_os_error(
             errno.ESRCH, self.scandir, 'non_existing/fake_dir')
 

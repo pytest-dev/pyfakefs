@@ -83,7 +83,13 @@ def _wrap_binary_strfunc_reverse(strfunc):
     return staticmethod(_wrapped)
 
 
-class _FakeAccessor(pathlib._Accessor):  # pylint: disable=protected-access
+try:
+    accessor = pathlib._Accessor
+except AttributeError:
+    accessor = object
+
+
+class _FakeAccessor(accessor):
     """Accessor which forwards some of the functions to FakeFilesystem methods.
     """
 
@@ -116,8 +122,7 @@ class _FakeAccessor(pathlib._Accessor):  # pylint: disable=protected-access
     rename = _wrap_binary_strfunc(FakeFilesystem.rename)
 
     replace = _wrap_binary_strfunc(
-        lambda fs, old_path,
-        new_path: FakeFilesystem.rename(
+        lambda fs, old_path, new_path: FakeFilesystem.rename(
             fs, old_path, new_path, force_replace=True))
 
     symlink = _wrap_binary_strfunc_reverse(
@@ -130,8 +135,10 @@ class _FakeAccessor(pathlib._Accessor):  # pylint: disable=protected-access
 
 _fake_accessor = _FakeAccessor()
 
+flavour = pathlib._Flavour if pathlib else object
 
-class _FakeFlavour(pathlib._Flavour):
+
+class _FakeFlavour(flavour):
     """Fake Flavour implementation used by PurePath and _Flavour"""
 
     filesystem = None
@@ -142,8 +149,8 @@ class _FakeFlavour(pathlib._Flavour):
     ext_namespace_prefix = '\\\\?\\'
 
     drive_letters = (
-        set(chr(x) for x in range(ord('a'), ord('z') + 1)) |
-        set(chr(x) for x in range(ord('A'), ord('Z') + 1))
+            set(chr(x) for x in range(ord('a'), ord('z') + 1)) |
+            set(chr(x) for x in range(ord('A'), ord('Z') + 1))
     )
 
     def __init__(self, filesystem):
@@ -273,6 +280,7 @@ class _FakeFlavour(pathlib._Flavour):
                     seen[newpath] = path  # resolved symlink
 
             return path
+
         # NOTE: according to POSIX, getcwd() cannot contain path components
         # which are symlinks.
         base = '' if path.is_absolute() else self.filesystem.cwd
@@ -328,9 +336,9 @@ class _FakeWindowsFlavour(_FakeFlavour):
     implementations independent of FakeFilesystem properties.
     """
     reserved_names = (
-        {'CON', 'PRN', 'AUX', 'NUL'} |
-        {'COM%d' % i for i in range(1, 10)} |
-        {'LPT%d' % i for i in range(1, 10)}
+            {'CON', 'PRN', 'AUX', 'NUL'} |
+            {'COM%d' % i for i in range(1, 10)} |
+            {'LPT%d' % i for i in range(1, 10)}
     )
 
     def is_reserved(self, parts):
@@ -386,7 +394,7 @@ class _FakeWindowsFlavour(_FakeFlavour):
             # corresponding usernames.  If current user home directory points
             # to nonstandard place, this guess is likely wrong.
             if os.environ['USERNAME'] != username:
-                drv, root, parts = self.parse_parts((userhome, ))
+                drv, root, parts = self.parse_parts((userhome,))
                 if parts[-1] != os.environ['USERNAME']:
                     raise RuntimeError("Can't determine home directory "
                                        "for %r" % username)
@@ -429,7 +437,10 @@ class _FakePosixFlavour(_FakeFlavour):
                                    "for %r" % username)
 
 
-class FakePath(pathlib.Path):
+path_module = pathlib.Path if pathlib else object
+
+
+class FakePath(path_module):
     """Replacement for pathlib.Path. Reimplement some methods to use
     fake filesystem. The rest of the methods work as they are, as they will
     use the fake accessor.
@@ -638,6 +649,8 @@ class FakePathlibModule(object):
     `fake_pathlib_module = fake_filesystem.FakePathlibModule(filesystem)`
     """
 
+    PurePath = pathlib.PurePath if pathlib else object
+
     def __init__(self, filesystem):
         """
         Initializes the module with the given filesystem.
@@ -648,12 +661,12 @@ class FakePathlibModule(object):
         init_module(filesystem)
         self._pathlib_module = pathlib
 
-    class PurePosixPath(pathlib.PurePath):
+    class PurePosixPath(PurePath):
         """A subclass of PurePath, that represents non-Windows filesystem
         paths"""
         __slots__ = ()
 
-    class PureWindowsPath(pathlib.PurePath):
+    class PureWindowsPath(PurePath):
         """A subclass of PurePath, that represents Windows filesystem paths"""
         __slots__ = ()
 

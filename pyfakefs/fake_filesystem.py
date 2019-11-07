@@ -2536,7 +2536,8 @@ class FakeFilesystem(object):
                         if not os.path.islink(abs_fileEntry):
                             continue
 
-                        self.add_real_symlink(abs_fileEntry, os.path.join(new_base, fileEntry))
+                        self.add_real_symlink(
+                            abs_fileEntry, os.path.join(new_base, fileEntry))
                 for fileEntry in files:
                     path = os.path.join(base, fileEntry)
                     if self._is_link_supported() and os.path.islink(path):
@@ -3927,7 +3928,7 @@ class FakeOsModule(object):
         """
         return self.filesystem.listdir(path)
 
-    if sys.version_info >= (3, 3):
+    if sys.version_info >= (3, 3):  # noqa: C901 - intentional long condition
         XATTR_CREATE = 1
         XATTR_REPLACE = 2
 
@@ -4210,32 +4211,32 @@ class FakeOsModule(object):
         self.filesystem.rename(src, dst)
 
     if sys.version_info >= (3, 3):
-      def replace(self, src, dst, src_dir_fd=None, dst_dir_fd=None):
-          """Renames a FakeFile object at old_file_path to new_file_path,
-          preserving all properties.
-          Also replaces existing new_file_path object, if one existed.
+        def replace(self, src, dst, src_dir_fd=None, dst_dir_fd=None):
+            """Renames a FakeFile object at old_file_path to new_file_path,
+            preserving all properties.
+            Also replaces existing new_file_path object, if one existed.
 
-          Arg
-              src: Path to filesystem object to rename.
-              dst: Path to where the filesystem object will live
-                  after this call.
-              src_dir_fd: If not `None`, the file descriptor of a directory,
-                  with `src` being relative to this directory.
-              dst_dir_fd: If not `None`, the file descriptor of a directory,
-                  with `dst` being relative to this directory.
+            Arg
+                src: Path to filesystem object to rename.
+                dst: Path to where the filesystem object will live
+                    after this call.
+                src_dir_fd: If not `None`, the file descriptor of a directory,
+                    with `src` being relative to this directory.
+                dst_dir_fd: If not `None`, the file descriptor of a directory,
+                    with `dst` being relative to this directory.
 
-          Raises:
-              OSError: if old_file_path does not exist.
-              OSError: if new_file_path is an existing directory.
-              OSError: if new_file_path is an existing file and could
-                  not be removed
-              OSError: if `dirname(new_file)` does not exist
-              OSError: if the file would be moved to another filesystem
-                  (e.g. mount point)
-          """
-          src = self._path_with_dir_fd(src, self.rename, src_dir_fd)
-          dst = self._path_with_dir_fd(dst, self.rename, dst_dir_fd)
-          self.filesystem.rename(src, dst, force_replace=True)
+            Raises:
+                OSError: if old_file_path does not exist.
+                OSError: if new_file_path is an existing directory.
+                OSError: if new_file_path is an existing file and could
+                    not be removed
+                OSError: if `dirname(new_file)` does not exist
+                OSError: if the file would be moved to another filesystem
+                    (e.g. mount point)
+            """
+            src = self._path_with_dir_fd(src, self.rename, src_dir_fd)
+            dst = self._path_with_dir_fd(dst, self.rename, dst_dir_fd)
+            self.filesystem.rename(src, dst, force_replace=True)
 
     def rmdir(self, path, dir_fd=None):
         """Remove a leaf Fake directory.
@@ -5242,33 +5243,10 @@ class FakeFileOpen(object):
                 (file_object or self.filesystem.islink(file_path) and
                  not self.filesystem.is_windows_fs)):
             error_fct(errno.EEXIST, file_path)
-        if file_object:
-            if (not is_root() and
-                    ((open_modes.can_read and
-                      not file_object.st_mode & PERM_READ)
-                     or (open_modes.can_write and
-                         not file_object.st_mode & PERM_WRITE))):
-                error_fct(errno.EACCES, file_path)
-            if open_modes.can_write:
-                if open_modes.truncate:
-                    file_object.set_contents('')
-        else:
-            if open_modes.must_exist:
-                error_fct(errno.ENOENT, file_path)
-            if self.filesystem.islink(file_path):
-                link_object = self.filesystem.resolve(file_path,
-                                                      follow_symlinks=False)
-                target_path = link_object.contents
-            else:
-                target_path = file_path
-            if self.filesystem.ends_with_path_separator(target_path):
-                error = (errno.EINVAL if self.filesystem.is_windows_fs
-                         else errno.ENOENT if self.filesystem.is_macos
-                         else errno.EISDIR)
-                error_fct(error, file_path)
-            file_object = self.filesystem.create_file_internally(
-                real_path, create_missing_dirs=False,
-                apply_umask=True, raw_io=self.raw_io)
+
+        file_object = self._init_file_object(error_fct, file_object,
+                                             file_path, open_modes,
+                                             real_path)
 
         if S_ISDIR(file_object.st_mode):
             if self.filesystem.is_windows_fs:
@@ -5306,6 +5284,37 @@ class FakeFileOpen(object):
         else:
             fakefile.filedes = self.filesystem._add_open_file(fakefile)
         return fakefile
+
+    def _init_file_object(self, error_fct, file_object, file_path,
+                          open_modes, real_path):
+        if file_object:
+            if (not is_root() and
+                    ((open_modes.can_read and
+                      not file_object.st_mode & PERM_READ)
+                     or (open_modes.can_write and
+                         not file_object.st_mode & PERM_WRITE))):
+                error_fct(errno.EACCES, file_path)
+            if open_modes.can_write:
+                if open_modes.truncate:
+                    file_object.set_contents('')
+        else:
+            if open_modes.must_exist:
+                error_fct(errno.ENOENT, file_path)
+            if self.filesystem.islink(file_path):
+                link_object = self.filesystem.resolve(file_path,
+                                                      follow_symlinks=False)
+                target_path = link_object.contents
+            else:
+                target_path = file_path
+            if self.filesystem.ends_with_path_separator(target_path):
+                error = (errno.EINVAL if self.filesystem.is_windows_fs
+                         else errno.ENOENT if self.filesystem.is_macos
+                         else errno.EISDIR)
+                error_fct(error, file_path)
+            file_object = self.filesystem.create_file_internally(
+                real_path, create_missing_dirs=False,
+                apply_umask=True, raw_io=self.raw_io)
+        return file_object
 
     def _handle_file_arg(self, file_):
         file_object = None
