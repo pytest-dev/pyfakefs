@@ -8,11 +8,13 @@ of 2020. As pyfakefs 4.0 is a major release, we are giving you advance notice of
 the proposed changes so you can be ready.
 
   * pyfakefs 4.0 drops support for Python 2.7. If you still need
-    Python 2.7, you can still use the latest pyfakefs 3.x version. 
+    Python 2.7, you can continue to use the latest pyfakefs 3.x version. 
 
 ## Version 3.7 (as yet unreleased)
 
 ### Fixes
+  * fixed a problem related to patching `distutils` functions
+    ([#501](../../issues/501))
   * correctly handle missing read permission for parent directory
     (see [#496](../../issues/496))
   * raise for `os.scandir` with non-existing directory

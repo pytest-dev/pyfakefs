@@ -43,6 +43,7 @@ import tempfile
 import unittest
 import warnings
 import zipfile  # noqa: F401 make sure it gets correctly stubbed, see #427
+import distutils.file_util  # noqa: F401 same reason - see #501
 
 from pyfakefs.fake_filesystem import set_uid, set_gid, reset_ids
 

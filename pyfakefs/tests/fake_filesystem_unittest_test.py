@@ -25,6 +25,7 @@ import shutil
 import sys
 import tempfile
 import unittest
+from distutils.dir_util import copy_tree, remove_tree
 from unittest import TestCase
 
 from pyfakefs import fake_filesystem_unittest, fake_filesystem
@@ -602,6 +603,33 @@ class TestShutilWithZipfile(fake_filesystem_unittest.TestCase):
     def test_b(self):
         # used to fail because 'bar' could not be found
         shutil.make_archive('archive', 'zip', root_dir='foo')
+
+
+class TestDistutilsCopyTree(fake_filesystem_unittest.TestCase):
+    """Regression test for #501."""
+
+    def setUp(self):
+        self.setUpPyfakefs()
+        self.fs.create_dir("./test/subdir/")
+        self.fs.create_dir("./test/subdir2/")
+        self.fs.create_file("./test2/subdir/1.txt")
+
+    def test_file_copied(self):
+        copy_tree("./test2/", "./test/")
+        remove_tree("./test2/")
+
+        self.assertTrue(os.path.isfile('./test/subdir/1.txt'))
+        self.assertFalse(os.path.isdir('./test2/'))
+
+    def test_file_copied_again(self):
+        # used to fail because 'test2' could not be found
+        self.assertTrue(os.path.isfile('./test2/subdir/1.txt'))
+
+        copy_tree("./test2/", "./test/")
+        remove_tree("./test2/")
+
+        self.assertTrue(os.path.isfile('./test/subdir/1.txt'))
+        self.assertFalse(os.path.isdir('./test2/'))
 
 
 if __name__ == "__main__":
