@@ -97,17 +97,17 @@ class DirEntry(BaseClass):
         if follow_symlinks:
             if self._statresult_symlink is None:
                 file_object = self._filesystem.resolve(self._abspath)
-                if self._filesystem.is_windows_fs:
-                    file_object.st_nlink = 0
                 self._statresult_symlink = file_object.stat_result.copy()
+                if self._filesystem.is_windows_fs:
+                    self._statresult_symlink.st_nlink = 0
             return self._statresult_symlink
 
         if self._statresult is None:
             file_object = self._filesystem.lresolve(self._abspath)
             self._inode = file_object.st_ino
-            if self._filesystem.is_windows_fs:
-                file_object.st_nlink = 0
             self._statresult = file_object.stat_result.copy()
+            if self._filesystem.is_windows_fs:
+                self._statresult.st_nlink = 0
         return self._statresult
 
     if sys.version_info >= (3, 6) and use_builtin_scandir:

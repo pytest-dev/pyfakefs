@@ -13,6 +13,8 @@ the proposed changes so you can be ready.
 ## Version 3.7 (as yet unreleased)
 
 ### Fixes
+  * fixed side effect of calling `DirEntry.stat()` under Windows (changed 
+    st_nlink) ([#502](../../issues/502))
   * fixed a problem related to patching `distutils` functions
     ([#501](../../issues/501))
   * correctly handle missing read permission for parent directory

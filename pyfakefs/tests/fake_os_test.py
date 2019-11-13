@@ -4882,6 +4882,22 @@ class FakeScandirTest(FakeOsModuleTestBase):
             self.assertEqual(self.os.lstat(self.file_rel_link_path).st_ino,
                              self.dir_entries[5].inode())
 
+    @unittest.skipIf(TestCase.is_windows and TestCase.is_python2,
+                     'st_nlink not properly set under Windows/Python 2')
+    def test_scandir_stat_nlink(self):
+        # regression test for #350
+        stat_nlink = self.os.stat(self.file_path).st_nlink
+        self.assertEqual(1, stat_nlink)
+        dir_iter = self.scandir(self.directory)
+        for item in dir_iter:
+            if item.path == self.file_path:
+                scandir_stat_nlink = item.stat().st_nlink
+                if self.is_windows_fs:
+                    self.assertEqual(0, scandir_stat_nlink)
+                else:
+                    self.assertEqual(1, scandir_stat_nlink)
+                self.assertEqual(1, self.os.stat(self.file_path).st_nlink)
+
     def check_stat(self, absolute_symlink_expected_size,
                    relative_symlink_expected_size):
         self.assertEqual(self.FILE_SIZE, self.dir_entries[1].stat().st_size)
