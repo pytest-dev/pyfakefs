@@ -14,9 +14,9 @@ the proposed changes so you can be ready.
 
 ### Fixes
   * fixed side effect of calling `DirEntry.stat()` under Windows (changed 
-    st_nlink) ([#502](../../issues/502))
-  * fixed a problem related to patching `distutils` functions
-    ([#501](../../issues/501))
+    st_nlink) (see [#502](../../issues/502))
+  * fixed problem of fake modules still referenced after a test in modules 
+    loaded during the test (see [#501](../../issues/501) and [#427](../../issues/427))
   * correctly handle missing read permission for parent directory
     (see [#496](../../issues/496))
   * raise for `os.scandir` with non-existing directory

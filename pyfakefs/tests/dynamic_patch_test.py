@@ -11,7 +11,7 @@
 # limitations under the License.
 
 """
-Tests for patching modules loaded after `setupPyfakefs()`.
+Tests for patching modules loaded after `setUpPyfakefs()`.
 """
 import sys
 import unittest
