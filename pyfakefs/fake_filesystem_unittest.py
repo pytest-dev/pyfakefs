@@ -42,14 +42,10 @@ import sys
 import tempfile
 import unittest
 import warnings
-import zipfile  # noqa: F401 make sure it gets correctly stubbed, see #427
-import distutils.file_util  # noqa: F401 same reason - see #501
-
-from pyfakefs.fake_filesystem import set_uid, set_gid, reset_ids
-
-from pyfakefs.helpers import IS_PY2, IS_PYPY
 
 from pyfakefs.deprecator import Deprecator
+from pyfakefs.fake_filesystem import set_uid, set_gid, reset_ids
+from pyfakefs.helpers import IS_PY2, IS_PYPY
 
 try:
     from importlib.machinery import ModuleSpec
@@ -643,7 +639,7 @@ class Pause(object):
 
 class DynamicPatcher(object):
     """A file loader that replaces file system related modules by their
-    fake implementation if they are loaded after calling `setupPyFakefs()`.
+    fake implementation if they are loaded after calling `setUpPyfakefs()`.
     Implements the protocol needed for import hooks.
     """
 
@@ -651,6 +647,7 @@ class DynamicPatcher(object):
         self._patcher = patcher
         self.sysmodules = {}
         self.modules = self._patcher.fake_modules
+        self._loaded_module_names = set()
 
         # remove all modules that have to be patched from `sys.modules`,
         # otherwise the find_... methods will not be called
@@ -668,10 +665,18 @@ class DynamicPatcher(object):
         for module in self._patcher.modules_to_reload:
             if module.__name__ in sys.modules:
                 reload(module)
+        reloaded_module_names = [module.__name__
+                                 for module in self._patcher.modules_to_reload]
+        # force all modules loaded during the test to reload on next use,
+        # to ensure that no faked modules are still hold in these modules
+        for name in self._loaded_module_names:
+            if name in sys.modules and name not in reloaded_module_names:
+                del sys.modules[name]
 
     def needs_patch(self, name):
         """Check if the module with the given name shall be replaced."""
         if name not in self.modules:
+            self._loaded_module_names.add(name)
             return False
         if (name in sys.modules and
                 type(sys.modules[name]) == self.modules[name]):
