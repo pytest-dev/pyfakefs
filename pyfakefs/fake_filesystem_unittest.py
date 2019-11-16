@@ -667,8 +667,9 @@ class DynamicPatcher(object):
                 reload(module)
         reloaded_module_names = [module.__name__
                                  for module in self._patcher.modules_to_reload]
-        # force all modules loaded during the test to reload on next use,
-        # to ensure that no faked modules are still hold in these modules
+        # Dereference all modules loaded during the test so they will reload on
+        # the next use, ensuring that no faked modules are referenced after the
+        # test.
         for name in self._loaded_module_names:
             if name in sys.modules and name not in reloaded_module_names:
                 del sys.modules[name]
