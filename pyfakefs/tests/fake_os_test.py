@@ -393,8 +393,8 @@ class FakeOsModuleTest(FakeOsModuleTestBase):
         self.skip_if_symlink_not_supported()
         link_path = self.make_path('foo')
         self.os.symlink(self.base_path, link_path)
-        self.assertEqual(self.base_path,
-                         self.os.readlink(link_path + self.os.sep))
+        self.assert_equal_paths(self.base_path,
+                                self.os.readlink(link_path + self.os.sep))
 
     def test_islink_with_trailing_sep_windows(self):
         self.check_windows_only()
@@ -573,7 +573,7 @@ class FakeOsModuleTest(FakeOsModuleTestBase):
         link_path = self.make_path('foo', 'bar', 'baz')
         target = self.make_path('tarJAY')
         self.create_symlink(link_path, target)
-        self.assertEqual(self.os.readlink(link_path), target)
+        self.assert_equal_paths(self.os.readlink(link_path), target)
 
     def check_readlink_raises_if_path_is_not_a_link(self):
         file_path = self.make_path('foo', 'bar', 'eleventyone')
@@ -671,9 +671,10 @@ class FakeOsModuleTest(FakeOsModuleTestBase):
                             self.make_path('yum'))
         self.create_symlink(self.make_path('geo', 'metro'),
                             self.make_path('meyer'))
-        self.assertEqual(self.make_path('yum'),
-                         self.os.readlink(
-                             self.make_path('geo', 'metro', 'lemon', 'pie')))
+        self.assert_equal_paths(self.make_path('yum'),
+                                self.os.readlink(
+                                    self.make_path('geo', 'metro',
+                                                   'lemon', 'pie')))
 
     def test_readlink_with_chained_links_in_path(self):
         self.skip_if_symlink_not_supported()
@@ -684,8 +685,9 @@ class FakeOsModuleTest(FakeOsModuleTestBase):
                             self.make_path('eastern', 'european'))
         self.create_symlink(self.make_path('dogs'),
                             self.make_path('russian', 'wolfhounds'))
-        self.assertEqual(self.make_path('cats'),
-                         self.os.readlink(self.make_path('dogs', 'chase')))
+        self.assert_equal_paths(self.make_path('cats'),
+                                self.os.readlink(
+                                    self.make_path('dogs', 'chase')))
 
     def check_remove_dir(self, dir_error):
         directory = self.make_path('xyzzy')
@@ -2806,7 +2808,7 @@ class FakeOsModuleTestCaseInsensitiveFS(FakeOsModuleTestBase):
         link_path = self.make_path('foo', 'bar', 'baz')
         target = self.make_path('tarJAY')
         self.create_symlink(link_path, target)
-        self.assertEqual(self.os.readlink(link_path.upper()), target)
+        self.assert_equal_paths(self.os.readlink(link_path.upper()), target)
 
     def check_readlink_raises_if_path_not_a_link(self):
         file_path = self.make_path('foo', 'bar', 'eleventyone')
@@ -2847,9 +2849,10 @@ class FakeOsModuleTestCaseInsensitiveFS(FakeOsModuleTestBase):
                             self.make_path('yum'))
         self.create_symlink(self.make_path('geo', 'metro'),
                             self.make_path('Meyer'))
-        self.assertEqual(self.make_path('yum'),
-                         self.os.readlink(
-                             self.make_path('Geo', 'Metro', 'Lemon', 'Pie')))
+        self.assert_equal_paths(self.make_path('yum'),
+                                self.os.readlink(
+                                    self.make_path('Geo', 'Metro',
+                                                   'Lemon', 'Pie')))
 
     def test_readlink_with_chained_links_in_path(self):
         self.skip_if_symlink_not_supported()
@@ -2860,8 +2863,9 @@ class FakeOsModuleTestCaseInsensitiveFS(FakeOsModuleTestBase):
                             self.make_path('Eastern', 'European'))
         self.create_symlink(self.make_path('dogs'),
                             self.make_path('Russian', 'Wolfhounds'))
-        self.assertEqual(self.make_path('cats'),
-                         self.os.readlink(self.make_path('DOGS', 'Chase')))
+        self.assert_equal_paths(self.make_path('cats'),
+                                self.os.readlink(
+                                    self.make_path('DOGS', 'Chase')))
 
     def check_remove_dir(self, dir_error):
         directory = self.make_path('xyzzy')
@@ -4245,7 +4249,10 @@ class FakeOsModuleLowLevelFileOpTest(FakeOsModuleTestBase):
 
     def test_devnull_windows(self):
         self.check_windows_only()
-        self.assertFalse(self.os.path.exists(self.os.devnull))
+        if sys.version_info < (3, 8):
+            self.assertFalse(self.os.path.exists(self.os.devnull))
+        else:
+            self.assertTrue(self.os.path.exists(self.os.devnull))
 
     def test_write_devnull(self):
         fd = self.os.open(self.os.devnull, os.O_RDWR)

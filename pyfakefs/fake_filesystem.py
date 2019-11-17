@@ -1787,7 +1787,7 @@ class FakeFilesystem(object):
         if not file_path:
             return False
         if file_path == self.dev_null.name:
-            return not self.is_windows_fs
+            return not self.is_windows_fs or sys.version_info >= (3, 8)
         try:
             if self.is_filepath_ending_with_separator(file_path):
                 return False

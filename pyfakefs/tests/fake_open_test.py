@@ -509,7 +509,7 @@ class FakeFileOpenTest(FakeFileOpenTestBase):
         target_contents = 'real baz contents'
         self.create_file(target, contents=target_contents)
         self.create_symlink(link_path, target)
-        self.assertEqual(target, self.os.readlink(link_path))
+        self.assert_equal_paths(target, self.os.readlink(link_path))
         fh = self.open(link_path, 'r')
         got_contents = fh.read()
         fh.close()

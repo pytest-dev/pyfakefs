@@ -12,7 +12,13 @@ the proposed changes so you can be ready.
 
 ## Version 3.7 (as yet unreleased)
 
+### Enhancements
+  * added preliminary support for Windows-specific `os.stat_result` attributes
+    `tst_file_attributes` and `st_reparse_tag` (see [#504](../../issues/504))
+
 ### Fixes
+  * support `devnull` in Windows under Python 3.8
+    (see [#504](../../issues/504)) 
   * fixed side effect of calling `DirEntry.stat()` under Windows (changed 
     st_nlink) (see [#502](../../issues/502))
   * fixed problem of fake modules still referenced after a test in modules 
@@ -21,6 +27,10 @@ the proposed changes so you can be ready.
     (see [#496](../../issues/496))
   * raise for `os.scandir` with non-existing directory
     (see [#498](../../issues/498))
+    
+### Infrastructure
+  * fixed CI tests scripts to always propagate errors
+    (see [#500](../../issues/500))
 
 ## [Version 3.6.1](https://pypi.python.org/pypi/pyfakefs/3.6.1)
 

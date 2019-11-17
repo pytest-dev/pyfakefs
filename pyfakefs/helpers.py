@@ -14,6 +14,7 @@
 import io
 import locale
 import platform
+import stat
 import sys
 from copy import copy
 from stat import S_IFLNK
@@ -202,6 +203,32 @@ class FakeStatResult(object):
     @st_size.setter
     def st_size(self, val):
         self._st_size = val
+
+    @property
+    def st_file_attributes(self):
+        if not self.is_windows or sys.version_info < (3, 5):
+            raise AttributeError("module 'os.stat_result' "
+                                 "has no attribute 'st_file_attributes'")
+        mode = 0
+        st_mode = self.st_mode
+        if st_mode & stat.S_IFDIR:
+            mode |= stat.FILE_ATTRIBUTE_DIRECTORY
+        if st_mode & stat.S_IFREG:
+            mode |= stat.FILE_ATTRIBUTE_NORMAL
+        if st_mode & (stat.S_IFCHR | stat.S_IFBLK):
+            mode |= stat.FILE_ATTRIBUTE_DEVICE
+        if st_mode & stat.S_IFLNK:
+            mode |= stat.FILE_ATTRIBUTE_REPARSE_POINT
+        return mode
+
+    @property
+    def st_reparse_tag(self):
+        if not self.is_windows or sys.version_info < (3, 8):
+            raise AttributeError("module 'os.stat_result' "
+                                 "has no attribute 'st_reparse_tag'")
+        if self.st_mode & stat.S_IFLNK:
+            return stat.IO_REPARSE_TAG_SYMLINK
+        return 0
 
     def __getitem__(self, item):
         """Implement item access to mimic `os.stat_result` behavior."""

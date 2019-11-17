@@ -72,6 +72,10 @@ class TestCase(unittest.TestCase):
         except OSError as exc:
             self.assertEqual(subtype, exc.errno)
 
+    def assert_equal_paths(self, actual, expected):
+        self.assertEqual(actual.replace('\\\\?\\', ''),
+                         expected.replace('\\\\?\\', ''))
+
 
 class RealFsTestMixin(object):
     """Test mixin to allow tests to run both in the fake filesystem and in the
