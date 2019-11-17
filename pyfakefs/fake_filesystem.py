@@ -1484,9 +1484,9 @@ class FakeFilesystem(object):
             dir_name, current_dir = self._directory_content(
                 current_dir, component)
             if current_dir is None or (
-                            isinstance(current_dir, FakeDirectory) and
-                            current_dir._byte_contents is None and
-                            current_dir.st_size == 0):
+                    isinstance(current_dir, FakeDirectory) and
+                    current_dir._byte_contents is None and
+                    current_dir.st_size == 0):
                 return components_to_path()
             normalized_components.append(dir_name)
         return components_to_path()
@@ -3523,7 +3523,7 @@ class FakePathModule(object):
                     sep, self.filesystem._alternative_path_separator(path)
                 )
             else:
-                path_seps = (sep, )
+                path_seps = (sep,)
             drive, rest = self.filesystem.splitdrive(normed_path)
             if drive and drive[:1] in path_seps:
                 return (not rest) or (rest in path_seps)
@@ -4513,7 +4513,7 @@ class FakeOsModule(object):
           created.
         """
         if self.filesystem.is_windows_fs:
-            raise(AttributeError, "module 'os' has no attribute 'mknode'")
+            raise (AttributeError, "module 'os' has no attribute 'mknode'")
         if mode is None:
             # note that a default value of 0o600 without a device type is
             # documented - this is not how it seems to work
@@ -4610,12 +4610,56 @@ class FakeOsModule(object):
             OSError: `fd` is an invalid file descriptor.
             TypeError: `fd` is not an integer.
         """
-        # Throw an error if file_des isn't valid
         if self.filesystem.is_windows_fs or self.filesystem.is_macos:
             raise AttributeError("module 'os' has no attribute 'fdatasync'")
+        # Throw an error if file_des isn't valid
         if 0 <= fd < NR_STD_STREAMS:
             self.filesystem.raise_os_error(errno.EINVAL)
         self.filesystem.get_open_file(fd)
+
+    def sendfile(self, fd_out, fd_in, offset, count):
+        """Copy count bytes from file descriptor fd_in to file descriptor
+        fd_out starting at offset.
+
+        Args:
+            fd_out: The file descriptor of the destination file.
+            fd_in: The file descriptor of the source file.
+            offset: The offset in bytes where to start the copy in the
+                source file. If `None` (Linux only), copying is started at
+                the current position, and the position is updated.
+            count: The number of bytes to copy. If 0, all remaining bytes
+                are copied (MacOs only).
+
+        Raises:
+            OSError: If `fd_in` or `fd_out` is an invalid file descriptor.
+            TypeError: If `fd_in` or `fd_out` is not an integer.
+            TypeError: If `offset` is None under MacOs.
+        """
+        if self.filesystem.is_windows_fs or sys.version_info < (3, 3):
+            raise AttributeError("module 'os' has no attribute 'sendfile'")
+        if 0 <= fd_in < NR_STD_STREAMS:
+            self.filesystem.raise_os_error(errno.EINVAL)
+        if 0 <= fd_out < NR_STD_STREAMS:
+            self.filesystem.raise_os_error(errno.EINVAL)
+        source = self.filesystem.get_open_file(fd_in)
+        dest = self.filesystem.get_open_file(fd_out)
+        if offset is None:
+            if self.filesystem.is_macos:
+                raise TypeError('None is not a valid offset')
+            contents = source.read(count)
+        else:
+            position = source.tell()
+            source.seek(offset)
+            if count == 0 and self.filesystem.is_macos:
+                contents = source.read()
+            else:
+                contents = source.read(count)
+            source.seek(position)
+        if contents:
+            written = dest.write(contents)
+            dest.flush()
+            return written
+        return 0
 
     def __getattr__(self, name):
         """Forwards any unfaked calls to the standard os module."""
@@ -5070,7 +5114,7 @@ class FakeFileWrapper(object):
             self._raise('File is not open for reading')
         return next(self._io)
 
-    if sys.version_info < (3, ):
+    if sys.version_info < (3,):
         next = __next__
 
 

@@ -4263,6 +4263,82 @@ class FakeOsModuleLowLevelFileOpTest(FakeOsModuleTestBase):
         self.assertEqual(b'', self.os.read(fd, 4))
         self.os.close(fd)
 
+    @unittest.skipIf(TestCase.is_python2, 'sendfile not available in Python 2')
+    def test_sendfile_with_invalid_fd(self):
+        self.check_posix_only()
+        self.assert_raises_os_error(errno.EBADF, self.os.sendfile,
+                                    100, 101, 0, 100)
+        src_file_path = self.make_path('foo')
+        dst_file_path = self.make_path('bar')
+        self.create_file(src_file_path, 'testcontent')
+        self.create_file(dst_file_path)
+        fd1 = self.os.open(src_file_path, os.O_RDONLY)
+        fd2 = self.os.open(dst_file_path, os.O_RDONLY)
+        self.assert_raises_os_error(errno.EBADF, self.os.sendfile,
+                                    fd2, fd1, 0, 4)
+
+    @unittest.skipIf(TestCase.is_python2, 'sendfile not available in Python 2')
+    def test_sendfile_no_offset(self):
+        self.check_posix_only()
+        src_file_path = self.make_path('foo')
+        dst_file_path = self.make_path('bar')
+        self.create_file(src_file_path, 'testcontent')
+        self.create_file(dst_file_path)
+        fd1 = self.os.open(src_file_path, os.O_RDONLY)
+        fd2 = self.os.open(dst_file_path, os.O_RDWR)
+        self.os.sendfile(fd2, fd1, 0, 3)
+        self.os.close(fd2)
+        self.os.close(fd1)
+        with self.open(dst_file_path) as f:
+            self.assertEqual('tes', f.read())
+
+    @unittest.skipIf(TestCase.is_python2, 'sendfile not available in Python 2')
+    def test_sendfile_with_offset(self):
+        self.check_posix_only()
+        src_file_path = self.make_path('foo')
+        dst_file_path = self.make_path('bar')
+        self.create_file(src_file_path, 'testcontent')
+        self.create_file(dst_file_path)
+        fd1 = self.os.open(src_file_path, os.O_RDONLY)
+        fd2 = self.os.open(dst_file_path, os.O_RDWR)
+        self.os.sendfile(fd2, fd1, 4, 4)
+        self.os.close(fd2)
+        self.os.close(fd1)
+        with self.open(dst_file_path) as f:
+            self.assertEqual('cont', f.read())
+
+    @unittest.skipIf(TestCase.is_python2, 'sendfile not available in Python 2')
+    def test_sendfile_twice(self):
+        self.check_posix_only()
+        src_file_path = self.make_path('foo')
+        dst_file_path = self.make_path('bar')
+        self.create_file(src_file_path, 'testcontent')
+        self.create_file(dst_file_path)
+        fd1 = self.os.open(src_file_path, os.O_RDONLY)
+        fd2 = self.os.open(dst_file_path, os.O_RDWR)
+        self.os.sendfile(fd2, fd1, 4, 4)
+        self.os.sendfile(fd2, fd1, 4, 4)
+        self.os.close(fd2)
+        self.os.close(fd1)
+        with self.open(dst_file_path) as f:
+            self.assertEqual('contcont', f.read())
+
+    @unittest.skipIf(TestCase.is_python2, 'sendfile not available in Python 2')
+    def test_sendfile_offset_none(self):
+        self.check_linux_only()
+        src_file_path = self.make_path('foo')
+        dst_file_path = self.make_path('bar')
+        self.create_file(src_file_path, 'testcontent')
+        self.create_file(dst_file_path)
+        fd1 = self.os.open(src_file_path, os.O_RDONLY)
+        fd2 = self.os.open(dst_file_path, os.O_RDWR)
+        self.os.sendfile(fd2, fd1, None, 4)
+        self.os.sendfile(fd2, fd1, None, 3)
+        self.os.close(fd2)
+        self.os.close(fd1)
+        with self.open(dst_file_path) as f:
+            self.assertEqual('testcon', f.read())
+
 
 class RealOsModuleLowLevelFileOpTest(FakeOsModuleLowLevelFileOpTest):
     def use_real_fs(self):
