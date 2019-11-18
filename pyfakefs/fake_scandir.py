@@ -20,10 +20,10 @@ import errno
 import os
 import sys
 
-from pyfakefs.extra_packages import use_scandir_package, use_builtin_scandir
+from pyfakefs.extra_packages import use_scandir_package
 from pyfakefs.helpers import IS_PY2
 
-if sys.version_info >= (3, 6) and use_builtin_scandir:
+if sys.version_info >= (3, 6):
     BaseClass = os.PathLike
 else:
     BaseClass = object
@@ -110,7 +110,7 @@ class DirEntry(BaseClass):
                 self._statresult.st_nlink = 0
         return self._statresult
 
-    if sys.version_info >= (3, 6) and use_builtin_scandir:
+    if sys.version_info >= (3, 6):
         def __fspath__(self):
             return self.path
 
