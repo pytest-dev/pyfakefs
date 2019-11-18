@@ -4265,7 +4265,7 @@ class FakeOsModuleLowLevelFileOpTest(FakeOsModuleTestBase):
 
     @unittest.skipIf(TestCase.is_python2, 'sendfile not available in Python 2')
     def test_sendfile_with_invalid_fd(self):
-        self.check_posix_only()
+        self.check_linux_only()
         self.assert_raises_os_error(errno.EBADF, self.os.sendfile,
                                     100, 101, 0, 100)
         src_file_path = self.make_path('foo')
@@ -4279,7 +4279,7 @@ class FakeOsModuleLowLevelFileOpTest(FakeOsModuleTestBase):
 
     @unittest.skipIf(TestCase.is_python2, 'sendfile not available in Python 2')
     def test_sendfile_no_offset(self):
-        self.check_posix_only()
+        self.check_linux_only()
         src_file_path = self.make_path('foo')
         dst_file_path = self.make_path('bar')
         self.create_file(src_file_path, 'testcontent')
@@ -4294,7 +4294,7 @@ class FakeOsModuleLowLevelFileOpTest(FakeOsModuleTestBase):
 
     @unittest.skipIf(TestCase.is_python2, 'sendfile not available in Python 2')
     def test_sendfile_with_offset(self):
-        self.check_posix_only()
+        self.check_linux_only()
         src_file_path = self.make_path('foo')
         dst_file_path = self.make_path('bar')
         self.create_file(src_file_path, 'testcontent')
@@ -4309,7 +4309,7 @@ class FakeOsModuleLowLevelFileOpTest(FakeOsModuleTestBase):
 
     @unittest.skipIf(TestCase.is_python2, 'sendfile not available in Python 2')
     def test_sendfile_twice(self):
-        self.check_posix_only()
+        self.check_linux_only()
         src_file_path = self.make_path('foo')
         dst_file_path = self.make_path('bar')
         self.create_file(src_file_path, 'testcontent')
