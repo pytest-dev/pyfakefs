@@ -17,6 +17,8 @@ the proposed changes so you can be ready.
     `tst_file_attributes` and `st_reparse_tag` (see [#504](../../issues/504))
   * added support for fake `os.sendfile` (Posix only, Python 3 only)
     (see [#504](../../issues/504))
+  * added support for Python 3.8 (mostly `shutil` issues)
+    (see [#504](../../issues/504))
 
 ### Fixes
   * support `devnull` in Windows under Python 3.8

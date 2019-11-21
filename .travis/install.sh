@@ -17,7 +17,7 @@ if [[ $TRAVIS_OS_NAME == 'osx' ]]; then
             curl -O https://bootstrap.pypa.io/get-pip.py
             python get-pip.py --user
             ;;
-        py34|py35|py36|py37)
+        py34|py35|py36|py37|py38)
             pyenv install ${PY_VERSION}
             pyenv global ${PY_VERSION}
             echo Checking Python version...

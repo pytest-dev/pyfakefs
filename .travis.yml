@@ -122,16 +122,16 @@ jobs:
         - PYTHON=py37
         - PY_VERSION=3.7.5
 
-#    - stage: test
-#      script:
-#        - ./.travis/run_tests.sh
-#        - ./.travis/run_pytest_fixture_test.sh
-#        - ./.travis/run_pytest_plugin_test.sh
-#      os: osx
-#      language: generic
-#      env:
-#        - PYTHON=py38
-#        - PY_VERSION=3.8.0
+    - stage: test
+      script:
+        - ./.travis/run_tests.sh
+        - ./.travis/run_pytest_fixture_test.sh
+        - ./.travis/run_pytest_plugin_test.sh
+      os: osx
+      language: generic
+      env:
+        - PYTHON=py38
+        - PY_VERSION=3.8.0
 
     - stage: test
       script:

@@ -38,6 +38,7 @@ to `:py:class`pyfakefs.fake_filesystem_unittest.TestCase`.
 """
 import doctest
 import inspect
+import shutil
 import sys
 import tempfile
 import unittest
@@ -524,6 +525,12 @@ class Patcher(object):
         """Bind the file-related modules to the :py:mod:`pyfakefs` fake
         modules real ones.  Also bind the fake `file()` and `open()` functions.
         """
+        self.has_fcopy_file = (sys.platform == 'darwin' and
+                               hasattr(shutil, '_HAS_FCOPYFILE') and
+                               shutil._HAS_FCOPYFILE)
+        if self.has_fcopy_file:
+            shutil._HAS_FCOPYFILE = False
+
         temp_dir = tempfile.gettempdir()
         self._find_modules()
         self._refresh()
@@ -578,6 +585,9 @@ class Patcher(object):
     def tearDown(self, doctester=None):
         """Clear the fake filesystem bindings created by `setUp()`."""
         self.stop_patching()
+        if self.has_fcopy_file:
+            shutil._HAS_FCOPYFILE = True
+
         reset_ids()
 
     def stop_patching(self):
