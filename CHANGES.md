@@ -12,12 +12,16 @@ the proposed changes so you can be ready.
 
 ## Version 3.7 (as yet unreleased)
 
+This version adds support for Python 3.8.
+
+_Note:_ This is the last pyfakefs version that will support Python 2.7 
+and Python 3.4 (possible bug fix releases notwithstanding).
+
 ### Enhancements
+  * added support for Python 3.8 (see [#504](../../issues/504))
   * added preliminary support for Windows-specific `os.stat_result` attributes
     `tst_file_attributes` and `st_reparse_tag` (see [#504](../../issues/504))
   * added support for fake `os.sendfile` (Posix only, Python 3 only)
-    (see [#504](../../issues/504))
-  * added support for Python 3.8 (mostly `shutil` issues)
     (see [#504](../../issues/504))
 
 ### Fixes

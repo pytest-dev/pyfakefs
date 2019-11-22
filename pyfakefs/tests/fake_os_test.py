@@ -4339,6 +4339,20 @@ class FakeOsModuleLowLevelFileOpTest(FakeOsModuleTestBase):
         with self.open(dst_file_path) as f:
             self.assertEqual('testcon', f.read())
 
+    @unittest.skipIf(not TestCase.is_macos or sys.version_info < (3, 3),
+                     'Testing MacOs Python 3 only behavior')
+    def test_no_sendfile_to_regular_file_under_macos(self):
+        src_file_path = self.make_path('foo')
+        dst_file_path = self.make_path('bar')
+        self.create_file(src_file_path, 'testcontent')
+        self.create_file(dst_file_path)
+        fd1 = self.os.open(src_file_path, os.O_RDONLY)
+        fd2 = self.os.open(dst_file_path, os.O_RDWR)
+        # raises socket operation on non-socket
+        self.assertRaises(OSError, self.os.sendfile, fd2, fd1, 0, 3)
+        self.os.close(fd2)
+        self.os.close(fd1)
+
 
 class RealOsModuleLowLevelFileOpTest(FakeOsModuleLowLevelFileOpTest):
     def use_real_fs(self):

@@ -1987,8 +1987,6 @@ class RealFileSystemAccessTest(TestCase):
 
     @unittest.skipIf(TestCase.is_windows and sys.version_info < (3, 3),
                      'Links are not supported under Windows before Python 3.3')
-    @unittest.skipIf(TestCase.is_windows and sys.version_info > (3, 8),
-                     'Behavior seems to be different under Python 3.8')
     def test_add_existing_real_directory_symlink(self):
         fake_open = fake_filesystem.FakeFileOpen(self.filesystem)
         real_directory = os.path.join(self.root_path, 'pyfakefs', 'tests')

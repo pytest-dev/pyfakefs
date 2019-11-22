@@ -103,7 +103,9 @@ import sys
 import time
 import warnings
 from collections import namedtuple
-from stat import S_IFREG, S_IFDIR, S_ISLNK, S_IFMT, S_ISDIR, S_IFLNK, S_ISREG
+from stat import (
+    S_IFREG, S_IFDIR, S_ISLNK, S_IFMT, S_ISDIR, S_IFLNK, S_ISREG, S_IFSOCK
+)
 
 from pyfakefs.deprecator import Deprecator
 from pyfakefs.extra_packages import use_scandir
@@ -1953,6 +1955,9 @@ class FakeFilesystem(object):
             IOError: if there are too many levels of symbolic link
         """
         link_path = link.contents
+        # ignore UNC prefix for local files
+        if self.is_windows_fs and link_path.startswith('\\\\?\\'):
+            link_path = link_path[4:]
         sep = self._path_separator(link_path)
         # For links to absolute paths, we want to throw out everything
         # in the path built so far and replace with the link. For relative
@@ -4643,6 +4648,9 @@ class FakeOsModule(object):
             self.filesystem.raise_os_error(errno.EINVAL)
         source = self.filesystem.get_open_file(fd_in)
         dest = self.filesystem.get_open_file(fd_out)
+        if self.filesystem.is_macos:
+            if dest.get_object().stat_result.st_mode & 0o777000 != S_IFSOCK:
+                raise OSError('Socket operation on non-socket')
         if offset is None:
             if self.filesystem.is_macos:
                 raise TypeError('None is not a valid offset')
