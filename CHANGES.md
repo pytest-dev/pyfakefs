@@ -1,7 +1,7 @@
 # pyfakefs Release Notes
 The released versions correspond to PyPi releases.
 
-## Preview of future Version 4.0
+## Version 4.0 (as yet unreleased)
 
 _Note:_ pyfakefs 4.0 is planned for release at the end of 2019 or the beginning
 of 2020. As pyfakefs 4.0 is a major release, we are giving you advance notice of
@@ -10,7 +10,7 @@ the proposed changes so you can be ready.
   * pyfakefs 4.0 drops support for Python 2.7. If you still need
     Python 2.7, you can continue to use the latest pyfakefs 3.x version. 
 
-## Version 3.7 (as yet unreleased)
+## [Version 3.7](https://pypi.python.org/pypi/pyfakefs/3.7)
 
 This version adds support for Python 3.8.
 

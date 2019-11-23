@@ -5,9 +5,8 @@ Introduction
 Using pyfakefs, your tests operate on a fake file system in memory without touching the real disk.
 The software under test requires no modification to work with pyfakefs.
 
-pyfakefs works with CPython 2.7, 3.4 and above, on Linux, Windows and OSX
-(MacOS), and with PyPy2 and PyPy3. Note that this is the last major release
-that still supports Python 2.7/PyPy2 and Python 3.4.
+pyfakefs works with CPython 3.5 and above, on Linux, Windows and OSX
+(MacOS), and with PyPy3.
 
 pyfakefs works with `PyTest <doc.pytest.org>`__ version 2.8.6 or above.
 

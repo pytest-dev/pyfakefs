@@ -280,10 +280,9 @@ additional_skip_names
 ~~~~~~~~~~~~~~~~~~~~~
 This may be used to add modules that shall not be patched. This is mostly
 used to avoid patching the Python file system modules themselves, but may be
-helpful in some special situations, for example if a testrunner is accessing
-the file system after test setup. A known case is erratic behavior if running a
-debug session in PyCharm with Python 2.7, which can be avoided by adding the
-offending module to ``additional_skip_names``:
+helpful in some special situations, for example if a testrunner needs to access
+the file system after test setup. To make this possible, the affected module
+can be added to ``additional_skip_names``:
 
 .. code:: python
 
