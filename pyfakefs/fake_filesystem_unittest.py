@@ -95,7 +95,7 @@ def load_doctests(loader, tests, ignore, module,
     return tests
 
 
-class TestCaseMixin(object):
+class TestCaseMixin:
     """Test case mixin that automatically replaces file-system related
     modules by fake implementations.
 
@@ -267,7 +267,7 @@ class TestCase(unittest.TestCase, TestCaseMixin):
         pass
 
 
-class Patcher(object):
+class Patcher:
     """
     Instantiate a stub creator to bind and un-bind the file-related modules to
     the :py:mod:`pyfakefs` fake modules.
@@ -586,7 +586,7 @@ class Patcher(object):
         self.start_patching()
 
 
-class Pause(object):
+class Pause:
     """Simple context manager that allows to pause/resume patching the
     filesystem. Patching is paused in the context manager, and resumed after
     going out of it's scope.
@@ -617,7 +617,7 @@ class Pause(object):
         return self._fs.resume()
 
 
-class DynamicPatcher(object):
+class DynamicPatcher:
     """A file loader that replaces file system related modules by their
     fake implementation if they are loaded after calling `setUpPyfakefs()`.
     Implements the protocol needed for import hooks.

@@ -285,7 +285,7 @@ class AdditionalSkipNamesModuleTest(fake_filesystem_unittest.TestCase):
             pyfakefs.tests.import_as_example.exists_this_file())
 
 
-class FakeExampleModule(object):
+class FakeExampleModule:
     """Used to patch a function that uses system-specific functions that
     cannot be patched automatically."""
     _orig_module = pyfakefs.tests.import_as_example

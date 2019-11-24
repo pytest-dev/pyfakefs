@@ -241,7 +241,7 @@ fake a module in Django that uses OS file system functions:
 
 .. code:: python
 
-  class FakeLocks(object):
+  class FakeLocks:
       """django.core.files.locks uses low level OS functions, fake it."""
       _locks_module = django.core.files.locks
 

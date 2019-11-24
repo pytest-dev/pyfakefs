@@ -12,8 +12,10 @@ the proposed changes so you can be ready.
     
 ### Changes
   * Removed Python 2.7 and 3.4 support (see [#492](../../issues/492))
-
-
+  
+### Enhancements
+  * Added support for handling keyword-only arguments in some `os` functions
+  
 ## [Version 3.7](https://pypi.python.org/pypi/pyfakefs/3.7)
 
 This version adds support for Python 3.8.

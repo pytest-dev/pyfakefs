@@ -27,7 +27,7 @@ into pyfakefs.
 import inspect
 
 
-class StubOutForTesting(object):
+class StubOutForTesting:
     """Sample Usage:
 
        You want os.path.exists() to always return true during testing.
