@@ -129,8 +129,6 @@ class TestExample(fake_filesystem_unittest.TestCase):  # pylint: disable=R0904
         example.rm_tree('/test/dir1')
         self.assertFalse(os.path.exists('/test/dir1'))
 
-    @unittest.skipIf(sys.version_info < (3, 5),
-                     'os.scandir was introduced in Python 3.5')
     def test_os_scandir(self):
         """Test example.scandir() which uses `os.scandir()`.
 

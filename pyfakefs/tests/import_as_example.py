@@ -15,17 +15,14 @@ Example module that is used for testing modules that import file system modules
 to be patched under another name.
 """
 import os as my_os
+from io import open as io_open
 from os import path
 from os import stat
 from os import stat as my_stat
 from os.path import exists
 from os.path import exists as my_exists
-from io import open as io_open
 
-try:
-    from builtins import open as bltn_open
-except ImportError:
-    from __builtin__ import open as bltn_open
+from builtins import open as bltn_open
 
 import sys
 

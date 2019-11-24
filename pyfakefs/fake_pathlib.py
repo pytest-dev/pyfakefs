@@ -44,7 +44,6 @@ import errno
 
 from pyfakefs import fake_scandir
 from pyfakefs.extra_packages import use_scandir, pathlib, pathlib2
-from pyfakefs.helpers import text_type
 from pyfakefs.fake_filesystem import FakeFileOpen, FakeFilesystem
 
 
@@ -515,102 +514,98 @@ class FakePath(path_module):
         """
         if self._closed:
             self._raise_closed()
-        return FakeFileOpen(self.filesystem, use_io=True)(
+        return FakeFileOpen(self.filesystem)(
             self._path(), mode, buffering, encoding, errors, newline)
 
-    if sys.version_info >= (3, 5) or pathlib2:
-        def read_bytes(self):
-            """Open the fake file in bytes mode, read it, and close the file.
+    def read_bytes(self):
+        """Open the fake file in bytes mode, read it, and close the file.
 
-            Raises:
-                IOError: if the target object is a directory, the path is
-                    invalid or permission is denied.
-            """
-            with FakeFileOpen(self.filesystem)(self._path(), mode='rb') as f:
-                return f.read()
+        Raises:
+            IOError: if the target object is a directory, the path is
+                invalid or permission is denied.
+        """
+        with FakeFileOpen(self.filesystem)(self._path(), mode='rb') as f:
+            return f.read()
 
-        def read_text(self, encoding=None, errors=None):
-            """
-            Open the fake file in text mode, read it, and close the file.
-            """
-            with FakeFileOpen(
-                    self.filesystem, use_io=True)(self._path(), mode='r',
-                                                  encoding=encoding,
-                                                  errors=errors) as f:
-                return f.read()
+    def read_text(self, encoding=None, errors=None):
+        """
+        Open the fake file in text mode, read it, and close the file.
+        """
+        with FakeFileOpen(self.filesystem)(self._path(), mode='r',
+                                           encoding=encoding,
+                                           errors=errors) as f:
+            return f.read()
 
-        def write_bytes(self, data):
-            """Open the fake file in bytes mode, write to it, and close the file.
-            Args:
-                data: the bytes to be written
-            Raises:
-                IOError: if the target object is a directory, the path is
-                    invalid or permission is denied.
-            """
-            # type-check for the buffer interface before truncating the file
-            view = memoryview(data)
-            with FakeFileOpen(self.filesystem)(self._path(), mode='wb') as f:
-                return f.write(view)
+    def write_bytes(self, data):
+        """Open the fake file in bytes mode, write to it, and close the file.
+        Args:
+            data: the bytes to be written
+        Raises:
+            IOError: if the target object is a directory, the path is
+                invalid or permission is denied.
+        """
+        # type-check for the buffer interface before truncating the file
+        view = memoryview(data)
+        with FakeFileOpen(self.filesystem)(self._path(), mode='wb') as f:
+            return f.write(view)
 
-        def write_text(self, data, encoding=None, errors=None):
-            """Open the fake file in text mode, write to it, and close
-            the file.
+    def write_text(self, data, encoding=None, errors=None):
+        """Open the fake file in text mode, write to it, and close
+        the file.
 
-            Args:
-                data: the string to be written
-                encoding: the encoding used for the string; if not given, the
-                    default locale encoding is used
-                errors: ignored
-            Raises:
-                TypeError: if data is not of type 'str' (Python 3) or 'unicode'
-                    (Python 2)
-                IOError: if the target object is a directory, the path is
-                    invalid or permission is denied.
-            """
-            if not isinstance(data, text_type):
-                raise TypeError('data must be str, not %s' %
-                                data.__class__.__name__)
-            with FakeFileOpen(
-                    self.filesystem, use_io=True)(self._path(),
-                                                  mode='w',
-                                                  encoding=encoding,
-                                                  errors=errors) as f:
-                return f.write(data)
+        Args:
+            data: the string to be written
+            encoding: the encoding used for the string; if not given, the
+                default locale encoding is used
+            errors: ignored
+        Raises:
+            TypeError: if data is not of type 'str'.
+            IOError: if the target object is a directory, the path is
+                invalid or permission is denied.
+        """
+        if not isinstance(data, str):
+            raise TypeError('data must be str, not %s' %
+                            data.__class__.__name__)
+        with FakeFileOpen(self.filesystem)(self._path(),
+                                           mode='w',
+                                           encoding=encoding,
+                                           errors=errors) as f:
+            return f.write(data)
 
-        @classmethod
-        def home(cls):
-            """Return a new path pointing to the user's home directory (as
-            returned by os.path.expanduser('~')).
-            """
-            return cls(cls()._flavour.gethomedir(None).
-                       replace(os.sep, cls.filesystem.path_separator))
+    @classmethod
+    def home(cls):
+        """Return a new path pointing to the user's home directory (as
+        returned by os.path.expanduser('~')).
+        """
+        return cls(cls()._flavour.gethomedir(None).
+                   replace(os.sep, cls.filesystem.path_separator))
 
-        def samefile(self, other_path):
-            """Return whether other_path is the same or not as this file
-            (as returned by os.path.samefile()).
+    def samefile(self, other_path):
+        """Return whether other_path is the same or not as this file
+        (as returned by os.path.samefile()).
 
-            Args:
-                other_path: A path object or string of the file object
-                to be compared with
+        Args:
+            other_path: A path object or string of the file object
+            to be compared with
 
-            Raises:
-                OSError: if the filesystem object doesn't exist.
-            """
-            st = self.stat()
-            try:
-                other_st = other_path.stat()
-            except AttributeError:
-                other_st = self.filesystem.stat(other_path)
-            return (st.st_ino == other_st.st_ino and
-                    st.st_dev == other_st.st_dev)
+        Raises:
+            OSError: if the filesystem object doesn't exist.
+        """
+        st = self.stat()
+        try:
+            other_st = other_path.stat()
+        except AttributeError:
+            other_st = self.filesystem.stat(other_path)
+        return (st.st_ino == other_st.st_ino and
+                st.st_dev == other_st.st_dev)
 
-        def expanduser(self):
-            """ Return a new path with expanded ~ and ~user constructs
-            (as returned by os.path.expanduser)
-            """
-            return FakePath(os.path.expanduser(self._path())
-                            .replace(os.path.sep,
-                                     self.filesystem.path_separator))
+    def expanduser(self):
+        """ Return a new path with expanded ~ and ~user constructs
+        (as returned by os.path.expanduser)
+        """
+        return FakePath(os.path.expanduser(self._path())
+                        .replace(os.path.sep,
+                                 self.filesystem.path_separator))
 
     def touch(self, mode=0o666, exist_ok=True):
         """Create a fake file for the path with the given access mode,
@@ -622,9 +617,7 @@ class FakePath(path_module):
                 happens, otherwise FileExistError is raised
 
         Raises:
-            OSError: (Python 2 only) if the file exists and exits_ok is False.
-            FileExistsError: (Python 3 only) if the file exists and exits_ok is
-                False.
+            FileExistsError: if the file exists and exits_ok is False.
         """
         if self._closed:
             self._raise_closed()

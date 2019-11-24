@@ -327,7 +327,6 @@ class FakeShutilModuleTest(RealFsTestCase):
         self.assertTrue(os.path.exists(os.path.join(dst_directory, 'subdir')))
         self.assertFalse(os.path.exists(src_directory))
 
-    @unittest.skipIf(sys.version_info < (3, 3), 'New in Python 3.3')
     def test_disk_usage(self):
         self.skip_real_fs()
         file_path = self.make_path('foo', 'bar')
@@ -439,8 +438,7 @@ class FakeCopyFileTest(RealFsTestCase):
         self.assertTrue(os.path.exists(src_file))
         self.assertTrue(os.path.exists(dst_dir))
         if not is_root():
-            exception = OSError if sys.version_info[0] > 2 else IOError
-            self.assertRaises(exception, shutil.copyfile, src_file, dst_file)
+            self.assertRaises(OSError, shutil.copyfile, src_file, dst_file)
         else:
             shutil.copyfile(src_file, dst_file)
             self.assertTrue(os.path.exists(dst_file))
@@ -473,7 +471,7 @@ class FakeCopyFileTest(RealFsTestCase):
         dst_file = self.make_path('xyzzy_copy')
         self.create_dir(src_file)
         self.assertTrue(os.path.exists(src_file))
-        if self.is_windows_fs and not self.is_python2:
+        if self.is_windows_fs:
             self.assertRaises(OSError, shutil.copyfile, src_file, dst_file)
         else:
             self.assertRaises(IOError, shutil.copyfile, src_file, dst_file)
@@ -486,7 +484,7 @@ class FakeCopyFileTest(RealFsTestCase):
         self.create_dir(dst_dir)
         self.assertTrue(os.path.exists(src_file))
         self.assertTrue(os.path.exists(dst_dir))
-        if self.is_windows_fs and not self.is_python2:
+        if self.is_windows_fs:
             self.assertRaises(OSError, shutil.copyfile, src_file, dst_dir)
         else:
             self.assertRaises(IOError, shutil.copyfile, src_file, dst_dir)

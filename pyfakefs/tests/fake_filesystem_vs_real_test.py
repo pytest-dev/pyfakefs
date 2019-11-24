@@ -209,7 +209,8 @@ class FakeFilesystemVsRealTest(TestCase):
                 method_call, real_value, fake_value)
         return None
 
-    def _get_fake_value(self, method_name, path, fake):
+    @staticmethod
+    def _get_fake_value(method_name, path, fake):
         fake_value = None
         fake_err = None
         try:
@@ -222,7 +223,8 @@ class FakeFilesystemVsRealTest(TestCase):
             fake_err = e
         return fake_err, fake_value
 
-    def _get_real_value(self, method_name, path, real):
+    @staticmethod
+    def _get_real_value(method_name, path, real):
         real_value = None
         real_err = None
         # Catching Exception below gives a lint warning, but it's what we need.
@@ -331,8 +333,6 @@ class FakeFilesystemVsRealTest(TestCase):
         path = sep(path)
         os_method_names = [] if self.is_windows else ['readlink']
         os_method_names_no_args = ['getcwd']
-        if sys.version_info < (3, 0):
-            os_method_names_no_args.append('getcwdu')
         os_path_method_names = ['isabs',
                                 'isdir',
                                 'isfile',

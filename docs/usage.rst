@@ -343,8 +343,7 @@ with large files).
             with open(file_path) as f:
                 self.assertEqual('test', f.read())
 
-``create_dir()`` behaves like ``os.makedirs()``, but can also be used in
-Python 2.
+``create_dir()`` behaves like ``os.makedirs()``.
 
 Access to files in the real file system
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

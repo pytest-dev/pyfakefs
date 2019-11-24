@@ -32,7 +32,6 @@ from pyfakefs import fake_filesystem_unittest, fake_filesystem
 from pyfakefs.extra_packages import pathlib
 from pyfakefs.fake_filesystem_unittest import Patcher, Pause
 import pyfakefs.tests.import_as_example
-from pyfakefs.helpers import IS_PYPY, IS_PY2
 from pyfakefs.tests.fixtures import module_with_attributes
 
 
@@ -53,19 +52,6 @@ class TestPyfakefsUnittestBase(fake_filesystem_unittest.TestCase):
 
 class TestPyfakefsUnittest(TestPyfakefsUnittestBase):  # pylint: disable=R0904
     """Test the `pyfakefs.fake_filesystem_unittest.TestCase` base class."""
-
-    @unittest.skipIf(sys.version_info[0] > 2,
-                     "file() was removed in Python 3")
-    def test_file(self):
-        """Fake `file()` function is bound"""
-        self.assertFalse(os.path.exists('/fake_file.txt'))
-        with file('/fake_file.txt', 'w') as f:  # noqa: F821 is only run on Py2
-            f.write("This test file was created using the file() function.\n")
-        self.assertTrue(self.fs.exists('/fake_file.txt'))
-        with file('/fake_file.txt') as f:  # noqa: F821 is only run on Py2
-            content = f.read()
-        self.assertEqual(content, 'This test file was created using the '
-                                  'file() function.\n')
 
     def test_open(self):
         """Fake `open()` function is bound"""
@@ -185,8 +171,6 @@ class TestPatchingImports(TestPyfakefsUnittestBase):
         stat_result = pyfakefs.tests.import_as_example.file_stat2(file_path)
         self.assertEqual(3, stat_result.st_size)
 
-    @unittest.skipIf(IS_PYPY and IS_PY2,
-                     'Not working for PyPy2 as it is implemented via file')
     def test_import_open_as_other_name(self):
         file_path = '/foo/bar'
         self.fs.create_file(file_path, contents=b'abc')

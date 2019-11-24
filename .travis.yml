@@ -28,13 +28,6 @@ jobs:
       script:
         - ./.travis/run_tests.sh
         - ./.travis/run_pytest_plugin_test.sh
-      python: 2.7
-      env: PYTHON=py27
-
-    - stage: test
-      script:
-        - ./.travis/run_tests.sh
-        - ./.travis/run_pytest_plugin_test.sh
       python: 3.5
       env:
         - PYTHON=py35
@@ -78,27 +71,10 @@ jobs:
       script:
         - ./.travis/run_tests.sh
         - ./.travis/run_pytest_plugin_test.sh
-      python: pypy2.7-7.0.0
-      dist: xenial
-      sudo: true
-      env: PYTHON=pypy2
-
-    - stage: test
-      script:
-        - ./.travis/run_tests.sh
-        - ./.travis/run_pytest_plugin_test.sh
       python: pypy3.5-7.0.0
       dist: xenial
       sudo: true
       env: PYTHON=pypy3
-
-    - stage: test
-      script:
-        - ./.travis/run_tests.sh
-        - ./.travis/run_pytest_plugin_test.sh
-      os: osx
-      language: generic
-      env: PYTHON=py27
 
     - stage: test
       script:

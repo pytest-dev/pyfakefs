@@ -27,20 +27,18 @@ The modules related to file handling are bound to the respective fake modules:
 >>> shutil     #doctest: +ELLIPSIS
 <pyfakefs.fake_filesystem_shutil.FakeShutilModule object...>
 
-Both `open()` and `file` built-ins are bound to the fake `open()` in Python 2.
-In Python 3, `open()` is an alias for `io.open()` and is bound to
-`FakeIoModule.open` instead.
+`open()` is an alias for `io.open()` and is bound to `FakeIoModule.open`.
 """
 
-import os
 import glob
+import os
 import shutil
-import sys
 
 try:
     import scandir
     has_scandir = True
 except ImportError:
+    scandir = None
     has_scandir = False
 
 
@@ -141,10 +139,7 @@ def scan_dir(path):
     """Return a list of directory entries for the given path."""
     if has_scandir:
         return list(scandir.scandir(path))
-    elif sys.version_info >= (3, 5):
-        return list(os.scandir(path))
-    else:
-        raise NotImplementedError
+    return list(os.scandir(path))
 
 
 def file_contents(path):

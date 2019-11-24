@@ -21,7 +21,6 @@ that import the `os`, `io`, `path` `shutil`, and `pathlib` modules.
 
 The `setUpPyfakefs()` method binds these modules to the corresponding fake
 modules from `pyfakefs`.  Further, the `open()` built-in is bound to a fake
-`open()`.  In Python 2, built-in `file()` is similarly bound to the fake
 `open()`.
 
 It is expected that `setUpPyfakefs()` be invoked at the beginning of the
@@ -46,23 +45,14 @@ import warnings
 
 from pyfakefs.deprecator import Deprecator
 from pyfakefs.fake_filesystem import set_uid, set_gid, reset_ids
-from pyfakefs.helpers import IS_PY2, IS_PYPY
+from pyfakefs.helpers import IS_PYPY
 
 try:
     from importlib.machinery import ModuleSpec
 except ImportError:
     ModuleSpec = object
 
-try:
-    # python >= 3.4
-    from importlib import reload
-except ImportError:
-    try:
-        # python 3.0 - 3.3
-        from imp import reload
-    except ImportError:
-        # python 2 - reload is built-in
-        pass
+from importlib import reload
 
 from pyfakefs import fake_filesystem
 from pyfakefs import fake_filesystem_shutil
@@ -74,11 +64,6 @@ if pathlib:
 
 if use_scandir:
     from pyfakefs import fake_scandir
-
-if sys.version_info < (3,):
-    import __builtin__ as builtins  # pylint: disable=import-error
-else:
-    import builtins
 
 OS_MODULE = 'nt' if sys.platform == 'win32' else 'posix'
 PATH_MODULE = 'ntpath' if sys.platform == 'win32' else 'posixpath'
@@ -165,7 +150,7 @@ class TestCaseMixin(object):
                       allow_root_user=True):
         """Bind the file-related modules to the :py:class:`pyfakefs` fake file
         system instead of the real file system.  Also bind the fake `open()`
-        function, and on Python 2, the `file()` function.
+        function.
 
         Invoke this at the beginning of the `setUp()` method in your unit test
         class.
@@ -369,8 +354,8 @@ class Patcher(object):
             'shutil': fake_filesystem_shutil.FakeShutilModule,
             'io': fake_filesystem.FakeIoModule,
         }
-        if IS_PY2 or IS_PYPY:
-            # in Python 2 io.open, the module is referenced as _io
+        if IS_PYPY:
+            # in PyPy io.open, the module is referenced as _io
             self._fake_module_classes['_io'] = fake_filesystem.FakeIoModule
 
         # class modules maps class names against a list of modules they can
@@ -500,13 +485,6 @@ class Patcher(object):
                 self._fct_modules.setdefault(
                     (name, fct.__name__, fct.__module__), set()).add(module)
 
-            if IS_PY2:
-                open_fcts = {name for name, fct in
-                             module.__dict__.copy().items()
-                             if self._is_open_function(fct)}
-                for name in open_fcts:
-                    self._open_functions.setdefault(name, set()).add(module)
-
     def _refresh(self):
         """Renew the fake file system and set the _isStale flag to `False`."""
         if self._stubs is not None:
@@ -548,10 +526,6 @@ class Patcher(object):
         if not self._patching:
             self._patching = True
 
-            if IS_PY2:
-                self._stubs.smart_set(builtins, 'open', self.fake_open)
-                self._stubs.smart_set(builtins, 'file', self.fake_open)
-
             for name, modules in self._modules.items():
                 for module, attr in modules:
                     self._stubs.smart_set(
@@ -562,10 +536,6 @@ class Patcher(object):
                 attr = method.__get__(fake_module, fake_module.__class__)
                 for module in modules:
                     self._stubs.smart_set(module, name, attr)
-            if IS_PY2:
-                for name, modules in self._open_functions.items():
-                    for module in modules:
-                        self._stubs.smart_set(module, name, self.fake_open)
 
             self._dyn_patcher = DynamicPatcher(self)
             sys.meta_path.insert(0, self._dyn_patcher)
@@ -698,11 +668,6 @@ class DynamicPatcher(object):
         """Module finder for Python 3."""
         if self.needs_patch(fullname):
             return ModuleSpec(fullname, self)
-
-    def find_module(self, fullname, path=None):
-        """Module finder for Python 2."""
-        if self.needs_patch(fullname):
-            return self
 
     def load_module(self, fullname):
         """Replaces the module by its fake implementation."""

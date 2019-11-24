@@ -28,9 +28,6 @@ work fine with the fake file system if `os`/`os.path` are patched.
 """
 
 import shutil
-import sys
-
-from pyfakefs.helpers import IS_PY2
 
 
 class FakeShutilModule(object):
@@ -42,9 +39,7 @@ class FakeShutilModule(object):
         """Return the list of patched function names. Used for patching
         functions imported from the module.
         """
-        if not IS_PY2:
-            return 'disk_usage',
-        return ()
+        return 'disk_usage',
 
     def __init__(self, filesystem):
         """Construct fake shutil module using the fake filesystem.
@@ -55,16 +50,15 @@ class FakeShutilModule(object):
         self.filesystem = filesystem
         self._shutil_module = shutil
 
-    if sys.version_info >= (3, 3):
-        def disk_usage(self, path):
-            """Return the total, used and free disk space in bytes as named tuple
-            or placeholder holder values simulating unlimited space if not set.
-            New in Python 3.3.
+    def disk_usage(self, path):
+        """Return the total, used and free disk space in bytes as named tuple
+        or placeholder holder values simulating unlimited space if not set.
+        New in Python 3.3.
 
-            Args:
-              path: defines the filesystem device which is queried
-            """
-            return self.filesystem.get_disk_usage(path)
+        Args:
+          path: defines the filesystem device which is queried
+        """
+        return self.filesystem.get_disk_usage(path)
 
     def __getattr__(self, name):
         """Forwards any non-faked calls to the standard shutil module."""

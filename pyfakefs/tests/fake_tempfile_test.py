@@ -18,7 +18,6 @@ if using `Patcher` (via `fake_filesystem_unittest`).
 
 import os
 import stat
-import sys
 import tempfile
 import unittest
 
@@ -89,8 +88,6 @@ class FakeTempfileModuleTest(fake_filesystem_unittest.TestCase):
         self.assertEqual(self.fs.get_object(dirname).st_mode,
                          stat.S_IFDIR | 0o700)
 
-    @unittest.skipIf(sys.version_info < (3, 0),
-                     "TemporaryDirectory showed up in 3")
     def test_temporary_directory(self):
         with tempfile.TemporaryDirectory() as tmpdir:
             self.assertTrue(tmpdir)

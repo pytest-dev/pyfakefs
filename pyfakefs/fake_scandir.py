@@ -16,12 +16,10 @@ Works with both the function integrated into the `os` module since Python 3.5
 and the standalone function available in the standalone `scandir` python
 package.
 """
-import errno
 import os
 import sys
 
 from pyfakefs.extra_packages import use_scandir_package
-from pyfakefs.helpers import IS_PY2
 
 if sys.version_info >= (3, 6):
     BaseClass = os.PathLike
@@ -134,25 +132,14 @@ class ScanDirIter:
         else:
             self.abspath = self.filesystem.absnormpath(path)
             self.path = path
-        try:
-            contents = self.filesystem.confirmdir(self.abspath).contents
-        except OSError as ex:
-            if IS_PY2 and self.filesystem.is_windows_fs:
-                if ex.errno == errno.ENOENT:
-                    # for some reason, under Python 2 / Windows
-                    # raises "No such process" for non-existing path
-                    raise OSError(errno.ESRCH, str(ex), ex.filename)
-            raise
+        contents = self.filesystem.confirmdir(self.abspath).contents
         self.contents_iter = iter(contents)
 
     def __iter__(self):
         return self
 
     def __next__(self):
-        try:
-            entry = self.contents_iter.next()
-        except AttributeError:
-            entry = self.contents_iter.__next__()
+        entry = self.contents_iter.__next__()
         dir_entry = DirEntry(self.filesystem)
         dir_entry.name = entry
         dir_entry.path = self.filesystem.joinpaths(self.path,
@@ -162,9 +149,6 @@ class ScanDirIter:
         dir_entry._isdir = self.filesystem.isdir(dir_entry._abspath)
         dir_entry._islink = self.filesystem.islink(dir_entry._abspath)
         return dir_entry
-
-    # satisfy both Python 2 and 3
-    next = __next__
 
     if sys.version_info >= (3, 6):
         def __enter__(self):

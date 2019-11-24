@@ -13,7 +13,6 @@
 """
 Tests for patching modules loaded after `setUpPyfakefs()`.
 """
-import sys
 import unittest
 
 from pyfakefs import fake_filesystem_unittest
@@ -26,8 +25,6 @@ class TestPyfakefsUnittestBase(fake_filesystem_unittest.TestCase):
         self.setUpPyfakefs()
 
 
-@unittest.skipIf((3, ) < sys.version_info < (3, 3),
-                 'Does not work with Python 3 < 3.3, including Pypy3 2.4')
 class DynamicImportPatchTest(TestPyfakefsUnittestBase):
     def __init__(self, methodName='runTest'):
         super(DynamicImportPatchTest, self).__init__(methodName)
@@ -53,23 +50,11 @@ class DynamicImportPatchTest(TestPyfakefsUnittestBase):
         self.assertTrue(self.fs.exists('test'))
         self.assertTrue(os.path.exists('test'))
 
-    @unittest.skipIf(sys.version_info < (3, 3), 'disk_usage new in Python 3.3')
     def test_shutil_patch(self):
         import shutil
 
         self.fs.set_disk_usage(100)
         self.assertEqual(100, shutil.disk_usage('/').total)
-
-    @unittest.skipIf(not pathlib, 'only run if pathlib is available')
-    def test_pathlib_patch(self):
-        file_path = 'test.txt'
-        path = pathlib.Path(file_path)
-        with path.open('w') as f:
-            f.write('test')
-
-        self.assertTrue(self.fs.exists(file_path))
-        file_object = self.fs.get_object(file_path)
-        self.assertEqual('test', file_object.contents)
 
     @unittest.skipIf(not pathlib, 'only run if pathlib is available')
     def test_pathlib_path_patch(self):

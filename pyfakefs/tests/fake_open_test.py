@@ -21,13 +21,12 @@ import io
 import locale
 import os
 import stat
-import sys
 import time
 import unittest
 
 from pyfakefs import fake_filesystem
 from pyfakefs.fake_filesystem import is_root, PERM_READ
-from pyfakefs.tests.test_utils import TestCase, RealFsTestCase
+from pyfakefs.tests.test_utils import RealFsTestCase
 
 
 class FakeFileOpenTestBase(RealFsTestCase):
@@ -90,19 +89,6 @@ class FakeFileOpenTest(FakeFileOpenTestBase):
             contents = f.read()
         self.assertEqual(contents, text_fractions)
 
-    @unittest.skipIf(sys.version_info >= (3, 0),
-                     'Python2 specific string handling')
-    def test_byte_contents_py2(self):
-        file_path = self.make_path('foo')
-        byte_fractions = b'\xe2\x85\x93 \xe2\x85\x94 \xe2\x85\x95 \xe2\x85\x96'
-        with self.open(file_path, 'w') as f:
-            f.write(byte_fractions)
-        with self.open(file_path) as f:
-            contents = f.read()
-        self.assertEqual(contents, byte_fractions)
-
-    @unittest.skipIf(sys.version_info < (3, 0),
-                     'Python3 specific string handling')
     def test_byte_contents_py3(self):
         file_path = self.make_path('foo')
         byte_fractions = b'\xe2\x85\x93 \xe2\x85\x94 \xe2\x85\x95 \xe2\x85\x96'
@@ -121,11 +107,8 @@ class FakeFileOpenTest(FakeFileOpenTestBase):
             f.write(str_contents)
         with self.open(file_path, 'rb') as f:
             contents = f.read()
-        if sys.version_info < (3, 0):
-            self.assertEqual(str_contents, contents)
-        else:
-            self.assertEqual(str_contents, contents.decode(
-                locale.getpreferredencoding(False)))
+        self.assertEqual(str_contents, contents.decode(
+            locale.getpreferredencoding(False)))
 
     def test_byte_contents(self):
         file_path = self.make_path('foo')
@@ -158,12 +141,11 @@ class FakeFileOpenTest(FakeFileOpenTestBase):
 
         with self.open(file_path, buffering=1) as f:
             self.assertEqual(contents, f.readlines())
-        if sys.version_info >= (3, 0):
-            with self.open(file_path, buffering=1,
-                           errors='strict', newline='\n', opener=None) as f:
-                expected_contents = [contents[0][:-1] + self.os.linesep,
-                                     contents[1]]
-                self.assertEqual(expected_contents, f.readlines())
+        with self.open(file_path, buffering=1,
+                       errors='strict', newline='\n', opener=None) as f:
+            expected_contents = [contents[0][:-1] + self.os.linesep,
+                                 contents[1]]
+            self.assertEqual(expected_contents, f.readlines())
 
     def test_open_valid_file_with_cwd(self):
         contents = [
@@ -205,12 +187,8 @@ class FakeFileOpenTest(FakeFileOpenTestBase):
         directory_path = self.make_path('foo')
         self.os.mkdir(directory_path)
         if self.is_windows:
-            if self.is_python2:
-                self.assert_raises_io_error(errno.EACCES, self.open.__call__,
-                                            directory_path)
-            else:
-                self.assert_raises_os_error(errno.EACCES, self.open.__call__,
-                                            directory_path)
+            self.assert_raises_os_error(errno.EACCES, self.open.__call__,
+                                        directory_path)
         else:
             self.assert_raises_io_error(errno.EISDIR, self.open.__call__,
                                         directory_path)
@@ -247,14 +225,6 @@ class FakeFileOpenTest(FakeFileOpenTestBase):
             result = [line.rstrip() for line in fake_file]
         self.assertEqual(contents, result)
 
-    @unittest.skipIf(not TestCase.is_python2, 'Python2 specific test')
-    def test_exclusive_mode_not_valid_in_python2(self):
-        file_path = self.make_path('bar')
-        self.assertRaises(ValueError, self.open, file_path, 'x')
-        self.assertRaises(ValueError, self.open, file_path, 'xb')
-
-    @unittest.skipIf(sys.version_info < (3, 3),
-                     'Exclusive mode new in Python 3.3')
     def test_exclusive_create_file_failure(self):
         self.skip_if_symlink_not_supported()
         file_path = self.make_path('bar')
@@ -262,8 +232,6 @@ class FakeFileOpenTest(FakeFileOpenTestBase):
         self.assert_raises_io_error(errno.EEXIST, self.open, file_path, 'x')
         self.assert_raises_io_error(errno.EEXIST, self.open, file_path, 'xb')
 
-    @unittest.skipIf(sys.version_info < (3, 3),
-                     'Exclusive mode new in Python 3.3')
     def test_exclusive_create_file(self):
         file_dir = self.make_path('foo')
         file_path = self.os.path.join(file_dir, 'bar')
@@ -274,8 +242,6 @@ class FakeFileOpenTest(FakeFileOpenTestBase):
         with self.open(file_path) as fake_file:
             self.assertEqual(contents, fake_file.read())
 
-    @unittest.skipIf(sys.version_info < (3, 3),
-                     'Exclusive mode new in Python 3.3')
     def test_exclusive_create_binary_file(self):
         file_dir = self.make_path('foo')
         file_path = self.os.path.join(file_dir, 'bar')
@@ -354,17 +320,11 @@ class FakeFileOpenTest(FakeFileOpenTestBase):
         file_path = self.make_path('appendfile')
         self.create_file(file_path, contents=''.join(contents))
         with self.open(file_path, 'a') as fake_file:
-            expected_error = (IOError if sys.version_info[0] < 3
-                              else io.UnsupportedOperation)
-            self.assertRaises(expected_error, fake_file.read, 0)
-            self.assertRaises(expected_error, fake_file.readline)
-            if self.is_python2 and self.is_windows_fs:
-                # FIXME: Windows Python 2
-                expected_len = 0
-            else:
-                expected_len = len(''.join(contents))
-                expected_len += len(contents) * (len(self.os.linesep) - 1)
-                self.assertEqual(expected_len, fake_file.tell())
+            self.assertRaises(io.UnsupportedOperation, fake_file.read, 0)
+            self.assertRaises(io.UnsupportedOperation, fake_file.readline)
+            expected_len = len(''.join(contents))
+            expected_len += len(contents) * (len(self.os.linesep) - 1)
+            self.assertEqual(expected_len, fake_file.tell())
             fake_file.seek(0)
             self.assertEqual(0, fake_file.tell())
             fake_file.writelines(additional_contents)
@@ -384,11 +344,7 @@ class FakeFileOpenTest(FakeFileOpenTestBase):
             self.open = fake_filesystem.FakeFileOpen(self.filesystem,
                                                      delete_on_close=True)
         with self.open(file_path, 'a+') as fake_file:
-            if self.is_python2 and not self.is_macos and not self.is_pypy:
-                self.assertEqual(0, fake_file.tell())
-                fake_file.seek(12)
-            else:
-                self.assertEqual(12, fake_file.tell())
+            self.assertEqual(12, fake_file.tell())
             fake_file.write('new contents')
             self.assertEqual(24, fake_file.tell())
             fake_file.seek(0)
@@ -637,8 +593,6 @@ class FakeFileOpenTest(FakeFileOpenTestBase):
                     reads.append(reader.read())
                 self.assertEqual(['' for _ in writes], reads)
 
-    @unittest.skipIf(sys.version_info < (3, 0),
-                     'Python 3 specific string handling')
     def test_intertwined_read_write_python3_str(self):
         file_path = self.make_path('some_file')
         self.create_file(file_path)
@@ -790,16 +744,6 @@ class FakeFileOpenTest(FakeFileOpenTestBase):
         self.assertRaises(ValueError, lambda: fake_file.seek(1))
         self.assertRaises(ValueError, lambda: fake_file.flush())
 
-    @unittest.skipIf(sys.version_info >= (3,),
-                     'file.next() not available in Python 3')
-    def test_next_raises_on_closed_file(self):
-        # Regression test for #284
-        file_path = self.make_path('foo')
-        with self.open(file_path, 'w') as f0:
-            f0.write('test')
-            f0.seek(0)
-            self.assertRaises(IOError, lambda: f0.next())
-
     def test_accessing_open_file_with_another_handle_raises(self):
         # Regression test for #282
         if self.is_pypy:
@@ -828,8 +772,7 @@ class FakeFileOpenTest(FakeFileOpenTestBase):
         with self.open(file_path, 'w') as f0:
             f0.write('test')
             self.assertEqual(4, f0.tell())
-            expected = 0 if sys.version_info < (3,) else 4
-            self.assertEqual(expected, self.os.path.getsize(file_path))
+            self.assertEqual(4, self.os.path.getsize(file_path))
 
     def test_read_flushes_under_posix(self):
         # Regression test for #278
@@ -847,8 +790,7 @@ class FakeFileOpenTest(FakeFileOpenTestBase):
         with self.open(file_path, 'w+') as f0:
             f0.write('test')
             f0.read()
-            expected = 0 if sys.version_info[0] < 3 else 4
-            self.assertEqual(expected, self.os.path.getsize(file_path))
+            self.assertEqual(4, self.os.path.getsize(file_path))
 
     def test_seek_flushes(self):
         # Regression test for #290
@@ -909,8 +851,6 @@ class FakeFileOpenTest(FakeFileOpenTestBase):
             f0.close()
             self.assertEqual('', f1.read())
 
-    @unittest.skipIf(TestCase.is_python2,
-                     'closefd argument not available in Python2')
     def test_closing_file_with_different_close_mode(self):
         self.skip_real_fs()
         filename = self.make_path('test.txt')
@@ -967,8 +907,7 @@ class OpenFileWithEncodingTest(FakeFileOpenTestBase):
         if self.use_real_fs():
             self.open = io.open
         else:
-            self.open = fake_filesystem.FakeFileOpen(self.filesystem,
-                                                     use_io=True)
+            self.open = fake_filesystem.FakeFileOpen(self.filesystem)
         self.file_path = self.make_path('foo')
 
     def test_write_str_read_bytes(self):
@@ -992,17 +931,16 @@ class OpenFileWithEncodingTest(FakeFileOpenTestBase):
         self.assertEqual('&#1593;&#1604;&#1610; &#1576;&#1575;&#1576;&#1575;',
                          contents)
 
-        if sys.version_info >= (3, 5):
-            with self.open(self.file_path, 'w', encoding='ascii',
-                           errors='namereplace') as f:
-                f.write(str_contents)
-            with self.open(self.file_path, 'r', encoding='ascii') as f:
-                contents = f.read()
-            self.assertEqual(
-                r'\N{ARABIC LETTER AIN}\N{ARABIC LETTER LAM}\N'
-                r'{ARABIC LETTER YEH} \N{ARABIC LETTER BEH}\N'
-                r'{ARABIC LETTER ALEF}\N{ARABIC LETTER BEH}'
-                r'\N{ARABIC LETTER ALEF}', contents)
+        with self.open(self.file_path, 'w', encoding='ascii',
+                       errors='namereplace') as f:
+            f.write(str_contents)
+        with self.open(self.file_path, 'r', encoding='ascii') as f:
+            contents = f.read()
+        self.assertEqual(
+            r'\N{ARABIC LETTER AIN}\N{ARABIC LETTER LAM}\N'
+            r'{ARABIC LETTER YEH} \N{ARABIC LETTER BEH}\N'
+            r'{ARABIC LETTER ALEF}\N{ARABIC LETTER BEH}'
+            r'\N{ARABIC LETTER ALEF}', contents)
 
     def test_read_str_error_modes(self):
         str_contents = u'علي بابا'
@@ -1017,11 +955,10 @@ class OpenFileWithEncodingTest(FakeFileOpenTestBase):
             contents = f.read()
         self.assertNotEqual(str_contents, contents)
 
-        if sys.version_info >= (3, 5):
-            with self.open(self.file_path, encoding='ascii',
-                           errors='backslashreplace') as f:
-                contents = f.read()
-            self.assertEqual(r'\xd9\xe4\xea \xc8\xc7\xc8\xc7', contents)
+        with self.open(self.file_path, encoding='ascii',
+                       errors='backslashreplace') as f:
+            contents = f.read()
+        self.assertEqual(r'\xd9\xe4\xea \xc8\xc7\xc8\xc7', contents)
 
     def test_write_and_read_str(self):
         str_contents = u'علي بابا'
@@ -1084,10 +1021,8 @@ class OpenFileWithEncodingTest(FakeFileOpenTestBase):
         self.create_file(self.file_path, contents=''.join(contents),
                          encoding='cyrillic')
         with self.open(self.file_path, 'a', encoding='cyrillic') as fake_file:
-            expected_error = (IOError if sys.version_info < (3,)
-                              else io.UnsupportedOperation)
-            self.assertRaises(expected_error, fake_file.read, 0)
-            self.assertRaises(expected_error, fake_file.readline)
+            self.assertRaises(io.UnsupportedOperation, fake_file.read, 0)
+            self.assertRaises(io.UnsupportedOperation, fake_file.readline)
             self.assertEqual(len(''.join(contents)), fake_file.tell())
             fake_file.seek(0)
             self.assertEqual(0, fake_file.tell())
@@ -1135,49 +1070,6 @@ class FakeFileOpenLineEndingTest(FakeFileOpenTestBase):
     def setUp(self):
         super(FakeFileOpenLineEndingTest, self).setUp()
 
-    @unittest.skipIf(not TestCase.is_python2,
-                     'Testing Python 2 newline behavior')
-    def test_read_python2_default_newline_mode_windows(self):
-        self.check_windows_only()
-        file_path = self.make_path('some_file')
-        for contents in (b'1\n2', b'1\r\n2'):
-            self.create_file(file_path, contents=contents)
-            with self.open(file_path, mode='r') as f:
-                self.assertEqual(['1\n', '2'], f.readlines())
-            with self.open(file_path, mode='r') as f:
-                self.assertEqual('1\n2', f.read())
-            with self.open(file_path, mode='rb') as f:
-                self.assertEqual(contents, f.read())
-
-        self.create_file(file_path, contents=b'1\r2')
-        with self.open(file_path, mode='r') as f:
-            self.assertEqual(['1\r2'], f.readlines())
-        with self.open(file_path, mode='r') as f:
-            self.assertEqual('1\r2', f.read())
-
-    @unittest.skipIf(not TestCase.is_python2,
-                     'Testing Python 2 newline behavior')
-    def test_read_python2_default_newline_mode_posix(self):
-        self.check_posix_only()
-        file_path = self.make_path('some_file')
-        self.create_file(file_path, contents=b'1\n2')
-        with self.open(file_path, mode='r') as f:
-            self.assertEqual(['1\n', '2'], f.readlines())
-        with self.open(file_path, mode='r') as f:
-            self.assertEqual('1\n2', f.read())
-
-        self.create_file(file_path, contents=b'1\r\n2')
-        with self.open(file_path, mode='r') as f:
-            self.assertEqual(['1\r\n', '2'], f.readlines())
-        with self.open(file_path, mode='r') as f:
-            self.assertEqual('1\r\n2', f.read())
-
-        self.create_file(file_path, contents=b'1\r2')
-        with self.open(file_path, mode='r') as f:
-            self.assertEqual(['1\r2'], f.readlines())
-        with self.open(file_path, mode='r') as f:
-            self.assertEqual('1\r2', f.read())
-
     def test_read_universal_newline_mode(self):
         file_path = self.make_path('some_file')
         for contents in (b'1\n2', b'1\r\n2', b'1\r2'):
@@ -1203,8 +1095,6 @@ class FakeFileOpenLineEndingTest(FakeFileOpenTestBase):
             self.assertEqual(b'1\r' + self.os.linesep.encode() + b'2',
                              f.read())
 
-    @unittest.skipIf(sys.version_info[0] < 3,
-                     'newline argument only available since Python 3')
     def test_read_with_newline_arg(self):
         file_path = self.make_path('some_file')
         file_contents = b'1\r\n2\n3\r4'
@@ -1218,8 +1108,6 @@ class FakeFileOpenLineEndingTest(FakeFileOpenTestBase):
         with self.open(file_path, mode='r', newline='\r\n') as f:
             self.assertEqual('1\r\n2\n3\r4', f.read())
 
-    @unittest.skipIf(sys.version_info[0] < 3,
-                     'newline argument only available since Python 3')
     def test_readlines_with_newline_arg(self):
         file_path = self.make_path('some_file')
         file_contents = b'1\r\n2\n3\r4'
@@ -1234,8 +1122,6 @@ class FakeFileOpenLineEndingTest(FakeFileOpenTestBase):
         with self.open(file_path, mode='r', newline='\r\n') as f:
             self.assertEqual(['1\r\n', '2\n3\r4'], f.readlines())
 
-    @unittest.skipIf(sys.version_info[0] < 3,
-                     'newline argument only available since Python 3')
     def test_read_with_ignored_universal_newlines_flag(self):
         file_path = self.make_path('some_file')
         file_contents = b'1\r\n2\n3\r4'
@@ -1247,8 +1133,6 @@ class FakeFileOpenLineEndingTest(FakeFileOpenTestBase):
         with self.open(file_path, mode='U', newline='\r') as f:
             self.assertEqual('1\r\n2\n3\r4', f.read())
 
-    @unittest.skipIf(sys.version_info[0] < 3,
-                     'newline argument only available since Python 3')
     def test_write_with_newline_arg(self):
         file_path = self.make_path('some_file')
         with self.open(file_path, 'w', newline='') as f:
@@ -1276,7 +1160,7 @@ class FakeFileOpenLineEndingTest(FakeFileOpenTestBase):
         file_contents = b'\x80\n\x80\r\x80\r\n\x80'
 
         def chunk_line():
-            px = ix = 0
+            px = 0
             while px < len(file_contents):
                 ix = file_contents.find(b'\n', px)
                 if ix == -1:
@@ -1302,31 +1186,7 @@ class FakeFileOpenLineEndingWithEncodingTest(FakeFileOpenTestBase):
         if self.use_real_fs():
             self.open = io.open
         else:
-            self.open = fake_filesystem.FakeFileOpen(self.filesystem,
-                                                     use_io=True)
-
-    @unittest.skipIf(not TestCase.is_python2,
-                     'Testing Python 2 newline behavior')
-    def test_read_python2_default_newline_mode(self):
-        file_path = self.make_path('some_file')
-        self.create_file(file_path, contents=u'раз\nдва', encoding='cyrillic')
-        with self.open(file_path, mode='r', encoding='cyrillic') as f:
-            self.assertEqual([u'раз\n', u'два'], f.readlines())
-        with self.open(file_path, mode='r', encoding='cyrillic') as f:
-            self.assertEqual(u'раз\nдва', f.read())
-
-        self.create_file(file_path, contents=u'раз\r\nдва',
-                         encoding='cyrillic')
-        with self.open(file_path, mode='r', encoding='cyrillic') as f:
-            self.assertEqual([u'раз\n', u'два'], f.readlines())
-        with self.open(file_path, mode='r', encoding='cyrillic') as f:
-            self.assertEqual(u'раз\nдва', f.read())
-
-        self.create_file(file_path, contents=u'раз\rдва', encoding='cyrillic')
-        with self.open(file_path, mode='r', encoding='cyrillic') as f:
-            self.assertEqual([u'раз\n', u'два'], f.readlines())
-        with self.open(file_path, mode='r', encoding='cyrillic') as f:
-            self.assertEqual(u'раз\nдва', f.read())
+            self.open = fake_filesystem.FakeFileOpen(self.filesystem)
 
     def test_read_universal_newline_mode(self):
         file_path = self.make_path('some_file')
@@ -1355,8 +1215,6 @@ class FakeFileOpenLineEndingWithEncodingTest(FakeFileOpenTestBase):
                              self.os.linesep.encode() +
                              u'два'.encode('cyrillic'), f.read())
 
-    @unittest.skipIf(sys.version_info[0] < 3,
-                     'newline argument only available since Python 3')
     def test_read_with_newline_arg(self):
         file_path = self.make_path('some_file')
         file_contents = u'раз\r\nдва\nтри\rчетыре'
@@ -1375,8 +1233,6 @@ class FakeFileOpenLineEndingWithEncodingTest(FakeFileOpenTestBase):
                        encoding='cyrillic') as f:
             self.assertEqual(u'раз\r\nдва\nтри\rчетыре', f.read())
 
-    @unittest.skipIf(sys.version_info[0] < 3,
-                     'newline argument only available since Python 3')
     def test_readlines_with_newline_arg(self):
         file_path = self.make_path('some_file')
         file_contents = u'раз\r\nдва\nтри\rчетыре'
@@ -1399,8 +1255,6 @@ class FakeFileOpenLineEndingWithEncodingTest(FakeFileOpenTestBase):
             self.assertEqual([u'раз\r\n', u'два\nтри\rчетыре'],
                              f.readlines())
 
-    @unittest.skipIf(sys.version_info[0] < 3,
-                     'newline argument only available since Python 3')
     def test_write_with_newline_arg(self):
         file_path = self.make_path('some_file')
         with self.open(file_path, 'w', newline='',
@@ -1439,16 +1293,12 @@ class RealFileOpenLineEndingWithEncodingTest(
 
 
 class OpenWithFileDescriptorTest(FakeFileOpenTestBase):
-    @unittest.skipIf(sys.version_info < (3, 0),
-                     'only tested on 3.0 or greater')
     def test_open_with_file_descriptor(self):
         file_path = self.make_path('this', 'file')
         self.create_file(file_path)
         fd = self.os.open(file_path, os.O_CREAT)
         self.assertEqual(fd, self.open(fd, 'r').fileno())
 
-    @unittest.skipIf(sys.version_info < (3, 0),
-                     'only tested on 3.0 or greater')
     def test_closefd_with_file_descriptor(self):
         file_path = self.make_path('this', 'file')
         self.create_file(file_path)
@@ -1506,13 +1356,9 @@ class OpenWithBinaryFlagsTest(OpenWithFlagsTestBase):
         self.assertEqual(self.file_contents, fake_file.read())
         # Attempt to reopen the file in text mode
         fake_file = self.open_file('wb')
-        if sys.version_info >= (3, 0):
-            fake_file = self.write_and_reopen_file(fake_file, mode='r',
-                                                   encoding='ascii')
-            self.assertRaises(UnicodeDecodeError, fake_file.read)
-        else:
-            fake_file = self.write_and_reopen_file(fake_file, mode='r')
-            self.assertEqual(self.file_contents, fake_file.read())
+        fake_file = self.write_and_reopen_file(fake_file, mode='r',
+                                               encoding='ascii')
+        self.assertRaises(UnicodeDecodeError, fake_file.read)
 
     def test_write_and_read_binary(self):
         fake_file = self.open_file_and_seek('w+b')
@@ -1538,37 +1384,16 @@ class OpenWithTextModeFlagsTest(OpenWithFlagsTestBase):
         self.converted_contents = 'two\nlines'
         self.create_file(self.file_path, contents=self.file_contents)
 
-    def test_read_text_windows(self):
-        """Test that text mode flag is ignored under Windows"""
+    def test_read_text(self):
+        """Test that text mode flag is ignored"""
         self.check_windows_only()
         with self.open_file('r') as f:
             self.assertEqual(self.converted_contents, f.read())
         with self.open_file('rt') as f:
             self.assertEqual(self.converted_contents, f.read())
 
-    def test_read_text_posix(self):
-        """Test that text mode flag is ignored under Posix"""
-        self.check_posix_only()
-        expected_contents = (self.original_contents if self.is_python2
-                             else self.converted_contents)
-        with self.open_file('r') as f:
-            self.assertEqual(expected_contents, f.read())
-        with self.open_file('rt') as f:
-            self.assertEqual(expected_contents, f.read())
-
-    @unittest.skipIf(TestCase.is_python2 and not TestCase.is_windows,
-                     'Mixed content only allowed in Python 2 in Posix')
     def test_mixed_text_and_binary_flags(self):
         self.assertRaises(ValueError, self.open_file_and_seek, 'w+bt')
-
-    @unittest.skipIf(not TestCase.is_python2,
-                     'Mixed content only allowed in Python 2 in Posix')
-    def test_write_and_read_text_binary_posix_python2(self):
-        self.check_posix_only()
-        fake_file = self.open_file_and_seek('w+bt')
-        self.assertEqual(0, fake_file.tell())
-        fake_file = self.write_and_reopen_file(fake_file, mode='rb')
-        self.assertEqual(self.file_contents, fake_file.read())
 
 
 class RealOpenWithTextModeFlagsTest(OpenWithTextModeFlagsTest):
@@ -1590,11 +1415,7 @@ class OpenWithInvalidFlagsTest(FakeFileOpenTestBase):
         self.assertRaises(ValueError, self.open, 'some_file', 'u')
 
     def test_lower_rw(self):
-        if self.is_python2 and sys.platform != 'win32':
-            self.assert_raises_io_error(
-                errno.ENOENT, self.open, 'some_file', 'rw')
-        else:
-            self.assertRaises(ValueError, self.open, 'some_file', 'rw')
+        self.assertRaises(ValueError, self.open, 'some_file', 'rw')
 
 
 class OpenWithInvalidFlagsRealFsTest(OpenWithInvalidFlagsTest):
@@ -1711,8 +1532,6 @@ class ResolvePathTest(FakeFileOpenTestBase):
         self.os.chdir('bar')
         self.assertEqual('!x!bar', self.os.getcwd())
 
-    @unittest.skipIf(sys.version_info < (3, 3),
-                     'file descriptor as path new in Python 3.3')
     def test_chdir_uses_open_fd_as_path(self):
         self.filesystem.is_windows_fs = False
         self.assert_raises_os_error(errno.EBADF, self.os.chdir, 5)
@@ -1786,8 +1605,6 @@ class ResolvePathTest(FakeFileOpenTestBase):
         self.assertEqual('C:!foo!bar',
                          self.filesystem.resolve_path('C:!foo!!bar'))
 
-    @unittest.skipIf(sys.version_info < (2, 7, 8),
-                     'UNC path support since Python 2.7.8')
     def test_that_unc_paths_are_preserved(self):
         self.filesystem.is_windows_fs = True
         self.assertEqual('!!foo!bar!baz',
