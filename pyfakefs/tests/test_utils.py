@@ -28,7 +28,7 @@ from pyfakefs import fake_filesystem
 from pyfakefs.helpers import is_byte_string
 
 
-class DummyTime(object):
+class DummyTime:
     """Mock replacement for time.time. Increases returned time on access."""
 
     def __init__(self, curr_time, increment):
@@ -76,7 +76,7 @@ class TestCase(unittest.TestCase):
                          expected.replace('\\\\?\\', ''))
 
 
-class RealFsTestMixin(object):
+class RealFsTestMixin:
     """Test mixin to allow tests to run both in the fake filesystem and in the
     real filesystem.
     To run tests in the real filesystem, a new test class can be derived from

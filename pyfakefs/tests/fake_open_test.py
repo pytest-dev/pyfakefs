@@ -1586,11 +1586,11 @@ class ResolvePathTest(FakeFileOpenTestBase):
         link_name = '!foo!bar'
         self.filesystem.create_symlink(link_name, '!foo!baz!bip')
 
-        self.os.utime(link_name, (1, 2))
+        self.os.utime(link_name, times=(1, 2))
         st = self.os.stat(link_name)
         self.assertEqual(1, st.st_atime)
         self.assertEqual(2, st.st_mtime)
-        self.os.utime(link_name, (3, 4))
+        self.os.utime(link_name, times=(3, 4))
         st = self.os.stat(link_name)
         self.assertEqual(3, st.st_atime)
         self.assertEqual(4, st.st_mtime)

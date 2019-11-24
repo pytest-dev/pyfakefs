@@ -253,7 +253,7 @@ def walk(filesystem, top, topdown=True, onerror=None, followlinks=False):
     return do_walk(top, top_most=True)
 
 
-class FakeScanDirModule(object):
+class FakeScanDirModule:
     """Uses FakeFilesystem to provide a fake `scandir` module replacement.
 
     .. Note:: The ``scandir`` function is a part of the standard ``os`` module

@@ -22,7 +22,7 @@ from pyfakefs import mox3_stubout
 from pyfakefs.tests import mox3_stubout_example
 
 
-class NoPanicMath(object):
+class NoPanicMath:
     real_math = math
 
     @staticmethod
@@ -34,7 +34,7 @@ class NoPanicMath(object):
         return getattr(self.real_math, name)
 
 
-class ExistingPath(object):
+class ExistingPath:
     real_path = path
 
     @staticmethod

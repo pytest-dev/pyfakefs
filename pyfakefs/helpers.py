@@ -49,12 +49,11 @@ def make_string_path(dir_name):
     return dir_name
 
 
-class FakeStatResult(object):
+class FakeStatResult:
     """Mimics os.stat_result for use as return type of `stat()` and similar.
     This is needed as `os.stat_result` has no possibility to set
     nanosecond times directly.
     """
-    long_type = int
     _stat_float_times = True
 
     def __init__(self, is_windows, user_id, group_id, initial_time=None):
@@ -170,7 +169,7 @@ class FakeStatResult(object):
     @st_mtime.setter
     def st_mtime(self, val):
         """Set the modification time in seconds."""
-        self._st_mtime_ns = self.long_type(val * 1e9)
+        self._st_mtime_ns = int(val * 1e9)
 
     @property
     def st_size(self):
@@ -266,7 +265,7 @@ class FakeStatResult(object):
         self._st_ctime_ns = val
 
 
-class FileBufferIO(object):
+class FileBufferIO:
     """Stream class that handles Python string and byte contents for files.
     The standard io.StringIO cannot be used for strings due to the slightly
     different handling of newline mode.

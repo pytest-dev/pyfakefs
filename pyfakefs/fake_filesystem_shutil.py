@@ -30,7 +30,7 @@ work fine with the fake file system if `os`/`os.path` are patched.
 import shutil
 
 
-class FakeShutilModule(object):
+class FakeShutilModule:
     """Uses a FakeFilesystem to provide a fake replacement for shutil module.
     """
 
@@ -53,7 +53,6 @@ class FakeShutilModule(object):
     def disk_usage(self, path):
         """Return the total, used and free disk space in bytes as named tuple
         or placeholder holder values simulating unlimited space if not set.
-        New in Python 3.3.
 
         Args:
           path: defines the filesystem device which is queried

@@ -1902,8 +1902,7 @@ class FakeOsModuleTest(FakeOsModuleTestBase):
         self.assert_mode_equal(0o6543, st.st_mode)
 
     def test_lchmod(self):
-        """lchmod shall behave like chmod with follow_symlinks=True
-        since Python 3.3"""
+        """lchmod shall behave like chmod with follow_symlinks=True."""
         self.check_posix_only()
         self.skip_real_fs()
         path = self.make_path('some_file')
@@ -3612,7 +3611,7 @@ class FakeOsModuleTimeTest(FakeOsModuleTestBase):
         self.assertEqual(200, st.st_atime)
         self.assertEqual(200, st.st_mtime)
         # actual tests
-        self.os.utime(path, None)
+        self.os.utime(path, times=None)
         st = self.os.stat(path)
         self.assertEqual(220, st.st_atime)
         self.assertEqual(220, st.st_mtime)
@@ -3639,7 +3638,7 @@ class FakeOsModuleTimeTest(FakeOsModuleTestBase):
 
         self.assertEqual(200, st.st_mtime)
         # actual tests
-        self.os.utime(path, None)
+        self.os.utime(path, times=None)
         st = self.os.stat(path)
         self.assertEqual(220, st.st_atime)
         self.assertTrue(isinstance(st.st_atime, int))
@@ -3681,7 +3680,7 @@ class FakeOsModuleTimeTest(FakeOsModuleTestBase):
         # 200.9123 not converted to int
         self.assertEqual(200.9123, test_file.st_atime, test_file.st_mtime)
         self.assertEqual(200.9123, st.st_atime, st.st_mtime)
-        self.os.utime(path, None)
+        self.os.utime(path, times=None)
         st = self.os.stat(path)
         self.assertEqual(220.9123, st.st_atime)
         self.assertEqual(220.9123, st.st_mtime)
@@ -3692,7 +3691,7 @@ class FakeOsModuleTimeTest(FakeOsModuleTestBase):
         self.createTestFile(path)
         self.os.stat(path)
         # actual tests
-        self.os.utime(path, (1, 2))
+        self.os.utime(path, times=(1, 2))
         st = self.os.stat(path)
         self.assertEqual(1, st.st_atime)
         self.assertEqual(2, st.st_mtime)
@@ -3702,7 +3701,7 @@ class FakeOsModuleTimeTest(FakeOsModuleTestBase):
         path = '/some_dir'
         self.createTestDirectory(path)
         # actual tests
-        self.os.utime(path, (1.0, 2.0))
+        self.os.utime(path, times=(1.0, 2.0))
         st = self.os.stat(path)
         self.assertEqual(1.0, st.st_atime)
         self.assertEqual(2.0, st.st_mtime)
@@ -3713,7 +3712,7 @@ class FakeOsModuleTimeTest(FakeOsModuleTestBase):
         link_path = '/link_to_some_file'
         self.filesystem.create_symlink(link_path, path)
 
-        self.os.utime(link_path, (1, 2))
+        self.os.utime(link_path, times=(1, 2))
         st = self.os.stat(link_path)
         self.assertEqual(1, st.st_atime)
         self.assertEqual(2, st.st_mtime)
@@ -3724,7 +3723,7 @@ class FakeOsModuleTimeTest(FakeOsModuleTestBase):
         link_path = '/link_to_some_file'
         self.filesystem.create_symlink(link_path, path)
 
-        self.os.utime(link_path, (1, 2), follow_symlinks=False)
+        self.os.utime(link_path, times=(1, 2), follow_symlinks=False)
         st = self.os.stat(link_path)
         self.assertNotEqual(1, st.st_atime)
         self.assertNotEqual(2, st.st_mtime)
@@ -4624,7 +4623,7 @@ class FakeOsModuleDirFdTest(FakeOsModuleTestBase):
             NotImplementedError, self.os.utime, 'baz', (1, 2),
             dir_fd=self.dir_fd)
         self.os.supports_dir_fd.add(os.utime)
-        self.os.utime('baz', (1, 2), dir_fd=self.dir_fd)
+        self.os.utime('baz', times=(1, 2), dir_fd=self.dir_fd)
         st = self.os.stat('/foo/baz')
         self.assertEqual(1, st.st_atime)
         self.assertEqual(2, st.st_mtime)

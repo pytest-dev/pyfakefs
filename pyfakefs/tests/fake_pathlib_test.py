@@ -964,7 +964,7 @@ class FakePathlibUsageInOsFunctionsTest(RealPathlibTestCase):
     def test_utime(self):
         path = self.make_path('some_file')
         self.create_file(path, contents='test')
-        self.os.utime(self.path(path), (1, 2))
+        self.os.utime(self.path(path), times=(1, 2))
         st = self.os.stat(path)
         self.assertEqual(1, st.st_atime)
         self.assertEqual(2, st.st_mtime)

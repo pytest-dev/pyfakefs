@@ -623,7 +623,7 @@ class FakePath(path_module):
             self._raise_closed()
         if self.exists():
             if exist_ok:
-                self.filesystem.utime(self._path(), None)
+                self.filesystem.utime(self._path(), times=None)
             else:
                 self.filesystem.raise_os_error(errno.EEXIST, self._path())
         else:
@@ -632,7 +632,7 @@ class FakePath(path_module):
             self.chmod(mode)
 
 
-class FakePathlibModule(object):
+class FakePathlibModule:
     """Uses FakeFilesystem to provide a fake pathlib module replacement.
     Can be used to replace both the standard `pathlib` module and the
     `pathlib2` package available on PyPi.
@@ -683,7 +683,7 @@ class FakePathlibModule(object):
         return getattr(self._pathlib_module, name)
 
 
-class FakePathlibPathModule(object):
+class FakePathlibPathModule:
     """Patches `pathlib.Path` by passing all calls to FakePathlibModule."""
     fake_pathlib = None
 
