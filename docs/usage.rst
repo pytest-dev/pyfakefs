@@ -380,10 +380,27 @@ fake filesystem via the argument ``target_path``.
                 # only at this point
                 contents = f.read()
 
+You can do the same using ``pytest`` by using a fixture for test setup:
+
+.. code:: python
+
+    import pytest
+    import os
+
+    fixture_path = os.path.join(os.path.dirname(__file__), 'fixtures')
+
+    @pytest.fixture
+    def my_fs(fs):
+        fs.add_real_directory(fixture_path)
+        yield fs
+
+    def test_using_fixture1(my_fs):
+        with open(os.path.join(fixture_path, 'fixture1.txt') as f:
+            contents = f.read()
 
 When using ``pytest`` another option is to load the contents of the real file
-in a fixture and pass this fixture to the test function **before** passing the ``fs``
-fixture.
+in a fixture and pass this fixture to the test function **before** passing
+the ``fs`` fixture.
 
 .. code:: python
 
@@ -393,9 +410,8 @@ fixture.
     @pytest.fixture
     def content():
         fixture_path = os.path.join(os.path.dirname(__file__), 'fixtures')
-        with open(os.path.join(self.fixture_path, 'fixture1.txt') as f:
+        with open(os.path.join(fixture_path, 'fixture1.txt') as f:
             contents = f.read()
-
         return contents
 
     def test_using_file_contents(content, fs):
