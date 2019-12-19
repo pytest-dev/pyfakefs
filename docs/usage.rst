@@ -380,6 +380,29 @@ fake filesystem via the argument ``target_path``.
                 # only at this point
                 contents = f.read()
 
+
+When using ``pytest`` another option is to load the contents of the real file
+in a fixture and pass this fixture to the test function **before** passing the ``fs``
+fixture.
+
+.. code:: python
+
+    import pytest
+    import os
+
+    @pytest.fixture
+    def content():
+        fixture_path = os.path.join(os.path.dirname(__file__), 'fixtures')
+        with open(os.path.join(self.fixture_path, 'fixture1.txt') as f:
+            contents = f.read()
+
+        return contents
+
+    def test_using_file_contents(content, fs):
+        fs.create_file("fake/path.txt")
+        assert content != ""
+
+
 Handling mount points
 ~~~~~~~~~~~~~~~~~~~~~
 Under Linux and MacOS, the root path (``/``) is the only mount point created
