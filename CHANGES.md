@@ -16,6 +16,10 @@ the proposed changes so you can be ready.
 #### New Features
   * Added support for handling keyword-only arguments in some `os` functions
   
+#### Fixes
+  * Fixed behavior of `os.makedirs` in write-protected directory 
+    (see [#507](../../issues/507))
+
 ## [Version 3.7](https://pypi.python.org/pypi/pyfakefs/3.7)
 
 This version adds support for Python 3.8.

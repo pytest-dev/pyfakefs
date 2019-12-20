@@ -2854,6 +2854,9 @@ class FakeFilesystem:
         try:
             self.create_dir(dir_name, mode & ~self.umask)
         except (IOError, OSError) as e:
+            if e.errno == errno.EACCES:
+                # permission denied - propagate exception
+                raise
             if (not exist_ok or
                     not isinstance(self.resolve(dir_name), FakeDirectory)):
                 if self.is_windows_fs and e.errno == errno.ENOTDIR:
