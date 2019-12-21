@@ -4,12 +4,20 @@
 
 <html xmlns="http://www.w3.org/1999/xhtml">
   <head>
-    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-    <title>Usage &#8212; pyfakefs 3.7 documentation</title>
+    <title>Usage &#8212; pyfakefs 3.7.1 documentation</title>
     <link rel="stylesheet" href="_static/pyfakefs.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
-    <script type="text/javascript" id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    './',
+        VERSION:     '3.7.1',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true,
+        SOURCELINK_SUFFIX: '.txt'
+      };
+    </script>
     <script type="text/javascript" src="_static/jquery.js"></script>
     <script type="text/javascript" src="_static/underscore.js"></script>
     <script type="text/javascript" src="_static/doctools.js"></script>
@@ -17,7 +25,8 @@
     <link rel="search" title="Search" href="search.html" />
     <link rel="next" title="Automatically find and patch file functions and modules" href="autopatch.html" />
     <link rel="prev" title="Introduction" href="intro.html" /> 
-  </head><body>
+  </head>
+  <body>
     <div class="related" role="navigation" aria-label="related navigation">
       <h3>Navigation</h3>
       <ul>
@@ -33,7 +42,7 @@
         <li class="right" >
           <a href="intro.html" title="Introduction"
              accesskey="P">previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="index.html">pyfakefs 3.7 documentation</a> &#187;</li> 
+        <li class="nav-item nav-item-0"><a href="index.html">pyfakefs 3.7.1 documentation</a> &#187;</li> 
       </ul>
     </div>  
 
@@ -46,15 +55,15 @@
 <h1>Usage<a class="headerlink" href="#usage" title="Permalink to this headline">¶</a></h1>
 <div class="section" id="test-scenarios">
 <h2>Test Scenarios<a class="headerlink" href="#test-scenarios" title="Permalink to this headline">¶</a></h2>
-<p>There are several approaches to implementing tests using <code class="docutils literal notranslate"><span class="pre">pyfakefs</span></code>.</p>
+<p>There are several approaches to implementing tests using <code class="docutils literal"><span class="pre">pyfakefs</span></code>.</p>
 <div class="section" id="patch-using-fake-filesystem-unittest">
 <h3>Patch using fake_filesystem_unittest<a class="headerlink" href="#patch-using-fake-filesystem-unittest" title="Permalink to this headline">¶</a></h3>
-<p>If you are using the Python <code class="docutils literal notranslate"><span class="pre">unittest</span></code> package, the easiest approach is to
-use test classes derived from <code class="docutils literal notranslate"><span class="pre">fake_filesystem_unittest.TestCase</span></code>.</p>
-<p>If you call <code class="docutils literal notranslate"><span class="pre">setUpPyfakefs()</span></code> in your <code class="docutils literal notranslate"><span class="pre">setUp()</span></code>, <code class="docutils literal notranslate"><span class="pre">pyfakefs</span></code> will
+<p>If you are using the Python <code class="docutils literal"><span class="pre">unittest</span></code> package, the easiest approach is to
+use test classes derived from <code class="docutils literal"><span class="pre">fake_filesystem_unittest.TestCase</span></code>.</p>
+<p>If you call <code class="docutils literal"><span class="pre">setUpPyfakefs()</span></code> in your <code class="docutils literal"><span class="pre">setUp()</span></code>, <code class="docutils literal"><span class="pre">pyfakefs</span></code> will
 automatically find all real file functions and modules, and stub these out
 with the fake file system functions and modules:</p>
-<div class="code python highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">pyfakefs.fake_filesystem_unittest</span> <span class="k">import</span> <span class="n">TestCase</span>
+<div class="code python highlight-default"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">pyfakefs.fake_filesystem_unittest</span> <span class="k">import</span> <span class="n">TestCase</span>
 
 <span class="k">class</span> <span class="nc">ExampleTestCase</span><span class="p">(</span><span class="n">TestCase</span><span class="p">):</span>
     <span class="k">def</span> <span class="nf">setUp</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
@@ -68,16 +77,16 @@ with the fake file system functions and modules:</p>
 </pre></div>
 </div>
 <p>The usage is explained in more detail in <a class="reference internal" href="autopatch.html#auto-patch"><span class="std std-ref">Automatically find and patch file functions and modules</span></a> and
-demonstrated in the files <code class="docutils literal notranslate"><span class="pre">example.py</span></code> and <code class="docutils literal notranslate"><span class="pre">example_test.py</span></code>.</p>
+demonstrated in the files <code class="docutils literal"><span class="pre">example.py</span></code> and <code class="docutils literal"><span class="pre">example_test.py</span></code>.</p>
 </div>
 <div class="section" id="patch-using-the-pytest-plugin">
 <h3>Patch using the PyTest plugin<a class="headerlink" href="#patch-using-the-pytest-plugin" title="Permalink to this headline">¶</a></h3>
 <p>If you use <a class="reference external" href="https://doc.pytest.org">PyTest</a>, you will be interested in
-the PyTest plugin in <code class="docutils literal notranslate"><span class="pre">pyfakefs</span></code>.
+the PyTest plugin in <code class="docutils literal"><span class="pre">pyfakefs</span></code>.
 This automatically patches all file system functions and modules in a
 similar manner as described above.</p>
-<p>The PyTest plugin provides the <code class="docutils literal notranslate"><span class="pre">fs</span></code> fixture for use in your test. For example:</p>
-<div class="code python highlight-default notranslate"><div class="highlight"><pre><span></span><span class="k">def</span> <span class="nf">my_fakefs_test</span><span class="p">(</span><span class="n">fs</span><span class="p">):</span>
+<p>The PyTest plugin provides the <code class="docutils literal"><span class="pre">fs</span></code> fixture for use in your test. For example:</p>
+<div class="code python highlight-default"><div class="highlight"><pre><span></span><span class="k">def</span> <span class="nf">my_fakefs_test</span><span class="p">(</span><span class="n">fs</span><span class="p">):</span>
     <span class="c1"># &quot;fs&quot; is the reference to the fake file system</span>
     <span class="n">fs</span><span class="o">.</span><span class="n">create_file</span><span class="p">(</span><span class="s1">&#39;/var/data/xx1.txt&#39;</span><span class="p">)</span>
     <span class="k">assert</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="s1">&#39;/var/data/xx1.txt&#39;</span><span class="p">)</span>
@@ -87,10 +96,10 @@ similar manner as described above.</p>
 <div class="section" id="patch-using-fake-filesystem-unittest-patcher">
 <h3>Patch using fake_filesystem_unittest.Patcher<a class="headerlink" href="#patch-using-fake-filesystem-unittest-patcher" title="Permalink to this headline">¶</a></h3>
 <p>If you are using other means of testing like <a class="reference external" href="http://nose2.readthedocs.io">nose</a>, you can do the
-patching using <code class="docutils literal notranslate"><span class="pre">fake_filesystem_unittest.Patcher</span></code> - the class doing the actual work
+patching using <code class="docutils literal"><span class="pre">fake_filesystem_unittest.Patcher</span></code> - the class doing the actual work
 of replacing the filesystem modules with the fake modules in the first two approaches.</p>
-<p>The easiest way is to just use <code class="docutils literal notranslate"><span class="pre">Patcher</span></code> as a context manager:</p>
-<div class="code python highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">pyfakefs.fake_filesystem_unittest</span> <span class="k">import</span> <span class="n">Patcher</span>
+<p>The easiest way is to just use <code class="docutils literal"><span class="pre">Patcher</span></code> as a context manager:</p>
+<div class="code python highlight-default"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">pyfakefs.fake_filesystem_unittest</span> <span class="k">import</span> <span class="n">Patcher</span>
 
 <span class="k">with</span> <span class="n">Patcher</span><span class="p">()</span> <span class="k">as</span> <span class="n">patcher</span><span class="p">:</span>
     <span class="c1"># access the fake_filesystem object via patcher.fs</span>
@@ -101,8 +110,8 @@ of replacing the filesystem modules with the fake modules in the first two appro
         <span class="n">contents</span> <span class="o">=</span> <span class="n">f</span><span class="o">.</span><span class="n">read</span><span class="p">()</span>
 </pre></div>
 </div>
-<p>You can also initialize <code class="docutils literal notranslate"><span class="pre">Patcher</span></code> manually:</p>
-<div class="code python highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">pyfakefs.fake_filesystem_unittest</span> <span class="k">import</span> <span class="n">Patcher</span>
+<p>You can also initialize <code class="docutils literal"><span class="pre">Patcher</span></code> manually:</p>
+<div class="code python highlight-default"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">pyfakefs.fake_filesystem_unittest</span> <span class="k">import</span> <span class="n">Patcher</span>
 
 <span class="n">patcher</span> <span class="o">=</span> <span class="n">Patcher</span><span class="p">()</span>
 <span class="n">patcher</span><span class="o">.</span><span class="n">setUp</span><span class="p">()</span>     <span class="c1"># called in the initialization code</span>
@@ -113,7 +122,7 @@ of replacing the filesystem modules with the fake modules in the first two appro
 </div>
 <div class="section" id="patch-using-unittest-mock-deprecated">
 <h3>Patch using unittest.mock (deprecated)<a class="headerlink" href="#patch-using-unittest-mock-deprecated" title="Permalink to this headline">¶</a></h3>
-<p>You can also use <code class="docutils literal notranslate"><span class="pre">mock.patch()</span></code> to patch the modules manually. This approach will
+<p>You can also use <code class="docutils literal"><span class="pre">mock.patch()</span></code> to patch the modules manually. This approach will
 only work for the directly imported modules, therefore it is not suited for testing
 larger code bases. As the other approaches are more convenient, this one is considered
 deprecated and will not be described in detail.</p>
@@ -121,15 +130,15 @@ deprecated and will not be described in detail.</p>
 </div>
 <div class="section" id="customizing-patcher-and-testcase">
 <span id="customizing-patcher"></span><h2>Customizing Patcher and TestCase<a class="headerlink" href="#customizing-patcher-and-testcase" title="Permalink to this headline">¶</a></h2>
-<p>Both <code class="docutils literal notranslate"><span class="pre">fake_filesystem_unittest.Patcher</span></code> and <code class="docutils literal notranslate"><span class="pre">fake_filesystem_unittest.TestCase</span></code>
+<p>Both <code class="docutils literal"><span class="pre">fake_filesystem_unittest.Patcher</span></code> and <code class="docutils literal"><span class="pre">fake_filesystem_unittest.TestCase</span></code>
 provide a few arguments to handle cases where patching does not work out of
 the box.
-In case of <code class="docutils literal notranslate"><span class="pre">fake_filesystem_unittest.TestCase</span></code>, these arguments can either
-be set in the TestCase instance initialization, or passed to <code class="docutils literal notranslate"><span class="pre">setUpPyfakefs()</span></code>.</p>
+In case of <code class="docutils literal"><span class="pre">fake_filesystem_unittest.TestCase</span></code>, these arguments can either
+be set in the TestCase instance initialization, or passed to <code class="docutils literal"><span class="pre">setUpPyfakefs()</span></code>.</p>
 <div class="admonition note">
 <p class="first admonition-title">Note</p>
-<p>If you need these arguments in <code class="docutils literal notranslate"><span class="pre">PyTest</span></code>, you must
-use <code class="docutils literal notranslate"><span class="pre">Patcher</span></code> directly instead of the <code class="docutils literal notranslate"><span class="pre">fs</span></code> fixture. Alternatively,
+<p>If you need these arguments in <code class="docutils literal"><span class="pre">PyTest</span></code>, you must
+use <code class="docutils literal"><span class="pre">Patcher</span></code> directly instead of the <code class="docutils literal"><span class="pre">fs</span></code> fixture. Alternatively,
 you can add your own fixture with the needed parameters.</p>
 <p class="last">An example for both approaches can be found in
 <a class="reference external" href="https://github.com/jmcgeheeiv/pyfakefs/blob/master/pyfakefs/pytest_tests/pytest_fixture_test.py">pytest_fixture_test.py</a>
@@ -146,31 +155,31 @@ This allows to automatically patch file system related modules that are:</p>
 <ul class="simple">
 <li>imported directly, for example:</li>
 </ul>
-<div class="code python highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">os</span>
+<div class="code python highlight-default"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">os</span>
 <span class="kn">import</span> <span class="nn">pathlib.Path</span>
 </pre></div>
 </div>
 <ul class="simple">
 <li>imported as another name:</li>
 </ul>
-<div class="code python highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">os</span> <span class="k">as</span> <span class="nn">my_os</span>
+<div class="code python highlight-default"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">os</span> <span class="k">as</span> <span class="nn">my_os</span>
 </pre></div>
 </div>
 <ul class="simple">
 <li>imported using one of these two specially handled statements:</li>
 </ul>
-<div class="code python highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">os</span> <span class="k">import</span> <span class="n">path</span>
+<div class="code python highlight-default"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">os</span> <span class="k">import</span> <span class="n">path</span>
 <span class="kn">from</span> <span class="nn">pathlib</span> <span class="k">import</span> <span class="n">Path</span>
 </pre></div>
 </div>
 <p>Additionally, functions from file system related modules are patched
 automatically if imported like:</p>
-<div class="code python highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">os.path</span> <span class="k">import</span> <span class="n">exists</span>
+<div class="code python highlight-default"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">os.path</span> <span class="k">import</span> <span class="n">exists</span>
 <span class="kn">from</span> <span class="nn">os</span> <span class="k">import</span> <span class="n">stat</span>
 </pre></div>
 </div>
 <p>This also works if importing the functions as another name:</p>
-<div class="code python highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">os.path</span> <span class="k">import</span> <span class="n">exists</span> <span class="k">as</span> <span class="n">my_exists</span>
+<div class="code python highlight-default"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">os.path</span> <span class="k">import</span> <span class="n">exists</span> <span class="k">as</span> <span class="n">my_exists</span>
 <span class="kn">from</span> <span class="nn">io</span> <span class="k">import</span> <span class="nb">open</span> <span class="k">as</span> <span class="n">io_open</span>
 <span class="kn">from</span> <span class="nn">builtins</span> <span class="k">import</span> <span class="nb">open</span> <span class="k">as</span> <span class="n">bltn_open</span>
 </pre></div>
@@ -180,31 +189,31 @@ specific cases where this is the case:</p>
 <ul class="simple">
 <li>initializing global variables:</li>
 </ul>
-<div class="code python highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">pathlib</span> <span class="k">import</span> <span class="n">Path</span>
+<div class="code python highlight-default"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">pathlib</span> <span class="k">import</span> <span class="n">Path</span>
 
 <span class="n">path</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="s2">&quot;/example_home&quot;</span><span class="p">)</span>
 </pre></div>
 </div>
-<p>In this case, <code class="docutils literal notranslate"><span class="pre">path</span></code> will hold the real file system path inside the test.</p>
+<p>In this case, <code class="docutils literal"><span class="pre">path</span></code> will hold the real file system path inside the test.</p>
 <ul class="simple">
 <li>initializing a default argument:</li>
 </ul>
-<div class="code python highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">os</span>
+<div class="code python highlight-default"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">os</span>
 
 <span class="k">def</span> <span class="nf">check_if_exists</span><span class="p">(</span><span class="n">filepath</span><span class="p">,</span> <span class="n">file_exists</span><span class="o">=</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">):</span>
     <span class="k">return</span> <span class="n">file_exists</span><span class="p">(</span><span class="n">filepath</span><span class="p">)</span>
 </pre></div>
 </div>
-<p>Here, <code class="docutils literal notranslate"><span class="pre">file_exists</span></code> will not be patched in the test.</p>
+<p>Here, <code class="docutils literal"><span class="pre">file_exists</span></code> will not be patched in the test.</p>
 <p>To get these cases to work as expected under test, the respective modules
-containing the code shall be added to the <code class="docutils literal notranslate"><span class="pre">modules_to_reload</span></code> argument (a
+containing the code shall be added to the <code class="docutils literal"><span class="pre">modules_to_reload</span></code> argument (a
 module list).
 The passed modules will be reloaded, thus allowing pyfakefs to patch them
 dynamically. All modules loaded after the initial patching described above
 will be patched using this second mechanism.</p>
 <p>Given that the example code shown above is located in the file
-<code class="docutils literal notranslate"><span class="pre">example/sut.py</span></code>, the following code will work:</p>
-<div class="code python highlight-default notranslate"><div class="highlight"><pre><span></span><span class="c1"># example using unittest</span>
+<code class="docutils literal"><span class="pre">example/sut.py</span></code>, the following code will work:</p>
+<div class="code python highlight-default"><div class="highlight"><pre><span></span><span class="c1"># example using unittest</span>
 <span class="k">class</span> <span class="nc">ReloadModuleTest</span><span class="p">(</span><span class="n">fake_filesystem_unittest</span><span class="o">.</span><span class="n">TestCase</span><span class="p">):</span>
     <span class="k">def</span> <span class="nf">setUp</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">setUpPyfakefs</span><span class="p">(</span><span class="n">modules_to_reload</span><span class="o">=</span><span class="p">[</span><span class="n">example</span><span class="o">.</span><span class="n">sut</span><span class="p">])</span>
@@ -223,7 +232,7 @@ will be patched using this second mechanism.</p>
 </pre></div>
 </div>
 <p>Example using pytest:</p>
-<div class="code python highlight-default notranslate"><div class="highlight"><pre><span></span><span class="c1"># conftest.py</span>
+<div class="code python highlight-default"><div class="highlight"><pre><span></span><span class="c1"># conftest.py</span>
 <span class="o">...</span>
 <span class="kn">from</span> <span class="nn">example</span> <span class="k">import</span> <span class="n">sut</span>
 
@@ -249,13 +258,13 @@ will be patched using this second mechanism.</p>
 <h3>modules_to_patch<a class="headerlink" href="#modules-to-patch" title="Permalink to this headline">¶</a></h3>
 <p>Sometimes there are file system modules in other packages that are not
 patched in standard pyfakefs. To allow patching such modules,
-<code class="docutils literal notranslate"><span class="pre">modules_to_patch</span></code> can be used by adding a fake module implementation for
+<code class="docutils literal"><span class="pre">modules_to_patch</span></code> can be used by adding a fake module implementation for
 a module name. The argument is a dictionary of fake modules mapped to the
 names to be faked.</p>
 <p>This mechanism is used in pyfakefs itself to patch the external modules
 <cite>pathlib2</cite> and <cite>scandir</cite> if present, and the following example shows how to
 fake a module in Django that uses OS file system functions:</p>
-<div class="code python highlight-default notranslate"><div class="highlight"><pre><span></span><span class="k">class</span> <span class="nc">FakeLocks</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+<div class="code python highlight-default"><div class="highlight"><pre><span></span><span class="k">class</span> <span class="nc">FakeLocks</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;django.core.files.locks uses low level OS functions, fake it.&quot;&quot;&quot;</span>
     <span class="n">_locks_module</span> <span class="o">=</span> <span class="n">django</span><span class="o">.</span><span class="n">core</span><span class="o">.</span><span class="n">files</span><span class="o">.</span><span class="n">locks</span>
 
@@ -299,48 +308,48 @@ used to avoid patching the Python file system modules themselves, but may be
 helpful in some special situations, for example if a testrunner is accessing
 the file system after test setup. A known case is erratic behavior if running a
 debug session in PyCharm with Python 2.7, which can be avoided by adding the
-offending module to <code class="docutils literal notranslate"><span class="pre">additional_skip_names</span></code>:</p>
-<div class="code python highlight-default notranslate"><div class="highlight"><pre><span></span><span class="k">with</span> <span class="n">Patcher</span><span class="p">(</span><span class="n">additional_skip_names</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;pydevd&#39;</span><span class="p">])</span> <span class="k">as</span> <span class="n">patcher</span><span class="p">:</span>
+offending module to <code class="docutils literal"><span class="pre">additional_skip_names</span></code>:</p>
+<div class="code python highlight-default"><div class="highlight"><pre><span></span><span class="k">with</span> <span class="n">Patcher</span><span class="p">(</span><span class="n">additional_skip_names</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;pydevd&#39;</span><span class="p">])</span> <span class="k">as</span> <span class="n">patcher</span><span class="p">:</span>
     <span class="n">patcher</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">create_file</span><span class="p">(</span><span class="s1">&#39;foo&#39;</span><span class="p">)</span>
 </pre></div>
 </div>
 <p>Alternatively to the module names, the modules themselves may be used:</p>
-<div class="code python highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">pydevd</span>
+<div class="code python highlight-default"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">pydevd</span>
 
 <span class="k">with</span> <span class="n">Patcher</span><span class="p">(</span><span class="n">additional_skip_names</span><span class="o">=</span><span class="p">[</span><span class="n">pydevd</span><span class="p">])</span> <span class="k">as</span> <span class="n">patcher</span><span class="p">:</span>
     <span class="n">patcher</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">create_file</span><span class="p">(</span><span class="s1">&#39;foo&#39;</span><span class="p">)</span>
 </pre></div>
 </div>
-<p>There is also the global variable <code class="docutils literal notranslate"><span class="pre">Patcher.SKIPNAMES</span></code> that can be extended
+<p>There is also the global variable <code class="docutils literal"><span class="pre">Patcher.SKIPNAMES</span></code> that can be extended
 for that purpose, though this seldom shall be needed (except for own pytest
 plugins, as shown in the example mentioned above).</p>
 </div>
 <div class="section" id="allow-root-user">
 <h3>allow_root_user<a class="headerlink" href="#allow-root-user" title="Permalink to this headline">¶</a></h3>
-<p>This is <code class="docutils literal notranslate"><span class="pre">True</span></code> by default, meaning that the user is considered a root user
+<p>This is <code class="docutils literal"><span class="pre">True</span></code> by default, meaning that the user is considered a root user
 if the real user is a root user (e.g. has the user ID 0). If you want to run
 your tests as a non-root user regardless of the actual user rights, you may
-want to set this to <code class="docutils literal notranslate"><span class="pre">False</span></code>.</p>
+want to set this to <code class="docutils literal"><span class="pre">False</span></code>.</p>
 </div>
 </div>
 <div class="section" id="using-convenience-methods">
 <h2>Using convenience methods<a class="headerlink" href="#using-convenience-methods" title="Permalink to this headline">¶</a></h2>
-<p>While <code class="docutils literal notranslate"><span class="pre">pyfakefs</span></code> can be used just with the standard Python file system
-functions, there are few convenience methods in <code class="docutils literal notranslate"><span class="pre">fake_filesystem</span></code> that can
+<p>While <code class="docutils literal"><span class="pre">pyfakefs</span></code> can be used just with the standard Python file system
+functions, there are few convenience methods in <code class="docutils literal"><span class="pre">fake_filesystem</span></code> that can
 help you setting up your tests. The methods can be accessed via the
-<code class="docutils literal notranslate"><span class="pre">fake_filesystem</span></code> instance in your tests: <code class="docutils literal notranslate"><span class="pre">Patcher.fs</span></code>, the <code class="docutils literal notranslate"><span class="pre">fs</span></code>
-fixture in PyTest, or <code class="docutils literal notranslate"><span class="pre">TestCase.fs</span></code>.</p>
+<code class="docutils literal"><span class="pre">fake_filesystem</span></code> instance in your tests: <code class="docutils literal"><span class="pre">Patcher.fs</span></code>, the <code class="docutils literal"><span class="pre">fs</span></code>
+fixture in PyTest, or <code class="docutils literal"><span class="pre">TestCase.fs</span></code>.</p>
 <div class="section" id="file-creation-helpers">
 <h3>File creation helpers<a class="headerlink" href="#file-creation-helpers" title="Permalink to this headline">¶</a></h3>
 <p>To create files, directories or symlinks together with all the directories
-in the path, you may use <code class="docutils literal notranslate"><span class="pre">create_file()</span></code>, <code class="docutils literal notranslate"><span class="pre">create_dir()</span></code> and
-<code class="docutils literal notranslate"><span class="pre">create_symlink()</span></code>, respectively.</p>
-<p><code class="docutils literal notranslate"><span class="pre">create_file()</span></code> also allows you to set the file mode and the file contents
+in the path, you may use <code class="docutils literal"><span class="pre">create_file()</span></code>, <code class="docutils literal"><span class="pre">create_dir()</span></code> and
+<code class="docutils literal"><span class="pre">create_symlink()</span></code>, respectively.</p>
+<p><code class="docutils literal"><span class="pre">create_file()</span></code> also allows you to set the file mode and the file contents
 together with the encoding if needed. Alternatively, you can define a file
 size without contents - in this case, you will not be able to perform
 standard IO operations on the file (may be used to “fill up” the file system
 with large files).</p>
-<div class="code python highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">pyfakefs.fake_filesystem_unittest</span> <span class="k">import</span> <span class="n">TestCase</span>
+<div class="code python highlight-default"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">pyfakefs.fake_filesystem_unittest</span> <span class="k">import</span> <span class="n">TestCase</span>
 
 <span class="k">class</span> <span class="nc">ExampleTestCase</span><span class="p">(</span><span class="n">TestCase</span><span class="p">):</span>
     <span class="k">def</span> <span class="nf">setUp</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
@@ -353,25 +362,25 @@ with large files).</p>
             <span class="bp">self</span><span class="o">.</span><span class="n">assertEqual</span><span class="p">(</span><span class="s1">&#39;test&#39;</span><span class="p">,</span> <span class="n">f</span><span class="o">.</span><span class="n">read</span><span class="p">())</span>
 </pre></div>
 </div>
-<p><code class="docutils literal notranslate"><span class="pre">create_dir()</span></code> behaves like <code class="docutils literal notranslate"><span class="pre">os.makedirs()</span></code>, but can also be used in
+<p><code class="docutils literal"><span class="pre">create_dir()</span></code> behaves like <code class="docutils literal"><span class="pre">os.makedirs()</span></code>, but can also be used in
 Python 2.</p>
 </div>
 <div class="section" id="access-to-files-in-the-real-file-system">
 <h3>Access to files in the real file system<a class="headerlink" href="#access-to-files-in-the-real-file-system" title="Permalink to this headline">¶</a></h3>
 <p>If you want to have read access to real files or directories, you can map
-them into the fake file system using <code class="docutils literal notranslate"><span class="pre">add_real_file()</span></code>,
-<code class="docutils literal notranslate"><span class="pre">add_real_directory()</span></code>, <code class="docutils literal notranslate"><span class="pre">add_real_symlink()</span></code> and <code class="docutils literal notranslate"><span class="pre">add_real_paths()</span></code>.
+them into the fake file system using <code class="docutils literal"><span class="pre">add_real_file()</span></code>,
+<code class="docutils literal"><span class="pre">add_real_directory()</span></code>, <code class="docutils literal"><span class="pre">add_real_symlink()</span></code> and <code class="docutils literal"><span class="pre">add_real_paths()</span></code>.
 They take a file path, a directory path, a symlink path, or a list of paths,
 respectively, and make them accessible from the fake file system. By
 default, the contents of the mapped files and directories are read only on
 demand, so that mapping them is relatively cheap. The access to the files is
-by default read-only, but even if you add them using <code class="docutils literal notranslate"><span class="pre">read_only=False</span></code>,
+by default read-only, but even if you add them using <code class="docutils literal"><span class="pre">read_only=False</span></code>,
 the files are written only in the fake system (e.g. in memory). The real
 files are never changed.</p>
-<p><code class="docutils literal notranslate"><span class="pre">add_real_file()</span></code>, <code class="docutils literal notranslate"><span class="pre">add_real_directory()</span></code> and <code class="docutils literal notranslate"><span class="pre">add_real_symlink()</span></code> also
+<p><code class="docutils literal"><span class="pre">add_real_file()</span></code>, <code class="docutils literal"><span class="pre">add_real_directory()</span></code> and <code class="docutils literal"><span class="pre">add_real_symlink()</span></code> also
 allow you to map a file or a directory tree into another location in the
-fake filesystem via the argument <code class="docutils literal notranslate"><span class="pre">target_path</span></code>.</p>
-<div class="code python highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">pyfakefs.fake_filesystem_unittest</span> <span class="k">import</span> <span class="n">TestCase</span>
+fake filesystem via the argument <code class="docutils literal"><span class="pre">target_path</span></code>.</p>
+<div class="code python highlight-default"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">pyfakefs.fake_filesystem_unittest</span> <span class="k">import</span> <span class="n">TestCase</span>
 
 <span class="k">class</span> <span class="nc">ExampleTestCase</span><span class="p">(</span><span class="n">TestCase</span><span class="p">):</span>
 
@@ -391,15 +400,15 @@ fake filesystem via the argument <code class="docutils literal notranslate"><spa
 </div>
 <div class="section" id="handling-mount-points">
 <h3>Handling mount points<a class="headerlink" href="#handling-mount-points" title="Permalink to this headline">¶</a></h3>
-<p>Under Linux and MacOS, the root path (<code class="docutils literal notranslate"><span class="pre">/</span></code>) is the only mount point created
+<p>Under Linux and MacOS, the root path (<code class="docutils literal"><span class="pre">/</span></code>) is the only mount point created
 in the fake file system. If you need support for more mount points, you can add
-them using <code class="docutils literal notranslate"><span class="pre">add_mount_point()</span></code>.</p>
+them using <code class="docutils literal"><span class="pre">add_mount_point()</span></code>.</p>
 <p>Under Windows, drives and UNC paths are internally handled as mount points.
 Adding a file or directory on another drive or UNC path automatically
 adds a mount point for that drive or UNC path root if needed. Explicitly
 adding mount points shall not be needed under Windows.</p>
-<p>A mount point has a separate device ID (<code class="docutils literal notranslate"><span class="pre">st_dev</span></code>) under all systems, and
-some operations (like <code class="docutils literal notranslate"><span class="pre">rename</span></code>) are not possible for files located on
+<p>A mount point has a separate device ID (<code class="docutils literal"><span class="pre">st_dev</span></code>) under all systems, and
+some operations (like <code class="docutils literal"><span class="pre">rename</span></code>) are not possible for files located on
 different mount points. The fake file system size (if used) is also set per
 mount point.</p>
 </div>
@@ -407,13 +416,13 @@ mount point.</p>
 <h3>Setting the file system size<a class="headerlink" href="#setting-the-file-system-size" title="Permalink to this headline">¶</a></h3>
 <p>If you need to know the file system size in your tests (for example for
 testing cleanup scripts), you can set the fake file system size using
-<code class="docutils literal notranslate"><span class="pre">set_disk_usage()</span></code>. By default, this sets the total size in bytes of the
+<code class="docutils literal"><span class="pre">set_disk_usage()</span></code>. By default, this sets the total size in bytes of the
 root partition; if you add a path as parameter, the size will be related to
 the mount point (see above) the path is related to.</p>
 <p>By default, the size of the fake file system is considered infinite. As soon
 as you set a size, all files will occupy the space according to their size,
 and you may fail to create new files if the fake file system is full.</p>
-<div class="code python highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">pyfakefs.fake_filesystem_unittest</span> <span class="k">import</span> <span class="n">TestCase</span>
+<div class="code python highlight-default"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">pyfakefs.fake_filesystem_unittest</span> <span class="k">import</span> <span class="n">TestCase</span>
 
 <span class="k">class</span> <span class="nc">ExampleTestCase</span><span class="p">(</span><span class="n">TestCase</span><span class="p">):</span>
 
@@ -426,19 +435,19 @@ and you may fail to create new files if the fake file system is full.</p>
             <span class="bp">self</span><span class="o">.</span><span class="n">assertRaises</span><span class="p">(</span><span class="ne">OSError</span><span class="p">,</span> <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">,</span> <span class="s1">&#39;a&#39;</span> <span class="o">*</span> <span class="mi">200</span><span class="p">)</span>
 </pre></div>
 </div>
-<p>To get the file system size, you may use <code class="docutils literal notranslate"><span class="pre">get_disk_usage()</span></code>, which is
-modeled after <code class="docutils literal notranslate"><span class="pre">shutil.disk_usage()</span></code>.</p>
+<p>To get the file system size, you may use <code class="docutils literal"><span class="pre">get_disk_usage()</span></code>, which is
+modeled after <code class="docutils literal"><span class="pre">shutil.disk_usage()</span></code>.</p>
 </div>
 <div class="section" id="pausing-patching">
 <h3>Pausing patching<a class="headerlink" href="#pausing-patching" title="Permalink to this headline">¶</a></h3>
 <p>Sometimes, you may want to access the real filesystem inside the test with
-no patching applied. This can be achieved by using the <code class="docutils literal notranslate"><span class="pre">pause/resume</span></code>
-functions, which exist in <code class="docutils literal notranslate"><span class="pre">fake_filesystem_unittest.Patcher</span></code>,
-<code class="docutils literal notranslate"><span class="pre">fake_filesystem_unittest.TestCase</span></code> and <code class="docutils literal notranslate"><span class="pre">fake_filesystem.FakeFilesystem</span></code>.
-There is also a context manager class <code class="docutils literal notranslate"><span class="pre">fake_filesystem_unittest.Pause</span></code>
-which encapsulates the calls to <code class="docutils literal notranslate"><span class="pre">pause()</span></code> and <code class="docutils literal notranslate"><span class="pre">resume()</span></code>.</p>
+no patching applied. This can be achieved by using the <code class="docutils literal"><span class="pre">pause/resume</span></code>
+functions, which exist in <code class="docutils literal"><span class="pre">fake_filesystem_unittest.Patcher</span></code>,
+<code class="docutils literal"><span class="pre">fake_filesystem_unittest.TestCase</span></code> and <code class="docutils literal"><span class="pre">fake_filesystem.FakeFilesystem</span></code>.
+There is also a context manager class <code class="docutils literal"><span class="pre">fake_filesystem_unittest.Pause</span></code>
+which encapsulates the calls to <code class="docutils literal"><span class="pre">pause()</span></code> and <code class="docutils literal"><span class="pre">resume()</span></code>.</p>
 <p>Here is an example that tests the usage with the pyfakefs pytest fixture:</p>
-<div class="code python highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">pyfakefs.fake_filesystem_unittest</span> <span class="k">import</span> <span class="n">Pause</span>
+<div class="code python highlight-default"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">pyfakefs.fake_filesystem_unittest</span> <span class="k">import</span> <span class="n">Pause</span>
 
 <span class="k">def</span> <span class="nf">test_pause_resume_contextmanager</span><span class="p">(</span><span class="n">fs</span><span class="p">):</span>
     <span class="n">fake_temp_file</span> <span class="o">=</span> <span class="n">tempfile</span><span class="o">.</span><span class="n">NamedTemporaryFile</span><span class="p">()</span>
@@ -453,7 +462,7 @@ which encapsulates the calls to <code class="docutils literal notranslate"><span
 </pre></div>
 </div>
 <p>Here is the same code using a context manager:</p>
-<div class="code python highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">pyfakefs.fake_filesystem_unittest</span> <span class="k">import</span> <span class="n">Pause</span>
+<div class="code python highlight-default"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">pyfakefs.fake_filesystem_unittest</span> <span class="k">import</span> <span class="n">Pause</span>
 
 <span class="k">def</span> <span class="nf">test_pause_resume_contextmanager</span><span class="p">(</span><span class="n">fs</span><span class="p">):</span>
     <span class="n">fake_temp_file</span> <span class="o">=</span> <span class="n">tempfile</span><span class="o">.</span><span class="n">NamedTemporaryFile</span><span class="p">()</span>
@@ -472,46 +481,46 @@ which encapsulates the calls to <code class="docutils literal notranslate"><span
 <h2>Troubleshooting<a class="headerlink" href="#troubleshooting" title="Permalink to this headline">¶</a></h2>
 <div class="section" id="modules-not-working-with-pyfakefs">
 <h3>Modules not working with pyfakefs<a class="headerlink" href="#modules-not-working-with-pyfakefs" title="Permalink to this headline">¶</a></h3>
-<p>Modules may not work with <code class="docutils literal notranslate"><span class="pre">pyfakefs</span></code> for several reasons. <code class="docutils literal notranslate"><span class="pre">pyfakefs</span></code>
+<p>Modules may not work with <code class="docutils literal"><span class="pre">pyfakefs</span></code> for several reasons. <code class="docutils literal"><span class="pre">pyfakefs</span></code>
 works by patching some file system related modules and functions, specifically:</p>
 <ul class="simple">
-<li>most file system related functions in the <code class="docutils literal notranslate"><span class="pre">os</span></code> and <code class="docutils literal notranslate"><span class="pre">os.path</span></code> modules</li>
-<li>the <code class="docutils literal notranslate"><span class="pre">pathlib</span></code> module</li>
-<li>the build-in <code class="docutils literal notranslate"><span class="pre">open</span></code> function and <code class="docutils literal notranslate"><span class="pre">io.open</span></code></li>
-<li><code class="docutils literal notranslate"><span class="pre">shutil.disk_usage</span></code></li>
+<li>most file system related functions in the <code class="docutils literal"><span class="pre">os</span></code> and <code class="docutils literal"><span class="pre">os.path</span></code> modules</li>
+<li>the <code class="docutils literal"><span class="pre">pathlib</span></code> module</li>
+<li>the build-in <code class="docutils literal"><span class="pre">open</span></code> function and <code class="docutils literal"><span class="pre">io.open</span></code></li>
+<li><code class="docutils literal"><span class="pre">shutil.disk_usage</span></code></li>
 </ul>
-<p>Other file system related modules work with <code class="docutils literal notranslate"><span class="pre">pyfakefs</span></code>, because they use
-exclusively these patched functions, specifically <code class="docutils literal notranslate"><span class="pre">shutil</span></code> (except for
-<code class="docutils literal notranslate"><span class="pre">disk_usage</span></code>), <code class="docutils literal notranslate"><span class="pre">tempfile</span></code>, <code class="docutils literal notranslate"><span class="pre">glob</span></code> and <code class="docutils literal notranslate"><span class="pre">zipfile</span></code>.</p>
-<p>A module may not work with <code class="docutils literal notranslate"><span class="pre">pyfakefs</span></code> because of one of the following
+<p>Other file system related modules work with <code class="docutils literal"><span class="pre">pyfakefs</span></code>, because they use
+exclusively these patched functions, specifically <code class="docutils literal"><span class="pre">shutil</span></code> (except for
+<code class="docutils literal"><span class="pre">disk_usage</span></code>), <code class="docutils literal"><span class="pre">tempfile</span></code>, <code class="docutils literal"><span class="pre">glob</span></code> and <code class="docutils literal"><span class="pre">zipfile</span></code>.</p>
+<p>A module may not work with <code class="docutils literal"><span class="pre">pyfakefs</span></code> because of one of the following
 reasons:</p>
 <ul class="simple">
 <li>It uses a file system related function of the mentioned modules that is
 not or not correctly patched. Mostly these are functions that are seldom
 used, but may be used in Python libraries (this has happened for example
-with a changed implementation of <code class="docutils literal notranslate"><span class="pre">shutil</span></code> in Python 3.7). Generally,
+with a changed implementation of <code class="docutils literal"><span class="pre">shutil</span></code> in Python 3.7). Generally,
 these shall be handled in issues and we are happy to fix them.</li>
 <li>It uses file system related functions in a way that will not be patched
 automatically. This is the case for functions that are executed while
 reading a module. This case and a possibility to make them work is
-documented above under <code class="docutils literal notranslate"><span class="pre">modules_to_reload</span></code>.</li>
+documented above under <code class="docutils literal"><span class="pre">modules_to_reload</span></code>.</li>
 <li>It uses OS specific file system functions not contained in the Python
 libraries. These will not work out of the box, and we generally will not
-support them in <code class="docutils literal notranslate"><span class="pre">pyfakefs</span></code>. If these functions are used in isolated
-functions or classes, they may be patched by using the <code class="docutils literal notranslate"><span class="pre">modules_to_patch</span></code>
+support them in <code class="docutils literal"><span class="pre">pyfakefs</span></code>. If these functions are used in isolated
+functions or classes, they may be patched by using the <code class="docutils literal"><span class="pre">modules_to_patch</span></code>
 parameter (see the example for file locks in Django above), and if there
 are more examples for patches that may be useful, we may add them in the
 documentation.</li>
 <li>It uses C libraries to access the file system. There is no way no make
-such a module work with <code class="docutils literal notranslate"><span class="pre">pyfakefs</span></code> - if you want to use it, you have to
+such a module work with <code class="docutils literal"><span class="pre">pyfakefs</span></code> - if you want to use it, you have to
 patch the whole module. In some cases, a library implemented in Python with
-a similar interface already exists. An example is <code class="docutils literal notranslate"><span class="pre">lxml</span></code>,
-which can be substituted with <code class="docutils literal notranslate"><span class="pre">ElementTree</span></code> in most cases for testing.</li>
+a similar interface already exists. An example is <code class="docutils literal"><span class="pre">lxml</span></code>,
+which can be substituted with <code class="docutils literal"><span class="pre">ElementTree</span></code> in most cases for testing.</li>
 </ul>
 <p>A list of Python modules that are known to not work correctly with
-<code class="docutils literal notranslate"><span class="pre">pyfakefs</span></code> will be collected here:</p>
+<code class="docutils literal"><span class="pre">pyfakefs</span></code> will be collected here:</p>
 <ul class="simple">
-<li><code class="docutils literal notranslate"><span class="pre">multiprocessing</span></code> has several issues (related to points 1 and 3 above).
+<li><code class="docutils literal"><span class="pre">multiprocessing</span></code> has several issues (related to points 1 and 3 above).
 Currently there are no plans to fix this, but this may change in case of
 sufficient demand.</li>
 </ul>
@@ -521,13 +530,13 @@ always write a new issue, of course!</p>
 <div class="section" id="os-temporary-directories">
 <h3>OS temporary directories<a class="headerlink" href="#os-temporary-directories" title="Permalink to this headline">¶</a></h3>
 <p>Tests relying on a completely empty file system on test start will fail.
-As <code class="docutils literal notranslate"><span class="pre">pyfakefs</span></code> does not fake the <code class="docutils literal notranslate"><span class="pre">tempfile</span></code> module (as described above),
-a temporary directory is required to ensure <code class="docutils literal notranslate"><span class="pre">tempfile</span></code> works correctly,
-e.g., that <code class="docutils literal notranslate"><span class="pre">tempfile.gettempdir()</span></code> will return a valid value. This
+As <code class="docutils literal"><span class="pre">pyfakefs</span></code> does not fake the <code class="docutils literal"><span class="pre">tempfile</span></code> module (as described above),
+a temporary directory is required to ensure <code class="docutils literal"><span class="pre">tempfile</span></code> works correctly,
+e.g., that <code class="docutils literal"><span class="pre">tempfile.gettempdir()</span></code> will return a valid value. This
 means that any newly created fake file system will always have either a
-directory named <code class="docutils literal notranslate"><span class="pre">/tmp</span></code> when running on Linux or Unix systems,
-<code class="docutils literal notranslate"><span class="pre">/var/folders/&lt;hash&gt;/T</span></code> when running on MacOs and
-<code class="docutils literal notranslate"><span class="pre">C:\Users\&lt;user&gt;\AppData\Local\Temp</span></code> on Windows.</p>
+directory named <code class="docutils literal"><span class="pre">/tmp</span></code> when running on Linux or Unix systems,
+<code class="docutils literal"><span class="pre">/var/folders/&lt;hash&gt;/T</span></code> when running on MacOs and
+<code class="docutils literal"><span class="pre">C:\Users\&lt;user&gt;\AppData\Local\Temp</span></code> on Windows.</p>
 </div>
 <div class="section" id="user-rights">
 <h3>User rights<a class="headerlink" href="#user-rights" title="Permalink to this headline">¶</a></h3>
@@ -538,9 +547,9 @@ can be changed.
 Pyfakefs has a rudimentary concept of user rights, which differentiates
 between root user (with the user id 0) and any other user. By default,
 pyfakefs assumes the user id of the current user, but you can change
-that using <code class="docutils literal notranslate"><span class="pre">fake_filesystem.set_uid()</span></code> in your setup. This allows to run
+that using <code class="docutils literal"><span class="pre">fake_filesystem.set_uid()</span></code> in your setup. This allows to run
 tests as non-root user in a root user environment and vice verse.
-Another possibility is the convenience argument <code class="docutils literal notranslate"><span class="pre">allow_root_user</span></code>
+Another possibility is the convenience argument <code class="docutils literal"><span class="pre">allow_root_user</span></code>
 described above.</p>
 </div>
 </div>
@@ -602,14 +611,12 @@ described above.</p>
    </div>
 <div id="searchbox" style="display: none" role="search">
   <h3>Quick search</h3>
-    <div class="searchformwrapper">
     <form class="search" action="search.html" method="get">
-      <input type="text" name="q" />
-      <input type="submit" value="Go" />
+      <div><input type="text" name="q" /></div>
+      <div><input type="submit" value="Go" /></div>
       <input type="hidden" name="check_keywords" value="yes" />
       <input type="hidden" name="area" value="default" />
     </form>
-    </div>
 </div>
 <script type="text/javascript">$('#searchbox').show(0);</script>
         </div>
@@ -631,14 +638,14 @@ described above.</p>
         <li class="right" >
           <a href="intro.html" title="Introduction"
              >previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="index.html">pyfakefs 3.7 documentation</a> &#187;</li> 
+        <li class="nav-item nav-item-0"><a href="index.html">pyfakefs 3.7.1 documentation</a> &#187;</li> 
       </ul>
     </div>
     <div class="footer" role="contentinfo">
         &#169; Copyright 2009 Google Inc. All Rights Reserved.
 © Copyright 2014 Altera Corporation. All Rights Reserved.
 © Copyright 2014-2019 John McGehee.
-      Last updated on Nov 24, 2019.
+      Last updated on Dec 21, 2019.
     </div>
   </body>
 </html>
