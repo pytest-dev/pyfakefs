@@ -19,6 +19,8 @@ the proposed changes so you can be ready.
 #### Fixes
   * Fixed behavior of `os.makedirs` in write-protected directory 
     (see [#507](../../issues/507))
+  * Adapted fake `pathlib` to changes in Python 3.7.6/3.8.1   
+    (see [#508](../../issues/508))
 
 ## [Version 3.7](https://pypi.python.org/pypi/pyfakefs/3.7)
 

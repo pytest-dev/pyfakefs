@@ -683,8 +683,8 @@ class FakePathlibPathFileOperationTest(RealPathlibTestCase):
                          [self.path(self.make_path('foo', 'all_tests.py')),
                           self.path(self.make_path('foo', 'setup.py'))])
 
+    @unittest.skipIf(not is_windows, 'Windows specific test')
     def test_glob_case_windows(self):
-        self.check_windows_only()
         self.create_file(self.make_path('foo', 'setup.py'))
         self.create_file(self.make_path('foo', 'all_tests.PY'))
         self.create_file(self.make_path('foo', 'README.md'))
@@ -695,6 +695,7 @@ class FakePathlibPathFileOperationTest(RealPathlibTestCase):
                           self.path(self.make_path('foo', 'example.Py')),
                           self.path(self.make_path('foo', 'setup.py'))])
 
+    @unittest.skipIf(is_windows, 'Posix specific test')
     def test_glob_case_posix(self):
         self.check_posix_only()
         self.create_file(self.make_path('foo', 'setup.py'))
