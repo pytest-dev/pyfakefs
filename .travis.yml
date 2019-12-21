@@ -35,7 +35,7 @@ jobs:
       script:
         - ./.travis/run_tests.sh
         - ./.travis/run_pytest_plugin_test.sh
-      python: 3.5
+      python: 3.5.9
       env:
         - PYTHON=py35
         - PY_VERSION=3.5.9
@@ -45,7 +45,7 @@ jobs:
         - ./.travis/run_tests.sh
         - ./.travis/run_pytest_fixture_test.sh
         - ./.travis/run_pytest_plugin_test.sh
-      python: 3.6
+      python: 3.6.9
       env:
         - PYTHON=py36
         - PY_VERSION=3.6.9
@@ -55,7 +55,7 @@ jobs:
         - ./.travis/run_tests.sh
         - ./.travis/run_pytest_fixture_test.sh
         - ./.travis/run_pytest_plugin_test.sh
-      python: 3.7
+      python: 3.7.5
       dist: xenial
       sudo: true
       env:
@@ -67,12 +67,12 @@ jobs:
         - ./.travis/run_tests.sh
         - ./.travis/run_pytest_fixture_test.sh
         - ./.travis/run_pytest_plugin_test.sh
-      python: 3.8
+      python: 3.8.1
       dist: xenial
       sudo: true
       env:
         - PYTHON=py38
-        - PY_VERSION=3.8.0
+        - PY_VERSION=3.8.1
 
     - stage: test
       script:
@@ -120,7 +120,7 @@ jobs:
       language: generic
       env:
         - PYTHON=py37
-        - PY_VERSION=3.7.5
+        - PY_VERSION=3.7.6
 
     - stage: test
       script:
@@ -131,7 +131,7 @@ jobs:
       language: generic
       env:
         - PYTHON=py38
-        - PY_VERSION=3.8.0
+        - PY_VERSION=3.8.1
 
     - stage: test
       script:

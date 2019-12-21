@@ -28,8 +28,9 @@ Note: as the implementation is based on FakeFilesystem, all faked classes
 (including PurePosixPath, PosixPath, PureWindowsPath and WindowsPath)
 get the properties of the underlying fake filesystem.
 """
-
+import fnmatch
 import os
+import re
 
 try:
     from urllib.parse import quote_from_bytes as urlquote_from_bytes
@@ -405,6 +406,9 @@ class _FakeWindowsFlavour(_FakeFlavour):
                     userhome = self.join(parts)
         return userhome
 
+    def compile_pattern(self, pattern):
+        return re.compile(fnmatch.translate(pattern), re.IGNORECASE).fullmatch
+
 
 class _FakePosixFlavour(_FakeFlavour):
     """Flavour used by PurePosixPath with some Unix specific implementations
@@ -435,6 +439,9 @@ class _FakePosixFlavour(_FakeFlavour):
             except KeyError:
                 raise RuntimeError("Can't determine home directory "
                                    "for %r" % username)
+
+    def compile_pattern(self, pattern):
+        return re.compile(fnmatch.translate(pattern)).fullmatch
 
 
 path_module = pathlib.Path if pathlib else object

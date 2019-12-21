@@ -10,21 +10,31 @@ the proposed changes so you can be ready.
   * pyfakefs 4.0 drops support for Python 2.7. If you still need
     Python 2.7, you can continue to use the latest pyfakefs 3.x version. 
 
+## [Version 3.7.1](https://pypi.python.org/pypi/pyfakefs/3.7.1)
+
+This version adds support for Python 3.7.6 and 3.8.1.
+
+#### Fixes
+  * Adapted fake `pathlib` to changes in Python 3.7.6/3.8.1   
+    (see [#508](../../issues/508))
+    
 ## [Version 3.7](https://pypi.python.org/pypi/pyfakefs/3.7)
+
+#### Fixes
 
 This version adds support for Python 3.8.
 
 _Note:_ This is the last pyfakefs version that will support Python 2.7 
 and Python 3.4 (possible bug fix releases notwithstanding).
 
-### Enhancements
+#### Enhancements
   * added support for Python 3.8 (see [#504](../../issues/504))
   * added preliminary support for Windows-specific `os.stat_result` attributes
     `tst_file_attributes` and `st_reparse_tag` (see [#504](../../issues/504))
   * added support for fake `os.sendfile` (Posix only, Python 3 only)
     (see [#504](../../issues/504))
 
-### Fixes
+#### Fixes
   * support `devnull` in Windows under Python 3.8
     (see [#504](../../issues/504)) 
   * fixed side effect of calling `DirEntry.stat()` under Windows (changed 
@@ -36,13 +46,13 @@ and Python 3.4 (possible bug fix releases notwithstanding).
   * raise for `os.scandir` with non-existing directory
     (see [#498](../../issues/498))
     
-### Infrastructure
+#### Infrastructure
   * fixed CI tests scripts to always propagate errors
     (see [#500](../../issues/500))
 
 ## [Version 3.6.1](https://pypi.python.org/pypi/pyfakefs/3.6.1)
 
-### Fixes
+#### Fixes
   * avoid rare side effect during module iteration in test setup
     (see [#338](../../issues/338))
   * make sure real OS tests are not executed by default 
