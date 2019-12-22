@@ -22,6 +22,14 @@ the proposed changes so you can be ready.
   * Adapted fake `pathlib` to changes in Python 3.7.6/3.8.1   
     (see [#508](../../issues/508))
 
+## [Version 3.7.1](https://pypi.python.org/pypi/pyfakefs/3.7.1)
+
+This version adds support for Python 3.7.6 and 3.8.1.
+
+#### Fixes
+  * Adapted fake `pathlib` to changes in Python 3.7.6/3.8.1   
+    (see [#508](../../issues/508)) (backported from master)
+    
 ## [Version 3.7](https://pypi.python.org/pypi/pyfakefs/3.7)
 
 This version adds support for Python 3.8.
