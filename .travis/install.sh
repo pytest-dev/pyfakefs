@@ -13,32 +13,31 @@ if [[ $TRAVIS_OS_NAME == 'osx' ]]; then
     eval "$(pyenv init -)"
 
     case "${PYTHON}" in
-        py27)
-            curl -O https://bootstrap.pypa.io/get-pip.py
-            python get-pip.py --user
-            ;;
         py34|py35|py36|py37|py38)
-            pyenv install ${PY_VERSION}
-            pyenv global ${PY_VERSION}
-            echo Checking Python version...
-            if [ "`python --version`" != "Python ${PY_VERSION}" ]
-            then
-                echo Incorrect version - expected ${PY_VERSION}.
-                echo Exiting.
-                exit 1
-            fi
-            echo Python version ok.
+            pyenv install "${PY_VERSION}"
+            pyenv global "${PY_VERSION}"
             ;;
         pypy*)
             pyenv install "$PYPY_VERSION"
             pyenv global "$PYPY_VERSION"
             ;;
     esac
-
     pyenv rehash
     python -m pip install --user virtualenv
     python -m virtualenv ~/.venv
     source ~/.venv/bin/activate
+fi
+
+if [ -n "$PY_VERSION" ]
+then
+  echo Checking Python version...
+  if [ "$(python --version)" != "Python ${PY_VERSION}" ]
+  then
+      echo Incorrect version - expected "${PY_VERSION}".
+      echo Exiting.
+      exit 1
+  fi
+  echo Python version ok.
 fi
 
 if ! [[ $VM == 'Docker' ]]; then
