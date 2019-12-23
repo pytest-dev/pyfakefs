@@ -98,8 +98,9 @@ be set in the TestCase instance initialization, or passed to ``setUpPyfakefs()``
 
 .. note:: If you need these arguments in ``PyTest``, you can pass them using
   ``@pytest.mark.parametrize``. Note that you have to also provide
-  all arguments before the needed ones, as keyword arguments cannot be used,
-  and you have to add ``indirect=True`` as argument.
+  `all Patcher arguments <http://jmcgeheeiv.github.io/pyfakefs/master/modules.html#pyfakefs.fake_filesystem_unittest.Patcher>`__
+  before the needed ones, as keyword arguments cannot be used, and you have to
+  add ``indirect=True`` as argument.
   Alternatively, you can add your own fixture with the needed parameters.
 
   Examples for the first approach can be found below, and in
@@ -205,7 +206,7 @@ Given that the example code shown above is located in the file
   @pytest.mark.parametrize('fs', [[None, [example.sut]]], indirect=True)
   def test_path_exists(fs):
       file_path = '/foo/bar'
-      fs_reload_sut.create_dir(file_path)
+      fs.create_dir(file_path)
       assert example.sut.check_if_exists(file_path)
 
   # example using Patcher
