@@ -15,6 +15,7 @@ the proposed changes so you can be ready.
   
 #### New Features
   * Added support for handling keyword-only arguments in some `os` functions
+  * Added possibility to pass additional parameters to `fs` pytest fixture
   
 #### Fixes
   * Fixed behavior of `os.makedirs` in write-protected directory 

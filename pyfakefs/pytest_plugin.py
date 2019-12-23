@@ -30,9 +30,13 @@ Patcher.SKIPMODULES.add(tokenize)
 
 
 @pytest.fixture
-def fs():
+def fs(request):
     """ Fake filesystem. """
-    patcher = Patcher()
+    if hasattr(request, 'param'):
+        # pass optional parameters via @pytest.mark.parametrize
+        patcher = Patcher(*request.param)
+    else:
+        patcher = Patcher()
     patcher.setUp()
     tokenize._builtin_open = patcher.original_open
     yield patcher.fs

@@ -37,6 +37,7 @@ jobs:
       script:
         - ./.travis/run_tests.sh
         - ./.travis/run_pytest_fixture_test.sh
+        - ./.travis/run_pytest_fixture_param_test.sh
         - ./.travis/run_pytest_plugin_test.sh
       python: 3.6.9
       env:
@@ -47,6 +48,7 @@ jobs:
       script:
         - ./.travis/run_tests.sh
         - ./.travis/run_pytest_fixture_test.sh
+        - ./.travis/run_pytest_fixture_param_test.sh
         - ./.travis/run_pytest_plugin_test.sh
       python: 3.7.5
       dist: xenial
@@ -59,6 +61,7 @@ jobs:
       script:
         - ./.travis/run_tests.sh
         - ./.travis/run_pytest_fixture_test.sh
+        - ./.travis/run_pytest_fixture_param_test.sh
         - ./.travis/run_pytest_plugin_test.sh
       python: 3.8.1
       dist: xenial
@@ -80,6 +83,7 @@ jobs:
       script:
         - ./.travis/run_tests.sh
         - ./.travis/run_pytest_fixture_test.sh
+        - ./.travis/run_pytest_fixture_param_test.sh
         - ./.travis/run_pytest_plugin_test.sh
       os: osx
       language: generic
@@ -91,6 +95,7 @@ jobs:
       script:
         - ./.travis/run_tests.sh
         - ./.travis/run_pytest_fixture_test.sh
+        - ./.travis/run_pytest_fixture_param_test.sh
         - ./.travis/run_pytest_plugin_test.sh
       os: osx
       language: generic
@@ -102,6 +107,7 @@ jobs:
       script:
         - ./.travis/run_tests.sh
         - ./.travis/run_pytest_fixture_test.sh
+        - ./.travis/run_pytest_fixture_param_test.sh
         - ./.travis/run_pytest_plugin_test.sh
       os: osx
       language: generic

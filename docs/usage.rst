@@ -96,11 +96,15 @@ the box.
 In case of ``fake_filesystem_unittest.TestCase``, these arguments can either
 be set in the TestCase instance initialization, or passed to ``setUpPyfakefs()``.
 
-.. note:: If you need these arguments in ``PyTest``, you must
-  use ``Patcher`` directly instead of the ``fs`` fixture. Alternatively,
-  you can add your own fixture with the needed parameters.
+.. note:: If you need these arguments in ``PyTest``, you can pass them using
+  ``@pytest.mark.parametrize``. Note that you have to also provide
+  all arguments before the needed ones, as keyword arguments cannot be used,
+  and you have to add ``indirect=True`` as argument.
+  Alternatively, you can add your own fixture with the needed parameters.
 
-  An example for both approaches can be found in
+  Examples for the first approach can be found below, and in
+  `pytest_fixture_param_test.py <https://github.com/jmcgeheeiv/pyfakefs/blob/master/pyfakefs/pytest_tests/pytest_fixture_param_test.py>`__.
+  The second approach is shown in
   `pytest_fixture_test.py <https://github.com/jmcgeheeiv/pyfakefs/blob/master/pyfakefs/pytest_tests/pytest_fixture_test.py>`__
   with the example fixture in `conftest.py <https://github.com/jmcgeheeiv/pyfakefs/blob/master/pyfakefs/pytest_tests/conftest.py>`__.
   We advice to use this example fixture code as a template for your customized
@@ -185,6 +189,8 @@ Given that the example code shown above is located in the file
 
 .. code:: python
 
+  import example
+
   # example using unittest
   class ReloadModuleTest(fake_filesystem_unittest.TestCase):
       def setUp(self):
@@ -195,36 +201,19 @@ Given that the example code shown above is located in the file
           self.fs.create_dir(file_path)
           self.assertTrue(example.sut.check_if_exists(file_path))
 
+  # example using pytest
+  @pytest.mark.parametrize('fs', [[None, [example.sut]]], indirect=True)
+  def test_path_exists(fs):
+      file_path = '/foo/bar'
+      fs_reload_sut.create_dir(file_path)
+      assert example.sut.check_if_exists(file_path)
+
   # example using Patcher
   def test_path_exists():
       with Patcher() as patcher:
         file_path = '/foo/bar'
         patcher.fs.create_dir(file_path)
         assert example.sut.check_if_exists(file_path)
-
-Example using pytest:
-
-.. code:: python
-
-  # conftest.py
-  ...
-  from example import sut
-
-  @pytest.fixture
-  def fs_reload_sut():
-      patcher = Patcher(modules_to_reload=[sut])
-      patcher.setUp()
-      linecache.open = patcher.original_open
-      tokenize._builtin_open = patcher.original_open
-      yield patcher.fs
-      patcher.tearDown()
-
-  # test_code.py
-  ...
-  def test_path_exists(fs_reload_sut):
-      file_path = '/foo/bar'
-      fs_reload_sut.create_dir(file_path)
-      assert example.sut.check_if_exists(file_path)
 
 
 modules_to_patch
@@ -273,8 +262,14 @@ fake a module in Django that uses OS file system functions:
       def setUp(self):
           self.setUpPyfakefs(modules_to_patch={'django.core.files.locks': FakeLocks})
 
-      def test_django_stuff()
+      def test_django_stuff(self)
           ...
+
+  # test code using pytest
+  @pytest.mark.parametrize('fs', [[None, None,
+    {'django.core.files.locks': FakeLocks}]], indirect=True)
+  def test_django_stuff(fs):
+      ...
 
 additional_skip_names
 ~~~~~~~~~~~~~~~~~~~~~
