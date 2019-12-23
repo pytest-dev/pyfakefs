@@ -139,8 +139,9 @@ be set in the TestCase instance initialization, or passed to <code class="docuti
 <p class="first admonition-title">Note</p>
 <p>If you need these arguments in <code class="docutils literal"><span class="pre">PyTest</span></code>, you can pass them using
 <code class="docutils literal"><span class="pre">&#64;pytest.mark.parametrize</span></code>. Note that you have to also provide
-all arguments before the needed ones, as keyword arguments cannot be used,
-and you have to add <code class="docutils literal"><span class="pre">indirect=True</span></code> as argument.
+<a class="reference external" href="http://jmcgeheeiv.github.io/pyfakefs/master/modules.html#pyfakefs.fake_filesystem_unittest.Patcher">all Patcher arguments</a>
+before the needed ones, as keyword arguments cannot be used, and you have to
+add <code class="docutils literal"><span class="pre">indirect=True</span></code> as argument.
 Alternatively, you can add your own fixture with the needed parameters.</p>
 <p class="last">Examples for the first approach can be found below, and in
 <a class="reference external" href="https://github.com/jmcgeheeiv/pyfakefs/blob/master/pyfakefs/pytest_tests/pytest_fixture_param_test.py">pytest_fixture_param_test.py</a>.
@@ -233,7 +234,7 @@ will be patched using this second mechanism.</p>
 <span class="nd">@pytest</span><span class="o">.</span><span class="n">mark</span><span class="o">.</span><span class="n">parametrize</span><span class="p">(</span><span class="s1">&#39;fs&#39;</span><span class="p">,</span> <span class="p">[[</span><span class="kc">None</span><span class="p">,</span> <span class="p">[</span><span class="n">example</span><span class="o">.</span><span class="n">sut</span><span class="p">]]],</span> <span class="n">indirect</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 <span class="k">def</span> <span class="nf">test_path_exists</span><span class="p">(</span><span class="n">fs</span><span class="p">):</span>
     <span class="n">file_path</span> <span class="o">=</span> <span class="s1">&#39;/foo/bar&#39;</span>
-    <span class="n">fs_reload_sut</span><span class="o">.</span><span class="n">create_dir</span><span class="p">(</span><span class="n">file_path</span><span class="p">)</span>
+    <span class="n">fs</span><span class="o">.</span><span class="n">create_dir</span><span class="p">(</span><span class="n">file_path</span><span class="p">)</span>
     <span class="k">assert</span> <span class="n">example</span><span class="o">.</span><span class="n">sut</span><span class="o">.</span><span class="n">check_if_exists</span><span class="p">(</span><span class="n">file_path</span><span class="p">)</span>
 
 <span class="c1"># example using Patcher</span>
