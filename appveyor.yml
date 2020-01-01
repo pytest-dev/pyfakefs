@@ -18,6 +18,7 @@ test_script:
   - "%PYTHON%\\python.exe -m pyfakefs.tests.all_tests"
   - "%PYTHON%\\python.exe -m pyfakefs.tests.all_tests_without_extra_packages"
   - "%PYTHON%\\python.exe -m pytest pyfakefs\\pytest_tests\\pytest_plugin_test.py"
-  - IF "C:\\Python36-x64"=="%PYTHON%" "%PYTHON%\\python.exe -m pytest pyfakefs\\pytest_tests\\pytest_fixture_test.py"
+  - ps: If ($env:PYTHON -Match ".*3[678]-x64") { "$env:PYTHON\\python.exe -m pytest pyfakefs\\pytest_tests\\pytest_fixture_test.py" }
+  - ps: If ($env:PYTHON -Match ".*3[678]-x64") { "$env:PYTHON\\python.exe -m pytest pyfakefs\\pytest_tests\\pytest_fixture_param_test.py" }
   - "%PYTHON%\\python.exe -m pytest pyfakefs\\pytest_tests\\pytest_plugin_failing_test.py > testresult.txt | echo."
   - "%PYTHON%\\python.exe -m pytest pyfakefs\\pytest_tests\\pytest_check_failed_plugin_test.py"
