@@ -1166,7 +1166,7 @@ class FakeFileOpenLineEndingTest(FakeFileOpenTestBase):
                 if ix == -1:
                     yield file_contents[px:]
                     return
-                yield file_contents[px:ix+1]
+                yield file_contents[px:ix + 1]
                 px = ix + 1
 
         chunked_contents = list(chunk_line())
@@ -1424,10 +1424,9 @@ class OpenWithInvalidFlagsRealFsTest(OpenWithInvalidFlagsTest):
 
 
 class ResolvePathTest(FakeFileOpenTestBase):
-    def _write_to_file(self, file_name):
-        fh = self.open(file_name, 'w')
-        fh.write('x')
-        fh.close()
+    def write_to_file(self, file_name):
+        with self.open(file_name, 'w') as fh:
+            fh.write('x')
 
     def test_none_filepath_raises_type_error(self):
         self.assertRaises(TypeError, self.open, None, 'w')
@@ -1436,179 +1435,212 @@ class ResolvePathTest(FakeFileOpenTestBase):
         self.assertRaises(IOError, self.open, '', 'w')
 
     def test_normal_path(self):
-        self._write_to_file('foo')
-        self.assertTrue(self.filesystem.exists('foo'))
+        file_path = self.make_path('foo')
+        self.write_to_file(file_path)
+        self.assertTrue(self.os.path.exists(file_path))
 
     def test_link_within_same_directory(self):
         self.skip_if_symlink_not_supported()
-        final_target = '!foo!baz'
-        self.filesystem.create_symlink('!foo!bar', 'baz')
-        self._write_to_file('!foo!bar')
-        self.assertTrue(self.filesystem.exists(final_target))
+        final_target = self.make_path('foo', 'baz')
+        link_path = self.make_path('foo', 'bar')
+        self.create_symlink(link_path, 'baz')
+        self.write_to_file(link_path)
+        self.assertTrue(self.os.path.exists(final_target))
         self.assertEqual(1, self.os.stat(final_target)[stat.ST_SIZE])
 
     def test_link_to_sub_directory(self):
         self.skip_if_symlink_not_supported()
-        final_target = '!foo!baz!bip'
-        self.filesystem.create_dir('!foo!baz')
-        self.filesystem.create_symlink('!foo!bar', 'baz!bip')
-        self._write_to_file('!foo!bar')
-        self.assertTrue(self.filesystem.exists(final_target))
+        final_target = self.make_path('foo', 'baz', 'bip')
+        dir_path = self.make_path('foo', 'baz')
+        self.create_dir(dir_path)
+        link_path = self.make_path('foo', 'bar')
+        target_path = self.os.path.join('baz', 'bip')
+        self.create_symlink(link_path, target_path)
+        self.write_to_file(link_path)
+        self.assertTrue(self.os.path.exists(final_target))
         self.assertEqual(1, self.os.stat(final_target)[stat.ST_SIZE])
-        self.assertTrue(self.filesystem.exists('!foo!baz'))
+        self.assertTrue(self.os.path.exists(dir_path))
         # Make sure that intermediate directory got created.
-        new_dir = self.filesystem.get_object('!foo!baz')
-        self.assertTrue(stat.S_IFDIR & new_dir.st_mode)
+        self.assertTrue(self.os.stat(dir_path)[stat.ST_MODE] & stat.S_IFDIR)
 
     def test_link_to_parent_directory(self):
         self.skip_if_symlink_not_supported()
-        final_target = '!baz!bip'
-        self.filesystem.create_dir('!foo')
-        self.filesystem.create_dir('!baz')
-        self.filesystem.create_symlink('!foo!bar', '..!baz')
-        self._write_to_file('!foo!bar!bip')
-        self.assertTrue(self.filesystem.exists(final_target))
+        final_target = self.make_path('baz', 'bip')
+        self.create_dir(self.make_path('foo'))
+        self.create_dir(self.make_path('baz'))
+        link_path = self.make_path('foo', 'bar')
+        self.create_symlink(link_path, self.os.path.join('..', 'baz'))
+        self.write_to_file(self.make_path('foo', 'bar', 'bip'))
+        self.assertTrue(self.os.path.exists(final_target))
         self.assertEqual(1, self.os.stat(final_target)[stat.ST_SIZE])
-        self.assertTrue(self.filesystem.exists('!foo!bar'))
+        self.assertTrue(self.os.path.exists(link_path))
 
     def test_link_to_absolute_path(self):
         self.skip_if_symlink_not_supported()
-        final_target = '!foo!baz!bip'
-        self.filesystem.create_dir('!foo!baz')
-        self.filesystem.create_symlink('!foo!bar', final_target)
-        self._write_to_file('!foo!bar')
-        self.assertTrue(self.filesystem.exists(final_target))
+        final_target = self.make_path('foo', 'baz', 'bip')
+        self.create_dir(self.make_path('foo', 'baz'))
+        link_path = self.make_path('foo', 'bar')
+        self.create_symlink(link_path, final_target)
+        self.write_to_file(link_path)
+        self.assertTrue(self.os.path.exists(final_target))
 
     def test_relative_links_work_after_chdir(self):
         self.skip_if_symlink_not_supported()
-        final_target = '!foo!baz!bip'
-        self.filesystem.create_dir('!foo!baz')
-        self.filesystem.create_symlink('!foo!bar', '.!baz!bip')
-        self.assertEqual(final_target,
-                         self.filesystem.resolve_path('!foo!bar'))
+        final_target = self.make_path('foo', 'baz', 'bip')
+        self.create_dir(self.make_path('foo', 'baz'))
+        link_path = self.make_path('foo', 'bar')
+        self.create_symlink(link_path, self.os.path.join('.', 'baz', 'bip'))
+        if not self.is_windows:
+            self.assert_equal_paths(
+                final_target, self.os.path.realpath(link_path))
 
-        self.assertTrue(self.os.path.islink('!foo!bar'))
-        self.os.chdir('!foo')
-        self.assertEqual('!foo', self.os.getcwd())
+        self.assertTrue(self.os.path.islink(link_path))
+        self.os.chdir(self.make_path('foo'))
+        self.assert_equal_paths(self.make_path('foo'), self.os.getcwd())
         self.assertTrue(self.os.path.islink('bar'))
+        if not self.is_windows:
+            self.assert_equal_paths(final_target, self.os.path.realpath('bar'))
 
-        self.assertEqual('!foo!baz!bip',
-                         self.filesystem.resolve_path('bar'))
-
-        self._write_to_file('!foo!bar')
-        self.assertTrue(self.filesystem.exists(final_target))
+        self.write_to_file(link_path)
+        self.assertTrue(self.os.path.exists(final_target))
 
     def test_absolute_links_work_after_chdir(self):
         self.skip_if_symlink_not_supported()
-        final_target = '!foo!baz!bip'
-        self.filesystem.create_dir('!foo!baz')
-        self.filesystem.create_symlink('!foo!bar', final_target)
-        self.assertEqual(final_target,
-                         self.filesystem.resolve_path('!foo!bar'))
+        final_target = self.make_path('foo', 'baz', 'bip')
+        self.create_dir(self.make_path('foo', 'baz'))
+        link_path = self.make_path('foo', 'bar')
+        self.create_symlink(link_path, final_target)
+        if not self.is_windows:
+            self.assert_equal_paths(
+                final_target, self.os.path.realpath(link_path))
 
-        os_module = fake_filesystem.FakeOsModule(self.filesystem)
-        self.assertTrue(os_module.path.islink('!foo!bar'))
-        os_module.chdir('!foo')
-        self.assertEqual('!foo', os_module.getcwd())
-        self.assertTrue(os_module.path.islink('bar'))
+        self.assertTrue(self.os.path.islink(link_path))
+        self.os.chdir(self.make_path('foo'))
+        self.assert_equal_paths(self.make_path('foo'), self.os.getcwd())
+        self.assertTrue(self.os.path.islink('bar'))
+        if not self.is_windows:
+            self.assert_equal_paths(final_target, self.os.path.realpath('bar'))
 
-        self.assertEqual('!foo!baz!bip',
-                         self.filesystem.resolve_path('bar'))
-
-        self._write_to_file('!foo!bar')
-        self.assertTrue(self.filesystem.exists(final_target))
+        self.write_to_file(link_path)
+        self.assertTrue(self.os.path.exists(final_target))
 
     def test_chdir_through_relative_link(self):
-        self.skip_if_symlink_not_supported()
-        self.filesystem.create_dir('!x!foo')
-        self.filesystem.create_dir('!x!bar')
-        self.filesystem.create_symlink('!x!foo!bar', '..!bar')
-        self.assertEqual('!x!bar', self.filesystem.resolve_path('!x!foo!bar'))
+        self.check_posix_only()
+        dir1_path = self.make_path('x', 'foo')
+        dir2_path = self.make_path('x', 'bar')
+        self.create_dir(dir1_path)
+        self.create_dir(dir2_path)
+        link_path = self.make_path('x', 'foo', 'bar')
+        self.create_symlink(link_path,
+                            self.os.path.join('..', 'bar'))
+        self.assert_equal_paths(dir2_path, self.os.path.realpath(link_path))
 
-        self.os.chdir('!x!foo')
-        self.assertEqual('!x!foo', self.os.getcwd())
-        self.assertEqual('!x!bar', self.filesystem.resolve_path('bar'))
+        self.os.chdir(dir1_path)
+        self.assert_equal_paths(dir1_path, self.os.getcwd())
+        self.assert_equal_paths(dir2_path, self.os.path.realpath('bar'))
 
         self.os.chdir('bar')
-        self.assertEqual('!x!bar', self.os.getcwd())
+        self.assert_equal_paths(dir2_path, self.os.getcwd())
 
     def test_chdir_uses_open_fd_as_path(self):
-        self.filesystem.is_windows_fs = False
-        self.assert_raises_os_error(errno.EBADF, self.os.chdir, 5)
-        dir_path = '!foo!bar'
-        self.filesystem.create_dir(dir_path)
+        self.check_posix_only()
+        if self.is_pypy:
+            # unclear behavior with PyPi
+            self.skip_real_fs()
+        self.assert_raises_os_error(errno.EBADF, self.os.chdir, 10)
+        dir_path = self.make_path('foo', 'bar')
+        self.create_dir(dir_path)
 
         path_des = self.os.open(dir_path, os.O_RDONLY)
         self.os.chdir(path_des)
         self.os.close(path_des)
-        self.assertEqual(dir_path, self.os.getcwd())
+        self.assert_equal_paths(dir_path, self.os.getcwd())
 
     def test_read_link_to_link(self):
         # Write into the final link target and read back from a file which will
         # point to that.
         self.skip_if_symlink_not_supported()
-        self.filesystem.create_symlink('!foo!bar', 'link')
-        self.filesystem.create_symlink('!foo!link', 'baz')
-        self._write_to_file('!foo!baz')
-        fh = self.open('!foo!bar', 'r')
+        link_path = self.make_path('foo', 'bar')
+        self.create_symlink(link_path, 'link')
+        self.create_symlink(self.make_path('foo', 'link'), 'baz')
+        self.write_to_file(self.make_path('foo', 'baz'))
+        fh = self.open(link_path, 'r')
         self.assertEqual('x', fh.read())
 
     def test_write_link_to_link(self):
         self.skip_if_symlink_not_supported()
-        final_target = '!foo!baz'
-        self.filesystem.create_symlink('!foo!bar', 'link')
-        self.filesystem.create_symlink('!foo!link', 'baz')
-        self._write_to_file('!foo!bar')
-        self.assertTrue(self.filesystem.exists(final_target))
+        final_target = self.make_path('foo', 'baz')
+        link_path = self.make_path('foo', 'bar')
+        self.create_symlink(link_path, 'link')
+        self.create_symlink(self.make_path('foo', 'link'), 'baz')
+        self.write_to_file(link_path)
+        self.assertTrue(self.os.path.exists(final_target))
 
     def test_multiple_links(self):
         self.skip_if_symlink_not_supported()
-        self.os.makedirs('!a!link1!c!link2')
+        self.os.makedirs(self.make_path('a', 'link1', 'c', 'link2'))
 
-        self.filesystem.create_symlink('!a!b', 'link1')
-        self.assertEqual('!a!link1', self.filesystem.resolve_path('!a!b'))
-        self.assertEqual('!a!link1!c', self.filesystem.resolve_path('!a!b!c'))
+        self.create_symlink(self.make_path('a', 'b'), 'link1')
 
-        self.filesystem.create_symlink('!a!link1!c!d', 'link2')
-        self.assertTrue(self.filesystem.exists('!a!link1!c!d'))
-        self.assertTrue(self.filesystem.exists('!a!b!c!d'))
+        if not self.is_windows:
+            self.assert_equal_paths(self.make_path('a', 'link1'),
+                                    self.os.path.realpath(
+                                        self.make_path('a', 'b')))
+            self.assert_equal_paths(self.make_path('a', 'link1', 'c'),
+                                    self.os.path.realpath(
+                                        self.make_path('a', 'b', 'c')))
 
-        final_target = '!a!link1!c!link2!e'
-        self.assertFalse(self.filesystem.exists(final_target))
-        self._write_to_file('!a!b!c!d!e')
-        self.assertTrue(self.filesystem.exists(final_target))
+        link_path = self.make_path('a', 'link1', 'c', 'd')
+        self.create_symlink(link_path, 'link2')
+        self.assertTrue(self.os.path.exists(link_path))
+        self.assertTrue(self.os.path.exists(
+            self.make_path('a', 'b', 'c', 'd')))
+
+        final_target = self.make_path('a', 'link1', 'c', 'link2', 'e')
+        self.assertFalse(self.os.path.exists(final_target))
+        self.write_to_file(self.make_path('a', 'b', 'c', 'd', 'e'))
+        self.assertTrue(self.os.path.exists(final_target))
 
     def test_utime_link(self):
         """os.utime() and os.stat() via symbolic link (issue #49)"""
         self.skip_if_symlink_not_supported()
-        self.filesystem.create_dir('!foo!baz')
-        self._write_to_file('!foo!baz!bip')
-        link_name = '!foo!bar'
-        self.filesystem.create_symlink(link_name, '!foo!baz!bip')
+        self.create_dir(self.make_path('foo', 'baz'))
+        target_path = self.make_path('foo', 'baz', 'bip')
+        self.write_to_file(target_path)
+        link_name = self.make_path('foo', 'bar')
+        self.create_symlink(link_name, target_path)
 
-        self.os.utime(link_name, times=(1, 2))
+        self.os.utime(link_name, (1, 2))
         st = self.os.stat(link_name)
         self.assertEqual(1, st.st_atime)
         self.assertEqual(2, st.st_mtime)
-        self.os.utime(link_name, times=(3, 4))
+        self.os.utime(link_name, (3, 4))
         st = self.os.stat(link_name)
         self.assertEqual(3, st.st_atime)
         self.assertEqual(4, st.st_mtime)
 
     def test_too_many_links(self):
-        self.filesystem.is_windows_fs = False
-        self.filesystem.create_symlink('!a!loop', 'loop')
-        self.assertFalse(self.filesystem.exists('!a!loop'))
+        self.check_posix_only()
+        link_path = self.make_path('a', 'loop')
+        self.create_symlink(link_path, 'loop')
+        self.assertFalse(self.os.path.exists(link_path))
 
     def test_that_drive_letters_are_preserved(self):
-        self.filesystem.is_windows_fs = True
+        self.check_windows_only()
+        self.skip_real_fs()
         self.assertEqual('C:!foo!bar',
                          self.filesystem.resolve_path('C:!foo!!bar'))
 
     def test_that_unc_paths_are_preserved(self):
-        self.filesystem.is_windows_fs = True
+        self.check_windows_only()
+        self.skip_real_fs()
         self.assertEqual('!!foo!bar!baz',
                          self.filesystem.resolve_path('!!foo!bar!baz!!'))
+
+
+class RealResolvePathTest(ResolvePathTest):
+    def use_real_fs(self):
+        return True
 
 
 if __name__ == '__main__':

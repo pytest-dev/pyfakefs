@@ -72,8 +72,14 @@ class TestCase(unittest.TestCase):
             self.assertEqual(subtype, exc.errno)
 
     def assert_equal_paths(self, actual, expected):
-        self.assertEqual(actual.replace('\\\\?\\', ''),
-                         expected.replace('\\\\?\\', ''))
+        if self.is_windows:
+            self.assertEqual(actual.replace('\\\\?\\', ''),
+                             expected.replace('\\\\?\\', ''))
+        elif self.is_macos:
+            self.assertEqual(actual.replace('/private/var/', '/var/'),
+                             expected.replace('/private/var/', '/var/'))
+        else:
+            self.assertEqual(actual, expected)
 
 
 class RealFsTestMixin:
