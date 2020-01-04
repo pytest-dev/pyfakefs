@@ -12,42 +12,30 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# Prerequisites:
-# * Install Docker
-# * Clone pyfakefs
-#
-# To build and run the container:
-#
-#     cd pyfakefs
-#     docker build -t pyfakefs .
-#     docker run   -t pyfakefs
-
-FROM ubuntu
+FROM centos:7
 MAINTAINER jmcgeheeiv@users.noreply.github.com
 
-# The Ubuntu base container does not specify a locale.
-# pyfakefs tests require at least the Latin1 character set.
-RUN apt-get update && apt-get install -y locales
-RUN locale-gen en_US.UTF-8
 ENV LANG en_US.UTF-8
 ENV LANGUAGE en_US:en
 ENV LC_ALL en_US.UTF-8
 
-RUN apt-get update && apt-get install -y \
-    python3-pip \
-    unzip \
-    wget
-RUN apt-get clean
+ARG github_repo=jmcgeheeiv/pyfakefs
+ARG github_branch=master
+
+RUN yum install -y python3-pip unzip wget
 
 RUN useradd -u 1000 pyfakefs
 
-RUN wget https://github.com/jmcgeheeiv/pyfakefs/archive/master.zip \
-    && unzip master.zip \
-    && chown -R pyfakefs:pyfakefs /pyfakefs-master
-WORKDIR /pyfakefs-master
+RUN mkdir -p work \
+    && wget https://github.com/$github_repo/archive/$github_branch.zip \
+    && unzip $github_branch.zip -d work
+RUN WORK_DIR=`ls -d work/*`; mv $WORK_DIR work/pyfakefs
+RUN chown -R pyfakefs:pyfakefs work/pyfakefs
+WORKDIR work/pyfakefs
 RUN pip3 install -r requirements.txt
 RUN pip3 install -r extra_requirements.txt
 
 USER pyfakefs
-ENV PYTHONPATH /pyfakefs-master
+ENV PYTHONPATH work/pyfakefs
+ENV TEST_REAL_FS=1
 CMD ["python3", "-m", "pyfakefs.tests.all_tests"]

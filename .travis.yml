@@ -119,4 +119,30 @@ jobs:
       script:
         - ./.travis/docker_tests.sh
       language: minimal
-      env: VM=Docker
+      env:
+        - VM=Docker
+        - DOCKERFILE=ubuntu
+
+    - stage: test
+      script:
+        - ./.travis/docker_tests.sh
+      language: minimal
+      env:
+        - VM=Docker
+        - DOCKERFILE=centos
+
+    - stage: test
+      script:
+        - ./.travis/docker_tests.sh
+      language: minimal
+      env:
+        - VM=Docker
+        - DOCKERFILE=fedora
+
+    - stage: test
+      script:
+        - ./.travis/docker_tests.sh
+      language: minimal
+      env:
+        - VM=Docker
+        - DOCKERFILE=debian

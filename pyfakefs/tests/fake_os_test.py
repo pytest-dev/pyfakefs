@@ -4996,6 +4996,8 @@ class FakeScandirTest(FakeOsModuleTestBase):
                          os.fspath(self.dir_entries[1]))
 
     def test_non_existing_dir(self):
+        # behaves differently in different systems, so we skip the real fs test
+        self.skip_real_fs()
         self.assert_raises_os_error(
             errno.ENOENT, self.scandir, 'non_existing/fake_dir')
 
