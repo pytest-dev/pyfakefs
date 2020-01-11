@@ -98,6 +98,12 @@ class FakeTempfileModuleTest(fake_filesystem_unittest.TestCase):
             self.assertEqual(self.fs.get_object(tmpdir).st_mode,
                              stat.S_IFDIR | 0o700)
 
+    def test_temporary_file(self):
+        with tempfile.TemporaryFile() as f:
+            f.write(b'test')
+            f.seek(0)
+            self.assertEqual(b'test', f.read())
+
 
 if __name__ == '__main__':
     unittest.main()

@@ -3726,8 +3726,10 @@ class FakeOsModule(object):
             else:
                 mode = 0o777 & ~self._umask()
 
+        has_tmpfile_flag = (hasattr(os, 'O_TMPFILE') and
+                            flags & getattr(os, 'O_TMPFILE'))
         open_modes = _OpenModes(
-            must_exist=not flags & os.O_CREAT,
+            must_exist=not flags & os.O_CREAT and not has_tmpfile_flag,
             can_read=not flags & os.O_WRONLY,
             can_write=flags & (os.O_RDWR | os.O_WRONLY),
             truncate=flags & os.O_TRUNC,
