@@ -18,10 +18,12 @@ the proposed changes so you can be ready.
   * Added possibility to pass additional parameters to `fs` pytest fixture
   
 #### Fixes
-  * Fixed behavior of `os.makedirs` in write-protected directory 
-    (see [#507](../../issues/507))
+  * Fixed handling of `os.TMPFILE` flag under Linux
+    (see [#509](../../issues/509))
   * Adapted fake `pathlib` to changes in Python 3.7.6/3.8.1   
     (see [#508](../../issues/508))
+  * Fixed behavior of `os.makedirs` in write-protected directory 
+    (see [#507](../../issues/507))
 
 ## [Version 3.7.1](https://pypi.python.org/pypi/pyfakefs/3.7.1)
 
