@@ -1,7 +1,8 @@
 Introduction
 ============
 
-`pyfakefs <https://github.com/jmcgeheeiv/pyfakefs>`__ implements a fake file system that mocks the Python file system modules.
+`pyfakefs <https://github.com/jmcgeheeiv/pyfakefs>`__ implements a fake file
+system that mocks the Python file system modules.
 Using pyfakefs, your tests operate on a fake file system in memory without touching the real disk.
 The software under test requires no modification to work with pyfakefs.
 
@@ -25,24 +26,59 @@ The latest master can be installed from the GitHub sources:
 
    pip install git+https://github.com/jmcgeheeiv/pyfakefs
 
+Features
+--------
+- Code executed under pyfakefs works transparently on a memory-based file
+  system without the need of special commands. The same code that works on
+  the real filesystem will work on the fake filesystem if running under
+  pyfakefs.
+
+- pyfakefs provides direct support for `unittest` (via a `TestCase` base
+  class) and `pytest` (via a fixture), but can also be used with other test
+  frameworks.
+
+- Each pyfakefs test starts with an empty file system, but it is possible to
+  map files and directories from the real file system into the fake
+  filesystem if needed.
+
+- No files in the real file system are changed during the tests, even in the
+  case of writing to mapped real files.
+
+- pyfakefs keeps track of the filesystem size if configured. The file system
+  size can be configured arbitrarily.
+
+- pyfakefs defaults to the OS it is running on, but can also be configured
+  to test code running under another OS (Linux, MacOS or Windows).
+
+- pyfakefs can be configured to behave as if running as a root or as a
+  non-root user, independently from the actual user.
+
+
 Limitations
 -----------
-pyfakefs will not work with Python libraries that use C libraries to access the
-file system, because it cannot patch the underlying C libraries' file access functions.
+- pyfakefs will not work with Python libraries (other than `os` and `io`) that
+  use C libraries to access the file system, because it cannot patch the
+  underlying C libraries' file access functions.
 
-Depending on the kind of import statements used, pyfakefs may not patch the
-file system modules automatically. See :ref:`customizing_patcher` for more
-information and ways to work around this.
+- pyfakefs patches most kinds of importing file system modules automatically,
+  but there are still some cases where this will not work.
+  See :ref:`customizing_patcher` for more information and ways to work around
+  this.
 
-pyfakefs is only tested with CPython and newest PyPy versions, other Python implementations
-will probably not work.
+- pyfakefs does not retain the MRO for file objects, so you cannot rely on
+  checks using `isinstance` for these objects (for example, to differentiate
+  between binary and textual file objects).
 
-Differences in the behavior in different Linux distributions or different MacOS or Windows versions
-may not be reflected in the implementation, as well as some OS-specific low-level file
-system behavior. The systems used for automatic tests in `Travis.CI
-<https://travis-ci.org/jmcgeheeiv/pyfakefs>`__ and `AppVeyor <https://ci
-.appveyor.com/project/jmcgeheeiv/pyfakefs>`__ are considered as reference
-systems.
+- pyfakefs is only tested with CPython and the newest PyPy versions, other
+  Python implementations will probably not work.
+
+- Differences in the behavior in different Linux distributions or different
+  MacOS or Windows versions may not be reflected in the implementation, as
+  well as some OS-specific low-level file system behavior. The systems used
+  for automatic tests in
+  `Travis.CI <https://travis-ci.org/jmcgeheeiv/pyfakefs>`__ and
+  `AppVeyor <https://ci.appveyor.com/project/jmcgeheeiv/pyfakefs>`__ are
+  considered as reference systems.
 
 History
 -------
