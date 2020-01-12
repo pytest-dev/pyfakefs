@@ -241,7 +241,7 @@ fake a module in Django that uses OS file system functions:
 
 .. code:: python
 
-  class FakeLocks:
+  class FakeLocks(object):
       """django.core.files.locks uses low level OS functions, fake it."""
       _locks_module = django.core.files.locks
 
@@ -280,9 +280,10 @@ additional_skip_names
 ~~~~~~~~~~~~~~~~~~~~~
 This may be used to add modules that shall not be patched. This is mostly
 used to avoid patching the Python file system modules themselves, but may be
-helpful in some special situations, for example if a testrunner needs to access
-the file system after test setup. To make this possible, the affected module
-can be added to ``additional_skip_names``:
+helpful in some special situations, for example if a testrunner is accessing
+the file system after test setup. A known case is erratic behavior if running a
+debug session in PyCharm with Python 2.7, which can be avoided by adding the
+offending module to ``additional_skip_names``:
 
 .. code:: python
 
@@ -343,7 +344,8 @@ with large files).
             with open(file_path) as f:
                 self.assertEqual('test', f.read())
 
-``create_dir()`` behaves like ``os.makedirs()``.
+``create_dir()`` behaves like ``os.makedirs()``, but can also be used in
+Python 2.
 
 Access to files in the real file system
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

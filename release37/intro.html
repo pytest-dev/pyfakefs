@@ -5,13 +5,13 @@
 <html xmlns="http://www.w3.org/1999/xhtml">
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-    <title>Introduction &#8212; pyfakefs 4.0dev documentation</title>
+    <title>Introduction &#8212; pyfakefs 3.7.1 documentation</title>
     <link rel="stylesheet" href="_static/pyfakefs.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    './',
-        VERSION:     '4.0dev',
+        VERSION:     '3.7.1',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true,
@@ -42,7 +42,7 @@
         <li class="right" >
           <a href="index.html" title="Welcome to the pyfakefs documentation!"
              accesskey="P">previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="index.html">pyfakefs 4.0dev documentation</a> &#187;</li> 
+        <li class="nav-item nav-item-0"><a href="index.html">pyfakefs 3.7.1 documentation</a> &#187;</li> 
       </ul>
     </div>  
 
@@ -53,12 +53,12 @@
             
   <div class="section" id="introduction">
 <h1>Introduction<a class="headerlink" href="#introduction" title="Permalink to this headline">¶</a></h1>
-<p><a class="reference external" href="https://github.com/jmcgeheeiv/pyfakefs">pyfakefs</a> implements a fake file
-system that mocks the Python file system modules.
+<p><a class="reference external" href="https://github.com/jmcgeheeiv/pyfakefs">pyfakefs</a> implements a fake file system that mocks the Python file system modules.
 Using pyfakefs, your tests operate on a fake file system in memory without touching the real disk.
 The software under test requires no modification to work with pyfakefs.</p>
-<p>pyfakefs works with CPython 3.5 and above, on Linux, Windows and OSX
-(MacOS), and with PyPy3.</p>
+<p>pyfakefs works with CPython 2.7, 3.4 and above, on Linux, Windows and OSX
+(MacOS), and with PyPy2 and PyPy3. Note that this is the last major release
+that still supports Python 2.7/PyPy2 and Python 3.4.</p>
 <p>pyfakefs works with <a class="reference external" href="doc.pytest.org">PyTest</a> version 2.8.6 or above.</p>
 <div class="section" id="installation">
 <h2>Installation<a class="headerlink" href="#installation" title="Permalink to this headline">¶</a></h2>
@@ -72,52 +72,19 @@ The latest released version can be installed from pypi:</p>
 </pre></div>
 </div>
 </div>
-<div class="section" id="features">
-<h2>Features<a class="headerlink" href="#features" title="Permalink to this headline">¶</a></h2>
-<ul class="simple">
-<li>Code executed under pyfakefs works transparently on a memory-based file
-system without the need of special commands. The same code that works on
-the real filesystem will work on the fake filesystem if running under
-pyfakefs.</li>
-<li>pyfakefs provides direct support for <cite>unittest</cite> (via a <cite>TestCase</cite> base
-class) and <cite>pytest</cite> (via a fixture), but can also be used with other test
-frameworks.</li>
-<li>Each pyfakefs test starts with an empty file system, but it is possible to
-map files and directories from the real file system into the fake
-filesystem if needed.</li>
-<li>No files in the real file system are changed during the tests, even in the
-case of writing to mapped real files.</li>
-<li>pyfakefs keeps track of the filesystem size if configured. The file system
-size can be configured arbitrarily.</li>
-<li>pyfakefs defaults to the OS it is running on, but can also be configured
-to test code running under another OS (Linux, MacOS or Windows).</li>
-<li>pyfakefs can be configured to behave as if running as a root or as a
-non-root user, independently from the actual user.</li>
-</ul>
-</div>
 <div class="section" id="limitations">
 <h2>Limitations<a class="headerlink" href="#limitations" title="Permalink to this headline">¶</a></h2>
-<ul class="simple">
-<li>pyfakefs will not work with Python libraries (other than <cite>os</cite> and <cite>io</cite>) that
-use C libraries to access the file system, because it cannot patch the
-underlying C libraries’ file access functions.</li>
-<li>pyfakefs patches most kinds of importing file system modules automatically,
-but there are still some cases where this will not work.
-See <a class="reference internal" href="usage.html#customizing-patcher"><span class="std std-ref">Customizing Patcher and TestCase</span></a> for more information and ways to work around
-this.</li>
-<li>pyfakefs does not retain the MRO for file objects, so you cannot rely on
-checks using <cite>isinstance</cite> for these objects (for example, to differentiate
-between binary and textual file objects).</li>
-<li>pyfakefs is only tested with CPython and the newest PyPy versions, other
-Python implementations will probably not work.</li>
-<li>Differences in the behavior in different Linux distributions or different
-MacOS or Windows versions may not be reflected in the implementation, as
-well as some OS-specific low-level file system behavior. The systems used
-for automatic tests in
-<a class="reference external" href="https://travis-ci.org/jmcgeheeiv/pyfakefs">Travis.CI</a> and
-<a class="reference external" href="https://ci.appveyor.com/project/jmcgeheeiv/pyfakefs">AppVeyor</a> are
-considered as reference systems.</li>
-</ul>
+<p>pyfakefs will not work with Python libraries that use C libraries to access the
+file system, because it cannot patch the underlying C libraries’ file access functions.</p>
+<p>Depending on the kind of import statements used, pyfakefs may not patch the
+file system modules automatically. See <a class="reference internal" href="usage.html#customizing-patcher"><span class="std std-ref">Customizing Patcher and TestCase</span></a> for more
+information and ways to work around this.</p>
+<p>pyfakefs is only tested with CPython and newest PyPy versions, other Python implementations
+will probably not work.</p>
+<p>Differences in the behavior in different Linux distributions or different MacOS or Windows versions
+may not be reflected in the implementation, as well as some OS-specific low-level file
+system behavior. The systems used for automatic tests in <a class="reference external" href="https://travis-ci.org/jmcgeheeiv/pyfakefs">Travis.CI</a> and <a class="reference external" href="https://ci.appveyor.com/project/jmcgeheeiv/pyfakefs">AppVeyor</a> are considered as reference
+systems.</p>
 </div>
 <div class="section" id="history">
 <h2>History<a class="headerlink" href="#history" title="Permalink to this headline">¶</a></h2>
@@ -155,7 +122,6 @@ community actively maintains and extends pyfakefs.</p>
   <ul>
 <li><a class="reference internal" href="#">Introduction</a><ul>
 <li><a class="reference internal" href="#installation">Installation</a></li>
-<li><a class="reference internal" href="#features">Features</a></li>
 <li><a class="reference internal" href="#limitations">Limitations</a></li>
 <li><a class="reference internal" href="#history">History</a></li>
 </ul>
@@ -204,14 +170,14 @@ community actively maintains and extends pyfakefs.</p>
         <li class="right" >
           <a href="index.html" title="Welcome to the pyfakefs documentation!"
              >previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="index.html">pyfakefs 4.0dev documentation</a> &#187;</li> 
+        <li class="nav-item nav-item-0"><a href="index.html">pyfakefs 3.7.1 documentation</a> &#187;</li> 
       </ul>
     </div>
     <div class="footer" role="contentinfo">
         &#169; Copyright 2009 Google Inc. All Rights Reserved.
 © Copyright 2014 Altera Corporation. All Rights Reserved.
 © Copyright 2014-2019 John McGehee.
-      Last updated on Jan 12, 2020.
+      Last updated on Dec 21, 2019.
     </div>
   </body>
 </html>

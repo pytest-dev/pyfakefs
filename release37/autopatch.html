@@ -1,0 +1,234 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>Automatically find and patch file functions and modules &#8212; pyfakefs 3.7.1 documentation</title>
+    <link rel="stylesheet" href="_static/pyfakefs.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    './',
+        VERSION:     '3.7.1',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true,
+        SOURCELINK_SUFFIX: '.txt'
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Public Modules and Classes" href="modules.html" />
+    <link rel="prev" title="Usage" href="usage.html" /> 
+  </head>
+  <body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="modules.html" title="Public Modules and Classes"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="usage.html" title="Usage"
+             accesskey="P">previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="index.html">pyfakefs 3.7.1 documentation</a> &#187;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="automatically-find-and-patch-file-functions-and-modules">
+<span id="auto-patch"></span><h1>Automatically find and patch file functions and modules<a class="headerlink" href="#automatically-find-and-patch-file-functions-and-modules" title="Permalink to this headline">¶</a></h1>
+<p>The <code class="docutils literal"><span class="pre">fake_filesystem_unittest</span></code> module automatically finds all real file
+functions and modules, and stubs them out with the fake file system functions and modules.
+The pyfakefs source code contains files that demonstrate this usage model:</p>
+<ul class="simple">
+<li><code class="docutils literal"><span class="pre">example.py</span></code> is the software under test. In production, it uses the
+real file system.</li>
+<li><code class="docutils literal"><span class="pre">example_test.py</span></code> tests <code class="docutils literal"><span class="pre">example.py</span></code>. During testing, the pyfakefs fake
+file system is used by <code class="docutils literal"><span class="pre">example_test.py</span></code> and <code class="docutils literal"><span class="pre">example.py</span></code> alike.</li>
+</ul>
+<div class="section" id="software-under-test">
+<h2>Software Under Test<a class="headerlink" href="#software-under-test" title="Permalink to this headline">¶</a></h2>
+<p><code class="docutils literal"><span class="pre">example.py</span></code> contains a few functions that manipulate files.  For instance:</p>
+<div class="code python highlight-default"><div class="highlight"><pre><span></span><span class="k">def</span> <span class="nf">create_file</span><span class="p">(</span><span class="n">path</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39;Create the specified file and add some content to it.  Use the open()</span>
+<span class="sd">    built in function.</span>
+
+<span class="sd">    For example, the following file operations occur in the fake file system.</span>
+<span class="sd">    In the real file system, we would not even have permission to write /test:</span>
+
+<span class="sd">    &gt;&gt;&gt; os.path.isdir(&#39;/test&#39;)</span>
+<span class="sd">    False</span>
+<span class="sd">    &gt;&gt;&gt; os.mkdir(&#39;/test&#39;)</span>
+<span class="sd">    &gt;&gt;&gt; os.path.isdir(&#39;/test&#39;)</span>
+<span class="sd">    True</span>
+<span class="sd">    &gt;&gt;&gt; os.path.exists(&#39;/test/file.txt&#39;)</span>
+<span class="sd">    False</span>
+<span class="sd">    &gt;&gt;&gt; create_file(&#39;/test/file.txt&#39;)</span>
+<span class="sd">    &gt;&gt;&gt; os.path.exists(&#39;/test/file.txt&#39;)</span>
+<span class="sd">    True</span>
+<span class="sd">    &gt;&gt;&gt; with open(&#39;/test/file.txt&#39;) as f:</span>
+<span class="sd">    ...     f.readlines()</span>
+<span class="sd">    [&quot;This is test file &#39;/test/file.txt&#39;.\\n&quot;, &#39;It was created using the open() function.\\n&#39;]</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+    <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="s1">&#39;w&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+        <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s2">&quot;This is test file &#39;</span><span class="si">{}</span><span class="s2">&#39;.</span><span class="se">\n</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">path</span><span class="p">))</span>
+        <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s2">&quot;It was created using the open() function.</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>No functional code in <code class="docutils literal"><span class="pre">example.py</span></code> even hints at a fake file system. In
+production, <code class="docutils literal"><span class="pre">create_file()</span></code> invokes the real file functions <code class="docutils literal"><span class="pre">open()</span></code> and
+<code class="docutils literal"><span class="pre">write()</span></code>.</p>
+</div>
+<div class="section" id="unit-tests-and-doctests">
+<h2>Unit Tests and Doctests<a class="headerlink" href="#unit-tests-and-doctests" title="Permalink to this headline">¶</a></h2>
+<p><code class="docutils literal"><span class="pre">example_test.py</span></code> contains unit tests for <code class="docutils literal"><span class="pre">example.py</span></code>. <code class="docutils literal"><span class="pre">example.py</span></code>
+contains the doctests, as you can see above.</p>
+<p>The module <code class="docutils literal"><span class="pre">fake_filesystem_unittest</span></code> contains code that finds all real file
+functions and modules, and stubs these out with the fake file system functions
+and modules:</p>
+<div class="code python highlight-default"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">os</span>
+<span class="kn">import</span> <span class="nn">unittest</span>
+<span class="kn">from</span> <span class="nn">pyfakefs</span> <span class="k">import</span> <span class="n">fake_filesystem_unittest</span>
+<span class="c1"># The module under test is example:</span>
+<span class="kn">import</span> <span class="nn">example</span>
+</pre></div>
+</div>
+<div class="section" id="doctests">
+<h3>Doctests<a class="headerlink" href="#doctests" title="Permalink to this headline">¶</a></h3>
+<p><code class="docutils literal"><span class="pre">example_test.py</span></code> defines <code class="docutils literal"><span class="pre">load_tests()</span></code>, which runs the doctests in
+<code class="docutils literal"><span class="pre">example.py</span></code>:</p>
+<div class="code python highlight-default"><div class="highlight"><pre><span></span><span class="k">def</span> <span class="nf">load_tests</span><span class="p">(</span><span class="n">loader</span><span class="p">,</span> <span class="n">tests</span><span class="p">,</span> <span class="n">ignore</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39;Load the pyfakefs/example.py doctest tests into unittest.&#39;&#39;&#39;</span>
+    <span class="k">return</span> <span class="n">fake_filesystem_unittest</span><span class="o">.</span><span class="n">load_doctests</span><span class="p">(</span><span class="n">loader</span><span class="p">,</span> <span class="n">tests</span><span class="p">,</span> <span class="n">ignore</span><span class="p">,</span> <span class="n">example</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>Everything, including all imported modules and the test, is stubbed out
+with the fake filesystem. Thus you can use familiar file functions like
+<code class="docutils literal"><span class="pre">os.mkdir()</span></code> as part of your test fixture and they too will operate on the
+fake file system.</p>
+</div>
+<div class="section" id="unit-test-class">
+<h3>Unit Test Class<a class="headerlink" href="#unit-test-class" title="Permalink to this headline">¶</a></h3>
+<p>Next comes the <code class="docutils literal"><span class="pre">unittest</span></code> test class.  This class is derived from
+<code class="docutils literal"><span class="pre">fake_filesystem_unittest.TestCase</span></code>, which is in turn derived from
+<code class="docutils literal"><span class="pre">unittest.TestClass</span></code>:</p>
+<div class="code python highlight-default"><div class="highlight"><pre><span></span><span class="k">class</span> <span class="nc">TestExample</span><span class="p">(</span><span class="n">fake_filesystem_unittest</span><span class="o">.</span><span class="n">TestCase</span><span class="p">):</span>
+
+    <span class="k">def</span> <span class="nf">setUp</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">setUpPyfakefs</span><span class="p">()</span>
+
+    <span class="k">def</span> <span class="nf">tearDown</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="c1"># It is no longer necessary to add self.tearDownPyfakefs()</span>
+        <span class="k">pass</span>
+
+    <span class="k">def</span> <span class="nf">test_create_file</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;Test example.create_file()&#39;&#39;&#39;</span>
+        <span class="c1"># The os module has been replaced with the fake os module so all of the</span>
+        <span class="c1"># following occurs in the fake filesystem.</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">assertFalse</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">isdir</span><span class="p">(</span><span class="s1">&#39;/test&#39;</span><span class="p">))</span>
+        <span class="n">os</span><span class="o">.</span><span class="n">mkdir</span><span class="p">(</span><span class="s1">&#39;/test&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">assertTrue</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">isdir</span><span class="p">(</span><span class="s1">&#39;/test&#39;</span><span class="p">))</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">assertFalse</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="s1">&#39;/test/file.txt&#39;</span><span class="p">))</span>
+        <span class="n">example</span><span class="o">.</span><span class="n">create_file</span><span class="p">(</span><span class="s1">&#39;/test/file.txt&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">assertTrue</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="s1">&#39;/test/file.txt&#39;</span><span class="p">))</span>
+
+    <span class="o">...</span>
+</pre></div>
+</div>
+<p>Just add <code class="docutils literal"><span class="pre">self.setUpPyfakefs()</span></code> in <code class="docutils literal"><span class="pre">setUp()</span></code>. You need add nothing to
+<code class="docutils literal"><span class="pre">tearDown()</span></code>.  Write your tests as usual.  From <code class="docutils literal"><span class="pre">self.setUpPyfakefs()</span></code> to
+the end of your <code class="docutils literal"><span class="pre">tearDown()</span></code> method, all file operations will use the fake
+file system.</p>
+</div>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="index.html">Table Of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">Automatically find and patch file functions and modules</a><ul>
+<li><a class="reference internal" href="#software-under-test">Software Under Test</a></li>
+<li><a class="reference internal" href="#unit-tests-and-doctests">Unit Tests and Doctests</a><ul>
+<li><a class="reference internal" href="#doctests">Doctests</a></li>
+<li><a class="reference internal" href="#unit-test-class">Unit Test Class</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="usage.html"
+                        title="previous chapter">Usage</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="modules.html"
+                        title="next chapter">Public Modules and Classes</a></p>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="_sources/autopatch.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="search.html" method="get">
+      <div><input type="text" name="q" /></div>
+      <div><input type="submit" value="Go" /></div>
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="modules.html" title="Public Modules and Classes"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="usage.html" title="Usage"
+             >previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="index.html">pyfakefs 3.7.1 documentation</a> &#187;</li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2009 Google Inc. All Rights Reserved.
+© Copyright 2014 Altera Corporation. All Rights Reserved.
+© Copyright 2014-2019 John McGehee.
+      Last updated on Dec 21, 2019.
+    </div>
+  </body>
+</html>

@@ -5,13 +5,13 @@
 <html xmlns="http://www.w3.org/1999/xhtml">
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-    <title>Public Modules and Classes &#8212; pyfakefs 4.0dev documentation</title>
+    <title>Public Modules and Classes &#8212; pyfakefs 3.7.1 documentation</title>
     <link rel="stylesheet" href="_static/pyfakefs.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    './',
-        VERSION:     '4.0dev',
+        VERSION:     '3.7.1',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true,
@@ -42,7 +42,7 @@
         <li class="right" >
           <a href="autopatch.html" title="Automatically find and patch file functions and modules"
              accesskey="P">previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="index.html">pyfakefs 4.0dev documentation</a> &#187;</li> 
+        <li class="nav-item nav-item-0"><a href="index.html">pyfakefs 3.7.1 documentation</a> &#187;</li> 
       </ul>
     </div>  
 
@@ -519,6 +519,7 @@ fileystem, otherwise, the same as <cite>source_path</cite>.</li>
 <li><code class="xref py py-exc docutils literal"><span class="pre">OSError</span></code> – if the directory does not exist in the real file system.</li>
 <li><code class="xref py py-exc docutils literal"><span class="pre">OSError</span></code> – if the symlink could not be created
 (see <a class="reference internal" href="#pyfakefs.fake_filesystem.FakeFilesystem.create_file" title="pyfakefs.fake_filesystem.FakeFilesystem.create_file"><code class="xref py py-meth docutils literal"><span class="pre">create_file()</span></code></a>).</li>
+<li><code class="xref py py-exc docutils literal"><span class="pre">OSError</span></code> – if on Windows before Python 3.2.</li>
 <li><code class="xref py py-exc docutils literal"><span class="pre">IOError</span></code> – if the directory already exists in the fake file system.</li>
 </ul>
 </td>
@@ -624,8 +625,11 @@ file_path will be created</li>
 <tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first">The newly created FakeFile object.</p>
 </td>
 </tr>
-<tr class="field-odd field"><th class="field-name">Raises:</th><td class="field-body"><p class="first last"><code class="xref py py-exc docutils literal"><span class="pre">OSError</span></code> – if the symlink could not be created
-(see <a class="reference internal" href="#pyfakefs.fake_filesystem.FakeFilesystem.create_file" title="pyfakefs.fake_filesystem.FakeFilesystem.create_file"><code class="xref py py-meth docutils literal"><span class="pre">create_file()</span></code></a>).</p>
+<tr class="field-odd field"><th class="field-name">Raises:</th><td class="field-body"><ul class="first last simple">
+<li><code class="xref py py-exc docutils literal"><span class="pre">OSError</span></code> – if the symlink could not be created
+(see <a class="reference internal" href="#pyfakefs.fake_filesystem.FakeFilesystem.create_file" title="pyfakefs.fake_filesystem.FakeFilesystem.create_file"><code class="xref py py-meth docutils literal"><span class="pre">create_file()</span></code></a>).</li>
+<li><code class="xref py py-exc docutils literal"><span class="pre">OSError</span></code> – if on Windows before Python 3.2.</li>
+</ul>
 </td>
 </tr>
 </tbody>
@@ -900,7 +904,7 @@ consider also specifying the same arguments to <code class="xref py py-func docu
 <code class="descname">setUpPyfakefs</code><span class="sig-paren">(</span><em>additional_skip_names=None</em>, <em>modules_to_reload=None</em>, <em>modules_to_patch=None</em>, <em>allow_root_user=True</em><span class="sig-paren">)</span><a class="headerlink" href="#pyfakefs.fake_filesystem_unittest.TestCaseMixin.setUpPyfakefs" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bind the file-related modules to the <code class="xref py py-class docutils literal"><span class="pre">pyfakefs</span></code> fake file
 system instead of the real file system.  Also bind the fake <cite>open()</cite>
-function.</p>
+function, and on Python 2, the <cite>file()</cite> function.</p>
 <p>Invoke this at the beginning of the <cite>setUp()</cite> method in your unit test
 class.
 For the arguments, see the <cite>TestCaseMixin</cite> attribute description.
@@ -999,7 +1003,7 @@ Does nothing if patching is not paused.</p>
 <h2>Faked module classes<a class="headerlink" href="#faked-module-classes" title="Permalink to this headline">¶</a></h2>
 <dl class="class">
 <dt id="pyfakefs.fake_filesystem.FakeOsModule">
-<em class="property">class </em><code class="descclassname">pyfakefs.fake_filesystem.</code><code class="descname">FakeOsModule</code><span class="sig-paren">(</span><em>filesystem</em><span class="sig-paren">)</span><a class="headerlink" href="#pyfakefs.fake_filesystem.FakeOsModule" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><code class="descclassname">pyfakefs.fake_filesystem.</code><code class="descname">FakeOsModule</code><span class="sig-paren">(</span><em>filesystem</em>, <em>os_path_module=None</em><span class="sig-paren">)</span><a class="headerlink" href="#pyfakefs.fake_filesystem.FakeOsModule" title="Permalink to this definition">¶</a></dt>
 <dd><p>Uses FakeFilesystem to provide a fake os module replacement.</p>
 <p>Do not create os.path separately from os, as there is a necessary circular
 dependency between os and os.path to replicate the behavior of the standard
@@ -1013,7 +1017,11 @@ my_os_module = fake_filesystem.FakeOsModule(filesystem)</p>
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>filesystem</strong> – FakeFilesystem used to provide file system information</td>
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>filesystem</strong> – FakeFilesystem used to provide file system information</li>
+<li><strong>os_path_module</strong> – (deprecated) Optional FakePathModule instance</li>
+</ul>
+</td>
 </tr>
 </tbody>
 </table>
@@ -1021,7 +1029,7 @@ my_os_module = fake_filesystem.FakeOsModule(filesystem)</p>
 
 <dl class="class">
 <dt id="pyfakefs.fake_filesystem.FakePathModule">
-<em class="property">class </em><code class="descclassname">pyfakefs.fake_filesystem.</code><code class="descname">FakePathModule</code><span class="sig-paren">(</span><em>filesystem</em>, <em>os_module</em><span class="sig-paren">)</span><a class="headerlink" href="#pyfakefs.fake_filesystem.FakePathModule" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><code class="descclassname">pyfakefs.fake_filesystem.</code><code class="descname">FakePathModule</code><span class="sig-paren">(</span><em>filesystem</em>, <em>os_module=None</em><span class="sig-paren">)</span><a class="headerlink" href="#pyfakefs.fake_filesystem.FakePathModule" title="Permalink to this definition">¶</a></dt>
 <dd><p>Faked os.path module replacement.</p>
 <p>FakePathModule should <em>only</em> be instantiated by FakeOsModule.  See the
 FakeOsModule docstring for details.</p>
@@ -1030,7 +1038,11 @@ FakeOsModule docstring for details.</p>
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>filesystem</strong> – FakeFilesystem used to provide file system information</td>
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>filesystem</strong> – FakeFilesystem used to provide file system information</li>
+<li><strong>os_module</strong> – (deprecated) FakeOsModule to assign to self.os</li>
+</ul>
+</td>
 </tr>
 </tbody>
 </table>
@@ -1038,7 +1050,7 @@ FakeOsModule docstring for details.</p>
 
 <dl class="class">
 <dt id="pyfakefs.fake_filesystem.FakeFileOpen">
-<em class="property">class </em><code class="descclassname">pyfakefs.fake_filesystem.</code><code class="descname">FakeFileOpen</code><span class="sig-paren">(</span><em>filesystem</em>, <em>delete_on_close=False</em>, <em>raw_io=False</em><span class="sig-paren">)</span><a class="headerlink" href="#pyfakefs.fake_filesystem.FakeFileOpen" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><code class="descclassname">pyfakefs.fake_filesystem.</code><code class="descname">FakeFileOpen</code><span class="sig-paren">(</span><em>filesystem</em>, <em>delete_on_close=False</em>, <em>use_io=False</em>, <em>raw_io=False</em><span class="sig-paren">)</span><a class="headerlink" href="#pyfakefs.fake_filesystem.FakeFileOpen" title="Permalink to this definition">¶</a></dt>
 <dd><p>Faked <cite>file()</cite> and <cite>open()</cite> function replacements.</p>
 <p>Returns FakeFile objects in a FakeFilesystem in place of the <cite>file()</cite>
 or <cite>open()</cite> function.</p>
@@ -1049,6 +1061,8 @@ or <cite>open()</cite> function.</p>
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
 <li><strong>filesystem</strong> – FakeFilesystem used to provide file system information</li>
 <li><strong>delete_on_close</strong> – optional boolean, deletes file on close()</li>
+<li><strong>use_io</strong> – if True, the io.open() version is used (ignored for Python 3,
+where io.open() is an alias to open() )</li>
 </ul>
 </td>
 </tr>
@@ -1186,14 +1200,14 @@ that is available on pypi.</p>
         <li class="right" >
           <a href="autopatch.html" title="Automatically find and patch file functions and modules"
              >previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="index.html">pyfakefs 4.0dev documentation</a> &#187;</li> 
+        <li class="nav-item nav-item-0"><a href="index.html">pyfakefs 3.7.1 documentation</a> &#187;</li> 
       </ul>
     </div>
     <div class="footer" role="contentinfo">
         &#169; Copyright 2009 Google Inc. All Rights Reserved.
 © Copyright 2014 Altera Corporation. All Rights Reserved.
 © Copyright 2014-2019 John McGehee.
-      Last updated on Jan 12, 2020.
+      Last updated on Dec 21, 2019.
     </div>
   </body>
 </html>
