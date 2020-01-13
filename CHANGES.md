@@ -18,6 +18,8 @@ the proposed changes so you can be ready.
   * Added possibility to pass additional parameters to `fs` pytest fixture
   
 #### Fixes
+  * Fixed handling of empty path in `os.makedirs`
+    (see [#510](../../issues/510))
   * Fixed handling of `os.TMPFILE` flag under Linux
     (see [#509](../../issues/509))
   * Adapted fake `pathlib` to changes in Python 3.7.6/3.8.1   

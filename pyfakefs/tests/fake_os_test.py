@@ -1708,6 +1708,12 @@ class FakeOsModuleTest(FakeOsModuleTestBase):
             self.os.makedirs(subdir)
             self.assertTrue(self.os.path.exists(subdir))
 
+    def test_makedirs_raises_on_empty_path(self):
+        self.assert_raises_os_error(
+            errno.ENOENT, self.os.makedirs, '', exist_ok=False)
+        self.assert_raises_os_error(
+            errno.ENOENT, self.os.makedirs, '', exist_ok=True)
+
     # test fsync and fdatasync
     def test_fsync_raises_on_non_int(self):
         self.assertRaises(TypeError, self.os.fsync, "zero")
