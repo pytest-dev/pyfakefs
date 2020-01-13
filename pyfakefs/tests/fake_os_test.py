@@ -1719,6 +1719,21 @@ class FakeOsModuleTest(FakeOsModuleTestBase):
         self.os.makedirs(directory, exist_ok=True)
         self.assertTrue(self.os.path.exists(directory))
 
+    def test_makedirs_in_write_protected_dir(self):
+        self.check_posix_only()
+        directory = self.make_path('foo')
+        self.os.mkdir(directory, mode=0o555)
+        subdir = self.os.path.join(directory, 'bar')
+        if not is_root():
+            self.assert_raises_os_error(errno.EACCES, self.os.makedirs, subdir)
+        else:
+            self.os.makedirs(subdir)
+            self.assertTrue(self.os.path.exists(subdir))
+
+    def test_makedirs_raises_on_empty_path(self):
+        self.assert_raises_os_error(
+            errno.ENOENT, self.os.makedirs, '')
+
     # test fsync and fdatasync
     def test_fsync_raises_on_non_int(self):
         self.assertRaises(TypeError, self.os.fsync, "zero")

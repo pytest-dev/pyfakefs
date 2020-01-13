@@ -12,6 +12,8 @@ the proposed changes so you can be ready.
 This version backports some fixes from master.
 
 #### Fixes
+  * Fixed handling of empty path in `os.makedirs`
+    (see [#510](../../issues/510))
   * Fixed handling of `os.TMPFILE` flag under Linux
     (see [#509](../../issues/509))
 

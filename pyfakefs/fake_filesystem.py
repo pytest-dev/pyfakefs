@@ -2886,6 +2886,8 @@ class FakeFilesystem(object):
             OSError: if the directory already exists and exist_ok=False,
                 or as per :py:meth:`create_dir`.
         """
+        if not dir_name:
+            self.raise_os_error(errno.ENOENT, '')
         ends_with_sep = self.ends_with_path_separator(dir_name)
         dir_name = self.absnormpath(dir_name)
         if (ends_with_sep and self.is_macos and
