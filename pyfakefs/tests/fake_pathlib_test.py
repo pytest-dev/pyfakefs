@@ -513,7 +513,7 @@ class FakePathlibPathFileOperationTest(RealPathlibTestCase):
 
     def test_open(self):
         self.create_dir(self.make_path('foo'))
-        self.assertRaises(IOError,
+        self.assertRaises(OSError,
                           self.path(self.make_path('foo', 'bar.txt')).open)
         self.path(self.make_path('foo', 'bar.txt')).open('w').close()
         self.assertTrue(

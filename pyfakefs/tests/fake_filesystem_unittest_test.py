@@ -333,12 +333,12 @@ class NoRootUserTest(fake_filesystem_unittest.TestCase):
         dir_path = '/foo/bar'
         self.fs.create_dir(dir_path, perm_bits=0o555)
         file_path = dir_path + 'baz'
-        self.assertRaises(IOError, self.fs.create_file, file_path)
+        self.assertRaises(OSError, self.fs.create_file, file_path)
 
         file_path = '/baz'
         self.fs.create_file(file_path)
         os.chmod(file_path, 0o400)
-        self.assertRaises(IOError, open, file_path, 'w')
+        self.assertRaises(OSError, open, file_path, 'w')
 
 
 class PauseResumeTest(TestPyfakefsUnittestBase):

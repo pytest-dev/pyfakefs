@@ -299,7 +299,7 @@ class _FakeFlavour(flavour):
             while True:
                 try:
                     path = self.filesystem.resolve_path(path)
-                except IOError:
+                except OSError:
                     previous_s = path
                     path = self.filesystem.splitpath(path)[0]
                 else:
@@ -492,7 +492,7 @@ class FakePath(path_module):
                 New in Python 3.6.
 
         Raises:
-            IOError: if the path doesn't exist (strict=True or Python < 3.6)
+            OSError: if the path doesn't exist (strict=True or Python < 3.6)
         """
         if sys.version_info >= (3, 6) or pathlib2:
             if strict is None:
@@ -516,7 +516,7 @@ class FakePath(path_module):
         """Open the file pointed by this path and return a fake file object.
 
         Raises:
-            IOError: if the target object is a directory, the path is invalid
+            OSError: if the target object is a directory, the path is invalid
                 or permission is denied.
         """
         if self._closed:
@@ -528,7 +528,7 @@ class FakePath(path_module):
         """Open the fake file in bytes mode, read it, and close the file.
 
         Raises:
-            IOError: if the target object is a directory, the path is
+            OSError: if the target object is a directory, the path is
                 invalid or permission is denied.
         """
         with FakeFileOpen(self.filesystem)(self._path(), mode='rb') as f:
@@ -548,7 +548,7 @@ class FakePath(path_module):
         Args:
             data: the bytes to be written
         Raises:
-            IOError: if the target object is a directory, the path is
+            OSError: if the target object is a directory, the path is
                 invalid or permission is denied.
         """
         # type-check for the buffer interface before truncating the file
@@ -567,7 +567,7 @@ class FakePath(path_module):
             errors: ignored
         Raises:
             TypeError: if data is not of type 'str'.
-            IOError: if the target object is a directory, the path is
+            OSError: if the target object is a directory, the path is
                 invalid or permission is denied.
         """
         if not isinstance(data, str):

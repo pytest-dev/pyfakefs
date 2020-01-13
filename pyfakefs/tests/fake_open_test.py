@@ -46,7 +46,7 @@ class FakeFileOpenTest(FakeFileOpenTestBase):
     def test_open_no_parent_dir(self):
         """Expect raise when opening a file in a missing directory."""
         file_path = self.make_path('foo', 'bar.txt')
-        self.assert_raises_io_error(errno.ENOENT, self.open, file_path, 'w')
+        self.assert_raises_os_error(errno.ENOENT, self.open, file_path, 'w')
 
     def test_delete_on_close(self):
         self.skip_real_fs()
@@ -190,7 +190,7 @@ class FakeFileOpenTest(FakeFileOpenTestBase):
             self.assert_raises_os_error(errno.EACCES, self.open.__call__,
                                         directory_path)
         else:
-            self.assert_raises_io_error(errno.EISDIR, self.open.__call__,
+            self.assert_raises_os_error(errno.EISDIR, self.open.__call__,
                                         directory_path)
 
     def test_create_file_with_write(self):
@@ -229,8 +229,8 @@ class FakeFileOpenTest(FakeFileOpenTestBase):
         self.skip_if_symlink_not_supported()
         file_path = self.make_path('bar')
         self.create_file(file_path)
-        self.assert_raises_io_error(errno.EEXIST, self.open, file_path, 'x')
-        self.assert_raises_io_error(errno.EEXIST, self.open, file_path, 'xb')
+        self.assert_raises_os_error(errno.EEXIST, self.open, file_path, 'x')
+        self.assert_raises_os_error(errno.EEXIST, self.open, file_path, 'xb')
 
     def test_exclusive_create_file(self):
         file_dir = self.make_path('foo')
@@ -421,9 +421,9 @@ class FakeFileOpenTest(FakeFileOpenTestBase):
         # actual tests
         self.open(file_path, 'r').close()
         if not is_root():
-            self.assert_raises_io_error(
+            self.assert_raises_os_error(
                 errno.EACCES, self.open, file_path, 'w')
-            self.assert_raises_io_error(
+            self.assert_raises_os_error(
                 errno.EACCES, self.open, file_path, 'w+')
         else:
             self.open(file_path, 'w').close()
@@ -437,8 +437,8 @@ class FakeFileOpenTest(FakeFileOpenTestBase):
         # actual tests
         self.open(file_path, 'w').close()
         if not is_root():
-            self.assertRaises(IOError, self.open, file_path, 'r')
-            self.assertRaises(IOError, self.open, file_path, 'w+')
+            self.assertRaises(OSError, self.open, file_path, 'r')
+            self.assertRaises(OSError, self.open, file_path, 'w+')
         else:
             self.open(file_path, 'r').close()
             self.open(file_path, 'w+').close()
@@ -450,9 +450,9 @@ class FakeFileOpenTest(FakeFileOpenTestBase):
         self.create_with_permission(file_path, 0o100)
         # actual tests
         if not is_root():
-            self.assertRaises(IOError, self.open, file_path, 'r')
-            self.assertRaises(IOError, self.open, file_path, 'w')
-            self.assertRaises(IOError, self.open, file_path, 'w+')
+            self.assertRaises(OSError, self.open, file_path, 'r')
+            self.assertRaises(OSError, self.open, file_path, 'w')
+            self.assertRaises(OSError, self.open, file_path, 'w+')
         else:
             self.open(file_path, 'r').close()
             self.open(file_path, 'w').close()
@@ -513,7 +513,7 @@ class FakeFileOpenTest(FakeFileOpenTestBase):
         self.os.mkdir(file_dir)
         file_path = self.os.path.join(file_dir, 'baz')
         self.os.symlink(file_path, file_path)
-        self.assert_raises_io_error(errno.ELOOP, self.open, file_path)
+        self.assert_raises_os_error(errno.ELOOP, self.open, file_path)
 
     def test_file_descriptors_for_different_files(self):
         first_path = self.make_path('some_file1')
@@ -622,41 +622,41 @@ class FakeFileOpenTest(FakeFileOpenTestBase):
         self.create_file(file_path)
 
         with self.open(file_path, 'a') as fh:
-            self.assertRaises(IOError, fh.read)
-            self.assertRaises(IOError, fh.readlines)
+            self.assertRaises(OSError, fh.read)
+            self.assertRaises(OSError, fh.readlines)
         with self.open(file_path, 'w') as fh:
-            self.assertRaises(IOError, fh.read)
-            self.assertRaises(IOError, fh.readlines)
+            self.assertRaises(OSError, fh.read)
+            self.assertRaises(OSError, fh.readlines)
         with self.open(file_path, 'r') as fh:
-            self.assertRaises(IOError, fh.truncate)
-            self.assertRaises(IOError, fh.write, 'contents')
-            self.assertRaises(IOError, fh.writelines, ['con', 'tents'])
+            self.assertRaises(OSError, fh.truncate)
+            self.assertRaises(OSError, fh.write, 'contents')
+            self.assertRaises(OSError, fh.writelines, ['con', 'tents'])
 
         def _iterator_open(mode):
             for _ in self.open(file_path, mode):
                 pass
 
-        self.assertRaises(IOError, _iterator_open, 'w')
-        self.assertRaises(IOError, _iterator_open, 'a')
+        self.assertRaises(OSError, _iterator_open, 'w')
+        self.assertRaises(OSError, _iterator_open, 'a')
 
     def test_open_raises_io_error_if_parent_is_file_posix(self):
         self.check_posix_only()
         file_path = self.make_path('bar')
         self.create_file(file_path)
         file_path = self.os.path.join(file_path, 'baz')
-        self.assert_raises_io_error(errno.ENOTDIR, self.open, file_path, 'w')
+        self.assert_raises_os_error(errno.ENOTDIR, self.open, file_path, 'w')
 
     def test_open_raises_io_error_if_parent_is_file_windows(self):
         self.check_windows_only()
         file_path = self.make_path('bar')
         self.create_file(file_path)
         file_path = self.os.path.join(file_path, 'baz')
-        self.assert_raises_io_error(errno.ENOENT, self.open, file_path, 'w')
+        self.assert_raises_os_error(errno.ENOENT, self.open, file_path, 'w')
 
     def check_open_with_trailing_sep(self, error_nr):
         # regression test for #362
         path = self.make_path('foo') + self.os.path.sep
-        self.assert_raises_io_error(error_nr, self.open, path, 'w')
+        self.assert_raises_os_error(error_nr, self.open, path, 'w')
 
     def test_open_with_trailing_sep_linux(self):
         self.check_linux_only()
@@ -1432,7 +1432,7 @@ class ResolvePathTest(FakeFileOpenTestBase):
         self.assertRaises(TypeError, self.open, None, 'w')
 
     def test_empty_filepath_raises_io_error(self):
-        self.assertRaises(IOError, self.open, '', 'w')
+        self.assertRaises(OSError, self.open, '', 'w')
 
     def test_normal_path(self):
         file_path = self.make_path('foo')

@@ -221,7 +221,7 @@ class FakeOsModuleTest(FakeOsModuleTestBase):
         self.os.fdopen(fileno1)
         self.os.fdopen(fileno1, 'r')
         if not is_root():
-            self.assertRaises(IOError, self.os.fdopen, fileno1, 'w')
+            self.assertRaises(OSError, self.os.fdopen, fileno1, 'w')
         else:
             self.os.fdopen(fileno1, 'w')
             self.os.close(fileno1)
@@ -2341,8 +2341,8 @@ class FakeOsModuleTest(FakeOsModuleTestBase):
         target_path = self.make_path('target') + self.os.sep
         link_path = self.make_path('link')
         self.os.symlink(target_path, link_path)
-        self.assert_raises_io_error(error, self.open, link_path, 'a')
-        self.assert_raises_io_error(error, self.open, link_path, 'w')
+        self.assert_raises_os_error(error, self.open, link_path, 'a')
+        self.assert_raises_os_error(error, self.open, link_path, 'w')
 
     def test_open_broken_symlink_to_path_with_trailing_sep_linux(self):
         self.check_linux_only()
@@ -2731,7 +2731,7 @@ class FakeOsModuleTestCaseInsensitiveFS(FakeOsModuleTestBase):
         self.os.fdopen(fileno1)
         self.os.fdopen(fileno1, 'r')
         if not is_root():
-            self.assertRaises(IOError, self.os.fdopen, fileno1, 'w')
+            self.assertRaises(OSError, self.os.fdopen, fileno1, 'w')
         else:
             self.os.fdopen(fileno1, 'w')
 
@@ -4019,9 +4019,9 @@ class FakeOsModuleLowLevelFileOpTest(FakeOsModuleTestBase):
     def test_open_exclusive_raises_if_file_exists(self):
         file_path = self.make_path('file1')
         self.create_file(file_path, contents=b'contents')
-        self.assert_raises_io_error(errno.EEXIST, self.os.open, file_path,
+        self.assert_raises_os_error(errno.EEXIST, self.os.open, file_path,
                                     os.O_RDWR | os.O_EXCL | os.O_CREAT)
-        self.assert_raises_io_error(errno.EEXIST, self.os.open, file_path,
+        self.assert_raises_os_error(errno.EEXIST, self.os.open, file_path,
                                     os.O_RDWR | os.O_EXCL | os.O_CREAT)
 
     def test_open_exclusive_raises_if_symlink_exists_in_posix(self):

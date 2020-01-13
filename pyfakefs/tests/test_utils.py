@@ -55,14 +55,6 @@ class TestCase(unittest.TestCase):
     def assert_mode_equal(self, expected, actual):
         return self.assertEqual(stat.S_IMODE(expected), stat.S_IMODE(actual))
 
-    def assert_raises_io_error(self, subtype, expression, *args, **kwargs):
-        """Asserts that a specific subtype of IOError is raised."""
-        try:
-            expression(*args, **kwargs)
-            self.fail('No exception was raised, IOError expected')
-        except IOError as exc:
-            self.assertEqual(subtype, exc.errno)
-
     def assert_raises_os_error(self, subtype, expression, *args, **kwargs):
         """Asserts that a specific subtype of OSError is raised."""
         try:

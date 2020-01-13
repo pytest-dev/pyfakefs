@@ -95,13 +95,13 @@ class FakeDirectoryUnitTest(TestCase):
         def set_size():
             self.fake_file.size = 0.1
 
-        self.assert_raises_io_error(errno.ENOSPC, set_size)
+        self.assert_raises_os_error(errno.ENOSPC, set_size)
 
     def test_should_throw_if_set_size_is_negative(self):
         def set_size():
             self.fake_file.size = -1
 
-        self.assert_raises_io_error(errno.ENOSPC, set_size)
+        self.assert_raises_os_error(errno.ENOSPC, set_size)
 
     def test_produce_empty_file_if_set_size_is_zero(self):
         self.fake_file.size = 0
@@ -125,7 +125,7 @@ class FakeDirectoryUnitTest(TestCase):
         self.assert_raises_os_error(
             errno.EISDIR, self.fake_dir.set_contents, 'a')
         self.filesystem.is_windows_fs = False
-        self.assert_raises_io_error(
+        self.assert_raises_os_error(
             errno.EISDIR, self.fake_dir.set_contents, 'a')
 
     def test_pads_with_nullbytes_if_size_is_greater_than_current_size(self):
@@ -179,11 +179,11 @@ class SetLargeFileSizeTest(TestCase):
                                                   filesystem=filesystem)
 
     def test_should_throw_if_size_is_not_integer(self):
-        self.assert_raises_io_error(errno.ENOSPC,
+        self.assert_raises_os_error(errno.ENOSPC,
                                     self.fake_file.set_large_file_size, 0.1)
 
     def test_should_throw_if_size_is_negative(self):
-        self.assert_raises_io_error(errno.ENOSPC,
+        self.assert_raises_os_error(errno.ENOSPC,
                                     self.fake_file.set_large_file_size, -1)
 
     def test_sets_content_none_if_size_is_non_negative_integer(self):
@@ -338,17 +338,17 @@ class FakeFilesystemUnitTest(TestCase):
     def test_get_nonexistent_object_from_root_error(self):
         self.filesystem.add_object(self.root_name, self.fake_file)
         self.assertEqual(self.fake_file, self.filesystem.get_object('foobar'))
-        self.assert_raises_io_error(
+        self.assert_raises_os_error(
             errno.ENOENT, self.filesystem.get_object, 'some_bogus_filename')
 
     def test_remove_object_from_root(self):
         self.filesystem.add_object(self.root_name, self.fake_file)
         self.filesystem.remove_object(self.fake_file.name)
-        self.assert_raises_io_error(
+        self.assert_raises_os_error(
             errno.ENOENT, self.filesystem.get_object, self.fake_file.name)
 
     def test_remove_nonexisten_object_from_root_error(self):
-        self.assert_raises_io_error(
+        self.assert_raises_os_error(
             errno.ENOENT, self.filesystem.remove_object, 'some_bogus_filename')
 
     def test_exists_removed_file(self):
@@ -395,7 +395,7 @@ class FakeFilesystemUnitTest(TestCase):
     def test_get_nonexistent_object_from_child_error(self):
         self.filesystem.add_object(self.root_name, self.fake_child)
         self.filesystem.add_object(self.fake_child.name, self.fake_file)
-        self.assert_raises_io_error(errno.ENOENT, self.filesystem.get_object,
+        self.assert_raises_os_error(errno.ENOENT, self.filesystem.get_object,
                                     self.filesystem.joinpaths(
                                         self.fake_child.name,
                                         'some_bogus_filename'))
@@ -406,19 +406,19 @@ class FakeFilesystemUnitTest(TestCase):
         target_path = self.filesystem.joinpaths(self.fake_child.name,
                                                 self.fake_file.name)
         self.filesystem.remove_object(target_path)
-        self.assert_raises_io_error(errno.ENOENT, self.filesystem.get_object,
+        self.assert_raises_os_error(errno.ENOENT, self.filesystem.get_object,
                                     target_path)
 
     def test_remove_object_from_child_error(self):
         self.filesystem.add_object(self.root_name, self.fake_child)
-        self.assert_raises_io_error(
+        self.assert_raises_os_error(
             errno.ENOENT, self.filesystem.remove_object,
             self.filesystem.joinpaths(self.fake_child.name,
                                       'some_bogus_filename'))
 
     def test_remove_object_from_non_directory_error(self):
         self.filesystem.add_object(self.root_name, self.fake_file)
-        self.assert_raises_io_error(
+        self.assert_raises_os_error(
             errno.ENOTDIR, self.filesystem.remove_object,
             self.filesystem.joinpaths(
                 '%s' % self.fake_file.name,
@@ -439,13 +439,13 @@ class FakeFilesystemUnitTest(TestCase):
             self.fake_child.name, self.fake_grandchild.name)
         grandchild_file = self.filesystem.joinpaths(
             grandchild_directory, self.fake_file.name)
-        self.assertRaises(IOError, self.filesystem.get_object, grandchild_file)
+        self.assertRaises(OSError, self.filesystem.get_object, grandchild_file)
         self.filesystem.add_object(grandchild_directory, self.fake_file)
         self.assertEqual(self.fake_file,
                          self.filesystem.get_object(grandchild_file))
         self.assertTrue(self.filesystem.exists(grandchild_file))
         self.filesystem.remove_object(grandchild_file)
-        self.assertRaises(IOError, self.filesystem.get_object, grandchild_file)
+        self.assertRaises(OSError, self.filesystem.get_object, grandchild_file)
         self.assertFalse(self.filesystem.exists(grandchild_file))
 
     def test_create_directory_in_root_directory(self):
@@ -626,9 +626,9 @@ class FakeFilesystemUnitTest(TestCase):
 
     def check_directory_access_on_file(self, error_subtype):
         self.filesystem.create_file('not_a_dir')
-        self.assert_raises_io_error(
+        self.assert_raises_os_error(
             error_subtype, self.filesystem.resolve, 'not_a_dir/foo')
-        self.assert_raises_io_error(
+        self.assert_raises_os_error(
             error_subtype, self.filesystem.lresolve, 'not_a_dir/foo/bar')
 
     def test_directory_access_on_file_windows(self):
@@ -738,13 +738,13 @@ class CaseSensitiveFakeFilesystemTest(TestCase):
     def test_get_object(self):
         self.filesystem.create_dir('/foo/bar')
         self.filesystem.create_file('/foo/bar/baz')
-        self.assertRaises(IOError, self.filesystem.get_object, '/Foo/Bar/Baz')
+        self.assertRaises(OSError, self.filesystem.get_object, '/Foo/Bar/Baz')
 
     def test_remove_object(self):
         self.filesystem.create_dir('/foo/bar')
         self.filesystem.create_file('/foo/bar/baz')
         self.assertRaises(
-            IOError, self.filesystem.remove_object, '/Foo/Bar/Baz')
+            OSError, self.filesystem.remove_object, '/Foo/Bar/Baz')
         self.assertTrue(self.filesystem.exists('/foo/bar/baz'))
 
     def test_exists(self):
@@ -1482,7 +1482,7 @@ class DiskSpaceTest(TestCase):
             with fake_open('!mount!file', 'w') as dest:
                 dest.write('a' * (total_size + 1))
 
-        self.assertRaises((OSError, IOError), create_too_large_file)
+        self.assertRaises(OSError, create_too_large_file)
 
         self.assertEqual(0, self.filesystem.get_disk_usage('!mount').used)
 
@@ -1537,7 +1537,7 @@ class DiskSpaceTest(TestCase):
 
         try:
             self.filesystem.create_file('!foo!bar', contents=b'a' * 100)
-        except IOError:
+        except OSError:
             self.fail('File with contents fitting into disk space '
                       'could not be written.')
 
@@ -1550,7 +1550,7 @@ class DiskSpaceTest(TestCase):
 
         initial_usage = self.filesystem.get_disk_usage()
 
-        self.assertRaises(IOError, create_large_file)
+        self.assertRaises(OSError, create_large_file)
 
         self.assertEqual(initial_usage, self.filesystem.get_disk_usage())
 
@@ -1559,7 +1559,7 @@ class DiskSpaceTest(TestCase):
 
         try:
             self.filesystem.create_file('!foo!bar', st_size=100)
-        except IOError:
+        except OSError:
             self.fail(
                 'File with size fitting into disk space could not be written.')
 
@@ -1572,7 +1572,7 @@ class DiskSpaceTest(TestCase):
         def create_large_file():
             self.filesystem.create_file('!foo!bar', st_size=101)
 
-        self.assertRaises(IOError, create_large_file)
+        self.assertRaises(OSError, create_large_file)
 
         self.assertEqual(initial_usage, self.filesystem.get_disk_usage())
 
@@ -1581,15 +1581,15 @@ class DiskSpaceTest(TestCase):
         try:
             file_object.set_large_file_size(100)
             file_object.set_contents(b'a' * 100)
-        except IOError:
+        except OSError:
             self.fail(
                 'Resizing file failed although disk space was sufficient.')
 
     def test_resize_file_with_size_too_large(self):
         file_object = self.filesystem.create_file('!foo!bar', st_size=50)
-        self.assert_raises_io_error(errno.ENOSPC,
+        self.assert_raises_os_error(errno.ENOSPC,
                                     file_object.set_large_file_size, 200)
-        self.assert_raises_io_error(errno.ENOSPC, file_object.set_contents,
+        self.assert_raises_os_error(errno.ENOSPC, file_object.set_contents,
                                     'a' * 150)
 
     def test_file_system_size_after_directory_rename(self):
@@ -1621,10 +1621,10 @@ class DiskSpaceTest(TestCase):
         self.filesystem.add_mount_point('!mount_limited', total_size=50)
         self.filesystem.add_mount_point('!mount_unlimited')
 
-        self.assert_raises_io_error(errno.ENOSPC,
+        self.assert_raises_os_error(errno.ENOSPC,
                                     self.filesystem.create_file,
                                     '!mount_limited!foo', st_size=60)
-        self.assert_raises_io_error(errno.ENOSPC, self.filesystem.create_file,
+        self.assert_raises_os_error(errno.ENOSPC, self.filesystem.create_file,
                                     '!bar', st_size=110)
 
         try:
@@ -1632,7 +1632,7 @@ class DiskSpaceTest(TestCase):
             self.filesystem.create_file('!mount_limited!foo', st_size=40)
             self.filesystem.create_file('!mount_unlimited!foo',
                                         st_size=1000000)
-        except IOError:
+        except OSError:
             self.fail('File with contents fitting into '
                       'disk space could not be written.')
 
@@ -1652,7 +1652,7 @@ class DiskSpaceTest(TestCase):
 
     def test_set_larger_disk_size(self):
         self.filesystem.add_mount_point('!mount1', total_size=20)
-        self.assert_raises_io_error(errno.ENOSPC,
+        self.assert_raises_os_error(errno.ENOSPC,
                                     self.filesystem.create_file, '!mount1!foo',
                                     st_size=100)
         self.filesystem.set_disk_usage(total_size=200, path='!mount1')
@@ -1663,7 +1663,7 @@ class DiskSpaceTest(TestCase):
     def test_set_smaller_disk_size(self):
         self.filesystem.add_mount_point('!mount1', total_size=200)
         self.filesystem.create_file('!mount1!foo', st_size=100)
-        self.assert_raises_io_error(errno.ENOSPC,
+        self.assert_raises_os_error(errno.ENOSPC,
                                     self.filesystem.set_disk_usage,
                                     total_size=50, path='!mount1')
         self.filesystem.set_disk_usage(total_size=150, path='!mount1')
@@ -1777,7 +1777,7 @@ class RealFileSystemAccessTest(TestCase):
 
     def test_add_non_existing_real_directory_raises(self):
         nonexisting_path = '/nonexisting'
-        self.assert_raises_io_error(errno.ENOENT,
+        self.assert_raises_os_error(errno.ENOENT,
                                     self.filesystem.add_real_directory,
                                     nonexisting_path)
         self.assertFalse(self.filesystem.exists(nonexisting_path))
@@ -1820,7 +1820,7 @@ class RealFileSystemAccessTest(TestCase):
             real_contents = f.read()
         self.assertEqual(fake_file.byte_contents, real_contents)
         if not is_root():
-            self.assert_raises_io_error(
+            self.assert_raises_os_error(
                 errno.EACCES, self.fake_open, real_file_path, 'w')
         else:
             with self.fake_open(real_file_path, 'w'):

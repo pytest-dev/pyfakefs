@@ -46,7 +46,7 @@ File objects can't be overwritten:
 True
 >>> try:
 ...   filesystem.create_file(pathname)
-... except IOError as e:
+... except OSError as e:
 ...   assert e.errno == errno.EEXIST, 'unexpected errno: %d' % e.errno
 ...   assert e.strerror == 'File exists in the fake filesystem'
 
@@ -336,7 +336,7 @@ class FakeFile:
           st_size: (int) The desired file size
 
         Raises:
-          IOError: if the st_size is not a non-negative integer,
+          OSError: if the st_size is not a non-negative integer,
                    or if st_size exceeds the available file system space
         """
         self._check_positive_int(st_size)
@@ -350,7 +350,7 @@ class FakeFile:
     def _check_positive_int(self, size):
         # the size should be an positive integer value
         if not is_int_type(size) or size < 0:
-            self.filesystem.raise_io_error(errno.ENOSPC, self.name)
+            self.filesystem.raise_os_error(errno.ENOSPC, self.name)
 
     def is_large_file(self):
         """Return `True` if this file was initialized with size but no contents.
@@ -376,7 +376,7 @@ class FakeFile:
             True if the contents have been changed.
 
         Raises:
-              IOError: if the st_size is not a non-negative integer,
+              OSError: if the st_size is not a non-negative integer,
                    or if st_size exceeds the available file system space
         """
         contents = self._encode_contents(contents)
@@ -404,7 +404,7 @@ class FakeFile:
                     If not given, the locale preferred encoding is used.
 
         Raises:
-          IOError: if `st_size` is not a non-negative integer,
+          OSError: if `st_size` is not a non-negative integer,
                    or if it exceeds the available file system space.
         """
         self.encoding = encoding
@@ -458,7 +458,7 @@ class FakeFile:
           st_size: The desired size for the file.
 
         Raises:
-          IOError: if the st_size arg is not a non-negative integer
+          OSError: if the st_size arg is not a non-negative integer
                    or if st_size exceeds the available file system space
         """
 
@@ -613,7 +613,7 @@ class FakeDirectory(FakeFile):
         if self.filesystem.is_windows_fs:
             error_fct = self.filesystem.raise_os_error
         else:
-            error_fct = self.filesystem.raise_io_error
+            error_fct = self.filesystem.raise_os_error
         raise error_fct(errno.EISDIR, self.path)
 
     @property
@@ -959,17 +959,6 @@ class FakeFilesystem:
             raise OSError(errno, message, filename, winerror)
         raise OSError(errno, message, filename)
 
-    def raise_io_error(self, errno, filename=None):
-        """Raises IOError.
-        The error message is constructed from the given error code and shall
-        start with the error in the real system.
-
-        Args:
-            errno: A numeric error code from the C variable errno.
-            filename: The name of the affected file, if any.
-        """
-        raise IOError(errno, self._error_message(errno), filename)
-
     @staticmethod
     def _matching_string(matched, string):
         """Return the string as byte or unicode depending
@@ -1091,14 +1080,14 @@ class FakeFilesystem:
                 Defaults to the root path (e.g. '/' on Unix systems).
 
         Raises:
-            IOError: if the new space is smaller than the used size.
+            OSError: if the new space is smaller than the used size.
         """
         if path is None:
             path = self.root.name
         mount_point = self._mount_point_for_path(path)
         if (mount_point['total_size'] is not None and
                 mount_point['used_size'] > total_size):
-            self.raise_io_error(errno.ENOSPC, path)
+            self.raise_os_error(errno.ENOSPC, path)
         mount_point['total_size'] = total_size
 
     def change_disk_usage(self, usage_change, file_path, st_dev):
@@ -1113,14 +1102,14 @@ class FakeFilesystem:
             st_dev: The device ID for the respective file system.
 
         Raises:
-            IOError: if usage_change exceeds the free file system space
+            OSError: if usage_change exceeds the free file system space
         """
         mount_point = self._mount_point_for_device(st_dev)
         if mount_point:
             total_size = mount_point['total_size']
             if total_size is not None:
                 if total_size - mount_point['used_size'] < usage_change:
-                    self.raise_io_error(errno.ENOSPC, file_path)
+                    self.raise_os_error(errno.ENOSPC, file_path)
             mount_point['used_size'] += usage_change
 
     def stat(self, entry_path, follow_symlinks=True):
@@ -1138,24 +1127,19 @@ class FakeFilesystem:
             OSError: if the filesystem object doesn't exist.
         """
         # stat should return the tuple representing return value of os.stat
-        try:
-            file_object = self.resolve(
-                entry_path, follow_symlinks,
-                allow_fd=True, check_read_perm=False)
-            if not is_root():
-                # make sure stat raises if a parent dir is not readable
-                parent_dir = file_object.parent_dir
-                if parent_dir:
-                    self.get_object(parent_dir.path)
+        file_object = self.resolve(
+            entry_path, follow_symlinks,
+            allow_fd=True, check_read_perm=False)
+        if not is_root():
+            # make sure stat raises if a parent dir is not readable
+            parent_dir = file_object.parent_dir
+            if parent_dir:
+                self.get_object(parent_dir.path)
 
-            self.raise_for_filepath_ending_with_separator(
-                entry_path, file_object, follow_symlinks)
+        self.raise_for_filepath_ending_with_separator(
+            entry_path, file_object, follow_symlinks)
 
-            return file_object.stat_result.copy()
-        except IOError as io_error:
-            winerror = (io_error.winerror if hasattr(io_error, 'winerror')
-                        else io_error.errno)
-            self.raise_os_error(io_error.errno, entry_path, winerror=winerror)
+        return file_object.stat_result.copy()
 
     def raise_for_filepath_ending_with_separator(self, entry_path,
                                                  file_object,
@@ -1165,7 +1149,7 @@ class FakeFilesystem:
             if S_ISLNK(file_object.st_mode):
                 try:
                     link_object = self.resolve(entry_path)
-                except (IOError, OSError) as exc:
+                except OSError as exc:
                     if self.is_macos and exc.errno != errno.ENOENT:
                         return
                     if self.is_windows_fs:
@@ -1193,12 +1177,7 @@ class FakeFilesystem:
             follow_symlinks: If `False` and `path` points to a symlink,
                 the link itself is affected instead of the linked object.
         """
-        try:
-            file_object = self.resolve(path, follow_symlinks, allow_fd=True)
-        except IOError as io_error:
-            if io_error.errno == errno.ENOENT:
-                self.raise_os_error(errno.ENOENT, path)
-            raise
+        file_object = self.resolve(path, follow_symlinks, allow_fd=True)
         if self.is_windows_fs:
             if mode & PERM_WRITE:
                 file_object.st_mode = file_object.st_mode | 0o222
@@ -1231,12 +1210,7 @@ class FakeFilesystem:
         """
         self._handle_utime_arg_errors(ns, times)
 
-        try:
-            file_object = self.resolve(path, follow_symlinks, allow_fd=True)
-        except IOError as io_error:
-            if io_error.errno == errno.ENOENT:
-                self.raise_os_error(errno.ENOENT, path)
-            raise
+        file_object = self.resolve(path, follow_symlinks, allow_fd=True)
         if times is not None:
             for file_time in times:
                 if not isinstance(file_time, (int, float)):
@@ -1642,7 +1616,7 @@ class FakeFilesystem:
             current_dir = self.root
             for component in path_components:
                 if component not in current_dir.contents:
-                    raise IOError
+                    raise OSError
                 _do_stuff_with_component(current_dir, component)
                 current_dir = current_dir.get_entry(component)
 
@@ -1753,7 +1727,7 @@ class FakeFilesystem:
             if self.is_filepath_ending_with_separator(file_path):
                 return False
             file_path = self.resolve_path(file_path)
-        except (IOError, OSError):
+        except OSError:
             return False
         if file_path == self.root.name:
             return True
@@ -1808,7 +1782,7 @@ class FakeFilesystem:
 
         Raises:
             TypeError: if `file_path` is `None`.
-            IOError: if `file_path` is '' or a part of the path doesn't exist.
+            OSError: if `file_path` is '' or a part of the path doesn't exist.
         """
 
         if allow_fd and isinstance(file_path, int):
@@ -1819,9 +1793,9 @@ class FakeFilesystem:
             raise TypeError('Expected file system path string, received None')
         file_path = self._to_string(file_path)
         if not file_path or not self._valid_relative_path(file_path):
-            # file.open('') raises IOError, so mimic that, and validate that
+            # file.open('') raises OSError, so mimic that, and validate that
             # all parts of a relative path exist.
-            self.raise_io_error(errno.ENOENT, file_path)
+            self.raise_os_error(errno.ENOENT, file_path)
         file_path = self.absnormpath(self._original_path(file_path))
         if self._is_root_path(file_path):
             return file_path
@@ -1864,7 +1838,7 @@ class FakeFilesystem:
                 # forever on cycles.
                 if link_depth > _MAX_LINK_DEPTH:
                     error_fct = (self.raise_os_error if raw_io
-                                 else self.raise_io_error)
+                                 else self.raise_os_error)
                     error_fct(errno.ELOOP,
                               self._components_to_path(resolved_components))
                 link_path = self._follow_link(resolved_components, current_dir)
@@ -1910,7 +1884,7 @@ class FakeFilesystem:
             (string) The updated path resolved after following the link.
 
         Raises:
-            IOError: if there are too many levels of symbolic link
+            OSError: if there are too many levels of symbolic link
         """
         link_path = link.contents
         # ignore UNC prefix for local files
@@ -1947,7 +1921,7 @@ class FakeFilesystem:
             The FakeFile object corresponding to file_path.
 
         Raises:
-            IOError: if the object is not found.
+            OSError: if the object is not found.
         """
         file_path = make_string_path(file_path)
         if file_path == self.root.name:
@@ -1964,14 +1938,14 @@ class FakeFilesystem:
                     target_object = self.resolve(target_object.contents)
                 if not S_ISDIR(target_object.st_mode):
                     if not self.is_windows_fs:
-                        self.raise_io_error(errno.ENOTDIR, file_path)
-                    self.raise_io_error(errno.ENOENT, file_path)
+                        self.raise_os_error(errno.ENOTDIR, file_path)
+                    self.raise_os_error(errno.ENOENT, file_path)
                 target_object = target_object.get_entry(component)
                 if (not is_root() and check_read_perm and target_object and
                         not target_object.st_mode & PERM_READ):
                     self.raise_os_error(errno.EACCES, target_object.path)
         except KeyError:
-            self.raise_io_error(errno.ENOENT, file_path)
+            self.raise_os_error(errno.ENOENT, file_path)
         return target_object
 
     def get_object(self, file_path, check_read_perm=True):
@@ -1987,7 +1961,7 @@ class FakeFilesystem:
             The FakeFile object corresponding to `file_path`.
 
         Raises:
-            IOError: if the object is not found.
+            OSError: if the object is not found.
         """
         file_path = make_string_path(file_path)
         file_path = self.absnormpath(self._original_path(file_path))
@@ -2009,7 +1983,7 @@ class FakeFilesystem:
           The FakeFile object corresponding to `file_path`.
 
         Raises:
-            IOError: if the object is not found.
+            OSError: if the object is not found.
         """
         if isinstance(file_path, int):
             if allow_fd:
@@ -2036,7 +2010,7 @@ class FakeFilesystem:
             The FakeFile object corresponding to path.
 
         Raises:
-            IOError: if the object is not found.
+            OSError: if the object is not found.
         """
         path = make_string_path(path)
         if path == self.root.name:
@@ -2055,13 +2029,13 @@ class FakeFilesystem:
             assert parent_obj
             if not isinstance(parent_obj, FakeDirectory):
                 if not self.is_windows_fs and isinstance(parent_obj, FakeFile):
-                    self.raise_io_error(errno.ENOTDIR, path)
-                self.raise_io_error(errno.ENOENT, path)
+                    self.raise_os_error(errno.ENOTDIR, path)
+                self.raise_os_error(errno.ENOENT, path)
             if not parent_obj.st_mode & PERM_READ:
                 self.raise_os_error(errno.EACCES, parent_directory)
             return parent_obj.get_entry(child_name)
         except KeyError:
-            self.raise_io_error(errno.ENOENT, path)
+            self.raise_os_error(errno.ENOENT, path)
 
     def add_object(self, file_path, file_object, error_fct=None):
         """Add a fake file or directory into the filesystem at file_path.
@@ -2073,7 +2047,7 @@ class FakeFilesystem:
                 not correspond to a directory (used internally(
 
         Raises:
-            IOError or OSError: if file_path does not correspond to a
+            OSError: if file_path does not correspond to a
                 directory.
         """
         error_fct = error_fct or self.raise_os_error
@@ -2201,10 +2175,7 @@ class FakeFilesystem:
         elif self.is_windows_fs and not force_replace:
             self.raise_os_error(errno.EEXIST, new_file_path)
         else:
-            try:
-                self.remove_object(new_file_path)
-            except IOError as exc:
-                self.raise_os_error(exc.errno, exc.filename)
+            self.remove_object(new_file_path)
         return new_file_path
 
     def _handle_rename_error_for_dir_or_link(self, force_replace,
@@ -2247,7 +2218,7 @@ class FakeFilesystem:
                     parent, file_name = self.splitpath(new_file_path)
                     new_file_path = self.joinpaths(
                         self._original_path(parent), file_name)
-            except (IOError, OSError):
+            except OSError:
                 # ResolvePath may fail due to symlink loop issues or
                 # similar - in this case just assume the paths
                 # to be different
@@ -2264,7 +2235,7 @@ class FakeFilesystem:
             file_path: The path to the file relative to self.
 
         Raises:
-            IOError: if file_path does not correspond to an existing file, or
+            OSError: if file_path does not correspond to an existing file, or
                 if part of the path refers to something other than a directory.
             OSError: if the directory is in use (eg, if it is '/').
         """
@@ -2276,9 +2247,9 @@ class FakeFilesystem:
             target_directory = self.resolve(dirname, check_read_perm=False)
             target_directory.remove_entry(basename)
         except KeyError:
-            self.raise_io_error(errno.ENOENT, file_path)
+            self.raise_os_error(errno.ENOENT, file_path)
         except AttributeError:
-            self.raise_io_error(errno.ENOTDIR, file_path)
+            self.raise_os_error(errno.ENOTDIR, file_path)
 
     def make_string_path(self, path):
         path = make_string_path(path)
@@ -2363,8 +2334,8 @@ class FakeFilesystem:
             The newly created FakeFile object.
 
         Raises:
-            IOError: if the file already exists.
-            IOError: if the containing directory is required and missing.
+            OSError: if the file already exists.
+            OSError: if the containing directory is required and missing.
         """
         return self.create_file_internally(
             file_path, st_mode, contents, st_size, create_missing_dirs,
@@ -2388,7 +2359,7 @@ class FakeFilesystem:
 
         Raises:
             OSError: if the file does not exist in the real file system.
-            IOError: if the file already exists in the fake file system.
+            OSError: if the file already exists in the fake file system.
 
         .. note:: On most systems, accessing the fake file's contents may
             update both the real and fake files' `atime` (access time).
@@ -2429,7 +2400,7 @@ class FakeFilesystem:
             OSError: if the directory does not exist in the real file system.
             OSError: if the symlink could not be created
                 (see :py:meth:`create_file`).
-            IOError: if the directory already exists in the fake file system.
+            OSError: if the directory already exists in the fake file system.
         """
         source_path = self._path_without_trailing_separators(source_path)
         if not os.path.exists(source_path) and not os.path.islink(source_path):
@@ -2469,11 +2440,11 @@ class FakeFilesystem:
 
         Raises:
             OSError: if the directory does not exist in the real file system.
-            IOError: if the directory already exists in the fake file system.
+            OSError: if the directory already exists in the fake file system.
         """
         source_path = self._path_without_trailing_separators(source_path)
         if not os.path.exists(source_path):
-            self.raise_io_error(errno.ENOENT, source_path)
+            self.raise_os_error(errno.ENOENT, source_path)
         target_path = target_path or source_path
         if lazy_read:
             parent_path = os.path.split(target_path)[0]
@@ -2565,7 +2536,7 @@ class FakeFilesystem:
             side_effect: function handle that is executed when file is written,
                 must accept the file object as an argument.
         """
-        error_fct = self.raise_os_error if raw_io else self.raise_io_error
+        error_fct = self.raise_os_error if raw_io else self.raise_os_error
         file_path = self.make_string_path(file_path)
         file_path = self.absnormpath(file_path)
         if not is_int_type(st_mode):
@@ -2607,7 +2578,7 @@ class FakeFilesystem:
                     file_object.set_large_file_size(st_size)
                 else:
                     file_object._set_initial_contents(contents)
-            except IOError:
+            except OSError:
                 self.remove_object(file_path)
                 raise
 
@@ -2704,7 +2675,7 @@ class FakeFilesystem:
         # Retrieve the target file
         try:
             old_file = self.resolve(old_path, follow_symlinks=follow_symlinks)
-        except IOError:
+        except OSError:
             self.raise_os_error(errno.ENOENT, old_path)
 
         if old_file.st_mode & S_IFDIR:
@@ -2720,7 +2691,7 @@ class FakeFilesystem:
     def _is_circular_link(self, link_obj):
         try:
             self.resolve_path(link_obj.contents)
-        except (IOError, OSError) as exc:
+        except OSError as exc:
             return exc.errno == errno.ELOOP
         return False
 
@@ -2741,10 +2712,7 @@ class FakeFilesystem:
         """
         if path is None:
             raise TypeError
-        try:
-            link_obj = self.lresolve(path)
-        except IOError as exc:
-            self.raise_os_error(exc.errno, path)
+        link_obj = self.lresolve(path)
         if S_IFMT(link_obj.st_mode) != S_IFLNK:
             self.raise_os_error(errno.EINVAL, path)
 
@@ -2844,7 +2812,7 @@ class FakeFilesystem:
 
         path_components = self._path_components(dir_name)
 
-        # Raise a permission denied error if the first existing directory
+        # Raise a permission denied error if thioe first existing directory
         # is not writeable.
         current_dir = self.root
         for component in path_components:
@@ -2855,7 +2823,7 @@ class FakeFilesystem:
                 current_dir = current_dir.contents[component]
         try:
             self.create_dir(dir_name, mode & ~self.umask)
-        except (IOError, OSError) as e:
+        except OSError as e:
             if e.errno == errno.EACCES:
                 # permission denied - propagate exception
                 raise
@@ -2889,7 +2857,7 @@ class FakeFilesystem:
                 self.raise_for_filepath_ending_with_separator(
                     path, obj, macos_handling=not follow_symlinks)
                 return S_IFMT(obj.st_mode) == st_flag
-        except (IOError, OSError):
+        except OSError:
             return False
         return False
 
@@ -2949,10 +2917,7 @@ class FakeFilesystem:
         Raises:
             OSError: if the target is not a directory.
         """
-        try:
-            directory = self.resolve(target_directory)
-        except IOError as exc:
-            self.raise_os_error(exc.errno, target_directory)
+        directory = self.resolve(target_directory)
         if not directory.st_mode & S_IFDIR:
             self.raise_os_error(errno.ENOTDIR, target_directory, 267)
         return directory
@@ -2996,10 +2961,7 @@ class FakeFilesystem:
             else:
                 self.raise_for_filepath_ending_with_separator(path, obj)
 
-        try:
-            self.remove_object(norm_path)
-        except IOError as exc:
-            self.raise_os_error(exc.errno, exc.filename)
+        self.remove_object(norm_path)
 
     def rmdir(self, target_directory, allow_symlink=False):
         """Remove a leaf Fake directory.
@@ -3030,10 +2992,7 @@ class FakeFilesystem:
             dir_object = self.resolve(target_directory)
             if dir_object.contents:
                 self.raise_os_error(errno.ENOTEMPTY, target_directory)
-            try:
-                self.remove_object(target_directory)
-            except IOError as exc:
-                self.raise_os_error(exc.errno, exc.filename)
+            self.remove_object(target_directory)
 
     def listdir(self, target_directory):
         """Return a list of file names in target_directory.
@@ -3177,16 +3136,13 @@ class FakePathModule:
         Returns:
           file size in bytes.
         """
-        try:
-            file_obj = self.filesystem.resolve(path)
-            if (self.filesystem.ends_with_path_separator(path) and
-                    S_IFMT(file_obj.st_mode) != S_IFDIR):
-                error_nr = (errno.EINVAL if self.filesystem.is_windows_fs
-                            else errno.ENOTDIR)
-                self.filesystem.raise_os_error(error_nr, path)
-            return file_obj.st_size
-        except IOError as exc:
-            raise os.error(exc.errno, exc.strerror)
+        file_obj = self.filesystem.resolve(path)
+        if (self.filesystem.ends_with_path_separator(path) and
+                S_IFMT(file_obj.st_mode) != S_IFDIR):
+            error_nr = (errno.EINVAL if self.filesystem.is_windows_fs
+                        else errno.ENOTDIR)
+            self.filesystem.raise_os_error(error_nr, path)
+        return file_obj.st_size
 
     def isabs(self, path):
         """Return True if path is an absolute pathname."""
@@ -3239,7 +3195,7 @@ class FakePathModule:
         try:
             file_obj = self.filesystem.resolve(path)
             return file_obj.st_mtime
-        except IOError:
+        except OSError:
             self.filesystem.raise_os_error(errno.ENOENT, winerror=3)
 
     def getatime(self, path):
@@ -3260,7 +3216,7 @@ class FakePathModule:
         """
         try:
             file_obj = self.filesystem.resolve(path)
-        except IOError:
+        except OSError:
             self.filesystem.raise_os_error(errno.ENOENT)
         return file_obj.st_atime
 
@@ -3279,7 +3235,7 @@ class FakePathModule:
         """
         try:
             file_obj = self.filesystem.resolve(path)
-        except IOError:
+        except OSError:
             self.filesystem.raise_os_error(errno.ENOENT)
         return file_obj.st_ctime
 
@@ -3579,7 +3535,7 @@ class FakeOsModule:
             A file descriptor.
 
         Raises:
-            IOError: if the path cannot be found
+            OSError: if the path cannot be found
             ValueError: if invalid mode is given
             NotImplementedError: if `os.O_EXCL` is used without `os.O_CREAT`
         """
@@ -4149,7 +4105,7 @@ class FakeOsModule:
         path = self._path_with_dir_fd(path, self.mkdir, dir_fd)
         try:
             self.filesystem.makedir(path, mode)
-        except IOError as e:
+        except OSError as e:
             if e.errno == errno.EACCES:
                 self.filesystem.raise_os_error(e.errno, path)
             raise
@@ -4289,13 +4245,8 @@ class FakeOsModule:
         `None` (unset).
         """
         path = self._path_with_dir_fd(path, self.chown, dir_fd)
-        try:
-            file_object = self.filesystem.resolve(
-                path, follow_symlinks, allow_fd=True)
-        except IOError as io_error:
-            if io_error.errno == errno.ENOENT:
-                self.filesystem.raise_os_error(errno.ENOENT, path)
-            raise
+        file_object = self.filesystem.resolve(
+            path, follow_symlinks, allow_fd=True)
         if not ((is_int_type(uid) or uid is None) and
                 (is_int_type(gid) or gid is None)):
             raise TypeError("An integer is required")
@@ -4343,12 +4294,9 @@ class FakeOsModule:
             self.filesystem.raise_os_error(errno.ENOENT, path)
         if self.filesystem.exists(path, check_link=True):
             self.filesystem.raise_os_error(errno.EEXIST, path)
-        try:
-            self.filesystem.add_object(head, FakeFile(
-                tail, mode & ~self.filesystem.umask,
-                filesystem=self.filesystem))
-        except IOError as e:
-            self.filesystem.raise_os_error(e.errno, path)
+        self.filesystem.add_object(head, FakeFile(
+            tail, mode & ~self.filesystem.umask,
+            filesystem=self.filesystem))
 
     def symlink(self, src, dst, *, dir_fd=None):
         """Creates the specified symlink, pointed at the specified link target.
@@ -5021,7 +4969,7 @@ class FakeFileOpen:
             A file-like object containing the contents of the target file.
 
         Raises:
-            IOError, OSError depending on Python version / call mode:
+            OSError depending on Python version / call mode:
                 - if the target object is a directory
                 - on an invalid path
                 - if the file does not exist when it should
@@ -5038,7 +4986,7 @@ class FakeFileOpen:
             closefd = True
 
         error_fct = (self.filesystem.raise_os_error if self.raw_io
-                     else self.filesystem.raise_io_error)
+                     else self.filesystem.raise_os_error)
         if (open_modes.must_not_exist and
                 (file_object or self.filesystem.islink(file_path) and
                  not self.filesystem.is_windows_fs)):

@@ -245,7 +245,7 @@ class TestCase(unittest.TestCase, TestCaseMixin):
           The newly created FakeFile object.
 
         Raises:
-          IOError: If the file already exists in the fake file system.
+          OSError: If the file already exists in the fake file system.
           ValueError: If deprecated argument values are specified.
 
         See:
