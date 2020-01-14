@@ -15,7 +15,7 @@
 """Tests that ensure that the `tempfile` module works with `fake_filesystem`
 if using `Patcher` (via `fake_filesystem_unittest`).
 """
-
+import errno
 import os
 import stat
 import sys
@@ -30,6 +30,14 @@ class FakeTempfileModuleTest(fake_filesystem_unittest.TestCase):
 
     def setUp(self):
         self.setUpPyfakefs()
+
+    def assert_raises_os_error(self, subtype, expression, *args, **kwargs):
+        """Asserts that a specific subtype of OSError is raised."""
+        try:
+            expression(*args, **kwargs)
+            self.fail('No exception was raised, OSError expected')
+        except OSError as exc:
+            self.assertEqual(subtype, exc.errno)
 
     def test_named_temporary_file(self):
         obj = tempfile.NamedTemporaryFile()
@@ -99,6 +107,16 @@ class FakeTempfileModuleTest(fake_filesystem_unittest.TestCase):
                              stat.S_IFDIR | 0o700)
 
     def test_temporary_file(self):
+        with tempfile.TemporaryFile() as f:
+            f.write(b'test')
+            f.seek(0)
+            self.assertEqual(b'test', f.read())
+
+    def test_temporary_file_with_dir(self):
+        self.assert_raises_os_error(errno.ENOENT,
+                                    tempfile.TemporaryFile,
+                                    dir='/parent')
+        os.mkdir('/parent')
         with tempfile.TemporaryFile() as f:
             f.write(b'test')
             f.seek(0)

@@ -101,6 +101,7 @@ import os
 import platform
 import sys
 import time
+import uuid
 import warnings
 from collections import namedtuple
 from stat import (
@@ -3733,14 +3734,20 @@ class FakeOsModule(object):
         open_modes = _OpenModes(
             must_exist=not flags & os.O_CREAT and not has_tmpfile_flag,
             can_read=not flags & os.O_WRONLY,
-            can_write=flags & (os.O_RDWR | os.O_WRONLY),
-            truncate=flags & os.O_TRUNC,
-            append=flags & os.O_APPEND,
-            must_not_exist=flags & os.O_EXCL
+            can_write=flags & (os.O_RDWR | os.O_WRONLY) != 0,
+            truncate=flags & os.O_TRUNC != 0,
+            append=flags & os.O_APPEND != 0,
+            must_not_exist=flags & os.O_EXCL != 0
         )
         if open_modes.must_not_exist and open_modes.must_exist:
             raise NotImplementedError(
                 'O_EXCL without O_CREAT mode is not supported')
+        if has_tmpfile_flag:
+            # this is a workaround for tempfiles that do not have a filename
+            # as we do not support this directly, we just add a unique filename
+            # and set the file to delete on close
+            path = self.filesystem.joinpaths(
+                path, str(uuid.uuid4()))
 
         if (not self.filesystem.is_windows_fs and
                 self.filesystem.exists(path)):
@@ -3759,7 +3766,7 @@ class FakeOsModule(object):
 
         # low level open is always binary
         str_flags = 'b'
-        delete_on_close = False
+        delete_on_close = has_tmpfile_flag
         if hasattr(os, 'O_TEMPORARY'):
             delete_on_close = flags & os.O_TEMPORARY == os.O_TEMPORARY
         fake_file = FakeFileOpen(

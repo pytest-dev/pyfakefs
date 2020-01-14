@@ -15,7 +15,9 @@ This version backports some fixes from master.
   * Fixed handling of empty path in `os.makedirs`
     (see [#510](../../issues/510))
   * Fixed handling of `os.TMPFILE` flag under Linux
-    (see [#509](../../issues/509))
+    (see [#509](../../issues/509) and [#511](../../issues/511))
+  * Fixed behavior of `os.makedirs` in write-protected directory 
+    (see [#507](../../issues/507))
 
 ## [Version 3.7.1](https://pypi.python.org/pypi/pyfakefs/3.7.1)
 
