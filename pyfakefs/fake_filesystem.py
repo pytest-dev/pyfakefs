@@ -610,11 +610,7 @@ class FakeDirectory(FakeFile):
         self.st_nlink += 1
 
     def set_contents(self, contents, encoding=None):
-        if self.filesystem.is_windows_fs:
-            error_fct = self.filesystem.raise_os_error
-        else:
-            error_fct = self.filesystem.raise_os_error
-        raise error_fct(errno.EISDIR, self.path)
+        raise self.filesystem.raise_os_error(errno.EISDIR, self.path)
 
     @property
     def contents(self):
@@ -1836,10 +1832,9 @@ class FakeFilesystem:
                 # check. It is just a quick hack to prevent us from looping
                 # forever on cycles.
                 if link_depth > _MAX_LINK_DEPTH:
-                    error_fct = (self.raise_os_error if raw_io
-                                 else self.raise_os_error)
-                    error_fct(errno.ELOOP,
-                              self._components_to_path(resolved_components))
+                    self.raise_os_error(errno.ELOOP,
+                                        self._components_to_path(
+                                            resolved_components))
                 link_path = self._follow_link(resolved_components, current_dir)
 
                 # Following the link might result in the complete replacement
@@ -2036,27 +2031,24 @@ class FakeFilesystem:
         except KeyError:
             self.raise_os_error(errno.ENOENT, path)
 
-    def add_object(self, file_path, file_object, error_fct=None):
+    def add_object(self, file_path, file_object):
         """Add a fake file or directory into the filesystem at file_path.
 
         Args:
             file_path: The path to the file to be added relative to self.
             file_object: File or directory to add.
-            error_fct: The error function to be called if file_path does
-                not correspond to a directory (used internally(
 
         Raises:
             OSError: if file_path does not correspond to a
                 directory.
         """
-        error_fct = error_fct or self.raise_os_error
         if not file_path:
             target_directory = self.root
         else:
             target_directory = self.resolve(file_path)
             if not S_ISDIR(target_directory.st_mode):
                 error = errno.ENOENT if self.is_windows_fs else errno.ENOTDIR
-                error_fct(error, file_path)
+                self.raise_os_error(error, file_path)
         target_directory.add_entry(file_object)
 
     def rename(self, old_file_path, new_file_path, force_replace=False):
@@ -2535,7 +2527,6 @@ class FakeFilesystem:
             side_effect: function handle that is executed when file is written,
                 must accept the file object as an argument.
         """
-        error_fct = self.raise_os_error if raw_io else self.raise_os_error
         file_path = self.make_string_path(file_path)
         file_path = self.absnormpath(file_path)
         if not is_int_type(st_mode):
@@ -2550,7 +2541,7 @@ class FakeFilesystem:
         self._auto_mount_drive_if_needed(parent_directory)
         if not self.exists(parent_directory):
             if not create_missing_dirs:
-                error_fct(errno.ENOENT, parent_directory)
+                self.raise_os_error(errno.ENOENT, parent_directory)
             self.create_dir(parent_directory)
         else:
             parent_directory = self._original_path(parent_directory)
@@ -2566,7 +2557,7 @@ class FakeFilesystem:
 
         self._last_ino += 1
         file_object.st_ino = self._last_ino
-        self.add_object(parent_directory, file_object, error_fct)
+        self.add_object(parent_directory, file_object)
 
         if st_size is None and contents is None:
             contents = ''
@@ -4984,22 +4975,20 @@ class FakeFileOpen:
         if not filedes:
             closefd = True
 
-        error_fct = (self.filesystem.raise_os_error if self.raw_io
-                     else self.filesystem.raise_os_error)
         if (open_modes.must_not_exist and
                 (file_object or self.filesystem.islink(file_path) and
                  not self.filesystem.is_windows_fs)):
-            error_fct(errno.EEXIST, file_path)
+            self.filesystem.raise_os_error(errno.EEXIST, file_path)
 
-        file_object = self._init_file_object(error_fct, file_object,
+        file_object = self._init_file_object(file_object,
                                              file_path, open_modes,
                                              real_path)
 
         if S_ISDIR(file_object.st_mode):
             if self.filesystem.is_windows_fs:
-                error_fct(errno.EACCES, file_path)
+                self.filesystem.raise_os_error(errno.EACCES, file_path)
             else:
-                error_fct(errno.EISDIR, file_path)
+                self.filesystem.raise_os_error(errno.EISDIR, file_path)
 
         # If you print obj.name, the argument to open() must be printed.
         # Not the abspath, not the filename, but the actual argument.
@@ -5031,7 +5020,7 @@ class FakeFileOpen:
             fakefile.filedes = self.filesystem._add_open_file(fakefile)
         return fakefile
 
-    def _init_file_object(self, error_fct, file_object, file_path,
+    def _init_file_object(self, file_object, file_path,
                           open_modes, real_path):
         if file_object:
             if (not is_root() and
@@ -5039,13 +5028,13 @@ class FakeFileOpen:
                       not file_object.st_mode & PERM_READ)
                      or (open_modes.can_write and
                          not file_object.st_mode & PERM_WRITE))):
-                error_fct(errno.EACCES, file_path)
+                self.filesystem.raise_os_error(errno.EACCES, file_path)
             if open_modes.can_write:
                 if open_modes.truncate:
                     file_object.set_contents('')
         else:
             if open_modes.must_exist:
-                error_fct(errno.ENOENT, file_path)
+                self.filesystem.raise_os_error(errno.ENOENT, file_path)
             if self.filesystem.islink(file_path):
                 link_object = self.filesystem.resolve(file_path,
                                                       follow_symlinks=False)
@@ -5056,7 +5045,7 @@ class FakeFileOpen:
                 error = (errno.EINVAL if self.filesystem.is_windows_fs
                          else errno.ENOENT if self.filesystem.is_macos
                          else errno.EISDIR)
-                error_fct(error, file_path)
+                self.filesystem.raise_os_error(error, file_path)
             file_object = self.filesystem.create_file_internally(
                 real_path, create_missing_dirs=False,
                 apply_umask=True, raw_io=self.raw_io)
