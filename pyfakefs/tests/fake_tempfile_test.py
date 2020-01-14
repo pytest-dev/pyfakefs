@@ -101,6 +101,15 @@ class FakeTempfileModuleTest(fake_filesystem_unittest.TestCase):
             f.seek(0)
             self.assertEqual(b'test', f.read())
 
+    def test_temporay_file_with_dir(self):
+        with self.assertRaises(FileNotFoundError):
+            tempfile.TemporaryFile(dir='/parent')
+        os.mkdir('/parent')
+        with tempfile.TemporaryFile() as f:
+            f.write(b'test')
+            f.seek(0)
+            self.assertEqual(b'test', f.read())
+
 
 if __name__ == '__main__':
     unittest.main()

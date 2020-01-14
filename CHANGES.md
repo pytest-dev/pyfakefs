@@ -21,7 +21,7 @@ the proposed changes so you can be ready.
   * Fixed handling of empty path in `os.makedirs`
     (see [#510](../../issues/510))
   * Fixed handling of `os.TMPFILE` flag under Linux
-    (see [#509](../../issues/509))
+    (see [#509](../../issues/509) and [#511](../../issues/511))
   * Adapted fake `pathlib` to changes in Python 3.7.6/3.8.1   
     (see [#508](../../issues/508))
   * Fixed behavior of `os.makedirs` in write-protected directory 
