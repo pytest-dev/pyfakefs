@@ -21,9 +21,9 @@ class Deprecator(object):
     Warnings are switched on by default.
     To disable deprecation warnings, use:
 
-    >>>  from pyfakefs.deprecator import Deprecator
+    >>> from pyfakefs.deprecator import Deprecator
     >>>
-    >>>  Deprecator.show_warnings = False
+    >>> Deprecator.show_warnings = False
     """
 
     show_warnings = True

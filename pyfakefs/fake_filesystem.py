@@ -843,10 +843,9 @@ class FakeFilesystem:
             total_size: if not None, the total size in bytes of the
                 root filesystem.
 
-        Example usage to emulate real file systems:
+        Example usage to use the same path separator under all systems:
 
-        >>> filesystem = FakeFilesystem(
-        ...     alt_path_separator='/' if _is_windows else None)
+        >>> filesystem = FakeFilesystem(path_separator='/')
 
         """
         self.path_separator = path_separator
@@ -5104,8 +5103,8 @@ class FakeFileOpen:
 
 def _run_doctest():
     import doctest
-    from pyfakefs import fake_filesystem  # pylint: disable=import-self
-    return doctest.testmod(fake_filesystem)
+    import pyfakefs
+    return doctest.testmod(pyfakefs.fake_filesystem)
 
 
 if __name__ == '__main__':
