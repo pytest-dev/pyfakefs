@@ -4545,6 +4545,16 @@ class FakeOsModuleWalkTest(FakeOsModuleTestBase):
                                self.os.path.join(base_dir, 'created_link'),
                                followlinks=True)
 
+    def test_path_ending_with_sep(self):
+        # regression test for #512
+        base_dir = self.make_path('foo')
+        self.create_dir(base_dir)
+        for dirpath, dirnames, filenames in self.os.walk(base_dir):
+            assert dirpath == base_dir
+        base_dir += self.os.path.sep
+        for dirpath, dirnames, filenames in self.os.walk(base_dir):
+            assert dirpath == base_dir
+
 
 class RealOsModuleWalkTest(FakeOsModuleWalkTest):
     def use_real_fs(self):
