@@ -242,13 +242,8 @@ def walk(filesystem, top, topdown=True, onerror=None, followlinks=False):
     """
 
     def do_walk(top_dir, top_most=False):
-        ends_with_sep = filesystem.ends_with_path_separator(top_dir)
-        top_dir = filesystem.normpath(top_dir)
         if not top_most and not followlinks and filesystem.islink(top_dir):
             return
-        if ends_with_sep:
-            # normpath strips the path separator, so put it back here...
-            top_dir += filesystem.path_separator
         try:
             top_contents = _classify_directory_contents(filesystem, top_dir)
         except OSError as exc:
