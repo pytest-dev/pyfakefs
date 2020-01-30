@@ -4477,15 +4477,28 @@ class FakeOsModuleWalkTest(FakeOsModuleTestBase):
                                self.os.path.join(base_dir, 'created_link'),
                                followlinks=True)
 
-    def test_path_ending_with_sep(self):
+    def test_base_dirpath(self):
         # regression test for #512
-        base_dir = self.make_path('foo')
-        self.create_dir(base_dir)
-        for dirpath, dirnames, filenames in self.os.walk(base_dir):
-            assert dirpath == base_dir
-        base_dir += self.os.path.sep
-        for dirpath, dirnames, filenames in self.os.walk(base_dir):
-            assert dirpath == base_dir
+        file_path = self.make_path('foo', 'bar', 'baz')
+        self.create_file(file_path)
+        variants = [
+            self.make_path('foo', 'bar'),
+            self.make_path('foo', '..', 'foo', 'bar'),
+            self.make_path('foo', '..', 'foo', 'bar') +
+            self.os.path.sep * 3,
+            self.make_path('foo') + self.os.path.sep * 3 + 'bar'
+        ]
+        for base_dir in variants:
+            for dirpath, dirnames, filenames in self.os.walk(base_dir):
+                print(dirpath, filenames)
+                self.assertEqual(dirpath, base_dir)
+
+        file_path = self.make_path('foo', 'bar', 'dir', 'baz')
+        self.create_file(file_path)
+        for base_dir in variants:
+            for dirpath, dirnames, filenames in self.os.walk(base_dir):
+                print(dirpath, filenames)
+                self.assertTrue(dirpath.startswith(base_dir))
 
 
 class RealOsModuleWalkTest(FakeOsModuleWalkTest):
