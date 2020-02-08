@@ -184,6 +184,20 @@ class TestPatchingImports(TestPyfakefsUnittestBase):
         self.assertEqual('abc', contents)
 
 
+class TestPatchingDefaultArgs(TestPyfakefsUnittestBase):
+    def test_path_exists_as_default_arg_in_function(self):
+        file_path = '/foo/bar'
+        self.fs.create_dir(file_path)
+        self.assertTrue(
+            pyfakefs.tests.import_as_example.check_if_exists4(file_path))
+
+    def test_path_exists_as_default_arg_in_method(self):
+        file_path = '/foo/bar'
+        self.fs.create_dir(file_path)
+        sut = pyfakefs.tests.import_as_example.TestDefaultArg()
+        self.assertTrue(sut.check_if_exists(file_path))
+
+
 class TestAttributesWithFakeModuleNames(TestPyfakefsUnittestBase):
     """Test that module attributes with names like `path` or `io` are not
     stubbed out.
@@ -225,13 +239,6 @@ class FailedPatchingTest(TestPyfakefsUnittestBase):
         self.assertEqual(
             4, pyfakefs.tests.import_as_example.system_stat(file_path).st_size)
 
-    @unittest.expectedFailure
-    def test_path_exists(self):
-        file_path = '/foo/bar'
-        self.fs.create_dir(file_path)
-        self.assertTrue(
-            pyfakefs.tests.import_as_example.check_if_exists4(file_path))
-
 
 class ReloadModuleTest(fake_filesystem_unittest.TestCase):
     """Make sure that reloading a module allows patching of classes not
@@ -242,12 +249,6 @@ class ReloadModuleTest(fake_filesystem_unittest.TestCase):
         """Set up the fake file system"""
         self.setUpPyfakefs(
             modules_to_reload=[pyfakefs.tests.import_as_example])
-
-    def test_path_exists(self):
-        file_path = '/foo/bar'
-        self.fs.create_dir(file_path)
-        self.assertTrue(
-            pyfakefs.tests.import_as_example.check_if_exists4(file_path))
 
 
 class NoSkipNamesTest(fake_filesystem_unittest.TestCase):

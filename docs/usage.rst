@@ -154,20 +154,8 @@ This also works if importing the functions as another name:
   from io import open as io_open
   from builtins import open as bltn_open
 
-There are a few cases where automatic patching does not work. We know of two
-specific cases where this is the case:
-
-- initializing global variables:
-
-.. code:: python
-
-  from pathlib import Path
-
-  path = Path("/example_home")
-
-In this case, ``path`` will hold the real file system path inside the test.
-
-- initializing a default argument:
+Initializing a default argument with a file system function is also patched
+automatically:
 
 .. code:: python
 
@@ -176,7 +164,19 @@ In this case, ``path`` will hold the real file system path inside the test.
   def check_if_exists(filepath, file_exists=os.path.exists):
       return file_exists(filepath)
 
-Here, ``file_exists`` will not be patched in the test.
+There are a few cases where automatic patching does not work. We know of at
+least one specific case where this is the case:
+
+If initializing a global variable using a file system function, the
+initialization will be done using the real file system:
+
+.. code:: python
+
+  from pathlib import Path
+
+  path = Path("/example_home")
+
+In this case, ``path`` will hold the real file system path inside the test.
 
 To get these cases to work as expected under test, the respective modules
 containing the code shall be added to the ``modules_to_reload`` argument (a

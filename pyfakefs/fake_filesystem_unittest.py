@@ -320,9 +320,7 @@ class Patcher:
         self._class_modules = {}
         self._init_fake_module_classes()
 
-        self.modules_to_reload = [tempfile]
-        if modules_to_reload is not None:
-            self.modules_to_reload.extend(modules_to_reload)
+        self.modules_to_reload = modules_to_reload or []
 
         if modules_to_patch is not None:
             for name, fake_module in modules_to_patch.items():
@@ -334,6 +332,7 @@ class Patcher:
         # Attributes set by _refresh()
         self._modules = {}
         self._fct_modules = {}
+        self._def_functions = []
         self._open_functions = {}
         self._stubs = None
         self.fs = None
@@ -424,15 +423,6 @@ class Patcher:
             # attribute - see #460
             return False
 
-    def _is_open_function(self, fct):
-        try:
-            return ((inspect.isfunction(fct) or
-                     inspect.isbuiltin(fct)) and
-                    fct.__name__ == 'open' and
-                    fct.__module__ == BUILTIN_MODULE)
-        except AttributeError:
-            return False
-
     def _is_fs_function(self, fct):
         try:
             return ((inspect.isfunction(fct) or
@@ -444,6 +434,25 @@ class Patcher:
             # handle cases where the function has no __name__ or __module__
             # attribute
             return False
+
+    def _def_values(self, item):
+        # check for module-level functions
+        if inspect.isfunction(item) and item.__defaults__:
+            for i, d in enumerate(item.__defaults__):
+                if self._is_fs_function(d):
+                    yield item, i, d
+        if inspect.isclass(item):
+            # check for methods in class (nested classes are ignored for now)
+            try:
+                for m in inspect.getmembers(item,
+                                            predicate=inspect.isfunction):
+                    if m[1].__defaults__:
+                        for i, d in enumerate(m[1].__defaults__):
+                            if self._is_fs_function(d):
+                                yield m[1], i, d
+            except ImportError:
+                # Ignore ImportError: No module named '_gdbm'
+                pass
 
     def _find_modules(self):
         """Find and cache all modules that import file system modules.
@@ -464,6 +473,8 @@ class Patcher:
                 # see https://github.com/pytest-dev/py/issues/73
                 continue
 
+            module_items = module.__dict__.copy().items()
+
             # suppress specific pytest warning - see #466
             with warnings.catch_warnings():
                 warnings.filterwarnings(
@@ -472,15 +483,21 @@ class Patcher:
                     category=DeprecationWarning,
                     module='py'
                 )
-                modules = {name: mod for name, mod in
-                           module.__dict__.copy().items()
+                modules = {name: mod for name, mod in module_items
                            if self._is_fs_module(mod, name, module_names)}
+
             for name, mod in modules.items():
                 self._modules.setdefault(name, set()).add((module,
                                                            mod.__name__))
             functions = {name: fct for name, fct in
-                         module.__dict__.copy().items()
+                         module_items
                          if self._is_fs_function(fct)}
+
+            # find default arguments that are file system functions
+            for _, fct in module_items:
+                for f, i, d in self._def_values(fct):
+                    self._def_functions.append((f, i, d))
+
             for name, fct in functions.items():
                 self._fct_modules.setdefault(
                     (name, fct.__name__, fct.__module__), set()).add(module)
@@ -537,6 +554,19 @@ class Patcher:
                 for module in modules:
                     self._stubs.smart_set(module, name, attr)
 
+            for (fct, idx, ft) in self._def_functions:
+                method, mod_name = self._fake_module_functions[
+                    ft.__name__][ft.__module__]
+                fake_module = self.fake_modules[mod_name]
+                attr = method.__get__(fake_module, fake_module.__class__)
+                new_defaults = []
+                for i, d in enumerate(fct.__defaults__):
+                    if i == idx:
+                        new_defaults.append(attr)
+                    else:
+                        new_defaults.append(d)
+                fct.__defaults__ = tuple(new_defaults)
+
             self._dyn_patcher = DynamicPatcher(self)
             sys.meta_path.insert(0, self._dyn_patcher)
             for module in self.modules_to_reload:
@@ -565,8 +595,20 @@ class Patcher:
             self._isStale = True
             self._patching = False
             self._stubs.smart_unset_all()
+            self.unset_defaults()
             self._dyn_patcher.cleanup()
             sys.meta_path.pop(0)
+
+    def unset_defaults(self):
+        for (fct, idx, ft) in self._def_functions:
+            new_defaults = []
+            for i, d in enumerate(fct.__defaults__):
+                if i == idx:
+                    new_defaults.append(ft)
+                else:
+                    new_defaults.append(d)
+            fct.__defaults__ = tuple(new_defaults)
+        self._def_functions = []
 
     def pause(self):
         """Pause the patching of the file system modules until `resume` is
