@@ -52,7 +52,6 @@ if Path:
 
 
 def check_if_exists4(filepath, file_exists=my_os.path.exists):
-    # this is a similar case as in the tempfile implementation under Posix
     return file_exists(filepath)
 
 
@@ -97,3 +96,9 @@ def file_contents2(filepath):
 def exists_this_file():
     "Returns True in real fs only"
     return exists(__file__)
+
+
+class TestDefaultArg:
+    def check_if_exists(self, filepath, file_exists=my_os.path.exists):
+        # this is a similar case as in the tempfile implementation under Posix
+        return file_exists(filepath)

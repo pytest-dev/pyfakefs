@@ -16,6 +16,8 @@ the proposed changes so you can be ready.
 #### New Features
   * Added support for handling keyword-only arguments in some `os` functions
   * Added possibility to pass additional parameters to `fs` pytest fixture
+  * Added automatic patching of default arguments that are file system
+    functions
   
 #### Fixes
   * Fixed `os.walk` if path ends with path separator
