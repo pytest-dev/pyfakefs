@@ -96,11 +96,16 @@ the box.
 In case of ``fake_filesystem_unittest.TestCase``, these arguments can either
 be set in the TestCase instance initialization, or passed to ``setUpPyfakefs()``.
 
-.. note:: If you need these arguments in ``PyTest``, you must
-  use ``Patcher`` directly instead of the ``fs`` fixture. Alternatively,
-  you can add your own fixture with the needed parameters.
+.. note:: If you need these arguments in ``PyTest``, you can pass them using
+  ``@pytest.mark.parametrize``. Note that you have to also provide
+  `all Patcher arguments <http://jmcgeheeiv.github.io/pyfakefs/master/modules.html#pyfakefs.fake_filesystem_unittest.Patcher>`__
+  before the needed ones, as keyword arguments cannot be used, and you have to
+  add ``indirect=True`` as argument.
+  Alternatively, you can add your own fixture with the needed parameters.
 
-  An example for both approaches can be found in
+  Examples for the first approach can be found below, and in
+  `pytest_fixture_param_test.py <https://github.com/jmcgeheeiv/pyfakefs/blob/master/pyfakefs/pytest_tests/pytest_fixture_param_test.py>`__.
+  The second approach is shown in
   `pytest_fixture_test.py <https://github.com/jmcgeheeiv/pyfakefs/blob/master/pyfakefs/pytest_tests/pytest_fixture_test.py>`__
   with the example fixture in `conftest.py <https://github.com/jmcgeheeiv/pyfakefs/blob/master/pyfakefs/pytest_tests/conftest.py>`__.
   We advice to use this example fixture code as a template for your customized
@@ -149,20 +154,8 @@ This also works if importing the functions as another name:
   from io import open as io_open
   from builtins import open as bltn_open
 
-There are a few cases where automatic patching does not work. We know of two
-specific cases where this is the case:
-
-- initializing global variables:
-
-.. code:: python
-
-  from pathlib import Path
-
-  path = Path("/example_home")
-
-In this case, ``path`` will hold the real file system path inside the test.
-
-- initializing a default argument:
+Initializing a default argument with a file system function is also patched
+automatically:
 
 .. code:: python
 
@@ -171,7 +164,19 @@ In this case, ``path`` will hold the real file system path inside the test.
   def check_if_exists(filepath, file_exists=os.path.exists):
       return file_exists(filepath)
 
-Here, ``file_exists`` will not be patched in the test.
+There are a few cases where automatic patching does not work. We know of at
+least one specific case where this is the case:
+
+If initializing a global variable using a file system function, the
+initialization will be done using the real file system:
+
+.. code:: python
+
+  from pathlib import Path
+
+  path = Path("/example_home")
+
+In this case, ``path`` will hold the real file system path inside the test.
 
 To get these cases to work as expected under test, the respective modules
 containing the code shall be added to the ``modules_to_reload`` argument (a
@@ -185,6 +190,8 @@ Given that the example code shown above is located in the file
 
 .. code:: python
 
+  import example
+
   # example using unittest
   class ReloadModuleTest(fake_filesystem_unittest.TestCase):
       def setUp(self):
@@ -195,36 +202,19 @@ Given that the example code shown above is located in the file
           self.fs.create_dir(file_path)
           self.assertTrue(example.sut.check_if_exists(file_path))
 
+  # example using pytest
+  @pytest.mark.parametrize('fs', [[None, [example.sut]]], indirect=True)
+  def test_path_exists(fs):
+      file_path = '/foo/bar'
+      fs.create_dir(file_path)
+      assert example.sut.check_if_exists(file_path)
+
   # example using Patcher
   def test_path_exists():
       with Patcher() as patcher:
         file_path = '/foo/bar'
         patcher.fs.create_dir(file_path)
         assert example.sut.check_if_exists(file_path)
-
-Example using pytest:
-
-.. code:: python
-
-  # conftest.py
-  ...
-  from example import sut
-
-  @pytest.fixture
-  def fs_reload_sut():
-      patcher = Patcher(modules_to_reload=[sut])
-      patcher.setUp()
-      linecache.open = patcher.original_open
-      tokenize._builtin_open = patcher.original_open
-      yield patcher.fs
-      patcher.tearDown()
-
-  # test_code.py
-  ...
-  def test_path_exists(fs_reload_sut):
-      file_path = '/foo/bar'
-      fs_reload_sut.create_dir(file_path)
-      assert example.sut.check_if_exists(file_path)
 
 
 modules_to_patch
@@ -273,8 +263,14 @@ fake a module in Django that uses OS file system functions:
       def setUp(self):
           self.setUpPyfakefs(modules_to_patch={'django.core.files.locks': FakeLocks})
 
-      def test_django_stuff()
+      def test_django_stuff(self)
           ...
+
+  # test code using pytest
+  @pytest.mark.parametrize('fs', [[None, None,
+    {'django.core.files.locks': FakeLocks}]], indirect=True)
+  def test_django_stuff(fs):
+      ...
 
 additional_skip_names
 ~~~~~~~~~~~~~~~~~~~~~
@@ -379,6 +375,45 @@ fake filesystem via the argument ``target_path``.
                 # file contents are copied to the fake file system
                 # only at this point
                 contents = f.read()
+
+You can do the same using ``pytest`` by using a fixture for test setup:
+
+.. code:: python
+
+    import pytest
+    import os
+
+    fixture_path = os.path.join(os.path.dirname(__file__), 'fixtures')
+
+    @pytest.fixture
+    def my_fs(fs):
+        fs.add_real_directory(fixture_path)
+        yield fs
+
+    def test_using_fixture1(my_fs):
+        with open(os.path.join(fixture_path, 'fixture1.txt') as f:
+            contents = f.read()
+
+When using ``pytest`` another option is to load the contents of the real file
+in a fixture and pass this fixture to the test function **before** passing
+the ``fs`` fixture.
+
+.. code:: python
+
+    import pytest
+    import os
+
+    @pytest.fixture
+    def content():
+        fixture_path = os.path.join(os.path.dirname(__file__), 'fixtures')
+        with open(os.path.join(fixture_path, 'fixture1.txt') as f:
+            contents = f.read()
+        return contents
+
+    def test_using_file_contents(content, fs):
+        fs.create_file("fake/path.txt")
+        assert content != ""
+
 
 Handling mount points
 ~~~~~~~~~~~~~~~~~~~~~
