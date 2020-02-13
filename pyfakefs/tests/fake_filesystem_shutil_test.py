@@ -20,6 +20,7 @@ and works correctly with the fake filesystem because of the faked `os` module.
 import os
 import shutil
 import sys
+import tempfile
 import unittest
 
 from pyfakefs import fake_filesystem_unittest
@@ -488,6 +489,17 @@ class FakeCopyFileTest(RealFsTestCase):
             self.assertRaises(OSError, shutil.copyfile, src_file, dst_dir)
         else:
             self.assertRaises(OSError, shutil.copyfile, src_file, dst_dir)
+
+    def test_moving_dir_into_dir(self):
+        # regression test for #515
+        source_dir = tempfile.mkdtemp()
+        target_dir = tempfile.mkdtemp()
+        filename = 'foo.pdf'
+        with open(os.path.join(source_dir, filename), 'wb') as fp:
+            fp.write(b'stub')
+
+        shutil.move(source_dir, target_dir)
+        shutil.rmtree(target_dir)
 
 
 class RealCopyFileTest(FakeCopyFileTest):

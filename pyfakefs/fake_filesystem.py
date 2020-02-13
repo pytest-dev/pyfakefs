@@ -646,6 +646,9 @@ class FakeDirectory(FakeFile):
 
         self.contents[path_object_name] = path_object
         path_object.parent_dir = self
+        if path_object.st_ino is None:
+            self.filesystem.last_ino += 1
+            path_object.st_ino = self.filesystem.last_ino
         self.st_nlink += 1
         path_object.st_nlink += 1
         path_object.st_dev = self.st_dev
@@ -878,8 +881,8 @@ class FakeFilesystem:
         # A heap containing all free positions in self.open_files list
         self._free_fd_heap = []
         # last used numbers for inodes (st_ino) and devices (st_dev)
-        self._last_ino = 0
-        self._last_dev = 0
+        self.last_ino = 0
+        self.last_dev = 0
         self.mount_points = {}
         self.add_mount_point(self.root.name, total_size)
         self._add_standard_streams()
@@ -896,8 +899,8 @@ class FakeFilesystem:
 
         self.open_files = []
         self._free_fd_heap = []
-        self._last_ino = 0
-        self._last_dev = 0
+        self.last_ino = 0
+        self.last_dev = 0
         self.mount_points = {}
         self.add_mount_point(self.root.name, total_size)
         self._add_standard_streams()
@@ -994,14 +997,18 @@ class FakeFilesystem:
         path = self.absnormpath(path)
         if path in self.mount_points:
             self.raise_os_error(errno.EEXIST, path)
-        self._last_dev += 1
+        self.last_dev += 1
         self.mount_points[path] = {
-            'idev': self._last_dev, 'total_size': total_size, 'used_size': 0
+            'idev': self.last_dev, 'total_size': total_size, 'used_size': 0
         }
         # special handling for root path: has been created before
-        root_dir = (self.root if path == self.root.name
-                    else self.create_dir(path))
-        root_dir.st_dev = self._last_dev
+        if path == self.root.name:
+            root_dir = self.root
+            self.last_ino += 1
+            root_dir.st_ino = self.last_ino
+        else:
+            root_dir = self.create_dir(path)
+        root_dir.st_dev = self.last_dev
         return self.mount_points[path]
 
     def _auto_mount_drive_if_needed(self, path, force=False):
@@ -2293,8 +2300,6 @@ class FakeFilesystem:
         for new_dir in new_dirs:
             new_dir.st_mode = S_IFDIR | perm_bits
 
-        self._last_ino += 1
-        current_dir.st_ino = self._last_ino
         return current_dir
 
     def create_file(self, file_path, st_mode=S_IFREG | PERM_DEF_FILE,
@@ -2448,8 +2453,6 @@ class FakeFilesystem:
             new_dir = FakeDirectoryFromRealDirectory(
                 source_path, self, read_only, target_path)
             parent_dir.add_entry(new_dir)
-            self._last_ino += 1
-            new_dir.st_ino = self._last_ino
         else:
             new_dir = self.create_dir(target_path)
             for base, _, files in os.walk(source_path):
@@ -2557,8 +2560,6 @@ class FakeFilesystem:
                                    encoding=encoding, errors=errors,
                                    side_effect=side_effect)
 
-        self._last_ino += 1
-        file_object.st_ino = self._last_ino
         self.add_object(parent_directory, file_object)
 
         if st_size is None and contents is None:

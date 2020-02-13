@@ -20,6 +20,7 @@ the proposed changes so you can be ready.
     functions
   
 #### Fixes
+  * Added missing `st_ino` in `makedir` (see [#515](../../issues/515))
   * Fixed handling of relative paths in `lresolve` / `os.lstat`
     (see [#516](../../issues/516))
   * Fixed handling of byte string paths 
