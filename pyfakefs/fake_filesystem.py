@@ -112,7 +112,7 @@ from pyfakefs.fake_scandir import scandir, walk
 from pyfakefs.helpers import (
     FakeStatResult, FileBufferIO, NullFileBufferIO,
     is_int_type, is_byte_string, is_unicode_string,
-    make_string_path, IS_WIN)
+    make_string_path, IS_WIN, to_string)
 
 __pychecker__ = 'no-reimportself'
 
@@ -640,10 +640,11 @@ class FakeDirectory(FakeFile):
                 not self.filesystem.is_windows_fs):
             raise OSError(errno.EACCES, 'Permission Denied', self.path)
 
-        if path_object.name in self.contents:
+        path_object_name = to_string(path_object.name)
+        if path_object_name in self.contents:
             self.filesystem.raise_os_error(errno.EEXIST, self.path)
 
-        self.contents[path_object.name] = path_object
+        self.contents[path_object_name] = path_object
         path_object.parent_dir = self
         self.st_nlink += 1
         path_object.st_nlink += 1
@@ -665,7 +666,7 @@ class FakeDirectory(FakeFile):
             KeyError: if no child exists by the specified name.
         """
         pathname_name = self._normalized_entryname(pathname_name)
-        return self.contents[pathname_name]
+        return self.contents[to_string(pathname_name)]
 
     def _normalized_entryname(self, pathname_name):
         if not self.filesystem.is_case_sensitive:
@@ -712,7 +713,7 @@ class FakeDirectory(FakeFile):
         entry.st_nlink -= 1
         assert entry.st_nlink >= 0
 
-        del self.contents[pathname_name]
+        del self.contents[to_string(pathname_name)]
 
     @property
     def size(self):
@@ -1736,12 +1737,6 @@ class FakeFilesystem:
                 return False
         return True
 
-    @staticmethod
-    def _to_string(path):
-        if isinstance(path, bytes):
-            path = path.decode(locale.getpreferredencoding(False))
-        return path
-
     def resolve_path(self, file_path, allow_fd=False, raw_io=True):
         """Follow a path, resolving symlinks.
 
@@ -1787,7 +1782,6 @@ class FakeFilesystem:
         if file_path is None:
             # file.open(None) raises TypeError, so mimic that.
             raise TypeError('Expected file system path string, received None')
-        file_path = self._to_string(file_path)
         if not file_path or not self._valid_relative_path(file_path):
             # file.open('') raises OSError, so mimic that, and validate that
             # all parts of a relative path exist.
@@ -2793,6 +2787,7 @@ class FakeFilesystem:
         """
         if not dir_name:
             self.raise_os_error(errno.ENOENT, '')
+        dir_name = to_string(dir_name)
         ends_with_sep = self.ends_with_path_separator(dir_name)
         dir_name = self.absnormpath(dir_name)
         if (ends_with_sep and self.is_macos and
@@ -4128,6 +4123,7 @@ class FakeOsModule:
 
     def _path_with_dir_fd(self, path, fct, dir_fd):
         """Return the path considering dir_fd. Raise on invalid parameters."""
+        path = to_string(path)
         if dir_fd is not None:
             # check if fd is supported for the built-in real function
             real_fct = getattr(os, fct.__name__)

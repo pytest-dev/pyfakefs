@@ -49,6 +49,14 @@ def make_string_path(dir_name):
     return dir_name
 
 
+def to_string(path):
+    """Return the string representation of a byte string using the preferred
+     encoding, or the string itself if path is a str."""
+    if isinstance(path, bytes):
+        return path.decode(locale.getpreferredencoding(False))
+    return path
+
+
 class FakeStatResult:
     """Mimics os.stat_result for use as return type of `stat()` and similar.
     This is needed as `os.stat_result` has no possibility to set
@@ -85,17 +93,17 @@ class FakeStatResult:
 
     def __eq__(self, other):
         return (
-            isinstance(other, FakeStatResult) and
-            self._st_atime_ns == other._st_atime_ns and
-            self._st_ctime_ns == other._st_ctime_ns and
-            self._st_mtime_ns == other._st_mtime_ns and
-            self.st_size == other.st_size and
-            self.st_gid == other.st_gid and
-            self.st_uid == other.st_uid and
-            self.st_nlink == other.st_nlink and
-            self.st_dev == other.st_dev and
-            self.st_ino == other.st_ino and
-            self.st_mode == other.st_mode
+                isinstance(other, FakeStatResult) and
+                self._st_atime_ns == other._st_atime_ns and
+                self._st_ctime_ns == other._st_ctime_ns and
+                self._st_mtime_ns == other._st_mtime_ns and
+                self.st_size == other.st_size and
+                self.st_gid == other.st_gid and
+                self.st_uid == other.st_uid and
+                self.st_nlink == other.st_nlink and
+                self.st_dev == other.st_dev and
+                self.st_ino == other.st_ino and
+                self.st_mode == other.st_mode
         )
 
     def __ne__(self, other):
@@ -272,6 +280,7 @@ class FileBufferIO:
     Uses an io.BytesIO stream for the raw data and adds handling of encoding
     and newlines.
     """
+
     def __init__(self, contents=None, linesep='\n', binary=False,
                  newline=None, encoding=None, errors='strict'):
         self._newline = newline
@@ -418,5 +427,6 @@ class FileBufferIO:
 
 class NullFileBufferIO(FileBufferIO):
     """Special stream for null device. Does nothing on writing."""
+
     def putvalue(self, s):
         pass

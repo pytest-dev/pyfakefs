@@ -20,6 +20,7 @@ import os
 import sys
 
 from pyfakefs.extra_packages import use_scandir_package
+from pyfakefs.helpers import to_string
 
 if sys.version_info >= (3, 6):
     BaseClass = os.PathLike
@@ -131,7 +132,7 @@ class ScanDirIter:
             self.path = ''
         else:
             self.abspath = self.filesystem.absnormpath(path)
-            self.path = path
+            self.path = to_string(path)
         contents = self.filesystem.confirmdir(self.abspath).contents
         self.contents_iter = iter(contents)
 
@@ -249,7 +250,7 @@ def walk(filesystem, top, topdown=True, onerror=None, followlinks=False):
             if not topdown:
                 yield top_contents
 
-    return do_walk(top, top_most=True)
+    return do_walk(to_string(top), top_most=True)
 
 
 class FakeScanDirModule:

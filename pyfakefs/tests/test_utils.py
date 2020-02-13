@@ -25,7 +25,7 @@ import tempfile
 import unittest
 
 from pyfakefs import fake_filesystem
-from pyfakefs.helpers import is_byte_string
+from pyfakefs.helpers import is_byte_string, to_string
 
 
 class DummyTime:
@@ -265,17 +265,13 @@ class RealFsTestMixin:
         Always use to compose absolute paths for tests also running in the
         real FS.
         """
-        if isinstance(args[0], bytes):
-            base_path = self.base_path.encode()
-        else:
-            base_path = self.base_path
-
         if isinstance(args[0], (list, tuple)):
-            path = base_path
+            path = self.base_path
             for arg in args[0]:
-                path = self.os.path.join(path, arg)
+                path = self.os.path.join(path, to_string(arg))
             return path
-        return self.os.path.join(base_path, *args)
+        args = [to_string(arg) for arg in args]
+        return self.os.path.join(self.base_path, *args)
 
     def create_dir(self, dir_path):
         """Create the directory at `dir_path`, including subdirectories.

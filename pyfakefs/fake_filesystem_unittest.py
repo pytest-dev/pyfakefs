@@ -436,20 +436,24 @@ class Patcher:
             return False
 
     def _def_values(self, item):
+        """Find default arguments that are file-system functions to be
+        patched in top-level functions and members of top-level classes."""
         # check for module-level functions
-        if inspect.isfunction(item) and item.__defaults__:
-            for i, d in enumerate(item.__defaults__):
-                if self._is_fs_function(d):
-                    yield item, i, d
-        if inspect.isclass(item):
+        if inspect.isfunction(item):
+            if item.__defaults__:
+                for i, d in enumerate(item.__defaults__):
+                    if self._is_fs_function(d):
+                        yield item, i, d
+        elif inspect.isclass(item):
             # check for methods in class (nested classes are ignored for now)
             try:
                 for m in inspect.getmembers(item,
                                             predicate=inspect.isfunction):
-                    if m[1].__defaults__:
-                        for i, d in enumerate(m[1].__defaults__):
+                    m = m[1]
+                    if m.__defaults__:
+                        for i, d in enumerate(m.__defaults__):
                             if self._is_fs_function(d):
-                                yield m[1], i, d
+                                yield m, i, d
             except ImportError:
                 # Ignore ImportError: No module named '_gdbm'
                 pass

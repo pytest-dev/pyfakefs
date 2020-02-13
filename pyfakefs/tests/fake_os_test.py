@@ -335,6 +335,18 @@ class FakeOsModuleTest(FakeOsModuleTestBase):
         self.assertEqual(stat, self.os.lstat(
             self.base_path + self.path_separator() + self.path_separator()))
 
+    def test_stat_with_byte_string(self):
+        stat_str = self.os.stat(self.base_path)
+        base_path_bytes = self.base_path.encode('utf8')
+        stat_bytes = self.os.stat(base_path_bytes)
+        self.assertEqual(stat_bytes, stat_str)
+
+    def test_lstat_with_byte_string(self):
+        stat_str = self.os.lstat(self.base_path)
+        base_path_bytes = self.base_path.encode('utf8')
+        stat_bytes = self.os.lstat(base_path_bytes)
+        self.assertEqual(stat_bytes, stat_str)
+
     def test_exists_with_trailing_sep(self):
         # regression test for #364
         file_path = self.make_path('alpha')

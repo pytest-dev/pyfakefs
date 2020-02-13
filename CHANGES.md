@@ -20,6 +20,8 @@ the proposed changes so you can be ready.
     functions
   
 #### Fixes
+  * Fixed handling of byte string paths 
+    (see [#517](../../issues/517))
   * Fixed `os.walk` if path ends with path separator
     (see [#512](../../issues/512))
   * Fixed handling of empty path in `os.makedirs`
