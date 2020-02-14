@@ -172,7 +172,11 @@ class FakeFilesystemVsRealTest(TestCase):
         # pylint: disable=C6403
 
         def _error_class(exc):
-            return (exc and exc.__class__.__name__) or 'None'
+            if exc:
+                if hasattr(exc, 'errno'):
+                    return '{}({})'.format(exc.__class__.__name__, exc.errno)
+                return exc.__class__.__name__
+            return 'None'
 
         real_err, real_value = self._get_real_value(method_name, path, real)
         fake_err, fake_value = self._get_fake_value(method_name, path, fake)

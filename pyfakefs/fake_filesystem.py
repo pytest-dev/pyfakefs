@@ -1442,6 +1442,8 @@ class FakeFilesystem:
         cwd = self._matching_string(path, self.cwd)
         if not path:
             path = self.path_separator
+        if path == self._matching_string(path, '.'):
+            path = cwd
         elif not self._starts_with_root_path(path):
             # Prefix relative paths with cwd, if cwd is not root.
             root_name = self._matching_string(path, self.root.name)
@@ -2002,12 +2004,16 @@ class FakeFilesystem:
             OSError: if the object is not found.
         """
         path = make_string_path(path)
+        if not path:
+            raise OSError(errno.ENOENT, path)
         if path == self.root.name:
             # The root directory will never be a link
             return self.root
 
         # remove trailing separator
         path = self._path_without_trailing_separators(path)
+        if path == self._matching_string(path, '.'):
+            path = self.cwd
         path = self._original_path(path)
 
         parent_directory, child_name = self.splitpath(path)
@@ -2022,7 +2028,8 @@ class FakeFilesystem:
                 self.raise_os_error(errno.ENOENT, path)
             if not parent_obj.st_mode & PERM_READ:
                 self.raise_os_error(errno.EACCES, parent_directory)
-            return parent_obj.get_entry(child_name)
+            return (parent_obj.get_entry(child_name) if child_name
+                    else parent_obj)
         except KeyError:
             self.raise_os_error(errno.ENOENT, path)
 
