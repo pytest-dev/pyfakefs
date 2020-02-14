@@ -350,6 +350,24 @@ class FakeOsModuleTest(FakeOsModuleTestBase):
         self.assertEqual(stat, self.os.lstat(
             self.base_path + self.path_separator() + self.path_separator()))
 
+    def test_stat_with_byte_string(self):
+        stat_str = self.os.stat(self.base_path)
+        base_path_bytes = self.base_path.encode('utf8')
+        stat_bytes = self.os.stat(base_path_bytes)
+        self.assertEqual(stat_bytes, stat_str)
+
+    def test_lstat_with_byte_string(self):
+        stat_str = self.os.lstat(self.base_path)
+        base_path_bytes = self.base_path.encode('utf8')
+        stat_bytes = self.os.lstat(base_path_bytes)
+        self.assertEqual(stat_bytes, stat_str)
+
+    def test_stat_with_current_dir(self):
+        # regression test for #516
+        stat_result = self.os.stat('.')
+        lstat_result = self.os.lstat('.')
+        self.assertEqual(stat_result, lstat_result)
+
     def test_exists_with_trailing_sep(self):
         # regression test for #364
         file_path = self.make_path('alpha')
@@ -361,6 +379,11 @@ class FakeOsModuleTest(FakeOsModuleTestBase):
         dir_path = self.make_path('foo')
         self.os.mkdir(dir_path + self.os.sep + self.os.sep)
         self.assertTrue(self.os.path.exists(dir_path))
+
+    def test_readlink_empty_path(self):
+        self.check_posix_only()
+        self.assert_raises_os_error(errno.ENOENT,
+                                    self.os.readlink, '')
 
     def test_readlink_ending_with_sep_posix(self):
         # regression test for #359
