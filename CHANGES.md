@@ -18,6 +18,8 @@ the proposed changes so you can be ready.
   * Added possibility to pass additional parameters to `fs` pytest fixture
   * Added automatic patching of default arguments that are file system
     functions
+  * Added convenience decorators `patchfs` and `custom_patchfs` (for
+    additional patcher arguments) to patch single functions
   
 #### Fixes
   * Added missing `st_ino` in `makedir` (see [#515](../../issues/515))

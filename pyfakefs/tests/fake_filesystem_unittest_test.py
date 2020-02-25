@@ -19,8 +19,8 @@ Test the :py:class`pyfakefs.fake_filesystem_unittest.TestCase` base class.
 """
 import glob
 import io
-import os
 import multiprocessing
+import os
 import shutil
 import sys
 import tempfile
@@ -28,10 +28,12 @@ import unittest
 from distutils.dir_util import copy_tree, remove_tree
 from unittest import TestCase
 
+import pyfakefs.tests.import_as_example
 from pyfakefs import fake_filesystem_unittest, fake_filesystem
 from pyfakefs.extra_packages import pathlib
-from pyfakefs.fake_filesystem_unittest import Patcher, Pause
-import pyfakefs.tests.import_as_example
+from pyfakefs.fake_filesystem_unittest import (
+    Patcher, Pause, patchfs, custom_patchfs
+)
 from pyfakefs.tests.fixtures import module_with_attributes
 
 
@@ -42,6 +44,13 @@ class TestPatcher(TestCase):
             with open('/foo/bar') as f:
                 contents = f.read()
             self.assertEqual('test', contents)
+
+    @patchfs
+    def test_context_decorator(self, fs):
+        fs.create_file('/foo/bar', contents='test')
+        with open('/foo/bar') as f:
+            contents = f.read()
+        self.assertEqual('test', contents)
 
 
 class TestPyfakefsUnittestBase(fake_filesystem_unittest.TestCase):
@@ -316,6 +325,28 @@ class PatchModuleTest(fake_filesystem_unittest.TestCase):
     def test_system_stat(self):
         file_path = '/foo/bar'
         self.fs.create_file(file_path, contents=b'test')
+        self.assertEqual(
+            4, pyfakefs.tests.import_as_example.system_stat(file_path).st_size)
+
+
+class PatchModuleTestUsingDecorator(unittest.TestCase):
+    """Make sure that reloading a module allows patching of classes not
+    patched automatically - use custom_patchfs decorator with parameter.
+    """
+
+    @patchfs
+    @unittest.expectedFailure
+    def test_system_stat_failing(self, fs):
+        file_path = '/foo/bar'
+        fs.create_file(file_path, contents=b'test')
+        self.assertEqual(
+            4, pyfakefs.tests.import_as_example.system_stat(file_path).st_size)
+
+    @custom_patchfs(modules_to_patch={
+        'pyfakefs.tests.import_as_example': FakeExampleModule})
+    def test_system_stat(self, fs):
+        file_path = '/foo/bar'
+        fs.create_file(file_path, contents=b'test')
         self.assertEqual(
             4, pyfakefs.tests.import_as_example.system_stat(file_path).st_size)
 
