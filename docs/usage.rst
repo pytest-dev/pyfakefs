@@ -78,9 +78,9 @@ You can also initialize ``Patcher`` manually:
    ...
    patcher.tearDown()  # somewhere in the cleanup code
 
-Patch using fake_filesystem_unittest decorators
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-This is basically just a convenience wrapper for the previous method.
+Patch using fake_filesystem_unittest.patchfs decorator
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+This is basically a convenience wrapper for the previous method.
 If you want to use the fake filesystem for a single function, you can write:
 
 .. code:: python
@@ -93,9 +93,6 @@ If you want to use the fake filesystem for a single function, you can write:
        fs.create_file('/foo/bar', contents='test')
 
 Note the argument name ``fs``, which is mandatory.
-
-_Caveat_: Do not use ``@patchfs`` without the call syntax - this would not
-run the test!
 
 Don't confuse this with pytest tests, where ``fs`` is the fixture name (with
 the same functionality). If you use pytest, you don't need this decorator.
@@ -110,18 +107,15 @@ You can also use this to make a single unit test use the fake fs:
         def test_something(self, fs):
             fs.create_file('/foo/bar', contents='test')
 
-If you want to pass additional arguments to the patcher you can use another
-version of the decorator:.
+If you want to pass additional arguments to the patcher you can just
+pass them to the decorator:
 
 .. code:: python
 
-    from pyfakefs.fake_filesystem_unittest import custom_patchfs
-
-    @custom_patchfs(allow_root_user=False)
+    @patchfs(allow_root_user=False)
     def test_something(fs):
-        fs.create_file('/foo/bar', contents='test')
-
-This version can only be used with call syntax (e.g. with parentheses).
+        # now always called as non-root user
+        os.makedirs('/foo/bar')
 
 Patch using unittest.mock (deprecated)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
