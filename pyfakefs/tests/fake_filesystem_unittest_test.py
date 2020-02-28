@@ -31,9 +31,7 @@ from unittest import TestCase
 import pyfakefs.tests.import_as_example
 from pyfakefs import fake_filesystem_unittest, fake_filesystem
 from pyfakefs.extra_packages import pathlib
-from pyfakefs.fake_filesystem_unittest import (
-    Patcher, Pause, patchfs, custom_patchfs
-)
+from pyfakefs.fake_filesystem_unittest import Patcher, Pause, patchfs
 from pyfakefs.tests.fixtures import module_with_attributes
 
 
@@ -331,7 +329,7 @@ class PatchModuleTest(fake_filesystem_unittest.TestCase):
 
 class PatchModuleTestUsingDecorator(unittest.TestCase):
     """Make sure that reloading a module allows patching of classes not
-    patched automatically - use custom_patchfs decorator with parameter.
+    patched automatically - use patchfs decorator with parameter.
     """
 
     @patchfs
@@ -342,7 +340,7 @@ class PatchModuleTestUsingDecorator(unittest.TestCase):
         self.assertEqual(
             4, pyfakefs.tests.import_as_example.system_stat(file_path).st_size)
 
-    @custom_patchfs(modules_to_patch={
+    @patchfs(modules_to_patch={
         'pyfakefs.tests.import_as_example': FakeExampleModule})
     def test_system_stat(self, fs):
         file_path = '/foo/bar'

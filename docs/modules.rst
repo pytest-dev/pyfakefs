@@ -36,6 +36,10 @@ Unittest module classes
 .. autoclass:: pyfakefs.fake_filesystem_unittest.Patcher
     :members: setUp, tearDown, pause, resume
 
+.. automodule:: pyfakefs.fake_filesystem_unittest
+    :members: patchfs
+
+
 Faked module classes
 --------------------
 
