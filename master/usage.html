@@ -111,6 +111,38 @@ of replacing the filesystem modules with the fake modules in the first two appro
 </pre></div>
 </div>
 </div>
+<div class="section" id="patch-using-fake-filesystem-unittest-patchfs-decorator">
+<h3>Patch using fake_filesystem_unittest.patchfs decorator<a class="headerlink" href="#patch-using-fake-filesystem-unittest-patchfs-decorator" title="Permalink to this headline">¶</a></h3>
+<p>This is basically a convenience wrapper for the previous method.
+If you want to use the fake filesystem for a single function, you can write:</p>
+<div class="code python highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">pyfakefs.fake_filesystem_unittest</span> <span class="k">import</span> <span class="n">patchfs</span>
+
+<span class="nd">@patchfs</span>
+<span class="k">def</span> <span class="nf">test_something</span><span class="p">(</span><span class="n">fs</span><span class="p">):</span>
+    <span class="c1"># access the fake_filesystem object via fs</span>
+    <span class="n">fs</span><span class="o">.</span><span class="n">create_file</span><span class="p">(</span><span class="s1">&#39;/foo/bar&#39;</span><span class="p">,</span> <span class="n">contents</span><span class="o">=</span><span class="s1">&#39;test&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>Note the argument name <code class="docutils literal notranslate"><span class="pre">fs</span></code>, which is mandatory.</p>
+<p>Don’t confuse this with pytest tests, where <code class="docutils literal notranslate"><span class="pre">fs</span></code> is the fixture name (with
+the same functionality). If you use pytest, you don’t need this decorator.</p>
+<p>You can also use this to make a single unit test use the fake fs:</p>
+<div class="code python highlight-default notranslate"><div class="highlight"><pre><span></span><span class="k">class</span> <span class="nc">TestSomething</span><span class="p">(</span><span class="n">unittest</span><span class="o">.</span><span class="n">TestCase</span><span class="p">):</span>
+
+    <span class="nd">@patchfs</span>
+    <span class="k">def</span> <span class="nf">test_something</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">fs</span><span class="p">):</span>
+        <span class="n">fs</span><span class="o">.</span><span class="n">create_file</span><span class="p">(</span><span class="s1">&#39;/foo/bar&#39;</span><span class="p">,</span> <span class="n">contents</span><span class="o">=</span><span class="s1">&#39;test&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>If you want to pass additional arguments to the patcher you can just
+pass them to the decorator:</p>
+<div class="code python highlight-default notranslate"><div class="highlight"><pre><span></span><span class="nd">@patchfs</span><span class="p">(</span><span class="n">allow_root_user</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+<span class="k">def</span> <span class="nf">test_something</span><span class="p">(</span><span class="n">fs</span><span class="p">):</span>
+    <span class="c1"># now always called as non-root user</span>
+    <span class="n">os</span><span class="o">.</span><span class="n">makedirs</span><span class="p">(</span><span class="s1">&#39;/foo/bar&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
 <div class="section" id="patch-using-unittest-mock-deprecated">
 <h3>Patch using unittest.mock (deprecated)<a class="headerlink" href="#patch-using-unittest-mock-deprecated" title="Permalink to this headline">¶</a></h3>
 <p>You can also use <code class="docutils literal notranslate"><span class="pre">mock.patch()</span></code> to patch the modules manually. This approach will
@@ -586,6 +618,7 @@ described above.</p>
 <li><a class="reference internal" href="#patch-using-fake-filesystem-unittest">Patch using fake_filesystem_unittest</a></li>
 <li><a class="reference internal" href="#patch-using-the-pytest-plugin">Patch using the PyTest plugin</a></li>
 <li><a class="reference internal" href="#patch-using-fake-filesystem-unittest-patcher">Patch using fake_filesystem_unittest.Patcher</a></li>
+<li><a class="reference internal" href="#patch-using-fake-filesystem-unittest-patchfs-decorator">Patch using fake_filesystem_unittest.patchfs decorator</a></li>
 <li><a class="reference internal" href="#patch-using-unittest-mock-deprecated">Patch using unittest.mock (deprecated)</a></li>
 </ul>
 </li>
@@ -665,7 +698,7 @@ described above.</p>
         &#169; Copyright 2009 Google Inc. All Rights Reserved.
 © Copyright 2014 Altera Corporation. All Rights Reserved.
 © Copyright 2014-2019 John McGehee.
-      Last updated on Feb 09, 2020.
+      Last updated on Feb 28, 2020.
     </div>
   </body>
 </html>

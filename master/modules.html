@@ -984,6 +984,39 @@ Does nothing if patching is not paused.</p>
 
 </dd></dl>
 
+<span class="target" id="module-pyfakefs.fake_filesystem_unittest"></span><p>This module provides a base class derived from <cite>unittest.TestClass</cite>
+for unit tests using the <code class="xref py py-class docutils literal notranslate"><span class="pre">pyfakefs</span></code> module.</p>
+<p><cite>fake_filesystem_unittest.TestCase</cite> searches <cite>sys.modules</cite> for modules
+that import the <cite>os</cite>, <cite>io</cite>, <cite>path</cite> <cite>shutil</cite>, and <cite>pathlib</cite> modules.</p>
+<p>The <cite>setUpPyfakefs()</cite> method binds these modules to the corresponding fake
+modules from <cite>pyfakefs</cite>.  Further, the <cite>open()</cite> built-in is bound to a fake
+<cite>open()</cite>.</p>
+<p>It is expected that <cite>setUpPyfakefs()</cite> be invoked at the beginning of the
+derived class’ <cite>setUp()</cite> method.  There is no need to add anything to the
+derived class’ <cite>tearDown()</cite> method.</p>
+<p>During the test, everything uses the fake file system and modules.  This means
+that even in your test fixture, familiar functions like <cite>open()</cite> and
+<cite>os.makedirs()</cite> manipulate the fake file system.</p>
+<p>Existing unit tests that use the real file system can be retrofitted to use
+pyfakefs by simply changing their base class from <cite>:py:class`unittest.TestCase</cite>
+to <cite>:py:class`pyfakefs.fake_filesystem_unittest.TestCase</cite>.</p>
+<dl class="function">
+<dt id="pyfakefs.fake_filesystem_unittest.patchfs">
+<code class="descclassname">pyfakefs.fake_filesystem_unittest.</code><code class="descname">patchfs</code><span class="sig-paren">(</span><em>additional_skip_names=None</em>, <em>modules_to_reload=None</em>, <em>modules_to_patch=None</em>, <em>allow_root_user=True</em><span class="sig-paren">)</span><a class="headerlink" href="#pyfakefs.fake_filesystem_unittest.patchfs" title="Permalink to this definition">¶</a></dt>
+<dd><p>Convenience decorator to use patcher with additional parameters in a
+test function.</p>
+<p>Usage:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="nd">@patchfs</span>
+<span class="n">test_my_function</span><span class="p">(</span><span class="n">fs</span><span class="p">):</span>
+    <span class="n">fs</span><span class="o">.</span><span class="n">create_file</span><span class="p">(</span><span class="s1">&#39;foo&#39;</span><span class="p">)</span>
+
+<span class="nd">@patchfs</span><span class="p">(</span><span class="n">allow_root_user</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+<span class="n">test_with_patcher_args</span><span class="p">(</span><span class="n">fs</span><span class="p">):</span>
+    <span class="n">os</span><span class="o">.</span><span class="n">makedirs</span><span class="p">(</span><span class="s1">&#39;foo/bar&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+</dd></dl>
+
 </div>
 <div class="section" id="faked-module-classes">
 <h2>Faked module classes<a class="headerlink" href="#faked-module-classes" title="Permalink to this headline">¶</a></h2>
@@ -1185,7 +1218,7 @@ that is available on pypi.</p>
         &#169; Copyright 2009 Google Inc. All Rights Reserved.
 © Copyright 2014 Altera Corporation. All Rights Reserved.
 © Copyright 2014-2019 John McGehee.
-      Last updated on Feb 09, 2020.
+      Last updated on Feb 28, 2020.
     </div>
   </body>
 </html>
