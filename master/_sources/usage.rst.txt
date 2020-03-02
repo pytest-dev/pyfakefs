@@ -250,10 +250,17 @@ Given that the example code shown above is located in the file
 
   # example using Patcher
   def test_path_exists():
-      with Patcher() as patcher:
+      with Patcher(modules_to_reload=[example.sut]) as patcher:
         file_path = '/foo/bar'
         patcher.fs.create_dir(file_path)
         assert example.sut.check_if_exists(file_path)
+
+  # example using patchfs decorator
+  @patchfs(modules_to_reload=[example.sut])
+  def test_path_exists(fs):
+      file_path = '/foo/bar'
+      fs.create_dir(file_path)
+      assert example.sut.check_if_exists(file_path)
 
 
 modules_to_patch
@@ -308,6 +315,11 @@ fake a module in Django that uses OS file system functions:
   # test code using pytest
   @pytest.mark.parametrize('fs', [[None, None,
     {'django.core.files.locks': FakeLocks}]], indirect=True)
+  def test_django_stuff(fs):
+      ...
+
+  # test code using patchfs decorator
+  @patchfs(modules_to_patch={'django.core.files.locks': FakeLocks})
   def test_django_stuff(fs):
       ...
 
