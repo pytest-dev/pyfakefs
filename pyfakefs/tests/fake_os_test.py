@@ -350,18 +350,6 @@ class FakeOsModuleTest(FakeOsModuleTestBase):
         self.assertEqual(stat, self.os.lstat(
             self.base_path + self.path_separator() + self.path_separator()))
 
-    def test_stat_with_byte_string(self):
-        stat_str = self.os.stat(self.base_path)
-        base_path_bytes = self.base_path.encode('utf8')
-        stat_bytes = self.os.stat(base_path_bytes)
-        self.assertEqual(stat_bytes, stat_str)
-
-    def test_lstat_with_byte_string(self):
-        stat_str = self.os.lstat(self.base_path)
-        base_path_bytes = self.base_path.encode('utf8')
-        stat_bytes = self.os.lstat(base_path_bytes)
-        self.assertEqual(stat_bytes, stat_str)
-
     def test_stat_with_current_dir(self):
         # regression test for #516
         stat_result = self.os.stat('.')
@@ -1745,7 +1733,7 @@ class FakeOsModuleTest(FakeOsModuleTestBase):
     def test_makedirs_in_write_protected_dir(self):
         self.check_posix_only()
         directory = self.make_path('foo')
-        self.os.mkdir(directory, mode=0o555)
+        self.os.mkdir(directory, 0o555)
         subdir = self.os.path.join(directory, 'bar')
         if not is_root():
             self.assert_raises_os_error(errno.EACCES, self.os.makedirs, subdir)
