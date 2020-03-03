@@ -509,8 +509,10 @@ class Patcher:
                         for i, d in enumerate(m.__defaults__):
                             if self._is_fs_function(d):
                                 yield m, i, d
-            except ImportError:
-                # Ignore ImportError: No module named '_gdbm'
+            except Exception:
+                # Ignore any exception, examples:
+                # ImportError: No module named '_gdbm'
+                # _DontDoThat() (see #523)
                 pass
 
     def _find_modules(self):

@@ -3,6 +3,9 @@ The released versions correspond to PyPi releases.
 
 ## Version 4.1.0 (as yet unreleased)
 
+#### Fixes
+  * Avoid exception if using `flask-restx` (see [#523](../../issues/523))
+
 ## [Version 4.0.0](https://pypi.python.org/pypi/pyfakefs/4.0.0)
 
   * pyfakefs 4.0.0 drops support for Python 2.7. If you still need
