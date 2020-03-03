@@ -3,6 +3,10 @@ The released versions correspond to PyPi releases.
 
 ## Version 4.1.0 (as yet unreleased)
 
+## [Version 4.0.1](https://pypi.python.org/pypi/pyfakefs/4.0.1)
+
+This as a bug fix release for a regression bug.
+
 #### Fixes
   * Avoid exception if using `flask-restx` (see [#523](../../issues/523))
 
