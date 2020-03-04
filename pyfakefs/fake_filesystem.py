@@ -116,7 +116,7 @@ from pyfakefs.helpers import (
 
 __pychecker__ = 'no-reimportself'
 
-__version__ = '4.1dev'
+__version__ = '4.0.2'
 
 PERM_READ = 0o400  # Read permission bit.
 PERM_WRITE = 0o200  # Write permission bit.

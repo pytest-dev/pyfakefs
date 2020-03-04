@@ -1,7 +1,18 @@
 # pyfakefs Release Notes
 The released versions correspond to PyPi releases.
 
-## Version 4.1.0 (as yet unreleased)
+## [Version 4.0.2](https://pypi.python.org/pypi/pyfakefs/4.0.2)
+
+This as a patch release that only builds for Python 3. Note that 
+versions 4.0.0 and 4.0.1 will be removed from PyPi to not to be able to
+install them under Python 2. 
+
+#### Fixes
+  * Do not build for Python 2 (see [#524](../../issues/524))
+
+## [Version 4.0.1](https://pypi.python.org/pypi/pyfakefs/4.0.1)
+
+This as a bug fix release for a regression bug.
 
 #### Fixes
   * Avoid exception if using `flask-restx` (see [#523](../../issues/523))
