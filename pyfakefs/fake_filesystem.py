@@ -113,10 +113,9 @@ from pyfakefs.helpers import (
     FakeStatResult, FileBufferIO, NullFileBufferIO,
     is_int_type, is_byte_string, is_unicode_string,
     make_string_path, IS_WIN, to_string)
+from pyfakefs import __version__  # noqa: F401 for upwards compatibility
 
 __pychecker__ = 'no-reimportself'
-
-__version__ = '4.1dev'
 
 PERM_READ = 0o400  # Read permission bit.
 PERM_WRITE = 0o200  # Write permission bit.

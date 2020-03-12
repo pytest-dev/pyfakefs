@@ -19,7 +19,7 @@ import os
 
 from setuptools import setup, find_packages
 
-from pyfakefs.fake_filesystem import __version__
+from pyfakefs import __version__
 
 NAME = 'pyfakefs'
 REQUIRES = []
