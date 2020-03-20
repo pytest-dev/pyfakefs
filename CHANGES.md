@@ -3,6 +3,10 @@ The released versions correspond to PyPi releases.
 
 ## Version 4.1.0 (as yet unreleased)
 
+#### Fixes
+  * Do not override global warnings setting in `Deprecator` 
+    (see [#526](../../issues/526))
+
 ## [Version 4.0.2](https://pypi.python.org/pypi/pyfakefs/4.0.2)
 
 This as a patch release that only builds for Python 3. Note that 

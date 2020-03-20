@@ -39,14 +39,14 @@ class Deprecator(object):
         @functools.wraps(func)
         def _new_func(*args, **kwargs):
             if self.show_warnings:
-                warnings.simplefilter('always', DeprecationWarning)
-                message = ''
-                if self.use_instead is not None:
-                    message = 'Use {} instead.'.format(self.use_instead)
-                warnings.warn('Call to deprecated function {}. {}'.format(
-                    self.func_name or func.__name__, message),
-                              category=DeprecationWarning, stacklevel=2)
-                warnings.simplefilter('default', DeprecationWarning)
+                with warnings.catch_warnings():
+                    warnings.simplefilter('always', DeprecationWarning)
+                    message = ''
+                    if self.use_instead is not None:
+                        message = 'Use {} instead.'.format(self.use_instead)
+                    warnings.warn('Call to deprecated function {}. {}'.format(
+                        self.func_name or func.__name__, message),
+                                  category=DeprecationWarning, stacklevel=2)
             return func(*args, **kwargs)
 
         return _new_func
