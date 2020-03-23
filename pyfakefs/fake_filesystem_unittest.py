@@ -71,19 +71,8 @@ PATH_MODULE = 'ntpath' if sys.platform == 'win32' else 'posixpath'
 BUILTIN_MODULE = '__builtin__'
 
 
-def _patchfs(f):
-    """Internally used to be able to use patchfs without parentheses."""
-
-    @functools.wraps(f)
-    def decorated(*args, **kwargs):
-        with Patcher() as p:
-            kwargs['fs'] = p.fs
-            return f(*args, **kwargs)
-
-    return decorated
-
-
-def patchfs(additional_skip_names=None,
+def patchfs(_func=None, *,
+            additional_skip_names=None,
             modules_to_reload=None,
             modules_to_patch=None,
             allow_root_user=True):
@@ -93,11 +82,11 @@ def patchfs(additional_skip_names=None,
     Usage::
 
         @patchfs
-        test_my_function(fs):
+        def test_my_function(fs):
             fs.create_file('foo')
 
         @patchfs(allow_root_user=False)
-        test_with_patcher_args(fs):
+        def test_with_patcher_args(fs):
             os.makedirs('foo/bar')
     """
 
@@ -114,13 +103,13 @@ def patchfs(additional_skip_names=None,
 
         return wrapped
 
-    # workaround to be able to use the decorator without using calling syntax
-    # (the default usage without parameters)
-    # if using the decorator without parentheses, the first argument here
-    # will be the wrapped function, so we pass it to the decorator function
-    # that doesn't use arguments
-    if inspect.isfunction(additional_skip_names):
-        return _patchfs(additional_skip_names)
+    if _func:
+        if not callable(_func):
+            raise TypeError(
+                "Decorator argument not a function.\n"
+                "Did you mean `@patchfs(additional_skip_names=...)`?"
+            )
+        return wrap_patchfs(_func)
 
     return wrap_patchfs
 
