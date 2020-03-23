@@ -50,6 +50,7 @@ CLASSIFIERS = [
     'Topic :: Software Development :: Libraries :: Python Modules',
     'Topic :: Software Development :: Testing',
     'Topic :: System :: Filesystems',
+    'Framework :: Pytest',
 ]
 
 AUTHOR = 'Google'
