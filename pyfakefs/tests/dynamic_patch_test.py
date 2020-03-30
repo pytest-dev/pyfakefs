@@ -56,7 +56,6 @@ class DynamicImportPatchTest(TestPyfakefsUnittestBase):
         self.fs.set_disk_usage(100)
         self.assertEqual(100, shutil.disk_usage('/').total)
 
-    @unittest.skipIf(not pathlib, 'only run if pathlib is available')
     def test_pathlib_path_patch(self):
         file_path = 'test.txt'
         path = pathlib.Path(file_path)

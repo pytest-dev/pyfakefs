@@ -6,6 +6,8 @@ The released versions correspond to PyPi releases.
 #### Fixes
   * Do not override global warnings setting in `Deprecator` 
     (see [#526](../../issues/526))
+  * Make sure filesystem modules in `pathlib` are patched
+    (see [#527](../../issues/527))
 
 ## [Version 4.0.2](https://pypi.python.org/pypi/pyfakefs/4.0.2)
 

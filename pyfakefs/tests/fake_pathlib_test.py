@@ -1036,5 +1036,4 @@ class FakeFilesystemPathLikeObjectTest(unittest.TestCase):
 
 
 if __name__ == '__main__':
-    if pathlib:
-        unittest.main()
+    unittest.main()

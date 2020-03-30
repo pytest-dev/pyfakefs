@@ -135,7 +135,7 @@ class _FakeAccessor(accessor):
 
 _fake_accessor = _FakeAccessor()
 
-flavour = pathlib._Flavour if pathlib else object
+flavour = pathlib._Flavour
 
 
 class _FakeFlavour(flavour):
@@ -443,7 +443,7 @@ class _FakePosixFlavour(_FakeFlavour):
         return re.compile(fnmatch.translate(pattern)).fullmatch
 
 
-path_module = pathlib.Path if pathlib else object
+path_module = pathlib.Path
 
 
 class FakePath(path_module):
@@ -649,7 +649,7 @@ class FakePathlibModule:
     `fake_pathlib_module = fake_filesystem.FakePathlibModule(filesystem)`
     """
 
-    PurePath = pathlib.PurePath if pathlib else object
+    PurePath = pathlib.PurePath
 
     def __init__(self, filesystem):
         """

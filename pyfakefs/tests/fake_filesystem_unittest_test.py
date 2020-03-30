@@ -119,7 +119,6 @@ class TestPyfakefsUnittest(TestPyfakefsUnittestBase):  # pylint: disable=R0904
         shutil.rmtree('/test/dir1')
         self.assertFalse(self.fs.exists('/test/dir1'))
 
-    @unittest.skipIf(not pathlib, "only run if pathlib is available")
     def test_fakepathlib(self):
         with pathlib.Path('/fake_file.txt') as p:
             with p.open('w') as f:
@@ -147,12 +146,11 @@ class TestPatchingImports(TestPyfakefsUnittestBase):
         self.assertTrue(
             pyfakefs.tests.import_as_example.check_if_exists2(file_path))
 
-    if pathlib:
-        def test_import_path_from_pathlib(self):
-            file_path = '/foo/bar'
-            self.fs.create_dir(file_path)
-            self.assertTrue(
-                pyfakefs.tests.import_as_example.check_if_exists3(file_path))
+    def test_import_path_from_pathlib(self):
+        file_path = '/foo/bar'
+        self.fs.create_dir(file_path)
+        self.assertTrue(
+            pyfakefs.tests.import_as_example.check_if_exists3(file_path))
 
     def test_import_function_from_os_path(self):
         file_path = '/foo/bar'
@@ -644,6 +642,18 @@ class TestDistutilsCopyTree(fake_filesystem_unittest.TestCase):
 
         self.assertTrue(os.path.isfile('./test/subdir/1.txt'))
         self.assertFalse(os.path.isdir('./test2/'))
+
+
+class PathlibTest(TestCase):
+    """Regression test for #527"""
+
+    @patchfs
+    def test_cwd(self, fs):
+        """Make sure fake file system is used for os in pathlib"""
+        self.assertEqual(os.path.sep, str(pathlib.Path.cwd()))
+        dot_abs = pathlib.Path(".").absolute()
+        self.assertEqual(os.path.sep, str(dot_abs))
+        self.assertTrue(dot_abs.exists())
 
 
 if __name__ == "__main__":

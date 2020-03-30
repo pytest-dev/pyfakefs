@@ -57,11 +57,10 @@ from importlib import reload
 
 from pyfakefs import fake_filesystem
 from pyfakefs import fake_filesystem_shutil
+from pyfakefs import fake_pathlib
 from pyfakefs import mox3_stubout
 from pyfakefs.extra_packages import pathlib, pathlib2, use_scandir
 
-if pathlib:
-    from pyfakefs import fake_pathlib
 
 if use_scandir:
     from pyfakefs import fake_scandir
@@ -335,10 +334,6 @@ class Patcher:
     IS_WINDOWS = sys.platform in ('win32', 'cygwin')
 
     SKIPNAMES = {'os', 'path', 'io', 'genericpath', OS_MODULE, PATH_MODULE}
-    if pathlib:
-        SKIPNAMES.add('pathlib')
-    if pathlib2:
-        SKIPNAMES.add('pathlib2')
 
     def __init__(self, additional_skip_names=None,
                  modules_to_reload=None, modules_to_patch=None,
@@ -404,18 +399,17 @@ class Patcher:
         # class modules maps class names against a list of modules they can
         # be contained in - this allows for alternative modules like
         # `pathlib` and `pathlib2`
+        self._class_modules['Path'] = []
         if pathlib:
-            self._class_modules['Path'] = []
-            if pathlib:
-                self._fake_module_classes[
-                    'pathlib'] = fake_pathlib.FakePathlibModule
-                self._class_modules['Path'].append('pathlib')
-            if pathlib2:
-                self._fake_module_classes[
-                    'pathlib2'] = fake_pathlib.FakePathlibModule
-                self._class_modules['Path'].append('pathlib2')
             self._fake_module_classes[
-                'Path'] = fake_pathlib.FakePathlibPathModule
+                'pathlib'] = fake_pathlib.FakePathlibModule
+            self._class_modules['Path'].append('pathlib')
+        if pathlib2:
+            self._fake_module_classes[
+                'pathlib2'] = fake_pathlib.FakePathlibModule
+            self._class_modules['Path'].append('pathlib2')
+        self._fake_module_classes[
+            'Path'] = fake_pathlib.FakePathlibPathModule
         if use_scandir:
             self._fake_module_classes[
                 'scandir'] = fake_scandir.FakeScanDirModule
