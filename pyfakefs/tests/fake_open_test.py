@@ -320,8 +320,10 @@ class FakeFileOpenTest(FakeFileOpenTestBase):
         file_path = self.make_path('appendfile')
         self.create_file(file_path, contents=''.join(contents))
         with self.open(file_path, 'a') as fake_file:
-            self.assertRaises(io.UnsupportedOperation, fake_file.read, 0)
-            self.assertRaises(io.UnsupportedOperation, fake_file.readline)
+            with self.assertRaises(io.UnsupportedOperation):
+                fake_file.read(0)
+            with self.assertRaises(io.UnsupportedOperation):
+                fake_file.readline()
             expected_len = len(''.join(contents))
             expected_len += len(contents) * (len(self.os.linesep) - 1)
             self.assertEqual(expected_len, fake_file.tell())
@@ -411,7 +413,8 @@ class FakeFileOpenTest(FakeFileOpenTestBase):
         self.open(file_path, 'r').close()
         self.open(file_path, 'w').close()
         self.open(file_path, 'w+').close()
-        self.assertRaises(ValueError, self.open, file_path, 'INV')
+        with self.assertRaises(ValueError):
+            self.open(file_path, 'INV')
 
     def test_open_flags400(self):
         # set up
@@ -437,8 +440,10 @@ class FakeFileOpenTest(FakeFileOpenTestBase):
         # actual tests
         self.open(file_path, 'w').close()
         if not is_root():
-            self.assertRaises(OSError, self.open, file_path, 'r')
-            self.assertRaises(OSError, self.open, file_path, 'w+')
+            with self.assertRaises(OSError):
+                self.open(file_path, 'r')
+            with self.assertRaises(OSError):
+                self.open(file_path, 'w+')
         else:
             self.open(file_path, 'r').close()
             self.open(file_path, 'w+').close()
@@ -450,9 +455,12 @@ class FakeFileOpenTest(FakeFileOpenTestBase):
         self.create_with_permission(file_path, 0o100)
         # actual tests
         if not is_root():
-            self.assertRaises(OSError, self.open, file_path, 'r')
-            self.assertRaises(OSError, self.open, file_path, 'w')
-            self.assertRaises(OSError, self.open, file_path, 'w+')
+            with self.assertRaises(OSError):
+                self.open(file_path, 'r')
+            with self.assertRaises(OSError):
+                self.open(file_path, 'w')
+            with self.assertRaises(OSError):
+                self.open(file_path, 'w+')
         else:
             self.open(file_path, 'r').close()
             self.open(file_path, 'w').close()
@@ -622,22 +630,31 @@ class FakeFileOpenTest(FakeFileOpenTestBase):
         self.create_file(file_path)
 
         with self.open(file_path, 'a') as fh:
-            self.assertRaises(OSError, fh.read)
-            self.assertRaises(OSError, fh.readlines)
+            with self.assertRaises(OSError):
+                fh.read()
+            with self.assertRaises(OSError):
+                fh.readlines()
         with self.open(file_path, 'w') as fh:
-            self.assertRaises(OSError, fh.read)
-            self.assertRaises(OSError, fh.readlines)
+            with self.assertRaises(OSError):
+                fh.read()
+            with self.assertRaises(OSError):
+                fh.readlines()
         with self.open(file_path, 'r') as fh:
-            self.assertRaises(OSError, fh.truncate)
-            self.assertRaises(OSError, fh.write, 'contents')
-            self.assertRaises(OSError, fh.writelines, ['con', 'tents'])
+            with self.assertRaises(OSError):
+                fh.truncate()
+            with self.assertRaises(OSError):
+                fh.write('contents')
+            with self.assertRaises(OSError):
+                fh.writelines(['con', 'tents'])
 
         def _iterator_open(mode):
             for _ in self.open(file_path, mode):
                 pass
 
-        self.assertRaises(OSError, _iterator_open, 'w')
-        self.assertRaises(OSError, _iterator_open, 'a')
+        with self.assertRaises(OSError):
+            _iterator_open('w')
+        with self.assertRaises(OSError):
+            _iterator_open('a')
 
     def test_open_raises_io_error_if_parent_is_file_posix(self):
         self.check_posix_only()
@@ -736,13 +753,20 @@ class FakeFileOpenTest(FakeFileOpenTestBase):
         self.create_file(file_path, contents=b'test')
         fake_file = self.open(file_path, 'r')
         fake_file.close()
-        self.assertRaises(ValueError, lambda: fake_file.read(1))
-        self.assertRaises(ValueError, lambda: fake_file.write('a'))
-        self.assertRaises(ValueError, lambda: fake_file.readline())
-        self.assertRaises(ValueError, lambda: fake_file.truncate())
-        self.assertRaises(ValueError, lambda: fake_file.tell())
-        self.assertRaises(ValueError, lambda: fake_file.seek(1))
-        self.assertRaises(ValueError, lambda: fake_file.flush())
+        with self.assertRaises(ValueError):
+            fake_file.read(1)
+        with self.assertRaises(ValueError):
+            fake_file.write('a')
+        with self.assertRaises(ValueError):
+            fake_file.readline()
+        with self.assertRaises(ValueError):
+            fake_file.truncate()
+        with self.assertRaises(ValueError):
+            fake_file.tell()
+        with self.assertRaises(ValueError):
+            fake_file.seek(1)
+        with self.assertRaises(ValueError):
+            fake_file.flush()
 
     def test_accessing_open_file_with_another_handle_raises(self):
         # Regression test for #282
@@ -752,8 +776,10 @@ class FakeFileOpenTest(FakeFileOpenTestBase):
         f0 = self.os.open(file_path, os.O_CREAT | os.O_WRONLY | os.O_TRUNC)
         fake_file = self.open(file_path, 'r')
         fake_file.close()
-        self.assertRaises(ValueError, lambda: fake_file.read(1))
-        self.assertRaises(ValueError, lambda: fake_file.write('a'))
+        with self.assertRaises(ValueError):
+            fake_file.read(1)
+        with self.assertRaises(ValueError):
+            fake_file.write('a')
         self.os.close(f0)
 
     def test_tell_flushes_under_mac_os(self):
@@ -921,7 +947,8 @@ class OpenFileWithEncodingTest(FakeFileOpenTestBase):
     def test_write_str_error_modes(self):
         str_contents = u'علي بابا'
         with self.open(self.file_path, 'w', encoding='cyrillic') as f:
-            self.assertRaises(UnicodeEncodeError, f.write, str_contents)
+            with self.assertRaises(UnicodeEncodeError):
+                f.write(str_contents)
 
         with self.open(self.file_path, 'w', encoding='ascii',
                        errors='xmlcharrefreplace') as f:
@@ -949,7 +976,8 @@ class OpenFileWithEncodingTest(FakeFileOpenTestBase):
 
         # default strict encoding
         with self.open(self.file_path, encoding='ascii') as f:
-            self.assertRaises(UnicodeDecodeError, f.read)
+            with self.assertRaises(UnicodeDecodeError):
+                f.read()
         with self.open(self.file_path, encoding='ascii',
                        errors='replace') as f:
             contents = f.read()
@@ -1021,8 +1049,10 @@ class OpenFileWithEncodingTest(FakeFileOpenTestBase):
         self.create_file(self.file_path, contents=''.join(contents),
                          encoding='cyrillic')
         with self.open(self.file_path, 'a', encoding='cyrillic') as fake_file:
-            self.assertRaises(io.UnsupportedOperation, fake_file.read, 0)
-            self.assertRaises(io.UnsupportedOperation, fake_file.readline)
+            with self.assertRaises(io.UnsupportedOperation):
+                fake_file.read(0)
+            with self.assertRaises(io.UnsupportedOperation):
+                fake_file.readline()
             self.assertEqual(len(''.join(contents)), fake_file.tell())
             fake_file.seek(0)
             self.assertEqual(0, fake_file.tell())
@@ -1358,7 +1388,8 @@ class OpenWithBinaryFlagsTest(OpenWithFlagsTestBase):
         fake_file = self.open_file('wb')
         fake_file = self.write_and_reopen_file(fake_file, mode='r',
                                                encoding='ascii')
-        self.assertRaises(UnicodeDecodeError, fake_file.read)
+        with self.assertRaises(UnicodeDecodeError):
+            fake_file.read()
 
     def test_write_and_read_binary(self):
         fake_file = self.open_file_and_seek('w+b')
@@ -1393,7 +1424,8 @@ class OpenWithTextModeFlagsTest(OpenWithFlagsTestBase):
             self.assertEqual(self.converted_contents, f.read())
 
     def test_mixed_text_and_binary_flags(self):
-        self.assertRaises(ValueError, self.open_file_and_seek, 'w+bt')
+        with self.assertRaises(ValueError):
+            self.open_file_and_seek('w+bt')
 
 
 class RealOpenWithTextModeFlagsTest(OpenWithTextModeFlagsTest):
@@ -1403,19 +1435,24 @@ class RealOpenWithTextModeFlagsTest(OpenWithTextModeFlagsTest):
 
 class OpenWithInvalidFlagsTest(FakeFileOpenTestBase):
     def test_capital_r(self):
-        self.assertRaises(ValueError, self.open, 'some_file', 'R')
+        with self.assertRaises(ValueError):
+            self.open('some_file', 'R')
 
     def test_capital_w(self):
-        self.assertRaises(ValueError, self.open, 'some_file', 'W')
+        with self.assertRaises(ValueError):
+            self.open('some_file', 'W')
 
     def test_capital_a(self):
-        self.assertRaises(ValueError, self.open, 'some_file', 'A')
+        with self.assertRaises(ValueError):
+            self.open('some_file', 'A')
 
     def test_lower_u(self):
-        self.assertRaises(ValueError, self.open, 'some_file', 'u')
+        with self.assertRaises(ValueError):
+            self.open('some_file', 'u')
 
     def test_lower_rw(self):
-        self.assertRaises(ValueError, self.open, 'some_file', 'rw')
+        with self.assertRaises(ValueError):
+            self.open('some_file', 'rw')
 
 
 class OpenWithInvalidFlagsRealFsTest(OpenWithInvalidFlagsTest):
@@ -1429,10 +1466,12 @@ class ResolvePathTest(FakeFileOpenTestBase):
             fh.write('x')
 
     def test_none_filepath_raises_type_error(self):
-        self.assertRaises(TypeError, self.open, None, 'w')
+        with self.assertRaises(TypeError):
+            self.open(None, 'w')
 
     def test_empty_filepath_raises_io_error(self):
-        self.assertRaises(OSError, self.open, '', 'w')
+        with self.assertRaises(OSError):
+            self.open('', 'w')
 
     def test_normal_path(self):
         file_path = self.make_path('foo')

@@ -36,6 +36,7 @@ class RealFsTestCase(fake_filesystem_unittest.TestCase, RealFsTestMixin):
         RealFsTestMixin.__init__(self)
 
     def setUp(self):
+        RealFsTestMixin.setUp(self)
         self.cwd = os.getcwd()
         if not self.use_real_fs():
             self.setUpPyfakefs()
@@ -46,10 +47,7 @@ class RealFsTestCase(fake_filesystem_unittest.TestCase, RealFsTestMixin):
             self.fs.set_disk_usage(1000, self.base_path)
 
     def tearDown(self):
-        if self.use_real_fs():
-            self.os.chdir(os.path.dirname(self.base_path))
-            shutil.rmtree(self.base_path, ignore_errors=True)
-            os.chdir(self.cwd)
+        RealFsTestMixin.tearDown(self)
 
     @property
     def is_windows_fs(self):
@@ -90,7 +88,8 @@ class FakeShutilModuleTest(RealFsTestCase):
         file_path = os.path.join(dir_path, 'baz')
         self.create_file(file_path)
         self.os.chmod(file_path, 0o444)
-        self.assertRaises(OSError, shutil.rmtree, dir_path)
+        with self.assertRaises(OSError):
+            shutil.rmtree(dir_path)
         self.assertTrue(os.path.exists(file_path))
         self.os.chmod(file_path, 0o666)
 
@@ -103,7 +102,8 @@ class FakeShutilModuleTest(RealFsTestCase):
         self.create_file(file_path)
         self.os.chmod(dir_path, 0o555)
         if not is_root():
-            self.assertRaises(OSError, shutil.rmtree, dir_path)
+            with self.assertRaises(OSError):
+                shutil.rmtree(dir_path)
             self.assertTrue(os.path.exists(file_path))
             self.os.chmod(dir_path, 0o777)
         else:
@@ -129,12 +129,14 @@ class FakeShutilModuleTest(RealFsTestCase):
         file_path = os.path.join(dir_path, 'baz')
         self.create_file(file_path)
         with open(file_path):
-            self.assertRaises(OSError, shutil.rmtree, dir_path)
+            with self.assertRaises(OSError):
+                shutil.rmtree(dir_path)
         self.assertTrue(os.path.exists(dir_path))
 
     def test_rmtree_non_existing_dir(self):
         directory = 'nonexisting'
-        self.assertRaises(OSError, shutil.rmtree, directory)
+        with self.assertRaises(OSError):
+            shutil.rmtree(directory)
         try:
             shutil.rmtree(directory, ignore_errors=True)
         except OSError:
@@ -261,10 +263,8 @@ class FakeShutilModuleTest(RealFsTestCase):
         self.create_file(src_file)
         self.assertTrue(os.path.exists(src_file))
         self.assertFalse(os.path.exists(dst_directory))
-        self.assertRaises(OSError,
-                          shutil.copytree,
-                          src_file,
-                          dst_directory)
+        with self.assertRaises(OSError):
+            shutil.copytree(src_file, dst_directory)
 
     def test_move_file_in_same_filesystem(self):
         self.skip_real_fs()
@@ -378,8 +378,8 @@ class FakeCopyFileTest(RealFsTestCase):
         contents = 'contents of file'
         self.create_file(src_file, contents=contents)
         self.assertTrue(os.path.exists(src_file))
-        self.assertRaises(shutil.Error,
-                          shutil.copyfile, src_file, dst_file)
+        with self.assertRaises(shutil.Error):
+            shutil.copyfile(src_file, dst_file)
 
     def test_raises_if_dest_is_a_symlink_to_src(self):
         self.skip_if_symlink_not_supported()
@@ -389,8 +389,8 @@ class FakeCopyFileTest(RealFsTestCase):
         self.create_file(src_file, contents=contents)
         self.create_symlink(dst_file, src_file)
         self.assertTrue(os.path.exists(src_file))
-        self.assertRaises(shutil.Error,
-                          shutil.copyfile, src_file, dst_file)
+        with self.assertRaises(shutil.Error):
+            shutil.copyfile(src_file, dst_file)
 
     def test_succeeds_if_dest_exists_and_is_writable(self):
         src_file = self.make_path('xyzzy')
@@ -422,7 +422,8 @@ class FakeCopyFileTest(RealFsTestCase):
             with self.open(dst_file) as f:
                 self.assertEqual('contents of source file', f.read())
         else:
-            self.assertRaises(OSError, shutil.copyfile, src_file, dst_file)
+            with self.assertRaises(OSError):
+                shutil.copyfile(src_file, dst_file)
 
         os.chmod(dst_file, 0o666)
 
@@ -439,7 +440,8 @@ class FakeCopyFileTest(RealFsTestCase):
         self.assertTrue(os.path.exists(src_file))
         self.assertTrue(os.path.exists(dst_dir))
         if not is_root():
-            self.assertRaises(OSError, shutil.copyfile, src_file, dst_file)
+            with self.assertRaises(OSError):
+                shutil.copyfile(src_file, dst_file)
         else:
             shutil.copyfile(src_file, dst_file)
             self.assertTrue(os.path.exists(dst_file))
@@ -449,7 +451,8 @@ class FakeCopyFileTest(RealFsTestCase):
         src_file = self.make_path('xyzzy')
         dst_file = self.make_path('xyzzy_copy')
         self.assertFalse(os.path.exists(src_file))
-        self.assertRaises(OSError, shutil.copyfile, src_file, dst_file)
+        with self.assertRaises(OSError):
+            shutil.copyfile(src_file, dst_file)
 
     @unittest.skipIf(is_windows, 'Posix specific behavior')
     def test_raises_if_src_not_readable(self):
@@ -461,7 +464,8 @@ class FakeCopyFileTest(RealFsTestCase):
         os.chmod(src_file, 0o000)
         self.assertTrue(os.path.exists(src_file))
         if not is_root():
-            self.assertRaises(OSError, shutil.copyfile, src_file, dst_file)
+            with self.assertRaises(OSError):
+                shutil.copyfile(src_file, dst_file)
         else:
             shutil.copyfile(src_file, dst_file)
             self.assertTrue(os.path.exists(dst_file))
@@ -472,10 +476,8 @@ class FakeCopyFileTest(RealFsTestCase):
         dst_file = self.make_path('xyzzy_copy')
         self.create_dir(src_file)
         self.assertTrue(os.path.exists(src_file))
-        if self.is_windows_fs:
-            self.assertRaises(OSError, shutil.copyfile, src_file, dst_file)
-        else:
-            self.assertRaises(OSError, shutil.copyfile, src_file, dst_file)
+        with self.assertRaises(OSError):
+            shutil.copyfile(src_file, dst_file)
 
     def test_raises_if_dest_is_a_directory(self):
         src_file = self.make_path('xyzzy')
@@ -485,10 +487,8 @@ class FakeCopyFileTest(RealFsTestCase):
         self.create_dir(dst_dir)
         self.assertTrue(os.path.exists(src_file))
         self.assertTrue(os.path.exists(dst_dir))
-        if self.is_windows_fs:
-            self.assertRaises(OSError, shutil.copyfile, src_file, dst_dir)
-        else:
-            self.assertRaises(OSError, shutil.copyfile, src_file, dst_dir)
+        with self.assertRaises(OSError):
+            shutil.copyfile(src_file, dst_dir)
 
     def test_moving_dir_into_dir(self):
         # regression test for #515

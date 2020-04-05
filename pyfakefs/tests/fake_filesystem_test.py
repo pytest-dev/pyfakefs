@@ -89,7 +89,8 @@ class FakeDirectoryUnitTest(TestCase):
         self.fake_dir.add_entry(self.fake_file)
         self.assertEqual(self.fake_file, self.fake_dir.get_entry('foobar'))
         self.fake_dir.remove_entry('foobar')
-        self.assertRaises(KeyError, self.fake_dir.get_entry, 'foobar')
+        with self.assertRaises(KeyError):
+            self.fake_dir.get_entry('foobar')
 
     def test_should_throw_if_set_size_is_not_integer(self):
         def set_size():
@@ -268,7 +269,8 @@ class FakeFilesystemUnitTest(TestCase):
         self.assertEqual({}, self.filesystem.root.contents)
 
     def test_none_raises_type_error(self):
-        self.assertRaises(TypeError, self.filesystem.exists, None)
+        with self.assertRaises(TypeError):
+            self.filesystem.exists(None)
 
     def test_empty_string_does_not_exist(self):
         self.assertFalse(self.filesystem.exists(''))
@@ -439,13 +441,15 @@ class FakeFilesystemUnitTest(TestCase):
             self.fake_child.name, self.fake_grandchild.name)
         grandchild_file = self.filesystem.joinpaths(
             grandchild_directory, self.fake_file.name)
-        self.assertRaises(OSError, self.filesystem.get_object, grandchild_file)
+        with self.assertRaises(OSError):
+            self.filesystem.get_object(grandchild_file)
         self.filesystem.add_object(grandchild_directory, self.fake_file)
         self.assertEqual(self.fake_file,
                          self.filesystem.get_object(grandchild_file))
         self.assertTrue(self.filesystem.exists(grandchild_file))
         self.filesystem.remove_object(grandchild_file)
-        self.assertRaises(OSError, self.filesystem.get_object, grandchild_file)
+        with self.assertRaises(OSError):
+            self.filesystem.get_object(grandchild_file)
         self.assertFalse(self.filesystem.exists(grandchild_file))
 
     def test_create_directory_in_root_directory(self):
@@ -570,7 +574,8 @@ class FakeFilesystemUnitTest(TestCase):
             self.assertEqual('', f.read())
 
     def test_create_file_with_incorrect_mode_type(self):
-        self.assertRaises(TypeError, self.filesystem.create_file, 'foo', 'bar')
+        with self.assertRaises(TypeError):
+            self.filesystem.create_file('foo', 'bar')
 
     def test_create_file_already_exists_error(self):
         path = 'foo/bar/baz'
@@ -738,13 +743,14 @@ class CaseSensitiveFakeFilesystemTest(TestCase):
     def test_get_object(self):
         self.filesystem.create_dir('/foo/bar')
         self.filesystem.create_file('/foo/bar/baz')
-        self.assertRaises(OSError, self.filesystem.get_object, '/Foo/Bar/Baz')
+        with self.assertRaises(OSError):
+            self.filesystem.get_object('/Foo/Bar/Baz')
 
     def test_remove_object(self):
         self.filesystem.create_dir('/foo/bar')
         self.filesystem.create_file('/foo/bar/baz')
-        self.assertRaises(
-            OSError, self.filesystem.remove_object, '/Foo/Bar/Baz')
+        with self.assertRaises(OSError):
+            self.filesystem.remove_object('/Foo/Bar/Baz')
         self.assertTrue(self.filesystem.exists('/foo/bar/baz'))
 
     def test_exists(self):
@@ -780,7 +786,8 @@ class CaseSensitiveFakeFilesystemTest(TestCase):
     def test_getsize(self):
         file_path = 'foo/bar/baz'
         self.filesystem.create_file(file_path, contents='1234567')
-        self.assertRaises(os.error, self.path.getsize, 'FOO/BAR/BAZ')
+        with self.assertRaises(os.error):
+            self.path.getsize('FOO/BAR/BAZ')
 
     def test_get_mtime(self):
         test_file = self.filesystem.create_file('foo/bar1.txt')
@@ -916,8 +923,10 @@ class FakePathModuleTest(TestCase):
         path_foo = '!path!to!foo'
         path_bar = '!path!to!bar'
         path_other = '!some!where!else'
-        self.assertRaises(ValueError, self.path.relpath, None)
-        self.assertRaises(ValueError, self.path.relpath, '')
+        with self.assertRaises(ValueError):
+            self.path.relpath(None)
+        with self.assertRaises(ValueError):
+            self.path.relpath('')
         self.assertEqual('path!to!foo', self.path.relpath(path_foo))
         self.assertEqual('..!foo',
                          self.path.relpath(path_foo, path_bar))
@@ -1012,7 +1021,8 @@ class FakePathModuleTest(TestCase):
 
     def test_getsize_path_nonexistent(self):
         file_path = 'foo!bar!baz'
-        self.assertRaises(os.error, self.path.getsize, file_path)
+        with self.assertRaises(os.error):
+            self.path.getsize(file_path)
 
     def test_getsize_file_empty(self):
         file_path = 'foo!bar!baz'
@@ -1482,7 +1492,8 @@ class DiskSpaceTest(TestCase):
             with fake_open('!mount!file', 'w') as dest:
                 dest.write('a' * (total_size + 1))
 
-        self.assertRaises(OSError, create_too_large_file)
+        with self.assertRaises(OSError):
+            create_too_large_file()
 
         self.assertEqual(0, self.filesystem.get_disk_usage('!mount').used)
 
@@ -1550,7 +1561,8 @@ class DiskSpaceTest(TestCase):
 
         initial_usage = self.filesystem.get_disk_usage()
 
-        self.assertRaises(OSError, create_large_file)
+        with self.assertRaises(OSError):
+            create_large_file()
 
         self.assertEqual(initial_usage, self.filesystem.get_disk_usage())
 
@@ -1572,7 +1584,8 @@ class DiskSpaceTest(TestCase):
         def create_large_file():
             self.filesystem.create_file('!foo!bar', st_size=101)
 
-        self.assertRaises(OSError, create_large_file)
+        with self.assertRaises(OSError):
+            create_large_file()
 
         self.assertEqual(initial_usage, self.filesystem.get_disk_usage())
 
@@ -1771,8 +1784,8 @@ class RealFileSystemAccessTest(TestCase):
 
     def test_add_non_existing_real_file_raises(self):
         nonexisting_path = os.path.join('nonexisting', 'test.txt')
-        self.assertRaises(OSError, self.filesystem.add_real_file,
-                          nonexisting_path)
+        with self.assertRaises(OSError):
+            self.filesystem.add_real_file(nonexisting_path)
         self.assertFalse(self.filesystem.exists(nonexisting_path))
 
     def test_add_non_existing_real_directory_raises(self):

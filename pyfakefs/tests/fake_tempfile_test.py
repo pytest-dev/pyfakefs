@@ -34,7 +34,8 @@ class FakeTempfileModuleTest(fake_filesystem_unittest.TestCase):
         obj = tempfile.NamedTemporaryFile()
         self.assertTrue(self.fs.get_object(obj.name))
         obj.close()
-        self.assertRaises(OSError, self.fs.get_object, obj.name)
+        with self.assertRaises(OSError):
+            self.fs.get_object(obj.name)
 
     def test_named_temporary_file_no_delete(self):
         obj = tempfile.NamedTemporaryFile(delete=False)
@@ -67,7 +68,8 @@ class FakeTempfileModuleTest(fake_filesystem_unittest.TestCase):
     def test_mkstemp_dir(self):
         """test tempfile.mkstemp(dir=)."""
         # expect fail: /dir does not exist
-        self.assertRaises(OSError, tempfile.mkstemp, dir='/dir')
+        with self.assertRaises(OSError):
+            tempfile.mkstemp(dir='/dir')
         # expect pass: /dir exists
         self.fs.create_dir('/dir')
         next_fd = len(self.fs.open_files)

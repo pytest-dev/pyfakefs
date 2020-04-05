@@ -8,6 +8,9 @@ The released versions correspond to PyPi releases.
     (see [#526](../../issues/526))
   * Make sure filesystem modules in `pathlib` are patched
     (see [#527](../../issues/527))
+    
+#### Infrastructure
+  * Make sure all temporary files from real fs tests are removed
 
 ## [Version 4.0.2](https://pypi.python.org/pypi/pyfakefs/4.0.2)
 

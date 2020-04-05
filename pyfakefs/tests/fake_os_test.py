@@ -177,8 +177,10 @@ class FakeOsModuleTest(FakeOsModuleTestBase):
             fake_file2 = self.os.fdopen(fileno)
             self.assertNotEqual(fake_file2, fake_file1)
 
-        self.assertRaises(TypeError, self.os.fdopen, None)
-        self.assertRaises(TypeError, self.os.fdopen, 'a string')
+        with self.assertRaises(TypeError):
+            self.os.fdopen(None)
+        with self.assertRaises(TypeError):
+            self.os.fdopen('a string')
 
     def test_out_of_range_fdopen(self):
         # test some file descriptor that is clearly out of range
@@ -221,7 +223,8 @@ class FakeOsModuleTest(FakeOsModuleTestBase):
         self.os.fdopen(fileno1)
         self.os.fdopen(fileno1, 'r')
         if not is_root():
-            self.assertRaises(OSError, self.os.fdopen, fileno1, 'w')
+            with self.assertRaises(OSError):
+                self.os.fdopen(fileno1, 'w')
         else:
             self.os.fdopen(fileno1, 'w')
             self.os.close(fileno1)
@@ -618,7 +621,8 @@ class FakeOsModuleTest(FakeOsModuleTestBase):
 
     def test_readlink_raises_if_path_is_none(self):
         self.skip_if_symlink_not_supported()
-        self.assertRaises(TypeError, self.os.readlink, None)
+        with self.assertRaises(TypeError):
+            self.os.readlink(None)
 
     def test_broken_symlink_with_trailing_separator_linux(self):
         self.check_linux_only()
@@ -1115,7 +1119,8 @@ class FakeOsModuleTest(FakeOsModuleTestBase):
         # not testing specific subtype:
         # raises errno.ENOTEMPTY under Ubuntu 16.04, MacOS and pyfakefs
         # but raises errno.EEXIST at least under Ubunto 14.04
-        self.assertRaises(OSError, self.os.rename, old_path, new_path)
+        with self.assertRaises(OSError):
+            self.os.rename(old_path, new_path)
 
     def test_rename_to_another_device_should_raise(self):
         """Renaming to another filesystem device raises OSError."""
@@ -1702,7 +1707,8 @@ class FakeOsModuleTest(FakeOsModuleTestBase):
 
         directory = self.make_path('a', 'b')
         if not is_root():
-            self.assertRaises(Exception, self.os.makedirs, directory)
+            with self.assertRaises(Exception):
+                self.os.makedirs(directory)
         else:
             self.os.makedirs(directory)
             self.assertTrue(self.os.path.exists(directory))
@@ -1739,7 +1745,8 @@ class FakeOsModuleTest(FakeOsModuleTestBase):
 
     # test fsync and fdatasync
     def test_fsync_raises_on_non_int(self):
-        self.assertRaises(TypeError, self.os.fsync, "zero")
+        with self.assertRaises(TypeError):
+            self.os.fsync("zero")
 
     def test_fdatasync_raises_on_non_int(self):
         self.check_linux_only()
@@ -4025,6 +4032,7 @@ class FakeOsModuleLowLevelFileOpTest(FakeOsModuleTestBase):
         file_des = self.os.open(file_path, os.O_WRONLY | os.O_CREAT, 0o442)
         self.assert_mode_equal(0o444, self.os.stat(file_path).st_mode)
         self.os.close(file_des)
+        self.os.chmod(file_path, 0o666)
 
     def testOpenCreateMode666Windows(self):
         self.check_windows_only()
@@ -4093,6 +4101,7 @@ class FakeOsModuleLowLevelFileOpTest(FakeOsModuleTestBase):
         self.create_dir(dir_path)
         file_des = self.os.open(dir_path, os.O_RDONLY)
         self.assertEqual(3, file_des)
+        self.os.close(file_des)
 
     def test_opening_existing_directory_in_creation_mode(self):
         self.check_linux_only()
@@ -4513,14 +4522,12 @@ class FakeOsModuleWalkTest(FakeOsModuleTestBase):
         ]
         for base_dir in variants:
             for dirpath, dirnames, filenames in self.os.walk(base_dir):
-                print(dirpath, filenames)
                 self.assertEqual(dirpath, base_dir)
 
         file_path = self.make_path('foo', 'bar', 'dir', 'baz')
         self.create_file(file_path)
         for base_dir in variants:
             for dirpath, dirnames, filenames in self.os.walk(base_dir):
-                print(dirpath, filenames)
                 self.assertTrue(dirpath.startswith(base_dir))
 
 
@@ -4874,7 +4881,7 @@ class FakeScandirTest(FakeOsModuleTestBase):
 
     def tearDown(self):
         self.os.chdir(self.pretest_cwd)
-        super(FakeScandirTest, self).tearDown()
+        super().tearDown()
 
     def do_scandir(self):
         """Hook to override how scandir is called."""
@@ -5152,6 +5159,9 @@ class FakeExtendedAttributeTest(FakeOsModuleTestBase):
 
 class FakeOsUnreadableDirTest(FakeOsModuleTestBase):
     def setUp(self):
+        if self.use_real_fs():
+            # make sure no dir is created if skipped
+            self.check_posix_only()
         super(FakeOsUnreadableDirTest, self).setUp()
         self.check_posix_only()
         self.dir_path = self.make_path('some_dir')

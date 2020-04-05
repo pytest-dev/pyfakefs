@@ -506,7 +506,8 @@ and you may fail to create new files if the fake file system is full.
 
         def test_disk_full(self):
             with open('/foo/bar.txt', 'w') as f:
-                self.assertRaises(OSError, f.write, 'a' * 200)
+                with self.assertRaises(OSError):
+                    f.write('a' * 200)
 
 To get the file system size, you may use ``get_disk_usage()``, which is
 modeled after ``shutil.disk_usage()``.

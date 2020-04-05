@@ -361,12 +361,14 @@ class NoRootUserTest(fake_filesystem_unittest.TestCase):
         dir_path = '/foo/bar'
         self.fs.create_dir(dir_path, perm_bits=0o555)
         file_path = dir_path + 'baz'
-        self.assertRaises(OSError, self.fs.create_file, file_path)
+        with self.assertRaises(OSError):
+            self.fs.create_file(file_path)
 
         file_path = '/baz'
         self.fs.create_file(file_path)
         os.chmod(file_path, 0o400)
-        self.assertRaises(OSError, open, file_path, 'w')
+        with self.assertRaises(OSError):
+            open(file_path, 'w')
 
 
 class PauseResumeTest(TestPyfakefsUnittestBase):
@@ -433,7 +435,8 @@ class PauseResumeTest(TestPyfakefsUnittestBase):
 
     def test_pause_resume_without_patcher(self):
         fs = fake_filesystem.FakeFilesystem()
-        self.assertRaises(RuntimeError, fs.resume)
+        with self.assertRaises(RuntimeError):
+            fs.resume()
 
 
 class PauseResumePatcherTest(fake_filesystem_unittest.TestCase):

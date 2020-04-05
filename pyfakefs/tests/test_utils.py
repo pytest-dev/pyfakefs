@@ -94,8 +94,18 @@ class RealFsTestMixin:
         self.open = open
         self.os = os
         self.base_path = None
+
+    def setUp(self):
+        if not os.environ.get('TEST_REAL_FS'):
+            self.skip_real_fs()
         if self.use_real_fs():
             self.base_path = tempfile.mkdtemp()
+
+    def tearDown(self):
+        if self.use_real_fs():
+            self.os.chdir(os.path.dirname(self.base_path))
+            shutil.rmtree(self.base_path, ignore_errors=True)
+            os.chdir(self.cwd)
 
     @property
     def is_windows_fs(self):
@@ -347,6 +357,7 @@ class RealFsTestCase(TestCase, RealFsTestMixin):
         RealFsTestMixin.__init__(self)
 
     def setUp(self):
+        RealFsTestMixin.setUp(self)
         self.cwd = os.getcwd()
         if not self.use_real_fs():
             self.filesystem = fake_filesystem.FakeFilesystem(
@@ -354,10 +365,11 @@ class RealFsTestCase(TestCase, RealFsTestMixin):
             self.open = fake_filesystem.FakeFileOpen(self.filesystem)
             self.os = fake_filesystem.FakeOsModule(self.filesystem)
             self.create_basepath()
-        elif not os.environ.get('TEST_REAL_FS'):
-            self.skip_real_fs()
 
         self.setUpFileSystem()
+
+    def tearDown(self):
+        RealFsTestMixin.tearDown(self)
 
     def setUpFileSystem(self):
         pass
@@ -373,9 +385,3 @@ class RealFsTestCase(TestCase, RealFsTestMixin):
         if self.use_real_fs():
             return TestCase.is_macos
         return self.filesystem.is_macos
-
-    def tearDown(self):
-        if self.use_real_fs():
-            self.os.chdir(os.path.dirname(self.base_path))
-            shutil.rmtree(self.base_path, ignore_errors=True)
-            self.os.chdir(self.cwd)

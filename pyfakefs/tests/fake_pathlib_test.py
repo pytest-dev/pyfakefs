@@ -45,7 +45,6 @@ def skip_if_pathlib_36_is_available():
         raise unittest.SkipTest('Changed behavior in Python 3.6')
 
 
-@unittest.skipIf(pathlib is None, 'Not running without pathlib')
 class RealPathlibTestCase(RealFsTestCase):
     def __init__(self, methodName='runTest'):
         super(RealPathlibTestCase, self).__init__(methodName)
@@ -53,7 +52,7 @@ class RealPathlibTestCase(RealFsTestCase):
         self.path = None
 
     def setUp(self):
-        super(RealPathlibTestCase, self).setUp()
+        super().setUp()
         if not self.use_real_fs():
             self.pathlib = fake_pathlib.FakePathlibModule(self.filesystem)
         self.path = self.pathlib.Path
@@ -67,13 +66,14 @@ class FakePathlibInitializationTest(RealPathlibTestCase):
             self.assertTrue(isinstance(path, self.pathlib.WindowsPath))
             self.assertTrue(isinstance(path, self.pathlib.PureWindowsPath))
             self.assertTrue(self.pathlib.PurePosixPath())
-            self.assertRaises(NotImplementedError, self.pathlib.PosixPath)
+            with self.assertRaises(NotImplementedError):
+                self.pathlib.PosixPath()
         else:
             self.assertTrue(isinstance(path, self.pathlib.PosixPath))
             self.assertTrue(isinstance(path, self.pathlib.PurePosixPath))
             self.assertTrue(self.pathlib.PureWindowsPath())
-            self.assertRaises(NotImplementedError,
-                              self.pathlib.WindowsPath)
+            with self.assertRaises(NotImplementedError):
+                self.pathlib.WindowsPath()
 
     def test_init_with_segments(self):
         """Basic initialization tests - taken from pathlib.Path documentation
@@ -228,16 +228,16 @@ class FakePathlibPurePathTest(RealPathlibTestCase):
                          self.path('etc/passwd'))
         self.assertEqual(self.path('/etc/passwd').relative_to('/'),
                          self.path('etc/passwd'))
-        self.assertRaises(ValueError, self.path('passwd').relative_to,
-                          '/usr')
+        with self.assertRaises(ValueError):
+            self.path('passwd').relative_to('/usr')
 
     def test_with_name(self):
         self.check_windows_only()
         self.assertEqual(
             self.path('c:/Downloads/pathlib.tar.gz').with_name('setup.py'),
             self.path('c:/Downloads/setup.py'))
-        self.assertRaises(ValueError, self.path('c:/').with_name,
-                          'setup.py')
+        with self.assertRaises(ValueError):
+            self.path('c:/').with_name('setup.py')
 
     def test_with_suffix(self):
         self.assertEqual(
@@ -381,8 +381,8 @@ class FakePathlibFileObjectPropertyTest(RealPathlibTestCase):
         file_stat = self.os.stat(self.file_path)
         link_stat = self.os.lstat(self.file_link_path)
         if not hasattr(os, "lchmod"):
-            self.assertRaises(NotImplementedError,
-                              self.path(self.file_link_path).lchmod, 0o444)
+            with self.assertRaises(NotImplementedError):
+                self.path(self.file_link_path).lchmod(0o444)
         else:
             self.path(self.file_link_path).lchmod(0o444)
             self.assertEqual(file_stat.st_mode, stat.S_IFREG | 0o666)
@@ -513,8 +513,8 @@ class FakePathlibPathFileOperationTest(RealPathlibTestCase):
 
     def test_open(self):
         self.create_dir(self.make_path('foo'))
-        self.assertRaises(OSError,
-                          self.path(self.make_path('foo', 'bar.txt')).open)
+        with self.assertRaises(OSError):
+            self.path(self.make_path('foo', 'bar.txt')).open()
         self.path(self.make_path('foo', 'bar.txt')).open('w').close()
         self.assertTrue(
             self.os.path.exists(self.make_path('foo', 'bar.txt')))
@@ -590,6 +590,7 @@ class FakePathlibPathFileOperationTest(RealPathlibTestCase):
         self.check_contents(file_name, '')
         self.assertTrue(self.os.stat(file_name).st_mode,
                         stat.S_IFREG | 0o444)
+        self.os.chmod(file_name, mode=0o666)
 
     def test_touch_existing(self):
         file_name = self.make_path('foo', 'bar.txt')
@@ -605,14 +606,15 @@ class FakePathlibPathFileOperationTest(RealPathlibTestCase):
         self.create_file(file_name)
         file_name2 = self.make_path('foo', 'baz.txt')
         self.create_file(file_name2)
-        self.assertRaises(OSError,
-                          self.path(
-                              self.make_path('foo', 'other')).samefile,
-                          self.make_path('foo', 'other.txt'))
+        with self.assertRaises(OSError):
+            self.path(self.make_path('foo', 'other')).samefile(
+                self.make_path('foo', 'other.txt'))
         path = self.path(file_name)
         other_name = self.make_path('foo', 'other.txt')
-        self.assertRaises(OSError, path.samefile, other_name)
-        self.assertRaises(OSError, path.samefile, self.path(other_name))
+        with self.assertRaises(OSError):
+            path.samefile(other_name)
+        with self.assertRaises(OSError):
+            path.samefile(self.path(other_name))
         self.assertFalse(path.samefile(file_name2))
         self.assertFalse(path.samefile(self.path(file_name2)))
         self.assertTrue(
@@ -660,7 +662,8 @@ class FakePathlibPathFileOperationTest(RealPathlibTestCase):
         self.assertFalse(self.os.path.exists(dir_name))
         self.assertTrue(self.os.path.exists(self.make_path('foo')))
         self.create_file(self.make_path('foo', 'baz'))
-        self.assertRaises(OSError, self.path(self.make_path('foo')).rmdir)
+        with self.assertRaises(OSError):
+            self.path(self.make_path('foo')).rmdir()
         self.assertTrue(self.os.path.exists(self.make_path('foo')))
 
     def test_iterdir(self):

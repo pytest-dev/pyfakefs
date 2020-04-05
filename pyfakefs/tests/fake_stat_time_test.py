@@ -23,7 +23,7 @@ FileTime = namedtuple('FileTime', 'st_ctime, st_atime, st_mtime')
 class FakeStatTestBase(RealFsTestCase):
 
     def setUp(self):
-        super(FakeStatTestBase, self).setUp()
+        super().setUp()
         # we disable the tests for MacOS to avoid very long builds due
         # to the 1s time resolution - we know that the functionality is
         # similar to Linux
