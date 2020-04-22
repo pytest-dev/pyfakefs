@@ -603,6 +603,8 @@ A list of Python modules that are known to not work correctly with
 - ``multiprocessing`` has several issues (related to points 1 and 3 above).
   Currently there are no plans to fix this, but this may change in case of
   sufficient demand.
+- the ``Pillow`` image library does not work with pyfakefs at least if writing
+  JPEG files (see `this issue <https://github.com/jmcgeheeiv/pyfakefs/issues/529>`__)
 
 If you are not sure if a module can be handled, or how to do it, you can
 always write a new issue, of course!
