@@ -494,7 +494,8 @@ and you may fail to create new files if the fake file system is full.</p>
 
     <span class="k">def</span> <span class="nf">test_disk_full</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="s1">&#39;/foo/bar.txt&#39;</span><span class="p">,</span> <span class="s1">&#39;w&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">assertRaises</span><span class="p">(</span><span class="ne">OSError</span><span class="p">,</span> <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">,</span> <span class="s1">&#39;a&#39;</span> <span class="o">*</span> <span class="mi">200</span><span class="p">)</span>
+            <span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">assertRaises</span><span class="p">(</span><span class="ne">OSError</span><span class="p">):</span>
+                <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s1">&#39;a&#39;</span> <span class="o">*</span> <span class="mi">200</span><span class="p">)</span>
 </pre></div>
 </div>
 <p>To get the file system size, you may use <code class="docutils literal notranslate"><span class="pre">get_disk_usage()</span></code>, which is
@@ -585,6 +586,8 @@ which can be substituted with <code class="docutils literal notranslate"><span c
 <li><code class="docutils literal notranslate"><span class="pre">multiprocessing</span></code> has several issues (related to points 1 and 3 above).
 Currently there are no plans to fix this, but this may change in case of
 sufficient demand.</li>
+<li>the <code class="docutils literal notranslate"><span class="pre">Pillow</span></code> image library does not work with pyfakefs at least if writing
+JPEG files (see <a class="reference external" href="https://github.com/jmcgeheeiv/pyfakefs/issues/529">this issue</a>)</li>
 </ul>
 <p>If you are not sure if a module can be handled, or how to do it, you can
 always write a new issue, of course!</p>
@@ -710,7 +713,7 @@ described above.</p>
         &#169; Copyright 2009 Google Inc. All Rights Reserved.
 © Copyright 2014 Altera Corporation. All Rights Reserved.
 © Copyright 2014-2019 John McGehee.
-      Last updated on Mar 03, 2020.
+      Last updated on Apr 22, 2020.
     </div>
   </body>
 </html>

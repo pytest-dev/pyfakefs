@@ -1002,16 +1002,16 @@ pyfakefs by simply changing their base class from <cite>:py:class`unittest.TestC
 to <cite>:py:class`pyfakefs.fake_filesystem_unittest.TestCase</cite>.</p>
 <dl class="function">
 <dt id="pyfakefs.fake_filesystem_unittest.patchfs">
-<code class="descclassname">pyfakefs.fake_filesystem_unittest.</code><code class="descname">patchfs</code><span class="sig-paren">(</span><em>additional_skip_names=None</em>, <em>modules_to_reload=None</em>, <em>modules_to_patch=None</em>, <em>allow_root_user=True</em><span class="sig-paren">)</span><a class="headerlink" href="#pyfakefs.fake_filesystem_unittest.patchfs" title="Permalink to this definition">¶</a></dt>
+<code class="descclassname">pyfakefs.fake_filesystem_unittest.</code><code class="descname">patchfs</code><span class="sig-paren">(</span><em>_func=None</em>, <em>*</em>, <em>additional_skip_names=None</em>, <em>modules_to_reload=None</em>, <em>modules_to_patch=None</em>, <em>allow_root_user=True</em><span class="sig-paren">)</span><a class="headerlink" href="#pyfakefs.fake_filesystem_unittest.patchfs" title="Permalink to this definition">¶</a></dt>
 <dd><p>Convenience decorator to use patcher with additional parameters in a
 test function.</p>
 <p>Usage:</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="nd">@patchfs</span>
-<span class="n">test_my_function</span><span class="p">(</span><span class="n">fs</span><span class="p">):</span>
+<span class="k">def</span> <span class="nf">test_my_function</span><span class="p">(</span><span class="n">fs</span><span class="p">):</span>
     <span class="n">fs</span><span class="o">.</span><span class="n">create_file</span><span class="p">(</span><span class="s1">&#39;foo&#39;</span><span class="p">)</span>
 
 <span class="nd">@patchfs</span><span class="p">(</span><span class="n">allow_root_user</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
-<span class="n">test_with_patcher_args</span><span class="p">(</span><span class="n">fs</span><span class="p">):</span>
+<span class="k">def</span> <span class="nf">test_with_patcher_args</span><span class="p">(</span><span class="n">fs</span><span class="p">):</span>
     <span class="n">os</span><span class="o">.</span><span class="n">makedirs</span><span class="p">(</span><span class="s1">&#39;foo/bar&#39;</span><span class="p">)</span>
 </pre></div>
 </div>
@@ -1218,7 +1218,7 @@ that is available on pypi.</p>
         &#169; Copyright 2009 Google Inc. All Rights Reserved.
 © Copyright 2014 Altera Corporation. All Rights Reserved.
 © Copyright 2014-2019 John McGehee.
-      Last updated on Mar 03, 2020.
+      Last updated on Apr 22, 2020.
     </div>
   </body>
 </html>
