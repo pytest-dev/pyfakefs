@@ -977,6 +977,13 @@ class FakeFilesystem:
         """Return the alternative path separator as the same type as path"""
         return self._matching_string(path, self.alternative_path_separator)
 
+    def _starts_with_sep(self, path):
+        """Return True if path starts with a path separator."""
+        sep = self._path_separator(path)
+        altsep = self._alternative_path_separator(path)
+        return (path.startswith(sep) or altsep is not None and
+                path.startswith(altsep))
+
     def add_mount_point(self, path, total_size=None):
         """Add a new mount point for a filesystem device.
         The mount point gets a new unique device number.
@@ -1409,7 +1416,8 @@ class FakeFilesystem:
                     path_components[len(normalized_components):])
             sep = self._path_separator(path)
             normalized_path = sep.join(normalized_components)
-            if path.startswith(sep) and not normalized_path.startswith(sep):
+            if (self._starts_with_sep(path) and not
+                    self._starts_with_sep(normalized_path)):
                 normalized_path = sep + normalized_path
             return normalized_path
 
@@ -3142,13 +3150,7 @@ class FakePathModule:
         if self.filesystem.is_windows_fs:
             path = self.splitdrive(path)[1]
         path = make_string_path(path)
-        sep = self.filesystem._path_separator(path)
-        altsep = self.filesystem._alternative_path_separator(path)
-        if self.filesystem.is_windows_fs:
-            return len(path) > 0 and path[:1] in (sep, altsep)
-        else:
-            return (path.startswith(sep) or
-                    altsep is not None and path.startswith(altsep))
+        return self.filesystem._starts_with_sep(path)
 
     def isdir(self, path):
         """Determine if path identifies a directory."""
@@ -3244,13 +3246,10 @@ class FakePathModule:
                 return self.os.getcwd()
 
         path = make_string_path(path)
-        sep = self.filesystem._path_separator(path)
-        altsep = self.filesystem._alternative_path_separator(path)
         if not self.isabs(path):
             path = self.join(getcwd(), path)
         elif (self.filesystem.is_windows_fs and
-              path.startswith(sep) or altsep is not None and
-              path.startswith(altsep)):
+              self.filesystem._starts_with_sep(path)):
             cwd = getcwd()
             if self.filesystem._starts_with_drive_letter(cwd):
                 path = self.join(cwd[:2], path)

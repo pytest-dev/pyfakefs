@@ -12,6 +12,7 @@
 
 # Example for a test using a custom pytest fixture with an argument to Patcher
 # Needs Python >= 3.6
+import os
 
 import pytest
 
@@ -41,3 +42,11 @@ def check_that_example_file_is_in_fake_fs():
         assert file.read() == 'stuff here'
     assert example.EXAMPLE_FILE.read_text() == 'stuff here'
     assert example.EXAMPLE_FILE.is_file()
+
+
+def test_twice_chdir(fs):
+    # regression test for #530 - make sure that
+    # alternative path separators are correctly handled under Windows
+    fs.create_dir("/absolute/path/to/directory")
+    os.chdir("/absolute/path/to/directory")
+    os.chdir("/absolute/path/to/directory")

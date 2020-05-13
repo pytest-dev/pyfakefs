@@ -8,7 +8,9 @@ The released versions correspond to PyPi releases.
     (see [#526](../../issues/526))
   * Make sure filesystem modules in `pathlib` are patched
     (see [#527](../../issues/527))
-    
+  * Make sure that alternative path separators are correctly handled under Windows
+    (see [#530](../../issues/530))
+
 #### Infrastructure
   * Make sure all temporary files from real fs tests are removed
 
