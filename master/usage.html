@@ -588,6 +588,9 @@ Currently there are no plans to fix this, but this may change in case of
 sufficient demand.</li>
 <li>the <code class="docutils literal notranslate"><span class="pre">Pillow</span></code> image library does not work with pyfakefs at least if writing
 JPEG files (see <a class="reference external" href="https://github.com/jmcgeheeiv/pyfakefs/issues/529">this issue</a>)</li>
+<li><code class="docutils literal notranslate"><span class="pre">pandas</span></code> (the Python data analysis library) uses its own internal file
+system access, written in C, and does therefore not work with pyfakefs
+(see <a class="reference external" href="https://github.com/jmcgeheeiv/pyfakefs/issues/528">this issue</a>)</li>
 </ul>
 <p>If you are not sure if a module can be handled, or how to do it, you can
 always write a new issue, of course!</p>
@@ -713,7 +716,7 @@ described above.</p>
         &#169; Copyright 2009 Google Inc. All Rights Reserved.
 © Copyright 2014 Altera Corporation. All Rights Reserved.
 © Copyright 2014-2019 John McGehee.
-      Last updated on Apr 22, 2020.
+      Last updated on May 26, 2020.
     </div>
   </body>
 </html>
