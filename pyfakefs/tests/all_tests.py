@@ -18,18 +18,22 @@ Includes tests with external pathlib2 and scandir packages if installed."""
 import sys
 import unittest
 
-from pyfakefs.tests import dynamic_patch_test, fake_stat_time_test
-from pyfakefs.tests import example_test
-from pyfakefs.tests import fake_filesystem_glob_test
-from pyfakefs.tests import fake_filesystem_shutil_test
-from pyfakefs.tests import fake_filesystem_test
-from pyfakefs.tests import fake_filesystem_unittest_test
-from pyfakefs.tests import fake_filesystem_vs_real_test
-from pyfakefs.tests import fake_open_test
-from pyfakefs.tests import fake_os_test
-from pyfakefs.tests import fake_pathlib_test
-from pyfakefs.tests import fake_tempfile_test
-from pyfakefs.tests import mox3_stubout_test
+from pyfakefs.tests import (
+    dynamic_patch_test,
+    fake_stat_time_test,
+    example_test,
+    fake_filesystem_glob_test,
+    fake_filesystem_shutil_test,
+    fake_filesystem_test,
+    fake_filesystem_unittest_test,
+    fake_filesystem_vs_real_test,
+    fake_open_test,
+    fake_os_test,
+    fake_pathlib_test,
+    fake_tempfile_test,
+    patched_packages_test,
+    mox3_stubout_test
+)
 
 
 class AllTests(unittest.TestSuite):
@@ -50,7 +54,8 @@ class AllTests(unittest.TestSuite):
             loader.loadTestsFromModule(example_test),
             loader.loadTestsFromModule(mox3_stubout_test),
             loader.loadTestsFromModule(dynamic_patch_test),
-            loader.loadTestsFromModule(fake_pathlib_test)
+            loader.loadTestsFromModule(fake_pathlib_test),
+            loader.loadTestsFromModule(patched_packages_test)
         ])
         return self
 

@@ -9,5 +9,10 @@
 # available at the time of writing.
 
 pathlib2>=2.3.2
-
 scandir>=1.8
+
+# pandas + xlrd are used to test pandas-specific patches to allow
+# pyfakefs to work with pandas
+# we use the latest version to see any problems with new versions
+pandas
+xlrd

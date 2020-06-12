@@ -356,6 +356,17 @@ if the real user is a root user (e.g. has the user ID 0). If you want to run
 your tests as a non-root user regardless of the actual user rights, you may
 want to set this to ``False``.
 
+use_known_patches
+~~~~~~~~~~~~~~~~~
+If this is set to ``True`` (the default), ``pyfakefs`` patches some
+libraries that are known to not work out of the box, to be able work with the
+fake filesystem. Currently, this includes patches for the ``pandas`` methods
+``read_csv`` and ``read_excel`` - more may follow. This flag is
+there to be able to disable this functionality in case it causes any
+problems. It may be removed or replaced by a more fine-grained argument in
+future releases.
+
+
 Using convenience methods
 -------------------------
 While ``pyfakefs`` can be used just with the standard Python file system
@@ -605,9 +616,6 @@ A list of Python modules that are known to not work correctly with
   sufficient demand.
 - the ``Pillow`` image library does not work with pyfakefs at least if writing
   JPEG files (see `this issue <https://github.com/jmcgeheeiv/pyfakefs/issues/529>`__)
-- ``pandas`` (the Python data analysis library) uses its own internal file
-  system access, written in C, and does therefore not work with pyfakefs
-  (see `this issue <https://github.com/jmcgeheeiv/pyfakefs/issues/528>`__)
 
 If you are not sure if a module can be handled, or how to do it, you can
 always write a new issue, of course!

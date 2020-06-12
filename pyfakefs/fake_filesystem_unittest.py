@@ -47,6 +47,8 @@ import warnings
 from pyfakefs.deprecator import Deprecator
 from pyfakefs.fake_filesystem import set_uid, set_gid, reset_ids
 from pyfakefs.helpers import IS_PYPY
+from pyfakefs.patched_packages import get_modules_to_patch, \
+    get_classes_to_patch, get_fake_module_classes
 
 try:
     from importlib.machinery import ModuleSpec
@@ -74,7 +76,8 @@ def patchfs(_func=None, *,
             additional_skip_names=None,
             modules_to_reload=None,
             modules_to_patch=None,
-            allow_root_user=True):
+            allow_root_user=True,
+            use_known_patches=True):
     """Convenience decorator to use patcher with additional parameters in a
     test function.
 
@@ -96,7 +99,8 @@ def patchfs(_func=None, *,
                     additional_skip_names=additional_skip_names,
                     modules_to_reload=modules_to_reload,
                     modules_to_patch=modules_to_patch,
-                    allow_root_user=allow_root_user) as p:
+                    allow_root_user=allow_root_user,
+                    use_known_patches=use_known_patches) as p:
                 kwargs['fs'] = p.fs
                 return f(*args, **kwargs)
 
@@ -117,7 +121,8 @@ def load_doctests(loader, tests, ignore, module,
                   additional_skip_names=None,
                   modules_to_reload=None,
                   modules_to_patch=None,
-                  allow_root_user=True):  # pylint: disable=unused-argument
+                  allow_root_user=True,
+                  use_known_patches=True):  # pylint: disable=unused-argument
     """Load the doctest tests for the specified module into unittest.
         Args:
             loader, tests, ignore : arguments passed in from `load_tests()`
@@ -129,7 +134,8 @@ def load_doctests(loader, tests, ignore, module,
     _patcher = Patcher(additional_skip_names=additional_skip_names,
                        modules_to_reload=modules_to_reload,
                        modules_to_patch=modules_to_patch,
-                       allow_root_user=allow_root_user)
+                       allow_root_user=allow_root_user,
+                       use_known_patches=use_known_patches)
     globs = _patcher.replace_globs(vars(module))
     tests.addTests(doctest.DocTestSuite(module,
                                         globs=globs,
@@ -155,6 +161,8 @@ class TestCaseMixin:
         modules_to_patch: A dictionary of fake modules mapped to the
             fully qualified patched module names. Can be used to add patching
             of modules not provided by `pyfakefs`.
+        use_known_patches: If True (the default), some patches for commonly
+            used packges are applied which make them usable with pyfakes.
 
     If you specify some of these attributes here and you have DocTests,
     consider also specifying the same arguments to :py:func:`load_doctests`.
@@ -190,7 +198,8 @@ class TestCaseMixin:
                       additional_skip_names=None,
                       modules_to_reload=None,
                       modules_to_patch=None,
-                      allow_root_user=True):
+                      allow_root_user=True,
+                      use_known_patches=True):
         """Bind the file-related modules to the :py:class:`pyfakefs` fake file
         system instead of the real file system.  Also bind the fake `open()`
         function.
@@ -212,7 +221,8 @@ class TestCaseMixin:
             additional_skip_names=additional_skip_names,
             modules_to_reload=modules_to_reload,
             modules_to_patch=modules_to_patch,
-            allow_root_user=allow_root_user
+            allow_root_user=allow_root_user,
+            use_known_patches=use_known_patches
         )
 
         self._stubber.setUp()
@@ -247,7 +257,8 @@ class TestCase(unittest.TestCase, TestCaseMixin):
                  additional_skip_names=None,
                  modules_to_reload=None,
                  modules_to_patch=None,
-                 allow_root_user=True):
+                 allow_root_user=True,
+                 use_known_patches=True):
         """Creates the test class instance and the patcher used to stub out
         file system related modules.
 
@@ -261,6 +272,7 @@ class TestCase(unittest.TestCase, TestCaseMixin):
         self.modules_to_reload = modules_to_reload
         self.modules_to_patch = modules_to_patch
         self.allow_root_user = allow_root_user
+        self.use_known_patches = use_known_patches
 
     @Deprecator('add_real_file')
     def copyRealFile(self, real_file_path, fake_file_path=None,
@@ -337,7 +349,7 @@ class Patcher:
 
     def __init__(self, additional_skip_names=None,
                  modules_to_reload=None, modules_to_patch=None,
-                 allow_root_user=True):
+                 allow_root_user=True, use_known_patches=True):
         """For a description of the arguments, see TestCase.__init__"""
 
         if not allow_root_user:
@@ -360,6 +372,12 @@ class Patcher:
         self._init_fake_module_classes()
 
         self.modules_to_reload = modules_to_reload or []
+
+        if use_known_patches:
+            modules_to_patch = modules_to_patch or {}
+            modules_to_patch.update(get_modules_to_patch())
+            self._class_modules.update(get_classes_to_patch())
+            self._fake_module_classes.update(get_fake_module_classes())
 
         if modules_to_patch is not None:
             for name, fake_module in modules_to_patch.items():
@@ -516,7 +534,8 @@ class Patcher:
                 # where py.error has no __name__ attribute
                 # see https://github.com/pytest-dev/py/issues/73
                 continue
-
+            if name == 'pandas.io.parsers':
+                print(name)
             module_items = module.__dict__.copy().items()
 
             # suppress specific pytest warning - see #466
@@ -588,6 +607,8 @@ class Patcher:
             self._patching = True
 
             for name, modules in self._modules.items():
+                if name == 'TextFileReader':
+                    print(name, modules)
                 for module, attr in modules:
                     self._stubs.smart_set(
                         module, name, self.fake_modules[attr])

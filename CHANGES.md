@@ -3,6 +3,10 @@ The released versions correspond to PyPi releases.
 
 ## Version 4.1.0 (as yet unreleased)
 
+#### New Features
+  * Added some support for pandas (`read_csv`, `read_excel`) to work with
+   the fake filesystem (see [#531](../../issues/531))
+  
 #### Fixes
   * Do not override global warnings setting in `Deprecator` 
     (see [#526](../../issues/526))
