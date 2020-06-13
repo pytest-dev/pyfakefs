@@ -26,11 +26,18 @@ try:
 except ImportError:
     xlrd = None
 
+try:
+    from django.core.files import locks
+except ImportError:
+    locks = None
+
 
 def get_modules_to_patch():
     modules_to_patch = {}
     if xlrd is not None:
         modules_to_patch['xlrd'] = XLRDModule
+    if locks is not None:
+        modules_to_patch['django.core.files.locks'] = FakeLocks
     return modules_to_patch
 
 
@@ -107,3 +114,22 @@ if parsers is not None:
         def __getattr__(self, name):
             """Forwards any unfaked calls to the standard xlrd module."""
             return getattr(self._parsers_module, name)
+
+if locks is not None:
+    class FakeLocks:
+        """django.core.files.locks uses low level OS functions, fake it."""
+        _locks_module = locks
+
+        def __init__(self, _):
+            pass
+
+        @staticmethod
+        def lock(f, flags):
+            return True
+
+        @staticmethod
+        def unlock(f):
+            return True
+
+        def __getattr__(self, name):
+            return getattr(self._locks_module, name)

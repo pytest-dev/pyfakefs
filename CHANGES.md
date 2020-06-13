@@ -4,8 +4,9 @@ The released versions correspond to PyPi releases.
 ## Version 4.1.0 (as yet unreleased)
 
 #### New Features
-  * Added some support for pandas (`read_csv`, `read_excel` and more) to work
-   with the fake filesystem (see [#531](../../issues/531))
+  * Added some support for pandas (`read_csv`, `read_excel` and more), and
+   for django file locks to work with the fake filesystem 
+   (see [#531](../../issues/531))
   
 #### Fixes
   * `os.expanduser` now works with a bytes path

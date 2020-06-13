@@ -273,7 +273,8 @@ names to be faked.
 
 This mechanism is used in pyfakefs itself to patch the external modules
 `pathlib2` and `scandir` if present, and the following example shows how to
-fake a module in Django that uses OS file system functions:
+fake a module in Django that uses OS file system functions (note that this
+has now been been integrated into pyfakefs):
 
 .. code:: python
 
