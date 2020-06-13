@@ -34,10 +34,16 @@ class TestPatchedPackages(fake_filesystem_unittest.TestCase):
         self.setUpPyfakefs()
 
     if pd is not None:
-        def test_load_csv(self):
+        def test_read_csv(self):
             path = '/foo/bar.csv'
             self.fs.create_file(path, contents='1,2,3,4')
             df = pd.read_csv(path)
+            assert (df.columns == ['1', '2', '3', '4']).all()
+
+        def test_read_table(self):
+            path = '/foo/bar.csv'
+            self.fs.create_file(path, contents='1|2|3|4')
+            df = pd.read_table(path, delimiter='|')
             assert (df.columns == ['1', '2', '3', '4']).all()
 
     if pd is not None and xlrd is not None:

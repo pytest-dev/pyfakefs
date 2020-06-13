@@ -359,10 +359,10 @@ want to set this to ``False``.
 use_known_patches
 ~~~~~~~~~~~~~~~~~
 If this is set to ``True`` (the default), ``pyfakefs`` patches some
-libraries that are known to not work out of the box, to be able work with the
-fake filesystem. Currently, this includes patches for the ``pandas`` methods
-``read_csv`` and ``read_excel`` - more may follow. This flag is
-there to be able to disable this functionality in case it causes any
+libraries that are known to not work out of the box, to be able to work with
+the fake filesystem. Currently, this includes patches for some ``pandas``
+read methods like ``read_csv`` and ``read_excel`` - more may follow. This
+flag is there to allow to disable this functionality in case it causes any
 problems. It may be removed or replaced by a more fine-grained argument in
 future releases.
 
@@ -616,6 +616,11 @@ A list of Python modules that are known to not work correctly with
   sufficient demand.
 - the ``Pillow`` image library does not work with pyfakefs at least if writing
   JPEG files (see `this issue <https://github.com/jmcgeheeiv/pyfakefs/issues/529>`__)
+- ``pandas`` (the Python data analysis library) uses its own internal file
+  system access, written in C, and does therefore not work with pyfakefs out
+   of the box. ``pyfakefs`` adds some patches so that many of the
+   ``read_xxx`` functions will work with the fake system (including
+   ``read_csv`` and ``read_excel``).
 
 If you are not sure if a module can be handled, or how to do it, you can
 always write a new issue, of course!
