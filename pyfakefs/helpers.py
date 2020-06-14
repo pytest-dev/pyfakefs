@@ -57,6 +57,17 @@ def to_string(path):
     return path
 
 
+def matching_string(matched, string):
+    """Return the string as byte or unicode depending
+    on the type of matched, assuming string is an ASCII string.
+    """
+    if string is None:
+        return string
+    if isinstance(matched, bytes) and isinstance(string, str):
+        return string.encode(locale.getpreferredencoding(False))
+    return string
+
+
 class FakeStatResult:
     """Mimics os.stat_result for use as return type of `stat()` and similar.
     This is needed as `os.stat_result` has no possibility to set

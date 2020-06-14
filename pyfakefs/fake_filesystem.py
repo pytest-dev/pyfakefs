@@ -112,7 +112,8 @@ from pyfakefs.fake_scandir import scandir, walk
 from pyfakefs.helpers import (
     FakeStatResult, FileBufferIO, NullFileBufferIO,
     is_int_type, is_byte_string, is_unicode_string,
-    make_string_path, IS_WIN, to_string)
+    make_string_path, IS_WIN, to_string, matching_string
+)
 from pyfakefs import __version__  # noqa: F401 for upwards compatibility
 
 __pychecker__ = 'no-reimportself'
@@ -958,24 +959,13 @@ class FakeFilesystem:
             raise OSError(errno, message, filename, winerror)
         raise OSError(errno, message, filename)
 
-    @staticmethod
-    def _matching_string(matched, string):
-        """Return the string as byte or unicode depending
-        on the type of matched, assuming string is an ASCII string.
-        """
-        if string is None:
-            return string
-        if isinstance(matched, bytes) and isinstance(string, str):
-            return string.encode(locale.getpreferredencoding(False))
-        return string
-
     def _path_separator(self, path):
         """Return the path separator as the same type as path"""
-        return self._matching_string(path, self.path_separator)
+        return matching_string(path, self.path_separator)
 
     def _alternative_path_separator(self, path):
         """Return the alternative path separator as the same type as path"""
-        return self._matching_string(path, self.alternative_path_separator)
+        return matching_string(path, self.alternative_path_separator)
 
     def _starts_with_sep(self, path):
         """Return True if path starts with a path separator."""
@@ -1035,10 +1025,10 @@ class FakeFilesystem:
         path = self.absnormpath(self._original_path(path))
         if path in self.mount_points:
             return self.mount_points[path]
-        mount_path = self._matching_string(path, '')
+        mount_path = matching_string(path, '')
         drive = self.splitdrive(path)[:1]
         for root_path in self.mount_points:
-            root_path = self._matching_string(path, root_path)
+            root_path = matching_string(path, root_path)
             if drive and not root_path.startswith(drive):
                 continue
             if path.startswith(root_path) and len(root_path) > len(mount_path):
@@ -1377,8 +1367,8 @@ class FakeFilesystem:
         is_absolute_path = path.startswith(sep)
         path_components = path.split(sep)
         collapsed_path_components = []
-        dot = self._matching_string(path, '.')
-        dotdot = self._matching_string(path, '..')
+        dot = matching_string(path, '.')
+        dotdot = matching_string(path, '..')
         for component in path_components:
             if (not component) or (component == dot):
                 continue
@@ -1453,18 +1443,18 @@ class FakeFilesystem:
             or the root directory if path is empty.
         """
         path = self.normcase(path)
-        cwd = self._matching_string(path, self.cwd)
+        cwd = matching_string(path, self.cwd)
         if not path:
             path = self.path_separator
-        if path == self._matching_string(path, '.'):
+        if path == matching_string(path, '.'):
             path = cwd
         elif not self._starts_with_root_path(path):
             # Prefix relative paths with cwd, if cwd is not root.
-            root_name = self._matching_string(path, self.root.name)
-            empty = self._matching_string(path, '')
+            root_name = matching_string(path, self.root.name)
+            empty = matching_string(path, '')
             path = self._path_separator(path).join(
                 (cwd != root_name and cwd or empty, path))
-        if path == self._matching_string(path, '.'):
+        if path == matching_string(path, '.'):
             path = cwd
         return self.normpath(path)
 
@@ -1489,7 +1479,7 @@ class FakeFilesystem:
 
         starts_with_drive = self._starts_with_drive_letter(path)
         basename = path_components.pop()
-        colon = self._matching_string(path, ':')
+        colon = matching_string(path, ':')
         if not path_components:
             if starts_with_drive:
                 components = basename.split(colon)
@@ -1545,7 +1535,7 @@ class FakeFilesystem:
                     if sep_index2 == -1:
                         sep_index2 = len(path)
                     return path[:sep_index2], path[sep_index2:]
-                if path[1:2] == self._matching_string(path, ':'):
+                if path[1:2] == matching_string(path, ':'):
                     return path[:2], path[2:]
         return path[:0], path
 
@@ -1579,7 +1569,7 @@ class FakeFilesystem:
                 result_path = result_path + sep
             result_path = result_path + path_part
         # add separator between UNC and non-absolute path
-        colon = self._matching_string(base_path, ':')
+        colon = matching_string(base_path, ':')
         if (result_path and result_path[:1] not in seps and
                 result_drive and result_drive[-1:] != colon):
             return result_drive + sep + result_path
@@ -1613,7 +1603,7 @@ class FakeFilesystem:
                     joined_path_segments.append(sep)
                 if path_segment:
                     joined_path_segments.append(path_segment)
-        return self._matching_string(paths[0], '').join(joined_path_segments)
+        return matching_string(paths[0], '').join(joined_path_segments)
 
     def _path_components(self, path):
         """Breaks the path into a list of component names.
@@ -1664,12 +1654,12 @@ class FakeFilesystem:
             `True` if drive letter support is enabled in the filesystem and
             the path starts with a drive letter.
         """
-        colon = self._matching_string(file_path, ':')
+        colon = matching_string(file_path, ':')
         return (self.is_windows_fs and len(file_path) >= 2 and
                 file_path[:1].isalpha and (file_path[1:2]) == colon)
 
     def _starts_with_root_path(self, file_path):
-        root_name = self._matching_string(file_path, self.root.name)
+        root_name = matching_string(file_path, self.root.name)
         file_path = self._normalize_path_sep(file_path)
         return (file_path.startswith(root_name) or
                 not self.is_case_sensitive and file_path.lower().startswith(
@@ -1677,7 +1667,7 @@ class FakeFilesystem:
                 self._starts_with_drive_letter(file_path))
 
     def _is_root_path(self, file_path):
-        root_name = self._matching_string(file_path, self.root.name)
+        root_name = matching_string(file_path, self.root.name)
         return (file_path == root_name or not self.is_case_sensitive and
                 file_path.lower() == root_name.lower() or
                 2 <= len(file_path) <= 3 and
@@ -1860,7 +1850,7 @@ class FakeFilesystem:
     def _valid_relative_path(self, file_path):
         if self.is_windows_fs:
             return True
-        slash_dotdot = self._matching_string(
+        slash_dotdot = matching_string(
             file_path, self.path_separator + '..')
         while file_path and slash_dotdot in file_path:
             file_path = file_path[:file_path.rfind(slash_dotdot)]
@@ -2026,7 +2016,7 @@ class FakeFilesystem:
 
         # remove trailing separator
         path = self._path_without_trailing_separators(path)
-        if path == self._matching_string(path, '.'):
+        if path == matching_string(path, '.'):
             path = self.cwd
         path = self._original_path(path)
 
@@ -2260,8 +2250,8 @@ class FakeFilesystem:
 
     def make_string_path(self, path):
         path = make_string_path(path)
-        os_sep = self._matching_string(path, os.sep)
-        fake_sep = self._matching_string(path, self.path_separator)
+        os_sep = matching_string(path, os.sep)
+        fake_sep = matching_string(path, self.path_separator)
         return path.replace(os_sep, fake_sep)
 
     def create_dir(self, directory_path, perm_bits=PERM_DEF):
@@ -2756,8 +2746,7 @@ class FakeFilesystem:
         parent_dir, _ = self.splitpath(dir_name)
         if parent_dir:
             base_dir = self.normpath(parent_dir)
-            ellipsis = self._matching_string(
-                parent_dir, self.path_separator + '..')
+            ellipsis = matching_string(parent_dir, self.path_separator + '..')
             if parent_dir.endswith(ellipsis) and not self.is_windows_fs:
                 base_dir, dummy_dotdot, _ = parent_dir.partition(ellipsis)
             if not self.exists(base_dir):
@@ -3333,8 +3322,8 @@ class FakePathModule:
         encountered in the second path.
         Taken from Python source and adapted.
         """
-        curdir = self.filesystem._matching_string(path, '.')
-        pardir = self.filesystem._matching_string(path, '..')
+        curdir = matching_string(path, '.')
+        pardir = matching_string(path, '..')
 
         sep = self.filesystem._path_separator(path)
         if self.isabs(rest):
@@ -3385,8 +3374,10 @@ class FakePathModule:
         """Return the argument with an initial component of ~ or ~user
         replaced by that user's home directory.
         """
-        return self._os_path.expanduser(path).replace(
-            self._os_path.sep, self.sep)
+        path = self._os_path.expanduser(path)
+        return path.replace(
+            matching_string(path, self._os_path.sep),
+            matching_string(path, self.sep))
 
     def ismount(self, path):
         """Return true if the given path is a mount point.
