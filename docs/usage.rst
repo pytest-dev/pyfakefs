@@ -359,14 +359,14 @@ want to set this to ``False``.
 
 use_known_patches
 ~~~~~~~~~~~~~~~~~
-If this is set to ``True`` (the default), ``pyfakefs`` patches some
-libraries that are known to not work out of the box, to be able to work with
-the fake filesystem. Currently, this includes patches for some ``pandas``
-read methods like ``read_csv`` and ``read_excel`` - more may follow. This
-flag is there to allow to disable this functionality in case it causes any
-problems. It may be removed or replaced by a more fine-grained argument in
-future releases.
-
+Some libraries are known to require patching in order to work with pyfakefs.
+If ``use_known_patches`` is set to ``True`` (the default), pyfakefs patches
+these libraries so that they will work with the fake filesystem. Currently, this
+includes patches for ``pandas`` read methods like ``read_csv`` and
+``read_excel``--more may follow. Ordinarily, the default value of
+``use_known_patches`` should be used, but it is present to allow users to
+disable this patching in case it causes any problems. It may be removed or
+replaced by more fine-grained arguments in future releases.
 
 Using convenience methods
 -------------------------
@@ -604,9 +604,9 @@ reasons:
   are more examples for patches that may be useful, we may add them in the
   documentation.
 - It uses C libraries to access the file system. There is no way no make
-  such a module work with ``pyfakefs`` - if you want to use it, you have to
-  patch the whole module. In some cases, a library implemented in Python with
-  a similar interface already exists. An example is ``lxml``,
+  such a module work with ``pyfakefs``--if you want to use it, you
+  have to patch the whole module. In some cases, a library implemented in
+  Python with a similar interface already exists. An example is ``lxml``,
   which can be substituted with ``ElementTree`` in most cases for testing.
 
 A list of Python modules that are known to not work correctly with
@@ -618,10 +618,11 @@ A list of Python modules that are known to not work correctly with
 - the ``Pillow`` image library does not work with pyfakefs at least if writing
   JPEG files (see `this issue <https://github.com/jmcgeheeiv/pyfakefs/issues/529>`__)
 - ``pandas`` (the Python data analysis library) uses its own internal file
-  system access, written in C, and does therefore not work with pyfakefs out
-   of the box. ``pyfakefs`` adds some patches so that many of the
-   ``read_xxx`` functions will work with the fake system (including
-   ``read_csv`` and ``read_excel``).
+  system access written in C. Thus much of ``pandas`` will not work with
+  ``pyfakefs``. Having said that, ``pyfakefs`` patches ``pandas`` so that many
+  of the ``read_xxx`` functions, including ``read_csv`` and ``read_excel``,
+  as well as some writer functions, do work with the fake file system. If
+  you use only these functions, ``pyfakefs`` will work with ``pandas``.
 
 If you are not sure if a module can be handled, or how to do it, you can
 always write a new issue, of course!

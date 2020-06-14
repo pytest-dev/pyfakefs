@@ -47,7 +47,7 @@ class TestPatchedPackages(fake_filesystem_unittest.TestCase):
             assert (df.columns == ['1', '2', '3', '4']).all()
 
     if pd is not None and xlrd is not None:
-        def test_load_excel(self):
+        def test_read_excel(self):
             path = '/foo/bar.xlsx'
             src_path = os.path.dirname(os.path.abspath(__file__))
             src_path = os.path.join(src_path, 'fixtures', 'excel_test.xlsx')
@@ -56,3 +56,12 @@ class TestPatchedPackages(fake_filesystem_unittest.TestCase):
             self.fs.add_real_file(src_path, target_path=path)
             df = pd.read_excel(path)
             assert (df.columns == [1, 2, 3, 4]).all()
+
+        def test_write_excel(self):
+            self.fs.create_dir('/foo')
+            path = '/foo/bar.xlsx'
+            df = pd.DataFrame([[0, 1, 2, 3]])
+            with pd.ExcelWriter(path) as writer:
+                df.to_excel(writer)
+            df = pd.read_excel(path)
+            assert (df.columns == ['Unnamed: 0', 0, 1, 2, 3]).all()

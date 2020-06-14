@@ -534,8 +534,6 @@ class Patcher:
                 # where py.error has no __name__ attribute
                 # see https://github.com/pytest-dev/py/issues/73
                 continue
-            if name == 'pandas.io.parsers':
-                print(name)
             module_items = module.__dict__.copy().items()
 
             # suppress specific pytest warning - see #466
@@ -607,8 +605,6 @@ class Patcher:
             self._patching = True
 
             for name, modules in self._modules.items():
-                if name == 'TextFileReader':
-                    print(name, modules)
                 for module, attr in modules:
                     self._stubs.smart_set(
                         module, name, self.fake_modules[attr])
