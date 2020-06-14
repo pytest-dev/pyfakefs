@@ -282,7 +282,8 @@ a module name. The argument is a dictionary of fake modules mapped to the
 names to be faked.</p>
 <p>This mechanism is used in pyfakefs itself to patch the external modules
 <cite>pathlib2</cite> and <cite>scandir</cite> if present, and the following example shows how to
-fake a module in Django that uses OS file system functions:</p>
+fake a module in Django that uses OS file system functions (note that this
+has now been been integrated into pyfakefs):</p>
 <div class="code python highlight-default notranslate"><div class="highlight"><pre><span></span><span class="k">class</span> <span class="nc">FakeLocks</span><span class="p">:</span>
     <span class="sd">&quot;&quot;&quot;django.core.files.locks uses low level OS functions, fake it.&quot;&quot;&quot;</span>
     <span class="n">_locks_module</span> <span class="o">=</span> <span class="n">django</span><span class="o">.</span><span class="n">core</span><span class="o">.</span><span class="n">files</span><span class="o">.</span><span class="n">locks</span>
@@ -359,6 +360,17 @@ plugins, as shown in the example mentioned above).</p>
 if the real user is a root user (e.g. has the user ID 0). If you want to run
 your tests as a non-root user regardless of the actual user rights, you may
 want to set this to <code class="docutils literal notranslate"><span class="pre">False</span></code>.</p>
+</div>
+<div class="section" id="use-known-patches">
+<h3>use_known_patches<a class="headerlink" href="#use-known-patches" title="Permalink to this headline">¶</a></h3>
+<p>Some libraries are known to require patching in order to work with pyfakefs.
+If <code class="docutils literal notranslate"><span class="pre">use_known_patches</span></code> is set to <code class="docutils literal notranslate"><span class="pre">True</span></code> (the default), pyfakefs patches
+these libraries so that they will work with the fake filesystem. Currently, this
+includes patches for <code class="docutils literal notranslate"><span class="pre">pandas</span></code> read methods like <code class="docutils literal notranslate"><span class="pre">read_csv</span></code> and
+<code class="docutils literal notranslate"><span class="pre">read_excel</span></code>–more may follow. Ordinarily, the default value of
+<code class="docutils literal notranslate"><span class="pre">use_known_patches</span></code> should be used, but it is present to allow users to
+disable this patching in case it causes any problems. It may be removed or
+replaced by more fine-grained arguments in future releases.</p>
 </div>
 </div>
 <div class="section" id="using-convenience-methods">
@@ -575,9 +587,9 @@ parameter (see the example for file locks in Django above), and if there
 are more examples for patches that may be useful, we may add them in the
 documentation.</li>
 <li>It uses C libraries to access the file system. There is no way no make
-such a module work with <code class="docutils literal notranslate"><span class="pre">pyfakefs</span></code> - if you want to use it, you have to
-patch the whole module. In some cases, a library implemented in Python with
-a similar interface already exists. An example is <code class="docutils literal notranslate"><span class="pre">lxml</span></code>,
+such a module work with <code class="docutils literal notranslate"><span class="pre">pyfakefs</span></code>–if you want to use it, you
+have to patch the whole module. In some cases, a library implemented in
+Python with a similar interface already exists. An example is <code class="docutils literal notranslate"><span class="pre">lxml</span></code>,
 which can be substituted with <code class="docutils literal notranslate"><span class="pre">ElementTree</span></code> in most cases for testing.</li>
 </ul>
 <p>A list of Python modules that are known to not work correctly with
@@ -589,8 +601,11 @@ sufficient demand.</li>
 <li>the <code class="docutils literal notranslate"><span class="pre">Pillow</span></code> image library does not work with pyfakefs at least if writing
 JPEG files (see <a class="reference external" href="https://github.com/jmcgeheeiv/pyfakefs/issues/529">this issue</a>)</li>
 <li><code class="docutils literal notranslate"><span class="pre">pandas</span></code> (the Python data analysis library) uses its own internal file
-system access, written in C, and does therefore not work with pyfakefs
-(see <a class="reference external" href="https://github.com/jmcgeheeiv/pyfakefs/issues/528">this issue</a>)</li>
+system access written in C. Thus much of <code class="docutils literal notranslate"><span class="pre">pandas</span></code> will not work with
+<code class="docutils literal notranslate"><span class="pre">pyfakefs</span></code>. Having said that, <code class="docutils literal notranslate"><span class="pre">pyfakefs</span></code> patches <code class="docutils literal notranslate"><span class="pre">pandas</span></code> so that many
+of the <code class="docutils literal notranslate"><span class="pre">read_xxx</span></code> functions, including <code class="docutils literal notranslate"><span class="pre">read_csv</span></code> and <code class="docutils literal notranslate"><span class="pre">read_excel</span></code>,
+as well as some writer functions, do work with the fake file system. If
+you use only these functions, <code class="docutils literal notranslate"><span class="pre">pyfakefs</span></code> will work with <code class="docutils literal notranslate"><span class="pre">pandas</span></code>.</li>
 </ul>
 <p>If you are not sure if a module can be handled, or how to do it, you can
 always write a new issue, of course!</p>
@@ -645,6 +660,7 @@ described above.</p>
 <li><a class="reference internal" href="#modules-to-patch">modules_to_patch</a></li>
 <li><a class="reference internal" href="#additional-skip-names">additional_skip_names</a></li>
 <li><a class="reference internal" href="#allow-root-user">allow_root_user</a></li>
+<li><a class="reference internal" href="#use-known-patches">use_known_patches</a></li>
 </ul>
 </li>
 <li><a class="reference internal" href="#using-convenience-methods">Using convenience methods</a><ul>
@@ -716,7 +732,7 @@ described above.</p>
         &#169; Copyright 2009 Google Inc. All Rights Reserved.
 © Copyright 2014 Altera Corporation. All Rights Reserved.
 © Copyright 2014-2019 John McGehee.
-      Last updated on May 26, 2020.
+      Last updated on Jun 14, 2020.
     </div>
   </body>
 </html>
