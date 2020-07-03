@@ -48,7 +48,7 @@ You can contribute to:
   * the source code documentation using [Google documentation style](https://google.github.io/styleguide/pyguide.html) 
   * the [README](https://github.com/jmcgeheeiv/pyfakefs/blob/master/README.md) using [markdown syntax](https://help.github.com/articles/basic-writing-and-formatting-syntax/)
   * the documentation published on [GitHub Pages](http://jmcgeheeiv.github.io/pyfakefs/),
-   located in the `docs` directory. 
+   located in the `docs` directory (call `make html` from that directory). 
   For building the documentation, you will need [sphinx](http://sphinx.pocoo.org/).
   * [this file](https://github.com/jmcgeheeiv/pyfakefs/blob/master/CONTRIBUTING.md) 
   if you want to enhance the contributing guide itself
