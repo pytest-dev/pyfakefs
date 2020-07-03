@@ -50,7 +50,8 @@ The PyTest plugin provides the ``fs`` fixture for use in your test. For example:
 Patch using fake_filesystem_unittest.Patcher
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 If you are using other means of testing like `nose <http://nose2.readthedocs.io>`__, you can do the
-patching using ``fake_filesystem_unittest.Patcher`` - the class doing the actual work
+patching using ``fake_filesystem_unittest.Patcher``--the class doing the
+actual work
 of replacing the filesystem modules with the fake modules in the first two approaches.
 
 The easiest way is to just use ``Patcher`` as a context manager:
@@ -363,10 +364,10 @@ Some libraries are known to require patching in order to work with pyfakefs.
 If ``use_known_patches`` is set to ``True`` (the default), pyfakefs patches
 these libraries so that they will work with the fake filesystem. Currently, this
 includes patches for ``pandas`` read methods like ``read_csv`` and
-``read_excel``--more may follow. Ordinarily, the default value of
-``use_known_patches`` should be used, but it is present to allow users to
-disable this patching in case it causes any problems. It may be removed or
-replaced by more fine-grained arguments in future releases.
+``read_excel``, and for ``Django`` file locks--more may follow. Ordinarily,
+the default value of ``use_known_patches`` should be used, but it is present
+to allow users to disable this patching in case it causes any problems. It
+may be removed or replaced by more fine-grained arguments in future releases.
 
 Using convenience methods
 -------------------------
@@ -374,7 +375,8 @@ While ``pyfakefs`` can be used just with the standard Python file system
 functions, there are few convenience methods in ``fake_filesystem`` that can
 help you setting up your tests. The methods can be accessed via the
 ``fake_filesystem`` instance in your tests: ``Patcher.fs``, the ``fs``
-fixture in PyTest, or ``TestCase.fs``.
+fixture in PyTest, ``TestCase.fs`` for ``unittest``, and the ``fs`` argument
+for the ``patchfs`` decorator.
 
 File creation helpers
 ~~~~~~~~~~~~~~~~~~~~~
@@ -384,7 +386,7 @@ in the path, you may use ``create_file()``, ``create_dir()`` and
 
 ``create_file()`` also allows you to set the file mode and the file contents
 together with the encoding if needed. Alternatively, you can define a file
-size without contents - in this case, you will not be able to perform
+size without contents--in this case, you will not be able to perform
 standard I\O operations on the file (may be used to "fill up" the file system
 with large files).
 
@@ -502,8 +504,9 @@ testing cleanup scripts), you can set the fake file system size using
 root partition; if you add a path as parameter, the size will be related to
 the mount point (see above) the path is related to.
 
-By default, the size of the fake file system is considered infinite. As soon
-as you set a size, all files will occupy the space according to their size,
+By default, the size of the fake file system is set to 1 TB (which
+for most tests can be considered as infinite). As soon as you set a
+size, all files will occupy the space according to their size,
 and you may fail to create new files if the fake file system is full.
 
 .. code:: python
@@ -600,9 +603,10 @@ reasons:
   libraries. These will not work out of the box, and we generally will not
   support them in ``pyfakefs``. If these functions are used in isolated
   functions or classes, they may be patched by using the ``modules_to_patch``
-  parameter (see the example for file locks in Django above), and if there
-  are more examples for patches that may be useful, we may add them in the
-  documentation.
+  parameter (see the example for file locks in Django above). We may add
+  some of these patches to ``pyfakefs``, so that they are applied
+  automatically (currently done for some ``pandas`` and ``Django``
+  functionality).
 - It uses C libraries to access the file system. There is no way no make
   such a module work with ``pyfakefs``--if you want to use it, you
   have to patch the whole module. In some cases, a library implemented in
@@ -615,6 +619,11 @@ A list of Python modules that are known to not work correctly with
 - ``multiprocessing`` has several issues (related to points 1 and 3 above).
   Currently there are no plans to fix this, but this may change in case of
   sufficient demand.
+- ``subprocess`` has very similar problems and cannot be used with
+  ``pyfakefs`` to start a process. ``subprocess`` can either be mocked, if
+  the process is not needed for the test, or patching can be paused to start
+  a process if needed, and resumed afterwards
+  (see  `this issue <https://github.com/jmcgeheeiv/pyfakefs/issues/447>`__).
 - the ``Pillow`` image library does not work with pyfakefs at least if writing
   JPEG files (see `this issue <https://github.com/jmcgeheeiv/pyfakefs/issues/529>`__)
 - ``pandas`` (the Python data analysis library) uses its own internal file
@@ -626,6 +635,16 @@ A list of Python modules that are known to not work correctly with
 
 If you are not sure if a module can be handled, or how to do it, you can
 always write a new issue, of course!
+
+Pyfakefs behaves differently than the real filesystem
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+There are basically two kinds of deviations from the actual behavior:
+
+- unwanted deviations that we didn't notice--if you find any of these, please
+  write an issue and will try to fix it
+- behavior that depends on different OS versions and editions--as mentioned
+  in :ref:`limitations`, pyfakefs uses the TravisCI systems as reference
+  system and will not replicate all system-specific behavior
 
 OS temporary directories
 ~~~~~~~~~~~~~~~~~~~~~~~~
@@ -642,13 +661,13 @@ directory named ``/tmp`` when running on Linux or Unix systems,
 User rights
 ~~~~~~~~~~~
 
-If you run pyfakefs tests as root (this happens by default if run in a
-docker container), pyfakefs also behaves as a root user, for example can
+If you run ``pyfakefs`` tests as root (this happens by default if run in a
+docker container), ``pyfakefs`` also behaves as a root user, for example can
 write to write-protected files. This may not be the expected behavior, and
 can be changed.
-Pyfakefs has a rudimentary concept of user rights, which differentiates
+``Pyfakefs`` has a rudimentary concept of user rights, which differentiates
 between root user (with the user id 0) and any other user. By default,
-pyfakefs assumes the user id of the current user, but you can change
+``pyfakefs`` assumes the user id of the current user, but you can change
 that using ``fake_filesystem.set_uid()`` in your setup. This allows to run
 tests as non-root user in a root user environment and vice verse.
 Another possibility is the convenience argument ``allow_root_user``

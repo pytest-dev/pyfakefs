@@ -47,18 +47,22 @@ Features
 - pyfakefs keeps track of the filesystem size if configured. The file system
   size can be configured arbitrarily.
 
+- it is possible to pause and resume using the fake filesystem, if the
+  real file system has to be used in a test step
+
 - pyfakefs defaults to the OS it is running on, but can also be configured
   to test code running under another OS (Linux, MacOS or Windows).
 
 - pyfakefs can be configured to behave as if running as a root or as a
   non-root user, independently from the actual user.
 
+.. _limitations:
 
 Limitations
 -----------
 - pyfakefs will not work with Python libraries (other than `os` and `io`) that
   use C libraries to access the file system, because it cannot patch the
-  underlying C libraries' file access functions.
+  underlying C libraries' file access functions
 
 - pyfakefs patches most kinds of importing file system modules automatically,
   but there are still some cases where this will not work.
@@ -70,7 +74,7 @@ Limitations
   between binary and textual file objects).
 
 - pyfakefs is only tested with CPython and the newest PyPy versions, other
-  Python implementations will probably not work.
+  Python implementations will probably not work
 
 - Differences in the behavior in different Linux distributions or different
   MacOS or Windows versions may not be reflected in the implementation, as
@@ -78,7 +82,8 @@ Limitations
   for automatic tests in
   `Travis.CI <https://travis-ci.org/jmcgeheeiv/pyfakefs>`__ and
   `AppVeyor <https://ci.appveyor.com/project/jmcgeheeiv/pyfakefs>`__ are
-  considered as reference systems.
+  considered as reference systems, additionally the tests are run in Docker
+  containers with the latest CentOS, Debian, Fedora and Ubuntu images.
 
 History
 -------

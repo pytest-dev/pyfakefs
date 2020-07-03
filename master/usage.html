@@ -87,7 +87,8 @@ similar manner as described above.</p>
 <div class="section" id="patch-using-fake-filesystem-unittest-patcher">
 <h3>Patch using fake_filesystem_unittest.Patcher<a class="headerlink" href="#patch-using-fake-filesystem-unittest-patcher" title="Permalink to this headline">¶</a></h3>
 <p>If you are using other means of testing like <a class="reference external" href="http://nose2.readthedocs.io">nose</a>, you can do the
-patching using <code class="docutils literal notranslate"><span class="pre">fake_filesystem_unittest.Patcher</span></code> - the class doing the actual work
+patching using <code class="docutils literal notranslate"><span class="pre">fake_filesystem_unittest.Patcher</span></code>–the class doing the
+actual work
 of replacing the filesystem modules with the fake modules in the first two approaches.</p>
 <p>The easiest way is to just use <code class="docutils literal notranslate"><span class="pre">Patcher</span></code> as a context manager:</p>
 <div class="code python highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">pyfakefs.fake_filesystem_unittest</span> <span class="k">import</span> <span class="n">Patcher</span>
@@ -367,10 +368,10 @@ want to set this to <code class="docutils literal notranslate"><span class="pre"
 If <code class="docutils literal notranslate"><span class="pre">use_known_patches</span></code> is set to <code class="docutils literal notranslate"><span class="pre">True</span></code> (the default), pyfakefs patches
 these libraries so that they will work with the fake filesystem. Currently, this
 includes patches for <code class="docutils literal notranslate"><span class="pre">pandas</span></code> read methods like <code class="docutils literal notranslate"><span class="pre">read_csv</span></code> and
-<code class="docutils literal notranslate"><span class="pre">read_excel</span></code>–more may follow. Ordinarily, the default value of
-<code class="docutils literal notranslate"><span class="pre">use_known_patches</span></code> should be used, but it is present to allow users to
-disable this patching in case it causes any problems. It may be removed or
-replaced by more fine-grained arguments in future releases.</p>
+<code class="docutils literal notranslate"><span class="pre">read_excel</span></code>, and for <code class="docutils literal notranslate"><span class="pre">Django</span></code> file locks–more may follow. Ordinarily,
+the default value of <code class="docutils literal notranslate"><span class="pre">use_known_patches</span></code> should be used, but it is present
+to allow users to disable this patching in case it causes any problems. It
+may be removed or replaced by more fine-grained arguments in future releases.</p>
 </div>
 </div>
 <div class="section" id="using-convenience-methods">
@@ -379,7 +380,8 @@ replaced by more fine-grained arguments in future releases.</p>
 functions, there are few convenience methods in <code class="docutils literal notranslate"><span class="pre">fake_filesystem</span></code> that can
 help you setting up your tests. The methods can be accessed via the
 <code class="docutils literal notranslate"><span class="pre">fake_filesystem</span></code> instance in your tests: <code class="docutils literal notranslate"><span class="pre">Patcher.fs</span></code>, the <code class="docutils literal notranslate"><span class="pre">fs</span></code>
-fixture in PyTest, or <code class="docutils literal notranslate"><span class="pre">TestCase.fs</span></code>.</p>
+fixture in PyTest, <code class="docutils literal notranslate"><span class="pre">TestCase.fs</span></code> for <code class="docutils literal notranslate"><span class="pre">unittest</span></code>, and the <code class="docutils literal notranslate"><span class="pre">fs</span></code> argument
+for the <code class="docutils literal notranslate"><span class="pre">patchfs</span></code> decorator.</p>
 <div class="section" id="file-creation-helpers">
 <h3>File creation helpers<a class="headerlink" href="#file-creation-helpers" title="Permalink to this headline">¶</a></h3>
 <p>To create files, directories or symlinks together with all the directories
@@ -387,7 +389,7 @@ in the path, you may use <code class="docutils literal notranslate"><span class=
 <code class="docutils literal notranslate"><span class="pre">create_symlink()</span></code>, respectively.</p>
 <p><code class="docutils literal notranslate"><span class="pre">create_file()</span></code> also allows you to set the file mode and the file contents
 together with the encoding if needed. Alternatively, you can define a file
-size without contents - in this case, you will not be able to perform
+size without contents–in this case, you will not be able to perform
 standard IO operations on the file (may be used to “fill up” the file system
 with large files).</p>
 <div class="code python highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">pyfakefs.fake_filesystem_unittest</span> <span class="k">import</span> <span class="n">TestCase</span>
@@ -493,8 +495,9 @@ testing cleanup scripts), you can set the fake file system size using
 <code class="docutils literal notranslate"><span class="pre">set_disk_usage()</span></code>. By default, this sets the total size in bytes of the
 root partition; if you add a path as parameter, the size will be related to
 the mount point (see above) the path is related to.</p>
-<p>By default, the size of the fake file system is considered infinite. As soon
-as you set a size, all files will occupy the space according to their size,
+<p>By default, the size of the fake file system is set to 1 TB (which
+for most tests can be considered as infinite). As soon as you set a
+size, all files will occupy the space according to their size,
 and you may fail to create new files if the fake file system is full.</p>
 <div class="code python highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">pyfakefs.fake_filesystem_unittest</span> <span class="k">import</span> <span class="n">TestCase</span>
 
@@ -583,9 +586,10 @@ documented above under <code class="docutils literal notranslate"><span class="p
 libraries. These will not work out of the box, and we generally will not
 support them in <code class="docutils literal notranslate"><span class="pre">pyfakefs</span></code>. If these functions are used in isolated
 functions or classes, they may be patched by using the <code class="docutils literal notranslate"><span class="pre">modules_to_patch</span></code>
-parameter (see the example for file locks in Django above), and if there
-are more examples for patches that may be useful, we may add them in the
-documentation.</li>
+parameter (see the example for file locks in Django above). We may add
+some of these patches to <code class="docutils literal notranslate"><span class="pre">pyfakefs</span></code>, so that they are applied
+automatically (currently done for some <code class="docutils literal notranslate"><span class="pre">pandas</span></code> and <code class="docutils literal notranslate"><span class="pre">Django</span></code>
+functionality).</li>
 <li>It uses C libraries to access the file system. There is no way no make
 such a module work with <code class="docutils literal notranslate"><span class="pre">pyfakefs</span></code>–if you want to use it, you
 have to patch the whole module. In some cases, a library implemented in
@@ -598,6 +602,11 @@ which can be substituted with <code class="docutils literal notranslate"><span c
 <li><code class="docutils literal notranslate"><span class="pre">multiprocessing</span></code> has several issues (related to points 1 and 3 above).
 Currently there are no plans to fix this, but this may change in case of
 sufficient demand.</li>
+<li><code class="docutils literal notranslate"><span class="pre">subprocess</span></code> has very similar problems and cannot be used with
+<code class="docutils literal notranslate"><span class="pre">pyfakefs</span></code> to start a process. <code class="docutils literal notranslate"><span class="pre">subprocess</span></code> can either be mocked, if
+the process is not needed for the test, or patching can be paused to start
+a process if needed, and resumed afterwards
+(see  <a class="reference external" href="https://github.com/jmcgeheeiv/pyfakefs/issues/447">this issue</a>).</li>
 <li>the <code class="docutils literal notranslate"><span class="pre">Pillow</span></code> image library does not work with pyfakefs at least if writing
 JPEG files (see <a class="reference external" href="https://github.com/jmcgeheeiv/pyfakefs/issues/529">this issue</a>)</li>
 <li><code class="docutils literal notranslate"><span class="pre">pandas</span></code> (the Python data analysis library) uses its own internal file
@@ -609,6 +618,17 @@ you use only these functions, <code class="docutils literal notranslate"><span c
 </ul>
 <p>If you are not sure if a module can be handled, or how to do it, you can
 always write a new issue, of course!</p>
+</div>
+<div class="section" id="pyfakefs-behaves-differently-than-the-real-filesystem">
+<h3>Pyfakefs behaves differently than the real filesystem<a class="headerlink" href="#pyfakefs-behaves-differently-than-the-real-filesystem" title="Permalink to this headline">¶</a></h3>
+<p>There are basically two kinds of deviations from the actual behavior:</p>
+<ul class="simple">
+<li>unwanted deviations that we didn’t notice–if you find any of these, please
+write an issue and will try to fix it</li>
+<li>behavior that depends on different OS versions and editions–as mentioned
+in <a class="reference internal" href="intro.html#limitations"><span class="std std-ref">Limitations</span></a>, pyfakefs uses the TravisCI systems as reference
+system and will not replicate all system-specific behavior</li>
+</ul>
 </div>
 <div class="section" id="os-temporary-directories">
 <h3>OS temporary directories<a class="headerlink" href="#os-temporary-directories" title="Permalink to this headline">¶</a></h3>
@@ -623,13 +643,13 @@ directory named <code class="docutils literal notranslate"><span class="pre">/tm
 </div>
 <div class="section" id="user-rights">
 <h3>User rights<a class="headerlink" href="#user-rights" title="Permalink to this headline">¶</a></h3>
-<p>If you run pyfakefs tests as root (this happens by default if run in a
-docker container), pyfakefs also behaves as a root user, for example can
+<p>If you run <code class="docutils literal notranslate"><span class="pre">pyfakefs</span></code> tests as root (this happens by default if run in a
+docker container), <code class="docutils literal notranslate"><span class="pre">pyfakefs</span></code> also behaves as a root user, for example can
 write to write-protected files. This may not be the expected behavior, and
 can be changed.
-Pyfakefs has a rudimentary concept of user rights, which differentiates
+<code class="docutils literal notranslate"><span class="pre">Pyfakefs</span></code> has a rudimentary concept of user rights, which differentiates
 between root user (with the user id 0) and any other user. By default,
-pyfakefs assumes the user id of the current user, but you can change
+<code class="docutils literal notranslate"><span class="pre">pyfakefs</span></code> assumes the user id of the current user, but you can change
 that using <code class="docutils literal notranslate"><span class="pre">fake_filesystem.set_uid()</span></code> in your setup. This allows to run
 tests as non-root user in a root user environment and vice verse.
 Another possibility is the convenience argument <code class="docutils literal notranslate"><span class="pre">allow_root_user</span></code>
@@ -673,6 +693,7 @@ described above.</p>
 </li>
 <li><a class="reference internal" href="#troubleshooting">Troubleshooting</a><ul>
 <li><a class="reference internal" href="#modules-not-working-with-pyfakefs">Modules not working with pyfakefs</a></li>
+<li><a class="reference internal" href="#pyfakefs-behaves-differently-than-the-real-filesystem">Pyfakefs behaves differently than the real filesystem</a></li>
 <li><a class="reference internal" href="#os-temporary-directories">OS temporary directories</a></li>
 <li><a class="reference internal" href="#user-rights">User rights</a></li>
 </ul>
@@ -732,7 +753,7 @@ described above.</p>
         &#169; Copyright 2009 Google Inc. All Rights Reserved.
 © Copyright 2014 Altera Corporation. All Rights Reserved.
 © Copyright 2014-2019 John McGehee.
-      Last updated on Jun 14, 2020.
+      Last updated on Jul 03, 2020.
     </div>
   </body>
 </html>
