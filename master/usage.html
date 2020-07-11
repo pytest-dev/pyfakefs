@@ -71,12 +71,13 @@ with the fake file system functions and modules:</p>
 demonstrated in the files <code class="docutils literal notranslate"><span class="pre">example.py</span></code> and <code class="docutils literal notranslate"><span class="pre">example_test.py</span></code>.</p>
 </div>
 <div class="section" id="patch-using-the-pytest-plugin">
-<h3>Patch using the PyTest plugin<a class="headerlink" href="#patch-using-the-pytest-plugin" title="Permalink to this headline">¶</a></h3>
-<p>If you use <a class="reference external" href="https://doc.pytest.org">PyTest</a>, you will be interested in
-the PyTest plugin in <code class="docutils literal notranslate"><span class="pre">pyfakefs</span></code>.
+<h3>Patch using the pytest plugin<a class="headerlink" href="#patch-using-the-pytest-plugin" title="Permalink to this headline">¶</a></h3>
+<p>If you use <a class="reference external" href="https://doc.pytest.org">pytest</a>, you will be interested in
+the pytest plugin in <code class="docutils literal notranslate"><span class="pre">pyfakefs</span></code>.
 This automatically patches all file system functions and modules in a
 similar manner as described above.</p>
-<p>The PyTest plugin provides the <code class="docutils literal notranslate"><span class="pre">fs</span></code> fixture for use in your test. For example:</p>
+<p>The pytest plugin provides the <code class="docutils literal notranslate"><span class="pre">fs</span></code> fixture for use in your test. For
+example:</p>
 <div class="code python highlight-default notranslate"><div class="highlight"><pre><span></span><span class="k">def</span> <span class="nf">my_fakefs_test</span><span class="p">(</span><span class="n">fs</span><span class="p">):</span>
     <span class="c1"># &quot;fs&quot; is the reference to the fake file system</span>
     <span class="n">fs</span><span class="o">.</span><span class="n">create_file</span><span class="p">(</span><span class="s1">&#39;/var/data/xx1.txt&#39;</span><span class="p">)</span>
@@ -115,7 +116,8 @@ of replacing the filesystem modules with the fake modules in the first two appro
 <div class="section" id="patch-using-fake-filesystem-unittest-patchfs-decorator">
 <h3>Patch using fake_filesystem_unittest.patchfs decorator<a class="headerlink" href="#patch-using-fake-filesystem-unittest-patchfs-decorator" title="Permalink to this headline">¶</a></h3>
 <p>This is basically a convenience wrapper for the previous method.
-If you want to use the fake filesystem for a single function, you can write:</p>
+If zou are not using <code class="docutils literal notranslate"><span class="pre">pytest</span></code> and  want to use the fake filesystem for a
+single function, you can write:</p>
 <div class="code python highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">pyfakefs.fake_filesystem_unittest</span> <span class="k">import</span> <span class="n">patchfs</span>
 
 <span class="nd">@patchfs</span>
@@ -124,9 +126,23 @@ If you want to use the fake filesystem for a single function, you can write:</p>
     <span class="n">fs</span><span class="o">.</span><span class="n">create_file</span><span class="p">(</span><span class="s1">&#39;/foo/bar&#39;</span><span class="p">,</span> <span class="n">contents</span><span class="o">=</span><span class="s1">&#39;test&#39;</span><span class="p">)</span>
 </pre></div>
 </div>
-<p>Note the argument name <code class="docutils literal notranslate"><span class="pre">fs</span></code>, which is mandatory.</p>
-<p>Don’t confuse this with pytest tests, where <code class="docutils literal notranslate"><span class="pre">fs</span></code> is the fixture name (with
-the same functionality). If you use pytest, you don’t need this decorator.</p>
+<p>Note the argument name <code class="docutils literal notranslate"><span class="pre">fs</span></code>, which is mandatory. As this is a keyword
+argument, it must go after all positional arguments, such as arguments from
+<code class="docutils literal notranslate"><span class="pre">mock.patch</span></code>, regardless of the decorator order:</p>
+<div class="code python highlight-default notranslate"><div class="highlight"><pre><span></span><span class="nd">@mock</span><span class="o">.</span><span class="n">patch</span><span class="p">(</span><span class="s1">&#39;foo.bar&#39;</span><span class="p">)</span>
+<span class="nd">@patchfs</span>
+<span class="k">def</span> <span class="nf">test_something</span><span class="p">(</span><span class="n">mocked_bar</span><span class="p">,</span> <span class="n">fs</span><span class="p">):</span>
+    <span class="o">...</span>
+
+<span class="nd">@patchfs</span>
+<span class="nd">@mock</span><span class="o">.</span><span class="n">patch</span><span class="p">(</span><span class="s1">&#39;foo.bar&#39;</span><span class="p">)</span>
+<span class="k">def</span> <span class="nf">test_something</span><span class="p">(</span><span class="n">mocked_bar</span><span class="p">,</span> <span class="n">fs</span><span class="p">):</span>
+    <span class="o">...</span>
+</pre></div>
+</div>
+<p>Don’t confuse this with <code class="docutils literal notranslate"><span class="pre">pytest</span></code> tests, where <code class="docutils literal notranslate"><span class="pre">fs</span></code> is the fixture name
+(with the same functionality). If you use <code class="docutils literal notranslate"><span class="pre">pytest</span></code>, you don’t need this
+decorator.</p>
 <p>You can also use this to make a single unit test use the fake fs:</p>
 <div class="code python highlight-default notranslate"><div class="highlight"><pre><span></span><span class="k">class</span> <span class="nc">TestSomething</span><span class="p">(</span><span class="n">unittest</span><span class="o">.</span><span class="n">TestCase</span><span class="p">):</span>
 
@@ -161,7 +177,7 @@ In case of <code class="docutils literal notranslate"><span class="pre">fake_fil
 be set in the TestCase instance initialization, or passed to <code class="docutils literal notranslate"><span class="pre">setUpPyfakefs()</span></code>.</p>
 <div class="admonition note">
 <p class="first admonition-title">Note</p>
-<p>If you need these arguments in <code class="docutils literal notranslate"><span class="pre">PyTest</span></code>, you can pass them using
+<p>If you need these arguments in <code class="docutils literal notranslate"><span class="pre">pytest</span></code>, you can pass them using
 <code class="docutils literal notranslate"><span class="pre">&#64;pytest.mark.parametrize</span></code>. Note that you have to also provide
 <a class="reference external" href="http://jmcgeheeiv.github.io/pyfakefs/master/modules.html#pyfakefs.fake_filesystem_unittest.Patcher">all Patcher arguments</a>
 before the needed ones, as keyword arguments cannot be used, and you have to
@@ -173,7 +189,7 @@ The second approach is shown in
 <a class="reference external" href="https://github.com/jmcgeheeiv/pyfakefs/blob/master/pyfakefs/pytest_tests/pytest_fixture_test.py">pytest_fixture_test.py</a>
 with the example fixture in <a class="reference external" href="https://github.com/jmcgeheeiv/pyfakefs/blob/master/pyfakefs/pytest_tests/conftest.py">conftest.py</a>.
 We advice to use this example fixture code as a template for your customized
-pytest plugins.</p>
+<code class="docutils literal notranslate"><span class="pre">pytest</span></code> plugins.</p>
 </div>
 <div class="section" id="modules-to-reload">
 <h3>modules_to_reload<a class="headerlink" href="#modules-to-reload" title="Permalink to this headline">¶</a></h3>
@@ -352,7 +368,7 @@ can be added to <code class="docutils literal notranslate"><span class="pre">add
 </pre></div>
 </div>
 <p>There is also the global variable <code class="docutils literal notranslate"><span class="pre">Patcher.SKIPNAMES</span></code> that can be extended
-for that purpose, though this seldom shall be needed (except for own pytest
+for that purpose, though this seldom shall be needed (except for own <code class="docutils literal notranslate"><span class="pre">pytest</span></code>
 plugins, as shown in the example mentioned above).</p>
 </div>
 <div class="section" id="allow-root-user">
@@ -380,7 +396,7 @@ may be removed or replaced by more fine-grained arguments in future releases.</p
 functions, there are few convenience methods in <code class="docutils literal notranslate"><span class="pre">fake_filesystem</span></code> that can
 help you setting up your tests. The methods can be accessed via the
 <code class="docutils literal notranslate"><span class="pre">fake_filesystem</span></code> instance in your tests: <code class="docutils literal notranslate"><span class="pre">Patcher.fs</span></code>, the <code class="docutils literal notranslate"><span class="pre">fs</span></code>
-fixture in PyTest, <code class="docutils literal notranslate"><span class="pre">TestCase.fs</span></code> for <code class="docutils literal notranslate"><span class="pre">unittest</span></code>, and the <code class="docutils literal notranslate"><span class="pre">fs</span></code> argument
+fixture in pytest, <code class="docutils literal notranslate"><span class="pre">TestCase.fs</span></code> for <code class="docutils literal notranslate"><span class="pre">unittest</span></code>, and the <code class="docutils literal notranslate"><span class="pre">fs</span></code> argument
 for the <code class="docutils literal notranslate"><span class="pre">patchfs</span></code> decorator.</p>
 <div class="section" id="file-creation-helpers">
 <h3>File creation helpers<a class="headerlink" href="#file-creation-helpers" title="Permalink to this headline">¶</a></h3>
@@ -669,7 +685,7 @@ described above.</p>
 <li><a class="reference internal" href="#">Usage</a><ul>
 <li><a class="reference internal" href="#test-scenarios">Test Scenarios</a><ul>
 <li><a class="reference internal" href="#patch-using-fake-filesystem-unittest">Patch using fake_filesystem_unittest</a></li>
-<li><a class="reference internal" href="#patch-using-the-pytest-plugin">Patch using the PyTest plugin</a></li>
+<li><a class="reference internal" href="#patch-using-the-pytest-plugin">Patch using the pytest plugin</a></li>
 <li><a class="reference internal" href="#patch-using-fake-filesystem-unittest-patcher">Patch using fake_filesystem_unittest.Patcher</a></li>
 <li><a class="reference internal" href="#patch-using-fake-filesystem-unittest-patchfs-decorator">Patch using fake_filesystem_unittest.patchfs decorator</a></li>
 <li><a class="reference internal" href="#patch-using-unittest-mock-deprecated">Patch using unittest.mock (deprecated)</a></li>
@@ -753,7 +769,7 @@ described above.</p>
         &#169; Copyright 2009 Google Inc. All Rights Reserved.
 © Copyright 2014 Altera Corporation. All Rights Reserved.
 © Copyright 2014-2019 John McGehee.
-      Last updated on Jul 03, 2020.
+      Last updated on Jul 11, 2020.
     </div>
   </body>
 </html>
