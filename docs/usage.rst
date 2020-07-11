@@ -31,14 +31,15 @@ with the fake file system functions and modules:
 The usage is explained in more detail in :ref:`auto_patch` and
 demonstrated in the files ``example.py`` and ``example_test.py``.
 
-Patch using the PyTest plugin
+Patch using the pytest plugin
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-If you use `PyTest <https://doc.pytest.org>`__, you will be interested in
-the PyTest plugin in ``pyfakefs``.
+If you use `pytest <https://doc.pytest.org>`__, you will be interested in
+the pytest plugin in ``pyfakefs``.
 This automatically patches all file system functions and modules in a
 similar manner as described above.
 
-The PyTest plugin provides the ``fs`` fixture for use in your test. For example:
+The pytest plugin provides the ``fs`` fixture for use in your test. For
+example:
 
 .. code:: python
 
@@ -82,7 +83,8 @@ You can also initialize ``Patcher`` manually:
 Patch using fake_filesystem_unittest.patchfs decorator
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 This is basically a convenience wrapper for the previous method.
-If you want to use the fake filesystem for a single function, you can write:
+If zou are not using ``pytest`` and  want to use the fake filesystem for a
+single function, you can write:
 
 .. code:: python
 
@@ -93,10 +95,25 @@ If you want to use the fake filesystem for a single function, you can write:
        # access the fake_filesystem object via fs
        fs.create_file('/foo/bar', contents='test')
 
-Note the argument name ``fs``, which is mandatory.
+Note the argument name ``fs``, which is mandatory. As this is a keyword
+argument, it must go after all positional arguments, such as arguments from
+``mock.patch``, regardless of the decorator order:
 
-Don't confuse this with pytest tests, where ``fs`` is the fixture name (with
-the same functionality). If you use pytest, you don't need this decorator.
+.. code:: python
+
+   @mock.patch('foo.bar')
+   @patchfs
+   def test_something(mocked_bar, fs):
+       ...
+
+   @patchfs
+   @mock.patch('foo.bar')
+   def test_something(mocked_bar, fs):
+       ...
+
+Don't confuse this with ``pytest`` tests, where ``fs`` is the fixture name
+(with the same functionality). If you use ``pytest``, you don't need this
+decorator.
 
 You can also use this to make a single unit test use the fake fs:
 
@@ -136,7 +153,7 @@ the box.
 In case of ``fake_filesystem_unittest.TestCase``, these arguments can either
 be set in the TestCase instance initialization, or passed to ``setUpPyfakefs()``.
 
-.. note:: If you need these arguments in ``PyTest``, you can pass them using
+.. note:: If you need these arguments in ``pytest``, you can pass them using
   ``@pytest.mark.parametrize``. Note that you have to also provide
   `all Patcher arguments <http://jmcgeheeiv.github.io/pyfakefs/master/modules.html#pyfakefs.fake_filesystem_unittest.Patcher>`__
   before the needed ones, as keyword arguments cannot be used, and you have to
@@ -149,7 +166,7 @@ be set in the TestCase instance initialization, or passed to ``setUpPyfakefs()``
   `pytest_fixture_test.py <https://github.com/jmcgeheeiv/pyfakefs/blob/master/pyfakefs/pytest_tests/pytest_fixture_test.py>`__
   with the example fixture in `conftest.py <https://github.com/jmcgeheeiv/pyfakefs/blob/master/pyfakefs/pytest_tests/conftest.py>`__.
   We advice to use this example fixture code as a template for your customized
-  pytest plugins.
+  ``pytest`` plugins.
 
 modules_to_reload
 ~~~~~~~~~~~~~~~~~
@@ -348,7 +365,7 @@ Alternatively to the module names, the modules themselves may be used:
       patcher.fs.create_file('foo')
 
 There is also the global variable ``Patcher.SKIPNAMES`` that can be extended
-for that purpose, though this seldom shall be needed (except for own pytest
+for that purpose, though this seldom shall be needed (except for own ``pytest``
 plugins, as shown in the example mentioned above).
 
 allow_root_user
@@ -375,7 +392,7 @@ While ``pyfakefs`` can be used just with the standard Python file system
 functions, there are few convenience methods in ``fake_filesystem`` that can
 help you setting up your tests. The methods can be accessed via the
 ``fake_filesystem`` instance in your tests: ``Patcher.fs``, the ``fs``
-fixture in PyTest, ``TestCase.fs`` for ``unittest``, and the ``fs`` argument
+fixture in pytest, ``TestCase.fs`` for ``unittest``, and the ``fs`` argument
 for the ``patchfs`` decorator.
 
 File creation helpers
