@@ -1,7 +1,9 @@
 # pyfakefs Release Notes
 The released versions correspond to PyPi releases.
 
-## Version 4.1.0 (as yet unreleased)
+## Version 4.2.0 (as yet unreleased)
+
+## [Version 4.1.0](https://pypi.python.org/pypi/pyfakefs/4.1.0)
 
 #### New Features
   * Added some support for pandas (`read_csv`, `read_excel` and more), and
