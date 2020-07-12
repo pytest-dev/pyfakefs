@@ -28,6 +28,11 @@ try:
 except ImportError:
     xlrd = None
 
+try:
+    import openpyxl
+except ImportError:
+    openpyxl = None
+
 
 class TestPatchedPackages(fake_filesystem_unittest.TestCase):
     def setUp(self):
@@ -57,6 +62,7 @@ class TestPatchedPackages(fake_filesystem_unittest.TestCase):
             df = pd.read_excel(path)
             assert (df.columns == [1, 2, 3, 4]).all()
 
+    if pd is not None and openpyxl is not None:
         def test_write_excel(self):
             self.fs.create_dir('/foo')
             path = '/foo/bar.xlsx'
