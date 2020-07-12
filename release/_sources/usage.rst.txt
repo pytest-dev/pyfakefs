@@ -31,14 +31,15 @@ with the fake file system functions and modules:
 The usage is explained in more detail in :ref:`auto_patch` and
 demonstrated in the files ``example.py`` and ``example_test.py``.
 
-Patch using the PyTest plugin
+Patch using the pytest plugin
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-If you use `PyTest <https://doc.pytest.org>`__, you will be interested in
-the PyTest plugin in ``pyfakefs``.
+If you use `pytest <https://doc.pytest.org>`__, you will be interested in
+the pytest plugin in ``pyfakefs``.
 This automatically patches all file system functions and modules in a
 similar manner as described above.
 
-The PyTest plugin provides the ``fs`` fixture for use in your test. For example:
+The pytest plugin provides the ``fs`` fixture for use in your test. For
+example:
 
 .. code:: python
 
@@ -50,7 +51,8 @@ The PyTest plugin provides the ``fs`` fixture for use in your test. For example:
 Patch using fake_filesystem_unittest.Patcher
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 If you are using other means of testing like `nose <http://nose2.readthedocs.io>`__, you can do the
-patching using ``fake_filesystem_unittest.Patcher`` - the class doing the actual work
+patching using ``fake_filesystem_unittest.Patcher``--the class doing the
+actual work
 of replacing the filesystem modules with the fake modules in the first two approaches.
 
 The easiest way is to just use ``Patcher`` as a context manager:
@@ -81,7 +83,8 @@ You can also initialize ``Patcher`` manually:
 Patch using fake_filesystem_unittest.patchfs decorator
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 This is basically a convenience wrapper for the previous method.
-If you want to use the fake filesystem for a single function, you can write:
+If zou are not using ``pytest`` and  want to use the fake filesystem for a
+single function, you can write:
 
 .. code:: python
 
@@ -92,10 +95,25 @@ If you want to use the fake filesystem for a single function, you can write:
        # access the fake_filesystem object via fs
        fs.create_file('/foo/bar', contents='test')
 
-Note the argument name ``fs``, which is mandatory.
+Note the argument name ``fs``, which is mandatory. As this is a keyword
+argument, it must go after all positional arguments, such as arguments from
+``mock.patch``, regardless of the decorator order:
 
-Don't confuse this with pytest tests, where ``fs`` is the fixture name (with
-the same functionality). If you use pytest, you don't need this decorator.
+.. code:: python
+
+   @mock.patch('foo.bar')
+   @patchfs
+   def test_something(mocked_bar, fs):
+       ...
+
+   @patchfs
+   @mock.patch('foo.bar')
+   def test_something(mocked_bar, fs):
+       ...
+
+Don't confuse this with ``pytest`` tests, where ``fs`` is the fixture name
+(with the same functionality). If you use ``pytest``, you don't need this
+decorator.
 
 You can also use this to make a single unit test use the fake fs:
 
@@ -135,7 +153,7 @@ the box.
 In case of ``fake_filesystem_unittest.TestCase``, these arguments can either
 be set in the TestCase instance initialization, or passed to ``setUpPyfakefs()``.
 
-.. note:: If you need these arguments in ``PyTest``, you can pass them using
+.. note:: If you need these arguments in ``pytest``, you can pass them using
   ``@pytest.mark.parametrize``. Note that you have to also provide
   `all Patcher arguments <http://jmcgeheeiv.github.io/pyfakefs/master/modules.html#pyfakefs.fake_filesystem_unittest.Patcher>`__
   before the needed ones, as keyword arguments cannot be used, and you have to
@@ -148,7 +166,7 @@ be set in the TestCase instance initialization, or passed to ``setUpPyfakefs()``
   `pytest_fixture_test.py <https://github.com/jmcgeheeiv/pyfakefs/blob/master/pyfakefs/pytest_tests/pytest_fixture_test.py>`__
   with the example fixture in `conftest.py <https://github.com/jmcgeheeiv/pyfakefs/blob/master/pyfakefs/pytest_tests/conftest.py>`__.
   We advice to use this example fixture code as a template for your customized
-  pytest plugins.
+  ``pytest`` plugins.
 
 modules_to_reload
 ~~~~~~~~~~~~~~~~~
@@ -273,7 +291,8 @@ names to be faked.
 
 This mechanism is used in pyfakefs itself to patch the external modules
 `pathlib2` and `scandir` if present, and the following example shows how to
-fake a module in Django that uses OS file system functions:
+fake a module in Django that uses OS file system functions (note that this
+has now been been integrated into pyfakefs):
 
 .. code:: python
 
@@ -346,7 +365,7 @@ Alternatively to the module names, the modules themselves may be used:
       patcher.fs.create_file('foo')
 
 There is also the global variable ``Patcher.SKIPNAMES`` that can be extended
-for that purpose, though this seldom shall be needed (except for own pytest
+for that purpose, though this seldom shall be needed (except for own ``pytest``
 plugins, as shown in the example mentioned above).
 
 allow_root_user
@@ -356,13 +375,25 @@ if the real user is a root user (e.g. has the user ID 0). If you want to run
 your tests as a non-root user regardless of the actual user rights, you may
 want to set this to ``False``.
 
+use_known_patches
+~~~~~~~~~~~~~~~~~
+Some libraries are known to require patching in order to work with pyfakefs.
+If ``use_known_patches`` is set to ``True`` (the default), pyfakefs patches
+these libraries so that they will work with the fake filesystem. Currently, this
+includes patches for ``pandas`` read methods like ``read_csv`` and
+``read_excel``, and for ``Django`` file locks--more may follow. Ordinarily,
+the default value of ``use_known_patches`` should be used, but it is present
+to allow users to disable this patching in case it causes any problems. It
+may be removed or replaced by more fine-grained arguments in future releases.
+
 Using convenience methods
 -------------------------
 While ``pyfakefs`` can be used just with the standard Python file system
 functions, there are few convenience methods in ``fake_filesystem`` that can
 help you setting up your tests. The methods can be accessed via the
 ``fake_filesystem`` instance in your tests: ``Patcher.fs``, the ``fs``
-fixture in PyTest, or ``TestCase.fs``.
+fixture in pytest, ``TestCase.fs`` for ``unittest``, and the ``fs`` argument
+for the ``patchfs`` decorator.
 
 File creation helpers
 ~~~~~~~~~~~~~~~~~~~~~
@@ -372,7 +403,7 @@ in the path, you may use ``create_file()``, ``create_dir()`` and
 
 ``create_file()`` also allows you to set the file mode and the file contents
 together with the encoding if needed. Alternatively, you can define a file
-size without contents - in this case, you will not be able to perform
+size without contents--in this case, you will not be able to perform
 standard I\O operations on the file (may be used to "fill up" the file system
 with large files).
 
@@ -490,8 +521,9 @@ testing cleanup scripts), you can set the fake file system size using
 root partition; if you add a path as parameter, the size will be related to
 the mount point (see above) the path is related to.
 
-By default, the size of the fake file system is considered infinite. As soon
-as you set a size, all files will occupy the space according to their size,
+By default, the size of the fake file system is set to 1 TB (which
+for most tests can be considered as infinite). As soon as you set a
+size, all files will occupy the space according to their size,
 and you may fail to create new files if the fake file system is full.
 
 .. code:: python
@@ -506,7 +538,8 @@ and you may fail to create new files if the fake file system is full.
 
         def test_disk_full(self):
             with open('/foo/bar.txt', 'w') as f:
-                self.assertRaises(OSError, f.write, 'a' * 200)
+                with self.assertRaises(OSError):
+                    f.write('a' * 200)
 
 To get the file system size, you may use ``get_disk_usage()``, which is
 modeled after ``shutil.disk_usage()``.
@@ -587,13 +620,14 @@ reasons:
   libraries. These will not work out of the box, and we generally will not
   support them in ``pyfakefs``. If these functions are used in isolated
   functions or classes, they may be patched by using the ``modules_to_patch``
-  parameter (see the example for file locks in Django above), and if there
-  are more examples for patches that may be useful, we may add them in the
-  documentation.
+  parameter (see the example for file locks in Django above). We may add
+  some of these patches to ``pyfakefs``, so that they are applied
+  automatically (currently done for some ``pandas`` and ``Django``
+  functionality).
 - It uses C libraries to access the file system. There is no way no make
-  such a module work with ``pyfakefs`` - if you want to use it, you have to
-  patch the whole module. In some cases, a library implemented in Python with
-  a similar interface already exists. An example is ``lxml``,
+  such a module work with ``pyfakefs``--if you want to use it, you
+  have to patch the whole module. In some cases, a library implemented in
+  Python with a similar interface already exists. An example is ``lxml``,
   which can be substituted with ``ElementTree`` in most cases for testing.
 
 A list of Python modules that are known to not work correctly with
@@ -602,9 +636,32 @@ A list of Python modules that are known to not work correctly with
 - ``multiprocessing`` has several issues (related to points 1 and 3 above).
   Currently there are no plans to fix this, but this may change in case of
   sufficient demand.
+- ``subprocess`` has very similar problems and cannot be used with
+  ``pyfakefs`` to start a process. ``subprocess`` can either be mocked, if
+  the process is not needed for the test, or patching can be paused to start
+  a process if needed, and resumed afterwards
+  (see  `this issue <https://github.com/jmcgeheeiv/pyfakefs/issues/447>`__).
+- the ``Pillow`` image library does not work with pyfakefs at least if writing
+  JPEG files (see `this issue <https://github.com/jmcgeheeiv/pyfakefs/issues/529>`__)
+- ``pandas`` (the Python data analysis library) uses its own internal file
+  system access written in C. Thus much of ``pandas`` will not work with
+  ``pyfakefs``. Having said that, ``pyfakefs`` patches ``pandas`` so that many
+  of the ``read_xxx`` functions, including ``read_csv`` and ``read_excel``,
+  as well as some writer functions, do work with the fake file system. If
+  you use only these functions, ``pyfakefs`` will work with ``pandas``.
 
 If you are not sure if a module can be handled, or how to do it, you can
 always write a new issue, of course!
+
+Pyfakefs behaves differently than the real filesystem
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+There are basically two kinds of deviations from the actual behavior:
+
+- unwanted deviations that we didn't notice--if you find any of these, please
+  write an issue and will try to fix it
+- behavior that depends on different OS versions and editions--as mentioned
+  in :ref:`limitations`, pyfakefs uses the TravisCI systems as reference
+  system and will not replicate all system-specific behavior
 
 OS temporary directories
 ~~~~~~~~~~~~~~~~~~~~~~~~
@@ -621,13 +678,13 @@ directory named ``/tmp`` when running on Linux or Unix systems,
 User rights
 ~~~~~~~~~~~
 
-If you run pyfakefs tests as root (this happens by default if run in a
-docker container), pyfakefs also behaves as a root user, for example can
+If you run ``pyfakefs`` tests as root (this happens by default if run in a
+docker container), ``pyfakefs`` also behaves as a root user, for example can
 write to write-protected files. This may not be the expected behavior, and
 can be changed.
-Pyfakefs has a rudimentary concept of user rights, which differentiates
+``Pyfakefs`` has a rudimentary concept of user rights, which differentiates
 between root user (with the user id 0) and any other user. By default,
-pyfakefs assumes the user id of the current user, but you can change
+``pyfakefs`` assumes the user id of the current user, but you can change
 that using ``fake_filesystem.set_uid()`` in your setup. This allows to run
 tests as non-root user in a root user environment and vice verse.
 Another possibility is the convenience argument ``allow_root_user``
