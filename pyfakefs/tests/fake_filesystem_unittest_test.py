@@ -25,6 +25,7 @@ import shutil
 import sys
 import tempfile
 import unittest
+import warnings
 from distutils.dir_util import copy_tree, remove_tree
 from unittest import TestCase
 
@@ -657,6 +658,21 @@ class PathlibTest(TestCase):
         dot_abs = pathlib.Path(".").absolute()
         self.assertEqual(os.path.sep, str(dot_abs))
         self.assertTrue(dot_abs.exists())
+
+
+class TestDeprecationSuppression(fake_filesystem_unittest.TestCase):
+    def test_no_deprecation_warning(self):
+        """Ensures that deprecation warnings are suppressed during module
+        lookup, see #542.
+        """
+
+        from pyfakefs.tests.fixtures.deprecated_property import \
+            DeprecationTest  # noqa: F401
+
+        with warnings.catch_warnings(record=True) as w:
+            warnings.simplefilter("error", DeprecationWarning)
+            self.setUpPyfakefs()
+            self.assertEqual(0, len(w))
 
 
 if __name__ == "__main__":

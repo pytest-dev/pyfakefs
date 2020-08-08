@@ -3,6 +3,10 @@ The released versions correspond to PyPi releases.
 
 ## Version 4.2.0 (as yet unreleased)
 
+#### Fixes
+  * suppress deprecation warnings while collecting modules
+   (see [#542](../../issues/542))
+
 ## [Version 4.1.0](https://pypi.python.org/pypi/pyfakefs/4.1.0)
 
 #### New Features

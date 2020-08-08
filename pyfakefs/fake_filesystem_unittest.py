@@ -503,13 +503,19 @@ class Patcher:
         elif inspect.isclass(item):
             # check for methods in class (nested classes are ignored for now)
             try:
-                for m in inspect.getmembers(item,
-                                            predicate=inspect.isfunction):
-                    m = m[1]
-                    if m.__defaults__:
-                        for i, d in enumerate(m.__defaults__):
-                            if self._is_fs_function(d):
-                                yield m, i, d
+                with warnings.catch_warnings():
+                    # ignore deprecation warnings, see #542
+                    warnings.filterwarnings(
+                        'ignore',
+                        category=DeprecationWarning
+                    )
+                    for m in inspect.getmembers(item,
+                                                predicate=inspect.isfunction):
+                        m = m[1]
+                        if m.__defaults__:
+                            for i, d in enumerate(m.__defaults__):
+                                if self._is_fs_function(d):
+                                    yield m, i, d
             except Exception:
                 # Ignore any exception, examples:
                 # ImportError: No module named '_gdbm'
