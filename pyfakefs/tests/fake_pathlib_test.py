@@ -973,6 +973,13 @@ class FakePathlibUsageInOsFunctionsTest(RealPathlibTestCase):
         self.assertEqual(1, st.st_atime)
         self.assertEqual(2, st.st_mtime)
 
+    def test_truncate(self):
+        path = self.make_path('some_file')
+        self.create_file(path, contents='test_test')
+        self.os.truncate(self.path(path), length=4)
+        st = self.os.stat(path)
+        self.assertEqual(4, st.st_size)
+
 
 class RealPathlibUsageInOsFunctionsTest(FakePathlibUsageInOsFunctionsTest):
     def use_real_fs(self):

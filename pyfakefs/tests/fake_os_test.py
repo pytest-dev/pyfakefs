@@ -2708,6 +2708,52 @@ class FakeOsModuleTest(FakeOsModuleTestBase):
         self.os.close(read_fd)
         self.os.close(write_fd)
 
+    def test_truncate(self):
+        file_path = self.make_path('foo', 'bar')
+        self.create_file(file_path, contents='012345678901234567')
+        self.os.truncate(file_path, 10)
+        with self.open(file_path) as f:
+            self.assertEqual('0123456789', f.read())
+
+    def test_truncate_non_existing(self):
+        self.assert_raises_os_error(errno.ENOENT, self.os.truncate, 'foo', 10)
+
+    def test_truncate_to_larger(self):
+        file_path = self.make_path('foo', 'bar')
+        self.create_file(file_path, contents='0123456789')
+        fd = self.os.open(file_path, os.O_RDWR)
+        self.os.truncate(fd, 20)
+        self.assertEqual(20, self.os.stat(file_path).st_size)
+        with self.open(file_path) as f:
+            self.assertEqual('0123456789' + '\0' * 10, f.read())
+
+    def test_truncate_with_fd(self):
+        if os.truncate not in os.supports_fd:
+            self.skip_real_fs()
+        self.assert_raises_os_error(errno.EBADF, self.os.ftruncate, 50, 10)
+        file_path = self.make_path('some_file')
+        self.create_file(file_path, contents='01234567890123456789')
+
+        fd = self.os.open(file_path, os.O_RDWR)
+        self.os.truncate(fd, 10)
+        self.assertEqual(10, self.os.stat(file_path).st_size)
+        with self.open(file_path) as f:
+            self.assertEqual('0123456789', f.read())
+
+    def test_ftruncate(self):
+        if self.is_pypy:
+            # not correctly supported
+            self.skip_real_fs()
+        self.assert_raises_os_error(errno.EBADF, self.os.ftruncate, 50, 10)
+        file_path = self.make_path('some_file')
+        self.create_file(file_path, contents='0123456789012345')
+
+        fd = self.os.open(file_path, os.O_RDWR)
+        self.os.truncate(fd, 10)
+        self.assertEqual(10, self.os.stat(file_path).st_size)
+        with self.open(file_path) as f:
+            self.assertEqual('0123456789', f.read())
+
 
 class RealOsModuleTest(FakeOsModuleTest):
     def use_real_fs(self):

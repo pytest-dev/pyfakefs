@@ -6,6 +6,8 @@ The released versions correspond to PyPi releases.
 #### Fixes
   * suppress deprecation warnings while collecting modules
    (see [#542](../../issues/542))
+  * add support for `os.truncate` and `os.ftruncate`
+   (see [#545](../../issues/545))
 
 ## [Version 4.1.0](https://pypi.python.org/pypi/pyfakefs/4.1.0)
 

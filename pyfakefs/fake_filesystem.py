@@ -4136,6 +4136,38 @@ class FakeOsModule:
                         dir_fd).get_object().path, path)
         return path
 
+    def truncate(self, path, length):
+        """Truncate the file corresponding to path, so that it is
+         length bytes in size. If length is larger than the current size,
+         the file is filled up with zero bytes.
+
+        Args:
+            path: (str or int) Path to the file, or an integer file
+                descriptor for the file object.
+            length: (int) Length of the file after truncating it.
+
+        Raises:
+            OSError: if the file does not exist or the file descriptor is
+                invalid.
+         """
+        file_object = self.filesystem.resolve(path, allow_fd=True)
+        file_object.size = length
+
+    def ftruncate(self, fd, length):
+        """Truncate the file corresponding to fd, so that it is
+         length bytes in size. If length is larger than the current size,
+         the file is filled up with zero bytes.
+
+        Args:
+            fd: (int) File descriptor for the file object.
+            length: (int) Maximum length of the file after truncating it.
+
+        Raises:
+            OSError: if the file descriptor is invalid
+         """
+        file_object = self.filesystem.get_open_file(fd).get_object()
+        file_object.size = length
+
     def access(self, path, mode, *, dir_fd=None, follow_symlinks=True):
         """Check if a file exists and has the specified permissions.
 
