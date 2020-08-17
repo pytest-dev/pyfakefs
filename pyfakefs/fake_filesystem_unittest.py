@@ -474,9 +474,10 @@ class Patcher:
                     mod.__name__ in module_names
                     or inspect.isclass(mod) and
                     mod.__module__ in self._class_modules.get(name, []))
-        except AttributeError:
+        except Exception:
             # handle cases where the module has no __name__ or __module__
-            # attribute - see #460
+            # attribute - see #460, and any other exception triggered
+            # by inspect functions
             return False
 
     def _is_fs_function(self, fct):
@@ -486,23 +487,24 @@ class Patcher:
                     fct.__name__ in self._fake_module_functions and
                     fct.__module__ in self._fake_module_functions[
                         fct.__name__])
-        except AttributeError:
+        except Exception:
             # handle cases where the function has no __name__ or __module__
-            # attribute
+            # attribute, or any other exception in inspect functions
             return False
 
     def _def_values(self, item):
         """Find default arguments that are file-system functions to be
         patched in top-level functions and members of top-level classes."""
         # check for module-level functions
-        if inspect.isfunction(item):
-            if item.__defaults__:
-                for i, d in enumerate(item.__defaults__):
-                    if self._is_fs_function(d):
-                        yield item, i, d
-        elif inspect.isclass(item):
-            # check for methods in class (nested classes are ignored for now)
-            try:
+        try:
+            if inspect.isfunction(item):
+                if item.__defaults__:
+                    for i, d in enumerate(item.__defaults__):
+                        if self._is_fs_function(d):
+                            yield item, i, d
+            elif inspect.isclass(item):
+                # check for methods in class
+                # (nested classes are ignored for now)
                 with warnings.catch_warnings():
                     # ignore deprecation warnings, see #542
                     warnings.filterwarnings(
@@ -516,11 +518,11 @@ class Patcher:
                             for i, d in enumerate(m.__defaults__):
                                 if self._is_fs_function(d):
                                     yield m, i, d
-            except Exception:
-                # Ignore any exception, examples:
-                # ImportError: No module named '_gdbm'
-                # _DontDoThat() (see #523)
-                pass
+        except Exception:
+            # Ignore any exception, examples:
+            # ImportError: No module named '_gdbm'
+            # _DontDoThat() (see #523)
+            pass
 
     def _find_modules(self):
         """Find and cache all modules that import file system modules.
@@ -535,10 +537,11 @@ class Patcher:
                         not inspect.ismodule(module) or
                         module.__name__.split('.')[0] in self._skipNames):
                     continue
-            except AttributeError:
+            except Exception:
                 # workaround for some py (part of pytest) versions
                 # where py.error has no __name__ attribute
                 # see https://github.com/pytest-dev/py/issues/73
+                # and any other exception triggered by inspect.ismodule
                 continue
             module_items = module.__dict__.copy().items()
 
