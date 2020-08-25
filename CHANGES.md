@@ -4,6 +4,8 @@ The released versions correspond to PyPi releases.
 ## Version 4.2.0 (as yet unreleased)
 
 #### Fixes
+  * do not truncate file on failed flush
+   (see [#548](../../issues/548))
   * suppress deprecation warnings while collecting modules
    (see [#542](../../issues/542))
   * add support for `os.truncate` and `os.ftruncate`

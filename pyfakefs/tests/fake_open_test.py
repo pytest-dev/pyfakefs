@@ -918,6 +918,26 @@ class FakeFileOpenTest(FakeFileOpenTestBase):
             with self.open(self.os.devnull) as f:
                 self.assertEqual('', f.read())
 
+    def test_failed_flush_does_not_truncate_file(self):
+        # regression test for #548
+        self.skip_real_fs()  # cannot set fs size in real fs
+        self.filesystem.set_disk_usage(100)
+        self.os.makedirs("foo")
+        file_path = self.os.path.join('foo', 'bar.txt')
+        with self.open(file_path, 'wb') as f:
+            f.write(b'a' * 50)
+            f.flush()
+            with self.open(file_path, "rb") as r:
+                x = r.read()
+                self.assertTrue(x.startswith(b'a' * 50))
+            with self.assertRaises(OSError):
+                f.write(b'b' * 200)
+                f.flush()
+            with self.open(file_path, "rb") as r:
+                x = r.read()
+                self.assertTrue(x.startswith(b'a' * 50))
+            f.truncate(50)
+
 
 class RealFileOpenTest(FakeFileOpenTest):
     def use_real_fs(self):
