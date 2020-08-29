@@ -3703,8 +3703,13 @@ class FakeOsModule:
             OSError: if user lacks permission to enter the argument directory
                 or if the target is not a directory.
         """
-        path = self.filesystem.resolve_path(
-            path, allow_fd=True)
+        try:
+            path = self.filesystem.resolve_path(
+                path, allow_fd=True)
+        except OSError as exc:
+            if self.filesystem.is_macos and exc.errno == errno.EBADF:
+                raise OSError(errno.ENOTDIR, "Not a directory: " + str(path))
+            raise
         self.filesystem.confirmdir(path)
         directory = self.filesystem.resolve(path)
         # A full implementation would check permissions all the way

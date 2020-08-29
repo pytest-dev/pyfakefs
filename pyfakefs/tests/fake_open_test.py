@@ -1726,7 +1726,8 @@ class ResolvePathTest(FakeFileOpenTestBase):
         if self.is_pypy:
             # unclear behavior with PyPi
             self.skip_real_fs()
-        self.assert_raises_os_error(errno.EBADF, self.os.chdir, 10)
+        error = errno.ENOTDIR if self.is_macos else errno.EBADF
+        self.assert_raises_os_error(error, self.os.chdir, 10)
         dir_path = self.make_path('foo', 'bar')
         self.create_dir(dir_path)
 
