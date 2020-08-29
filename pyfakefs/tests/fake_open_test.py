@@ -918,6 +918,109 @@ class FakeFileOpenTest(FakeFileOpenTestBase):
             with self.open(self.os.devnull) as f:
                 self.assertEqual('', f.read())
 
+
+class RealFileOpenTest(FakeFileOpenTest):
+    def use_real_fs(self):
+        return True
+
+
+class BufferingModeTest(FakeFileOpenTestBase):
+    # todo: check text mode, check append mode
+    def test_no_buffering(self):
+        file_path = self.make_path("buffertest.bin")
+        with self.open(file_path, 'wb', buffering=0) as f:
+            f.write(b'a' * 128)
+            with self.open(file_path, "rb") as r:
+                x = r.read()
+                self.assertEqual(b'a' * 128, x)
+
+    def test_no_buffering_not_allowed_in_textmode(self):
+        file_path = self.make_path("buffertest.txt")
+        with self.assertRaises(ValueError):
+            self.open(file_path, 'w', buffering=0)
+
+    def test_default_buffering_no_flush(self):
+        file_path = self.make_path("buffertest.bin")
+        with self.open(file_path, 'wb') as f:
+            f.write(b'a' * 2048)
+            with self.open(file_path, "rb") as r:
+                x = r.read()
+                self.assertEqual(b'', x)
+        with self.open(file_path, "rb") as r:
+            x = r.read()
+            self.assertEqual(b'a' * 2048, x)
+
+    def test_default_buffering_flush(self):
+        file_path = self.make_path("buffertest.bin")
+        with self.open(file_path, 'wb') as f:
+            f.write(b'a' * 2048)
+            f.flush()
+            with self.open(file_path, "rb") as r:
+                x = r.read()
+                self.assertEqual(b'a' * 2048, x)
+
+    def test_writing_with_specific_buffer(self):
+        file_path = self.make_path("buffertest.bin")
+        with self.open(file_path, 'wb', buffering=512) as f:
+            f.write(b'a' * 500)
+            with self.open(file_path, "rb") as r:
+                x = r.read()
+                # buffer not filled - not written
+                self.assertEqual(0, len(x))
+            f.write(b'a' * 400)
+            with self.open(file_path, "rb") as r:
+                x = r.read()
+                # buffer exceeded, but new buffer (400) not - previous written
+                self.assertEqual(500, len(x))
+            f.write(b'a' * 100)
+            with self.open(file_path, "rb") as r:
+                x = r.read()
+                # buffer not full (500) not written
+                self.assertEqual(500, len(x))
+            f.write(b'a' * 100)
+            with self.open(file_path, "rb") as r:
+                x = r.read()
+                # buffer exceeded (600) -> write previous
+                # new buffer not full (100) - not written
+                self.assertEqual(1000, len(x))
+            f.write(b'a' * 600)
+            with self.open(file_path, "rb") as r:
+                x = r.read()
+                # new buffer exceeded (600) -> all written
+                self.assertEqual(1700, len(x))
+
+    def test_append_with_specific_buffer(self):
+        file_path = self.make_path("buffertest.bin")
+        with self.open(file_path, 'wb', buffering=512) as f:
+            f.write(b'a' * 500)
+        with self.open(file_path, 'ab', buffering=512) as f:
+            f.write(b'a' * 500)
+            with self.open(file_path, "rb") as r:
+                x = r.read()
+                # buffer not filled - not written
+                self.assertEqual(500, len(x))
+            f.write(b'a' * 400)
+            with self.open(file_path, "rb") as r:
+                x = r.read()
+                # buffer exceeded, but new buffer (400) not - previous written
+                self.assertEqual(1000, len(x))
+            f.write(b'a' * 100)
+            with self.open(file_path, "rb") as r:
+                x = r.read()
+                # buffer not full (500) not written
+                self.assertEqual(1000, len(x))
+            f.write(b'a' * 100)
+            with self.open(file_path, "rb") as r:
+                x = r.read()
+                # buffer exceeded (600) -> write previous
+                # new buffer not full (100) - not written
+                self.assertEqual(1500, len(x))
+            f.write(b'a' * 600)
+            with self.open(file_path, "rb") as r:
+                x = r.read()
+                # new buffer exceeded (600) -> all written
+                self.assertEqual(2200, len(x))
+
     def test_failed_flush_does_not_truncate_file(self):
         # regression test for #548
         self.skip_real_fs()  # cannot set fs size in real fs
@@ -938,8 +1041,25 @@ class FakeFileOpenTest(FakeFileOpenTestBase):
                 self.assertTrue(x.startswith(b'a' * 50))
             f.truncate(50)
 
+    def test_failed_write_does_not_truncate_file(self):
+        # test the same with no buffering and no flush
+        self.skip_real_fs()  # cannot set fs size in real fs
+        self.filesystem.set_disk_usage(100)
+        self.os.makedirs("foo")
+        file_path = self.os.path.join('foo', 'bar.txt')
+        with self.open(file_path, 'wb', buffering=0) as f:
+            f.write(b'a' * 50)
+            with self.open(file_path, "rb") as r:
+                x = r.read()
+                self.assertEqual(b'a' * 50, x)
+            with self.assertRaises(OSError):
+                f.write(b'b' * 200)
+            with self.open(file_path, "rb") as r:
+                x = r.read()
+                self.assertEqual(b'a' * 50, x)
 
-class RealFileOpenTest(FakeFileOpenTest):
+
+class RealBufferingTest(BufferingModeTest):
     def use_real_fs(self):
         return True
 

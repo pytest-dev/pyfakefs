@@ -3,6 +3,10 @@ The released versions correspond to PyPi releases.
 
 ## Version 4.2.0 (as yet unreleased)
 
+#### New Features
+  * add support for the `buffering` parameter in `open` (text line mode not
+    supported) (see [#549](../../issues/549))
+
 #### Fixes
   * do not truncate file on failed flush
    (see [#548](../../issues/548))

@@ -4493,10 +4493,10 @@ class FakeFileWrapper:
     the FakeFile object on close() or flush().
     """
 
-    def __init__(self, file_object, file_path, update=False, read=False,
-                 append=False, delete_on_close=False, filesystem=None,
-                 newline=None, binary=True, closefd=True, encoding=None,
-                 errors=None, raw_io=False, is_stream=False):
+    def __init__(self, file_object, file_path, update, read,
+                 append, delete_on_close, filesystem,
+                 newline, binary, closefd, encoding,
+                 errors, buffer_size, raw_io, is_stream=False):
         self.file_object = file_object
         self.file_path = file_path
         self._append = append
@@ -4506,6 +4506,8 @@ class FakeFileWrapper:
         self._file_epoch = file_object.epoch
         self.raw_io = raw_io
         self._binary = binary
+        self._buffer_size = buffer_size
+        self._use_line_buffer = not binary and buffer_size == 1
         self.is_stream = is_stream
         self._changed = False
         contents = file_object.byte_contents
@@ -4583,6 +4585,18 @@ class FakeFileWrapper:
         """Simulate the `closed` attribute on file."""
         return not self._is_open()
 
+    def _try_flush(self, old_pos):
+        """Try to flush and reset the position if it fails."""
+        flush_pos = self._flush_pos
+        try:
+            self.flush()
+        except OSError:
+            # write failed - reset to previous position
+            self._io.seek(old_pos)
+            self._io.truncate()
+            self._flush_pos = flush_pos
+            raise
+
     def flush(self):
         """Flush file contents to 'disk'."""
         self._check_open_file()
@@ -4595,9 +4609,9 @@ class FakeFileWrapper:
                                 self.file_object.contents)
                 contents = old_contents + contents[self._flush_pos:]
                 self._set_stream_contents(contents)
-                self.update_flush_pos()
             else:
                 self._io.flush()
+            self.update_flush_pos()
             if self.file_object.set_contents(contents, self._encoding):
                 if self._filesystem.is_windows_fs:
                     self._changed = True
@@ -4712,7 +4726,7 @@ class FakeFileWrapper:
 
         return read_wrapper
 
-    def _other_wrapper(self, name, writing):
+    def _other_wrapper(self, name):
         """Wrap a stream attribute in an other_wrapper.
 
         Args:
@@ -4742,9 +4756,58 @@ class FakeFileWrapper:
             if write_seek != self._io.tell():
                 self._read_seek = self._io.tell()
                 self._read_whence = 0
+
             return ret_value
 
         return other_wrapper
+
+    def _write_wrapper(self, name):
+        """Wrap a stream attribute in a write_wrapper.
+
+        Args:
+          name: the name of the stream attribute to wrap.
+
+        Returns:
+          write_wrapper which is described below.
+        """
+        io_attr = getattr(self._io, name)
+
+        def write_wrapper(*args, **kwargs):
+            """Wrap all other calls to the stream Object.
+
+            We do this to track changes to the write pointer.  Anything that
+            moves the write pointer in a file open for appending should move
+            the read pointer as well.
+
+            Args:
+                *args: Pass through args.
+                **kwargs: Pass through kwargs.
+
+            Returns:
+                Wrapped stream object method.
+            """
+            old_pos = self._io.tell()
+            ret_value = io_attr(*args, **kwargs)
+            new_pos = self._io.tell()
+
+            # if the buffer size is exceeded, we flush
+            if new_pos - self._flush_pos > self._buffer_size:
+                flush_all = new_pos - old_pos > self._buffer_size
+                # if the current write does not exceed the buffer size,
+                # we revert to the previous position and flush that,
+                # otherwise we flush all
+                if not flush_all:
+                    self._io.seek(old_pos)
+                    self._io.truncate()
+                self._try_flush(old_pos)
+                if not flush_all:
+                    ret_value = io_attr(*args, **kwargs)
+            if self._append:
+                self._read_seek = self._io.tell()
+                self._read_whence = 0
+            return ret_value
+
+        return write_wrapper
 
     def _adapt_size_for_related_files(self, size):
         for open_files in self._filesystem.open_files[3:]:
@@ -4815,8 +4878,10 @@ class FakeFileWrapper:
         if self._append:
             if reading:
                 return self._read_wrappers(name)
-            else:
-                return self._other_wrapper(name, writing)
+            elif not writing:
+                return self._other_wrapper(name)
+        if writing:
+            return self._write_wrapper(name)
 
         return getattr(self._io, name)
 
@@ -4975,8 +5040,10 @@ class FakeFileOpen:
         Args:
             file_: Path to target file or a file descriptor.
             mode: Additional file modes (all modes in `open()` are supported).
-            buffering: ignored. (Used for signature compliance with
-                __builtin__.open)
+            buffering: the buffer size used for writing. Data will only be
+                flushed if buffer size is exceeded. The default (-1) uses a
+                system specific default buffer size. Text line mode (e.g.
+                buffering=1 in text mode) is not supported.
             encoding: The encoding used to encode unicode strings / decode
                 bytes.
             errors: (str) Defines how encoding errors are handled.
@@ -5006,6 +5073,13 @@ class FakeFileOpen:
             file_)
         if not filedes:
             closefd = True
+
+        buffer_size = buffering
+        if buffer_size == -1:
+            buffer_size = io.DEFAULT_BUFFER_SIZE
+        elif buffer_size == 0:
+            if not binary:
+                raise ValueError("can't have unbuffered text I/O")
 
         if (open_modes.must_not_exist and
                 (file_object or self.filesystem.islink(file_path) and
@@ -5043,6 +5117,7 @@ class FakeFileOpen:
                                    closefd=closefd,
                                    encoding=encoding,
                                    errors=errors,
+                                   buffer_size=buffer_size,
                                    raw_io=self.raw_io)
         if filedes is not None:
             fakefile.filedes = filedes
