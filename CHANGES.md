@@ -17,6 +17,8 @@ The released versions correspond to PyPi releases.
 
 #### Infrastructure
   * fixed another problem with CI test scripts not always propagating errors
+  * make sure pytest will work without pyfakefs installed
+   (see [#550](../../issues/550))
 
 ## [Version 4.1.0](https://pypi.python.org/pypi/pyfakefs/4.1.0)
 

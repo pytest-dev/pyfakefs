@@ -22,6 +22,8 @@ import py
 import pytest
 
 from pyfakefs.fake_filesystem_unittest import Patcher
+# import the fs fixture to be visible if pyfakefs is not installed
+from pyfakefs.pytest_plugin import fs  # noqa: F401
 
 Patcher.SKIPMODULES.add(pytest)
 Patcher.SKIPMODULES.add(py)

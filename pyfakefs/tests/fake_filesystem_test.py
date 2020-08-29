@@ -2192,7 +2192,7 @@ class FileSideEffectTests(TestCase):
         self.side_effect_called = False
         with fake_open('/a/b/file_one', 'w') as handle:
             handle.write('foo')
-        self.assertEquals(self.side_effect_file_object_content, 'foo')
+        self.assertEqual(self.side_effect_file_object_content, 'foo')
 
 
 if __name__ == '__main__':
