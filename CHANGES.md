@@ -15,6 +15,9 @@ The released versions correspond to PyPi releases.
   * add support for `os.truncate` and `os.ftruncate`
    (see [#545](../../issues/545))
 
+#### Infrastructure
+  * fixed another problem with CI test scripts not always propagating errors
+
 ## [Version 4.1.0](https://pypi.python.org/pypi/pyfakefs/4.1.0)
 
 #### New Features
