@@ -925,7 +925,6 @@ class RealFileOpenTest(FakeFileOpenTest):
 
 
 class BufferingModeTest(FakeFileOpenTestBase):
-    # todo: check text mode, check append mode
     def test_no_buffering(self):
         file_path = self.make_path("buffertest.bin")
         with self.open(file_path, 'wb', buffering=0) as f:
@@ -988,6 +987,103 @@ class BufferingModeTest(FakeFileOpenTestBase):
                 x = r.read()
                 # new buffer exceeded (600) -> all written
                 self.assertEqual(1700, len(x))
+
+    def test_writing_text_with_line_buffer(self):
+        file_path = self.make_path("buffertest.bin")
+        with self.open(file_path, 'w', buffering=1) as f:
+            f.write('test' * 100)
+            with self.open(file_path, "r") as r:
+                x = r.read()
+                # no new line - not written
+                self.assertEqual(0, len(x))
+            f.write('\ntest')
+            with self.open(file_path, "r") as r:
+                x = r.read()
+                # new line - buffer written
+                self.assertEqual(405, len(x))
+            f.write('test' * 10)
+            with self.open(file_path, "r") as r:
+                x = r.read()
+                # buffer not filled - not written
+                self.assertEqual(405, len(x))
+            f.write('\ntest')
+            with self.open(file_path, "r") as r:
+                x = r.read()
+                # new line - buffer written
+                self.assertEqual(450, len(x))
+
+    def test_writing_large_text_with_line_buffer(self):
+        file_path = self.make_path("buffertest.bin")
+        with self.open(file_path, 'w', buffering=1) as f:
+            f.write('test' * 4000)
+            with self.open(file_path, "r") as r:
+                x = r.read()
+                # buffer larger than default - written
+                self.assertEqual(16000, len(x))
+            f.write('test')
+            with self.open(file_path, "r") as r:
+                x = r.read()
+                # buffer not filled - not written
+                self.assertEqual(16000, len(x))
+            f.write('\ntest')
+            with self.open(file_path, "r") as r:
+                x = r.read()
+                # new line - buffer written
+                self.assertEqual(16009, len(x))
+            f.write('\ntest')
+            with self.open(file_path, "r") as r:
+                x = r.read()
+                # another new line - buffer written
+                self.assertEqual(16014, len(x))
+
+    def test_writing_text_with_default_buffer(self):
+        file_path = self.make_path("buffertest.txt")
+        with self.open(file_path, 'w') as f:
+            f.write('test' * 5)
+            with self.open(file_path, "r") as r:
+                x = r.read()
+                # buffer not filled - not written
+                self.assertEqual(0, len(x))
+            f.write('\ntest')
+            with self.open(file_path, "r") as r:
+                x = r.read()
+                # buffer exceeded, but new buffer (400) not - previous written
+                self.assertEqual(0, len(x))
+            f.write('test' * 10)
+            with self.open(file_path, "r") as r:
+                x = r.read()
+                # buffer not filled - not written
+                self.assertEqual(0, len(x))
+            f.write('\ntest')
+            with self.open(file_path, "r") as r:
+                x = r.read()
+                self.assertEqual(0, len(x))
+
+    def test_writing_text_with_specific_buffer(self):
+        file_path = self.make_path("buffertest.txt")
+        with self.open(file_path, 'w', buffering=2) as f:
+            f.write('a' * 8000)
+            with self.open(file_path, "r") as r:
+                x = r.read()
+                # buffer not filled - not written
+                self.assertEqual(0, len(x))
+            f.write('test')
+            with self.open(file_path, "r") as r:
+                x = r.read()
+                # buffer exceeded, but new buffer (400) not - previous written
+                self.assertEqual(0, len(x))
+            f.write('test')
+            with self.open(file_path, "r") as r:
+                x = r.read()
+                # buffer not filled - not written
+                self.assertEqual(0, len(x))
+            f.write('test')
+            with self.open(file_path, "r") as r:
+                x = r.read()
+                self.assertEqual(0, len(x))
+        # with self.open(file_path, "r") as r:
+        #     x = r.read()
+        #     self.assertEqual(35, len(x))
 
     def test_append_with_specific_buffer(self):
         file_path = self.make_path("buffertest.bin")

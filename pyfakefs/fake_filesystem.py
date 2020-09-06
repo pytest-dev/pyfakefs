@@ -139,7 +139,7 @@ _OPEN_MODE_MAP = {
     'r+': (True, True, True, False, False, False),
     'w+': (False, True, True, True, False, False),
     'a+': (False, True, True, False, True, False),
-    'x':  (False, False, True, False, False, True),
+    'x': (False, False, True, False, False, True),
     'x+': (False, True, True, False, False, True)
 }
 
@@ -1406,8 +1406,8 @@ class FakeFilesystem:
                     path_components[len(normalized_components):])
             sep = self._path_separator(path)
             normalized_path = sep.join(normalized_components)
-            if (self._starts_with_sep(path) and not
-                    self._starts_with_sep(normalized_path)):
+            if (self._starts_with_sep(path)
+                    and not self._starts_with_sep(normalized_path)):
                 normalized_path = sep + normalized_path
             return normalized_path
 
@@ -4501,7 +4501,7 @@ class FakeFileWrapper:
     def __init__(self, file_object, file_path, update, read,
                  append, delete_on_close, filesystem,
                  newline, binary, closefd, encoding,
-                 errors, buffer_size, raw_io, is_stream=False):
+                 errors, buffering, raw_io, is_stream=False):
         self.file_object = file_object
         self.file_path = file_path
         self._append = append
@@ -4511,10 +4511,16 @@ class FakeFileWrapper:
         self._file_epoch = file_object.epoch
         self.raw_io = raw_io
         self._binary = binary
-        self._buffer_size = buffer_size
-        self._use_line_buffer = not binary and buffer_size == 1
         self.is_stream = is_stream
         self._changed = False
+        self._buffer_size = buffering
+        if self._buffer_size == 0 and not binary:
+            raise ValueError("can't have unbuffered text I/O")
+        # buffer_size is ignored in text mode
+        elif self._buffer_size == -1 or not binary:
+            self._buffer_size = io.DEFAULT_BUFFER_SIZE
+        self._use_line_buffer = not binary and buffering == 1
+
         contents = file_object.byte_contents
         self._encoding = encoding or locale.getpreferredencoding(False)
         errors = errors or 'strict'
@@ -4796,8 +4802,10 @@ class FakeFileWrapper:
             new_pos = self._io.tell()
 
             # if the buffer size is exceeded, we flush
-            if new_pos - self._flush_pos > self._buffer_size:
-                flush_all = new_pos - old_pos > self._buffer_size
+            use_line_buf = self._use_line_buffer and '\n' in args[0]
+            if new_pos - self._flush_pos > self._buffer_size or use_line_buf:
+                flush_all = (new_pos - old_pos > self._buffer_size or
+                             use_line_buf)
                 # if the current write does not exceed the buffer size,
                 # we revert to the previous position and flush that,
                 # otherwise we flush all
@@ -5079,13 +5087,6 @@ class FakeFileOpen:
         if not filedes:
             closefd = True
 
-        buffer_size = buffering
-        if buffer_size == -1:
-            buffer_size = io.DEFAULT_BUFFER_SIZE
-        elif buffer_size == 0:
-            if not binary:
-                raise ValueError("can't have unbuffered text I/O")
-
         if (open_modes.must_not_exist and
                 (file_object or self.filesystem.islink(file_path) and
                  not self.filesystem.is_windows_fs)):
@@ -5122,7 +5123,7 @@ class FakeFileOpen:
                                    closefd=closefd,
                                    encoding=encoding,
                                    errors=errors,
-                                   buffer_size=buffer_size,
+                                   buffering=buffering,
                                    raw_io=self.raw_io)
         if filedes is not None:
             fakefile.filedes = filedes
