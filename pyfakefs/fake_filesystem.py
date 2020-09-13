@@ -4997,6 +4997,14 @@ class FakePipeWrapper:
         self.file_object = None
         self.filedes = None
 
+    def __enter__(self):
+        """To support usage of this fake pipe with the 'with' statement."""
+        return self
+
+    def __exit__(self, type, value, traceback):
+        """To support usage of this fake pipe with the 'with' statement."""
+        self.close()
+
     def get_object(self):
         return self.file_object
 
@@ -5007,6 +5015,10 @@ class FakePipeWrapper:
     def read(self, numBytes):
         """Read from the real pipe."""
         return os.read(self.fd, numBytes)
+
+    def flush(self):
+        """Flush the real pipe?"""
+        pass
 
     def write(self, contents):
         """Write to the real pipe."""
@@ -5084,6 +5096,12 @@ class FakeFileOpen:
 
         file_object, file_path, filedes, real_path = self._handle_file_arg(
             file_)
+        if file_object is None and file_path is None:
+            wrapper = FakePipeWrapper(self.filesystem, filedes)
+            file_des = self.filesystem._add_open_file(wrapper)
+            wrapper.filedes = file_des
+            return wrapper
+
         if not filedes:
             closefd = True
 
@@ -5170,6 +5188,8 @@ class FakeFileOpen:
             # opening a file descriptor
             filedes = file_
             wrapper = self.filesystem.get_open_file(filedes)
+            if isinstance(wrapper, FakePipeWrapper):
+                return None, None, filedes, None
             self._delete_on_close = wrapper.delete_on_close
             file_object = self.filesystem.get_open_file(filedes).get_object()
             file_path = file_object.name

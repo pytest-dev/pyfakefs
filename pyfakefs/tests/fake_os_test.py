@@ -2694,6 +2694,22 @@ class FakeOsModuleTest(FakeOsModuleTestBase):
         self.os.close(write_fd)
         self.os.close(fd)
 
+    def test_read_write_pipe(self):
+        read_fd, write_fd = self.os.pipe()
+        self.assertEqual(4, self.os.write(write_fd, b'test'))
+        self.assertEqual(b'test', self.os.read(read_fd, 4))
+        self.os.close(read_fd)
+        self.os.close(write_fd)
+
+    def test_open_existing_pipe(self):
+        if self.is_pypy:
+            raise unittest.SkipTest('Does not work correctly with PyPy')
+        read_fd, write_fd = self.os.pipe()
+        with self.open(write_fd, 'wb') as f:
+            self.assertEqual(4, f.write(b'test'))
+        with self.open(read_fd, 'rb') as f:
+            self.assertEqual(b'test', f.read(4))
+
     def test_write_to_pipe(self):
         read_fd, write_fd = self.os.pipe()
         self.os.write(write_fd, b'test')

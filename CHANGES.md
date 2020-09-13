@@ -8,12 +8,14 @@ The released versions correspond to PyPi releases.
     (see [#549](../../issues/549))
 
 #### Fixes
+  * allow to open existing pipe file descriptor
+    (see [#493](../../issues/493))
   * do not truncate file on failed flush
-   (see [#548](../../issues/548))
+    (see [#548](../../issues/548))
   * suppress deprecation warnings while collecting modules
-   (see [#542](../../issues/542))
+    (see [#542](../../issues/542))
   * add support for `os.truncate` and `os.ftruncate`
-   (see [#545](../../issues/545))
+    (see [#545](../../issues/545))
 
 #### Infrastructure
   * fixed another problem with CI test scripts not always propagating errors
