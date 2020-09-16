@@ -261,9 +261,16 @@ class NoSkipNamesTest(fake_filesystem_unittest.TestCase):
     """Reference test for additional_skip_names tests:
      make sure that the module is patched by default."""
 
+    def setUp(self):
+        self.setUpPyfakefs()
+
     def test_path_exists(self):
-        self.assertTrue(
+        self.assertFalse(
             pyfakefs.tests.import_as_example.exists_this_file())
+
+    def test_open_fails(self):
+        with self.assertRaises(OSError):
+            pyfakefs.tests.import_as_example.open_this_file()
 
 
 class AdditionalSkipNamesTest(fake_filesystem_unittest.TestCase):
@@ -275,8 +282,14 @@ class AdditionalSkipNamesTest(fake_filesystem_unittest.TestCase):
             additional_skip_names=['pyfakefs.tests.import_as_example'])
 
     def test_path_exists(self):
-        self.assertFalse(
+        self.assertTrue(
             pyfakefs.tests.import_as_example.exists_this_file())
+
+    # def test_open_succeeds(self):
+    #     pyfakefs.tests.import_as_example.open_this_file()
+    #
+    # def test_path_succeeds(self):
+    #     pyfakefs.tests.import_as_example.return_this_file_path()
 
 
 class AdditionalSkipNamesModuleTest(fake_filesystem_unittest.TestCase):
@@ -288,8 +301,14 @@ class AdditionalSkipNamesModuleTest(fake_filesystem_unittest.TestCase):
             additional_skip_names=[pyfakefs.tests.import_as_example])
 
     def test_path_exists(self):
-        self.assertFalse(
+        self.assertTrue(
             pyfakefs.tests.import_as_example.exists_this_file())
+
+    # def test_open_succeeds(self):
+    #     pyfakefs.tests.import_as_example.open_this_file()
+
+    # def test_path_succeeds(self):
+    #     pyfakefs.tests.import_as_example.return_this_file_path()
 
 
 class FakeExampleModule:

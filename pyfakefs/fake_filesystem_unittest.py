@@ -535,7 +535,8 @@ class Patcher:
             try:
                 if (module in self.SKIPMODULES or
                         not inspect.ismodule(module) or
-                        module.__name__.split('.')[0] in self._skipNames):
+                        any([sn.startswith(module.__name__)
+                             for sn in self._skipNames])):
                     continue
             except Exception:
                 # workaround for some py (part of pytest) versions
