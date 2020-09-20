@@ -285,9 +285,9 @@ class AdditionalSkipNamesTest(fake_filesystem_unittest.TestCase):
         self.assertTrue(
             pyfakefs.tests.import_as_example.exists_this_file())
 
-    # def test_open_succeeds(self):
-    #     pyfakefs.tests.import_as_example.open_this_file()
-    #
+    def test_open_succeeds(self):
+        pyfakefs.tests.import_as_example.open_this_file()
+
     # def test_path_succeeds(self):
     #     pyfakefs.tests.import_as_example.return_this_file_path()
 
@@ -304,8 +304,8 @@ class AdditionalSkipNamesModuleTest(fake_filesystem_unittest.TestCase):
         self.assertTrue(
             pyfakefs.tests.import_as_example.exists_this_file())
 
-    # def test_open_succeeds(self):
-    #     pyfakefs.tests.import_as_example.open_this_file()
+    def test_open_succeeds(self):
+        pyfakefs.tests.import_as_example.open_this_file()
 
     # def test_path_succeeds(self):
     #     pyfakefs.tests.import_as_example.return_this_file_path()

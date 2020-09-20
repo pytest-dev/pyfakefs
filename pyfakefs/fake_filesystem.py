@@ -100,6 +100,7 @@ import locale
 import os
 import sys
 import time
+import traceback
 import uuid
 from collections import namedtuple
 from stat import (
@@ -4475,6 +4476,7 @@ class FakeIoModule:
             filesystem: FakeFilesystem used to provide file system information.
         """
         self.filesystem = filesystem
+        self.skip_names = []
         self._io_module = io
 
     def open(self, file, mode='r', buffering=-1, encoding=None,
@@ -4482,6 +4484,16 @@ class FakeIoModule:
         """Redirect the call to FakeFileOpen.
         See FakeFileOpen.call() for description.
         """
+        # workaround for built-in open called from skipped modules (see #552)
+        # as open is not imported explicitly, we cannot patch it for
+        # specific modules; instead we check if the caller is a skipped
+        # module (should work in most cases)
+        stack = traceback.extract_stack(limit=2)
+        module_name = os.path.splitext(stack[0].filename)[0]
+        module_name = module_name.replace(os.sep, '.')
+        if any([module_name.endswith(sn) for sn in self.skip_names]):
+            return io.open(file, mode, buffering, encoding, errors,
+                           newline, closefd, opener)
         fake_open = FakeFileOpen(self.filesystem)
         return fake_open(file, mode, buffering, encoding, errors,
                          newline, closefd, opener)

@@ -8,6 +8,8 @@ The released versions correspond to PyPi releases.
     (see [#549](../../issues/549))
 
 #### Fixes
+  * do not call fake `open` if called from skipped module  
+    (see [#552](../../issues/552))
   * fixed handling of `additional_skip_names` with several module components
   * allow to open existing pipe file descriptor
     (see [#493](../../issues/493))

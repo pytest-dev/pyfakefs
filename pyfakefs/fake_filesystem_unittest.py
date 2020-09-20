@@ -69,7 +69,6 @@ if use_scandir:
 
 OS_MODULE = 'nt' if sys.platform == 'win32' else 'posix'
 PATH_MODULE = 'ntpath' if sys.platform == 'win32' else 'posixpath'
-BUILTIN_MODULE = '__builtin__'
 
 
 def patchfs(_func=None, *,
@@ -357,7 +356,7 @@ class Patcher:
             set_uid(1)
             set_gid(1)
 
-        self._skipNames = self.SKIPNAMES.copy()
+        self._skip_names = self.SKIPNAMES.copy()
         # save the original open function for use in pytest plugin
         self.original_open = open
         self.fake_open = None
@@ -365,7 +364,7 @@ class Patcher:
         if additional_skip_names is not None:
             skip_names = [m.__name__ if inspect.ismodule(m) else m
                           for m in additional_skip_names]
-            self._skipNames.update(skip_names)
+            self._skip_names.update(skip_names)
 
         self._fake_module_classes = {}
         self._class_modules = {}
@@ -536,7 +535,7 @@ class Patcher:
                 if (module in self.SKIPMODULES or
                         not inspect.ismodule(module) or
                         any([sn.startswith(module.__name__)
-                             for sn in self._skipNames])):
+                             for sn in self._skip_names])):
                     continue
             except Exception:
                 # workaround for some py (part of pytest) versions
@@ -582,6 +581,8 @@ class Patcher:
         self.fs = fake_filesystem.FakeFilesystem(patcher=self)
         for name in self._fake_module_classes:
             self.fake_modules[name] = self._fake_module_classes[name](self.fs)
+            if hasattr(self.fake_modules[name], 'skip_names'):
+                self.fake_modules[name].skip_names = self._skip_names
         self.fake_modules[PATH_MODULE] = self.fake_modules['os'].path
         self.fake_open = fake_filesystem.FakeFileOpen(self.fs)
 
