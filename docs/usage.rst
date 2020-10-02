@@ -386,6 +386,22 @@ the default value of ``use_known_patches`` should be used, but it is present
 to allow users to disable this patching in case it causes any problems. It
 may be removed or replaced by more fine-grained arguments in future releases.
 
+patch_open_code
+~~~~~~~~~~~~~~~
+Since Python 3.8, the ``io`` module has the function ``open_code``, which
+opens a file read-only and is used to open Python code files. By default, this
+function is not patched, because the files it opens usually belong to the
+executed library code and are not present in the fake file system.
+Under some circumstances, this may not be the case, and the opened file
+lives in the fake filesystem. For these cases, you can set ``patch_open_code``
+to ``True``.
+
+.. note:: There is no possibility to change this setting based on affected
+  files. Depending on the upcoming use cases, this may be changed in future
+  versions of ``pyfakefs``, and this argument may be changed or removed in a
+  later version.
+
+
 Using convenience methods
 -------------------------
 While ``pyfakefs`` can be used just with the standard Python file system

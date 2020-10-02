@@ -6,7 +6,10 @@ The released versions correspond to PyPi releases.
 #### New Features
   * add support for the `buffering` parameter in `open` 
     (see [#549](../../issues/549))
-
+  * add possibility to patch `io.open_code` using the new argument 
+    `patch_open_code` (since Python 3.8)
+    (see [#554](../../issues/554))
+    
 #### Fixes
   * do not call fake `open` if called from skipped module  
     (see [#552](../../issues/552))

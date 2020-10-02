@@ -21,15 +21,24 @@ import io
 import locale
 import os
 import stat
+import sys
 import time
 import unittest
 
 from pyfakefs import fake_filesystem
-from pyfakefs.fake_filesystem import is_root, PERM_READ
+from pyfakefs.fake_filesystem import is_root, PERM_READ, FakeIoModule
 from pyfakefs.tests.test_utils import RealFsTestCase
 
 
 class FakeFileOpenTestBase(RealFsTestCase):
+    def setUp(self):
+        super(FakeFileOpenTestBase, self).setUp()
+        if self.use_real_fs():
+            self.open = io.open
+        else:
+            self.fake_io_module = FakeIoModule(self.filesystem)
+            self.open = self.fake_io_module.open
+
     def path_separator(self):
         return '!'
 
@@ -89,7 +98,7 @@ class FakeFileOpenTest(FakeFileOpenTestBase):
             contents = f.read()
         self.assertEqual(contents, text_fractions)
 
-    def test_byte_contents_py3(self):
+    def test_byte_contents(self):
         file_path = self.make_path('foo')
         byte_fractions = b'\xe2\x85\x93 \xe2\x85\x94 \xe2\x85\x95 \xe2\x85\x96'
         with self.open(file_path, 'wb') as f:
@@ -109,15 +118,6 @@ class FakeFileOpenTest(FakeFileOpenTestBase):
             contents = f.read()
         self.assertEqual(str_contents, contents.decode(
             locale.getpreferredencoding(False)))
-
-    def test_byte_contents(self):
-        file_path = self.make_path('foo')
-        byte_fractions = b'\xe2\x85\x93 \xe2\x85\x94 \xe2\x85\x95 \xe2\x85\x96'
-        with self.open(file_path, 'wb') as f:
-            f.write(byte_fractions)
-        with self.open(file_path, 'rb') as f:
-            contents = f.read()
-        self.assertEqual(contents, byte_fractions)
 
     def test_open_valid_file(self):
         contents = [
@@ -926,6 +926,83 @@ class RealFileOpenTest(FakeFileOpenTest):
         return True
 
 
+@unittest.skipIf(sys.version_info < (3, 8),
+                 'open_code only present since Python 3.8')
+class FakeFilePatchedOpenCodeTest(FakeFileOpenTestBase):
+
+    def setUp(self):
+        super(FakeFilePatchedOpenCodeTest, self).setUp()
+        if self.use_real_fs():
+            self.open_code = io.open_code
+        else:
+            self.filesystem.patch_open_code = True
+            self.open_code = self.fake_io_module.open_code
+
+    def tearDown(self):
+        if not self.use_real_fs():
+            self.filesystem.patch_open_code = False
+        super(FakeFilePatchedOpenCodeTest, self).tearDown()
+
+    def test_invalid_path(self):
+        with self.assertRaises(TypeError):
+            self.open_code(4)
+
+    def test_byte_contents_open_code(self):
+        byte_fractions = b'\xe2\x85\x93 \xe2\x85\x94 \xe2\x85\x95 \xe2\x85\x96'
+        file_path = self.make_path('foo')
+        self.create_file(file_path, contents=byte_fractions)
+        with self.open_code(file_path) as f:
+            contents = f.read()
+        self.assertEqual(contents, byte_fractions)
+
+    def test_open_code_in_real_fs(self):
+        self.skip_real_fs()
+        file_path = __file__
+        with self.assertRaises(OSError):
+            self.open_code(file_path)
+
+
+class RealPatchedFileOpenCodeTest(FakeFilePatchedOpenCodeTest):
+    def use_real_fs(self):
+        return True
+
+
+@unittest.skipIf(sys.version_info < (3, 8),
+                 'open_code only present since Python 3.8')
+class FakeFileUnpatchedOpenCodeTest(FakeFileOpenTestBase):
+
+    def setUp(self):
+        super(FakeFileUnpatchedOpenCodeTest, self).setUp()
+        if self.use_real_fs():
+            self.open_code = io.open_code
+        else:
+            self.open_code = self.fake_io_module.open_code
+
+    def test_invalid_path(self):
+        with self.assertRaises(TypeError):
+            self.open_code(4)
+
+    def test_open_code_in_real_fs(self):
+        file_path = __file__
+
+        with self.open_code(file_path) as f:
+            contents = f.read()
+        self.assertTrue(len(contents) > 100)
+
+
+class RealUnpatchedFileOpenCodeTest(FakeFileUnpatchedOpenCodeTest):
+    def use_real_fs(self):
+        return True
+
+    def test_byte_contents_open_code(self):
+        byte_fractions = b'\xe2\x85\x93 \xe2\x85\x94 \xe2\x85\x95 \xe2\x85\x96'
+        file_path = self.make_path('foo')
+        self.create_file(file_path, contents=byte_fractions)
+        with self.open_code(file_path) as f:
+            contents = f.read()
+        self.assertEqual(contents, byte_fractions)
+
+
 class BufferingModeTest(FakeFileOpenTestBase):
     def test_no_buffering(self):
         file_path = self.make_path("buffertest.bin")
@@ -1168,10 +1245,6 @@ class OpenFileWithEncodingTest(FakeFileOpenTestBase):
 
     def setUp(self):
         super(OpenFileWithEncodingTest, self).setUp()
-        if self.use_real_fs():
-            self.open = io.open
-        else:
-            self.open = fake_filesystem.FakeFileOpen(self.filesystem)
         self.file_path = self.make_path('foo')
 
     def test_write_str_read_bytes(self):
@@ -1451,10 +1524,6 @@ class RealFileOpenLineEndingTest(FakeFileOpenLineEndingTest):
 class FakeFileOpenLineEndingWithEncodingTest(FakeFileOpenTestBase):
     def setUp(self):
         super(FakeFileOpenLineEndingWithEncodingTest, self).setUp()
-        if self.use_real_fs():
-            self.open = io.open
-        else:
-            self.open = fake_filesystem.FakeFileOpen(self.filesystem)
 
     def test_read_standard_newline_mode(self):
         file_path = self.make_path('some_file')

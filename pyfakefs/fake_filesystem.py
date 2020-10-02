@@ -888,6 +888,8 @@ class FakeFilesystem:
         self.add_mount_point(self.root.name, total_size)
         self._add_standard_streams()
         self.dev_null = FakeNullFile(self)
+        # set from outside if needed
+        self.patch_open_code = False
 
     @property
     def is_linux(self):
@@ -3438,7 +3440,7 @@ class FakeOsModule:
         """Return the list of patched function names. Used for patching
         functions imported from the module.
         """
-        dir = [
+        _dir = [
             'access', 'chdir', 'chmod', 'chown', 'close', 'fstat', 'fsync',
             'getcwd', 'lchmod', 'link', 'listdir', 'lstat', 'makedirs',
             'mkdir', 'mknod', 'open', 'read', 'readlink', 'remove',
@@ -3446,13 +3448,13 @@ class FakeOsModule:
             'unlink', 'utime', 'walk', 'write', 'getcwdb', 'replace'
         ]
         if sys.platform.startswith('linux'):
-            dir += [
+            _dir += [
                 'fdatasync', 'getxattr', 'listxattr',
                 'removexattr', 'setxattr'
             ]
         if use_scandir:
-            dir += ['scandir']
-        return dir
+            _dir += ['scandir']
+        return _dir
 
     def __init__(self, filesystem):
         """Also exposes self.path (to fake os.path).
@@ -4468,7 +4470,10 @@ class FakeIoModule:
         """Return the list of patched function names. Used for patching
         functions imported from the module.
         """
-        return 'open',
+        _dir = ['open']
+        if sys.version_info >= (3, 8):
+            _dir.append('open_code')
+        return _dir
 
     def __init__(self, filesystem):
         """
@@ -4497,6 +4502,21 @@ class FakeIoModule:
         fake_open = FakeFileOpen(self.filesystem)
         return fake_open(file, mode, buffering, encoding, errors,
                          newline, closefd, opener)
+
+    if sys.version_info >= (3, 8):
+        def open_code(self, path):
+            """Redirect the call to open. Note that the behavior of the real
+            function may be overridden by an earlier call to the
+            PyFile_SetOpenCodeHook(). This behavior is not reproduced here.
+            """
+            if not isinstance(path, str):
+                raise TypeError(
+                    "open_code() argument 'path' must be str, not int")
+            if not self.filesystem.patch_open_code:
+                # mostly this is used for compiled code -
+                # don't patch these, as the files are probably in the real fs
+                return self._io_module.open_code(path)
+            return self.open(path, mode='rb')
 
     def __getattr__(self, name):
         """Forwards any unfaked calls to the standard io module."""

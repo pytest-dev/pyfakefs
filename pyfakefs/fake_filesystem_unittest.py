@@ -78,7 +78,8 @@ def patchfs(_func=None, *,
             modules_to_reload=None,
             modules_to_patch=None,
             allow_root_user=True,
-            use_known_patches=True):
+            use_known_patches=True,
+            patch_open_code=False):
     """Convenience decorator to use patcher with additional parameters in a
     test function.
 
@@ -101,7 +102,8 @@ def patchfs(_func=None, *,
                     modules_to_reload=modules_to_reload,
                     modules_to_patch=modules_to_patch,
                     allow_root_user=allow_root_user,
-                    use_known_patches=use_known_patches) as p:
+                    use_known_patches=use_known_patches,
+                    patch_open_code=patch_open_code) as p:
                 kwargs['fs'] = p.fs
                 return f(*args, **kwargs)
 
@@ -123,7 +125,8 @@ def load_doctests(loader, tests, ignore, module,
                   modules_to_reload=None,
                   modules_to_patch=None,
                   allow_root_user=True,
-                  use_known_patches=True):  # pylint: disable=unused-argument
+                  use_known_patches=True,
+                  patch_open_code=False):  # pylint: disable=unused-argument
     """Load the doctest tests for the specified module into unittest.
         Args:
             loader, tests, ignore : arguments passed in from `load_tests()`
@@ -136,7 +139,8 @@ def load_doctests(loader, tests, ignore, module,
                        modules_to_reload=modules_to_reload,
                        modules_to_patch=modules_to_patch,
                        allow_root_user=allow_root_user,
-                       use_known_patches=use_known_patches)
+                       use_known_patches=use_known_patches,
+                       patch_open_code=patch_open_code)
     globs = _patcher.replace_globs(vars(module))
     tests.addTests(doctest.DocTestSuite(module,
                                         globs=globs,
@@ -162,8 +166,6 @@ class TestCaseMixin:
         modules_to_patch: A dictionary of fake modules mapped to the
             fully qualified patched module names. Can be used to add patching
             of modules not provided by `pyfakefs`.
-        use_known_patches: If True (the default), some patches for commonly
-            used packges are applied which make them usable with pyfakes.
 
     If you specify some of these attributes here and you have DocTests,
     consider also specifying the same arguments to :py:func:`load_doctests`.
@@ -200,7 +202,8 @@ class TestCaseMixin:
                       modules_to_reload=None,
                       modules_to_patch=None,
                       allow_root_user=True,
-                      use_known_patches=True):
+                      use_known_patches=True,
+                      patch_open_code=False):
         """Bind the file-related modules to the :py:class:`pyfakefs` fake file
         system instead of the real file system.  Also bind the fake `open()`
         function.
@@ -223,7 +226,8 @@ class TestCaseMixin:
             modules_to_reload=modules_to_reload,
             modules_to_patch=modules_to_patch,
             allow_root_user=allow_root_user,
-            use_known_patches=use_known_patches
+            use_known_patches=use_known_patches,
+            patch_open_code=patch_open_code
         )
 
         self._stubber.setUp()
@@ -257,9 +261,7 @@ class TestCase(unittest.TestCase, TestCaseMixin):
     def __init__(self, methodName='runTest',
                  additional_skip_names=None,
                  modules_to_reload=None,
-                 modules_to_patch=None,
-                 allow_root_user=True,
-                 use_known_patches=True):
+                 modules_to_patch=None):
         """Creates the test class instance and the patcher used to stub out
         file system related modules.
 
@@ -272,8 +274,6 @@ class TestCase(unittest.TestCase, TestCaseMixin):
         self.additional_skip_names = additional_skip_names
         self.modules_to_reload = modules_to_reload
         self.modules_to_patch = modules_to_patch
-        self.allow_root_user = allow_root_user
-        self.use_known_patches = use_known_patches
 
     @Deprecator('add_real_file')
     def copyRealFile(self, real_file_path, fake_file_path=None,
@@ -358,8 +358,32 @@ class Patcher:
 
     def __init__(self, additional_skip_names=None,
                  modules_to_reload=None, modules_to_patch=None,
-                 allow_root_user=True, use_known_patches=True):
-        """For a description of the arguments, see TestCase.__init__"""
+                 allow_root_user=True, use_known_patches=True,
+                 patch_open_code=False):
+        """
+        Args:
+            additional_skip_names: names of modules inside of which no module
+                replacement shall be performed, in addition to the names in
+                :py:attr:`fake_filesystem_unittest.Patcher.SKIPNAMES`.
+                Instead of the module names, the modules themselves
+                may be used.
+            modules_to_reload: A list of modules that need to be reloaded
+                to be patched dynamically; may be needed if the module
+                imports file system modules under an alias
+
+                .. caution:: Reloading modules may have unwanted side effects.
+            modules_to_patch: A dictionary of fake modules mapped to the
+                fully qualified patched module names. Can be used to add
+                patching of modules not provided by `pyfakefs`.
+            allow_root_user: If True (default), if the test is run as root
+                user, the user in the fake file system is also considered a
+                root user, otherwise it is always considered a regular user.
+            use_known_patches: If True (the default), some patches for commonly
+                used packages are applied which make them usable with pyfakefs.
+            patch_open_code: If True, `io.open_code` is patched. The default
+                is not to patch it, as it mostly is used to load compiled
+                modules that are not in the fake file system.
+        """
 
         if not allow_root_user:
             # set non-root IDs even if the real user is root
@@ -370,6 +394,7 @@ class Patcher:
         # save the original open function for use in pytest plugin
         self.original_open = open
         self.fake_open = None
+        self.patch_open_code = patch_open_code
 
         if additional_skip_names is not None:
             skip_names = [m.__name__ if inspect.ismodule(m) else m
@@ -589,6 +614,7 @@ class Patcher:
         self._stubs = mox3_stubout.StubOutForTesting()
 
         self.fs = fake_filesystem.FakeFilesystem(patcher=self)
+        self.fs.patch_open_code = self.patch_open_code
         for name in self._fake_module_classes:
             self.fake_modules[name] = self._fake_module_classes[name](self.fs)
             if hasattr(self.fake_modules[name], 'skip_names'):
