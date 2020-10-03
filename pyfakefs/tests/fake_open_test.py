@@ -157,7 +157,8 @@ class FakeFileOpenTest(FakeFileOpenTestBase):
         file_path = self.make_path('bar.txt')
         self.create_file(file_path, contents=''.join(contents))
         self.os.chdir(self.base_path)
-        self.assertEqual(contents, self.open(file_path).readlines())
+        with self.open(file_path) as f:
+            self.assertEqual(contents, f.readlines())
 
     def test_iterate_over_file(self):
         contents = [
@@ -648,8 +649,9 @@ class FakeFileOpenTest(FakeFileOpenTestBase):
                 fh.writelines(['con', 'tents'])
 
         def _iterator_open(mode):
-            for _ in self.open(file_path, mode):
-                pass
+            with self.open(file_path, mode) as f:
+                for _ in f:
+                    pass
 
         with self.assertRaises(OSError):
             _iterator_open('w')
@@ -707,12 +709,12 @@ class FakeFileOpenTest(FakeFileOpenTestBase):
     def test_update_other_instances_of_same_file_on_flush(self):
         # Regression test for #302
         file_path = self.make_path('baz')
-        f0 = self.open(file_path, 'w')
-        f1 = self.open(file_path, 'w')
-        f0.write('test')
-        f0.truncate()
-        f1.flush()
-        self.assertEqual(4, self.os.path.getsize(file_path))
+        with self.open(file_path, 'w') as f0:
+            with self.open(file_path, 'w') as f1:
+                f0.write('test')
+                f0.truncate()
+                f1.flush()
+                self.assertEqual(4, self.os.path.getsize(file_path))
 
     def test_getsize_after_truncate(self):
         # Regression test for #412
@@ -1336,13 +1338,13 @@ class FakeFileOpenLineEndingTest(FakeFileOpenTestBase):
     def setUp(self):
         super(FakeFileOpenLineEndingTest, self).setUp()
 
-    def test_read_universal_newline_mode(self):
+    def test_read_default_newline_mode(self):
         file_path = self.make_path('some_file')
         for contents in (b'1\n2', b'1\r\n2', b'1\r2'):
             self.create_file(file_path, contents=contents)
-            with self.open(file_path, mode='rU') as f:
+            with self.open(file_path, mode='r') as f:
                 self.assertEqual(['1\n', '2'], f.readlines())
-            with self.open(file_path, mode='rU') as f:
+            with self.open(file_path, mode='r') as f:
                 self.assertEqual('1\n2', f.read())
             with self.open(file_path, mode='rb') as f:
                 self.assertEqual(contents, f.read())
@@ -1454,14 +1456,14 @@ class FakeFileOpenLineEndingWithEncodingTest(FakeFileOpenTestBase):
         else:
             self.open = fake_filesystem.FakeFileOpen(self.filesystem)
 
-    def test_read_universal_newline_mode(self):
+    def test_read_standard_newline_mode(self):
         file_path = self.make_path('some_file')
         for contents in (u'раз\nдва', u'раз\r\nдва', u'раз\rдва'):
             self.create_file(file_path, contents=contents, encoding='cyrillic')
-            with self.open(file_path, mode='rU',
+            with self.open(file_path, mode='r',
                            encoding='cyrillic') as fake_file:
                 self.assertEqual([u'раз\n', u'два'], fake_file.readlines())
-            with self.open(file_path, mode='rU',
+            with self.open(file_path, mode='r',
                            encoding='cyrillic') as fake_file:
                 self.assertEqual(u'раз\nдва', fake_file.read())
 
@@ -1612,26 +1614,26 @@ class OpenWithBinaryFlagsTest(OpenWithFlagsTestBase):
         self.create_file(self.file_path, contents=self.file_contents)
 
     def test_read_binary(self):
-        fake_file = self.open_file('rb')
-        self.assertEqual(self.file_contents, fake_file.read())
+        with self.open_file('rb') as fake_file:
+            self.assertEqual(self.file_contents, fake_file.read())
 
     def test_write_binary(self):
-        fake_file = self.open_file_and_seek('wb')
-        self.assertEqual(0, fake_file.tell())
-        fake_file = self.write_and_reopen_file(fake_file, mode='rb')
-        self.assertEqual(self.file_contents, fake_file.read())
-        # Attempt to reopen the file in text mode
-        fake_file = self.open_file('wb')
-        fake_file = self.write_and_reopen_file(fake_file, mode='r',
-                                               encoding='ascii')
-        with self.assertRaises(UnicodeDecodeError):
-            fake_file.read()
+        with self.open_file_and_seek('wb') as f:
+            self.assertEqual(0, f.tell())
+            with self.write_and_reopen_file(f, mode='rb') as f1:
+                self.assertEqual(self.file_contents, f1.read())
+                # Attempt to reopen the file in text mode
+                with self.open_file('wb') as f2:
+                    with self.write_and_reopen_file(f2, mode='r',
+                                                    encoding='ascii') as f3:
+                        with self.assertRaises(UnicodeDecodeError):
+                            f3.read()
 
     def test_write_and_read_binary(self):
-        fake_file = self.open_file_and_seek('w+b')
-        self.assertEqual(0, fake_file.tell())
-        fake_file = self.write_and_reopen_file(fake_file, mode='rb')
-        self.assertEqual(self.file_contents, fake_file.read())
+        with self.open_file_and_seek('w+b') as f:
+            self.assertEqual(0, f.tell())
+            with self.write_and_reopen_file(f, mode='rb') as f1:
+                self.assertEqual(self.file_contents, f1.read())
 
 
 class RealOpenWithBinaryFlagsTest(OpenWithBinaryFlagsTest):

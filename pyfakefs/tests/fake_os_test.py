@@ -3606,6 +3606,7 @@ class FakeOsModuleTestCaseInsensitiveFS(FakeOsModuleTestBase):
         self.os.fsync(test_fd)
         # And just for sanity, double-check that this still raises
         self.assert_raises_os_error(errno.EBADF, self.os.fsync, test_fd + 10)
+        test_file.close()
 
     def test_chmod(self):
         # set up
