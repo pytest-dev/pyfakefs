@@ -38,9 +38,11 @@ to `:py:class`pyfakefs.fake_filesystem_unittest.TestCase`.
 import doctest
 import functools
 import inspect
+import linecache
 import shutil
 import sys
 import tempfile
+import tokenize
 import unittest
 import warnings
 
@@ -337,8 +339,16 @@ class Patcher:
     '''Stub nothing that is imported within these modules.
     `sys` is included to prevent `sys.path` from being stubbed with the fake
     `os.path`.
+    The `linecache` module is used to read the test file in case of test
+    failure to get traceback information before test tear down.
+    In order to make sure that reading the test file is not faked,
+    we skip faking the module.
+    We also have to set back the cached open function in tokenize.
     '''
-    SKIPMODULES = {None, fake_filesystem, fake_filesystem_shutil, sys}
+    SKIPMODULES = {
+        None, fake_filesystem, fake_filesystem_shutil,
+        sys, linecache, tokenize
+    }
     assert None in SKIPMODULES, ("sys.modules contains 'None' values;"
                                  " must skip them.")
 
@@ -606,6 +616,8 @@ class Patcher:
             doctester.globs = self.replace_globs(doctester.globs)
 
         self.start_patching()
+        linecache.open = self.original_open
+        tokenize._builtin_open = self.original_open
 
         # the temp directory is assumed to exist at least in `tempfile1`,
         # so we create it here for convenience
