@@ -810,7 +810,7 @@ consider also specifying the same arguments to <code class="xref py py-func docu
 </div>
 <dl class="py method">
 <dt id="pyfakefs.fake_filesystem_unittest.TestCaseMixin.setUpPyfakefs">
-<code class="sig-name descname">setUpPyfakefs</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">additional_skip_names</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">modules_to_reload</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">modules_to_patch</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">allow_root_user</span><span class="o">=</span><span class="default_value">True</span></em>, <em class="sig-param"><span class="n">use_known_patches</span><span class="o">=</span><span class="default_value">True</span></em>, <em class="sig-param"><span class="n">patch_open_code</span><span class="o">=</span><span class="default_value">False</span></em><span class="sig-paren">)</span><a class="headerlink" href="#pyfakefs.fake_filesystem_unittest.TestCaseMixin.setUpPyfakefs" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname">setUpPyfakefs</code><span class="sig-paren">(</span><em class="sig-param">additional_skip_names=None</em>, <em class="sig-param">modules_to_reload=None</em>, <em class="sig-param">modules_to_patch=None</em>, <em class="sig-param">allow_root_user=True</em>, <em class="sig-param">use_known_patches=True</em>, <em class="sig-param">patch_open_code=&lt;PatchMode.OFF: 1&gt;</em><span class="sig-paren">)</span><a class="headerlink" href="#pyfakefs.fake_filesystem_unittest.TestCaseMixin.setUpPyfakefs" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bind the file-related modules to the <code class="xref py py-class docutils literal notranslate"><span class="pre">pyfakefs</span></code> fake file
 system instead of the real file system.  Also bind the fake <cite>open()</cite>
 function.</p>
@@ -860,7 +860,7 @@ unittest.TestCase)</p>
 
 <dl class="py class">
 <dt id="pyfakefs.fake_filesystem_unittest.Patcher">
-<em class="property">class </em><code class="sig-prename descclassname">pyfakefs.fake_filesystem_unittest.</code><code class="sig-name descname">Patcher</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">additional_skip_names</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">modules_to_reload</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">modules_to_patch</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">allow_root_user</span><span class="o">=</span><span class="default_value">True</span></em>, <em class="sig-param"><span class="n">use_known_patches</span><span class="o">=</span><span class="default_value">True</span></em>, <em class="sig-param"><span class="n">patch_open_code</span><span class="o">=</span><span class="default_value">False</span></em><span class="sig-paren">)</span><a class="headerlink" href="#pyfakefs.fake_filesystem_unittest.Patcher" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><code class="sig-prename descclassname">pyfakefs.fake_filesystem_unittest.</code><code class="sig-name descname">Patcher</code><span class="sig-paren">(</span><em class="sig-param">additional_skip_names=None</em>, <em class="sig-param">modules_to_reload=None</em>, <em class="sig-param">modules_to_patch=None</em>, <em class="sig-param">allow_root_user=True</em>, <em class="sig-param">use_known_patches=True</em>, <em class="sig-param">patch_open_code=&lt;PatchMode.OFF: 1&gt;</em><span class="sig-paren">)</span><a class="headerlink" href="#pyfakefs.fake_filesystem_unittest.Patcher" title="Permalink to this definition">¶</a></dt>
 <dd><p>Instantiate a stub creator to bind and un-bind the file-related modules to
 the <code class="xref py py-mod docutils literal notranslate"><span class="pre">pyfakefs</span></code> fake modules.</p>
 <p>The arguments are explained in <a class="reference internal" href="#pyfakefs.fake_filesystem_unittest.TestCaseMixin" title="pyfakefs.fake_filesystem_unittest.TestCaseMixin"><code class="xref py py-class docutils literal notranslate"><span class="pre">TestCaseMixin</span></code></a>.</p>
@@ -951,7 +951,7 @@ pyfakefs by simply changing their base class from <cite>:py:class`unittest.TestC
 to <cite>:py:class`pyfakefs.fake_filesystem_unittest.TestCase</cite>.</p>
 <dl class="py function">
 <dt id="pyfakefs.fake_filesystem_unittest.patchfs">
-<code class="sig-prename descclassname">pyfakefs.fake_filesystem_unittest.</code><code class="sig-name descname">patchfs</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">_func</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="o">*</span></em>, <em class="sig-param"><span class="n">additional_skip_names</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">modules_to_reload</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">modules_to_patch</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">allow_root_user</span><span class="o">=</span><span class="default_value">True</span></em>, <em class="sig-param"><span class="n">use_known_patches</span><span class="o">=</span><span class="default_value">True</span></em>, <em class="sig-param"><span class="n">patch_open_code</span><span class="o">=</span><span class="default_value">False</span></em><span class="sig-paren">)</span><a class="headerlink" href="#pyfakefs.fake_filesystem_unittest.patchfs" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">pyfakefs.fake_filesystem_unittest.</code><code class="sig-name descname">patchfs</code><span class="sig-paren">(</span><em class="sig-param">_func=None</em>, <em class="sig-param">*</em>, <em class="sig-param">additional_skip_names=None</em>, <em class="sig-param">modules_to_reload=None</em>, <em class="sig-param">modules_to_patch=None</em>, <em class="sig-param">allow_root_user=True</em>, <em class="sig-param">use_known_patches=True</em>, <em class="sig-param">patch_open_code=&lt;PatchMode.OFF: 1&gt;</em><span class="sig-paren">)</span><a class="headerlink" href="#pyfakefs.fake_filesystem_unittest.patchfs" title="Permalink to this definition">¶</a></dt>
 <dd><p>Convenience decorator to use patcher with additional parameters in a
 test function.</p>
 <p>Usage:</p>
@@ -1148,7 +1148,7 @@ that is available on pypi.</p>
         &#169; Copyright 2009 Google Inc. All Rights Reserved.
 © Copyright 2014 Altera Corporation. All Rights Reserved.
 © Copyright 2014-2020 John McGehee.
-      Last updated on Oct 04, 2020.
+      Last updated on Oct 08, 2020.
     </div>
   </body>
 </html>

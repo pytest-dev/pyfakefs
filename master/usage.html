@@ -398,13 +398,13 @@ function is not patched, because the files it opens usually belong to the
 executed library code and are not present in the fake file system.
 Under some circumstances, this may not be the case, and the opened file
 lives in the fake filesystem. For these cases, you can set <code class="docutils literal notranslate"><span class="pre">patch_open_code</span></code>
-to <code class="docutils literal notranslate"><span class="pre">True</span></code>.</p>
+to <code class="docutils literal notranslate"><span class="pre">PatchMode.ON</span></code>. If you just want to patch <code class="docutils literal notranslate"><span class="pre">open_case</span></code> for files that
+live in the fake filesystem, and use the real function for the rest, you can
+set <code class="docutils literal notranslate"><span class="pre">patch_open_code</span></code> to <code class="docutils literal notranslate"><span class="pre">PatchMode.AUTO</span></code>.</p>
 <div class="admonition note">
 <p class="admonition-title">Note</p>
-<p>There is no possibility to change this setting based on affected
-files. Depending on the upcoming use cases, this may be changed in future
-versions of <code class="docutils literal notranslate"><span class="pre">pyfakefs</span></code>, and this argument may be changed or removed in a
-later version.</p>
+<p>This argument is subject to change or removal in future
+versions of pyfakefs, depending on the upcoming use cases.</p>
 </div>
 </div>
 </div>
@@ -789,7 +789,7 @@ described above.</p>
         &#169; Copyright 2009 Google Inc. All Rights Reserved.
 © Copyright 2014 Altera Corporation. All Rights Reserved.
 © Copyright 2014-2020 John McGehee.
-      Last updated on Oct 04, 2020.
+      Last updated on Oct 08, 2020.
     </div>
   </body>
 </html>

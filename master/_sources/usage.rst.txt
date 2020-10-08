@@ -394,12 +394,12 @@ function is not patched, because the files it opens usually belong to the
 executed library code and are not present in the fake file system.
 Under some circumstances, this may not be the case, and the opened file
 lives in the fake filesystem. For these cases, you can set ``patch_open_code``
-to ``True``.
+to ``PatchMode.ON``. If you just want to patch ``open_case`` for files that
+live in the fake filesystem, and use the real function for the rest, you can
+set ``patch_open_code`` to ``PatchMode.AUTO``.
 
-.. note:: There is no possibility to change this setting based on affected
-  files. Depending on the upcoming use cases, this may be changed in future
-  versions of ``pyfakefs``, and this argument may be changed or removed in a
-  later version.
+.. note:: This argument is subject to change or removal in future
+  versions of pyfakefs, depending on the upcoming use cases.
 
 
 Using convenience methods
