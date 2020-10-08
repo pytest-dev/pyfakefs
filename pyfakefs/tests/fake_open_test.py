@@ -27,6 +27,7 @@ import unittest
 
 from pyfakefs import fake_filesystem
 from pyfakefs.fake_filesystem import is_root, PERM_READ, FakeIoModule
+from pyfakefs.fake_filesystem_unittest import PatchMode
 from pyfakefs.tests.test_utils import RealFsTestCase
 
 
@@ -935,7 +936,7 @@ class FakeFilePatchedOpenCodeTest(FakeFileOpenTestBase):
         if self.use_real_fs():
             self.open_code = io.open_code
         else:
-            self.filesystem.patch_open_code = True
+            self.filesystem.patch_open_code = PatchMode.ON
             self.open_code = self.fake_io_module.open_code
 
     def tearDown(self):

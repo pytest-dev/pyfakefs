@@ -21,6 +21,7 @@ import glob
 import io
 import multiprocessing
 import os
+import runpy
 import shutil
 import sys
 import tempfile
@@ -32,7 +33,9 @@ from unittest import TestCase
 import pyfakefs.tests.import_as_example
 from pyfakefs import fake_filesystem_unittest, fake_filesystem
 from pyfakefs.extra_packages import pathlib
-from pyfakefs.fake_filesystem_unittest import Patcher, Pause, patchfs
+from pyfakefs.fake_filesystem_unittest import (
+    Patcher, Pause, patchfs, PatchMode
+)
 from pyfakefs.tests.fixtures import module_with_attributes
 
 
@@ -594,6 +597,39 @@ class TestDeprecationSuppression(fake_filesystem_unittest.TestCase):
             warnings.simplefilter("error", DeprecationWarning)
             self.setUpPyfakefs()
             self.assertEqual(0, len(w))
+
+
+def load_configs(configs):
+    """ Helper code for patching open_code in auto mode, see issue #554. """
+    retval = []
+    for config in configs:
+        if len(config) > 3 and config[-3:] == ".py":
+            retval += runpy.run_path(config)
+        else:
+            retval += runpy.run_module(config)
+    return retval
+
+
+class AutoPatchOpenCodeTestCase(fake_filesystem_unittest.TestCase):
+    """ Test patching open_code in auto mode, see issue #554."""
+
+    def setUp(self):
+        self.setUpPyfakefs(patch_open_code=PatchMode.AUTO)
+
+        self.configpy = 'configpy.py'
+        self.fs.create_file(
+            self.configpy,
+            contents="configurable_value='yup'")
+        self.config_module = 'pyfakefs.tests.fixtures.config_module'
+
+    def test_both(self):
+        load_configs([self.configpy, self.config_module])
+
+    def test_run_path(self):
+        load_configs([self.configpy])
+
+    def test_run_module(self):
+        load_configs([self.config_module])
 
 
 if __name__ == "__main__":

@@ -103,6 +103,7 @@ import time
 import traceback
 import uuid
 from collections import namedtuple
+from enum import Enum
 from stat import (
     S_IFREG, S_IFDIR, S_ISLNK, S_IFMT, S_ISDIR, S_IFLNK, S_ISREG, S_IFSOCK
 )
@@ -155,6 +156,15 @@ else:
 NR_STD_STREAMS = 3
 USER_ID = 1 if IS_WIN else os.getuid()
 GROUP_ID = 1 if IS_WIN else os.getgid()
+
+
+class PatchMode(Enum):
+    """Defines if patching shall be on, off, or in automatic mode.
+    Currently only used for `patch_open_code` option.
+    """
+    OFF = 1
+    AUTO = 2
+    ON = 3
 
 
 def set_uid(uid):
@@ -889,7 +899,7 @@ class FakeFilesystem:
         self._add_standard_streams()
         self.dev_null = FakeNullFile(self)
         # set from outside if needed
-        self.patch_open_code = False
+        self.patch_open_code = PatchMode.OFF
 
     @property
     def is_linux(self):
@@ -4512,11 +4522,13 @@ class FakeIoModule:
             if not isinstance(path, str):
                 raise TypeError(
                     "open_code() argument 'path' must be str, not int")
-            if not self.filesystem.patch_open_code:
-                # mostly this is used for compiled code -
-                # don't patch these, as the files are probably in the real fs
-                return self._io_module.open_code(path)
-            return self.open(path, mode='rb')
+            patch_mode = self.filesystem.patch_open_code
+            if (patch_mode == PatchMode.AUTO and self.filesystem.exists(path)
+                    or patch_mode == PatchMode.ON):
+                return self.open(path, mode='rb')
+            # mostly this is used for compiled code -
+            # don't patch these, as the files are probably in the real fs
+            return self._io_module.open_code(path)
 
     def __getattr__(self, name):
         """Forwards any unfaked calls to the standard io module."""

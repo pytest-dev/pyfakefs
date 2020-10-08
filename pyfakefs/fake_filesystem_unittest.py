@@ -47,10 +47,11 @@ import unittest
 import warnings
 
 from pyfakefs.deprecator import Deprecator
-from pyfakefs.fake_filesystem import set_uid, set_gid, reset_ids
+from pyfakefs.fake_filesystem import set_uid, set_gid, reset_ids, PatchMode
 from pyfakefs.helpers import IS_PYPY
-from pyfakefs.patched_packages import get_modules_to_patch, \
-    get_classes_to_patch, get_fake_module_classes
+from pyfakefs.patched_packages import (
+    get_modules_to_patch, get_classes_to_patch, get_fake_module_classes
+)
 
 try:
     from importlib.machinery import ModuleSpec
@@ -79,7 +80,7 @@ def patchfs(_func=None, *,
             modules_to_patch=None,
             allow_root_user=True,
             use_known_patches=True,
-            patch_open_code=False):
+            patch_open_code=PatchMode.OFF):
     """Convenience decorator to use patcher with additional parameters in a
     test function.
 
@@ -120,13 +121,14 @@ def patchfs(_func=None, *,
     return wrap_patchfs
 
 
-def load_doctests(loader, tests, ignore, module,
-                  additional_skip_names=None,
-                  modules_to_reload=None,
-                  modules_to_patch=None,
-                  allow_root_user=True,
-                  use_known_patches=True,
-                  patch_open_code=False):  # pylint: disable=unused-argument
+def load_doctests(
+        loader, tests, ignore, module,
+        additional_skip_names=None,
+        modules_to_reload=None,
+        modules_to_patch=None,
+        allow_root_user=True,
+        use_known_patches=True,
+        patch_open_code=PatchMode.OFF):  # pylint: disable=unused-argument
     """Load the doctest tests for the specified module into unittest.
         Args:
             loader, tests, ignore : arguments passed in from `load_tests()`
@@ -203,7 +205,7 @@ class TestCaseMixin:
                       modules_to_patch=None,
                       allow_root_user=True,
                       use_known_patches=True,
-                      patch_open_code=False):
+                      patch_open_code=PatchMode.OFF):
         """Bind the file-related modules to the :py:class:`pyfakefs` fake file
         system instead of the real file system.  Also bind the fake `open()`
         function.
@@ -359,7 +361,7 @@ class Patcher:
     def __init__(self, additional_skip_names=None,
                  modules_to_reload=None, modules_to_patch=None,
                  allow_root_user=True, use_known_patches=True,
-                 patch_open_code=False):
+                 patch_open_code=PatchMode.OFF):
         """
         Args:
             additional_skip_names: names of modules inside of which no module
