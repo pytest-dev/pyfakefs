@@ -168,6 +168,12 @@ class TestPatchingImports(TestPyfakefsUnittestBase):
         self.assertTrue(
             pyfakefs.tests.import_as_example.check_if_exists6(file_path))
 
+    def test_import_pathlib_path(self):
+        file_path = '/foo/bar'
+        self.fs.create_dir(file_path)
+        self.assertTrue(
+            pyfakefs.tests.import_as_example.check_if_exists7(file_path))
+
     def test_import_function_from_os(self):
         file_path = '/foo/bar'
         self.fs.create_file(file_path, contents=b'abc')
@@ -271,6 +277,41 @@ class NoSkipNamesTest(fake_filesystem_unittest.TestCase):
         self.assertFalse(
             pyfakefs.tests.import_as_example.exists_this_file())
 
+    def test_fake_path_exists1(self):
+        self.fs.create_file('foo')
+        self.assertTrue(
+            pyfakefs.tests.import_as_example.check_if_exists1('foo'))
+
+    def test_fake_path_exists2(self):
+        self.fs.create_file('foo')
+        self.assertTrue(
+            pyfakefs.tests.import_as_example.check_if_exists2('foo'))
+
+    def test_fake_path_exists3(self):
+        self.fs.create_file('foo')
+        self.assertTrue(
+            pyfakefs.tests.import_as_example.check_if_exists3('foo'))
+
+    def test_fake_path_exists4(self):
+        self.fs.create_file('foo')
+        self.assertTrue(
+            pyfakefs.tests.import_as_example.check_if_exists4('foo'))
+
+    def test_fake_path_exists5(self):
+        self.fs.create_file('foo')
+        self.assertTrue(
+            pyfakefs.tests.import_as_example.check_if_exists5('foo'))
+
+    def test_fake_path_exists6(self):
+        self.fs.create_file('foo')
+        self.assertTrue(
+            pyfakefs.tests.import_as_example.check_if_exists6('foo'))
+
+    def test_fake_path_exists7(self):
+        self.fs.create_file('foo')
+        self.assertTrue(
+            pyfakefs.tests.import_as_example.check_if_exists7('foo'))
+
     def test_open_fails(self):
         with self.assertRaises(OSError):
             pyfakefs.tests.import_as_example.open_this_file()
@@ -288,11 +329,46 @@ class AdditionalSkipNamesTest(fake_filesystem_unittest.TestCase):
         self.assertTrue(
             pyfakefs.tests.import_as_example.exists_this_file())
 
+    def test_fake_path_does_not_exist1(self):
+        self.fs.create_file('foo')
+        self.assertFalse(
+            pyfakefs.tests.import_as_example.check_if_exists1('foo'))
+
+    def test_fake_path_does_not_exist2(self):
+        self.fs.create_file('foo')
+        self.assertFalse(
+            pyfakefs.tests.import_as_example.check_if_exists2('foo'))
+
+    def test_fake_path_does_not_exist3(self):
+        self.fs.create_file('foo')
+        self.assertFalse(
+            pyfakefs.tests.import_as_example.check_if_exists3('foo'))
+
+    def test_fake_path_does_not_exist4(self):
+        self.fs.create_file('foo')
+        self.assertFalse(
+            pyfakefs.tests.import_as_example.check_if_exists4('foo'))
+
+    def test_fake_path_does_not_exist5(self):
+        self.fs.create_file('foo')
+        self.assertFalse(
+            pyfakefs.tests.import_as_example.check_if_exists5('foo'))
+
+    def test_fake_path_does_not_exist6(self):
+        self.fs.create_file('foo')
+        self.assertFalse(
+            pyfakefs.tests.import_as_example.check_if_exists6('foo'))
+
+    def test_fake_path_does_not_exist7(self):
+        self.fs.create_file('foo')
+        self.assertFalse(
+            pyfakefs.tests.import_as_example.check_if_exists7('foo'))
+
     def test_open_succeeds(self):
         pyfakefs.tests.import_as_example.open_this_file()
 
-    # def test_path_succeeds(self):
-    #     pyfakefs.tests.import_as_example.return_this_file_path()
+    def test_path_succeeds(self):
+        pyfakefs.tests.import_as_example.return_this_file_path()
 
 
 class AdditionalSkipNamesModuleTest(fake_filesystem_unittest.TestCase):
@@ -307,11 +383,46 @@ class AdditionalSkipNamesModuleTest(fake_filesystem_unittest.TestCase):
         self.assertTrue(
             pyfakefs.tests.import_as_example.exists_this_file())
 
+    def test_fake_path_does_not_exist1(self):
+        self.fs.create_file('foo')
+        self.assertFalse(
+            pyfakefs.tests.import_as_example.check_if_exists1('foo'))
+
+    def test_fake_path_does_not_exist2(self):
+        self.fs.create_file('foo')
+        self.assertFalse(
+            pyfakefs.tests.import_as_example.check_if_exists2('foo'))
+
+    def test_fake_path_does_not_exist3(self):
+        self.fs.create_file('foo')
+        self.assertFalse(
+            pyfakefs.tests.import_as_example.check_if_exists3('foo'))
+
+    def test_fake_path_does_not_exist4(self):
+        self.fs.create_file('foo')
+        self.assertFalse(
+            pyfakefs.tests.import_as_example.check_if_exists4('foo'))
+
+    def test_fake_path_does_not_exist5(self):
+        self.fs.create_file('foo')
+        self.assertFalse(
+            pyfakefs.tests.import_as_example.check_if_exists5('foo'))
+
+    def test_fake_path_does_not_exist6(self):
+        self.fs.create_file('foo')
+        self.assertFalse(
+            pyfakefs.tests.import_as_example.check_if_exists6('foo'))
+
+    def test_fake_path_does_not_exist7(self):
+        self.fs.create_file('foo')
+        self.assertFalse(
+            pyfakefs.tests.import_as_example.check_if_exists7('foo'))
+
     def test_open_succeeds(self):
         pyfakefs.tests.import_as_example.open_this_file()
 
-    # def test_path_succeeds(self):
-    #     pyfakefs.tests.import_as_example.return_this_file_path()
+    def test_path_succeeds(self):
+        pyfakefs.tests.import_as_example.return_this_file_path()
 
 
 class FakeExampleModule:

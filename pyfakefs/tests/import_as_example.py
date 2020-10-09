@@ -15,6 +15,7 @@ Example module that is used for testing modules that import file system modules
 to be patched under another name.
 """
 import os as my_os
+import pathlib
 import sys
 from builtins import open as bltn_open
 from io import open as io_open
@@ -36,10 +37,9 @@ def check_if_exists2(filepath):
     return path.exists(filepath)
 
 
-if Path:
-    def check_if_exists3(filepath):
-        # tests patching Path imported from pathlib
-        return Path(filepath).exists()
+def check_if_exists3(filepath):
+    # tests patching Path imported from pathlib
+    return Path(filepath).exists()
 
 
 def check_if_exists4(filepath, file_exists=my_os.path.exists):
@@ -54,6 +54,11 @@ def check_if_exists5(filepath):
 def check_if_exists6(filepath):
     # tests patching `exists` imported from os.path as other name
     return my_exists(filepath)
+
+
+def check_if_exists7(filepath):
+    # tests patching pathlib
+    return pathlib.Path(filepath).exists()
 
 
 def file_stat1(filepath):

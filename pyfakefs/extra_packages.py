@@ -20,11 +20,9 @@ try:
     pathlib = pathlib2
 except ImportError:
     pathlib2 = None
+    import pathlib
 
-    try:
-        import pathlib
-    except ImportError:
-        pathlib = None
+    pathlib = pathlib
 
 try:
     import scandir

@@ -13,6 +13,8 @@ The released versions correspond to PyPi releases.
 #### Fixes
   * do not call fake `open` if called from skipped module  
     (see [#552](../../issues/552))
+  * do not call fake `pathlib.Path` if called from skipped module  
+    (see [#553](../../issues/553))
   * fixed handling of `additional_skip_names` with several module components
   * allow to open existing pipe file descriptor
     (see [#493](../../issues/493))

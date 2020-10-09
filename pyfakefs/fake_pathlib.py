@@ -28,20 +28,13 @@ Note: as the implementation is based on FakeFilesystem, all faked classes
 (including PurePosixPath, PosixPath, PureWindowsPath and WindowsPath)
 get the properties of the underlying fake filesystem.
 """
+import errno
 import fnmatch
+import functools
 import os
 import re
-
-try:
-    from urllib.parse import quote_from_bytes as urlquote_from_bytes
-except ImportError:
-    from urllib import quote as urlquote_from_bytes
-
 import sys
-
-import functools
-
-import errno
+from urllib.parse import quote_from_bytes as urlquote_from_bytes
 
 from pyfakefs import fake_scandir
 from pyfakefs.extra_packages import use_scandir, pathlib, pathlib2
@@ -443,10 +436,7 @@ class _FakePosixFlavour(_FakeFlavour):
         return re.compile(fnmatch.translate(pattern)).fullmatch
 
 
-path_module = pathlib.Path
-
-
-class FakePath(path_module):
+class FakePath(pathlib.Path):
     """Replacement for pathlib.Path. Reimplement some methods to use
     fake filesystem. The rest of the methods work as they are, as they will
     use the fake accessor.
@@ -694,7 +684,7 @@ class FakePathlibPathModule:
     """Patches `pathlib.Path` by passing all calls to FakePathlibModule."""
     fake_pathlib = None
 
-    def __init__(self, filesystem):
+    def __init__(self, filesystem=None):
         if self.fake_pathlib is None:
             self.__class__.fake_pathlib = FakePathlibModule(filesystem)
 
@@ -703,3 +693,73 @@ class FakePathlibPathModule:
 
     def __getattr__(self, name):
         return getattr(self.fake_pathlib.Path, name)
+
+
+class RealPath(pathlib.Path):
+    """Replacement for `pathlib.Path` if it shall not be faked.
+    Needed because `Path` in `pathlib` is always faked, even if `pathlib`
+    itself is not.
+    """
+
+    def __new__(cls, *args, **kwargs):
+        """Creates the correct subclass based on OS."""
+        if cls is RealPathlibModule.Path:
+            cls = (RealPathlibModule.WindowsPath if os.name == 'nt'
+                   else RealPathlibModule.PosixPath)
+        self = cls._from_parts(args, init=True)
+        return self
+
+
+class RealPathlibModule:
+    """Used to replace `pathlib` for skipped modules.
+    As the original `pathlib` is always patched to use the fake path,
+    we need to provide a version which does not do this.
+    """
+    PurePath = pathlib.PurePath
+
+    def __init__(self):
+        RealPathlibModule.PureWindowsPath._flavour = pathlib._WindowsFlavour()
+        RealPathlibModule.PurePosixPath._flavour = pathlib._PosixFlavour()
+        self._pathlib_module = pathlib
+
+    class PurePosixPath(PurePath):
+        """A subclass of PurePath, that represents Posix filesystem paths"""
+        __slots__ = ()
+
+    class PureWindowsPath(PurePath):
+        """A subclass of PurePath, that represents Windows filesystem paths"""
+        __slots__ = ()
+
+    if sys.platform == 'win32':
+        class WindowsPath(RealPath, PureWindowsPath):
+            """A subclass of Path and PureWindowsPath that represents
+            concrete Windows filesystem paths.
+            """
+            __slots__ = ()
+    else:
+        class PosixPath(RealPath, PurePosixPath):
+            """A subclass of Path and PurePosixPath that represents
+            concrete non-Windows filesystem paths.
+            """
+            __slots__ = ()
+
+    Path = RealPath
+
+    def __getattr__(self, name):
+        """Forwards any unfaked calls to the standard pathlib module."""
+        return getattr(self._pathlib_module, name)
+
+
+class RealPathlibPathModule:
+    """Patches `pathlib.Path` by passing all calls to RealPathlibModule."""
+    real_pathlib = None
+
+    def __init__(self):
+        if self.real_pathlib is None:
+            self.__class__.real_pathlib = RealPathlibModule()
+
+    def __call__(self, *args, **kwargs):
+        return self.real_pathlib.Path(*args, **kwargs)
+
+    def __getattr__(self, name):
+        return getattr(self.real_pathlib.Path, name)

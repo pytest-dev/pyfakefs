@@ -404,6 +404,7 @@ class Patcher:
             self._skip_names.update(skip_names)
 
         self._fake_module_classes = {}
+        self._unfaked_module_classes = {}
         self._class_modules = {}
         self._init_fake_module_classes()
 
@@ -424,12 +425,14 @@ class Patcher:
 
         # Attributes set by _refresh()
         self._modules = {}
+        self._skipped_modules = {}
         self._fct_modules = {}
         self._def_functions = []
         self._open_functions = {}
         self._stubs = None
         self.fs = None
         self.fake_modules = {}
+        self.unfaked_modules = {}
         self._dyn_patcher = None
 
         # _isStale is set by tearDown(), reset by _refresh()
@@ -458,12 +461,18 @@ class Patcher:
             self._fake_module_classes[
                 'pathlib'] = fake_pathlib.FakePathlibModule
             self._class_modules['Path'].append('pathlib')
+            self._unfaked_module_classes[
+                'pathlib'] = fake_pathlib.RealPathlibModule
         if pathlib2:
             self._fake_module_classes[
                 'pathlib2'] = fake_pathlib.FakePathlibModule
             self._class_modules['Path'].append('pathlib2')
+            self._unfaked_module_classes[
+                'pathlib2'] = fake_pathlib.RealPathlibModule
         self._fake_module_classes[
             'Path'] = fake_pathlib.FakePathlibPathModule
+        self._unfaked_module_classes[
+            'Path'] = fake_pathlib.RealPathlibPathModule
         if use_scandir:
             self._fake_module_classes[
                 'scandir'] = fake_scandir.FakeScanDirModule
@@ -510,6 +519,16 @@ class Patcher:
                     mod.__name__ in module_names
                     or inspect.isclass(mod) and
                     mod.__module__ in self._class_modules.get(name, []))
+        except Exception:
+            # handle cases where the module has no __name__ or __module__
+            # attribute - see #460, and any other exception triggered
+            # by inspect functions
+            return False
+
+    def _is_skipped_fs_module(self, mod, name, module_names):
+        try:
+            return (inspect.ismodule(mod) and
+                    mod.__name__ in module_names)
         except Exception:
             # handle cases where the module has no __name__ or __module__
             # attribute - see #460, and any other exception triggered
@@ -569,10 +588,7 @@ class Patcher:
         module_names = list(self._fake_module_classes.keys()) + [PATH_MODULE]
         for name, module in list(sys.modules.items()):
             try:
-                if (module in self.SKIPMODULES or
-                        not inspect.ismodule(module) or
-                        any([sn.startswith(module.__name__)
-                             for sn in self._skip_names])):
+                if module in self.SKIPMODULES or not inspect.ismodule(module):
                     continue
             except Exception:
                 # workaround for some py (part of pytest) versions
@@ -580,6 +596,8 @@ class Patcher:
                 # see https://github.com/pytest-dev/py/issues/73
                 # and any other exception triggered by inspect.ismodule
                 continue
+            skipped = (any([sn.startswith(module.__name__)
+                            for sn in self._skip_names]))
             module_items = module.__dict__.copy().items()
 
             # suppress specific pytest warning - see #466
@@ -593,9 +611,15 @@ class Patcher:
                 modules = {name: mod for name, mod in module_items
                            if self._is_fs_module(mod, name, module_names)}
 
+            if skipped:
+                for name, mod in modules.items():
+                    self._skipped_modules.setdefault(name, set()).add(
+                        (module, mod.__name__))
+                continue
+
             for name, mod in modules.items():
-                self._modules.setdefault(name, set()).add((module,
-                                                           mod.__name__))
+                self._modules.setdefault(name, set()).add(
+                    (module, mod.__name__))
             functions = {name: fct for name, fct in
                          module_items
                          if self._is_fs_function(fct)}
@@ -623,6 +647,8 @@ class Patcher:
                 self.fake_modules[name].skip_names = self._skip_names
         self.fake_modules[PATH_MODULE] = self.fake_modules['os'].path
         self.fake_open = fake_filesystem.FakeFileOpen(self.fs)
+        for name in self._unfaked_module_classes:
+            self.unfaked_modules[name] = self._unfaked_module_classes[name]()
 
         self._isStale = False
 
@@ -655,35 +681,48 @@ class Patcher:
         if not self._patching:
             self._patching = True
 
-            for name, modules in self._modules.items():
-                for module, attr in modules:
-                    self._stubs.smart_set(
-                        module, name, self.fake_modules[attr])
-            for (name, ft_name, ft_mod), modules in self._fct_modules.items():
-                method, mod_name = self._fake_module_functions[ft_name][ft_mod]
-                fake_module = self.fake_modules[mod_name]
-                attr = method.__get__(fake_module, fake_module.__class__)
-                for module in modules:
-                    self._stubs.smart_set(module, name, attr)
-
-            for (fct, idx, ft) in self._def_functions:
-                method, mod_name = self._fake_module_functions[
-                    ft.__name__][ft.__module__]
-                fake_module = self.fake_modules[mod_name]
-                attr = method.__get__(fake_module, fake_module.__class__)
-                new_defaults = []
-                for i, d in enumerate(fct.__defaults__):
-                    if i == idx:
-                        new_defaults.append(attr)
-                    else:
-                        new_defaults.append(d)
-                fct.__defaults__ = tuple(new_defaults)
+            self.patch_modules()
+            self.patch_functions()
+            self.patch_defaults()
 
             self._dyn_patcher = DynamicPatcher(self)
             sys.meta_path.insert(0, self._dyn_patcher)
             for module in self.modules_to_reload:
                 if module.__name__ in sys.modules:
                     reload(module)
+
+    def patch_functions(self):
+        for (name, ft_name, ft_mod), modules in self._fct_modules.items():
+            method, mod_name = self._fake_module_functions[ft_name][ft_mod]
+            fake_module = self.fake_modules[mod_name]
+            attr = method.__get__(fake_module, fake_module.__class__)
+            for module in modules:
+                self._stubs.smart_set(module, name, attr)
+
+    def patch_modules(self):
+        for name, modules in self._modules.items():
+            for module, attr in modules:
+                self._stubs.smart_set(
+                    module, name, self.fake_modules[attr])
+        for name, modules in self._skipped_modules.items():
+            for module, attr in modules:
+                if attr in self.unfaked_modules:
+                    self._stubs.smart_set(
+                        module, name, self.unfaked_modules[attr])
+
+    def patch_defaults(self):
+        for (fct, idx, ft) in self._def_functions:
+            method, mod_name = self._fake_module_functions[
+                ft.__name__][ft.__module__]
+            fake_module = self.fake_modules[mod_name]
+            attr = method.__get__(fake_module, fake_module.__class__)
+            new_defaults = []
+            for i, d in enumerate(fct.__defaults__):
+                if i == idx:
+                    new_defaults.append(attr)
+                else:
+                    new_defaults.append(d)
+            fct.__defaults__ = tuple(new_defaults)
 
     def replace_globs(self, globs_):
         globs = globs_.copy()
