@@ -46,6 +46,9 @@ import tokenize
 import unittest
 import warnings
 
+import py
+import pytest
+
 from pyfakefs.deprecator import Deprecator
 from pyfakefs.fake_filesystem import set_uid, set_gid, reset_ids, PatchMode
 from pyfakefs.helpers import IS_PYPY
@@ -341,6 +344,8 @@ class Patcher:
     '''Stub nothing that is imported within these modules.
     `sys` is included to prevent `sys.path` from being stubbed with the fake
     `os.path`.
+    The `pytest` and `py` modules are used by pytest and have to access the
+    real file system.
     The `linecache` module is used to read the test file in case of test
     failure to get traceback information before test tear down.
     In order to make sure that reading the test file is not faked,
@@ -349,7 +354,7 @@ class Patcher:
     '''
     SKIPMODULES = {
         None, fake_filesystem, fake_filesystem_shutil,
-        sys, linecache, tokenize
+        sys, linecache, tokenize, py, pytest
     }
     assert None in SKIPMODULES, ("sys.modules contains 'None' values;"
                                  " must skip them.")
