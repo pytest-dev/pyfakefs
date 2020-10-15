@@ -11,6 +11,8 @@ The released versions correspond to PyPi releases.
     (see [#554](../../issues/554))
     
 #### Fixes
+  * fix handling of real files in combination with `home` if simulating
+    Posix under Windows (see [#558](../../issues/558))
   * do not call fake `open` if called from skipped module  
     (see [#552](../../issues/552))
   * do not call fake `pathlib.Path` if called from skipped module  

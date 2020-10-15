@@ -28,6 +28,7 @@ import tempfile
 import unittest
 import warnings
 from distutils.dir_util import copy_tree, remove_tree
+from pathlib import Path
 from unittest import TestCase
 
 import pyfakefs.tests.import_as_example
@@ -741,6 +742,25 @@ class AutoPatchOpenCodeTestCase(fake_filesystem_unittest.TestCase):
 
     def test_run_module(self):
         load_configs([self.config_module])
+
+
+class TestOtherFS(fake_filesystem_unittest.TestCase):
+    def setUp(self):
+        self.setUpPyfakefs()
+        self.fs.is_windows_fs = os.name != 'nt'
+
+    def test_real_file_with_home(self):
+        """Regression test for #558"""
+        self.fs.add_real_file(__file__)
+        with open(__file__) as f:
+            self.assertTrue(f.read())
+        home = Path.home()
+        if sys.version_info < (3, 6):
+            # fspath support since Python 3.6
+            home = str(home)
+        os.chdir(home)
+        with open(__file__) as f:
+            self.assertTrue(f.read())
 
 
 if __name__ == "__main__":

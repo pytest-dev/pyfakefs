@@ -1668,7 +1668,10 @@ class FakeFilesystem:
             the path starts with a drive letter.
         """
         colon = matching_string(file_path, ':')
-        return (self.is_windows_fs and len(file_path) >= 2 and
+        # we also allow a drive letter if only the real fs is Windows
+        # to allow for real path names
+        return ((self.is_windows_fs or os.name == 'nt') and
+                len(file_path) >= 2 and
                 file_path[:1].isalpha and (file_path[1:2]) == colon)
 
     def _starts_with_root_path(self, file_path):

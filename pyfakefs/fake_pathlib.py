@@ -449,7 +449,8 @@ class FakePath(pathlib.Path):
     def __new__(cls, *args, **kwargs):
         """Creates the correct subclass based on OS."""
         if cls is FakePathlibModule.Path:
-            cls = (FakePathlibModule.WindowsPath if os.name == 'nt'
+            cls = (FakePathlibModule.WindowsPath
+                   if cls.filesystem.is_windows_fs
                    else FakePathlibModule.PosixPath)
         self = cls._from_parts(args, init=True)
         return self
@@ -574,8 +575,15 @@ class FakePath(pathlib.Path):
         """Return a new path pointing to the user's home directory (as
         returned by os.path.expanduser('~')).
         """
-        return cls(cls()._flavour.gethomedir(None).
-                   replace(os.sep, cls.filesystem.path_separator))
+        home = os.path.expanduser("~")
+        if cls.filesystem.is_windows_fs != (os.name == 'nt'):
+            username = os.path.split(home)[1]
+            if cls.filesystem.is_windows_fs:
+                home = os.path.join('C:', 'Users', username)
+            else:
+                home = os.path.join('home', username)
+            cls.filesystem.create_dir(home)
+        return cls(home.replace(os.sep, cls.filesystem.path_separator))
 
     def samefile(self, other_path):
         """Return whether other_path is the same or not as this file
@@ -660,18 +668,17 @@ class FakePathlibModule:
         """A subclass of PurePath, that represents Windows filesystem paths"""
         __slots__ = ()
 
-    if sys.platform == 'win32':
-        class WindowsPath(FakePath, PureWindowsPath):
-            """A subclass of Path and PureWindowsPath that represents
-            concrete Windows filesystem paths.
-            """
-            __slots__ = ()
-    else:
-        class PosixPath(FakePath, PurePosixPath):
-            """A subclass of Path and PurePosixPath that represents
-            concrete non-Windows filesystem paths.
-            """
-            __slots__ = ()
+    class WindowsPath(FakePath, PureWindowsPath):
+        """A subclass of Path and PureWindowsPath that represents
+        concrete Windows filesystem paths.
+        """
+        __slots__ = ()
+
+    class PosixPath(FakePath, PurePosixPath):
+        """A subclass of Path and PurePosixPath that represents
+        concrete non-Windows filesystem paths.
+        """
+        __slots__ = ()
 
     Path = FakePath
 

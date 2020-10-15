@@ -66,14 +66,21 @@ class FakePathlibInitializationTest(RealPathlibTestCase):
             self.assertTrue(isinstance(path, self.pathlib.WindowsPath))
             self.assertTrue(isinstance(path, self.pathlib.PureWindowsPath))
             self.assertTrue(self.pathlib.PurePosixPath())
-            with self.assertRaises(NotImplementedError):
-                self.pathlib.PosixPath()
+            # in fake fs, we allow to use the other OS implementation
+            if self.use_real_fs():
+                with self.assertRaises(NotImplementedError):
+                    self.pathlib.PosixPath()
+            else:
+                self.assertTrue(self.pathlib.PosixPath())
         else:
             self.assertTrue(isinstance(path, self.pathlib.PosixPath))
             self.assertTrue(isinstance(path, self.pathlib.PurePosixPath))
             self.assertTrue(self.pathlib.PureWindowsPath())
-            with self.assertRaises(NotImplementedError):
-                self.pathlib.WindowsPath()
+            if self.use_real_fs():
+                with self.assertRaises(NotImplementedError):
+                    self.pathlib.WindowsPath()
+            else:
+                self.assertTrue(self.pathlib.WindowsPath())
 
     def test_init_with_segments(self):
         """Basic initialization tests - taken from pathlib.Path documentation
@@ -477,13 +484,12 @@ class FakePathlibFileObjectPropertyTest(RealPathlibTestCase):
 
     def test_home(self):
         if is_windows:
-            self.assertEqual(self.path.home(),
-                             self.path(
-                                 os.environ['USERPROFILE'].replace('\\',
-                                                                   '/')))
+            self.assertEqual(self.path(
+                os.environ['USERPROFILE'].replace('\\', '/')),
+                self.path.home())
         else:
-            self.assertEqual(self.path.home(),
-                             self.path(os.environ['HOME']))
+            self.assertEqual(self.path(os.environ['HOME']),
+                             self.path.home())
 
 
 class RealPathlibFileObjectPropertyTest(FakePathlibFileObjectPropertyTest):
