@@ -671,6 +671,35 @@ Here is the same code using a context manager:
         assert not os.path.exists(real_temp_file.name)
         assert os.path.exists(fake_temp_file.name)
 
+Simulating other file systems
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Pyfakefs supports Linux, MacOS and Windows operating systems. By default,
+the file system of the OS where the tests run is assumed, but it is possible
+to simulate other file systems to an extent. ``pyfakefs.FakeFilesystem`` has
+a few attributes that can be changed to simulate another file system:
+
+  - ``is windows_fs`` -  if ``True`` a Windows file system (NTFS) is assumed
+  - ``is_macos`` - if ``True`` and ``is windows_fs`` is ``False``, the
+    standard MacOS file system (HFS+) is assumed
+  - if ``is windows_fs`` and ``is_macos`` are ``False``, a Linux file system
+    (something like ext3) is assumed
+  - ``is_case_sensitive`` is set to ``True`` under Linux and to ``False``
+    under Windows and MacOS by default - you can change it to change the
+    respective behavior
+  - ``path_separator`` is set to ``\`` under Windows and to ``/`` under Posix,
+    ``alternative_path_separator`` is set to ``/`` under Windows and to
+    ``None`` under Posix--these can also be adapted if needed
+
+The following test works both under Windows and Linux:
+
+.. code:: python
+
+  def test_windows_paths(fs):
+      fs.is_windows_fs = True
+      path = "C:/foo/bar"
+      assert os.path.splitdrive(path) == ("C:", "/foo/bar")
+
+
 Troubleshooting
 ---------------
 
