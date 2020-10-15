@@ -650,6 +650,35 @@ which encapsulates the calls to <code class="docutils literal notranslate"><span
 </pre></div>
 </div>
 </div>
+<div class="section" id="simulating-other-file-systems">
+<h3>Simulating other file systems<a class="headerlink" href="#simulating-other-file-systems" title="Permalink to this headline">¶</a></h3>
+<p>Pyfakefs supports Linux, MacOS and Windows operating systems. By default,
+the file system of the OS where the tests run is assumed, but it is possible
+to simulate other file systems to an extent. <code class="docutils literal notranslate"><span class="pre">pyfakefs.FakeFilesystem</span></code> has
+a few attributes that can be changed to simulate another file system:</p>
+<blockquote>
+<div><ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">is</span> <span class="pre">windows_fs</span></code> -  if <code class="docutils literal notranslate"><span class="pre">True</span></code> a Windows file system (NTFS) is assumed</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">is_macos</span></code> - if <code class="docutils literal notranslate"><span class="pre">True</span></code> and <code class="docutils literal notranslate"><span class="pre">is</span> <span class="pre">windows_fs</span></code> is <code class="docutils literal notranslate"><span class="pre">False</span></code>, the
+standard MacOS file system (HFS+) is assumed</p></li>
+<li><p>if <code class="docutils literal notranslate"><span class="pre">is</span> <span class="pre">windows_fs</span></code> and <code class="docutils literal notranslate"><span class="pre">is_macos</span></code> are <code class="docutils literal notranslate"><span class="pre">False</span></code>, a Linux file system
+(something like ext3) is assumed</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">is_case_sensitive</span></code> is set to <code class="docutils literal notranslate"><span class="pre">True</span></code> under Linux and to <code class="docutils literal notranslate"><span class="pre">False</span></code>
+under Windows and MacOS by default - you can change it to change the
+respective behavior</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">path_separator</span></code> is set to <code class="docutils literal notranslate"><span class="pre">\</span></code> under Windows and to <code class="docutils literal notranslate"><span class="pre">/</span></code> under Posix,
+<code class="docutils literal notranslate"><span class="pre">alternative_path_separator</span></code> is set to <code class="docutils literal notranslate"><span class="pre">/</span></code> under Windows and to
+<code class="docutils literal notranslate"><span class="pre">None</span></code> under Posix–these can also be adapted if needed</p></li>
+</ul>
+</div></blockquote>
+<p>The following test works both under Windows and Linux:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">def</span> <span class="nf">test_windows_paths</span><span class="p">(</span><span class="n">fs</span><span class="p">):</span>
+    <span class="n">fs</span><span class="o">.</span><span class="n">is_windows_fs</span> <span class="o">=</span> <span class="bp">True</span>
+    <span class="n">path</span> <span class="o">=</span> <span class="s2">&quot;C:/foo/bar&quot;</span>
+    <span class="k">assert</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">splitdrive</span><span class="p">(</span><span class="n">path</span><span class="p">)</span> <span class="o">==</span> <span class="p">(</span><span class="s2">&quot;C:&quot;</span><span class="p">,</span> <span class="s2">&quot;/foo/bar&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
 </div>
 <div class="section" id="troubleshooting">
 <h2>Troubleshooting<a class="headerlink" href="#troubleshooting" title="Permalink to this headline">¶</a></h2>
@@ -796,6 +825,7 @@ described above.</p>
 <li><a class="reference internal" href="#handling-mount-points">Handling mount points</a></li>
 <li><a class="reference internal" href="#setting-the-file-system-size">Setting the file system size</a></li>
 <li><a class="reference internal" href="#suspending-patching">Suspending patching</a></li>
+<li><a class="reference internal" href="#simulating-other-file-systems">Simulating other file systems</a></li>
 </ul>
 </li>
 <li><a class="reference internal" href="#troubleshooting">Troubleshooting</a><ul>
@@ -859,7 +889,7 @@ described above.</p>
         &#169; Copyright 2009 Google Inc. All Rights Reserved.
 © Copyright 2014 Altera Corporation. All Rights Reserved.
 © Copyright 2014-2020 John McGehee.
-      Last updated on Oct 10, 2020.
+      Last updated on Oct 15, 2020.
     </div>
   </body>
 </html>
