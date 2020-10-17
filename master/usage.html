@@ -654,8 +654,14 @@ which encapsulates the calls to <code class="docutils literal notranslate"><span
 <h3>Simulating other file systems<a class="headerlink" href="#simulating-other-file-systems" title="Permalink to this headline">¶</a></h3>
 <p>Pyfakefs supports Linux, MacOS and Windows operating systems. By default,
 the file system of the OS where the tests run is assumed, but it is possible
-to simulate other file systems to an extent. <code class="docutils literal notranslate"><span class="pre">pyfakefs.FakeFilesystem</span></code> has
-a few attributes that can be changed to simulate another file system:</p>
+to simulate other file systems to some extent. To set a specific file
+system, you can change <code class="docutils literal notranslate"><span class="pre">pyfakefs.FakeFilesystem.os</span></code> to one of
+<code class="docutils literal notranslate"><span class="pre">OSType.LINUX</span></code>, <code class="docutils literal notranslate"><span class="pre">OSType.MACOS</span></code> and <code class="docutils literal notranslate"><span class="pre">OSType.WINDOWS</span></code>. On doing so, the
+behavior of pyfakefs is adapted to the respective file system. Note that
+setting this causes the fake file system to be reset, so you should call it
+before adding any files.</p>
+<p>Setting the <code class="docutils literal notranslate"><span class="pre">os</span></code> attributes changes a number of <code class="docutils literal notranslate"><span class="pre">pyfakefs.FakeFilesystem</span></code>
+attributes, which can also be set separately if needed:</p>
 <blockquote>
 <div><ul class="simple">
 <li><p><code class="docutils literal notranslate"><span class="pre">is</span> <span class="pre">windows_fs</span></code> -  if <code class="docutils literal notranslate"><span class="pre">True</span></code> a Windows file system (NTFS) is assumed</p></li>
@@ -672,10 +678,13 @@ respective behavior</p></li>
 </ul>
 </div></blockquote>
 <p>The following test works both under Windows and Linux:</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">def</span> <span class="nf">test_windows_paths</span><span class="p">(</span><span class="n">fs</span><span class="p">):</span>
-    <span class="n">fs</span><span class="o">.</span><span class="n">is_windows_fs</span> <span class="o">=</span> <span class="bp">True</span>
-    <span class="n">path</span> <span class="o">=</span> <span class="s2">&quot;C:/foo/bar&quot;</span>
-    <span class="k">assert</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">splitdrive</span><span class="p">(</span><span class="n">path</span><span class="p">)</span> <span class="o">==</span> <span class="p">(</span><span class="s2">&quot;C:&quot;</span><span class="p">,</span> <span class="s2">&quot;/foo/bar&quot;</span><span class="p">)</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">pyfakefs.fake_filesystem</span> <span class="kn">import</span> <span class="n">OSType</span>
+
+<span class="k">def</span> <span class="nf">test_windows_paths</span><span class="p">(</span><span class="n">fs</span><span class="p">):</span>
+    <span class="n">fs</span><span class="o">.</span><span class="n">os</span> <span class="o">=</span> <span class="n">OSType</span><span class="o">.</span><span class="n">WINDOWS</span>
+    <span class="k">assert</span> <span class="sa">r</span><span class="s2">&quot;C:\foo\bar&quot;</span> <span class="o">==</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="s1">&#39;C:</span><span class="se">\\</span><span class="s1">&#39;</span><span class="p">,</span> <span class="s1">&#39;foo&#39;</span><span class="p">,</span> <span class="s1">&#39;bar&#39;</span><span class="p">))</span>
+    <span class="k">assert</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">splitdrive</span><span class="p">(</span><span class="sa">r</span><span class="s2">&quot;C:\foo\bar&quot;</span><span class="p">)</span> <span class="o">==</span> <span class="p">(</span><span class="s2">&quot;C:&quot;</span><span class="p">,</span> <span class="sa">r</span><span class="s2">&quot;\foo\bar&quot;</span><span class="p">)</span>
+    <span class="k">assert</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">ismount</span><span class="p">(</span><span class="s2">&quot;C:&quot;</span><span class="p">)</span>
 </pre></div>
 </div>
 </div>
@@ -889,7 +898,7 @@ described above.</p>
         &#169; Copyright 2009 Google Inc. All Rights Reserved.
 © Copyright 2014 Altera Corporation. All Rights Reserved.
 © Copyright 2014-2020 John McGehee.
-      Last updated on Oct 15, 2020.
+      Last updated on Oct 17, 2020.
     </div>
   </body>
 </html>
