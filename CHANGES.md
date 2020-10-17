@@ -12,6 +12,7 @@ The released versions correspond to PyPi releases.
   * add possibility to set file system OS via `FakeFilesystem.os` 
     
 #### Fixes
+  * fix check for link in `os.walk` (see [#559](../../issues/559))
   * fix handling of real files in combination with `home` if simulating
     Posix under Windows (see [#558](../../issues/558))
   * do not call fake `open` if called from skipped module  

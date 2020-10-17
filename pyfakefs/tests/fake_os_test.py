@@ -4572,6 +4572,20 @@ class FakeOsModuleWalkTest(FakeOsModuleTestBase):
                                self.os.path.join(base_dir, 'created_link'),
                                followlinks=True)
 
+    def test_walk_linked_file_in_subdir(self):
+        # regression test for #559 (tested for link on incomplete path)
+        self.check_posix_only()
+        # need to have a top-level link to reproduce the bug - skip real fs
+        self.skip_real_fs()
+        file_path = '/foo/bar/baz'
+        self.create_file(file_path)
+        self.create_symlink('bar', file_path)
+        expected = [
+            ('/foo', ['bar'], []),
+            ('/foo/bar', [], ['baz'])
+        ]
+        self.assertWalkResults(expected, '/foo')
+
     def test_base_dirpath(self):
         # regression test for #512
         file_path = self.make_path('foo', 'bar', 'baz')

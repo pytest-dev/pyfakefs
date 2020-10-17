@@ -241,12 +241,11 @@ def walk(filesystem, top, topdown=True, onerror=None, followlinks=False):
                 yield top_contents
 
             for directory in top_contents[1]:
-                if not followlinks and filesystem.islink(directory):
+                path = filesystem.joinpaths(top_dir, directory)
+                if not followlinks and filesystem.islink(path):
                     continue
-                for contents in do_walk(filesystem.joinpaths(top_dir,
-                                                             directory)):
+                for contents in do_walk(path):
                     yield contents
-
             if not topdown:
                 yield top_contents
 
