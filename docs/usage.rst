@@ -675,8 +675,15 @@ Simulating other file systems
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Pyfakefs supports Linux, MacOS and Windows operating systems. By default,
 the file system of the OS where the tests run is assumed, but it is possible
-to simulate other file systems to an extent. ``pyfakefs.FakeFilesystem`` has
-a few attributes that can be changed to simulate another file system:
+to simulate other file systems to some extent. To set a specific file
+system, you can change ``pyfakefs.FakeFilesystem.os`` to one of
+``OSType.LINUX``, ``OSType.MACOS`` and ``OSType.WINDOWS``. On doing so, the
+behavior of pyfakefs is adapted to the respective file system. Note that
+setting this causes the fake file system to be reset, so you should call it
+before adding any files.
+
+Setting the ``os`` attributes changes a number of ``pyfakefs.FakeFilesystem``
+attributes, which can also be set separately if needed:
 
   - ``is windows_fs`` -  if ``True`` a Windows file system (NTFS) is assumed
   - ``is_macos`` - if ``True`` and ``is windows_fs`` is ``False``, the
@@ -694,11 +701,13 @@ The following test works both under Windows and Linux:
 
 .. code:: python
 
-  def test_windows_paths(fs):
-      fs.is_windows_fs = True
-      path = "C:/foo/bar"
-      assert os.path.splitdrive(path) == ("C:", "/foo/bar")
+  from pyfakefs.fake_filesystem import OSType
 
+  def test_windows_paths(fs):
+      fs.os = OSType.WINDOWS
+      assert r"C:\foo\bar" == os.path.join('C:\\', 'foo', 'bar'))
+      assert os.path.splitdrive(r"C:\foo\bar") == ("C:", r"\foo\bar")
+      assert os.path.ismount("C:")
 
 Troubleshooting
 ---------------

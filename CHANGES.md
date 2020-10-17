@@ -9,6 +9,7 @@ The released versions correspond to PyPi releases.
   * add possibility to patch `io.open_code` using the new argument 
     `patch_open_code` (since Python 3.8)
     (see [#554](../../issues/554))
+  * add possibility to set file system OS via `FakeFilesystem.os` 
     
 #### Fixes
   * fix handling of real files in combination with `home` if simulating

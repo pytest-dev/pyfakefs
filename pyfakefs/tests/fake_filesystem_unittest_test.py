@@ -34,6 +34,7 @@ from unittest import TestCase
 import pyfakefs.tests.import_as_example
 from pyfakefs import fake_filesystem_unittest, fake_filesystem
 from pyfakefs.extra_packages import pathlib
+from pyfakefs.fake_filesystem import OSType
 from pyfakefs.fake_filesystem_unittest import (
     Patcher, Pause, patchfs, PatchMode
 )
@@ -747,10 +748,10 @@ class AutoPatchOpenCodeTestCase(fake_filesystem_unittest.TestCase):
 class TestOtherFS(fake_filesystem_unittest.TestCase):
     def setUp(self):
         self.setUpPyfakefs()
-        self.fs.is_windows_fs = os.name != 'nt'
 
     def test_real_file_with_home(self):
         """Regression test for #558"""
+        self.fs.is_windows_fs = os.name != 'nt'
         self.fs.add_real_file(__file__)
         with open(__file__) as f:
             self.assertTrue(f.read())
@@ -761,6 +762,39 @@ class TestOtherFS(fake_filesystem_unittest.TestCase):
         os.chdir(home)
         with open(__file__) as f:
             self.assertTrue(f.read())
+
+    def test_windows(self):
+        self.fs.os = OSType.WINDOWS
+        path = r'C:\foo\bar'
+        self.assertEqual(path, os.path.join('C:\\', 'foo', 'bar'))
+        self.assertEqual(('C:', r'\foo\bar'), os.path.splitdrive(path))
+        self.fs.create_file(path)
+        self.assertTrue(os.path.exists(path))
+        self.assertTrue(os.path.exists(path.upper()))
+        self.assertTrue(os.path.ismount(r'\\share\foo'))
+        self.assertTrue(os.path.ismount(r'C:'))
+
+    def test_linux(self):
+        self.fs.os = OSType.LINUX
+        path = '/foo/bar'
+        self.assertEqual(path, os.path.join('/', 'foo', 'bar'))
+        self.assertEqual(('', 'C:/foo/bar'), os.path.splitdrive('C:/foo/bar'))
+        self.fs.create_file(path)
+        self.assertTrue(os.path.exists(path))
+        self.assertFalse(os.path.exists(path.upper()))
+        self.assertTrue(os.path.ismount('/'))
+        self.assertFalse(os.path.ismount('//share/foo'))
+
+    def test_macos(self):
+        self.fs.os = OSType.MACOS
+        path = '/foo/bar'
+        self.assertEqual(path, os.path.join('/', 'foo', 'bar'))
+        self.assertEqual(('', 'C:/foo/bar'), os.path.splitdrive('C:/foo/bar'))
+        self.fs.create_file(path)
+        self.assertTrue(os.path.exists(path))
+        self.assertTrue(os.path.exists(path.upper()))
+        self.assertTrue(os.path.ismount('/'))
+        self.assertFalse(os.path.ismount('//share/foo'))
 
 
 if __name__ == "__main__":

@@ -158,6 +158,13 @@ USER_ID = 1 if IS_WIN else os.getuid()
 GROUP_ID = 1 if IS_WIN else os.getgid()
 
 
+class OSType(Enum):
+    """Defines the real or simulated OS of the underlying file system."""
+    LINUX = "linux"
+    MACOS = "macos"
+    WINDOWS = "windows"
+
+
 class PatchMode(Enum):
     """Defines if patching shall be on, off, or in automatic mode.
     Currently only used for `patch_open_code` option.
@@ -905,6 +912,24 @@ class FakeFilesystem:
     def is_linux(self):
         return not self.is_windows_fs and not self.is_macos
 
+    @property
+    def os(self):
+        """Return the real or simulated type of operating system."""
+        return (OSType.WINDOWS if self.is_windows_fs else
+                OSType.MACOS if self.is_macos else OSType.LINUX)
+
+    @os.setter
+    def os(self, value):
+        """Set the simulated type of operating system underlying the fake
+        file system."""
+        self.is_windows_fs = value == OSType.WINDOWS
+        self.is_macos = value == OSType.MACOS
+        self.is_case_sensitive = value == OSType.LINUX
+        self.path_separator = '\\' if value == OSType.WINDOWS else '/'
+        self.alternative_path_separator = ('/' if value == OSType.WINDOWS
+                                           else None)
+        self.reset()
+
     def reset(self, total_size=None):
         """Remove all file system contents and reset the root."""
         self.root = FakeDirectory(self.path_separator, filesystem=self)
@@ -917,6 +942,8 @@ class FakeFilesystem:
         self.mount_points = {}
         self.add_mount_point(self.root.name, total_size)
         self._add_standard_streams()
+        from pyfakefs import fake_pathlib
+        fake_pathlib.init_module(self)
 
     def pause(self):
         """Pause the patching of the file system modules until `resume` is
