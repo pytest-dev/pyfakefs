@@ -1695,11 +1695,20 @@ class FakeFilesystem:
             the path starts with a drive letter.
         """
         colon = matching_string(file_path, ':')
-        # we also allow a drive letter if only the real fs is Windows
-        # to allow for real path names
-        return ((self.is_windows_fs or os.name == 'nt') and
-                len(file_path) >= 2 and
-                file_path[:1].isalpha and (file_path[1:2]) == colon)
+        if (len(file_path) >= 2 and
+                file_path[:1].isalpha and file_path[1:2] == colon):
+            if self.is_windows_fs:
+                return True
+            if os.name == 'nt':
+                # special case if we are emulating Posix under Windows
+                # check if the path exists because it has been mapped in
+                # this is not foolproof, but handles most cases
+                try:
+                    self.get_object_from_normpath(file_path)
+                    return True
+                except OSError:
+                    return False
+        return False
 
     def _starts_with_root_path(self, file_path):
         root_name = matching_string(file_path, self.root.name)

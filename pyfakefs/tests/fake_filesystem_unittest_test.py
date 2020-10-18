@@ -796,6 +796,16 @@ class TestOtherFS(fake_filesystem_unittest.TestCase):
         self.assertTrue(os.path.ismount('/'))
         self.assertFalse(os.path.ismount('//share/foo'))
 
+    def test_drivelike_path(self):
+        self.fs.os = OSType.LINUX
+        folder = Path('/test')
+        file_path = folder / 'C:/testfile'
+        file_path.parent.mkdir(parents=True)
+        file_path.touch()
+        # use str() to be Python 3.5 compatible
+        os.chdir(str(folder))
+        self.assertTrue(os.path.exists(str(file_path.relative_to(folder))))
+
 
 if __name__ == "__main__":
     unittest.main()
