@@ -15,5 +15,5 @@ scandir>=1.8
 # pyfakefs to work with pandas
 # we use the latest version to see any problems with new versions
 pandas
-xlrd
+xlrd==1.2.0
 openpyxl
