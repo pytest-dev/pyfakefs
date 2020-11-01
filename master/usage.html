@@ -5,7 +5,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Usage &#8212; pyfakefs 4.2dev documentation</title>
+    <title>Usage &#8212; pyfakefs 4.3dev documentation</title>
     <link rel="stylesheet" href="_static/pyfakefs.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
     <script id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
@@ -33,7 +33,7 @@
         <li class="right" >
           <a href="intro.html" title="Introduction"
              accesskey="P">previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="index.html">pyfakefs 4.2dev documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="index.html">pyfakefs 4.3dev documentation</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">Usage</a></li> 
       </ul>
     </div>  
@@ -131,13 +131,13 @@ single function, you can write:</p>
 <p>Note the argument name <code class="docutils literal notranslate"><span class="pre">fs</span></code>, which is mandatory. As this is a keyword
 argument, it must go after all positional arguments, such as arguments from
 <code class="docutils literal notranslate"><span class="pre">mock.patch</span></code>, regardless of the decorator order:</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="nd">@mock.patch</span><span class="p">(</span><span class="s1">&#39;foo.bar&#39;</span><span class="p">)</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="nd">@mock</span><span class="o">.</span><span class="n">patch</span><span class="p">(</span><span class="s1">&#39;foo.bar&#39;</span><span class="p">)</span>
 <span class="nd">@patchfs</span>
 <span class="k">def</span> <span class="nf">test_something</span><span class="p">(</span><span class="n">mocked_bar</span><span class="p">,</span> <span class="n">fs</span><span class="p">):</span>
     <span class="o">...</span>
 
 <span class="nd">@patchfs</span>
-<span class="nd">@mock.patch</span><span class="p">(</span><span class="s1">&#39;foo.bar&#39;</span><span class="p">)</span>
+<span class="nd">@mock</span><span class="o">.</span><span class="n">patch</span><span class="p">(</span><span class="s1">&#39;foo.bar&#39;</span><span class="p">)</span>
 <span class="k">def</span> <span class="nf">test_something</span><span class="p">(</span><span class="n">mocked_bar</span><span class="p">,</span> <span class="n">fs</span><span class="p">):</span>
     <span class="o">...</span>
 </pre></div>
@@ -170,7 +170,7 @@ scenarios, using the argument <code class="docutils literal notranslate"><span c
 constructor:</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">pyfakefs.fake_filesystem_unittest</span> <span class="kn">import</span> <span class="n">Patcher</span>
 
-<span class="k">with</span> <span class="n">Patcher</span><span class="p">(</span><span class="n">allow_root_user</span><span class="o">=</span><span class="bp">False</span><span class="p">)</span> <span class="k">as</span> <span class="n">patcher</span><span class="p">:</span>
+<span class="k">with</span> <span class="n">Patcher</span><span class="p">(</span><span class="n">allow_root_user</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span> <span class="k">as</span> <span class="n">patcher</span><span class="p">:</span>
     <span class="o">...</span>
 </pre></div>
 </div>
@@ -184,7 +184,7 @@ instance:</p>
 
 <span class="k">class</span> <span class="nc">SomeTest</span><span class="p">(</span><span class="n">TestCase</span><span class="p">):</span>
     <span class="k">def</span> <span class="nf">setUp</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">setUpPyfakefs</span><span class="p">(</span><span class="n">allow_root_user</span><span class="o">=</span><span class="bp">False</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">setUpPyfakefs</span><span class="p">(</span><span class="n">allow_root_user</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
 
     <span class="k">def</span> <span class="nf">testSomething</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="o">...</span>
@@ -203,7 +203,7 @@ add <code class="docutils literal notranslate"><span class="pre">indirect=True</
 </ul>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">pytest</span>
 
-<span class="nd">@pytest.mark.parametrize</span><span class="p">(</span><span class="s1">&#39;fs&#39;</span><span class="p">,</span> <span class="p">[[</span><span class="bp">None</span><span class="p">,</span> <span class="bp">None</span><span class="p">,</span> <span class="bp">None</span><span class="p">,</span> <span class="bp">False</span><span class="p">]],</span> <span class="n">indirect</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+<span class="nd">@pytest</span><span class="o">.</span><span class="n">mark</span><span class="o">.</span><span class="n">parametrize</span><span class="p">(</span><span class="s1">&#39;fs&#39;</span><span class="p">,</span> <span class="p">[[</span><span class="kc">None</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span> <span class="kc">False</span><span class="p">]],</span> <span class="n">indirect</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 <span class="k">def</span> <span class="nf">test_something</span><span class="p">(</span><span class="n">fs</span><span class="p">):</span>
     <span class="o">...</span>
 </pre></div>
@@ -216,9 +216,9 @@ the <code class="docutils literal notranslate"><span class="pre">Patcher</span><
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">pytest</span>
 <span class="kn">from</span> <span class="nn">pyfakefs.fake_filesystem_unittest</span> <span class="kn">import</span> <span class="n">Patcher</span>
 
-<span class="nd">@pytest.fixture</span>
+<span class="nd">@pytest</span><span class="o">.</span><span class="n">fixture</span>
 <span class="k">def</span> <span class="nf">fs_no_root</span><span class="p">():</span>
-    <span class="n">patcher</span> <span class="o">=</span> <span class="n">Patcher</span><span class="p">(</span><span class="n">allow_root_user</span><span class="o">=</span><span class="bp">False</span><span class="p">)</span>
+    <span class="n">patcher</span> <span class="o">=</span> <span class="n">Patcher</span><span class="p">(</span><span class="n">allow_root_user</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
     <span class="n">patcher</span><span class="o">.</span><span class="n">setUp</span><span class="p">()</span>
     <span class="k">yield</span> <span class="n">patcher</span><span class="o">.</span><span class="n">fs</span>
     <span class="n">patcher</span><span class="o">.</span><span class="n">tearDown</span><span class="p">()</span>
@@ -234,7 +234,7 @@ the <code class="docutils literal notranslate"><span class="pre">Patcher</span><
 the decorator:</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">pyfakefs.fake_filesystem_unittest</span> <span class="kn">import</span> <span class="n">patchfs</span>
 
-<span class="nd">@patchfs</span><span class="p">(</span><span class="n">allow_root_user</span><span class="o">=</span><span class="bp">False</span><span class="p">)</span>
+<span class="nd">@patchfs</span><span class="p">(</span><span class="n">allow_root_user</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
 <span class="k">def</span> <span class="nf">test_something</span><span class="p">(</span><span class="n">fs</span><span class="p">):</span>
     <span class="o">...</span>
 </pre></div>
@@ -261,7 +261,7 @@ This allows to automatically patch file system related modules that are:</p>
 <ul class="simple">
 <li><p>imported as another name:</p></li>
 </ul>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">os</span> <span class="kn">as</span> <span class="nn">my_os</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">os</span> <span class="k">as</span> <span class="nn">my_os</span>
 </pre></div>
 </div>
 <ul class="simple">
@@ -322,7 +322,7 @@ will be patched using this second mechanism.</p>
         <span class="bp">self</span><span class="o">.</span><span class="n">assertTrue</span><span class="p">(</span><span class="n">example</span><span class="o">.</span><span class="n">sut</span><span class="o">.</span><span class="n">check_if_exists</span><span class="p">(</span><span class="n">file_path</span><span class="p">))</span>
 
 <span class="c1"># example using pytest</span>
-<span class="nd">@pytest.mark.parametrize</span><span class="p">(</span><span class="s1">&#39;fs&#39;</span><span class="p">,</span> <span class="p">[[</span><span class="bp">None</span><span class="p">,</span> <span class="p">[</span><span class="n">example</span><span class="o">.</span><span class="n">sut</span><span class="p">]]],</span> <span class="n">indirect</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+<span class="nd">@pytest</span><span class="o">.</span><span class="n">mark</span><span class="o">.</span><span class="n">parametrize</span><span class="p">(</span><span class="s1">&#39;fs&#39;</span><span class="p">,</span> <span class="p">[[</span><span class="kc">None</span><span class="p">,</span> <span class="p">[</span><span class="n">example</span><span class="o">.</span><span class="n">sut</span><span class="p">]]],</span> <span class="n">indirect</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 <span class="k">def</span> <span class="nf">test_path_exists</span><span class="p">(</span><span class="n">fs</span><span class="p">):</span>
     <span class="n">file_path</span> <span class="o">=</span> <span class="s1">&#39;/foo/bar&#39;</span>
     <span class="n">fs</span><span class="o">.</span><span class="n">create_dir</span><span class="p">(</span><span class="n">file_path</span><span class="p">)</span>
@@ -368,11 +368,11 @@ has now been been integrated into pyfakefs):</p>
 
     <span class="nd">@staticmethod</span>
     <span class="k">def</span> <span class="nf">lock</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="n">flags</span><span class="p">):</span>
-        <span class="k">return</span> <span class="bp">True</span>
+        <span class="k">return</span> <span class="kc">True</span>
 
     <span class="nd">@staticmethod</span>
     <span class="k">def</span> <span class="nf">unlock</span><span class="p">(</span><span class="n">f</span><span class="p">):</span>
-        <span class="k">return</span> <span class="bp">True</span>
+        <span class="k">return</span> <span class="kc">True</span>
 
     <span class="k">def</span> <span class="fm">__getattr__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">):</span>
         <span class="k">return</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_locks_module</span><span class="p">,</span> <span class="n">name</span><span class="p">)</span>
@@ -391,8 +391,8 @@ has now been been integrated into pyfakefs):</p>
         <span class="o">...</span>
 
 <span class="c1"># test code using pytest</span>
-<span class="nd">@pytest.mark.parametrize</span><span class="p">(</span><span class="s1">&#39;fs&#39;</span><span class="p">,</span> <span class="p">[[</span><span class="bp">None</span><span class="p">,</span> <span class="bp">None</span><span class="p">,</span>
-  <span class="p">{</span><span class="s1">&#39;django.core.files.locks&#39;</span><span class="p">:</span> <span class="n">FakeLocks</span><span class="p">}]],</span> <span class="n">indirect</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+<span class="nd">@pytest</span><span class="o">.</span><span class="n">mark</span><span class="o">.</span><span class="n">parametrize</span><span class="p">(</span><span class="s1">&#39;fs&#39;</span><span class="p">,</span> <span class="p">[[</span><span class="kc">None</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span>
+  <span class="p">{</span><span class="s1">&#39;django.core.files.locks&#39;</span><span class="p">:</span> <span class="n">FakeLocks</span><span class="p">}]],</span> <span class="n">indirect</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 <span class="k">def</span> <span class="nf">test_django_stuff</span><span class="p">(</span><span class="n">fs</span><span class="p">):</span>
     <span class="o">...</span>
 
@@ -540,7 +540,7 @@ fake filesystem via the argument <code class="docutils literal notranslate"><spa
 
 <span class="n">fixture_path</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">dirname</span><span class="p">(</span><span class="vm">__file__</span><span class="p">),</span> <span class="s1">&#39;fixtures&#39;</span><span class="p">)</span>
 
-<span class="nd">@pytest.fixture</span>
+<span class="nd">@pytest</span><span class="o">.</span><span class="n">fixture</span>
 <span class="k">def</span> <span class="nf">my_fs</span><span class="p">(</span><span class="n">fs</span><span class="p">):</span>
     <span class="n">fs</span><span class="o">.</span><span class="n">add_real_directory</span><span class="p">(</span><span class="n">fixture_path</span><span class="p">)</span>
     <span class="k">yield</span> <span class="n">fs</span>
@@ -556,7 +556,7 @@ the <code class="docutils literal notranslate"><span class="pre">fs</span></code
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">pytest</span>
 <span class="kn">import</span> <span class="nn">os</span>
 
-<span class="nd">@pytest.fixture</span>
+<span class="nd">@pytest</span><span class="o">.</span><span class="n">fixture</span>
 <span class="k">def</span> <span class="nf">content</span><span class="p">():</span>
     <span class="n">fixture_path</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">dirname</span><span class="p">(</span><span class="vm">__file__</span><span class="p">),</span> <span class="s1">&#39;fixtures&#39;</span><span class="p">)</span>
     <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">fixture_path</span><span class="p">,</span> <span class="s1">&#39;fixture1.txt&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
@@ -890,7 +890,7 @@ described above.</p>
         <li class="right" >
           <a href="intro.html" title="Introduction"
              >previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="index.html">pyfakefs 4.2dev documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="index.html">pyfakefs 4.3dev documentation</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">Usage</a></li> 
       </ul>
     </div>
@@ -898,7 +898,7 @@ described above.</p>
         &#169; Copyright 2009 Google Inc. All Rights Reserved.
 © Copyright 2014 Altera Corporation. All Rights Reserved.
 © Copyright 2014-2020 John McGehee.
-      Last updated on Oct 17, 2020.
+      Last updated on Nov 01, 2020.
     </div>
   </body>
 </html>

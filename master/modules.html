@@ -5,7 +5,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Public Modules and Classes &#8212; pyfakefs 4.2dev documentation</title>
+    <title>Public Modules and Classes &#8212; pyfakefs 4.3dev documentation</title>
     <link rel="stylesheet" href="_static/pyfakefs.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
     <script id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
@@ -33,7 +33,7 @@
         <li class="right" >
           <a href="autopatch.html" title="Automatically find and patch file functions and modules"
              accesskey="P">previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="index.html">pyfakefs 4.2dev documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="index.html">pyfakefs 4.3dev documentation</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">Public Modules and Classes</a></li> 
       </ul>
     </div>  
@@ -73,7 +73,7 @@ replacements.</p></li>
 <dt class="field-even">Usage</dt>
 <dd class="field-even"><p></p></dd>
 </dl>
-<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">pyfakefs</span> <span class="k">import</span> <span class="n">fake_filesystem</span>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">pyfakefs</span> <span class="kn">import</span> <span class="n">fake_filesystem</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">filesystem</span> <span class="o">=</span> <span class="n">fake_filesystem</span><span class="o">.</span><span class="n">FakeFilesystem</span><span class="p">()</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">os_module</span> <span class="o">=</span> <span class="n">fake_filesystem</span><span class="o">.</span><span class="n">FakeOsModule</span><span class="p">(</span><span class="n">filesystem</span><span class="p">)</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">pathname</span> <span class="o">=</span> <span class="s1">&#39;/a/new/dir/new-file&#39;</span>
@@ -791,11 +791,11 @@ of modules not provided by <cite>pyfakefs</cite>.</p>
 <p>If you specify some of these attributes here and you have DocTests,
 consider also specifying the same arguments to <code class="xref py py-func docutils literal notranslate"><span class="pre">load_doctests()</span></code>.</p>
 <p>Example usage in derived test classes:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">unittest</span> <span class="k">import</span> <span class="n">TestCase</span>
-<span class="kn">from</span> <span class="nn">fake_filesystem_unittest</span> <span class="k">import</span> <span class="n">TestCaseMixin</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">unittest</span> <span class="kn">import</span> <span class="n">TestCase</span>
+<span class="kn">from</span> <span class="nn">fake_filesystem_unittest</span> <span class="kn">import</span> <span class="n">TestCaseMixin</span>
 
 <span class="k">class</span> <span class="nc">MyTestCase</span><span class="p">(</span><span class="n">TestCase</span><span class="p">,</span> <span class="n">TestCaseMixin</span><span class="p">):</span>
-    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">methodName</span><span class="o">=</span><span class="s1">&#39;runTest&#39;</span><span class="p">):</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">methodName</span><span class="o">=</span><span class="s1">&#39;runTest&#39;</span><span class="p">):</span>
         <span class="nb">super</span><span class="p">(</span><span class="n">MyTestCase</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span>
             <span class="n">methodName</span><span class="o">=</span><span class="n">methodName</span><span class="p">,</span>
             <span class="n">additional_skip_names</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;posixpath&#39;</span><span class="p">])</span>
@@ -803,7 +803,7 @@ consider also specifying the same arguments to <code class="xref py py-func docu
 <span class="kn">import</span> <span class="nn">sut</span>
 
 <span class="k">class</span> <span class="nc">AnotherTestCase</span><span class="p">(</span><span class="n">TestCase</span><span class="p">,</span> <span class="n">TestCaseMixin</span><span class="p">):</span>
-    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">methodName</span><span class="o">=</span><span class="s1">&#39;runTest&#39;</span><span class="p">):</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">methodName</span><span class="o">=</span><span class="s1">&#39;runTest&#39;</span><span class="p">):</span>
         <span class="nb">super</span><span class="p">(</span><span class="n">MyTestCase</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span>
             <span class="n">methodName</span><span class="o">=</span><span class="n">methodName</span><span class="p">,</span> <span class="n">modules_to_reload</span><span class="o">=</span><span class="p">[</span><span class="n">sut</span><span class="p">])</span>
 </pre></div>
@@ -1140,7 +1140,7 @@ that is available on pypi.</p>
         <li class="right" >
           <a href="autopatch.html" title="Automatically find and patch file functions and modules"
              >previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="index.html">pyfakefs 4.2dev documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="index.html">pyfakefs 4.3dev documentation</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">Public Modules and Classes</a></li> 
       </ul>
     </div>
@@ -1148,7 +1148,7 @@ that is available on pypi.</p>
         &#169; Copyright 2009 Google Inc. All Rights Reserved.
 © Copyright 2014 Altera Corporation. All Rights Reserved.
 © Copyright 2014-2020 John McGehee.
-      Last updated on Oct 17, 2020.
+      Last updated on Nov 01, 2020.
     </div>
   </body>
 </html>

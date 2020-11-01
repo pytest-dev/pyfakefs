@@ -1,18 +1,18 @@
 
-<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
-  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<!DOCTYPE html>
 
-<html xmlns="http://www.w3.org/1999/xhtml">
+<html>
   <head>
-    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
-    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-    <title>Automatically find and patch file functions and modules &#8212; pyfakefs 4.1.0 documentation</title>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Automatically find and patch file functions and modules &#8212; pyfakefs 4.2.0 documentation</title>
     <link rel="stylesheet" href="_static/pyfakefs.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
-    <script type="text/javascript" id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
-    <script type="text/javascript" src="_static/jquery.js"></script>
-    <script type="text/javascript" src="_static/underscore.js"></script>
-    <script type="text/javascript" src="_static/doctools.js"></script>
+    <script id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+    <script src="_static/jquery.js"></script>
+    <script src="_static/underscore.js"></script>
+    <script src="_static/doctools.js"></script>
+    <script src="_static/language_data.js"></script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
     <link rel="next" title="Public Modules and Classes" href="modules.html" />
@@ -33,7 +33,8 @@
         <li class="right" >
           <a href="usage.html" title="Usage"
              accesskey="P">previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="index.html">pyfakefs 4.1.0 documentation</a> &#187;</li> 
+        <li class="nav-item nav-item-0"><a href="index.html">pyfakefs 4.2.0 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">Automatically find and patch file functions and modules</a></li> 
       </ul>
     </div>  
 
@@ -48,15 +49,15 @@
 functions and modules, and stubs them out with the fake file system functions and modules.
 The pyfakefs source code contains files that demonstrate this usage model:</p>
 <ul class="simple">
-<li><code class="docutils literal notranslate"><span class="pre">example.py</span></code> is the software under test. In production, it uses the
-real file system.</li>
-<li><code class="docutils literal notranslate"><span class="pre">example_test.py</span></code> tests <code class="docutils literal notranslate"><span class="pre">example.py</span></code>. During testing, the pyfakefs fake
-file system is used by <code class="docutils literal notranslate"><span class="pre">example_test.py</span></code> and <code class="docutils literal notranslate"><span class="pre">example.py</span></code> alike.</li>
+<li><p><code class="docutils literal notranslate"><span class="pre">example.py</span></code> is the software under test. In production, it uses the
+real file system.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">example_test.py</span></code> tests <code class="docutils literal notranslate"><span class="pre">example.py</span></code>. During testing, the pyfakefs fake
+file system is used by <code class="docutils literal notranslate"><span class="pre">example_test.py</span></code> and <code class="docutils literal notranslate"><span class="pre">example.py</span></code> alike.</p></li>
 </ul>
 <div class="section" id="software-under-test">
 <h2>Software Under Test<a class="headerlink" href="#software-under-test" title="Permalink to this headline">¶</a></h2>
 <p><code class="docutils literal notranslate"><span class="pre">example.py</span></code> contains a few functions that manipulate files.  For instance:</p>
-<div class="code python highlight-default notranslate"><div class="highlight"><pre><span></span><span class="k">def</span> <span class="nf">create_file</span><span class="p">(</span><span class="n">path</span><span class="p">):</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">def</span> <span class="nf">create_file</span><span class="p">(</span><span class="n">path</span><span class="p">):</span>
     <span class="sd">&#39;&#39;&#39;Create the specified file and add some content to it.  Use the open()</span>
 <span class="sd">    built in function.</span>
 
@@ -93,9 +94,9 @@ contains the doctests, as you can see above.</p>
 <p>The module <code class="docutils literal notranslate"><span class="pre">fake_filesystem_unittest</span></code> contains code that finds all real file
 functions and modules, and stubs these out with the fake file system functions
 and modules:</p>
-<div class="code python highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">os</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">os</span>
 <span class="kn">import</span> <span class="nn">unittest</span>
-<span class="kn">from</span> <span class="nn">pyfakefs</span> <span class="k">import</span> <span class="n">fake_filesystem_unittest</span>
+<span class="kn">from</span> <span class="nn">pyfakefs</span> <span class="kn">import</span> <span class="n">fake_filesystem_unittest</span>
 <span class="c1"># The module under test is example:</span>
 <span class="kn">import</span> <span class="nn">example</span>
 </pre></div>
@@ -104,7 +105,7 @@ and modules:</p>
 <h3>Doctests<a class="headerlink" href="#doctests" title="Permalink to this headline">¶</a></h3>
 <p><code class="docutils literal notranslate"><span class="pre">example_test.py</span></code> defines <code class="docutils literal notranslate"><span class="pre">load_tests()</span></code>, which runs the doctests in
 <code class="docutils literal notranslate"><span class="pre">example.py</span></code>:</p>
-<div class="code python highlight-default notranslate"><div class="highlight"><pre><span></span><span class="k">def</span> <span class="nf">load_tests</span><span class="p">(</span><span class="n">loader</span><span class="p">,</span> <span class="n">tests</span><span class="p">,</span> <span class="n">ignore</span><span class="p">):</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">def</span> <span class="nf">load_tests</span><span class="p">(</span><span class="n">loader</span><span class="p">,</span> <span class="n">tests</span><span class="p">,</span> <span class="n">ignore</span><span class="p">):</span>
     <span class="sd">&#39;&#39;&#39;Load the pyfakefs/example.py doctest tests into unittest.&#39;&#39;&#39;</span>
     <span class="k">return</span> <span class="n">fake_filesystem_unittest</span><span class="o">.</span><span class="n">load_doctests</span><span class="p">(</span><span class="n">loader</span><span class="p">,</span> <span class="n">tests</span><span class="p">,</span> <span class="n">ignore</span><span class="p">,</span> <span class="n">example</span><span class="p">)</span>
 </pre></div>
@@ -119,7 +120,7 @@ fake file system.</p>
 <p>Next comes the <code class="docutils literal notranslate"><span class="pre">unittest</span></code> test class.  This class is derived from
 <code class="docutils literal notranslate"><span class="pre">fake_filesystem_unittest.TestCase</span></code>, which is in turn derived from
 <code class="docutils literal notranslate"><span class="pre">unittest.TestClass</span></code>:</p>
-<div class="code python highlight-default notranslate"><div class="highlight"><pre><span></span><span class="k">class</span> <span class="nc">TestExample</span><span class="p">(</span><span class="n">fake_filesystem_unittest</span><span class="o">.</span><span class="n">TestCase</span><span class="p">):</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">class</span> <span class="nc">TestExample</span><span class="p">(</span><span class="n">fake_filesystem_unittest</span><span class="o">.</span><span class="n">TestCase</span><span class="p">):</span>
 
     <span class="k">def</span> <span class="nf">setUp</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">setUpPyfakefs</span><span class="p">()</span>
@@ -152,12 +153,13 @@ file system.</p>
 </div>
 
 
+            <div class="clearer"></div>
           </div>
         </div>
       </div>
       <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
         <div class="sphinxsidebarwrapper">
-  <h3><a href="index.html">Table Of Contents</a></h3>
+  <h3><a href="index.html">Table of Contents</a></h3>
   <ul>
 <li><a class="reference internal" href="#">Automatically find and patch file functions and modules</a><ul>
 <li><a class="reference internal" href="#software-under-test">Software Under Test</a></li>
@@ -184,17 +186,15 @@ file system.</p>
     </ul>
    </div>
 <div id="searchbox" style="display: none" role="search">
-  <h3>Quick search</h3>
+  <h3 id="searchlabel">Quick search</h3>
     <div class="searchformwrapper">
     <form class="search" action="search.html" method="get">
-      <input type="text" name="q" />
+      <input type="text" name="q" aria-labelledby="searchlabel" />
       <input type="submit" value="Go" />
-      <input type="hidden" name="check_keywords" value="yes" />
-      <input type="hidden" name="area" value="default" />
     </form>
     </div>
 </div>
-<script type="text/javascript">$('#searchbox').show(0);</script>
+<script>$('#searchbox').show(0);</script>
         </div>
       </div>
       <div class="clearer"></div>
@@ -214,14 +214,15 @@ file system.</p>
         <li class="right" >
           <a href="usage.html" title="Usage"
              >previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="index.html">pyfakefs 4.1.0 documentation</a> &#187;</li> 
+        <li class="nav-item nav-item-0"><a href="index.html">pyfakefs 4.2.0 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">Automatically find and patch file functions and modules</a></li> 
       </ul>
     </div>
     <div class="footer" role="contentinfo">
         &#169; Copyright 2009 Google Inc. All Rights Reserved.
 © Copyright 2014 Altera Corporation. All Rights Reserved.
 © Copyright 2014-2020 John McGehee.
-      Last updated on Jul 12, 2020.
+      Last updated on Nov 01, 2020.
     </div>
   </body>
 </html>
