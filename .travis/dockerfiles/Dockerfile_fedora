@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-FROM fedora
+FROM fedora:32
 MAINTAINER jmcgeheeiv@users.noreply.github.com
 
 ENV LANG en_US.UTF-8
