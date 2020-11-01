@@ -1,7 +1,9 @@
 # pyfakefs Release Notes
 The released versions correspond to PyPi releases.
 
-## Version 4.2.0 (as yet unreleased)
+## Version 4.3.0 (as yet unreleased)
+
+## [Version 4.2.0](https://pypi.python.org/pypi/pyfakefs/4.2.0)
 
 #### New Features
   * add support for the `buffering` parameter in `open` 

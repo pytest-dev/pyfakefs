@@ -4,7 +4,7 @@ This problem is resolved by using PyTest version 2.8.6 or above.
 
 To run these doctests, install pytest and run:
 
-    $ py.test --doctest-modules pytest_doctest_test.py
+    $ pytest --doctest-modules pytest_doctest_test.py
 
 Add `-s` option to enable print statements.
 """
