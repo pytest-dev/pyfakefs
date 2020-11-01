@@ -184,7 +184,7 @@ class FakeOsModuleTest(FakeOsModuleTestBase):
 
     def test_out_of_range_fdopen(self):
         # test some file descriptor that is clearly out of range
-        self.assert_raises_os_error(errno.EBADF, self.os.fdopen, 100)
+        self.assert_raises_os_error(errno.EBADF, self.os.fdopen, 500)
 
     def test_closed_file_descriptor(self):
         first_path = self.make_path('some_file1')
@@ -1753,13 +1753,13 @@ class FakeOsModuleTest(FakeOsModuleTestBase):
         self.assertRaises(TypeError, self.os.fdatasync, "zero")
 
     def test_fsync_raises_on_invalid_fd(self):
-        self.assert_raises_os_error(errno.EBADF, self.os.fsync, 100)
+        self.assert_raises_os_error(errno.EBADF, self.os.fsync, 500)
 
     def test_fdatasync_raises_on_invalid_fd(self):
         # No open files yet
         self.check_linux_only()
         self.assert_raises_os_error(errno.EINVAL, self.os.fdatasync, 0)
-        self.assert_raises_os_error(errno.EBADF, self.os.fdatasync, 100)
+        self.assert_raises_os_error(errno.EBADF, self.os.fdatasync, 500)
 
     def test_fsync_pass_posix(self):
         self.check_posix_only()
@@ -3060,6 +3060,8 @@ class FakeOsModuleTestCaseInsensitiveFS(FakeOsModuleTestBase):
         # Regression test for #317
         self.check_posix_only()
         dest_dir_path = self.make_path('Dest')
+        # seems to behave differently under different MacOS versions
+        self.skip_real_fs()
         new_dest_dir_path = self.make_path('dest')
         self.os.mkdir(dest_dir_path)
         source_dir_path = self.make_path('src')
@@ -4676,6 +4678,7 @@ class FakeOsModuleDirFdTest(FakeOsModuleTestBase):
         self.assertTrue(self.os.path.exists('/bat'))
 
     def test_readlink(self):
+        self.skip_if_symlink_not_supported()
         self.filesystem.create_symlink('/meyer/lemon/pie', '/foo/baz')
         self.filesystem.create_symlink('/geo/metro', '/meyer')
         self.assertRaises(

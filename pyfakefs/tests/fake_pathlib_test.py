@@ -401,11 +401,10 @@ class FakePathlibFileObjectPropertyTest(RealPathlibTestCase):
         self.create_file(self.make_path('antoine', 'setup.py'))
         self.os.chdir(self.make_path('antoine'))
         # use real path to handle symlink /var to /private/var in MacOs
-        self.assertEqual(self.path().resolve(),
-                         self.path(
-                             self.os.path.realpath(
-                                 self.make_path('antoine'))))
-        self.assertEqual(
+        self.assert_equal_paths(self.path().resolve(),
+                                self.path(self.os.path.realpath(
+                                    self.make_path('antoine'))))
+        self.assert_equal_paths(
             self.path(
                 self.os.path.join('docs', '..', 'setup.py')).resolve(),
             self.path(
@@ -469,8 +468,8 @@ class FakePathlibFileObjectPropertyTest(RealPathlibTestCase):
         dir_path = self.make_path('jane')
         self.create_dir(dir_path)
         self.os.chdir(dir_path)
-        self.assertEqual(self.path.cwd(),
-                         self.path(self.os.path.realpath(dir_path)))
+        self.assert_equal_paths(self.path.cwd(),
+                                self.path(self.os.path.realpath(dir_path)))
 
     def test_expanduser(self):
         if is_windows:
@@ -868,7 +867,7 @@ class FakePathlibUsageInOsFunctionsTest(RealPathlibTestCase):
         self.create_dir(path)
         self.os.chdir(self.path(path))
         # use real path to handle symlink /var to /private/var in MacOs
-        self.assertEqual(self.os.path.realpath(path), self.os.getcwd())
+        self.assert_equal_paths(self.os.path.realpath(path), self.os.getcwd())
 
     def test_chmod(self):
         path = self.make_path('some_file')

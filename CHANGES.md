@@ -3,6 +3,9 @@ The released versions correspond to PyPi releases.
 
 ## Version 4.4.0 (as yet unreleased)
 
+### Infrastructure
+* Moved CI builds to GitHub Actions for performance reasons
+
 ## [Version 4.3.0](https://pypi.python.org/pypi/pyfakefs/4.3.0) (2020-11-19)
 
 This is mostly a performance release. The performance of the pyfakefs setup has

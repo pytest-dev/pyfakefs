@@ -66,16 +66,6 @@ class TestCase(unittest.TestCase):
             else:
                 self.assertEqual(subtype, exc.errno)
 
-    def assert_equal_paths(self, actual, expected):
-        if self.is_windows:
-            self.assertEqual(actual.replace('\\\\?\\', ''),
-                             expected.replace('\\\\?\\', ''))
-        elif self.is_macos:
-            self.assertEqual(actual.replace('/private/var/', '/var/'),
-                             expected.replace('/private/var/', '/var/'))
-        else:
-            self.assertEqual(actual, expected)
-
 
 class RealFsTestMixin:
     """Test mixin to allow tests to run both in the fake filesystem and in the
@@ -349,6 +339,29 @@ class RealFsTestMixin:
                     self.filesystem.create_dir(self.base_path)
                 if old_base_path is not None:
                     self.setUpFileSystem()
+
+    def assert_equal_paths(self, actual, expected):
+        if self.is_windows:
+            actual = str(actual).replace('\\\\?\\', '')
+            expected = str(expected).replace('\\\\?\\', '')
+            if os.name == 'nt' and self.use_real_fs():
+                # work around a problem that the user name, but not the full
+                # path is shown as the short name
+                self.assertEqual(self.path_with_short_username(actual),
+                                 self.path_with_short_username(expected))
+            else:
+                self.assertEqual(actual, expected)
+        elif self.is_macos:
+            self.assertEqual(str(actual).replace('/private/var/', '/var/'),
+                             str(expected).replace('/private/var/', '/var/'))
+        else:
+            self.assertEqual(actual, expected)
+
+    def path_with_short_username(self, path):
+        components = path.split(os.sep)
+        if len(components) >= 3:
+            components[2] = components[2][:6].upper() + '~1'
+        return os.sep.join(components)
 
 
 class RealFsTestCase(TestCase, RealFsTestMixin):

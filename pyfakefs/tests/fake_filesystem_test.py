@@ -26,7 +26,7 @@ import unittest
 from pyfakefs import fake_filesystem
 from pyfakefs.fake_filesystem import set_uid, set_gid, is_root, reset_ids
 from pyfakefs.helpers import IS_WIN
-from pyfakefs.tests.test_utils import DummyTime, TestCase
+from pyfakefs.tests.test_utils import DummyTime, TestCase, RealFsTestCase
 
 
 class FakeDirectoryUnitTest(TestCase):
@@ -1773,7 +1773,7 @@ class MountPointTest(TestCase):
             '!!foo!bar!bip!bop').st_dev)
 
 
-class RealFileSystemAccessTest(TestCase):
+class RealFileSystemAccessTest(RealFsTestCase):
     def setUp(self):
         # use the real path separator to work with the real file system
         self.filesystem = fake_filesystem.FakeFilesystem()
@@ -2005,6 +2005,7 @@ class RealFileSystemAccessTest(TestCase):
         )
 
     def test_add_existing_real_directory_symlink_target_path(self):
+        self.skip_if_symlink_not_supported()
         real_directory = os.path.join(self.root_path, 'pyfakefs', 'tests')
         symlinks = [
             ('..', os.path.join(
@@ -2013,15 +2014,9 @@ class RealFileSystemAccessTest(TestCase):
                 real_directory, 'fixtures', 'symlink_file_relative')),
         ]
 
-        try:
-            with self.create_symlinks(symlinks):
-                self.filesystem.add_real_directory(
-                    real_directory, target_path='/path', lazy_read=False)
-        except OSError:
-            if self.is_windows:
-                raise unittest.SkipTest(
-                    'Symlinks under Windows need admin privileges')
-            raise
+        with self.create_symlinks(symlinks):
+            self.filesystem.add_real_directory(
+                real_directory, target_path='/path', lazy_read=False)
 
         self.assertTrue(self.filesystem.exists(
             '/path/fixtures/symlink_dir_relative'))
@@ -2031,6 +2026,7 @@ class RealFileSystemAccessTest(TestCase):
             '/path/fixtures/symlink_file_relative'))
 
     def test_add_existing_real_directory_symlink_lazy_read(self):
+        self.skip_if_symlink_not_supported()
         real_directory = os.path.join(self.root_path, 'pyfakefs', 'tests')
         symlinks = [
             ('..', os.path.join(
@@ -2039,22 +2035,16 @@ class RealFileSystemAccessTest(TestCase):
                 real_directory, 'fixtures', 'symlink_file_relative')),
         ]
 
-        try:
-            with self.create_symlinks(symlinks):
-                self.filesystem.add_real_directory(
-                    real_directory, target_path='/path', lazy_read=True)
+        with self.create_symlinks(symlinks):
+            self.filesystem.add_real_directory(
+                real_directory, target_path='/path', lazy_read=True)
 
-                self.assertTrue(self.filesystem.exists(
-                    '/path/fixtures/symlink_dir_relative'))
-                self.assertTrue(self.filesystem.exists(
-                    '/path/fixtures/symlink_dir_relative/all_tests.py'))
-                self.assertTrue(self.filesystem.exists(
-                    '/path/fixtures/symlink_file_relative'))
-        except OSError:
-            if self.is_windows:
-                raise unittest.SkipTest(
-                    'Symlinks under Windows need admin privileges')
-            raise
+            self.assertTrue(self.filesystem.exists(
+                '/path/fixtures/symlink_dir_relative'))
+            self.assertTrue(self.filesystem.exists(
+                '/path/fixtures/symlink_dir_relative/all_tests.py'))
+            self.assertTrue(self.filesystem.exists(
+                '/path/fixtures/symlink_file_relative'))
 
     def test_add_existing_real_directory_tree_to_existing_path(self):
         self.filesystem.create_dir('/foo/bar')

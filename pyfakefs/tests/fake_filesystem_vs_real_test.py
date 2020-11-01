@@ -23,6 +23,7 @@ import time
 import unittest
 
 from pyfakefs import fake_filesystem
+from pyfakefs.helpers import IS_PYPY
 
 
 def sep(path):
@@ -337,14 +338,12 @@ class FakeFilesystemVsRealTest(TestCase):
         path = sep(path)
         os_method_names = [] if self.is_windows else ['readlink']
         os_method_names_no_args = ['getcwd']
-        os_path_method_names = ['isabs',
-                                'isdir',
-                                'isfile',
-                                'exists'
-                                ]
+        os_path_method_names = ['isabs', 'isdir']
         if not self.is_windows:
-            os_path_method_names.append('islink')
-            os_path_method_names.append('lexists')
+            os_path_method_names += ['islink', 'lexists']
+        if not self.is_windows or not IS_PYPY:
+            os_path_method_names += ['isfile', 'exists']
+
         wrapped_methods = [
             ['access', self._access_real, self._access_fake],
             ['stat.size', self._stat_size_real, self._stat_size_fake],
