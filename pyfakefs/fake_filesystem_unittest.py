@@ -46,9 +46,6 @@ import tokenize
 import unittest
 import warnings
 
-import py
-import pytest
-
 from pyfakefs.deprecator import Deprecator
 from pyfakefs.fake_filesystem import set_uid, set_gid, reset_ids, PatchMode
 from pyfakefs.helpers import IS_PYPY
@@ -354,8 +351,16 @@ class Patcher:
     '''
     SKIPMODULES = {
         None, fake_filesystem, fake_filesystem_shutil,
-        sys, linecache, tokenize, py, pytest
+        sys, linecache, tokenize
     }
+    try:
+        import py
+        import pytest
+        SKIPMODULES.add(py)
+        SKIPMODULES.add(pytest)
+    except ImportError:
+        pass
+
     assert None in SKIPMODULES, ("sys.modules contains 'None' values;"
                                  " must skip them.")
 
