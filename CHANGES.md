@@ -1,7 +1,9 @@
 # pyfakefs Release Notes
 The released versions correspond to PyPi releases.
 
-## Version 4.3.0 (as yet unreleased)
+## [Version 4.2.1](https://pypi.python.org/pypi/pyfakefs/4.2.1)
+
+This is a bugfix releases that fixes a regression issue.
 
 ### Fixes
   * remove dependency of pyfakefs on `pytest` (regression, 
