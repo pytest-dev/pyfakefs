@@ -87,8 +87,8 @@ def patchfs(_func=None, *,
     Usage::
 
         @patchfs
-        def test_my_function(fs):
-            fs.create_file('foo')
+        def test_my_function(fake_fs):
+            fake_fs.create_file('foo')
 
         @patchfs(allow_root_user=False)
         def test_with_patcher_args(fs):
@@ -105,7 +105,8 @@ def patchfs(_func=None, *,
                     allow_root_user=allow_root_user,
                     use_known_patches=use_known_patches,
                     patch_open_code=patch_open_code) as p:
-                kwargs['fs'] = p.fs
+                args = list(args)
+                args.append(p.fs)
                 return f(*args, **kwargs)
 
         return wrapped
@@ -113,9 +114,11 @@ def patchfs(_func=None, *,
     if _func:
         if not callable(_func):
             raise TypeError(
-                "Decorator argument not a function.\n"
+                "Decorator argument is not a function.\n"
                 "Did you mean `@patchfs(additional_skip_names=...)`?"
             )
+        if hasattr(_func, 'patchings'):
+            _func.nr_patches = len(_func.patchings)
         return wrap_patchfs(_func)
 
     return wrap_patchfs

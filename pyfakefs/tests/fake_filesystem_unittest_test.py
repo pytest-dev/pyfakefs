@@ -29,7 +29,7 @@ import unittest
 import warnings
 from distutils.dir_util import copy_tree, remove_tree
 from pathlib import Path
-from unittest import TestCase
+from unittest import TestCase, mock
 
 import pyfakefs.tests.import_as_example
 from pyfakefs import fake_filesystem_unittest, fake_filesystem
@@ -50,11 +50,33 @@ class TestPatcher(TestCase):
             self.assertEqual('test', contents)
 
     @patchfs
-    def test_context_decorator(self, fs):
-        fs.create_file('/foo/bar', contents='test')
+    def test_context_decorator(self, fake_fs):
+        fake_fs.create_file('/foo/bar', contents='test')
         with open('/foo/bar') as f:
             contents = f.read()
         self.assertEqual('test', contents)
+
+
+class TestPatchfsArgumentOrder(TestCase):
+    @patchfs
+    @mock.patch('os.system')
+    def test_argument_order1(self, fake_fs, patched_system):
+        fake_fs.create_file('/foo/bar', contents='test')
+        with open('/foo/bar') as f:
+            contents = f.read()
+        self.assertEqual('test', contents)
+        os.system("foo")
+        patched_system.assert_called_with("foo")
+
+    @mock.patch('os.system')
+    @patchfs
+    def test_argument_order2(self, patched_system, fake_fs):
+        fake_fs.create_file('/foo/bar', contents='test')
+        with open('/foo/bar') as f:
+            contents = f.read()
+        self.assertEqual('test', contents)
+        os.system("foo")
+        patched_system.assert_called_with("foo")
 
 
 class TestPyfakefsUnittestBase(fake_filesystem_unittest.TestCase):
@@ -468,17 +490,17 @@ class PatchModuleTestUsingDecorator(unittest.TestCase):
 
     @patchfs
     @unittest.expectedFailure
-    def test_system_stat_failing(self, fs):
+    def test_system_stat_failing(self, fake_fs):
         file_path = '/foo/bar'
-        fs.create_file(file_path, contents=b'test')
+        fake_fs.create_file(file_path, contents=b'test')
         self.assertEqual(
             4, pyfakefs.tests.import_as_example.system_stat(file_path).st_size)
 
     @patchfs(modules_to_patch={
         'pyfakefs.tests.import_as_example': FakeExampleModule})
-    def test_system_stat(self, fs):
+    def test_system_stat(self, fake_fs):
         file_path = '/foo/bar'
-        fs.create_file(file_path, contents=b'test')
+        fake_fs.create_file(file_path, contents=b'test')
         self.assertEqual(
             4, pyfakefs.tests.import_as_example.system_stat(file_path).st_size)
 

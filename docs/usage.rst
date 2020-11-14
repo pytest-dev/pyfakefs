@@ -92,29 +92,38 @@ single function, you can write:
    from pyfakefs.fake_filesystem_unittest import patchfs
 
    @patchfs
-   def test_something(fs):
-       # access the fake_filesystem object via fs
-       fs.create_file('/foo/bar', contents='test')
+   def test_something(fake_fs):
+       # access the fake_filesystem object via fake_fs
+       fake_fs.create_file('/foo/bar', contents='test')
 
-Note the argument name ``fs``, which is mandatory. As this is a keyword
-argument, it must go after all positional arguments, such as arguments from
-``mock.patch``, regardless of the decorator order:
+Note the ``fake_fs`` is a positional argument and the argument name does not
+matter. If there are additional ``mock.patch`` decorators that also
+create positional arguments, the argument order is the same as the decorator
+order, as shown here:
 
 .. code:: python
 
-   @mock.patch('foo.bar')
-   @patchfs
-   def test_something(mocked_bar, fs):
-       ...
-
    @patchfs
    @mock.patch('foo.bar')
-   def test_something(mocked_bar, fs):
+   def test_something(fake_fs, mocked_bar):
        ...
 
-Don't confuse this with ``pytest`` tests, where ``fs`` is the fixture name
-(with the same functionality). If you use ``pytest``, you don't need this
-decorator.
+   @mock.patch('foo.bar')
+   @patchfs
+   def test_something(mocked_bar, fake_fs):
+       ...
+
+.. note::
+  Avoid writing the ``patchfs`` decorator *between* ``mock.patch`` operators,
+  as the order will not be what you expect. Due to implementation details,
+  all arguments created by ``mock.patch`` decorators are always expected to
+  be contiguous, regardless of other decorators positioned between them.
+
+.. caution::
+  In previous versions, the keyword argument `fs` has been used instead,
+  which had to be positioned *after* all positional arguments regardless of
+  the decorator order. If you upgrade from a version before pyfakefs 4.2,
+  you may have to adapt the argument order.
 
 You can also use this to make a single unit test use the fake fs:
 
@@ -218,7 +227,7 @@ the decorator:
   from pyfakefs.fake_filesystem_unittest import patchfs
 
   @patchfs(allow_root_user=False)
-  def test_something(fs):
+  def test_something(fake_fs):
       ...
 
 
@@ -399,7 +408,7 @@ has now been been integrated into pyfakefs):
 
   # test code using patchfs decorator
   @patchfs(modules_to_patch={'django.core.files.locks': FakeLocks})
-  def test_django_stuff(fs):
+  def test_django_stuff(fake_fs):
       ...
 
 additional_skip_names

@@ -3,15 +3,23 @@ The released versions correspond to PyPi releases.
 
 ## Version 4.3.0 (as yet unreleased)
 
+
+### Changes
+  * The `patchfs` decorator now expects a positional argument instead of the
+    keyword arguments `fs`. This avoids confusion with the pytest `fs`
+    fixture and conforms to the behavior of `mock.patch`. You may have to
+    adapt the argument order if you use the `patchfs` and `mock.patch`
+    decorators together (see  [#566](../../issues/566)) 
+    
 ## [Version 4.2.1](https://pypi.python.org/pypi/pyfakefs/4.2.1)
 
-This is a bugfix releases that fixes a regression issue.
+This is a bugfix release that fixes a regression issue.
 
 ### Fixes
   * remove dependency of pyfakefs on `pytest` (regression, 
     see [#565](../../issues/565)) 
 
-## [Version 4.2.0](https://pypi.python.org/pypi/pyfakefs/4.2.0)
+## [Version 4.2.0](https://pydpi.python.org/pypi/pyfakefs/4.2.0)
 
 #### New Features
   * add support for the `buffering` parameter in `open` 
