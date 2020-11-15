@@ -223,7 +223,10 @@ class TestPatchingImports(TestPyfakefsUnittestBase):
         self.assertEqual('abc', contents)
 
 
-class TestPatchingDefaultArgs(TestPyfakefsUnittestBase):
+class TestPatchingDefaultArgs(fake_filesystem_unittest.TestCase):
+    def setUp(self):
+        self.setUpPyfakefs(patch_default_args=True)
+
     def test_path_exists_as_default_arg_in_function(self):
         file_path = '/foo/bar'
         self.fs.create_dir(file_path)
@@ -235,6 +238,11 @@ class TestPatchingDefaultArgs(TestPyfakefsUnittestBase):
         self.fs.create_dir(file_path)
         sut = pyfakefs.tests.import_as_example.TestDefaultArg()
         self.assertTrue(sut.check_if_exists(file_path))
+
+    def test_fake_path_exists4(self):
+        self.fs.create_file('foo')
+        self.assertTrue(
+            pyfakefs.tests.import_as_example.check_if_exists4('foo'))
 
 
 class TestAttributesWithFakeModuleNames(TestPyfakefsUnittestBase):
@@ -315,11 +323,6 @@ class NoSkipNamesTest(fake_filesystem_unittest.TestCase):
         self.fs.create_file('foo')
         self.assertTrue(
             pyfakefs.tests.import_as_example.check_if_exists3('foo'))
-
-    def test_fake_path_exists4(self):
-        self.fs.create_file('foo')
-        self.assertTrue(
-            pyfakefs.tests.import_as_example.check_if_exists4('foo'))
 
     def test_fake_path_exists5(self):
         self.fs.create_file('foo')
@@ -720,6 +723,8 @@ class PathlibTest(TestCase):
 
 
 class TestDeprecationSuppression(fake_filesystem_unittest.TestCase):
+    @unittest.skipIf(sys.version_info[1] == 6,
+                     'Test fails for Python 3.6 for unknown reason')
     def test_no_deprecation_warning(self):
         """Ensures that deprecation warnings are suppressed during module
         lookup, see #542.

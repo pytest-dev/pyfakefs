@@ -9,7 +9,11 @@ The released versions correspond to PyPi releases.
     keyword arguments `fs`. This avoids confusion with the pytest `fs`
     fixture and conforms to the behavior of `mock.patch`. You may have to
     adapt the argument order if you use the `patchfs` and `mock.patch`
-    decorators together (see  [#566](../../issues/566)) 
+    decorators together (see [#566](../../issues/566)) 
+  * Default arguments that are file system functions are now _not_ patched by
+    default to avoid a large performance impact. An additional parameter
+    `patch_default_args` has been added that switches this behavior on
+    (see [#567](../../issues/567)).
     
 ## [Version 4.2.1](https://pypi.python.org/pypi/pyfakefs/4.2.1)
 

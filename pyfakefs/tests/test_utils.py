@@ -61,7 +61,10 @@ class TestCase(unittest.TestCase):
             expression(*args, **kwargs)
             self.fail('No exception was raised, OSError expected')
         except OSError as exc:
-            self.assertEqual(subtype, exc.errno)
+            if isinstance(subtype, list):
+                self.assertIn(exc.errno, subtype)
+            else:
+                self.assertEqual(subtype, exc.errno)
 
     def assert_equal_paths(self, actual, expected):
         if self.is_windows:

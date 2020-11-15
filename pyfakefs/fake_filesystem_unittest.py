@@ -80,7 +80,8 @@ def patchfs(_func=None, *,
             modules_to_patch=None,
             allow_root_user=True,
             use_known_patches=True,
-            patch_open_code=PatchMode.OFF):
+            patch_open_code=PatchMode.OFF,
+            patch_default_args=False):
     """Convenience decorator to use patcher with additional parameters in a
     test function.
 
@@ -104,7 +105,8 @@ def patchfs(_func=None, *,
                     modules_to_patch=modules_to_patch,
                     allow_root_user=allow_root_user,
                     use_known_patches=use_known_patches,
-                    patch_open_code=patch_open_code) as p:
+                    patch_open_code=patch_open_code,
+                    patch_default_args=False) as p:
                 args = list(args)
                 args.append(p.fs)
                 return f(*args, **kwargs)
@@ -131,7 +133,8 @@ def load_doctests(
         modules_to_patch=None,
         allow_root_user=True,
         use_known_patches=True,
-        patch_open_code=PatchMode.OFF):  # pylint: disable=unused-argument
+        patch_open_code=PatchMode.OFF,
+        patch_default_args=False):  # pylint: disable=unused-argument
     """Load the doctest tests for the specified module into unittest.
         Args:
             loader, tests, ignore : arguments passed in from `load_tests()`
@@ -145,7 +148,8 @@ def load_doctests(
                        modules_to_patch=modules_to_patch,
                        allow_root_user=allow_root_user,
                        use_known_patches=use_known_patches,
-                       patch_open_code=patch_open_code)
+                       patch_open_code=patch_open_code,
+                       patch_default_args=patch_default_args)
     globs = _patcher.replace_globs(vars(module))
     tests.addTests(doctest.DocTestSuite(module,
                                         globs=globs,
@@ -208,7 +212,8 @@ class TestCaseMixin:
                       modules_to_patch=None,
                       allow_root_user=True,
                       use_known_patches=True,
-                      patch_open_code=PatchMode.OFF):
+                      patch_open_code=PatchMode.OFF,
+                      patch_default_args=False):
         """Bind the file-related modules to the :py:class:`pyfakefs` fake file
         system instead of the real file system.  Also bind the fake `open()`
         function.
@@ -232,7 +237,8 @@ class TestCaseMixin:
             modules_to_patch=modules_to_patch,
             allow_root_user=allow_root_user,
             use_known_patches=use_known_patches,
-            patch_open_code=patch_open_code
+            patch_open_code=patch_open_code,
+            patch_default_args=patch_default_args
         )
 
         self._stubber.setUp()
@@ -374,7 +380,8 @@ class Patcher:
     def __init__(self, additional_skip_names=None,
                  modules_to_reload=None, modules_to_patch=None,
                  allow_root_user=True, use_known_patches=True,
-                 patch_open_code=PatchMode.OFF):
+                 patch_open_code=PatchMode.OFF,
+                 patch_default_args=False):
         """
         Args:
             additional_skip_names: names of modules inside of which no module
@@ -421,7 +428,11 @@ class Patcher:
         self._class_modules = {}
         self._init_fake_module_classes()
 
-        self.modules_to_reload = modules_to_reload or []
+        # reload tempfile under posix to patch default argument
+        self.modules_to_reload = [] if sys.platform == 'win32' else [tempfile]
+        if modules_to_reload is not None:
+            self.modules_to_reload.extend(modules_to_reload)
+        self.patch_default_args = patch_default_args
 
         if use_known_patches:
             modules_to_patch = modules_to_patch or {}
@@ -528,20 +539,23 @@ class Patcher:
 
     def _is_fs_module(self, mod, name, module_names):
         try:
-            return (inspect.ismodule(mod) and
-                    mod.__name__ in module_names
-                    or inspect.isclass(mod) and
-                    mod.__module__ in self._class_modules.get(name, []))
+            if mod.__name__ in module_names and inspect.ismodule(mod):
+                return True
         except Exception:
-            # handle cases where the module has no __name__ or __module__
+            pass
+        try:
+            if (name in self._class_modules and
+                    mod.__module__ in self._class_modules[name]):
+                return inspect.isclass(mod)
+        except Exception:
+            # handle cases where the class has no __module__
             # attribute - see #460, and any other exception triggered
             # by inspect functions
             return False
 
     def _is_skipped_fs_module(self, mod, name, module_names):
         try:
-            return (inspect.ismodule(mod) and
-                    mod.__name__ in module_names)
+            return mod.__name__ in module_names and inspect.ismodule(mod)
         except Exception:
             # handle cases where the module has no __name__ or __module__
             # attribute - see #460, and any other exception triggered
@@ -550,11 +564,10 @@ class Patcher:
 
     def _is_fs_function(self, fct):
         try:
-            return ((inspect.isfunction(fct) or
-                     inspect.isbuiltin(fct)) and
-                    fct.__name__ in self._fake_module_functions and
+            return (fct.__name__ in self._fake_module_functions and
                     fct.__module__ in self._fake_module_functions[
-                        fct.__name__])
+                        fct.__name__] and
+                    (inspect.isfunction(fct) or inspect.isbuiltin(fct)))
         except Exception:
             # handle cases where the function has no __name__ or __module__
             # attribute, or any other exception in inspect functions
@@ -565,27 +578,23 @@ class Patcher:
         patched in top-level functions and members of top-level classes."""
         # check for module-level functions
         try:
-            if inspect.isfunction(item):
-                if item.__defaults__:
-                    for i, d in enumerate(item.__defaults__):
-                        if self._is_fs_function(d):
-                            yield item, i, d
-            elif inspect.isclass(item):
+            if item.__defaults__ and inspect.isfunction(item):
+                for i, d in enumerate(item.__defaults__):
+                    if self._is_fs_function(d):
+                        yield item, i, d
+        except Exception:
+            pass
+        try:
+            if inspect.isclass(item):
                 # check for methods in class
                 # (nested classes are ignored for now)
-                with warnings.catch_warnings():
-                    # ignore deprecation warnings, see #542
-                    warnings.filterwarnings(
-                        'ignore',
-                        category=DeprecationWarning
-                    )
-                    for m in inspect.getmembers(item,
-                                                predicate=inspect.isfunction):
-                        m = m[1]
-                        if m.__defaults__:
-                            for i, d in enumerate(m.__defaults__):
-                                if self._is_fs_function(d):
-                                    yield m, i, d
+                for m in inspect.getmembers(item,
+                                            predicate=inspect.isfunction):
+                    m = m[1]
+                    if m.__defaults__:
+                        for i, d in enumerate(m.__defaults__):
+                            if self._is_fs_function(d):
+                                yield m, i, d
         except Exception:
             # Ignore any exception, examples:
             # ImportError: No module named '_gdbm'
@@ -613,34 +622,33 @@ class Patcher:
                             for sn in self._skip_names]))
             module_items = module.__dict__.copy().items()
 
-            # suppress specific pytest warning - see #466
             with warnings.catch_warnings():
+                # ignore deprecation warnings, see #542
                 warnings.filterwarnings(
                     'ignore',
-                    message='The compiler package is deprecated',
-                    category=DeprecationWarning,
-                    module='py'
+                    category=DeprecationWarning
                 )
                 modules = {name: mod for name, mod in module_items
                            if self._is_fs_module(mod, name, module_names)}
 
-            if skipped:
+                if skipped:
+                    for name, mod in modules.items():
+                        self._skipped_modules.setdefault(name, set()).add(
+                            (module, mod.__name__))
+                    continue
+
                 for name, mod in modules.items():
-                    self._skipped_modules.setdefault(name, set()).add(
+                    self._modules.setdefault(name, set()).add(
                         (module, mod.__name__))
-                continue
+                functions = {name: fct for name, fct in
+                             module_items
+                             if self._is_fs_function(fct)}
 
-            for name, mod in modules.items():
-                self._modules.setdefault(name, set()).add(
-                    (module, mod.__name__))
-            functions = {name: fct for name, fct in
-                         module_items
-                         if self._is_fs_function(fct)}
-
-            # find default arguments that are file system functions
-            for _, fct in module_items:
-                for f, i, d in self._def_values(fct):
-                    self._def_functions.append((f, i, d))
+                # find default arguments that are file system functions
+                if self.patch_default_args:
+                    for _, fct in module_items:
+                        for f, i, d in self._def_values(fct):
+                            self._def_functions.append((f, i, d))
 
             for name, fct in functions.items():
                 self._fct_modules.setdefault(

@@ -280,8 +280,12 @@ This also works if importing the functions as another name:
   from io import open as io_open
   from builtins import open as bltn_open
 
-Initializing a default argument with a file system function is also patched
-automatically:
+There are a few cases where automatic patching does not work. We know of at
+least two specific cases where this is the case:
+
+Initializing a default argument with a file system function is not patched
+automatically due to performance reasons (though it can be switched on using
+``patch_default_args``):
 
 .. code:: python
 
@@ -290,8 +294,6 @@ automatically:
   def check_if_exists(filepath, file_exists=os.path.exists):
       return file_exists(filepath)
 
-There are a few cases where automatic patching does not work. We know of at
-least one specific case where this is the case:
 
 If initializing a global variable using a file system function, the
 initialization will be done using the real file system:
@@ -478,6 +480,23 @@ set ``patch_open_code`` to ``PatchMode.AUTO``:
 .. note:: This argument is subject to change or removal in future
   versions of pyfakefs, depending on the upcoming use cases.
 
+patch_default_args
+..................
+As already mentioned, a default argument that is initialized with a file
+system function is not patched automatically:
+
+.. code:: python
+
+  import os
+
+  def check_if_exists(filepath, file_exists=os.path.exists):
+      return file_exists(filepath)
+
+As this is rarely needed, and the check to patch this automatically is quite
+expansive, it is not done by default. Using ``patch_default_args`` will
+search for this kind of default arguments and patch them automatically.
+You could also use the ``modules_to_reload`` option with the module that
+contains the default argument instead, if you want to avoid the overhead.
 
 Using convenience methods
 -------------------------
