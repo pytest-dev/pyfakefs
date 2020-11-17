@@ -15,7 +15,7 @@ The released versions correspond to PyPi releases.
     `patch_default_args` has been added that switches this behavior on
     (see [#567](../../issues/567)).
     
-## [Version 4.2.1](https://pypi.python.org/pypi/pyfakefs/4.2.1)
+## [Version 4.2.1](https://pypi.python.org/pypi/pyfakefs/4.2.1) (2020-11-02)
 
 This is a bugfix release that fixes a regression issue.
 
@@ -23,7 +23,7 @@ This is a bugfix release that fixes a regression issue.
   * remove dependency of pyfakefs on `pytest` (regression, 
     see [#565](../../issues/565)) 
 
-## [Version 4.2.0](https://pydpi.python.org/pypi/pyfakefs/4.2.0)
+## [Version 4.2.0](https://pydpi.python.org/pypi/pyfakefs/4.2.0) (2020-11-01)
 
 #### New Features
   * add support for the `buffering` parameter in `open` 
@@ -56,7 +56,7 @@ This is a bugfix release that fixes a regression issue.
   * make sure pytest will work without pyfakefs installed
    (see [#550](../../issues/550))
 
-## [Version 4.1.0](https://pypi.python.org/pypi/pyfakefs/4.1.0)
+## [Version 4.1.0](https://pypi.python.org/pypi/pyfakefs/4.1.0) (2020-07-12)
 
 #### New Features
   * Added some support for pandas (`read_csv`, `read_excel` and more), and
@@ -75,7 +75,7 @@ This is a bugfix release that fixes a regression issue.
 #### Infrastructure
   * Make sure all temporary files from real fs tests are removed
 
-## [Version 4.0.2](https://pypi.python.org/pypi/pyfakefs/4.0.2)
+## [Version 4.0.2](https://pypi.python.org/pypi/pyfakefs/4.0.2) (2020-03-04)
 
 This as a patch release that only builds for Python 3. Note that 
 versions 4.0.0 and 4.0.1 will be removed from PyPi to not to be able to
@@ -84,14 +84,14 @@ install them under Python 2.
 #### Fixes
   * Do not build for Python 2 (see [#524](../../issues/524))
 
-## [Version 4.0.1](https://pypi.python.org/pypi/pyfakefs/4.0.1)
+## [Version 4.0.1](https://pypi.python.org/pypi/pyfakefs/4.0.1) (2020-03-03)
 
 This as a bug fix release for a regression bug.
 
 #### Fixes
   * Avoid exception if using `flask-restx` (see [#523](../../issues/523))
 
-## [Version 4.0.0](https://pypi.python.org/pypi/pyfakefs/4.0.0)
+## [Version 4.0.0](https://pypi.python.org/pypi/pyfakefs/4.0.0) (2020-03-03)
 
   * pyfakefs 4.0.0 drops support for Python 2.7. If you still need
     Python 2.7, you can continue to use pyfakefs 3.7.x. 
@@ -124,7 +124,7 @@ This as a bug fix release for a regression bug.
   * Fixed behavior of `os.makedirs` in write-protected directory 
     (see [#507](../../issues/507))
 
-## [Version 3.7.2](https://pypi.python.org/pypi/pyfakefs/3.7.2)
+## [Version 3.7.2](https://pypi.python.org/pypi/pyfakefs/3.7.2) (2020-03-02)
 
 This version backports some fixes from master.
 
@@ -140,7 +140,7 @@ This version backports some fixes from master.
   * Fixed behavior of `os.makedirs` in write-protected directory 
     (see [#507](../../issues/507))
 
-## [Version 3.7.1](https://pypi.python.org/pypi/pyfakefs/3.7.1)
+## [Version 3.7.1](https://pypi.python.org/pypi/pyfakefs/3.7.1) (2020-02-14)
 
 This version adds support for Python 3.7.6 and 3.8.1.
 
@@ -148,7 +148,7 @@ This version adds support for Python 3.7.6 and 3.8.1.
   * Adapted fake `pathlib` to changes in Python 3.7.6/3.8.1   
     (see [#508](../../issues/508)) (backported from master)
     
-## [Version 3.7](https://pypi.python.org/pypi/pyfakefs/3.7)
+## [Version 3.7](https://pypi.python.org/pypi/pyfakefs/3.7) (2019-11-23)
 
 This version adds support for Python 3.8.
 
@@ -178,7 +178,7 @@ and Python 3.4 (possible bug fix releases notwithstanding).
   * fixed CI tests scripts to always propagate errors
     (see [#500](../../issues/500))
 
-## [Version 3.6.1](https://pypi.python.org/pypi/pyfakefs/3.6.1)
+## [Version 3.6.1](https://pypi.python.org/pypi/pyfakefs/3.6.1) (2019-10-07)
 
 #### Fixes
   * avoid rare side effect during module iteration in test setup
@@ -186,7 +186,7 @@ and Python 3.4 (possible bug fix releases notwithstanding).
   * make sure real OS tests are not executed by default 
     (see [#495](../../issues/495))
     
-## [Version 3.6](https://pypi.python.org/pypi/pyfakefs/3.6)
+## [Version 3.6](https://pypi.python.org/pypi/pyfakefs/3.6) (2019-06-30)
 
 #### Changes
   * removed unneeded parameter `use_dynamic_patch`
@@ -215,7 +215,7 @@ and Python 3.4 (possible bug fix releases notwithstanding).
   * avoid pytest warning under Python 2.7 (see [#466](../../issues/466))
   * add __next__ to FakeFileWrapper (see [#485](../../issues/485))
 
-## [Version 3.5.8](https://pypi.python.org/pypi/pyfakefs/3.5.8)
+## [Version 3.5.8](https://pypi.python.org/pypi/pyfakefs/3.5.8) (2019-06-21)
 
 Another bug-fix release that mainly fixes a regression wih Python 2 that has
 been introduced in version 3.5.3.
@@ -231,7 +231,7 @@ been introduced in version 3.5.3.
   * more changes to run tests using `python setup.py test` under Python 2
     regardless of `pathlib2` presence
 
-## [Version 3.5.7](https://pypi.python.org/pypi/pyfakefs/3.5.7)
+## [Version 3.5.7](https://pypi.python.org/pypi/pyfakefs/3.5.7) (2019-02-08)
 
 This is mostly a bug-fix release.
 
@@ -246,19 +246,19 @@ This is mostly a bug-fix release.
     see [#465](../../issues/465))
   * make tests run if running `python setup.py test` under Python 2
 
-## [Version 3.5.6](https://pypi.python.org/pypi/pyfakefs/3.5.6)
+## [Version 3.5.6](https://pypi.python.org/pypi/pyfakefs/3.5.6) (2019-01-13)
 
 #### Changes
   * import external `pathlib2` and `scandir` packages first if present
     (see [#462](../../issues/462))
 
-## [Version 3.5.5](https://pypi.python.org/pypi/pyfakefs/3.5.5)
+## [Version 3.5.5](https://pypi.python.org/pypi/pyfakefs/3.5.5) (2018-12-20)
 
 #### Fixes
   * removed shebang from test files to avoid packaging warnings
    (see [#461](../../issues/461))
 
-## [Version 3.5.4](https://pypi.python.org/pypi/pyfakefs/3.5.4)
+## [Version 3.5.4](https://pypi.python.org/pypi/pyfakefs/3.5.4) (2018-12-19)
 
 #### New Features
   * added context manager class `Pause` for pause/resume
@@ -271,7 +271,7 @@ This is mostly a bug-fix release.
   * avoid `AttributeError` triggered by modules without `__module__` attribute
     (see [#460](../../issues/460))
 
-## [Version 3.5.3](https://pypi.python.org/pypi/pyfakefs/3.5.3)
+## [Version 3.5.3](https://pypi.python.org/pypi/pyfakefs/3.5.3) (2018-11-22)
 
 This is a minor release to have a version with passing tests for OpenSUSE
 packaging.
@@ -285,7 +285,7 @@ packaging.
   * make tests for access time less strict to account for file systems that
     do not change it immediately ([#453](../../issues/453))
 
-## [Version 3.5.2](https://pypi.python.org/pypi/pyfakefs/3.5.2)
+## [Version 3.5.2](https://pypi.python.org/pypi/pyfakefs/3.5.2) (2018-11-11)
 
 This is mostly a bug-fix release.
 
@@ -301,7 +301,7 @@ This is mostly a bug-fix release.
     ([#445](../../issues/445))
   * allow trailing path in `add_real_directory` ([#446](../../issues/446))
 
-## [Version 3.5](https://pypi.python.org/pypi/pyfakefs/3.5)
+## [Version 3.5](https://pypi.python.org/pypi/pyfakefs/3.5) (2018-10-22)
 
 #### Changes
   * This version of pyfakefs does not support Python 3.3. Python 3.3 users
@@ -346,7 +346,7 @@ This is mostly a bug-fix release.
   * fixed a problem related to patching `shutil` functions using `zipfile`
     ([#427](../../issues/427))
 
-## [Version 3.4.3](https://pypi.python.org/pypi/pyfakefs/3.4.3)
+## [Version 3.4.3](https://pypi.python.org/pypi/pyfakefs/3.4.3) (2018-06-13)
 
 This is mostly a bug fix release, mainly for bugs found by
 [@agroce](https://github.com/agroce) using [tstl](https://github.com/agroce/tstl).
@@ -398,7 +398,7 @@ This is mostly a bug fix release, mainly for bugs found by
     * `os.readlink` ([#359](../../issues/359), [#372](../../issues/372),
     [#392](../../issues/392))
 
-## [Version 3.4.1](https://pypi.python.org/pypi/pyfakefs/3.4.1)
+## [Version 3.4.1](https://pypi.python.org/pypi/pyfakefs/3.4.1) (2018-03-18)
 
 This is a bug fix only release.
 
@@ -407,7 +407,7 @@ This is a bug fix only release.
    `tempfile` after test execution (regression, see [#356](../../issues/356))
   * `add_real_directory` does not work after `chdir` (see [#355](../../issues/355))
 
-## [Version 3.4](https://pypi.python.org/pypi/pyfakefs/3.4)
+## [Version 3.4](https://pypi.python.org/pypi/pyfakefs/3.4) (2018-03-08)
 
 This version of pyfakefs does not support Python 2.6.  Python 2.6 users
 must use pyfakefs 3.3 or earlier.
@@ -449,7 +449,7 @@ must use pyfakefs 3.3 or earlier.
   * Unittest mock didn't work after setUpPyfakefs ([#334](../../issues/334))
   * `os.path.split()` and `os.path.dirname()` gave incorrect results under Windows ([#335](../../issues/335))
 
-## [Version 3.3](https://pypi.python.org/pypi/pyfakefs/3.3)
+## [Version 3.3](https://pypi.python.org/pypi/pyfakefs/3.3) (2017-11-12)
 
 This is the last release that supports Python 2.6.
 
@@ -499,7 +499,7 @@ This is the last release that supports Python 2.6.
     ([#199](../../issues/199))
   * Creating files in read-only directory was possible ([#203](../../issues/203))
 
-## [Version 3.2](https://pypi.python.org/pypi/pyfakefs/3.2)
+## [Version 3.2](https://pypi.python.org/pypi/pyfakefs/3.2) (2017-05-27)
 
 #### New Features
   * The `errors` argument is supported for `io.open()` and `os.open()`
@@ -525,7 +525,7 @@ This is the last release that supports Python 2.6.
  * On Windows it was not possible to rename a file when only the case of the file
    name changed ([#160](../../issues/160))
 
-## [Version 3.1](https://pypi.python.org/pypi/pyfakefs/3.1)
+## [Version 3.1](https://pypi.python.org/pypi/pyfakefs/3.1) (2017-02-11)
 
 #### New Features
  * Added helper method `TestCase.copyRealFile()` to copy a file from
@@ -537,7 +537,7 @@ This is the last release that supports Python 2.6.
 #### Fixes
  * Incorrect disk usage calculation if too large file created ([#155](../../issues/155))
 
-## [Version 3.0](https://pypi.python.org/pypi/pyfakefs/3.0)
+## [Version 3.0](https://pypi.python.org/pypi/pyfakefs/3.0) (2017-01-18)
 
 #### New Features
  * Support for path-like objects as arguments in fake `os`
@@ -562,7 +562,7 @@ This is the last release that supports Python 2.6.
  * Exception handling when using `Patcher` with py.test ([#135](../../issues/135))
  * Fake `os.listdir` returned sorted instead of unsorted entries
 
-## [Version 2.9](https://pypi.python.org/pypi/pyfakefs/2.9)
+## [Version 2.9](https://pypi.python.org/pypi/pyfakefs/2.9) (2016-10-02)
 
 #### New Features
  * `io.open`, `os.open`: support for `encoding` argument ([#120](../../issues/120))
