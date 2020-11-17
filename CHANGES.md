@@ -3,7 +3,6 @@ The released versions correspond to PyPi releases.
 
 ## Version 4.3.0 (as yet unreleased)
 
-
 ### Changes
   * The `patchfs` decorator now expects a positional argument instead of the
     keyword arguments `fs`. This avoids confusion with the pytest `fs`
@@ -14,6 +13,7 @@ The released versions correspond to PyPi releases.
     default to avoid a large performance impact. An additional parameter
     `patch_default_args` has been added that switches this behavior on
     (see [#567](../../issues/567)).
+  * Some setup performance improvements have been added  
     
 ## [Version 4.2.1](https://pypi.python.org/pypi/pyfakefs/4.2.1) (2020-11-02)
 

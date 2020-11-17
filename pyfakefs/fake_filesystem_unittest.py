@@ -362,13 +362,6 @@ class Patcher:
         None, fake_filesystem, fake_filesystem_shutil,
         sys, linecache, tokenize
     }
-    try:
-        import py
-        import pytest
-        SKIPMODULES.add(py)
-        SKIPMODULES.add(pytest)
-    except ImportError:
-        pass
 
     assert None in SKIPMODULES, ("sys.modules contains 'None' values;"
                                  " must skip them.")
@@ -606,7 +599,6 @@ class Patcher:
         Later, `setUp()` will stub these with the fake file system
         modules.
         """
-
         module_names = list(self._fake_module_classes.keys()) + [PATH_MODULE]
         for name, module in list(sys.modules.items()):
             try:
@@ -622,33 +614,27 @@ class Patcher:
                             for sn in self._skip_names]))
             module_items = module.__dict__.copy().items()
 
-            with warnings.catch_warnings():
-                # ignore deprecation warnings, see #542
-                warnings.filterwarnings(
-                    'ignore',
-                    category=DeprecationWarning
-                )
-                modules = {name: mod for name, mod in module_items
-                           if self._is_fs_module(mod, name, module_names)}
+            modules = {name: mod for name, mod in module_items
+                       if self._is_fs_module(mod, name, module_names)}
 
-                if skipped:
-                    for name, mod in modules.items():
-                        self._skipped_modules.setdefault(name, set()).add(
-                            (module, mod.__name__))
-                    continue
-
+            if skipped:
                 for name, mod in modules.items():
-                    self._modules.setdefault(name, set()).add(
+                    self._skipped_modules.setdefault(name, set()).add(
                         (module, mod.__name__))
-                functions = {name: fct for name, fct in
-                             module_items
-                             if self._is_fs_function(fct)}
+                continue
 
-                # find default arguments that are file system functions
-                if self.patch_default_args:
-                    for _, fct in module_items:
-                        for f, i, d in self._def_values(fct):
-                            self._def_functions.append((f, i, d))
+            for name, mod in modules.items():
+                self._modules.setdefault(name, set()).add(
+                    (module, mod.__name__))
+            functions = {name: fct for name, fct in
+                         module_items
+                         if self._is_fs_function(fct)}
+
+            # find default arguments that are file system functions
+            if self.patch_default_args:
+                for _, fct in module_items:
+                    for f, i, d in self._def_values(fct):
+                        self._def_functions.append((f, i, d))
 
             for name, fct in functions.items():
                 self._fct_modules.setdefault(
@@ -684,7 +670,13 @@ class Patcher:
             shutil._HAS_FCOPYFILE = False
 
         temp_dir = tempfile.gettempdir()
-        self._find_modules()
+        with warnings.catch_warnings():
+            # ignore deprecation warnings, see #542
+            warnings.filterwarnings(
+                'ignore',
+                category=DeprecationWarning
+            )
+            self._find_modules()
         self._refresh()
 
         if doctester is not None:
@@ -696,7 +688,8 @@ class Patcher:
 
         # the temp directory is assumed to exist at least in `tempfile1`,
         # so we create it here for convenience
-        self.fs.create_dir(temp_dir)
+        self.fs.create_dir(temp_dir, check=False)
+        self.fs._add_c_drive()
 
     def start_patching(self):
         if not self._patching:
