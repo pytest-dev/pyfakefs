@@ -362,6 +362,9 @@ class Patcher:
         None, fake_filesystem, fake_filesystem_shutil,
         sys, linecache, tokenize
     }
+    # caches all modules that do not have file system modules or function
+    # to speed up _find_modules
+    CACHED_SKIPMODULES = set()
 
     assert None in SKIPMODULES, ("sys.modules contains 'None' values;"
                                  " must skip them.")
@@ -369,6 +372,11 @@ class Patcher:
     IS_WINDOWS = sys.platform in ('win32', 'cygwin')
 
     SKIPNAMES = {'os', 'path', 'io', 'genericpath', OS_MODULE, PATH_MODULE}
+
+    # hold values from last call - if changed, the cache in
+    # CACHED_SKIPMODULES has to be invalidated
+    PATCHED_MODULE_NAMES = {}
+    PATCH_DEFAULT_ARGS = False
 
     def __init__(self, additional_skip_names=None,
                  modules_to_reload=None, modules_to_patch=None,
@@ -426,6 +434,9 @@ class Patcher:
         if modules_to_reload is not None:
             self.modules_to_reload.extend(modules_to_reload)
         self.patch_default_args = patch_default_args
+        if patch_default_args != self.PATCH_DEFAULT_ARGS:
+            self.__class__.PATCH_DEFAULT_ARGS = patch_default_args
+            self.__class__.CACHED_SKIPMODULES = set()
 
         if use_known_patches:
             modules_to_patch = modules_to_patch or {}
@@ -436,6 +447,10 @@ class Patcher:
         if modules_to_patch is not None:
             for name, fake_module in modules_to_patch.items():
                 self._fake_module_classes[name] = fake_module
+        patched_module_names = set(modules_to_patch)
+        if patched_module_names != self.PATCHED_MODULE_NAMES:
+            self.__class__.PATCHED_MODULE_NAMES = patched_module_names
+            self.__class__.CACHED_SKIPMODULES = set()
 
         self._fake_module_functions = {}
         self._init_fake_module_functions()
@@ -455,6 +470,7 @@ class Patcher:
         # _isStale is set by tearDown(), reset by _refresh()
         self._isStale = True
         self._patching = False
+        self.found_fs_module = False
 
     def _init_fake_module_classes(self):
         # IMPORTANT TESTING NOTE: Whenever you add a new module below, test
@@ -532,38 +548,50 @@ class Patcher:
 
     def _is_fs_module(self, mod, name, module_names):
         try:
+            # check for __name__ first and ignore the AttributeException
+            # if it does not exist - avoids calling expansive ismodule
             if mod.__name__ in module_names and inspect.ismodule(mod):
+                self.found_fs_module = True
                 return True
         except Exception:
             pass
         try:
             if (name in self._class_modules and
                     mod.__module__ in self._class_modules[name]):
-                return inspect.isclass(mod)
+                if inspect.isclass(mod):
+                    self.found_fs_module = True
+                    return True
+                return False
         except Exception:
-            # handle cases where the class has no __module__
-            # attribute - see #460, and any other exception triggered
-            # by inspect functions
+            # handle AttributeError and any other exception possibly triggered
+            # by side effects of inspect methods
             return False
 
     def _is_skipped_fs_module(self, mod, name, module_names):
         try:
+            # check for __name__ first and ignore the AttributeException
+            # if it does not exist - avoids calling expansive ismodule
             return mod.__name__ in module_names and inspect.ismodule(mod)
         except Exception:
-            # handle cases where the module has no __name__ or __module__
-            # attribute - see #460, and any other exception triggered
-            # by inspect functions
+            # handle AttributeError and any other exception possibly triggered
+            # by side effects of inspect.ismodule
             return False
 
     def _is_fs_function(self, fct):
         try:
-            return (fct.__name__ in self._fake_module_functions and
+            # check for __name__ first and ignore the AttributeException
+            # if it does not exist - avoids calling expansive inspect
+            # methods in most cases
+            if (fct.__name__ in self._fake_module_functions and
                     fct.__module__ in self._fake_module_functions[
                         fct.__name__] and
-                    (inspect.isfunction(fct) or inspect.isbuiltin(fct)))
+                    (inspect.isfunction(fct) or inspect.isbuiltin(fct))):
+                self.found_fs_module = True
+                return True
+            return False
         except Exception:
-            # handle cases where the function has no __name__ or __module__
-            # attribute, or any other exception in inspect functions
+            # handle AttributeError and any other exception possibly triggered
+            # by side effects of inspect methods
             return False
 
     def _def_values(self, item):
@@ -581,6 +609,7 @@ class Patcher:
             if inspect.isclass(item):
                 # check for methods in class
                 # (nested classes are ignored for now)
+                # inspect.getmembers is very expansive!
                 for m in inspect.getmembers(item,
                                             predicate=inspect.isfunction):
                     m = m[1]
@@ -602,14 +631,18 @@ class Patcher:
         module_names = list(self._fake_module_classes.keys()) + [PATH_MODULE]
         for name, module in list(sys.modules.items()):
             try:
-                if module in self.SKIPMODULES or not inspect.ismodule(module):
+                if (module in self.CACHED_SKIPMODULES or
+                        module in self.SKIPMODULES or
+                        not inspect.ismodule(module)):
                     continue
             except Exception:
                 # workaround for some py (part of pytest) versions
                 # where py.error has no __name__ attribute
                 # see https://github.com/pytest-dev/py/issues/73
                 # and any other exception triggered by inspect.ismodule
+                self.__class__.SKIPMODULES.add(module)
                 continue
+            self.found_fs_module = False
             skipped = (any([sn.startswith(module.__name__)
                             for sn in self._skip_names]))
             module_items = module.__dict__.copy().items()
@@ -639,6 +672,8 @@ class Patcher:
             for name, fct in functions.items():
                 self._fct_modules.setdefault(
                     (name, fct.__name__, fct.__module__), set()).add(module)
+            if not self.found_fs_module:
+                self.__class__.CACHED_SKIPMODULES.add(module)
 
     def _refresh(self):
         """Renew the fake file system and set the _isStale flag to `False`."""
