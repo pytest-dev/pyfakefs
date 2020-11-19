@@ -5,7 +5,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Usage &#8212; pyfakefs 4.2.1 documentation</title>
+    <title>Usage &#8212; pyfakefs 4.3.0 documentation</title>
     <link rel="stylesheet" href="_static/pyfakefs.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
     <script id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
@@ -33,7 +33,7 @@
         <li class="right" >
           <a href="intro.html" title="Introduction"
              accesskey="P">previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="index.html">pyfakefs 4.2.1 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="index.html">pyfakefs 4.3.0 documentation</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">Usage</a></li> 
       </ul>
     </div>  
@@ -123,28 +123,40 @@ single function, you can write:</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">pyfakefs.fake_filesystem_unittest</span> <span class="kn">import</span> <span class="n">patchfs</span>
 
 <span class="nd">@patchfs</span>
-<span class="k">def</span> <span class="nf">test_something</span><span class="p">(</span><span class="n">fs</span><span class="p">):</span>
-    <span class="c1"># access the fake_filesystem object via fs</span>
-    <span class="n">fs</span><span class="o">.</span><span class="n">create_file</span><span class="p">(</span><span class="s1">&#39;/foo/bar&#39;</span><span class="p">,</span> <span class="n">contents</span><span class="o">=</span><span class="s1">&#39;test&#39;</span><span class="p">)</span>
+<span class="k">def</span> <span class="nf">test_something</span><span class="p">(</span><span class="n">fake_fs</span><span class="p">):</span>
+    <span class="c1"># access the fake_filesystem object via fake_fs</span>
+    <span class="n">fake_fs</span><span class="o">.</span><span class="n">create_file</span><span class="p">(</span><span class="s1">&#39;/foo/bar&#39;</span><span class="p">,</span> <span class="n">contents</span><span class="o">=</span><span class="s1">&#39;test&#39;</span><span class="p">)</span>
 </pre></div>
 </div>
-<p>Note the argument name <code class="docutils literal notranslate"><span class="pre">fs</span></code>, which is mandatory. As this is a keyword
-argument, it must go after all positional arguments, such as arguments from
-<code class="docutils literal notranslate"><span class="pre">mock.patch</span></code>, regardless of the decorator order:</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="nd">@mock</span><span class="o">.</span><span class="n">patch</span><span class="p">(</span><span class="s1">&#39;foo.bar&#39;</span><span class="p">)</span>
-<span class="nd">@patchfs</span>
-<span class="k">def</span> <span class="nf">test_something</span><span class="p">(</span><span class="n">mocked_bar</span><span class="p">,</span> <span class="n">fs</span><span class="p">):</span>
+<p>Note the <code class="docutils literal notranslate"><span class="pre">fake_fs</span></code> is a positional argument and the argument name does not
+matter. If there are additional <code class="docutils literal notranslate"><span class="pre">mock.patch</span></code> decorators that also
+create positional arguments, the argument order is the same as the decorator
+order, as shown here:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="nd">@patchfs</span>
+<span class="nd">@mock</span><span class="o">.</span><span class="n">patch</span><span class="p">(</span><span class="s1">&#39;foo.bar&#39;</span><span class="p">)</span>
+<span class="k">def</span> <span class="nf">test_something</span><span class="p">(</span><span class="n">fake_fs</span><span class="p">,</span> <span class="n">mocked_bar</span><span class="p">):</span>
     <span class="o">...</span>
 
-<span class="nd">@patchfs</span>
 <span class="nd">@mock</span><span class="o">.</span><span class="n">patch</span><span class="p">(</span><span class="s1">&#39;foo.bar&#39;</span><span class="p">)</span>
-<span class="k">def</span> <span class="nf">test_something</span><span class="p">(</span><span class="n">mocked_bar</span><span class="p">,</span> <span class="n">fs</span><span class="p">):</span>
+<span class="nd">@patchfs</span>
+<span class="k">def</span> <span class="nf">test_something</span><span class="p">(</span><span class="n">mocked_bar</span><span class="p">,</span> <span class="n">fake_fs</span><span class="p">):</span>
     <span class="o">...</span>
 </pre></div>
 </div>
-<p>Don’t confuse this with <code class="docutils literal notranslate"><span class="pre">pytest</span></code> tests, where <code class="docutils literal notranslate"><span class="pre">fs</span></code> is the fixture name
-(with the same functionality). If you use <code class="docutils literal notranslate"><span class="pre">pytest</span></code>, you don’t need this
-decorator.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>Avoid writing the <code class="docutils literal notranslate"><span class="pre">patchfs</span></code> decorator <em>between</em> <code class="docutils literal notranslate"><span class="pre">mock.patch</span></code> operators,
+as the order will not be what you expect. Due to implementation details,
+all arguments created by <code class="docutils literal notranslate"><span class="pre">mock.patch</span></code> decorators are always expected to
+be contiguous, regardless of other decorators positioned between them.</p>
+</div>
+<div class="admonition caution">
+<p class="admonition-title">Caution</p>
+<p>In previous versions, the keyword argument <cite>fs</cite> has been used instead,
+which had to be positioned <em>after</em> all positional arguments regardless of
+the decorator order. If you upgrade from a version before pyfakefs 4.2,
+you may have to adapt the argument order.</p>
+</div>
 <p>You can also use this to make a single unit test use the fake fs:</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">class</span> <span class="nc">TestSomething</span><span class="p">(</span><span class="n">unittest</span><span class="o">.</span><span class="n">TestCase</span><span class="p">):</span>
 
@@ -235,7 +247,7 @@ the decorator:</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">pyfakefs.fake_filesystem_unittest</span> <span class="kn">import</span> <span class="n">patchfs</span>
 
 <span class="nd">@patchfs</span><span class="p">(</span><span class="n">allow_root_user</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
-<span class="k">def</span> <span class="nf">test_something</span><span class="p">(</span><span class="n">fs</span><span class="p">):</span>
+<span class="k">def</span> <span class="nf">test_something</span><span class="p">(</span><span class="n">fake_fs</span><span class="p">):</span>
     <span class="o">...</span>
 </pre></div>
 </div>
@@ -283,16 +295,17 @@ automatically if imported like:</p>
 <span class="kn">from</span> <span class="nn">builtins</span> <span class="kn">import</span> <span class="nb">open</span> <span class="k">as</span> <span class="n">bltn_open</span>
 </pre></div>
 </div>
-<p>Initializing a default argument with a file system function is also patched
-automatically:</p>
+<p>There are a few cases where automatic patching does not work. We know of at
+least two specific cases where this is the case:</p>
+<p>Initializing a default argument with a file system function is not patched
+automatically due to performance reasons (though it can be switched on using
+<code class="docutils literal notranslate"><span class="pre">patch_default_args</span></code>):</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">os</span>
 
 <span class="k">def</span> <span class="nf">check_if_exists</span><span class="p">(</span><span class="n">filepath</span><span class="p">,</span> <span class="n">file_exists</span><span class="o">=</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">):</span>
     <span class="k">return</span> <span class="n">file_exists</span><span class="p">(</span><span class="n">filepath</span><span class="p">)</span>
 </pre></div>
 </div>
-<p>There are a few cases where automatic patching does not work. We know of at
-least one specific case where this is the case:</p>
 <p>If initializing a global variable using a file system function, the
 initialization will be done using the real file system:</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">pathlib</span> <span class="kn">import</span> <span class="n">Path</span>
@@ -398,7 +411,7 @@ has now been been integrated into pyfakefs):</p>
 
 <span class="c1"># test code using patchfs decorator</span>
 <span class="nd">@patchfs</span><span class="p">(</span><span class="n">modules_to_patch</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;django.core.files.locks&#39;</span><span class="p">:</span> <span class="n">FakeLocks</span><span class="p">})</span>
-<span class="k">def</span> <span class="nf">test_django_stuff</span><span class="p">(</span><span class="n">fs</span><span class="p">):</span>
+<span class="k">def</span> <span class="nf">test_django_stuff</span><span class="p">(</span><span class="n">fake_fs</span><span class="p">):</span>
     <span class="o">...</span>
 </pre></div>
 </div>
@@ -466,6 +479,22 @@ set <code class="docutils literal notranslate"><span class="pre">patch_open_code
 <p>This argument is subject to change or removal in future
 versions of pyfakefs, depending on the upcoming use cases.</p>
 </div>
+</div>
+<div class="section" id="patch-default-args">
+<h4>patch_default_args<a class="headerlink" href="#patch-default-args" title="Permalink to this headline">¶</a></h4>
+<p>As already mentioned, a default argument that is initialized with a file
+system function is not patched automatically:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">os</span>
+
+<span class="k">def</span> <span class="nf">check_if_exists</span><span class="p">(</span><span class="n">filepath</span><span class="p">,</span> <span class="n">file_exists</span><span class="o">=</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">):</span>
+    <span class="k">return</span> <span class="n">file_exists</span><span class="p">(</span><span class="n">filepath</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>As this is rarely needed, and the check to patch this automatically is quite
+expansive, it is not done by default. Using <code class="docutils literal notranslate"><span class="pre">patch_default_args</span></code> will
+search for this kind of default arguments and patch them automatically.
+You could also use the <code class="docutils literal notranslate"><span class="pre">modules_to_reload</span></code> option with the module that
+contains the default argument instead, if you want to avoid the overhead.</p>
 </div>
 </div>
 </div>
@@ -824,6 +853,7 @@ described above.</p>
 <li><a class="reference internal" href="#allow-root-user">allow_root_user</a></li>
 <li><a class="reference internal" href="#use-known-patches">use_known_patches</a></li>
 <li><a class="reference internal" href="#patch-open-code">patch_open_code</a></li>
+<li><a class="reference internal" href="#patch-default-args">patch_default_args</a></li>
 </ul>
 </li>
 </ul>
@@ -890,7 +920,7 @@ described above.</p>
         <li class="right" >
           <a href="intro.html" title="Introduction"
              >previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="index.html">pyfakefs 4.2.1 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="index.html">pyfakefs 4.3.0 documentation</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">Usage</a></li> 
       </ul>
     </div>
@@ -898,7 +928,7 @@ described above.</p>
         &#169; Copyright 2009 Google Inc. All Rights Reserved.
 © Copyright 2014 Altera Corporation. All Rights Reserved.
 © Copyright 2014-2020 John McGehee.
-      Last updated on Nov 02, 2020.
+      Last updated on Nov 19, 2020.
     </div>
   </body>
 </html>
