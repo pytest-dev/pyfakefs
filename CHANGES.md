@@ -1,7 +1,16 @@
 # pyfakefs Release Notes
 The released versions correspond to PyPi releases.
 
-## Version 4.3.0 (as yet unreleased)
+## Version 4.4.0 (as yet unreleased)
+
+## [Version 4.3.0](https://pypi.python.org/pypi/pyfakefs/4.3.0) (2020-11-19)
+
+This is mostly a performance release. The performance of the pyfakefs setup has
+been decreasing sufficiently, especially with the 4.x releases. This release
+corrects that by making the most expansive feature optional, and by adding some
+other performance improvements. This shall decrease the setup time by about a
+factor of 20, and it shall now be comparable to the performance of the 3.4
+release.
 
 ### Changes
   * The `patchfs` decorator now expects a positional argument instead of the
@@ -13,7 +22,8 @@ The released versions correspond to PyPi releases.
     default to avoid a large performance impact. An additional parameter
     `patch_default_args` has been added that switches this behavior on
     (see [#567](../../issues/567)).
-  * Added some performance improvements in the test setup  
+  * Added performance improvements in the test setup, including caching the
+    the unpatched modules
     
 ## [Version 4.2.1](https://pypi.python.org/pypi/pyfakefs/4.2.1) (2020-11-02)
 
