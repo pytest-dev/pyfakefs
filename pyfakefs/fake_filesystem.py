@@ -974,6 +974,11 @@ class FakeFilesystem:
                                'system object created by a Patcher object')
         self.patcher.resume()
 
+    def clear_cache(self):
+        """Clear the cache of non-patched modules."""
+        if self.patcher:
+            self.patcher.clear_cache()
+
     def line_separator(self):
         return '\r\n' if self.is_windows_fs else '\n'
 

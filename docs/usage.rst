@@ -498,6 +498,21 @@ search for this kind of default arguments and patch them automatically.
 You could also use the ``modules_to_reload`` option with the module that
 contains the default argument instead, if you want to avoid the overhead.
 
+use_cache
+.........
+If True (default), non-patched modules are cached between tests for performance
+reasons. As this is a new feature, this argument allows to turn it off in case
+it causes any problems. Note that this parameter may be removed in a later
+version. If you want to clear the cache just for a specific test, you can call
+``clear_cache`` on the ``Patcher`` or the ``fake_filesystem`` instance:
+
+.. code:: python
+
+def test_something(fs):
+    fs.clear_cache()
+    ...
+
+
 Using convenience methods
 -------------------------
 While ``pyfakefs`` can be used just with the standard Python file system

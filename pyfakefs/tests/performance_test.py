@@ -16,21 +16,25 @@ import unittest
 from pyfakefs.fake_filesystem_unittest import TestCase
 
 
-class PerformanceTest(TestCase):
+class SetupPerformanceTest(TestCase):
     def setUp(self) -> None:
         self.setUpPyfakefs()
 
 
-def test(self):
-    path = "foo/bar"
-    self.fs.create_file(path, contents="test")
-    with open(path) as f:
-        assert f.read() == "test"
+class SetupNoCachePerformanceTest(TestCase):
+    def setUp(self) -> None:
+        self.setUpPyfakefs(use_cache=False)
+
+
+def test_setup(self):
+    pass
 
 
 for n in range(100):
     test_name = "test_" + str(n)
-    setattr(PerformanceTest, test_name, test)
+    setattr(SetupPerformanceTest, test_name, test_setup)
+    test_name = "test_nocache" + str(n)
+    setattr(SetupNoCachePerformanceTest, test_name, test_setup)
 
 if __name__ == "__main__":
     unittest.main()

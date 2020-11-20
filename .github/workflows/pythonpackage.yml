@@ -63,6 +63,11 @@ jobs:
         export PY_VERSION=${{ matrix.python-version }}
         $GITHUB_WORKSPACE/.github/workflows/run_pytest.sh
       shell: bash
+    - name: Run performance tests
+      run: |
+        python -m pyfakefs.tests.performance_test SetupPerformanceTest
+        python -m pyfakefs.tests.performance_test SetupNoCachePerformanceTest
+      shell: bash
 
   dockertests:
     runs-on: ubuntu-latest
