@@ -367,7 +367,11 @@ class Patcher:
     }
     # caches all modules that do not have file system modules or function
     # to speed up _find_modules
-    CACHED_SKIPMODULES = set()
+    CACHED_MODULES = set()
+    FS_MODULES = {}
+    FS_FUNCTIONS = {}
+    FS_DEFARGS = []
+    SKIPPED_FS_MODULES = {}
 
     assert None in SKIPMODULES, ("sys.modules contains 'None' values;"
                                  " must skip them.")
@@ -379,6 +383,7 @@ class Patcher:
     # hold values from last call - if changed, the cache in
     # CACHED_SKIPMODULES has to be invalidated
     PATCHED_MODULE_NAMES = {}
+    ADDITIONAL_SKIP_NAMES = set()
     PATCH_DEFAULT_ARGS = False
 
     def __init__(self, additional_skip_names=None,
@@ -413,8 +418,8 @@ class Patcher:
             patch_default_args: If True, default arguments are checked for
                 file system functions, which are patched. This check is
                 expansive, so it is off by default.
-            use_cache: If True (default), non-patched modules are cached
-                between tests for performance reasons. As this is a new
+            use_cache: If True (default), patched and non-patched modules are
+                cached between tests for performance reasons. As this is a new
                 feature, this argument allows to turn it off in case it
                 causes any problems.
         """
@@ -446,9 +451,6 @@ class Patcher:
             self.modules_to_reload.extend(modules_to_reload)
         self.patch_default_args = patch_default_args
         self.use_cache = use_cache
-        if patch_default_args != self.PATCH_DEFAULT_ARGS:
-            self.__class__.PATCH_DEFAULT_ARGS = patch_default_args
-            self.clear_cache()
 
         if use_known_patches:
             modules_to_patch = modules_to_patch or {}
@@ -460,33 +462,41 @@ class Patcher:
             for name, fake_module in modules_to_patch.items():
                 self._fake_module_classes[name] = fake_module
         patched_module_names = set(modules_to_patch)
-        if patched_module_names != self.PATCHED_MODULE_NAMES:
-            self.__class__.PATCHED_MODULE_NAMES = patched_module_names
-            self.clear_cache()
+        clear_cache = not use_cache
+        if use_cache:
+            if patched_module_names != self.PATCHED_MODULE_NAMES:
+                self.__class__.PATCHED_MODULE_NAMES = patched_module_names
+                clear_cache = True
+            if self._skip_names != self.ADDITIONAL_SKIP_NAMES:
+                self.__class__.ADDITIONAL_SKIP_NAMES = self._skip_names
+                clear_cache = True
+            if patch_default_args != self.PATCH_DEFAULT_ARGS:
+                self.__class__.PATCH_DEFAULT_ARGS = patch_default_args
+                clear_cache = True
 
+        if clear_cache:
+            self.clear_cache()
         self._fake_module_functions = {}
         self._init_fake_module_functions()
 
         # Attributes set by _refresh()
-        self._modules = {}
-        self._skipped_modules = {}
-        self._fct_modules = {}
-        self._def_functions = []
-        self._open_functions = {}
         self._stubs = None
         self.fs = None
         self.fake_modules = {}
         self.unfaked_modules = {}
-        self._dyn_patcher = None
 
         # _isStale is set by tearDown(), reset by _refresh()
         self._isStale = True
+        self._dyn_patcher = None
         self._patching = False
-        self.found_fs_module = False
 
     def clear_cache(self):
-        """Clear the cache of non-patched modules."""
-        self.__class__.CACHED_SKIPMODULES = set()
+        """Clear the module cache."""
+        self.__class__.CACHED_MODULES = set()
+        self.__class__.FS_MODULES = {}
+        self.__class__.FS_FUNCTIONS = {}
+        self.__class__.FS_DEFARGS = []
+        self.__class__.SKIPPED_FS_MODULES = {}
 
     def _init_fake_module_classes(self):
         # IMPORTANT TESTING NOTE: Whenever you add a new module below, test
@@ -567,17 +577,13 @@ class Patcher:
             # check for __name__ first and ignore the AttributeException
             # if it does not exist - avoids calling expansive ismodule
             if mod.__name__ in module_names and inspect.ismodule(mod):
-                self.found_fs_module = True
                 return True
         except Exception:
             pass
         try:
             if (name in self._class_modules and
                     mod.__module__ in self._class_modules[name]):
-                if inspect.isclass(mod):
-                    self.found_fs_module = True
-                    return True
-                return False
+                return inspect.isclass(mod)
         except Exception:
             # handle AttributeError and any other exception possibly triggered
             # by side effects of inspect methods
@@ -588,13 +594,10 @@ class Patcher:
             # check for __name__ first and ignore the AttributeException
             # if it does not exist - avoids calling expansive inspect
             # methods in most cases
-            if (fct.__name__ in self._fake_module_functions and
+            return (fct.__name__ in self._fake_module_functions and
                     fct.__module__ in self._fake_module_functions[
                         fct.__name__] and
-                    (inspect.isfunction(fct) or inspect.isbuiltin(fct))):
-                self.found_fs_module = True
-                return True
-            return False
+                    (inspect.isfunction(fct) or inspect.isbuiltin(fct)))
         except Exception:
             # handle AttributeError and any other exception possibly triggered
             # by side effects of inspect methods
@@ -632,7 +635,7 @@ class Patcher:
     def _find_def_values(self, module_items):
         for _, fct in module_items:
             for f, i, d in self._def_values(fct):
-                self._def_functions.append((f, i, d))
+                self.__class__.FS_DEFARGS.append((f, i, d))
 
     def _find_modules(self):
         """Find and cache all modules that import file system modules.
@@ -642,7 +645,7 @@ class Patcher:
         module_names = list(self._fake_module_classes.keys()) + [PATH_MODULE]
         for name, module in list(sys.modules.items()):
             try:
-                if (self.use_cache and module in self.CACHED_SKIPMODULES or
+                if (self.use_cache and module in self.CACHED_MODULES or
                         module in self.SKIPMODULES or
                         not inspect.ismodule(module)):
                     continue
@@ -652,9 +655,8 @@ class Patcher:
                 # see https://github.com/pytest-dev/py/issues/73
                 # and any other exception triggered by inspect.ismodule
                 if self.use_cache:
-                    self.__class__.CACHED_SKIPMODULES.add(module)
+                    self.__class__.CACHED_MODULES.add(module)
                 continue
-            self.found_fs_module = False
             skipped = (any([sn.startswith(module.__name__)
                             for sn in self._skip_names]))
             module_items = module.__dict__.copy().items()
@@ -664,27 +666,27 @@ class Patcher:
 
             if skipped:
                 for name, mod in modules.items():
-                    self._skipped_modules.setdefault(name, set()).add(
-                        (module, mod.__name__))
+                    self.__class__.SKIPPED_FS_MODULES.setdefault(
+                        name, set()).add((module, mod.__name__))
                 continue
 
             for name, mod in modules.items():
-                self._modules.setdefault(name, set()).add(
+                self.__class__.FS_MODULES.setdefault(name, set()).add(
                     (module, mod.__name__))
             functions = {name: fct for name, fct in
                          module_items
                          if self._is_fs_function(fct)}
 
             for name, fct in functions.items():
-                self._fct_modules.setdefault(
+                self.__class__.FS_FUNCTIONS.setdefault(
                     (name, fct.__name__, fct.__module__), set()).add(module)
 
             # find default arguments that are file system functions
             if self.patch_default_args:
                 self._find_def_values(module_items)
 
-            if not self.found_fs_module and self.use_cache:
-                self.__class__.CACHED_SKIPMODULES.add(module)
+            if self.use_cache:
+                self.__class__.CACHED_MODULES.add(module)
 
     def _refresh(self):
         """Renew the fake file system and set the _isStale flag to `False`."""
@@ -723,6 +725,7 @@ class Patcher:
                 category=DeprecationWarning
             )
             self._find_modules()
+
         self._refresh()
 
         if doctester is not None:
@@ -752,7 +755,7 @@ class Patcher:
                     reload(module)
 
     def patch_functions(self):
-        for (name, ft_name, ft_mod), modules in self._fct_modules.items():
+        for (name, ft_name, ft_mod), modules in self.FS_FUNCTIONS.items():
             method, mod_name = self._fake_module_functions[ft_name][ft_mod]
             fake_module = self.fake_modules[mod_name]
             attr = method.__get__(fake_module, fake_module.__class__)
@@ -760,18 +763,18 @@ class Patcher:
                 self._stubs.smart_set(module, name, attr)
 
     def patch_modules(self):
-        for name, modules in self._modules.items():
+        for name, modules in self.FS_MODULES.items():
             for module, attr in modules:
                 self._stubs.smart_set(
                     module, name, self.fake_modules[attr])
-        for name, modules in self._skipped_modules.items():
+        for name, modules in self.SKIPPED_FS_MODULES.items():
             for module, attr in modules:
                 if attr in self.unfaked_modules:
                     self._stubs.smart_set(
                         module, name, self.unfaked_modules[attr])
 
     def patch_defaults(self):
-        for (fct, idx, ft) in self._def_functions:
+        for (fct, idx, ft) in self.FS_DEFARGS:
             method, mod_name = self._fake_module_functions[
                 ft.__name__][ft.__module__]
             fake_module = self.fake_modules[mod_name]
@@ -811,7 +814,7 @@ class Patcher:
             sys.meta_path.pop(0)
 
     def unset_defaults(self):
-        for (fct, idx, ft) in self._def_functions:
+        for (fct, idx, ft) in self.FS_DEFARGS:
             new_defaults = []
             for i, d in enumerate(fct.__defaults__):
                 if i == idx:
@@ -819,7 +822,7 @@ class Patcher:
                 else:
                     new_defaults.append(d)
             fct.__defaults__ = tuple(new_defaults)
-        self._def_functions = []
+        # self._def_functions = []
 
     def pause(self):
         """Pause the patching of the file system modules until `resume` is

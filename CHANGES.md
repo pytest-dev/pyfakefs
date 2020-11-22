@@ -3,6 +3,11 @@ The released versions correspond to PyPi releases.
 
 ## Version 4.4.0 (as yet unreleased)
 
+### Changes
+* Added caching of patched modules to avoid lookup overhead  
+* Added `use_cache` option and `clear_cache` method to be able
+  to deal with unwanted side-effects of the newly introduced caching
+
 ### Infrastructure
 * Moved CI builds to GitHub Actions for performance reasons
 
