@@ -1,7 +1,10 @@
 # pyfakefs Release Notes
 The released versions correspond to PyPi releases.
 
-## Version 4.4.0 (as yet unreleased)
+## [Version 4.3.1](https://pypi.python.org/pypi/pyfakefs/4.3.1) (2020-11-23)
+
+This is an update to the performance release, with more setup caching and the
+possibility to disable it. 
 
 ### Changes
 * Added caching of patched modules to avoid lookup overhead  
