@@ -492,9 +492,24 @@ system function is not patched automatically:</p>
 </div>
 <p>As this is rarely needed, and the check to patch this automatically is quite
 expansive, it is not done by default. Using <code class="docutils literal notranslate"><span class="pre">patch_default_args</span></code> will
-search for this kind of default arguments and patch them automatically.
+search for this kind of default arguments and patch them automatically.h
 You could also use the <code class="docutils literal notranslate"><span class="pre">modules_to_reload</span></code> option with the module that
 contains the default argument instead, if you want to avoid the overhead.</p>
+</div>
+<div class="section" id="use-cache">
+<h4>use_cache<a class="headerlink" href="#use-cache" title="Permalink to this headline">¶</a></h4>
+<p>If True (default), patched and non-patched modules are cached between tests
+to avoid the performance hit of the file system function lookup (the
+patching is self is reverted after each test as before). As this is a new
+feature, this argument allows to turn it off in case it causes any problems.
+Note that this parameter may be removed in a later version. If you want to
+clear the cache just for a specific test instead, you can call
+<code class="docutils literal notranslate"><span class="pre">clear_cache</span></code> on the <code class="docutils literal notranslate"><span class="pre">Patcher</span></code> or the <code class="docutils literal notranslate"><span class="pre">fake_filesystem</span></code> instance:</p>
+<dl class="simple">
+<dt>def test_something(fs):</dt><dd><p>fs.clear_cache()
+…</p>
+</dd>
+</dl>
 </div>
 </div>
 </div>
@@ -854,6 +869,7 @@ described above.</p>
 <li><a class="reference internal" href="#use-known-patches">use_known_patches</a></li>
 <li><a class="reference internal" href="#patch-open-code">patch_open_code</a></li>
 <li><a class="reference internal" href="#patch-default-args">patch_default_args</a></li>
+<li><a class="reference internal" href="#use-cache">use_cache</a></li>
 </ul>
 </li>
 </ul>
@@ -928,7 +944,7 @@ described above.</p>
         &#169; Copyright 2009 Google Inc. All Rights Reserved.
 © Copyright 2014 Altera Corporation. All Rights Reserved.
 © Copyright 2014-2020 John McGehee.
-      Last updated on Nov 19, 2020.
+      Last updated on Nov 23, 2020.
     </div>
   </body>
 </html>

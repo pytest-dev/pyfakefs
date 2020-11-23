@@ -494,9 +494,26 @@ system function is not patched automatically:
 
 As this is rarely needed, and the check to patch this automatically is quite
 expansive, it is not done by default. Using ``patch_default_args`` will
-search for this kind of default arguments and patch them automatically.
+search for this kind of default arguments and patch them automatically.h
 You could also use the ``modules_to_reload`` option with the module that
 contains the default argument instead, if you want to avoid the overhead.
+
+use_cache
+.........
+If True (default), patched and non-patched modules are cached between tests
+to avoid the performance hit of the file system function lookup (the
+patching is self is reverted after each test as before). As this is a new
+feature, this argument allows to turn it off in case it causes any problems.
+Note that this parameter may be removed in a later version. If you want to
+clear the cache just for a specific test instead, you can call
+``clear_cache`` on the ``Patcher`` or the ``fake_filesystem`` instance:
+
+.. code:: python
+
+def test_something(fs):
+    fs.clear_cache()
+    ...
+
 
 Using convenience methods
 -------------------------
