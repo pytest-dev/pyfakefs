@@ -1895,7 +1895,7 @@ class ResolvePathTest(FakeFileOpenTestBase):
             # unclear behavior with PyPi
             self.skip_real_fs()
         self.assert_raises_os_error(
-            [errno.ENOTDIR, errno.EBADF], self.os.chdir, 10)
+            [errno.ENOTDIR, errno.EBADF], self.os.chdir, 500)
         dir_path = self.make_path('foo', 'bar')
         self.create_dir(dir_path)
 

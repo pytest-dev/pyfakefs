@@ -432,7 +432,6 @@ class Patcher:
         self._skip_names = self.SKIPNAMES.copy()
         # save the original open function for use in pytest plugin
         self.original_open = open
-        self.fake_open = None
         self.patch_open_code = patch_open_code
 
         if additional_skip_names is not None:
@@ -701,7 +700,6 @@ class Patcher:
             if hasattr(self.fake_modules[name], 'skip_names'):
                 self.fake_modules[name].skip_names = self._skip_names
         self.fake_modules[PATH_MODULE] = self.fake_modules['os'].path
-        self.fake_open = fake_filesystem.FakeFileOpen(self.fs)
         for name in self._unfaked_module_classes:
             self.unfaked_modules[name] = self._unfaked_module_classes[name]()
 

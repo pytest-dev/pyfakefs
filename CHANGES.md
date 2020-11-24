@@ -3,6 +3,10 @@ The released versions correspond to PyPi releases.
 
 ## Version 4.4.0 (as yet unreleased)
 
+### Fixes
+* `open` calls had not been patched for modules with a name ending with "io"
+  (see [#569](../../issues/569))
+
 ## [Version 4.3.1](https://pypi.python.org/pypi/pyfakefs/4.3.1) (2020-11-23)
 
 This is an update to the performance release, with more setup caching and the

@@ -4563,7 +4563,8 @@ class FakeIoModule:
         stack = traceback.extract_stack(limit=2)
         module_name = os.path.splitext(stack[0].filename)[0]
         module_name = module_name.replace(os.sep, '.')
-        if any([module_name.endswith(sn) for sn in self.skip_names]):
+        if any([module_name == sn or module_name.endswith('.' + sn)
+                for sn in self.skip_names]):
             return io.open(file, mode, buffering, encoding, errors,
                            newline, closefd, opener)
         fake_open = FakeFileOpen(self.filesystem)

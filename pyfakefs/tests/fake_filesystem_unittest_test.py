@@ -32,6 +32,7 @@ from pathlib import Path
 from unittest import TestCase, mock
 
 import pyfakefs.tests.import_as_example
+import pyfakefs.tests.logsio
 from pyfakefs import fake_filesystem_unittest, fake_filesystem
 from pyfakefs.extra_packages import pathlib
 from pyfakefs.fake_filesystem import OSType
@@ -342,6 +343,13 @@ class NoSkipNamesTest(fake_filesystem_unittest.TestCase):
     def test_open_fails(self):
         with self.assertRaises(OSError):
             pyfakefs.tests.import_as_example.open_this_file()
+
+    def test_open_patched_in_module_ending_with_io(self):
+        # regression test for #569
+        file_path = '/foo/bar'
+        self.fs.create_file(file_path, contents=b'abc')
+        contents = pyfakefs.tests.logsio.file_contents(file_path)
+        self.assertEqual(b'abc', contents)
 
 
 class AdditionalSkipNamesTest(fake_filesystem_unittest.TestCase):

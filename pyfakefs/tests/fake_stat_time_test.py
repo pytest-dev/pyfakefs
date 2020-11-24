@@ -334,8 +334,8 @@ class FakeStatTestBase(RealFsTestCase):
         """
         before, opened, written, flushed, closed = self.open_write_flush()
 
-        self.assertLessExceptWindows(before.st_ctime, opened.st_ctime)
-        self.assertLessExceptWindows(written.st_ctime, flushed.st_ctime)
+        self.assertLessEqual(before.st_ctime, opened.st_ctime)
+        self.assertLessEqual(written.st_ctime, flushed.st_ctime)
         self.assertEqual(opened.st_ctime, written.st_ctime)
         self.assertEqual(flushed.st_ctime, closed.st_ctime)
 
