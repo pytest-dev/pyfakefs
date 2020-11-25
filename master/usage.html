@@ -78,8 +78,9 @@ and <a class="reference external" href="https://github.com/jmcgeheeiv/pyfakefs/b
 the pytest plugin in <code class="docutils literal notranslate"><span class="pre">pyfakefs</span></code>.
 This automatically patches all file system functions and modules in a
 similar manner as described above.</p>
-<p>The pytest plugin provides the <code class="docutils literal notranslate"><span class="pre">fs</span></code> fixture for use in your test. For
-example:</p>
+<p>The pytest plugin provides the <code class="docutils literal notranslate"><span class="pre">fs</span></code> fixture for use in your test. The plugin
+is registered for pytest on installing pyfakefs as usual for pytest plugins, so
+can just use it:</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">def</span> <span class="nf">my_fakefs_test</span><span class="p">(</span><span class="n">fs</span><span class="p">):</span>
     <span class="c1"># &quot;fs&quot; is the reference to the fake file system</span>
     <span class="n">fs</span><span class="o">.</span><span class="n">create_file</span><span class="p">(</span><span class="s1">&#39;/var/data/xx1.txt&#39;</span><span class="p">)</span>
@@ -128,8 +129,8 @@ single function, you can write:</p>
     <span class="n">fake_fs</span><span class="o">.</span><span class="n">create_file</span><span class="p">(</span><span class="s1">&#39;/foo/bar&#39;</span><span class="p">,</span> <span class="n">contents</span><span class="o">=</span><span class="s1">&#39;test&#39;</span><span class="p">)</span>
 </pre></div>
 </div>
-<p>Note the <code class="docutils literal notranslate"><span class="pre">fake_fs</span></code> is a positional argument and the argument name does not
-matter. If there are additional <code class="docutils literal notranslate"><span class="pre">mock.patch</span></code> decorators that also
+<p>Note that the <code class="docutils literal notranslate"><span class="pre">fake_fs</span></code> is a positional argument and the argument name does
+not matter. If there are additional <code class="docutils literal notranslate"><span class="pre">mock.patch</span></code> decorators that also
 create positional arguments, the argument order is the same as the decorator
 order, as shown here:</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="nd">@patchfs</span>
@@ -175,7 +176,7 @@ can also be used with <code class="docutils literal notranslate"><span class="pr
 <div class="section" id="using-custom-arguments">
 <h3>Using custom arguments<a class="headerlink" href="#using-custom-arguments" title="Permalink to this headline">¶</a></h3>
 <p>The following sections describe how to apply these arguments in different
-scenarios, using the argument <code class="docutils literal notranslate"><span class="pre">allow_root_user</span></code> as an example.</p>
+scenarios, using the argument <a class="reference internal" href="#allow-root-user"><span class="std std-ref">allow_root_user</span></a> as an example.</p>
 <div class="section" id="patcher">
 <h4>Patcher<a class="headerlink" href="#patcher" title="Permalink to this headline">¶</a></h4>
 <p>If you use the <code class="docutils literal notranslate"><span class="pre">Patcher</span></code> directly, you can just pass the arguments in the
@@ -258,7 +259,7 @@ the decorator:</p>
 <p>Following is a description of the optional arguments that can be used to
 customize pyfakefs.</p>
 <div class="section" id="modules-to-reload">
-<h4>modules_to_reload<a class="headerlink" href="#modules-to-reload" title="Permalink to this headline">¶</a></h4>
+<span id="id1"></span><h4>modules_to_reload<a class="headerlink" href="#modules-to-reload" title="Permalink to this headline">¶</a></h4>
 <p>Pyfakefs patches modules that are imported before starting the test by
 finding and replacing file system modules in all loaded modules at test
 initialization time.
@@ -299,7 +300,7 @@ automatically if imported like:</p>
 least two specific cases where this is the case:</p>
 <p>Initializing a default argument with a file system function is not patched
 automatically due to performance reasons (though it can be switched on using
-<code class="docutils literal notranslate"><span class="pre">patch_default_args</span></code>):</p>
+<a class="reference internal" href="#patch-default-args"><span class="std std-ref">patch_default_args</span></a>):</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">os</span>
 
 <span class="k">def</span> <span class="nf">check_if_exists</span><span class="p">(</span><span class="n">filepath</span><span class="p">,</span> <span class="n">file_exists</span><span class="o">=</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">):</span>
@@ -434,12 +435,9 @@ can be added to <code class="docutils literal notranslate"><span class="pre">add
     <span class="n">patcher</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">create_file</span><span class="p">(</span><span class="s1">&#39;foo&#39;</span><span class="p">)</span>
 </pre></div>
 </div>
-<p>There is also the global variable <code class="docutils literal notranslate"><span class="pre">Patcher.SKIPNAMES</span></code> that can be extended
-for that purpose, though this seldom shall be needed (except for own <code class="docutils literal notranslate"><span class="pre">pytest</span></code>
-plugins, as shown in the example mentioned above).</p>
 </div>
 <div class="section" id="allow-root-user">
-<h4>allow_root_user<a class="headerlink" href="#allow-root-user" title="Permalink to this headline">¶</a></h4>
+<span id="id2"></span><h4>allow_root_user<a class="headerlink" href="#allow-root-user" title="Permalink to this headline">¶</a></h4>
 <p>This is <code class="docutils literal notranslate"><span class="pre">True</span></code> by default, meaning that the user is considered a root user
 if the real user is a root user (e.g. has the user ID 0). If you want to run
 your tests as a non-root user regardless of the actual user rights, you may
@@ -481,7 +479,7 @@ versions of pyfakefs, depending on the upcoming use cases.</p>
 </div>
 </div>
 <div class="section" id="patch-default-args">
-<h4>patch_default_args<a class="headerlink" href="#patch-default-args" title="Permalink to this headline">¶</a></h4>
+<span id="id3"></span><h4>patch_default_args<a class="headerlink" href="#patch-default-args" title="Permalink to this headline">¶</a></h4>
 <p>As already mentioned, a default argument that is initialized with a file
 system function is not patched automatically:</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">os</span>
@@ -492,24 +490,32 @@ system function is not patched automatically:</p>
 </div>
 <p>As this is rarely needed, and the check to patch this automatically is quite
 expansive, it is not done by default. Using <code class="docutils literal notranslate"><span class="pre">patch_default_args</span></code> will
-search for this kind of default arguments and patch them automatically.h
-You could also use the <code class="docutils literal notranslate"><span class="pre">modules_to_reload</span></code> option with the module that
+search for this kind of default arguments and patch them automatically.
+You could also use the <a class="reference internal" href="#modules-to-reload"><span class="std std-ref">modules_to_reload</span></a> option with the module that
 contains the default argument instead, if you want to avoid the overhead.</p>
 </div>
 <div class="section" id="use-cache">
 <h4>use_cache<a class="headerlink" href="#use-cache" title="Permalink to this headline">¶</a></h4>
-<p>If True (default), patched and non-patched modules are cached between tests
+<p>If True (the default), patched and non-patched modules are cached between tests
 to avoid the performance hit of the file system function lookup (the
-patching is self is reverted after each test as before). As this is a new
-feature, this argument allows to turn it off in case it causes any problems.
-Note that this parameter may be removed in a later version. If you want to
-clear the cache just for a specific test instead, you can call
+patching itself is reverted after each test). As this is a new
+feature, this argument allows to turn it off in case it causes any problems:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="nd">@patchfs</span><span class="p">(</span><span class="n">use_cache</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+<span class="k">def</span> <span class="nf">test_something</span><span class="p">(</span><span class="n">fake_fs</span><span class="p">):</span>
+    <span class="n">fake_fs</span><span class="o">.</span><span class="n">create_file</span><span class="p">(</span><span class="s2">&quot;foo&quot;</span><span class="p">,</span> <span class="n">contents</span><span class="o">=</span><span class="s2">&quot;test&quot;</span><span class="p">)</span>
+    <span class="o">...</span>
+</pre></div>
+</div>
+<p>Please write an issue if you encounter any problem that can be fixed by using
+this parameter. Note that this argument may be removed in a later version, if
+no problems come up.</p>
+<p>If you want to clear the cache just for a specific test instead, you can call
 <code class="docutils literal notranslate"><span class="pre">clear_cache</span></code> on the <code class="docutils literal notranslate"><span class="pre">Patcher</span></code> or the <code class="docutils literal notranslate"><span class="pre">fake_filesystem</span></code> instance:</p>
-<dl class="simple">
-<dt>def test_something(fs):</dt><dd><p>fs.clear_cache()
-…</p>
-</dd>
-</dl>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">def</span> <span class="nf">test_something</span><span class="p">(</span><span class="n">fs</span><span class="p">):</span>  <span class="c1"># using pytest fixture</span>
+    <span class="n">fs</span><span class="o">.</span><span class="n">clear_cache</span><span class="p">()</span>
+    <span class="o">...</span>
+</pre></div>
+</div>
 </div>
 </div>
 </div>
@@ -529,8 +535,8 @@ in the path, you may use <code class="docutils literal notranslate"><span class=
 <p><code class="docutils literal notranslate"><span class="pre">create_file()</span></code> also allows you to set the file mode and the file contents
 together with the encoding if needed. Alternatively, you can define a file
 size without contents–in this case, you will not be able to perform
-standard IO operations on the file (may be used to “fill up” the file system
-with large files).</p>
+standard IO operations on the file (may be used to fill up the file system
+with large files, see also <a class="reference internal" href="#set-fs-size"><span class="std std-ref">Setting the file system size</span></a>).</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">pyfakefs.fake_filesystem_unittest</span> <span class="kn">import</span> <span class="n">TestCase</span>
 
 <span class="k">class</span> <span class="nc">ExampleTestCase</span><span class="p">(</span><span class="n">TestCase</span><span class="p">):</span>
@@ -628,7 +634,7 @@ different mount points. The fake file system size (if used) is also set per
 mount point.</p>
 </div>
 <div class="section" id="setting-the-file-system-size">
-<h3>Setting the file system size<a class="headerlink" href="#setting-the-file-system-size" title="Permalink to this headline">¶</a></h3>
+<span id="set-fs-size"></span><h3>Setting the file system size<a class="headerlink" href="#setting-the-file-system-size" title="Permalink to this headline">¶</a></h3>
 <p>If you need to know the file system size in your tests (for example for
 testing cleanup scripts), you can set the fake file system size using
 <code class="docutils literal notranslate"><span class="pre">set_disk_usage()</span></code>. By default, this sets the total size in bytes of the
@@ -764,8 +770,9 @@ documented above under <code class="docutils literal notranslate"><span class="p
 libraries. These will not work out of the box, and we generally will not
 support them in <code class="docutils literal notranslate"><span class="pre">pyfakefs</span></code>. If these functions are used in isolated
 functions or classes, they may be patched by using the <code class="docutils literal notranslate"><span class="pre">modules_to_patch</span></code>
-parameter (see the example for file locks in Django above). We may add
-some of these patches to <code class="docutils literal notranslate"><span class="pre">pyfakefs</span></code>, so that they are applied
+parameter (see the example for file locks in Django above), or by using
+<code class="docutils literal notranslate"><span class="pre">unittest.patch</span></code> if you don’t need to simulate the functions. We
+added some of these patches to <code class="docutils literal notranslate"><span class="pre">pyfakefs</span></code>, so that they are applied
 automatically (currently done for some <code class="docutils literal notranslate"><span class="pre">pandas</span></code> and <code class="docutils literal notranslate"><span class="pre">Django</span></code>
 functionality).</p></li>
 <li><p>It uses C libraries to access the file system. There is no way no make
@@ -816,7 +823,7 @@ a temporary directory is required to ensure <code class="docutils literal notran
 e.g., that <code class="docutils literal notranslate"><span class="pre">tempfile.gettempdir()</span></code> will return a valid value. This
 means that any newly created fake file system will always have either a
 directory named <code class="docutils literal notranslate"><span class="pre">/tmp</span></code> when running on Linux or Unix systems,
-<code class="docutils literal notranslate"><span class="pre">/var/folders/&lt;hash&gt;/T</span></code> when running on MacOs and
+<code class="docutils literal notranslate"><span class="pre">/var/folders/&lt;hash&gt;/T</span></code> when running on MacOs, or
 <code class="docutils literal notranslate"><span class="pre">C:\Users\&lt;user&gt;\AppData\Local\Temp</span></code> on Windows.</p>
 </div>
 <div class="section" id="user-rights">
@@ -830,8 +837,7 @@ between root user (with the user id 0) and any other user. By default,
 <code class="docutils literal notranslate"><span class="pre">pyfakefs</span></code> assumes the user id of the current user, but you can change
 that using <code class="docutils literal notranslate"><span class="pre">fake_filesystem.set_uid()</span></code> in your setup. This allows to run
 tests as non-root user in a root user environment and vice verse.
-Another possibility is the convenience argument <code class="docutils literal notranslate"><span class="pre">allow_root_user</span></code>
-described above.</p>
+Another possibility is the convenience argument <a class="reference internal" href="#allow-root-user"><span class="std std-ref">allow_root_user</span></a>.</p>
 </div>
 </div>
 </div>
@@ -944,7 +950,7 @@ described above.</p>
         &#169; Copyright 2009 Google Inc. All Rights Reserved.
 © Copyright 2014 Altera Corporation. All Rights Reserved.
 © Copyright 2014-2020 John McGehee.
-      Last updated on Nov 23, 2020.
+      Last updated on Nov 25, 2020.
     </div>
   </body>
 </html>
