@@ -380,8 +380,7 @@ class Patcher:
 
     SKIPNAMES = {'os', 'path', 'io', 'genericpath', OS_MODULE, PATH_MODULE}
 
-    # hold values from last call - if changed, the cache in
-    # CACHED_SKIPMODULES has to be invalidated
+    # hold values from last call - if changed, the cache has to be invalidated
     PATCHED_MODULE_NAMES = {}
     ADDITIONAL_SKIP_NAMES = set()
     PATCH_DEFAULT_ARGS = False
