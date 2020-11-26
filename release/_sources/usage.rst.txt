@@ -39,8 +39,9 @@ the pytest plugin in ``pyfakefs``.
 This automatically patches all file system functions and modules in a
 similar manner as described above.
 
-The pytest plugin provides the ``fs`` fixture for use in your test. For
-example:
+The pytest plugin provides the ``fs`` fixture for use in your test. The plugin
+is registered for pytest on installing pyfakefs as usual for pytest plugins, so
+can just use it:
 
 .. code:: python
 
@@ -96,8 +97,8 @@ single function, you can write:
        # access the fake_filesystem object via fake_fs
        fake_fs.create_file('/foo/bar', contents='test')
 
-Note the ``fake_fs`` is a positional argument and the argument name does not
-matter. If there are additional ``mock.patch`` decorators that also
+Note that the ``fake_fs`` is a positional argument and the argument name does
+not matter. If there are additional ``mock.patch`` decorators that also
 create positional arguments, the argument order is the same as the decorator
 order, as shown here:
 
@@ -148,7 +149,7 @@ can also be used with ``unittest`` and ``pytest``.
 Using custom arguments
 ~~~~~~~~~~~~~~~~~~~~~~
 The following sections describe how to apply these arguments in different
-scenarios, using the argument ``allow_root_user`` as an example.
+scenarios, using the argument :ref:`allow_root_user` as an example.
 
 Patcher
 .......
@@ -237,6 +238,8 @@ List of custom arguments
 Following is a description of the optional arguments that can be used to
 customize pyfakefs.
 
+.. _modules_to_reload:
+
 modules_to_reload
 .................
 Pyfakefs patches modules that are imported before starting the test by
@@ -285,7 +288,7 @@ least two specific cases where this is the case:
 
 Initializing a default argument with a file system function is not patched
 automatically due to performance reasons (though it can be switched on using
-``patch_default_args``):
+:ref:`patch_default_args`):
 
 .. code:: python
 
@@ -435,9 +438,7 @@ Alternatively to the module names, the modules themselves may be used:
   with Patcher(additional_skip_names=[pydevd]) as patcher:
       patcher.fs.create_file('foo')
 
-There is also the global variable ``Patcher.SKIPNAMES`` that can be extended
-for that purpose, though this seldom shall be needed (except for own ``pytest``
-plugins, as shown in the example mentioned above).
+.. _allow_root_user:
 
 allow_root_user
 ...............
@@ -480,6 +481,8 @@ set ``patch_open_code`` to ``PatchMode.AUTO``:
 .. note:: This argument is subject to change or removal in future
   versions of pyfakefs, depending on the upcoming use cases.
 
+.. _patch_default_args:
+
 patch_default_args
 ..................
 As already mentioned, a default argument that is initialized with a file
@@ -494,25 +497,36 @@ system function is not patched automatically:
 
 As this is rarely needed, and the check to patch this automatically is quite
 expansive, it is not done by default. Using ``patch_default_args`` will
-search for this kind of default arguments and patch them automatically.h
-You could also use the ``modules_to_reload`` option with the module that
+search for this kind of default arguments and patch them automatically.
+You could also use the :ref:`modules_to_reload` option with the module that
 contains the default argument instead, if you want to avoid the overhead.
 
 use_cache
 .........
-If True (default), patched and non-patched modules are cached between tests
+If True (the default), patched and non-patched modules are cached between tests
 to avoid the performance hit of the file system function lookup (the
-patching is self is reverted after each test as before). As this is a new
-feature, this argument allows to turn it off in case it causes any problems.
-Note that this parameter may be removed in a later version. If you want to
-clear the cache just for a specific test instead, you can call
+patching itself is reverted after each test). As this is a new
+feature, this argument allows to turn it off in case it causes any problems:
+
+.. code:: python
+
+  @patchfs(use_cache=False)
+  def test_something(fake_fs):
+      fake_fs.create_file("foo", contents="test")
+      ...
+
+Please write an issue if you encounter any problem that can be fixed by using
+this parameter. Note that this argument may be removed in a later version, if
+no problems come up.
+
+If you want to clear the cache just for a specific test instead, you can call
 ``clear_cache`` on the ``Patcher`` or the ``fake_filesystem`` instance:
 
 .. code:: python
 
-def test_something(fs):
-    fs.clear_cache()
-    ...
+  def test_something(fs):  # using pytest fixture
+      fs.clear_cache()
+      ...
 
 
 Using convenience methods
@@ -533,8 +547,8 @@ in the path, you may use ``create_file()``, ``create_dir()`` and
 ``create_file()`` also allows you to set the file mode and the file contents
 together with the encoding if needed. Alternatively, you can define a file
 size without contents--in this case, you will not be able to perform
-standard I\O operations on the file (may be used to "fill up" the file system
-with large files).
+standard I\O operations on the file (may be used to fill up the file system
+with large files, see also :ref:`set-fs-size`).
 
 .. code:: python
 
@@ -641,6 +655,8 @@ A mount point has a separate device ID (``st_dev``) under all systems, and
 some operations (like ``rename``) are not possible for files located on
 different mount points. The fake file system size (if used) is also set per
 mount point.
+
+.. _set-fs-size:
 
 Setting the file system size
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -788,8 +804,9 @@ reasons:
   libraries. These will not work out of the box, and we generally will not
   support them in ``pyfakefs``. If these functions are used in isolated
   functions or classes, they may be patched by using the ``modules_to_patch``
-  parameter (see the example for file locks in Django above). We may add
-  some of these patches to ``pyfakefs``, so that they are applied
+  parameter (see the example for file locks in Django above), or by using
+  ``unittest.patch`` if you don't need to simulate the functions. We
+  added some of these patches to ``pyfakefs``, so that they are applied
   automatically (currently done for some ``pandas`` and ``Django``
   functionality).
 - It uses C libraries to access the file system. There is no way no make
@@ -840,7 +857,7 @@ a temporary directory is required to ensure ``tempfile`` works correctly,
 e.g., that ``tempfile.gettempdir()`` will return a valid value. This
 means that any newly created fake file system will always have either a
 directory named ``/tmp`` when running on Linux or Unix systems,
-``/var/folders/<hash>/T`` when running on MacOs and
+``/var/folders/<hash>/T`` when running on MacOs, or
 ``C:\Users\<user>\AppData\Local\Temp`` on Windows.
 
 User rights
@@ -855,5 +872,4 @@ between root user (with the user id 0) and any other user. By default,
 ``pyfakefs`` assumes the user id of the current user, but you can change
 that using ``fake_filesystem.set_uid()`` in your setup. This allows to run
 tests as non-root user in a root user environment and vice verse.
-Another possibility is the convenience argument ``allow_root_user``
-described above.
+Another possibility is the convenience argument :ref:`allow_root_user`.
