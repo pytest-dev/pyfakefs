@@ -1,4 +1,4 @@
-# pyfakefs [![PyPI version](https://badge.fury.io/py/pyfakefs.svg)](https://badge.fury.io/py/pyfakefs) [![Python version](https://img.shields.io/pypi/pyversions/pyfakefs.svg)](https://img.shields.io/pypi/pyversions/pyfakefs.svg)
+# pyfakefs [![PyPI version](https://badge.fury.io/py/pyfakefs.svg)](https://badge.fury.io/py/pyfakefs) [![Python version](https://img.shields.io/pypi/pyversions/pyfakefs.svg)](https://img.shields.io/pypi/pyversions/pyfakefs.svg) ![Testsuite](https://github.com/jmcgeheeiv/pyfakefs/workflows/Testsuite/badge.svg)
 
 pyfakefs implements a fake file system that mocks the Python file system modules.
 Using pyfakefs, your tests operate on a fake file system in memory without
@@ -14,7 +14,7 @@ This file provides general usage instructions for pyfakefs.  There is more:
 * The documentation at [GitHub Pages:](http://jmcgeheeiv.github.io/pyfakefs)
   * The [Release documentation](http://jmcgeheeiv.github.io/pyfakefs/release)
     contains usage documentation for pyfakefs and a description of the 
-    most relevent classes, methods and functions for the last version 
+    most relevant classes, methods and functions for the last version 
     released on PyPi
   * The [Development documentation](http://jmcgeheeiv.github.io/pyfakefs/master)
     contains the same documentation for the current master branch
