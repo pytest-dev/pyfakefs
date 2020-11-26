@@ -8,6 +8,9 @@
 # Older versions might work ok, the versions chosen here are just the latest
 # available at the time of writing.
 
+# scandir needs wheel to be installed to use the wheel package
+wheel
+
 pathlib2>=2.3.2
 scandir>=1.8
 
