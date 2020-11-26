@@ -1,7 +1,9 @@
 # pyfakefs Release Notes
 The released versions correspond to PyPi releases.
 
-## Version 4.4.0 (as yet unreleased)
+## [Version 4.3.2](https://pypi.python.org/pypi/pyfakefs/4.3.2) (2020-11-26)
+
+This is a bugfix release that fixes a regression introduced in version 4.2.0.
 
 ### Fixes
 * `open` calls had not been patched for modules with a name ending with "io"
