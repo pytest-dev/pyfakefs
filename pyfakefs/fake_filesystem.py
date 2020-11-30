@@ -554,7 +554,7 @@ class FakeFile:
 
 class FakeNullFile(FakeFile):
     def __init__(self, filesystem):
-        devnull = '/dev/nul' if filesystem.is_windows_fs else '/dev/nul'
+        devnull = 'nul' if filesystem.is_windows_fs else '/dev/null'
         super(FakeNullFile, self).__init__(
             devnull, filesystem=filesystem, contents=b'')
 
@@ -929,6 +929,7 @@ class FakeFilesystem:
         self.alternative_path_separator = ('/' if value == OSType.WINDOWS
                                            else None)
         self.reset()
+        FakePathModule.reset(self)
 
     def reset(self, total_size=None):
         """Remove all file system contents and reset the root."""
@@ -3141,6 +3142,12 @@ class FakePathModule:
     """
     _OS_PATH_COPY = _copy_module(os.path)
 
+    devnull = None
+    sep = None
+    altsep = None
+    linesep = None
+    pathsep = None
+
     @staticmethod
     def dir():
         """Return the list of patched function names. Used for patching
@@ -3162,8 +3169,15 @@ class FakePathModule:
         self.filesystem = filesystem
         self._os_path = self._OS_PATH_COPY
         self._os_path.os = self.os = os_module
-        self.sep = self.filesystem.path_separator
-        self.altsep = self.filesystem.alternative_path_separator
+        self.reset(filesystem)
+
+    @classmethod
+    def reset(cls, filesystem):
+        cls.sep = filesystem.path_separator
+        cls.altsep = filesystem.alternative_path_separator
+        cls.linesep = filesystem.line_separator()
+        cls.devnull = 'nul' if filesystem.is_windows_fs else '/dev/null'
+        cls.pathsep = ';' if filesystem.is_windows_fs else ':'
 
     def exists(self, path):
         """Determine whether the file object exists within the fake filesystem.
@@ -3500,8 +3514,6 @@ class FakeOsModule:
     my_os_module = fake_filesystem.FakeOsModule(filesystem)
     """
 
-    devnull = None
-
     @staticmethod
     def dir():
         """Return the list of patched function names. Used for patching
@@ -3530,13 +3542,28 @@ class FakeOsModule:
             filesystem: FakeFilesystem used to provide file system information
         """
         self.filesystem = filesystem
-        self.sep = filesystem.path_separator
-        self.altsep = filesystem.alternative_path_separator
-        self.linesep = filesystem.line_separator()
         self._os_module = os
         self.path = FakePathModule(self.filesystem, self)
-        self.__class__.devnull = ('/dev/nul' if filesystem.is_windows_fs
-                                  else '/dev/nul')
+
+    @property
+    def devnull(self):
+        return self.path.devnull
+
+    @property
+    def sep(self):
+        return self.path.sep
+
+    @property
+    def altsep(self):
+        return self.path.altsep
+
+    @property
+    def linesep(self):
+        return self.path.linesep
+
+    @property
+    def pathsep(self):
+        return self.path.pathsep
 
     def fdopen(self, fd, *args, **kwargs):
         """Redirector to open() builtin function.

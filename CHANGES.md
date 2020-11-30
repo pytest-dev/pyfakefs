@@ -3,6 +3,11 @@ The released versions correspond to PyPi releases.
 
 ## Version 4.4.0 (as yet unreleased)
 
+### Fixes
+* Setting `os` did not reset `os.sep` and related variables,
+  fixed null device name, added `os.pathsep` and missing `os.path` variables
+  (see [#572](../../issues/572))
+
 ## [Version 4.3.2](https://pypi.python.org/pypi/pyfakefs/4.3.2) (2020-11-26)
 
 This is a bugfix release that fixes a regression introduced in version 4.2.0.

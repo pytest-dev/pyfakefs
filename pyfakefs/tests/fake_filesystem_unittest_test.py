@@ -808,6 +808,12 @@ class TestOtherFS(fake_filesystem_unittest.TestCase):
         self.assertTrue(os.path.exists(path.upper()))
         self.assertTrue(os.path.ismount(r'\\share\foo'))
         self.assertTrue(os.path.ismount(r'C:'))
+        self.assertEqual('\\', os.sep)
+        self.assertEqual('\\', os.path.sep)
+        self.assertEqual('/', os.altsep)
+        self.assertEqual(';', os.pathsep)
+        self.assertEqual('\r\n', os.linesep)
+        self.assertEqual('nul', os.devnull)
 
     def test_linux(self):
         self.fs.os = OSType.LINUX
@@ -819,6 +825,12 @@ class TestOtherFS(fake_filesystem_unittest.TestCase):
         self.assertFalse(os.path.exists(path.upper()))
         self.assertTrue(os.path.ismount('/'))
         self.assertFalse(os.path.ismount('//share/foo'))
+        self.assertEqual('/', os.sep)
+        self.assertEqual('/', os.path.sep)
+        self.assertEqual(None, os.altsep)
+        self.assertEqual(':', os.pathsep)
+        self.assertEqual('\n', os.linesep)
+        self.assertEqual('/dev/null', os.devnull)
 
     def test_macos(self):
         self.fs.os = OSType.MACOS
@@ -830,6 +842,12 @@ class TestOtherFS(fake_filesystem_unittest.TestCase):
         self.assertTrue(os.path.exists(path.upper()))
         self.assertTrue(os.path.ismount('/'))
         self.assertFalse(os.path.ismount('//share/foo'))
+        self.assertEqual('/', os.sep)
+        self.assertEqual('/', os.path.sep)
+        self.assertEqual(None, os.altsep)
+        self.assertEqual(':', os.pathsep)
+        self.assertEqual('\n', os.linesep)
+        self.assertEqual('/dev/null', os.devnull)
 
     def test_drivelike_path(self):
         self.fs.os = OSType.LINUX
