@@ -1020,17 +1020,6 @@ class FakeFilesystem:
         return (path.startswith(sep) or altsep is not None and
                 path.startswith(altsep))
 
-    def _add_c_drive(self):
-        """Optimized version for the default Windows C drive.
-        For internal use only.
-        """
-        if self.is_windows_fs:
-            self.last_dev += 1
-            self.mount_points['C:'] = {
-                'idev': self.last_dev, 'total_size': None, 'used_size': 0
-            }
-            self.root.get_entry('C:') .st_dev = self.last_dev
-
     def add_mount_point(self, path, total_size=None):
         """Add a new mount point for a filesystem device.
         The mount point gets a new unique device number.
@@ -2323,7 +2312,7 @@ class FakeFilesystem:
         fake_sep = matching_string(path, self.path_separator)
         return path.replace(os_sep, fake_sep)
 
-    def create_dir(self, directory_path, perm_bits=PERM_DEF, check=True):
+    def create_dir(self, directory_path, perm_bits=PERM_DEF):
         """Create `directory_path`, and all the parent directories.
 
         Helper method to set up your test faster.
@@ -2331,7 +2320,6 @@ class FakeFilesystem:
         Args:
             directory_path: The full directory path to create.
             perm_bits: The permission bits as set by `chmod`.
-            check: For internal use only.
 
         Returns:
             The newly created FakeDirectory object.
@@ -2340,11 +2328,10 @@ class FakeFilesystem:
             OSError: if the directory already exists.
         """
         directory_path = self.make_string_path(directory_path)
-        if check:
-            directory_path = self.absnormpath(directory_path)
-            self._auto_mount_drive_if_needed(directory_path)
-            if self.exists(directory_path, check_link=True):
-                self.raise_os_error(errno.EEXIST, directory_path)
+        directory_path = self.absnormpath(directory_path)
+        self._auto_mount_drive_if_needed(directory_path)
+        if self.exists(directory_path, check_link=True):
+            self.raise_os_error(errno.EEXIST, directory_path)
         path_components = self._path_components(directory_path)
         current_dir = self.root
 
@@ -2357,10 +2344,10 @@ class FakeFilesystem:
                 current_dir.add_entry(new_dir)
                 current_dir = new_dir
             else:
-                if check and S_ISLNK(directory.st_mode):
+                if S_ISLNK(directory.st_mode):
                     directory = self.resolve(directory.contents)
                 current_dir = directory
-                if check and directory.st_mode & S_IFDIR != S_IFDIR:
+                if directory.st_mode & S_IFDIR != S_IFDIR:
                     self.raise_os_error(errno.ENOTDIR, current_dir.path)
 
         # set the permission after creating the directories

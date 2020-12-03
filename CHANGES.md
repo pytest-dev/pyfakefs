@@ -4,6 +4,8 @@ The released versions correspond to PyPi releases.
 ## Version 4.4.0 (as yet unreleased)
 
 ### Fixes
+* Reverted one Windows-specific optimization that can break tests under some
+  conditions (see [#573](../../issues/573))
 * Setting `os` did not reset `os.sep` and related variables,
   fixed null device name, added `os.pathsep` and missing `os.path` variables
   (see [#572](../../issues/572))

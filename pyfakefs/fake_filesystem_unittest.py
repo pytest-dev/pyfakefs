@@ -734,8 +734,7 @@ class Patcher:
 
         # the temp directory is assumed to exist at least in `tempfile1`,
         # so we create it here for convenience
-        self.fs.create_dir(temp_dir, check=False)
-        self.fs._add_c_drive()
+        self.fs.create_dir(temp_dir)
 
     def start_patching(self):
         if not self._patching:
