@@ -15,4 +15,4 @@ scandir>=1.8
 # we use the latest version to see any problems with new versions
 pandas
 xlrd
-openpyxl
+openpyxl==3.0.5
