@@ -4731,9 +4731,7 @@ class FakeFileWrapper:
             contents = self._io.getvalue()
             if self._append:
                 self._sync_io()
-                old_contents = (self.file_object.byte_contents
-                                if is_byte_string(contents) else
-                                self.file_object.contents)
+                old_contents = self.file_object.byte_contents
                 contents = old_contents + contents[self._flush_pos:]
                 self._set_stream_contents(contents)
             else:
@@ -4799,11 +4797,7 @@ class FakeFileWrapper:
         if self._file_epoch == self.file_object.epoch:
             return
 
-        if self._io.binary:
-            contents = self.file_object.byte_contents
-        else:
-            contents = self.file_object.contents
-
+        contents = self.file_object.byte_contents
         self._set_stream_contents(contents)
         self._file_epoch = self.file_object.epoch
 
@@ -4811,8 +4805,6 @@ class FakeFileWrapper:
         whence = self._io.tell()
         self._io.seek(0)
         self._io.truncate()
-        if not self._io.binary and is_byte_string(contents):
-            contents = contents.decode(self._encoding)
         self._io.putvalue(contents)
         if not self._append:
             self._io.seek(whence)
@@ -4966,7 +4958,7 @@ class FakeFileWrapper:
                 buffer_size = len(self._io.getvalue())
                 if buffer_size < size:
                     self._io.seek(buffer_size)
-                    self._io.write('\0' * (size - buffer_size))
+                    self._io.putvalue(b'\0' * (size - buffer_size))
                     self.file_object.set_contents(
                         self._io.getvalue(), self._encoding)
                     self._flush_pos = size

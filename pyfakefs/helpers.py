@@ -294,106 +294,22 @@ class FileBufferIO:
 
     def __init__(self, contents=None, linesep='\n', binary=False,
                  newline=None, encoding=None, errors='strict'):
-        self._newline = newline
         self._encoding = encoding
-        self.errors = errors
         self._linesep = linesep
+        self._newline = newline
         self.binary = binary
         self._bytestream = io.BytesIO()
         if contents is not None:
-            self.putvalue(contents)
+            self._bytestream.write(contents)
             self._bytestream.seek(0)
+        self._textio = (None if binary
+                        else io.TextIOWrapper(self._bytestream,
+                                              encoding=encoding,
+                                              newline=newline,
+                                              errors=errors))
 
     def encoding(self):
         return self._encoding or locale.getpreferredencoding(False)
-
-    def encoded_string(self, contents):
-        if is_byte_string(contents):
-            return contents
-        return contents.encode(self.encoding(), self.errors)
-
-    def decoded_string(self, contents):
-        return contents.decode(self.encoding(), self.errors)
-
-    def convert_newlines_for_writing(self, s):
-        if self.binary:
-            return s
-        if self._newline in (None, '-'):
-            return s.replace('\n', self._linesep)
-        if self._newline in ('', '\n'):
-            return s
-        return s.replace('\n', self._newline)
-
-    def convert_newlines_after_reading(self, s):
-        if self._newline is None:
-            return s.replace('\r\n', '\n').replace('\r', '\n')
-        if self._newline == '-':
-            return s.replace(self._linesep, '\n')
-        return s
-
-    def read(self, size=-1):
-        contents = self._bytestream.read(size)
-        if self.binary:
-            return contents
-        return self.convert_newlines_after_reading(
-            self.decoded_string(contents))
-
-    def readline(self, size=-1):
-        seek_pos = self._bytestream.tell()
-        byte_contents = self._bytestream.read(size)
-        if self.binary:
-            read_contents = byte_contents
-            LF = b'\n'
-        else:
-            read_contents = self.convert_newlines_after_reading(
-                self.decoded_string(byte_contents))
-            LF = '\n'
-        end_pos = 0
-
-        if self._newline is None:
-            end_pos = self._linelen_for_universal_newlines(byte_contents)
-            if end_pos > 0:
-                length = read_contents.find(LF) + 1
-        elif self._newline == '':
-            end_pos = self._linelen_for_universal_newlines(byte_contents)
-            if end_pos > 0:
-                if byte_contents[end_pos - 1] == ord(b'\r'):
-                    newline = '\r'
-                elif end_pos > 1 and byte_contents[end_pos - 2] == ord(b'\r'):
-                    newline = '\r\n'
-                else:
-                    newline = '\n'
-                length = read_contents.find(newline) + len(newline)
-        else:
-            newline = '\n' if self._newline == '-' else self._newline
-            length = read_contents.find(newline)
-            if length >= 0:
-                nl_len = len(newline)
-                end_pos = byte_contents.find(newline.encode()) + nl_len
-                length += nl_len
-
-        if end_pos == 0:
-            length = len(read_contents)
-            end_pos = len(byte_contents)
-
-        self._bytestream.seek(seek_pos + end_pos)
-        return (byte_contents[:end_pos] if self.binary
-                else read_contents[:length])
-
-    def _linelen_for_universal_newlines(self, byte_contents):
-        if self.binary:
-            return byte_contents.find(b'\n') + 1
-        pos_lf = byte_contents.find(b'\n')
-        pos_cr = byte_contents.find(b'\r')
-        if pos_lf == -1 and pos_cr == -1:
-            return 0
-        if pos_lf != -1 and (pos_lf < pos_cr or pos_cr == -1):
-            end_pos = pos_lf
-        else:
-            end_pos = pos_cr
-        if end_pos == pos_cr and end_pos + 1 == pos_lf:
-            end_pos = pos_lf
-        return end_pos + 1
 
     def readlines(self, size=-1):
         remaining_size = size
@@ -408,16 +324,11 @@ class FileBufferIO:
                 if remaining_size <= 0:
                     return lines
 
-    def putvalue(self, s):
-        self._bytestream.write(self.encoded_string(s))
+    def getvalue(self):
+        return self._bytestream.getvalue()
 
-    def write(self, s):
-        if self.binary != is_byte_string(s):
-            raise TypeError('Incorrect type for writing')
-        contents = self.convert_newlines_for_writing(s)
-        length = len(contents)
-        self.putvalue(contents)
-        return length
+    def putvalue(self, value):
+        self._bytestream.write(value)
 
     def writelines(self, lines):
         for line in lines:
@@ -433,11 +344,10 @@ class FileBufferIO:
         return line
 
     def __getattr__(self, name):
-        return getattr(self._bytestream, name)
+        if self.binary:
+            return getattr(self._bytestream, name)
+        return getattr(self._textio, name)
 
 
 class NullFileBufferIO(FileBufferIO):
     """Special stream for null device. Does nothing on writing."""
-
-    def putvalue(self, s):
-        pass

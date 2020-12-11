@@ -908,7 +908,7 @@ class FakeFileOpenTest(FakeFileOpenTestBase):
             self.assertEqual(b'test', f.read())
 
     def test_unicode_filename(self):
-        file_path = self.make_path(u'тест')
+        file_path = self.make_path('тест')
         with self.open(file_path, 'wb') as f:
             f.write(b'test')
         with self.open(file_path, 'rb') as f:
@@ -920,6 +920,19 @@ class FakeFileOpenTest(FakeFileOpenTestBase):
                 f.write('test')
             with self.open(self.os.devnull) as f:
                 self.assertEqual('', f.read())
+
+    def test_utf16_text(self):
+        # regression test for #574
+        file_path = self.make_path('foo')
+        with self.open(file_path, "w", encoding='utf-16') as f:
+            assert f.write("1") == 1
+
+        with self.open(file_path, "a", encoding='utf-16') as f:
+            assert f.write("2") == 1
+
+        with self.open(file_path, "r", encoding='utf-16') as f:
+            text = f.read()
+            assert text == "12"
 
 
 class RealFileOpenTest(FakeFileOpenTest):
