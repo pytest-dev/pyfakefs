@@ -284,70 +284,24 @@ class FakeStatResult:
         self._st_ctime_ns = val
 
 
-class FileBufferIO:
-    """Stream class that handles Python string and byte contents for files.
-    The standard io.StringIO cannot be used for strings due to the slightly
-    different handling of newline mode.
-    Uses an io.BytesIO stream for the raw data and adds handling of encoding
-    and newlines.
+class BinaryBufferIO(io.BytesIO):
+    """Stream class that handles byte contents for files."""
+
+    def putvalue(self, value):
+        self.write(value)
+
+
+class TextBufferIO(io.TextIOWrapper):
+    """Stream class that handles Python string contents for files.
     """
 
-    def __init__(self, contents=None, linesep='\n', binary=False,
-                 newline=None, encoding=None, errors='strict'):
-        self._encoding = encoding
-        self._linesep = linesep
-        self._newline = newline
-        self.binary = binary
-        self._bytestream = io.BytesIO()
-        if contents is not None:
-            self._bytestream.write(contents)
-            self._bytestream.seek(0)
-        self._textio = (None if binary
-                        else io.TextIOWrapper(self._bytestream,
-                                              encoding=encoding,
-                                              newline=newline,
-                                              errors=errors))
-
-    def encoding(self):
-        return self._encoding or locale.getpreferredencoding(False)
-
-    def readlines(self, size=-1):
-        remaining_size = size
-        lines = []
-        while True:
-            line = self.readline(remaining_size)
-            if not line:
-                return lines
-            lines.append(line)
-            if size > 0:
-                remaining_size -= len(line)
-                if remaining_size <= 0:
-                    return lines
+    def __init__(self, contents=None, newline=None, encoding=None,
+                 errors='strict'):
+        self._bytestream = io.BytesIO(contents)
+        super().__init__(self._bytestream, encoding, errors, newline)
 
     def getvalue(self):
         return self._bytestream.getvalue()
 
     def putvalue(self, value):
         self._bytestream.write(value)
-
-    def writelines(self, lines):
-        for line in lines:
-            self.write(line)
-
-    def __iter__(self):
-        return self
-
-    def __next__(self):
-        line = self.readline()
-        if not line:
-            raise StopIteration
-        return line
-
-    def __getattr__(self, name):
-        if self.binary:
-            return getattr(self._bytestream, name)
-        return getattr(self._textio, name)
-
-
-class NullFileBufferIO(FileBufferIO):
-    """Special stream for null device. Does nothing on writing."""

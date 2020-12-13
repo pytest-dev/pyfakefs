@@ -112,7 +112,7 @@ from pyfakefs.deprecator import Deprecator
 from pyfakefs.extra_packages import use_scandir
 from pyfakefs.fake_scandir import scandir, walk
 from pyfakefs.helpers import (
-    FakeStatResult, FileBufferIO, NullFileBufferIO,
+    FakeStatResult, BinaryBufferIO, TextBufferIO,
     is_int_type, is_byte_string, is_unicode_string,
     make_string_path, IS_WIN, to_string, matching_string
 )
@@ -4640,11 +4640,9 @@ class FakeFileWrapper:
         contents = file_object.byte_contents
         self._encoding = encoding or locale.getpreferredencoding(False)
         errors = errors or 'strict'
-        buffer_class = (NullFileBufferIO if file_object == filesystem.dev_null
-                        else FileBufferIO)
-        self._io = buffer_class(contents, linesep=filesystem.line_separator(),
-                                binary=binary, encoding=encoding,
-                                newline=newline, errors=errors)
+        self._io = (BinaryBufferIO(contents) if binary
+                    else TextBufferIO(contents, encoding=encoding,
+                                      newline=newline, errors=errors))
 
         self._read_whence = 0
         self._read_seek = 0
