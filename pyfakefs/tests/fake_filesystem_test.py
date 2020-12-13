@@ -2005,7 +2005,7 @@ class RealFileSystemAccessTest(RealFsTestCase):
         )
 
     def test_add_existing_real_directory_symlink_target_path(self):
-        self.skip_if_symlink_not_supported()
+        self.skip_if_symlink_not_supported(force_real_fs=True)
         real_directory = os.path.join(self.root_path, 'pyfakefs', 'tests')
         symlinks = [
             ('..', os.path.join(
@@ -2026,7 +2026,7 @@ class RealFileSystemAccessTest(RealFsTestCase):
             '/path/fixtures/symlink_file_relative'))
 
     def test_add_existing_real_directory_symlink_lazy_read(self):
-        self.skip_if_symlink_not_supported()
+        self.skip_if_symlink_not_supported(force_real_fs=True)
         real_directory = os.path.join(self.root_path, 'pyfakefs', 'tests')
         symlinks = [
             ('..', os.path.join(

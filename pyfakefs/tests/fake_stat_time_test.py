@@ -342,7 +342,7 @@ class FakeStatTestBase(RealFsTestCase):
         self.assertLessEqual(before.st_atime, opened.st_atime)
         self.assertEqual(opened.st_atime, written.st_atime)
         self.assertLessEqual(written.st_atime, flushed.st_atime)
-        self.assertEqual(flushed.st_atime, closed.st_atime)
+        self.assertLessEqual(flushed.st_atime, closed.st_atime)
 
         self.assertLess(before.st_mtime, opened.st_mtime)
         self.assertEqual(opened.st_mtime, written.st_mtime)
@@ -365,7 +365,7 @@ class FakeStatTestBase(RealFsTestCase):
         self.assertEqual(before.st_atime, opened.st_atime)
         self.assertEqual(opened.st_atime, written.st_atime)
         self.assertLessEqual(written.st_atime, flushed.st_atime)
-        self.assertEqual(flushed.st_atime, closed.st_atime)
+        self.assertLessEqual(flushed.st_atime, closed.st_atime)
 
         self.assertEqual(before.st_mtime, opened.st_mtime)
         self.assertEqual(opened.st_mtime, written.st_mtime)
