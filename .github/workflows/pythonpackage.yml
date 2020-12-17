@@ -81,8 +81,10 @@ jobs:
       shell: bash
     - name: Run performance tests
       run: |
-        export TEST_PERFORMANCE=1
-        python -m pyfakefs.tests.performance_test
+        if [[ '${{ matrix.os  }}' != 'macOS-latest' ]]; then
+          export TEST_PERFORMANCE=1
+          python -m pyfakefs.tests.performance_test
+        fi
       shell: bash
 
   dockertests:
