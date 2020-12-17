@@ -81,8 +81,8 @@ jobs:
       shell: bash
     - name: Run performance tests
       run: |
-        python -m pyfakefs.tests.performance_test SetupPerformanceTest
-        python -m pyfakefs.tests.performance_test SetupNoCachePerformanceTest
+        export TEST_PERFORMANCE=1
+        python -m pyfakefs.tests.performance_test
       shell: bash
 
   dockertests:
