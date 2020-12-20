@@ -1,7 +1,9 @@
 # pyfakefs Release Notes
 The released versions correspond to PyPi releases.
 
-## Version 4.4.0 (as yet unreleased)
+## [Version 4.3.3](https://pypi.python.org/pypi/pyfakefs/4.3.3) (2020-12-20)
+
+Another bugfix release.
 
 ### Fixes
 * Reverted one Windows-specific optimization that can break tests under some
