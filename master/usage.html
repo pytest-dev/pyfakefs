@@ -530,8 +530,8 @@ for the <code class="docutils literal notranslate"><span class="pre">patchfs</sp
 <div class="section" id="file-creation-helpers">
 <h3>File creation helpers<a class="headerlink" href="#file-creation-helpers" title="Permalink to this headline">¶</a></h3>
 <p>To create files, directories or symlinks together with all the directories
-in the path, you may use <code class="docutils literal notranslate"><span class="pre">create_file()</span></code>, <code class="docutils literal notranslate"><span class="pre">create_dir()</span></code> and
-<code class="docutils literal notranslate"><span class="pre">create_symlink()</span></code>, respectively.</p>
+in the path, you may use <code class="docutils literal notranslate"><span class="pre">create_file()</span></code>, <code class="docutils literal notranslate"><span class="pre">create_dir()</span></code>,
+<code class="docutils literal notranslate"><span class="pre">create_symlink()</span></code> and <code class="docutils literal notranslate"><span class="pre">create_link()</span></code>, respectively.</p>
 <p><code class="docutils literal notranslate"><span class="pre">create_file()</span></code> also allows you to set the file mode and the file contents
 together with the encoding if needed. Alternatively, you can define a file
 size without contents–in this case, you will not be able to perform
@@ -550,7 +550,15 @@ with large files, see also <a class="reference internal" href="#set-fs-size"><sp
             <span class="bp">self</span><span class="o">.</span><span class="n">assertEqual</span><span class="p">(</span><span class="s1">&#39;test&#39;</span><span class="p">,</span> <span class="n">f</span><span class="o">.</span><span class="n">read</span><span class="p">())</span>
 </pre></div>
 </div>
-<p><code class="docutils literal notranslate"><span class="pre">create_dir()</span></code> behaves like <code class="docutils literal notranslate"><span class="pre">os.makedirs()</span></code>.</p>
+<p><code class="docutils literal notranslate"><span class="pre">create_dir()</span></code> behaves like <code class="docutils literal notranslate"><span class="pre">os.makedirs()</span></code>.
+<code class="docutils literal notranslate"><span class="pre">create_symlink</span></code> and <code class="docutils literal notranslate"><span class="pre">create_link</span></code> behave like <code class="docutils literal notranslate"><span class="pre">os.symlink</span></code> and
+<code class="docutils literal notranslate"><span class="pre">os.link</span></code>, with any missing parent directories of the link created
+automatically.</p>
+<div class="admonition caution">
+<p class="admonition-title">Caution</p>
+<p>The first two arguments in <code class="docutils literal notranslate"><span class="pre">create_symlink</span></code> are reverted in relation to
+<code class="docutils literal notranslate"><span class="pre">os.symlink</span></code> for historical reasons.</p>
+</div>
 </div>
 <div class="section" id="access-to-files-in-the-real-file-system">
 <h3>Access to files in the real file system<a class="headerlink" href="#access-to-files-in-the-real-file-system" title="Permalink to this headline">¶</a></h3>
@@ -950,7 +958,7 @@ Another possibility is the convenience argument <a class="reference internal" hr
         &#169; Copyright 2009 Google Inc. All Rights Reserved.
 © Copyright 2014 Altera Corporation. All Rights Reserved.
 © Copyright 2014-2020 John McGehee.
-      Last updated on Nov 25, 2020.
+      Last updated on Dec 31, 2020.
     </div>
   </body>
 </html>
