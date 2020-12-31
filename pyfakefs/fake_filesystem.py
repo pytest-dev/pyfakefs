@@ -2632,7 +2632,6 @@ class FakeFilesystem:
 
         return file_object
 
-    # pylint: disable=unused-argument
     def create_symlink(self, file_path, link_target, create_missing_dirs=True):
         """Create the specified symlink, pointed at the specified link target.
 
@@ -2684,7 +2683,8 @@ class FakeFilesystem:
             create_missing_dirs=create_missing_dirs,
             raw_io=True)
 
-    def link(self, old_path, new_path, follow_symlinks=True):
+    def create_link(self, old_path, new_path,
+                    follow_symlinks=True, create_missing_dirs=True):
         """Create a hard link at new_path, pointing at old_path.
 
         Args:
@@ -2692,6 +2692,8 @@ class FakeFilesystem:
             new_path: The destination path to create a new link at.
             follow_symlinks: If False and old_path is a symlink, link the
                 symlink instead of the object it points to.
+            create_missing_dirs: If `True`, any missing parent directories of
+                file_path will be created
 
         Returns:
             The FakeFile object referred to by old_path.
@@ -2711,7 +2713,10 @@ class FakeFilesystem:
             new_parent_directory = self.cwd
 
         if not self.exists(new_parent_directory):
-            self.raise_os_error(errno.ENOENT, new_parent_directory)
+            if create_missing_dirs:
+                self.create_dir(new_parent_directory)
+            else:
+                self.raise_os_error(errno.ENOENT, new_parent_directory)
 
         if self.ends_with_path_separator(old_path):
             error = errno.EINVAL if self.is_windows_fs else errno.ENOTDIR
@@ -2735,6 +2740,26 @@ class FakeFilesystem:
         old_file.name = new_basename
         self.add_object(new_parent_directory, old_file)
         return old_file
+
+    def link(self, old_path, new_path, follow_symlinks=True):
+        """Create a hard link at new_path, pointing at old_path.
+
+        Args:
+            old_path: An existing link to the target file.
+            new_path: The destination path to create a new link at.
+            follow_symlinks: If False and old_path is a symlink, link the
+                symlink instead of the object it points to.
+
+        Returns:
+            The FakeFile object referred to by old_path.
+
+        Raises:
+            OSError:  if something already exists at new_path.
+            OSError:  if old_path is a directory.
+            OSError:  if the parent directory doesn't exist.
+        """
+        return self.create_link(old_path, new_path, follow_symlinks,
+                                create_missing_dirs=False)
 
     def _is_circular_link(self, link_obj):
         try:

@@ -635,11 +635,21 @@ class FakePathlibPathFileOperationTest(RealPathlibTestCase):
         path = self.path(link_name)
         path.symlink_to(file_name)
         self.assertTrue(self.os.path.exists(link_name))
-        # file_obj = self.filesystem.ResolveObject(file_name)
-        # linked_file_obj = self.filesystem.ResolveObject(link_name)
-        # self.assertEqual(file_obj, linked_file_obj)
-        # link__obj = self.filesystem.LResolveObject(link_name)
         self.assertTrue(path.is_symlink())
+
+    @unittest.skipIf(sys.version_info < (3, 8) or pathlib2,
+                     'link_to new in Python 3.8')
+    def test_link_to(self):
+        self.skip_if_symlink_not_supported()
+        file_name = self.make_path('foo', 'bar.txt')
+        self.create_file(file_name)
+        self.assertEqual(1, self.os.stat(file_name).st_nlink)
+        link_name = self.make_path('link_to_bar')
+        path = self.path(file_name)
+        path.link_to(link_name)
+        self.assertTrue(self.os.path.exists(link_name))
+        self.assertFalse(path.is_symlink())
+        self.assertEqual(2, self.os.stat(file_name).st_nlink)
 
     def test_mkdir(self):
         dir_name = self.make_path('foo', 'bar')

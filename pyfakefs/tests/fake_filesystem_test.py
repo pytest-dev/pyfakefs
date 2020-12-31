@@ -1773,6 +1773,30 @@ class MountPointTest(TestCase):
             '!!foo!bar!bip!bop').st_dev)
 
 
+class ConvenienceMethodTest(RealFsTestCase):
+
+    def test_create_link_with_non_existent_parent(self):
+        self.skip_if_symlink_not_supported()
+        file1_path = self.make_path('test_file1')
+        link_path = self.make_path('nonexistent', 'test_file2')
+
+        self.filesystem.create_file(file1_path, contents='link test')
+        self.assertEqual(self.os.stat(file1_path).st_nlink, 1)
+        self.filesystem.create_link(file1_path, link_path)
+        self.assertEqual(self.os.stat(file1_path).st_nlink, 2)
+        self.assertTrue(self.filesystem.exists(link_path))
+
+    def test_create_symlink_with_non_existent_parent(self):
+        self.skip_if_symlink_not_supported()
+        file1_path = self.make_path('test_file1')
+        link_path = self.make_path('nonexistent', 'test_file2')
+
+        self.filesystem.create_file(file1_path, contents='symlink test')
+        self.filesystem.create_symlink(link_path, file1_path)
+        self.assertTrue(self.filesystem.exists(link_path))
+        self.assertTrue(self.filesystem.islink(link_path))
+
+
 class RealFileSystemAccessTest(RealFsTestCase):
     def setUp(self):
         # use the real path separator to work with the real file system

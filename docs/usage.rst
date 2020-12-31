@@ -541,8 +541,8 @@ for the ``patchfs`` decorator.
 File creation helpers
 ~~~~~~~~~~~~~~~~~~~~~
 To create files, directories or symlinks together with all the directories
-in the path, you may use ``create_file()``, ``create_dir()`` and
-``create_symlink()``, respectively.
+in the path, you may use ``create_file()``, ``create_dir()``,
+``create_symlink()`` and ``create_link()``, respectively.
 
 ``create_file()`` also allows you to set the file mode and the file contents
 together with the encoding if needed. Alternatively, you can define a file
@@ -565,6 +565,13 @@ with large files, see also :ref:`set-fs-size`).
                 self.assertEqual('test', f.read())
 
 ``create_dir()`` behaves like ``os.makedirs()``.
+``create_symlink`` and ``create_link`` behave like ``os.symlink`` and
+``os.link``, with any missing parent directories of the link created
+automatically.
+
+.. caution::
+  The first two arguments in ``create_symlink`` are reverted in relation to
+  ``os.symlink`` for historical reasons.
 
 Access to files in the real file system
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

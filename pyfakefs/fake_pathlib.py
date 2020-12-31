@@ -123,6 +123,11 @@ class _FakeAccessor(accessor):
         FakeFilesystem.create_symlink(fs, file_path, link_target,
                                       create_missing_dirs=False))
 
+    if sys.version_info >= (3, 8) and not pathlib2:
+        link_to = _wrap_binary_strfunc(
+            lambda fs, file_path, link_target:
+            FakeFilesystem.link(fs, file_path, link_target))
+
     utime = _wrap_strfunc(FakeFilesystem.utime)
 
 

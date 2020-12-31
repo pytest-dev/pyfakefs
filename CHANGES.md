@@ -3,6 +3,12 @@ The released versions correspond to PyPi releases.
 
 ## Version 4.4.0 (as yet unreleased)
 
+#### New Features
+  * added support for `pathlib.Path.link_to` (new in Python 3.8) 
+    (see [#580](../../issues/580))
+  * added `FakeFilesystem.create_link` convenience method which creates
+    intermittent directories (see [#580](../../issues/580))
+    
 ## [Version 4.3.3](https://pypi.python.org/pypi/pyfakefs/4.3.3) (2020-12-20)
 
 Another bugfix release.
