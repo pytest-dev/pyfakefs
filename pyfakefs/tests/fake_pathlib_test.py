@@ -651,6 +651,19 @@ class FakePathlibPathFileOperationTest(RealPathlibTestCase):
         self.assertFalse(path.is_symlink())
         self.assertEqual(2, self.os.stat(file_name).st_nlink)
 
+    @unittest.skipIf(sys.version_info < (3, 8) or not pathlib2,
+                     'pathlib2 has no link_to')
+    def test_pathlib2_does_not_have_link_to(self):
+        self.skip_if_symlink_not_supported()
+        file_name = self.make_path('foo', 'bar.txt')
+        self.create_file(file_name)
+        self.assertEqual(1, self.os.stat(file_name).st_nlink)
+        link_name = self.make_path('link_to_bar')
+        path = self.path(file_name)
+        with self.assertRaises(AttributeError):
+            path.link_to(link_name)
+        self.assertFalse(self.os.path.exists(link_name))
+
     def test_mkdir(self):
         dir_name = self.make_path('foo', 'bar')
         self.assert_raises_os_error(errno.ENOENT,
