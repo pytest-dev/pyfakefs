@@ -2702,6 +2702,8 @@ class FakeOsModuleTest(FakeOsModuleTestBase):
         self.os.close(write_fd)
 
     def test_open_existing_pipe(self):
+        if 'PYTEST_CURRENT_TEST' in os.environ:
+            raise unittest.SkipTest('Not working under Pytest, see #581')
         if self.is_pypy:
             raise unittest.SkipTest('Does not work correctly with PyPy')
         read_fd, write_fd = self.os.pipe()
