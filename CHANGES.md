@@ -9,6 +9,10 @@ The released versions correspond to PyPi releases.
   * added `FakeFilesystem.create_link` convenience method which creates
     intermittent directories (see [#580](../../issues/580))
     
+### Fixes
+  * fixed handling of pipe descriptors in the fake filesystem 
+    (see [#581](../../issues/581))
+
 ## [Version 4.3.3](https://pypi.python.org/pypi/pyfakefs/4.3.3) (2020-12-20)
 
 Another bugfix release.

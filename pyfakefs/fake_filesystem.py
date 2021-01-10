@@ -5228,7 +5228,12 @@ class FakeFileOpen:
         file_object, file_path, filedes, real_path = self._handle_file_arg(
             file_)
         if file_object is None and file_path is None:
-            wrapper = FakePipeWrapper(self.filesystem, filedes)
+            # file must be a fake pipe wrapper, find it...
+            if (len(self.filesystem.open_files) <= filedes
+                    or not self.filesystem.open_files[filedes]):
+                raise OSError(errno.EBADF, 'invalid pipe file descriptor')
+            real_fd = self.filesystem.open_files[filedes][0].fd
+            wrapper = FakePipeWrapper(self.filesystem, real_fd)
             file_des = self.filesystem._add_open_file(wrapper)
             wrapper.filedes = file_des
             return wrapper

@@ -2702,15 +2702,22 @@ class FakeOsModuleTest(FakeOsModuleTestBase):
         self.os.close(write_fd)
 
     def test_open_existing_pipe(self):
-        if 'PYTEST_CURRENT_TEST' in os.environ:
-            raise unittest.SkipTest('Not working under Pytest, see #581')
-        if self.is_pypy:
-            raise unittest.SkipTest('Does not work correctly with PyPy')
-        read_fd, write_fd = self.os.pipe()
-        with self.open(write_fd, 'wb') as f:
-            self.assertEqual(4, f.write(b'test'))
-        with self.open(read_fd, 'rb') as f:
-            self.assertEqual(b'test', f.read(4))
+        # create some regular files to ensure that real and fake fd
+        # are out of sync (see #581)
+        fds = []
+        for i in range(5):
+            path = self.make_path('file' + str(i))
+            fds.append(self.os.open(path, os.O_CREAT))
+        file_path = self.make_path('file.txt')
+        self.create_file(file_path)
+        with self.open(file_path):
+            read_fd, write_fd = self.os.pipe()
+            with self.open(write_fd, 'wb') as f:
+                self.assertEqual(4, f.write(b'test'))
+            with self.open(read_fd, 'rb') as f:
+                self.assertEqual(b'test', f.read(4))
+        for fd in fds:
+            self.os.close(fd)
 
     def test_write_to_pipe(self):
         read_fd, write_fd = self.os.pipe()
