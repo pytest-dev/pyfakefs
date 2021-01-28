@@ -12,6 +12,9 @@ The released versions correspond to PyPi releases.
 ### Fixes
   * fixed handling of pipe descriptors in the fake filesystem 
     (see [#581](../../issues/581))
+    
+### Infrastructure
+  * added automatic documentation build and check-in
 
 ## [Version 4.3.3](https://pypi.python.org/pypi/pyfakefs/4.3.3) (2020-12-20)
 

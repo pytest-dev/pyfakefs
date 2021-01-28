@@ -1,0 +1,53 @@
+name: DocBuild
+
+on:
+  push:
+    branches: master
+
+defaults:
+  run:
+    shell: bash
+
+jobs:
+  build_docs:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest]
+        python-version:  [3.8]
+    steps:
+      - name: Checkout master
+        uses: actions/checkout@v2
+        with:
+          path: main
+      - name: Get last commit message
+        run: |
+          cd main
+          echo "LAST_COMMIT=$(echo `git log -1 --pretty=%B`)" >> $GITHUB_ENV
+          cd ..
+      - name: Install needed packages
+        run: |
+          pip3 install wheel
+          pip3 install pytest
+          sudo apt update
+          sudo apt-get install python3-sphinx
+          cd main/docs
+          make html
+      - name: Checkout gh-pages
+        uses: actions/checkout@v2
+        with:
+          ref: gh-pages
+          path: doc
+      - name: Copy and commit changes
+        run: |
+          cp -r main/gh-pages/* doc/master
+          cd doc
+          git config user.name "CI Build"
+          git config user.email "pyfakefs@gmail.com"
+          git add master/*
+          if [ `git status -s | wc -l` = 0 ]; then
+            echo "No changes in built documentation, skipping"
+            exit 0
+          fi
+          git commit -a -m "$LAST_COMMIT"
+          git push
