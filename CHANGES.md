@@ -12,7 +12,9 @@ The released versions correspond to PyPi releases.
 ### Fixes
   * fixed handling of pipe descriptors in the fake filesystem 
     (see [#581](../../issues/581))
-    
+  * added non-functional argument `effective_ids` to `os.access`
+    (see [#585](../../issues/585))
+      
 ### Infrastructure
   * added automatic documentation build and check-in
 

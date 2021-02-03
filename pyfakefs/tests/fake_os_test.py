@@ -1896,6 +1896,12 @@ class FakeOsModuleTest(FakeOsModuleTestBase):
         self.assertFalse(self.os.access(path, self.rwx))
         self.assertFalse(self.os.access(path, self.rw))
 
+    def test_effective_ids_not_supported_under_windows(self):
+        self.check_windows_only()
+        path = self.make_path('foo', 'bar')
+        with self.assertRaises(NotImplementedError):
+            self.os.access(path, self.os.F_OK, effective_ids=True)
+
     def test_chmod(self):
         # set up
         self.check_posix_only()

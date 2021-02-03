@@ -4282,7 +4282,8 @@ class FakeOsModule:
         file_object = self.filesystem.get_open_file(fd).get_object()
         file_object.size = length
 
-    def access(self, path, mode, *, dir_fd=None, follow_symlinks=True):
+    def access(self, path, mode, *, dir_fd=None, effective_ids=False,
+               follow_symlinks=True):
         """Check if a file exists and has the specified permissions.
 
         Args:
@@ -4291,12 +4292,16 @@ class FakeOsModule:
                 os.F_OK, os.R_OK, os.W_OK, and os.X_OK.
             dir_fd: If not `None`, the file descriptor of a directory, with
                 `path` being relative to this directory.
+            effective_ids: (bool) Unused. Only here to match the signature.
             follow_symlinks: (bool) If `False` and `path` points to a symlink,
                 the link itself is queried instead of the linked object.
 
         Returns:
             bool, `True` if file is accessible, `False` otherwise.
         """
+        if effective_ids and self.filesystem.is_windows_fs:
+            raise NotImplementedError(
+                'access: effective_ids unavailable on this platform')
         path = self._path_with_dir_fd(path, self.access, dir_fd)
         try:
             stat_result = self.stat(path, follow_symlinks=follow_symlinks)
