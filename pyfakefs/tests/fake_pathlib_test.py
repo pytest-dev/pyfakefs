@@ -238,6 +238,13 @@ class FakePathlibPurePathTest(RealPathlibTestCase):
         with self.assertRaises(ValueError):
             self.path('passwd').relative_to('/usr')
 
+    @unittest.skipIf(sys.version_info < (3, 9) or pathlib2,
+                     'readlink new in Python 3.9')
+    def test_is_relative_to(self):
+        path = self.path('/etc/passwd')
+        self.assertTrue(path.is_relative_to('/etc'))
+        self.assertFalse(path.is_relative_to('/src'))
+
     def test_with_name(self):
         self.check_windows_only()
         self.assertEqual(
@@ -664,6 +671,16 @@ class FakePathlibPathFileOperationTest(RealPathlibTestCase):
             path.link_to(link_name)
         self.assertFalse(self.os.path.exists(link_name))
 
+    @unittest.skipIf(sys.version_info < (3, 9) or pathlib2,
+                     'readlink new in Python 3.9')
+    def test_readlink(self):
+        self.skip_if_symlink_not_supported()
+        link_path = self.make_path('foo', 'bar', 'baz')
+        target = self.make_path('tarJAY')
+        self.create_symlink(link_path, target)
+        path = self.path(link_path)
+        self.assert_equal_paths(path.readlink(), self.path(target))
+
     def test_mkdir(self):
         dir_name = self.make_path('foo', 'bar')
         self.assert_raises_os_error(errno.ENOENT,
@@ -1074,4 +1091,4 @@ class FakeFilesystemPathLikeObjectTest(unittest.TestCase):
 
 
 if __name__ == '__main__':
-    unittest.main()
+    unittest.main(verbosity=2)

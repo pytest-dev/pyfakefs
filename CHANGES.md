@@ -6,6 +6,8 @@ The released versions correspond to PyPi releases.
 #### New Features
   * added support for `pathlib.Path.link_to` (new in Python 3.8) 
     (see [#580](../../issues/580))
+  * added support for `pathlib.Path.readlink` (new in Python 3.9) 
+    (see [#584](../../issues/584))
   * added `FakeFilesystem.create_link` convenience method which creates
     intermittent directories (see [#580](../../issues/580))
     

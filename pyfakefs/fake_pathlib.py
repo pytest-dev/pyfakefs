@@ -128,6 +128,9 @@ class _FakeAccessor(accessor):
             lambda fs, file_path, link_target:
             FakeFilesystem.link(fs, file_path, link_target))
 
+    if sys.version_info >= (3, 9):
+        readlink = _wrap_strfunc(FakeFilesystem.readlink)
+
     utime = _wrap_strfunc(FakeFilesystem.utime)
 
 
