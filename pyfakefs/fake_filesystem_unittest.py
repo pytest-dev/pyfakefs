@@ -329,7 +329,6 @@ class TestCase(unittest.TestCase, TestCaseMixin):
                              "supports NOT creating missing directories")
         return self._stubber.fs.add_real_file(real_file_path, read_only=False)
 
-    @DeprecationWarning
     def tearDownPyfakefs(self):
         """This method is deprecated and exists only for backward
         compatibility. It does nothing.
