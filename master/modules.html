@@ -681,7 +681,9 @@ the default setting.</p>
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
 <li><strong>name</strong> – Name of the file/directory, without parent path information</li>
 <li><strong>st_mode</strong> – The stat.S_IF* constant representing the file type (i.e.
-stat.S_IFREG, stat.S_IFDIR)</li>
+stat.S_IFREG, stat.S_IFDIR), and the file permissions.
+If no file type is set (e.g. permission flags only), a
+regular file type is assumed.</li>
 <li><strong>contents</strong> – The contents of the filesystem object; should be a string
 or byte object for regular files, and a list of other
 FakeFile or FakeDirectory objects for FakeDirectory objects</li>
@@ -1265,7 +1267,7 @@ that is available on pypi.</p>
         &#169; Copyright 2009 Google Inc. All Rights Reserved.
 © Copyright 2014 Altera Corporation. All Rights Reserved.
 © Copyright 2014-2020 John McGehee.
-      Last updated on Feb 11, 2021.
+      Last updated on Feb 24, 2021.
     </div>
   </body>
 </html>
