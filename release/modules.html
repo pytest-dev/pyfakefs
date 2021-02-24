@@ -5,7 +5,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Public Modules and Classes &#8212; pyfakefs 4.3.3 documentation</title>
+    <title>Public Modules and Classes &#8212; pyfakefs 4.4.0 documentation</title>
     <link rel="stylesheet" href="_static/pyfakefs.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
     <script id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
@@ -33,7 +33,7 @@
         <li class="right" >
           <a href="autopatch.html" title="Automatically find and patch file functions and modules"
              accesskey="P">previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="index.html">pyfakefs 4.3.3 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="index.html">pyfakefs 4.4.0 documentation</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">Public Modules and Classes</a></li> 
       </ul>
     </div>  
@@ -610,7 +610,9 @@ the default setting.</p>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>name</strong> – Name of the file/directory, without parent path information</p></li>
 <li><p><strong>st_mode</strong> – The stat.S_IF* constant representing the file type (i.e.
-stat.S_IFREG, stat.S_IFDIR)</p></li>
+stat.S_IFREG, stat.S_IFDIR), and the file permissions.
+If no file type is set (e.g. permission flags only), a
+regular file type is assumed.</p></li>
 <li><p><strong>contents</strong> – The contents of the filesystem object; should be a string
 or byte object for regular files, and a list of other
 FakeFile or FakeDirectory objects for FakeDirectory objects</p></li>
@@ -1147,7 +1149,7 @@ that is available on pypi.</p>
         <li class="right" >
           <a href="autopatch.html" title="Automatically find and patch file functions and modules"
              >previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="index.html">pyfakefs 4.3.3 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="index.html">pyfakefs 4.4.0 documentation</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">Public Modules and Classes</a></li> 
       </ul>
     </div>
@@ -1155,7 +1157,7 @@ that is available on pypi.</p>
         &#169; Copyright 2009 Google Inc. All Rights Reserved.
 © Copyright 2014 Altera Corporation. All Rights Reserved.
 © Copyright 2014-2020 John McGehee.
-      Last updated on Dec 20, 2020.
+      Last updated on Feb 24, 2021.
     </div>
   </body>
 </html>
