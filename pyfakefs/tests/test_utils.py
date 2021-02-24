@@ -295,7 +295,7 @@ class RealFsTestMixin:
             self.os.mkdir(existing_path)
             self.os.chmod(existing_path, 0o777)
 
-    def create_file(self, file_path, contents=None, encoding=None):
+    def create_file(self, file_path, contents=None, encoding=None, perm=0o666):
         """Create the given file at `file_path` with optional contents,
         including subdirectories. `file_path` shall be composed using
         `make_path()`.
@@ -309,7 +309,7 @@ class RealFsTestMixin:
         with self.open(file_path, mode) as f:
             if contents is not None:
                 f.write(contents)
-        self.os.chmod(file_path, 0o666)
+        self.os.chmod(file_path, perm)
 
     def create_symlink(self, link_path, target_path):
         """Create the path at `link_path`, and a symlink to this path at

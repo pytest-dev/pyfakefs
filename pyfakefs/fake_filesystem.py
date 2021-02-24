@@ -269,7 +269,9 @@ class FakeFile:
         Args:
             name: Name of the file/directory, without parent path information
             st_mode: The stat.S_IF* constant representing the file type (i.e.
-                stat.S_IFREG, stat.S_IFDIR)
+                stat.S_IFREG, stat.S_IFDIR), and the file permissions.
+                If no file type is set (e.g. permission flags only), a
+                regular file type is assumed.
             contents: The contents of the filesystem object; should be a string
                 or byte object for regular files, and a list of other
                 FakeFile or FakeDirectory objects for FakeDirectory objects
@@ -288,6 +290,8 @@ class FakeFile:
         self.name = name
         self.stat_result = FakeStatResult(
             filesystem.is_windows_fs, USER_ID, GROUP_ID, time.time())
+        if st_mode >> 12 == 0:
+            st_mode |= S_IFREG
         self.stat_result.st_mode = st_mode
         self.encoding = encoding
         self.errors = errors or 'strict'
@@ -2906,7 +2910,8 @@ class FakeFilesystem:
                     e.errno = errno.ENOENT
                 self.raise_os_error(e.errno, e.filename)
 
-    def _is_of_type(self, path, st_flag, follow_symlinks=True):
+    def _is_of_type(self, path, st_flag, follow_symlinks=True,
+                    check_read_perm=True):
         """Helper function to implement isdir(), islink(), etc.
 
         See the stat(2) man page for valid stat.S_I* flag values
@@ -2914,6 +2919,8 @@ class FakeFilesystem:
         Args:
             path: Path to file to stat and test
             st_flag: The stat.S_I* flag checked for the file's st_mode
+            check_read_perm: If True (default) False is returned for
+                existing but unreadable file paths.
 
         Returns:
             (boolean) `True` if the st_flag is set in path's st_mode.
@@ -2925,7 +2932,8 @@ class FakeFilesystem:
         if path is None:
             raise TypeError
         try:
-            obj = self.resolve(path, follow_symlinks)
+            obj = self.resolve(path, follow_symlinks,
+                               check_read_perm=check_read_perm)
             if obj:
                 self.raise_for_filepath_ending_with_separator(
                     path, obj, macos_handling=not follow_symlinks)
@@ -2960,7 +2968,8 @@ class FakeFilesystem:
         Raises:
             TypeError: if path is None.
         """
-        return self._is_of_type(path, S_IFREG, follow_symlinks)
+        return self._is_of_type(path, S_IFREG, follow_symlinks,
+                                check_read_perm=False)
 
     def islink(self, path):
         """Determine if path identifies a symbolic link.

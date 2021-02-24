@@ -879,6 +879,12 @@ class FakePathlibUsageInOsFunctionsTest(RealPathlibTestCase):
         self.assertEqual(self.os.path.isfile(path),
                          self.os.path.isfile(self.path(path)))
 
+    def test_isfile_not_readable(self):
+        path = self.make_path('foo', 'bar', 'baz')
+        self.create_file(path, perm=0)
+        self.assertEqual(self.os.path.isfile(path),
+                         self.os.path.isfile(self.path(path)))
+
     def test_islink(self):
         path = self.make_path('foo', 'bar', 'baz')
         self.create_file(path)

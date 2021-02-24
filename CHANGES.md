@@ -2,7 +2,7 @@
 The released versions correspond to PyPi releases.
 
 ## Version 4.4.0 (as yet unreleased)
-
+  
 #### New Features
   * added support for `pathlib.Path.link_to` (new in Python 3.8) 
     (see [#580](../../issues/580))
@@ -16,7 +16,9 @@ The released versions correspond to PyPi releases.
     (see [#581](../../issues/581))
   * added non-functional argument `effective_ids` to `os.access`
     (see [#585](../../issues/585))
-      
+  * correctly handle `os.file` for unreadable files
+    (see [#588](../../issues/588))
+
 ### Infrastructure
   * added automatic documentation build and check-in
 

@@ -547,6 +547,11 @@ class FakeOsModuleTest(FakeOsModuleTestBase):
         self.create_file(file_path)
         self.assertFalse(self.os.path.isfile(file_path + self.os.sep))
 
+    def test_isfile_not_readable_file(self):
+        file_path = self.make_path('foo')
+        self.create_file(file_path, perm=0)
+        self.assertTrue(self.os.path.isfile(file_path))
+
     def check_stat_with_trailing_separator(self, error_nr):
         # regression test for #376
         file_path = self.make_path('foo')
