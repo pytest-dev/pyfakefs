@@ -1,7 +1,10 @@
 # pyfakefs Release Notes
 The released versions correspond to PyPi releases.
 
-## Version 4.4.0 (as yet unreleased)
+## Version 4.5.0 (as yet unreleased)
+
+## [Version 4.4.0](https://pypi.python.org/pypi/pyfakefs/4.4.0) (2021-02-24)
+Adds better support for Python 3.8 / 3.9.
   
 #### New Features
   * added support for `pathlib.Path.link_to` (new in Python 3.8) 
