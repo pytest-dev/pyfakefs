@@ -13,10 +13,10 @@
 """
 Tests for patching modules loaded after `setUpPyfakefs()`.
 """
+import pathlib
 import unittest
 
 from pyfakefs import fake_filesystem_unittest
-from pyfakefs.extra_packages import pathlib
 
 
 class TestPyfakefsUnittestBase(fake_filesystem_unittest.TestCase):

@@ -64,7 +64,7 @@ from pyfakefs import fake_filesystem
 from pyfakefs import fake_filesystem_shutil
 from pyfakefs import fake_pathlib
 from pyfakefs import mox3_stubout
-from pyfakefs.extra_packages import pathlib, pathlib2, use_scandir
+from pyfakefs.extra_packages import pathlib2, use_scandir
 
 if use_scandir:
     from pyfakefs import fake_scandir
@@ -504,6 +504,7 @@ class Patcher:
             'os': fake_filesystem.FakeOsModule,
             'shutil': fake_filesystem_shutil.FakeShutilModule,
             'io': fake_filesystem.FakeIoModule,
+            'pathlib': fake_pathlib.FakePathlibModule
         }
         if IS_PYPY:
             # in PyPy io.open, the module is referenced as _io
@@ -512,13 +513,9 @@ class Patcher:
         # class modules maps class names against a list of modules they can
         # be contained in - this allows for alternative modules like
         # `pathlib` and `pathlib2`
-        self._class_modules['Path'] = []
-        if pathlib:
-            self._fake_module_classes[
-                'pathlib'] = fake_pathlib.FakePathlibModule
-            self._class_modules['Path'].append('pathlib')
-            self._unfaked_module_classes[
-                'pathlib'] = fake_pathlib.RealPathlibModule
+        self._class_modules['Path'] = ['pathlib']
+        self._unfaked_module_classes[
+            'pathlib'] = fake_pathlib.RealPathlibModule
         if pathlib2:
             self._fake_module_classes[
                 'pathlib2'] = fake_pathlib.FakePathlibModule

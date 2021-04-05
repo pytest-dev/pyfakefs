@@ -22,11 +22,11 @@ python docs.
 
 import errno
 import os
+import pathlib
 import stat
 import sys
 import unittest
 
-from pyfakefs.extra_packages import pathlib, pathlib2
 from pyfakefs.fake_filesystem import is_root
 
 from pyfakefs import fake_pathlib, fake_filesystem
@@ -35,20 +35,10 @@ from pyfakefs.tests.test_utils import RealFsTestCase
 is_windows = sys.platform == 'win32'
 
 
-def skip_if_pathlib_36_not_available():
-    if sys.version_info < (3, 6) and not pathlib2:
-        raise unittest.SkipTest('Changed behavior in Python 3.6')
-
-
-def skip_if_pathlib_36_is_available():
-    if sys.version_info >= (3, 6) or pathlib2:
-        raise unittest.SkipTest('Changed behavior in Python 3.6')
-
-
 class RealPathlibTestCase(RealFsTestCase):
     def __init__(self, methodName='runTest'):
         super(RealPathlibTestCase, self).__init__(methodName)
-        self.pathlib = pathlib or pathlib2
+        self.pathlib = pathlib
         self.path = None
 
     def setUp(self):
@@ -238,8 +228,8 @@ class FakePathlibPurePathTest(RealPathlibTestCase):
         with self.assertRaises(ValueError):
             self.path('passwd').relative_to('/usr')
 
-    @unittest.skipIf(sys.version_info < (3, 9) or pathlib2,
-                     'readlink new in Python 3.9')
+    @unittest.skipIf(sys.version_info < (3, 9),
+                     'is_relative_to new in Python 3.9')
     def test_is_relative_to(self):
         path = self.path('/etc/passwd')
         self.assertTrue(path.is_relative_to('/etc'))
@@ -418,11 +408,6 @@ class FakePathlibFileObjectPropertyTest(RealPathlibTestCase):
                 self.os.path.realpath(
                     self.make_path('antoine', 'setup.py'))))
 
-    def test_resolve_nonexisting_file(self):
-        skip_if_pathlib_36_is_available()
-        path = self.path('/foo/bar')
-        self.assert_raises_os_error(errno.ENOENT, path.resolve)
-
     def test_stat_file_in_unreadable_dir(self):
         self.check_posix_only()
         dir_path = self.make_path('some_dir')
@@ -448,25 +433,7 @@ class FakePathlibFileObjectPropertyTest(RealPathlibTestCase):
             path = str(list(iter)[0])
             self.assertTrue(path.endswith('some_file'))
 
-    @unittest.skipIf(not is_windows, 'Windows specific behavior')
-    def test_resolve_file_as_parent_windows(self):
-        skip_if_pathlib_36_is_available()
-        self.check_windows_only()
-        self.create_file(self.make_path('a_file'))
-        path = self.path(self.make_path('a_file', 'this can not exist'))
-        self.assert_raises_os_error(errno.ENOENT, path.resolve)
-
-    @unittest.skipIf(is_windows, 'POSIX specific behavior')
-    def test_resolve_file_as_parent_posix(self):
-        skip_if_pathlib_36_is_available()
-        self.check_posix_only()
-        self.create_file(self.make_path('a_file'))
-        path = self.path(
-            self.make_path('', 'a_file', 'this can not exist'))
-        self.assert_raises_os_error(errno.ENOTDIR, path.resolve)
-
-    def test_resolve_nonexisting_file_after_36(self):
-        skip_if_pathlib_36_not_available()
+    def test_resolve_nonexisting_file(self):
         path = self.path(
             self.make_path('/path', 'to', 'file', 'this can not exist'))
         self.assertEqual(path, path.resolve())
@@ -644,7 +611,7 @@ class FakePathlibPathFileOperationTest(RealPathlibTestCase):
         self.assertTrue(self.os.path.exists(link_name))
         self.assertTrue(path.is_symlink())
 
-    @unittest.skipIf(sys.version_info < (3, 8) or pathlib2,
+    @unittest.skipIf(sys.version_info < (3, 8),
                      'link_to new in Python 3.8')
     def test_link_to(self):
         self.skip_if_symlink_not_supported()
@@ -658,20 +625,7 @@ class FakePathlibPathFileOperationTest(RealPathlibTestCase):
         self.assertFalse(path.is_symlink())
         self.assertEqual(2, self.os.stat(file_name).st_nlink)
 
-    @unittest.skipIf(sys.version_info < (3, 8) or not pathlib2,
-                     'pathlib2 has no link_to')
-    def test_pathlib2_does_not_have_link_to(self):
-        self.skip_if_symlink_not_supported()
-        file_name = self.make_path('foo', 'bar.txt')
-        self.create_file(file_name)
-        self.assertEqual(1, self.os.stat(file_name).st_nlink)
-        link_name = self.make_path('link_to_bar')
-        path = self.path(file_name)
-        with self.assertRaises(AttributeError):
-            path.link_to(link_name)
-        self.assertFalse(self.os.path.exists(link_name))
-
-    @unittest.skipIf(sys.version_info < (3, 9) or pathlib2,
+    @unittest.skipIf(sys.version_info < (3, 9),
                      'readlink new in Python 3.9')
     def test_readlink(self):
         self.skip_if_symlink_not_supported()

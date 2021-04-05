@@ -32,12 +32,13 @@ import errno
 import fnmatch
 import functools
 import os
+import pathlib
 import re
 import sys
 from urllib.parse import quote_from_bytes as urlquote_from_bytes
 
 from pyfakefs import fake_scandir
-from pyfakefs.extra_packages import use_scandir, pathlib, pathlib2
+from pyfakefs.extra_packages import use_scandir
 from pyfakefs.fake_filesystem import FakeFileOpen, FakeFilesystem
 
 
@@ -493,7 +494,7 @@ class FakePath(pathlib.Path):
         Raises:
             OSError: if the path doesn't exist (strict=True or Python < 3.6)
         """
-        if sys.version_info >= (3, 6) or pathlib2:
+        if sys.version_info >= (3, 6):
             if strict is None:
                 strict = False
         else:

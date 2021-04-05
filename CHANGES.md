@@ -3,10 +3,16 @@ The released versions correspond to PyPi releases.
 
 ## Version 4.5.0 (as yet unreleased)
 
+### Changes
+  * `pathlib2` is still supported, but considered to have the same
+     functionality as `pathlib` and is no longer tested separately;
+     the previous behavior broke newer `pathlib` features if `pathlib2`
+     was installed (see [#592](../../issues/592))
+
 ## [Version 4.4.0](https://pypi.python.org/pypi/pyfakefs/4.4.0) (2021-02-24)
 Adds better support for Python 3.8 / 3.9.
   
-#### New Features
+### New Features
   * added support for `pathlib.Path.link_to` (new in Python 3.8) 
     (see [#580](../../issues/580))
   * added support for `pathlib.Path.readlink` (new in Python 3.9) 

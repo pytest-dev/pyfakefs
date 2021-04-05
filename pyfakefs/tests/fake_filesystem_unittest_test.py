@@ -21,6 +21,7 @@ import glob
 import io
 import multiprocessing
 import os
+import pathlib
 import runpy
 import shutil
 import sys
@@ -34,7 +35,6 @@ from unittest import TestCase, mock
 import pyfakefs.tests.import_as_example
 import pyfakefs.tests.logsio
 from pyfakefs import fake_filesystem_unittest, fake_filesystem
-from pyfakefs.extra_packages import pathlib
 from pyfakefs.fake_filesystem import OSType
 from pyfakefs.fake_filesystem_unittest import (
     Patcher, Pause, patchfs, PatchMode
