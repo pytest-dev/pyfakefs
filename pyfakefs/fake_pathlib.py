@@ -462,9 +462,15 @@ class FakePath(pathlib.Path):
                    if cls.filesystem.is_windows_fs
                    else FakePathlibModule.PosixPath)
         self = cls._from_parts(args)
-        self._accessor = _fake_accessor
-        self._closed = False
+        self._init()
         return self
+
+    def _init(self, template=None):
+         """Initializer called from base class."""
+         # template is an unused holdover
+         _ = template
+         self._accessor = _fake_accessor
+         self._closed = False
 
     def _path(self):
         """Returns the underlying path string as used by the fake filesystem.
@@ -720,8 +726,7 @@ class RealPath(pathlib.Path):
             cls = (RealPathlibModule.WindowsPath if os.name == 'nt'
                    else RealPathlibModule.PosixPath)
         self = cls._from_parts(args)
-        self._accessor = _fake_accessor
-        self._closed = False
+        self._init()
         return self
 
 
