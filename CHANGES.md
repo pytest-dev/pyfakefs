@@ -13,6 +13,10 @@ The released versions correspond to PyPi releases.
   * correctly handle byte paths in `os.path.exists`
     (see [#595](../../issues/595))
 
+### Fixes
+  * Update `fake_pathlib` to support changes coming in Python 3.10
+    ([see](https://github.com/python/cpython/pull/19342))
+
 ## [Version 4.4.0](https://pypi.python.org/pypi/pyfakefs/4.4.0) (2021-02-24)
 Adds better support for Python 3.8 / 3.9.
   

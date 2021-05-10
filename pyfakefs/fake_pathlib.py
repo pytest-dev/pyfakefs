@@ -463,6 +463,7 @@ class FakePath(pathlib.Path):
                    else FakePathlibModule.PosixPath)
         self = cls._from_parts(args)
         self._accessor = _fake_accessor
+        self._closed = False
         return self
 
     def _path(self):
@@ -720,6 +721,7 @@ class RealPath(pathlib.Path):
                    else RealPathlibModule.PosixPath)
         self = cls._from_parts(args)
         self._accessor = _fake_accessor
+        self._closed = False
         return self
 
 
