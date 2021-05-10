@@ -53,8 +53,8 @@ def init_module(filesystem):
 
 def _wrap_strfunc(strfunc):
     @functools.wraps(strfunc)
-    def _wrapped(pathobj, *args):
-        return strfunc(pathobj.filesystem, str(pathobj), *args)
+    def _wrapped(pathobj, *args, **kwargs):
+        return strfunc(pathobj.filesystem, str(pathobj), *args, **kwargs)
 
     return staticmethod(_wrapped)
 
@@ -461,18 +461,14 @@ class FakePath(pathlib.Path):
             cls = (FakePathlibModule.WindowsPath
                    if cls.filesystem.is_windows_fs
                    else FakePathlibModule.PosixPath)
-        self = cls._from_parts(args, init=True)
+        self = cls._from_parts(args)
+        self._accessor = _fake_accessor
         return self
 
     def _path(self):
         """Returns the underlying path string as used by the fake filesystem.
         """
         return str(self)
-
-    def _init(self, template=None):
-        """Initializer called from base class."""
-        self._accessor = _fake_accessor
-        self._closed = False
 
     @classmethod
     def cwd(cls):
@@ -722,7 +718,8 @@ class RealPath(pathlib.Path):
         if cls is RealPathlibModule.Path:
             cls = (RealPathlibModule.WindowsPath if os.name == 'nt'
                    else RealPathlibModule.PosixPath)
-        self = cls._from_parts(args, init=True)
+        self = cls._from_parts(args)
+        self._accessor = _fake_accessor
         return self
 
 
