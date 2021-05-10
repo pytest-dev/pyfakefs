@@ -54,7 +54,8 @@ def init_module(filesystem):
 def _wrap_strfunc(strfunc):
     @functools.wraps(strfunc)
     def _wrapped(pathobj, *args, **kwargs):
-        return strfunc(pathobj.filesystem, str(pathobj), *args, **kwargs)
+        p = pathobj.filesystem if hasattr(pathobj, "filesystem") else pathobj
+        return strfunc(p, str(pathobj), *args, **kwargs)
 
     return staticmethod(_wrapped)
 
@@ -131,8 +132,16 @@ class _FakeAccessor(accessor):
 
     if sys.version_info >= (3, 9):
         readlink = _wrap_strfunc(FakeFilesystem.readlink)
+    else:
+        # why? and shouldnt this not be *os* -- but something patched (FakeOsModule probably)?
+        readlink = staticmethod(os.readlink)
+        pass
 
     utime = _wrap_strfunc(FakeFilesystem.utime)
+
+    # same comment as above for these two
+    realpath = staticmethod(os.path.realpath)
+    getcwd = staticmethod(os.getcwd)
 
 
 _fake_accessor = _FakeAccessor()
@@ -719,6 +728,13 @@ class RealPath(pathlib.Path):
     Needed because `Path` in `pathlib` is always faked, even if `pathlib`
     itself is not.
     """
+
+    def _init(self, template=None):
+         """Initializer called from base class."""
+         # template is an unused holdover
+         _ = template
+         self._accessor = _fake_accessor
+         self._closed = False
 
     def __new__(cls, *args, **kwargs):
         """Creates the correct subclass based on OS."""

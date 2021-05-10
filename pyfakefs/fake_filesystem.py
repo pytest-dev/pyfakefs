@@ -1177,9 +1177,12 @@ class FakeFilesystem:
             OSError: if the filesystem object doesn't exist.
         """
         # stat should return the tuple representing return value of os.stat
-        file_object = self.resolve(
-            entry_path, follow_symlinks,
-            allow_fd=True, check_read_perm=False)
+        try:
+            file_object = self.resolve(
+                entry_path, follow_symlinks,
+                allow_fd=True, check_read_perm=False)
+        except TypeError:
+            file_object = self.resolve(entry_path)
         if not is_root():
             # make sure stat raises if a parent dir is not readable
             parent_dir = file_object.parent_dir
