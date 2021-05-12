@@ -54,8 +54,7 @@ def init_module(filesystem):
 def _wrap_strfunc(strfunc):
     @functools.wraps(strfunc)
     def _wrapped(pathobj, *args, **kwargs):
-        p = pathobj.filesystem if hasattr(pathobj, "filesystem") else pathobj
-        return strfunc(p, str(pathobj), *args, **kwargs)
+        return strfunc(pathobj.filesystem, str(pathobj), *args, **kwargs)
 
     return staticmethod(_wrapped)
 
@@ -125,23 +124,19 @@ class _FakeAccessor(accessor):
         FakeFilesystem.create_symlink(fs, file_path, link_target,
                                       create_missing_dirs=False))
 
-    if sys.version_info >= (3, 8):
+    if (3, 8) <= sys.version_info < (3, 10):
         link_to = _wrap_binary_strfunc(
             lambda fs, file_path, link_target:
             FakeFilesystem.link(fs, file_path, link_target))
 
-    if sys.version_info >= (3, 9):
-        readlink = _wrap_strfunc(FakeFilesystem.readlink)
-    else:
-        # why? and shouldnt this not be *os* -- but something patched (FakeOsModule probably)?
-        readlink = staticmethod(os.readlink)
-        pass
+    if sys.version_info >= (3, 10):
+        link = _wrap_binary_strfunc(
+            lambda fs, file_path, link_target:
+            FakeFilesystem.link(fs, file_path, link_target))
+
+    readlink = _wrap_strfunc(FakeFilesystem.readlink)
 
     utime = _wrap_strfunc(FakeFilesystem.utime)
-
-    # same comment as above for these two
-    realpath = staticmethod(os.path.realpath)
-    getcwd = staticmethod(os.getcwd)
 
 
 _fake_accessor = _FakeAccessor()
@@ -471,15 +466,35 @@ class FakePath(pathlib.Path):
                    if cls.filesystem.is_windows_fs
                    else FakePathlibModule.PosixPath)
         self = cls._from_parts(args)
+        return self
+
+    @classmethod
+    def _from_parts(cls, args, init=False):  # pylint: disable=unused-argument
+        # Overwritten to call _init to set the fake accessor,
+        # which is not done since Python 3.10
+        self = object.__new__(cls)
         self._init()
+        drv, root, parts = self._parse_args(args)
+        self._drv = drv
+        self._root = root
+        self._parts = parts
+        return self
+
+    @classmethod
+    def _from_parsed_parts(cls, drv, root, parts):
+        # Overwritten to call _init to set the fake accessor,
+        # which is not done since Python 3.10
+        self = object.__new__(cls)
+        self._init()
+        self._drv = drv
+        self._root = root
+        self._parts = parts
         return self
 
     def _init(self, template=None):
-         """Initializer called from base class."""
-         # template is an unused holdover
-         _ = template
-         self._accessor = _fake_accessor
-         self._closed = False
+        """Initializer called from base class."""
+        self._accessor = _fake_accessor
+        self._closed = False
 
     def _path(self):
         """Returns the underlying path string as used by the fake filesystem.
@@ -729,20 +744,12 @@ class RealPath(pathlib.Path):
     itself is not.
     """
 
-    def _init(self, template=None):
-         """Initializer called from base class."""
-         # template is an unused holdover
-         _ = template
-         self._accessor = _fake_accessor
-         self._closed = False
-
     def __new__(cls, *args, **kwargs):
         """Creates the correct subclass based on OS."""
         if cls is RealPathlibModule.Path:
             cls = (RealPathlibModule.WindowsPath if os.name == 'nt'
                    else RealPathlibModule.PosixPath)
         self = cls._from_parts(args)
-        self._init()
         return self
 
 

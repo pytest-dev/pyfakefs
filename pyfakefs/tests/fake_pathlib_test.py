@@ -378,20 +378,19 @@ class FakePathlibFileObjectPropertyTest(RealPathlibTestCase):
         # we get stat.S_IFLNK | 0o755 under MacOs
         self.assertEqual(link_stat.st_mode, stat.S_IFLNK | 0o777)
 
-    @unittest.skipIf(sys.platform == 'darwin',
-                     'Different behavior under MacOs')
     def test_lchmod(self):
         self.skip_if_symlink_not_supported()
         file_stat = self.os.stat(self.file_path)
         link_stat = self.os.lstat(self.file_link_path)
-        if not hasattr(os, "lchmod"):
+        if not hasattr(os, "lchmod") and sys.version_info < (3, 10):
             with self.assertRaises(NotImplementedError):
                 self.path(self.file_link_path).lchmod(0o444)
         else:
             self.path(self.file_link_path).lchmod(0o444)
             self.assertEqual(file_stat.st_mode, stat.S_IFREG | 0o666)
-            # we get stat.S_IFLNK | 0o755 under MacOs
-            self.assertEqual(link_stat.st_mode, stat.S_IFLNK | 0o444)
+            # the exact mode depends on OS and Python version
+            self.assertEqual(link_stat.st_mode & 0o777700,
+                             stat.S_IFLNK | 0o700)
 
     def test_resolve(self):
         self.create_dir(self.make_path('antoine', 'docs'))
