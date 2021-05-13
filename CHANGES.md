@@ -8,6 +8,10 @@ The released versions correspond to PyPi releases.
      functionality as `pathlib` and is no longer tested separately;
      the previous behavior broke newer `pathlib` features if `pathlib2`
      was installed (see [#592](../../issues/592))
+    
+### Fixes
+  * correctly handle byte paths in `os.path.exists`
+    (see [#595](../../issues/595))
 
 ## [Version 4.4.0](https://pypi.python.org/pypi/pyfakefs/4.4.0) (2021-02-24)
 Adds better support for Python 3.8 / 3.9.

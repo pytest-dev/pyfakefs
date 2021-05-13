@@ -1781,7 +1781,7 @@ class FakeFilesystem:
         """
         if check_link and self.islink(file_path):
             return True
-        file_path = make_string_path(file_path)
+        file_path = to_string(make_string_path(file_path))
         if file_path is None:
             raise TypeError
         if not file_path:
@@ -2928,7 +2928,7 @@ class FakeFilesystem:
         Raises:
           TypeError: if path is None
         """
-        path = make_string_path(path)
+        path = to_string(make_string_path(path))
         if path is None:
             raise TypeError
         try:
@@ -3495,7 +3495,7 @@ class FakePathModule:
             Under Windows also returns True for drive and UNC roots
             (independent of their existence).
         """
-        path = make_string_path(path)
+        path = to_string(make_string_path(path))
         if not path:
             return False
         normed_path = self.filesystem.absnormpath(path)
