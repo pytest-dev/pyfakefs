@@ -134,6 +134,9 @@ class _FakeAccessor(accessor):
             lambda fs, file_path, link_target:
             FakeFilesystem.link(fs, file_path, link_target))
 
+        # this will use the fake filesystem because os is patched
+        getcwd = lambda p: os.getcwd()
+
     readlink = _wrap_strfunc(FakeFilesystem.readlink)
 
     utime = _wrap_strfunc(FakeFilesystem.utime)

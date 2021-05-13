@@ -114,7 +114,7 @@ from pyfakefs.fake_scandir import scandir, walk
 from pyfakefs.helpers import (
     FakeStatResult, BinaryBufferIO, TextBufferIO,
     is_int_type, is_byte_string, is_unicode_string,
-    make_string_path, IS_WIN, to_string, matching_string
+    make_string_path, IS_WIN, to_string, matching_string, real_encoding
 )
 from pyfakefs import __version__  # noqa: F401 for upwards compatibility
 
@@ -293,7 +293,7 @@ class FakeFile:
         if st_mode >> 12 == 0:
             st_mode |= S_IFREG
         self.stat_result.st_mode = st_mode
-        self.encoding = encoding
+        self.encoding = real_encoding(encoding)
         self.errors = errors or 'strict'
         self._byte_contents = self._encode_contents(contents)
         self.stat_result.st_size = (
@@ -430,7 +430,7 @@ class FakeFile:
           OSError: if `st_size` is not a non-negative integer,
                    or if it exceeds the available file system space.
         """
-        self.encoding = encoding
+        self.encoding = real_encoding(encoding)
         changed = self._set_initial_contents(contents)
         if self._side_effect is not None:
             self._side_effect(self)

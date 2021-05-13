@@ -57,6 +57,15 @@ def to_string(path):
     return path
 
 
+def real_encoding(encoding):
+    """Since Python 3.10, the new function ``io.text_encoding`` returns
+    "locale" as the encoding if None is defined. This will be handled
+    as no encoding in pyfakefs."""
+    if sys.version_info >= (3, 10):
+        return encoding if encoding != "locale" else None
+    return encoding
+
+
 def matching_string(matched, string):
     """Return the string as byte or unicode depending
     on the type of matched, assuming string is an ASCII string.
