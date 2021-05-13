@@ -970,7 +970,22 @@ class FakePathlibUsageInOsFunctionsTest(RealPathlibTestCase):
     def test_stat(self):
         path = self.make_path('foo', 'bar', 'baz')
         self.create_file(path, contents='1234567')
-        self.assertEqual(self.os.stat(path), self.os.stat(self.path(path)))
+        self.assertEqual(self.os.stat(path), self.path(path).stat())
+
+    @unittest.skipIf(sys.version_info < (3, 10), "New in Python 3.10")
+    def test_stat_follow_symlinks(self):
+        self.check_posix_only()
+        directory = self.make_path('foo')
+        base_name = 'bar'
+        file_path = self.path(self.os.path.join(directory, base_name))
+        link_path = self.path(self.os.path.join(directory, 'link'))
+        contents = "contents"
+        self.create_file(file_path, contents=contents)
+        self.create_symlink(link_path, base_name)
+        self.assertEqual(len(contents),
+                         link_path.stat(follow_symlinks=True)[stat.ST_SIZE])
+        self.assertEqual(len(base_name),
+                         link_path.stat(follow_symlinks=False)[stat.ST_SIZE])
 
     def test_utime(self):
         path = self.make_path('some_file')

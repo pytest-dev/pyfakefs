@@ -12,8 +12,6 @@ The released versions correspond to PyPi releases.
 ### Fixes
   * correctly handle byte paths in `os.path.exists`
     (see [#595](../../issues/595))
-
-### Fixes
   * Update `fake_pathlib` to support changes coming in Python 3.10
     ([see](https://github.com/python/cpython/pull/19342))
 
