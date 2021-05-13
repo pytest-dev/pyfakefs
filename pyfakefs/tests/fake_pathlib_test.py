@@ -380,9 +380,12 @@ class FakePathlibFileObjectPropertyTest(RealPathlibTestCase):
 
     def test_lchmod(self):
         self.skip_if_symlink_not_supported()
+        if (sys.version_info >= (3, 10) and self.use_real_fs() and
+                'chmod' not in os.supports_follow_symlinks):
+            raise unittest.SkipTest('follow_symlinks not available for chmod')
         file_stat = self.os.stat(self.file_path)
         link_stat = self.os.lstat(self.file_link_path)
-        if not hasattr(os, "lchmod") and sys.version_info < (3, 10):
+        if not hasattr(os, "lchmod"):
             with self.assertRaises(NotImplementedError):
                 self.path(self.file_link_path).lchmod(0o444)
         else:

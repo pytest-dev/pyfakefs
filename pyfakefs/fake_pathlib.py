@@ -94,18 +94,23 @@ class _FakeAccessor(accessor):
 
     listdir = _wrap_strfunc(FakeFilesystem.listdir)
 
-    chmod = _wrap_strfunc(FakeFilesystem.chmod)
-
     if use_scandir:
         scandir = _wrap_strfunc(fake_scandir.scandir)
 
     if hasattr(os, "lchmod"):
         lchmod = _wrap_strfunc(lambda fs, path, mode: FakeFilesystem.chmod(
             fs, path, mode, follow_symlinks=False))
+        chmod = _wrap_strfunc(FakeFilesystem.chmod)
     else:
-        def lchmod(self, pathobj, mode):
+        def lchmod(self, pathobj,  *args, **kwargs):
             """Raises not implemented for Windows systems."""
             raise NotImplementedError("lchmod() not available on this system")
+
+        def chmod(self, pathobj, *args, **kwargs):
+            if "follow_symlinks" in kwargs and not kwargs["follow_symlinks"]:
+                raise NotImplementedError(
+                    "lchmod() not available on this system")
+            return pathobj.filesystem.chmod(str(pathobj), *args, **kwargs)
 
     mkdir = _wrap_strfunc(FakeFilesystem.makedir)
 
@@ -135,7 +140,8 @@ class _FakeAccessor(accessor):
             FakeFilesystem.link(fs, file_path, link_target))
 
         # this will use the fake filesystem because os is patched
-        getcwd = lambda p: os.getcwd()
+        def getcwd(self):
+            return os.getcwd()
 
     readlink = _wrap_strfunc(FakeFilesystem.readlink)
 
