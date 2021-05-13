@@ -857,8 +857,8 @@ class FakePathModuleTest(TestCase):
     def check_abspath(self, is_windows):
         # the implementation differs in Windows and Posix, so test both
         self.filesystem.is_windows_fs = is_windows
-        filename = u'foo'
-        abspath = u'!%s' % filename
+        filename = 'foo'
+        abspath = '!%s' % filename
         self.filesystem.create_file(abspath)
         self.assertEqual(abspath, self.path.abspath(abspath))
         self.assertEqual(abspath, self.path.abspath(filename))
@@ -914,10 +914,14 @@ class FakePathModuleTest(TestCase):
     def test_isabs_with_drive_component(self):
         self.filesystem.is_windows_fs = False
         self.assertFalse(self.path.isabs('C:!foo'))
+        self.assertFalse(self.path.isabs(b'C:!foo'))
         self.assertTrue(self.path.isabs('!'))
+        self.assertTrue(self.path.isabs(b'!'))
         self.filesystem.is_windows_fs = True
         self.assertTrue(self.path.isabs('C:!foo'))
+        self.assertTrue(self.path.isabs(b'C:!foo'))
         self.assertTrue(self.path.isabs('!'))
+        self.assertTrue(self.path.isabs(b'!'))
 
     def test_relpath(self):
         path_foo = '!path!to!foo'
@@ -957,46 +961,53 @@ class FakePathModuleTest(TestCase):
         self.assertFalse(self.path.samefile(file_path1, file_path2))
         self.assertTrue(
             self.path.samefile(file_path1, '!foo!..!foo!bar!..!bar!baz'))
+        self.assertTrue(
+            self.path.samefile(file_path1, b'!foo!..!foo!bar!..!bar!baz'))
 
     def test_exists(self):
         file_path = 'foo!bar!baz'
+        file_path_bytes = b'foo!bar!baz'
         self.filesystem.create_file(file_path)
         self.assertTrue(self.path.exists(file_path))
+        self.assertTrue(self.path.exists(file_path_bytes))
         self.assertFalse(self.path.exists('!some!other!bogus!path'))
 
     def test_lexists(self):
         file_path = 'foo!bar!baz'
+        file_path_bytes = b'foo!bar!baz'
         self.filesystem.create_dir('foo!bar')
         self.filesystem.create_symlink(file_path, 'bogus')
         self.assertTrue(self.path.lexists(file_path))
+        self.assertTrue(self.path.lexists(file_path_bytes))
         self.assertFalse(self.path.exists(file_path))
+        self.assertFalse(self.path.exists(file_path_bytes))
         self.filesystem.create_file('foo!bar!bogus')
         self.assertTrue(self.path.exists(file_path))
 
     def test_dirname_with_drive(self):
         self.filesystem.is_windows_fs = True
-        self.assertEqual(u'c:!foo',
-                         self.path.dirname(u'c:!foo!bar'))
+        self.assertEqual('c:!foo',
+                         self.path.dirname('c:!foo!bar'))
         self.assertEqual(b'c:!',
                          self.path.dirname(b'c:!foo'))
-        self.assertEqual(u'!foo',
-                         self.path.dirname(u'!foo!bar'))
+        self.assertEqual('!foo',
+                         self.path.dirname('!foo!bar'))
         self.assertEqual(b'!',
                          self.path.dirname(b'!foo'))
-        self.assertEqual(u'c:foo',
-                         self.path.dirname(u'c:foo!bar'))
+        self.assertEqual('c:foo',
+                         self.path.dirname('c:foo!bar'))
         self.assertEqual(b'c:',
                          self.path.dirname(b'c:foo'))
-        self.assertEqual(u'foo',
-                         self.path.dirname(u'foo!bar'))
+        self.assertEqual('foo',
+                         self.path.dirname('foo!bar'))
 
     def test_dirname(self):
         dirname = 'foo!bar'
         self.assertEqual(dirname, self.path.dirname('%s!baz' % dirname))
 
     def test_join_strings(self):
-        components = [u'foo', u'bar', u'baz']
-        self.assertEqual(u'foo!bar!baz', self.path.join(*components))
+        components = ['foo', 'bar', 'baz']
+        self.assertEqual('foo!bar!baz', self.path.join(*components))
 
     def test_join_bytes(self):
         components = [b'foo', b'bar', b'baz']
@@ -1031,8 +1042,10 @@ class FakePathModuleTest(TestCase):
 
     def test_getsize_file_non_zero_size(self):
         file_path = 'foo!bar!baz'
+        file_path_bytes = b'foo!bar!baz'
         self.filesystem.create_file(file_path, contents='1234567')
         self.assertEqual(7, self.path.getsize(file_path))
+        self.assertEqual(7, self.path.getsize(file_path_bytes))
 
     def test_getsize_dir_empty(self):
         # For directories, only require that the size is non-negative.
@@ -1053,6 +1066,7 @@ class FakePathModuleTest(TestCase):
     def test_isdir(self):
         self.filesystem.create_file('foo!bar')
         self.assertTrue(self.path.isdir('foo'))
+        self.assertTrue(self.path.isdir(b'foo'))
         self.assertFalse(self.path.isdir('foo!bar'))
         self.assertFalse(self.path.isdir('it_dont_exist'))
 
@@ -1071,6 +1085,7 @@ class FakePathModuleTest(TestCase):
         self.filesystem.create_file('foo!bar')
         self.assertFalse(self.path.isfile('foo'))
         self.assertTrue(self.path.isfile('foo!bar'))
+        self.assertTrue(self.path.isfile(b'foo!bar'))
         self.assertFalse(self.path.isfile('it_dont_exist'))
 
     def test_get_mtime(self):
@@ -1079,6 +1094,7 @@ class FakePathModuleTest(TestCase):
         self.assertEqual(10, test_file.st_mtime)
         test_file.st_mtime = 24
         self.assertEqual(24, self.path.getmtime('foo!bar1.txt'))
+        self.assertEqual(24, self.path.getmtime(b'foo!bar1.txt'))
 
     def test_get_mtime_raises_os_error(self):
         self.assertFalse(self.path.exists('it_dont_exist'))
@@ -1095,6 +1111,8 @@ class FakePathModuleTest(TestCase):
         # comments in Python/Lib/posixpath.py.
         self.assertTrue(self.path.islink('foo!link_to_file'))
         self.assertTrue(self.path.isfile('foo!link_to_file'))
+        self.assertTrue(self.path.islink(b'foo!link_to_file'))
+        self.assertTrue(self.path.isfile(b'foo!link_to_file'))
 
         self.assertTrue(self.path.isfile('foo!regular_file'))
         self.assertFalse(self.path.islink('foo!regular_file'))
@@ -1111,9 +1129,11 @@ class FakePathModuleTest(TestCase):
     def test_ismount(self):
         self.assertFalse(self.path.ismount(''))
         self.assertTrue(self.path.ismount('!'))
+        self.assertTrue(self.path.ismount(b'!'))
         self.assertFalse(self.path.ismount('!mount!'))
         self.filesystem.add_mount_point('!mount')
         self.assertTrue(self.path.ismount('!mount'))
+        self.assertTrue(self.path.ismount(b'!mount'))
         self.assertTrue(self.path.ismount('!mount!'))
 
     def test_ismount_with_drive_letters(self):
