@@ -1,0 +1,19 @@
+name: Dockertests
+
+on:
+  [push]
+
+jobs:
+  dockertests:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        docker-image: [centos, debian, fedora, ubuntu]
+    steps:
+    - uses: actions/checkout@v2
+    - name: Setup docker container
+      run: |
+        docker build -t pyfakefs -f $GITHUB_WORKSPACE/.github/workflows/dockerfiles/Dockerfile_${{ matrix.docker-image }} . --build-arg github_repo=$GITHUB_REPOSITORY --build-arg github_branch=$(basename $GITHUB_REF)
+    - name: Run tests
+      run: docker run -t pyfakefs
