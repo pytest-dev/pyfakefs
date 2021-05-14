@@ -378,10 +378,11 @@ class FakePathlibFileObjectPropertyTest(RealPathlibTestCase):
         # we get stat.S_IFLNK | 0o755 under MacOs
         self.assertEqual(link_stat.st_mode, stat.S_IFLNK | 0o777)
 
-    @unittest.skipIf(sys.platform == 'darwin',
-                     'Different behavior under MacOs')
     def test_lchmod(self):
         self.skip_if_symlink_not_supported()
+        if (sys.version_info >= (3, 10) and self.use_real_fs() and
+                'chmod' not in os.supports_follow_symlinks):
+            raise unittest.SkipTest('follow_symlinks not available for chmod')
         file_stat = self.os.stat(self.file_path)
         link_stat = self.os.lstat(self.file_link_path)
         if not hasattr(os, "lchmod"):
@@ -390,8 +391,9 @@ class FakePathlibFileObjectPropertyTest(RealPathlibTestCase):
         else:
             self.path(self.file_link_path).lchmod(0o444)
             self.assertEqual(file_stat.st_mode, stat.S_IFREG | 0o666)
-            # we get stat.S_IFLNK | 0o755 under MacOs
-            self.assertEqual(link_stat.st_mode, stat.S_IFLNK | 0o444)
+            # the exact mode depends on OS and Python version
+            self.assertEqual(link_stat.st_mode & 0o777700,
+                             stat.S_IFLNK | 0o700)
 
     def test_resolve(self):
         self.create_dir(self.make_path('antoine', 'docs'))
@@ -968,7 +970,22 @@ class FakePathlibUsageInOsFunctionsTest(RealPathlibTestCase):
     def test_stat(self):
         path = self.make_path('foo', 'bar', 'baz')
         self.create_file(path, contents='1234567')
-        self.assertEqual(self.os.stat(path), self.os.stat(self.path(path)))
+        self.assertEqual(self.os.stat(path), self.path(path).stat())
+
+    @unittest.skipIf(sys.version_info < (3, 10), "New in Python 3.10")
+    def test_stat_follow_symlinks(self):
+        self.check_posix_only()
+        directory = self.make_path('foo')
+        base_name = 'bar'
+        file_path = self.path(self.os.path.join(directory, base_name))
+        link_path = self.path(self.os.path.join(directory, 'link'))
+        contents = "contents"
+        self.create_file(file_path, contents=contents)
+        self.create_symlink(link_path, base_name)
+        self.assertEqual(len(contents),
+                         link_path.stat(follow_symlinks=True)[stat.ST_SIZE])
+        self.assertEqual(len(base_name),
+                         link_path.stat(follow_symlinks=False)[stat.ST_SIZE])
 
     def test_utime(self):
         path = self.make_path('some_file')
