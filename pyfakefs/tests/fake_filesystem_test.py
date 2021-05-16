@@ -952,6 +952,18 @@ class FakePathModuleTest(TestCase):
         self.assertEqual('!george!washington!bridge',
                          self.os.path.realpath('bridge'))
 
+    @unittest.skipIf(sys.version_info < (3, 10), "'strict' new in Python 3.10")
+    def test_realpath_strict(self):
+        self.filesystem.create_file('!foo!bar')
+        self.filesystem.cwd = '!foo'
+        self.assertEqual('!foo!baz',
+                         self.os.path.realpath('baz', strict=False))
+        self.assert_raises_os_error(errno.ENOENT,
+                                    self.os.path.realpath,
+                                    'baz', strict=True)
+        self.assertEqual('!foo!bar',
+                         self.os.path.realpath('bar', strict=True))
+
     def test_samefile(self):
         file_path1 = '!foo!bar!baz'
         file_path2 = '!foo!bar!boo'

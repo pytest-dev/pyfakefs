@@ -113,8 +113,8 @@ from pyfakefs.extra_packages import use_scandir
 from pyfakefs.fake_scandir import scandir, walk
 from pyfakefs.helpers import (
     FakeStatResult, BinaryBufferIO, TextBufferIO,
-    is_int_type, is_byte_string, is_unicode_string,
-    make_string_path, IS_WIN, to_string, matching_string, real_encoding
+    is_int_type, is_byte_string, is_unicode_string, make_string_path,
+    IS_WIN, IS_PYPY, to_string, matching_string, real_encoding
 )
 from pyfakefs import __version__  # noqa: F401 for upwards compatibility
 
@@ -3399,15 +3399,22 @@ class FakePathModule:
         path = self._os_path.relpath(path, start)
         return path.replace(self._os_path.sep, self.filesystem.path_separator)
 
-    def realpath(self, filename):
+    def realpath(self, filename, strict=None):
         """Return the canonical path of the specified filename, eliminating any
         symbolic links encountered in the path.
         """
+        if strict is not None and sys.version_info < (3, 10):
+            raise TypeError("realpath() got an unexpected "
+                            "keyword argument 'strict'")
+        if strict:
+            # raises in strict mode if the file does not exist
+            self.filesystem.resolve(filename)
         if self.filesystem.is_windows_fs:
             return self.abspath(filename)
         filename = make_string_path(filename)
         path, ok = self._joinrealpath(filename[:0], filename, {})
-        return self.abspath(path)
+        path = self.abspath(path)
+        return path
 
     def samefile(self, path1, path2):
         """Return whether path1 and path2 point to the same file.
@@ -4336,6 +4343,11 @@ class FakeOsModule:
             follow_symlinks: (bool) If `False` and `path` points to a symlink,
                 the link itself is queried instead of the linked object.
         """
+        if (not follow_symlinks and
+                (os.chmod not in os.supports_follow_symlinks or IS_PYPY)):
+            raise NotImplementedError(
+                "`follow_symlinks` for chmod() is not available "
+                "on this system")
         path = self._path_with_dir_fd(path, self.chmod, dir_fd)
         self.filesystem.chmod(path, mode, follow_symlinks)
 

@@ -97,19 +97,26 @@ class _FakeAccessor(accessor):
     if use_scandir:
         scandir = _wrap_strfunc(fake_scandir.scandir)
 
+    chmod = _wrap_strfunc(FakeFilesystem.chmod)
+
     if hasattr(os, "lchmod"):
         lchmod = _wrap_strfunc(lambda fs, path, mode: FakeFilesystem.chmod(
             fs, path, mode, follow_symlinks=False))
-        chmod = _wrap_strfunc(FakeFilesystem.chmod)
     else:
         def lchmod(self, pathobj,  *args, **kwargs):
             """Raises not implemented for Windows systems."""
             raise NotImplementedError("lchmod() not available on this system")
 
         def chmod(self, pathobj, *args, **kwargs):
-            if "follow_symlinks" in kwargs and not kwargs["follow_symlinks"]:
-                raise NotImplementedError(
-                    "lchmod() not available on this system")
+            if "follow_symlinks" in kwargs:
+                if sys.version_info < (3, 10):
+                    raise TypeError("chmod() got an unexpected keyword "
+                                    "argument 'follow_synlinks'")
+                if (not kwargs["follow_symlinks"] and
+                        os.chmod not in os.supports_follow_symlinks):
+                    raise NotImplementedError(
+                        "`follow_symlinks` for chmod() is not available "
+                        "on this system")
             return pathobj.filesystem.chmod(str(pathobj), *args, **kwargs)
 
     mkdir = _wrap_strfunc(FakeFilesystem.makedir)
@@ -129,7 +136,7 @@ class _FakeAccessor(accessor):
         FakeFilesystem.create_symlink(fs, file_path, link_target,
                                       create_missing_dirs=False))
 
-    if (3, 8) <= sys.version_info < (3, 10):
+    if (3, 8) <= sys.version_info:
         link_to = _wrap_binary_strfunc(
             lambda fs, file_path, link_target:
             FakeFilesystem.link(fs, file_path, link_target))
@@ -592,7 +599,7 @@ class FakePath(pathlib.Path):
         with FakeFileOpen(self.filesystem)(self._path(), mode='wb') as f:
             return f.write(view)
 
-    def write_text(self, data, encoding=None, errors=None):
+    def write_text(self, data, encoding=None, errors=None, newline=None):
         """Open the fake file in text mode, write to it, and close
         the file.
 
@@ -600,7 +607,9 @@ class FakePath(pathlib.Path):
             data: the string to be written
             encoding: the encoding used for the string; if not given, the
                 default locale encoding is used
-            errors: ignored
+            errors: (str) Defines how encoding errors are handled.
+            newline: Controls universal newlines, passed to stream object.
+                New in Python 3.10.
         Raises:
             TypeError: if data is not of type 'str'.
             OSError: if the target object is a directory, the path is
@@ -609,10 +618,14 @@ class FakePath(pathlib.Path):
         if not isinstance(data, str):
             raise TypeError('data must be str, not %s' %
                             data.__class__.__name__)
+        if newline is not None and sys.version_info < (3, 10):
+            raise TypeError("write_text() got an unexpected "
+                            "keyword argument 'newline'")
         with FakeFileOpen(self.filesystem)(self._path(),
                                            mode='w',
                                            encoding=encoding,
-                                           errors=errors) as f:
+                                           errors=errors,
+                                           newline=newline) as f:
             return f.write(data)
 
     @classmethod

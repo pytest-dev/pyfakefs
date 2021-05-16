@@ -30,6 +30,7 @@ import unittest
 from pyfakefs.fake_filesystem import is_root
 
 from pyfakefs import fake_pathlib, fake_filesystem
+from pyfakefs.helpers import IS_PYPY
 from pyfakefs.tests.test_utils import RealFsTestCase
 
 is_windows = sys.platform == 'win32'
@@ -380,9 +381,6 @@ class FakePathlibFileObjectPropertyTest(RealPathlibTestCase):
 
     def test_lchmod(self):
         self.skip_if_symlink_not_supported()
-        if (sys.version_info >= (3, 10) and self.use_real_fs() and
-                'chmod' not in os.supports_follow_symlinks):
-            raise unittest.SkipTest('follow_symlinks not available for chmod')
         file_stat = self.os.stat(self.file_path)
         link_stat = self.os.lstat(self.file_link_path)
         if not hasattr(os, "lchmod"):
@@ -390,6 +388,23 @@ class FakePathlibFileObjectPropertyTest(RealPathlibTestCase):
                 self.path(self.file_link_path).lchmod(0o444)
         else:
             self.path(self.file_link_path).lchmod(0o444)
+            self.assertEqual(file_stat.st_mode, stat.S_IFREG | 0o666)
+            # the exact mode depends on OS and Python version
+            self.assertEqual(link_stat.st_mode & 0o777700,
+                             stat.S_IFLNK | 0o700)
+
+    @unittest.skipIf(sys.version_info < (3, 10),
+                     "follow_symlinks argument new in Python 3.10")
+    def test_chmod_no_followsymlinks(self):
+        self.skip_if_symlink_not_supported()
+        file_stat = self.os.stat(self.file_path)
+        link_stat = self.os.lstat(self.file_link_path)
+        if os.chmod not in os.supports_follow_symlinks or IS_PYPY:
+            with self.assertRaises(NotImplementedError):
+                self.path(self.file_link_path).chmod(0o444,
+                                                     follow_symlinks=False)
+        else:
+            self.path(self.file_link_path).chmod(0o444, follow_symlinks=False)
             self.assertEqual(file_stat.st_mode, stat.S_IFREG | 0o666)
             # the exact mode depends on OS and Python version
             self.assertEqual(link_stat.st_mode & 0o777700,
@@ -526,6 +541,19 @@ class FakePathlibPathFileOperationTest(RealPathlibTestCase):
         self.assertTrue(self.os.path.exists(path_name))
         self.check_contents(path_name, 'ανοησίες'.encode('greek'))
 
+    @unittest.skipIf(sys.version_info < (3, 10),
+                     "newline argument new in Python 3.10")
+    def test_write_with_newline_arg(self):
+        path = self.path(self.make_path('some_file'))
+        path.write_text('1\r\n2\n3\r4', newline='')
+        self.check_contents(path, b'1\r\n2\n3\r4')
+        path.write_text('1\r\n2\n3\r4', newline='\n')
+        self.check_contents(path, b'1\r\n2\n3\r4')
+        path.write_text('1\r\n2\n3\r4', newline='\r\n')
+        self.check_contents(path, b'1\r\r\n2\r\n3\r4')
+        path.write_text('1\r\n2\n3\r4', newline='\r')
+        self.check_contents(path, b'1\r\r2\r3\r4')
+
     def test_read_bytes(self):
         path_name = self.make_path('binary_file')
         self.create_file(path_name, contents=b'Binary file contents')
@@ -624,6 +652,20 @@ class FakePathlibPathFileOperationTest(RealPathlibTestCase):
         path = self.path(file_name)
         path.link_to(link_name)
         self.assertTrue(self.os.path.exists(link_name))
+        self.assertFalse(path.is_symlink())
+        self.assertEqual(2, self.os.stat(file_name).st_nlink)
+
+    @unittest.skipIf(sys.version_info < (3, 10),
+                     'hardlink_to new in Python 3.10')
+    def test_hardlink_to(self):
+        self.skip_if_symlink_not_supported()
+        file_name = self.make_path('foo', 'bar.txt')
+        self.create_file(file_name)
+        self.assertEqual(1, self.os.stat(file_name).st_nlink)
+        link_path = self.path(self.make_path('link_to_bar'))
+        path = self.path(file_name)
+        link_path.hardlink_to(path)
+        self.assertTrue(self.os.path.exists(link_path))
         self.assertFalse(path.is_symlink())
         self.assertEqual(2, self.os.stat(file_name).st_nlink)
 
