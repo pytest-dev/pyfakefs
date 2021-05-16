@@ -23,7 +23,7 @@ import sys
 import time
 import unittest
 
-from pyfakefs.helpers import IN_DOCKER
+from pyfakefs.helpers import IN_DOCKER, IS_PYPY
 
 from pyfakefs import fake_filesystem
 from pyfakefs.fake_filesystem import FakeFileOpen, is_root
@@ -1934,8 +1934,6 @@ class FakeOsModuleTest(FakeOsModuleTestBase):
 
     def test_chmod_follow_symlink(self):
         self.check_posix_only()
-        if self.use_real_fs() and 'chmod' not in os.supports_follow_symlinks:
-            raise unittest.SkipTest('follow_symlinks not available')
         path = self.make_path('some_file')
         self.createTestFile(path)
         link_path = self.make_path('link_to_some_file')
@@ -1945,22 +1943,24 @@ class FakeOsModuleTest(FakeOsModuleTestBase):
         st = self.os.stat(link_path)
         self.assert_mode_equal(0o6543, st.st_mode)
         st = self.os.stat(link_path, follow_symlinks=False)
-        self.assert_mode_equal(0o777, st.st_mode)
+        # the exact mode depends on OS and Python version
+        self.assertEqual(stat.S_IMODE(0o700), stat.S_IMODE(st.st_mode) & 0o700)
 
     def test_chmod_no_follow_symlink(self):
         self.check_posix_only()
-        if self.use_real_fs() and 'chmod' not in os.supports_follow_symlinks:
-            raise unittest.SkipTest('follow_symlinks not available')
         path = self.make_path('some_file')
         self.createTestFile(path)
         link_path = self.make_path('link_to_some_file')
         self.create_symlink(link_path, path)
-        self.os.chmod(link_path, 0o6543, follow_symlinks=False)
-
-        st = self.os.stat(link_path)
-        self.assert_mode_equal(0o666, st.st_mode)
-        st = self.os.stat(link_path, follow_symlinks=False)
-        self.assert_mode_equal(0o6543, st.st_mode)
+        if os.chmod not in os.supports_follow_symlinks or IS_PYPY:
+            with self.assertRaises(NotImplementedError):
+                self.os.chmod(link_path, 0o6543, follow_symlinks=False)
+        else:
+            self.os.chmod(link_path, 0o6543, follow_symlinks=False)
+            st = self.os.stat(link_path)
+            self.assert_mode_equal(0o666, st.st_mode)
+            st = self.os.stat(link_path, follow_symlinks=False)
+            self.assert_mode_equal(0o6543, st.st_mode)
 
     def test_lchmod(self):
         """lchmod shall behave like chmod with follow_symlinks=True."""

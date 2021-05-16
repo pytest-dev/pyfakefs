@@ -3,6 +3,14 @@ The released versions correspond to PyPi releases.
 
 ## Version 4.5.0 (as yet unreleased)
 
+### New Features
+  * added support for some Python 3.10 features:
+    * new method `pathlib.Path.hardlink_to` 
+    * new `newline` argument in `pathlib.Path.write_text`
+    * new `follow_symlinks` argument in `pathlib.Path.stat` and
+     `pathlib.Path.chmod`
+    * new 'strict' argument in `os.path.realpath`  
+
 ### Changes
   * `pathlib2` is still supported, but considered to have the same
      functionality as `pathlib` and is no longer tested separately;
