@@ -322,25 +322,25 @@ class FakeFile:
         """Return the creation time of the fake file."""
         return self.stat_result.st_ctime
 
-    @property
-    def st_atime(self):
-        """Return the access time of the fake file."""
-        return self.stat_result.st_atime
-
-    @property
-    def st_mtime(self):
-        """Return the modification time of the fake file."""
-        return self.stat_result.st_mtime
-
     @st_ctime.setter
     def st_ctime(self, val):
         """Set the creation time of the fake file."""
         self.stat_result.st_ctime = val
 
+    @property
+    def st_atime(self):
+        """Return the access time of the fake file."""
+        return self.stat_result.st_atime
+
     @st_atime.setter
     def st_atime(self, val):
         """Set the access time of the fake file."""
         self.stat_result.st_atime = val
+
+    @property
+    def st_mtime(self):
+        """Return the modification time of the fake file."""
+        return self.stat_result.st_mtime
 
     @st_mtime.setter
     def st_mtime(self, val):

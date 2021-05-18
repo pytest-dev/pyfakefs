@@ -172,27 +172,27 @@ class FakeStatResult:
         ctime = self._st_ctime_ns / 1e9
         return ctime if self.use_float else int(ctime)
 
+    @st_ctime.setter
+    def st_ctime(self, val):
+        """Set the creation time in seconds."""
+        self._st_ctime_ns = int(val * 1e9)
+
     @property
     def st_atime(self):
         """Return the access time in seconds."""
         atime = self._st_atime_ns / 1e9
         return atime if self.use_float else int(atime)
 
+    @st_atime.setter
+    def st_atime(self, val):
+        """Set the access time in seconds."""
+        self._st_atime_ns = int(val * 1e9)
+
     @property
     def st_mtime(self):
         """Return the modification time in seconds."""
         mtime = self._st_mtime_ns / 1e9
         return mtime if self.use_float else int(mtime)
-
-    @st_ctime.setter
-    def st_ctime(self, val):
-        """Set the creation time in seconds."""
-        self._st_ctime_ns = int(val * 1e9)
-
-    @st_atime.setter
-    def st_atime(self, val):
-        """Set the access time in seconds."""
-        self._st_atime_ns = int(val * 1e9)
 
     @st_mtime.setter
     def st_mtime(self, val):
@@ -267,25 +267,25 @@ class FakeStatResult:
         """Return the access time in nanoseconds."""
         return self._st_atime_ns
 
-    @property
-    def st_mtime_ns(self):
-        """Return the modification time in nanoseconds."""
-        return self._st_mtime_ns
-
-    @property
-    def st_ctime_ns(self):
-        """Return the creation time in nanoseconds."""
-        return self._st_ctime_ns
-
     @st_atime_ns.setter
     def st_atime_ns(self, val):
         """Set the access time in nanoseconds."""
         self._st_atime_ns = val
 
+    @property
+    def st_mtime_ns(self):
+        """Return the modification time in nanoseconds."""
+        return self._st_mtime_ns
+
     @st_mtime_ns.setter
     def st_mtime_ns(self, val):
         """Set the modification time of the fake file in nanoseconds."""
         self._st_mtime_ns = val
+
+    @property
+    def st_ctime_ns(self):
+        """Return the creation time in nanoseconds."""
+        return self._st_ctime_ns
 
     @st_ctime_ns.setter
     def st_ctime_ns(self, val):
