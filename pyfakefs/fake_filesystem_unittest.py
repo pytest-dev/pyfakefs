@@ -56,7 +56,7 @@ from pyfakefs.patched_packages import (
 try:
     from importlib.machinery import ModuleSpec
 except ImportError:
-    ModuleSpec = object
+    ModuleSpec = object  # type: ignore [assignment, misc]
 
 from importlib import reload
 
