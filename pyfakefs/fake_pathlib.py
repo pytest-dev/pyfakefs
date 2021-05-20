@@ -160,7 +160,7 @@ _fake_accessor = _FakeAccessor()
 flavour = pathlib._Flavour  # type: ignore [attr-defined]
 
 
-class _FakeFlavour(flavour):
+class _FakeFlavour(flavour):  # type: ignore [valid-type, misc]
     """Fake Flavour implementation used by PurePath and _Flavour"""
 
     filesystem = None
