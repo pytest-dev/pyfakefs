@@ -33,6 +33,7 @@ import fnmatch
 import functools
 import os
 import pathlib
+from pathlib import PurePath
 import re
 import sys
 from urllib.parse import quote_from_bytes as urlquote_from_bytes
@@ -705,8 +706,6 @@ class FakePathlibModule:
     `fake_pathlib_module = fake_filesystem.FakePathlibModule(filesystem)`
     """
 
-    PurePath = pathlib.PurePath
-
     def __init__(self, filesystem):
         """
         Initializes the module with the given filesystem.
@@ -780,7 +779,6 @@ class RealPathlibModule:
     As the original `pathlib` is always patched to use the fake path,
     we need to provide a version which does not do this.
     """
-    PurePath = pathlib.PurePath
 
     def __init__(self):
         RealPathlibModule.PureWindowsPath._flavour = pathlib._WindowsFlavour()
