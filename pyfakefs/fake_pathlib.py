@@ -78,7 +78,7 @@ def _wrap_binary_strfunc_reverse(strfunc):
 
 
 try:
-    accessor = pathlib._Accessor
+    accessor = pathlib._Accessor  # type: ignore [attr-defined]
 except AttributeError:
     accessor = object
 
