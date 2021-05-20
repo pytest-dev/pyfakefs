@@ -83,7 +83,7 @@ except AttributeError:
     accessor = object
 
 
-class _FakeAccessor(accessor):
+class _FakeAccessor(accessor):  # type: ignore [valid-type, misc]
     """Accessor which forwards some of the functions to FakeFilesystem methods.
     """
 
