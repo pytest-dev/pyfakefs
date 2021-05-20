@@ -128,7 +128,7 @@ PERM_DEF_FILE = 0o666  # Default permission bits (regular file)
 PERM_ALL = 0o7777  # All permission bits.
 
 _OpenModes = namedtuple(
-    'open_modes',
+    '_OpenModes',
     'must_exist can_read can_write truncate append must_not_exist'
 )
 
