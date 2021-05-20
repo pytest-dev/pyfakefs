@@ -157,7 +157,7 @@ class _FakeAccessor(accessor):  # type: ignore [valid-type, misc]
 
 _fake_accessor = _FakeAccessor()
 
-flavour = pathlib._Flavour
+flavour = pathlib._Flavour  # type: ignore [attr-defined]
 
 
 class _FakeFlavour(flavour):
