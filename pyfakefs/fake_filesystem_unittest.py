@@ -43,6 +43,8 @@ import shutil
 import sys
 import tempfile
 import tokenize
+from types import ModuleType
+from typing import Any, Callable, Dict, List, Set, Tuple
 import unittest
 import warnings
 
@@ -366,11 +368,11 @@ class Patcher:
     }
     # caches all modules that do not have file system modules or function
     # to speed up _find_modules
-    CACHED_MODULES = set()
-    FS_MODULES = {}
-    FS_FUNCTIONS = {}
-    FS_DEFARGS = []
-    SKIPPED_FS_MODULES = {}
+    CACHED_MODULES: Set[ModuleType] = set()
+    FS_MODULES: Dict[str, Set[ModuleType]] = {}
+    FS_FUNCTIONS: Dict[Tuple[str, str, str], Set[ModuleType]] = {}
+    FS_DEFARGS: List[Tuple[Callable[..., Any], int, Callable[..., Any]]] = []
+    SKIPPED_FS_MODULES: Dict[str, Set[ModuleType]] = {}
 
     assert None in SKIPMODULES, ("sys.modules contains 'None' values;"
                                  " must skip them.")
@@ -380,8 +382,8 @@ class Patcher:
     SKIPNAMES = {'os', 'path', 'io', 'genericpath', OS_MODULE, PATH_MODULE}
 
     # hold values from last call - if changed, the cache has to be invalidated
-    PATCHED_MODULE_NAMES = {}
-    ADDITIONAL_SKIP_NAMES = set()
+    PATCHED_MODULE_NAMES: Set[str] = set()
+    ADDITIONAL_SKIP_NAMES: Set[str] = set()
     PATCH_DEFAULT_ARGS = False
 
     def __init__(self, additional_skip_names=None,
