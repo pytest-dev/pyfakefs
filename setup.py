@@ -16,13 +16,14 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 import os
+from typing import List
 
 from setuptools import setup, find_packages
 
 from pyfakefs import __version__
 
 NAME = 'pyfakefs'
-REQUIRES = []
+REQUIRES: List[str] = []
 DESCRIPTION = ('pyfakefs implements a fake file system that mocks '
                'the Python file system modules.')
 
