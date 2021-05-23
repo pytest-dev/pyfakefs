@@ -33,6 +33,7 @@ import fnmatch
 import functools
 import os
 import pathlib
+from pathlib import PurePath
 import re
 import sys
 from urllib.parse import quote_from_bytes as urlquote_from_bytes
@@ -78,12 +79,12 @@ def _wrap_binary_strfunc_reverse(strfunc):
 
 
 try:
-    accessor = pathlib._Accessor
+    accessor = pathlib._Accessor  # type: ignore [attr-defined]
 except AttributeError:
     accessor = object
 
 
-class _FakeAccessor(accessor):
+class _FakeAccessor(accessor):  # type: ignore [valid-type, misc]
     """Accessor which forwards some of the functions to FakeFilesystem methods.
     """
 
@@ -157,10 +158,10 @@ class _FakeAccessor(accessor):
 
 _fake_accessor = _FakeAccessor()
 
-flavour = pathlib._Flavour
+flavour = pathlib._Flavour  # type: ignore [attr-defined]
 
 
-class _FakeFlavour(flavour):
+class _FakeFlavour(flavour):  # type: ignore [valid-type, misc]
     """Fake Flavour implementation used by PurePath and _Flavour"""
 
     filesystem = None
@@ -705,8 +706,6 @@ class FakePathlibModule:
     `fake_pathlib_module = fake_filesystem.FakePathlibModule(filesystem)`
     """
 
-    PurePath = pathlib.PurePath
-
     def __init__(self, filesystem):
         """
         Initializes the module with the given filesystem.
@@ -780,7 +779,6 @@ class RealPathlibModule:
     As the original `pathlib` is always patched to use the fake path,
     we need to provide a version which does not do this.
     """
-    PurePath = pathlib.PurePath
 
     def __init__(self):
         RealPathlibModule.PureWindowsPath._flavour = pathlib._WindowsFlavour()

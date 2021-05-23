@@ -128,7 +128,7 @@ PERM_DEF_FILE = 0o666  # Default permission bits (regular file)
 PERM_ALL = 0o7777  # All permission bits.
 
 _OpenModes = namedtuple(
-    'open_modes',
+    '_OpenModes',
     'must_exist can_read can_write truncate append must_not_exist'
 )
 
@@ -322,25 +322,25 @@ class FakeFile:
         """Return the creation time of the fake file."""
         return self.stat_result.st_ctime
 
-    @property
-    def st_atime(self):
-        """Return the access time of the fake file."""
-        return self.stat_result.st_atime
-
-    @property
-    def st_mtime(self):
-        """Return the modification time of the fake file."""
-        return self.stat_result.st_mtime
-
     @st_ctime.setter
     def st_ctime(self, val):
         """Set the creation time of the fake file."""
         self.stat_result.st_ctime = val
 
+    @property
+    def st_atime(self):
+        """Return the access time of the fake file."""
+        return self.stat_result.st_atime
+
     @st_atime.setter
     def st_atime(self, val):
         """Set the access time of the fake file."""
         self.stat_result.st_atime = val
+
+    @property
+    def st_mtime(self):
+        """Return the modification time of the fake file."""
+        return self.stat_result.st_mtime
 
     @st_mtime.setter
     def st_mtime(self, val):
@@ -442,6 +442,31 @@ class FakeFile:
         """
         return self.st_size
 
+    @size.setter
+    def size(self, st_size):
+        """Resizes file content, padding with nulls if new size exceeds the
+        old size.
+
+        Args:
+          st_size: The desired size for the file.
+
+        Raises:
+          OSError: if the st_size arg is not a non-negative integer
+                   or if st_size exceeds the available file system space
+        """
+
+        self._check_positive_int(st_size)
+        current_size = self.st_size or 0
+        self.filesystem.change_disk_usage(
+            st_size - current_size, self.name, self.st_dev)
+        if self._byte_contents:
+            if st_size < current_size:
+                self._byte_contents = self._byte_contents[:st_size]
+            else:
+                self._byte_contents += b'\0' * (st_size - current_size)
+        self.st_size = st_size
+        self.epoch += 1
+
     @property
     def path(self):
         """Return the full path of the current object."""
@@ -471,31 +496,6 @@ class FakeFile:
     @Deprecator('property size')
     def GetSize(self):
         return self.size
-
-    @size.setter
-    def size(self, st_size):
-        """Resizes file content, padding with nulls if new size exceeds the
-        old size.
-
-        Args:
-          st_size: The desired size for the file.
-
-        Raises:
-          OSError: if the st_size arg is not a non-negative integer
-                   or if st_size exceeds the available file system space
-        """
-
-        self._check_positive_int(st_size)
-        current_size = self.st_size or 0
-        self.filesystem.change_disk_usage(
-            st_size - current_size, self.name, self.st_dev)
-        if self._byte_contents:
-            if st_size < current_size:
-                self._byte_contents = self._byte_contents[:st_size]
-            else:
-                self._byte_contents += b'\0' * (st_size - current_size)
-        self.st_size = st_size
-        self.epoch += 1
 
     @Deprecator('property size')
     def SetSize(self, value):
@@ -746,6 +746,10 @@ class FakeDirectory(FakeFile):
         """
         return sum([item[1].size for item in self.contents.items()])
 
+    @size.setter
+    def size(self, st_size):
+        super().size(st_size)
+
     @Deprecator('property size')
     def GetSize(self):
         return self.size
@@ -840,6 +844,10 @@ class FakeDirectoryFromRealDirectory(FakeDirectory):
         if not self.contents_read:
             return 0
         return super(FakeDirectoryFromRealDirectory, self).size
+
+    @size.setter
+    def size(self, st_size):
+        super().size(st_size)
 
 
 class FakeFilesystem:
