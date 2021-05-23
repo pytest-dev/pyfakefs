@@ -745,7 +745,7 @@ class Patcher:
             self._dyn_patcher = DynamicPatcher(self)
             sys.meta_path.insert(0, self._dyn_patcher)
             for module in self.modules_to_reload:
-                if module.__name__ in sys.modules:
+                if sys.modules.get(module.__name__) is module:
                     reload(module)
 
     def patch_functions(self):

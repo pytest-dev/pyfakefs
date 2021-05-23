@@ -23,6 +23,9 @@ The released versions correspond to PyPi releases.
   * Update `fake_pathlib` to support changes coming in Python 3.10
     ([see](https://github.com/python/cpython/pull/19342))
 
+### Infrastructure
+  * added mypy checks in CI (see [#599](../../issues/599))
+
 ## [Version 4.4.0](https://pypi.python.org/pypi/pyfakefs/4.4.0) (2021-02-24)
 Adds better support for Python 3.8 / 3.9.
   

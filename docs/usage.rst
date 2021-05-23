@@ -210,10 +210,8 @@ In case of ``pytest``, you have two possibilities:
 
   @pytest.fixture
   def fs_no_root():
-      patcher = Patcher(allow_root_user=False)
-      patcher.setUp()
-      yield patcher.fs
-      patcher.tearDown()
+      with Patcher(allow_root_user=False) as patcher:
+          yield patcher.fs
 
   def test_something(fs_no_root):
       ...
