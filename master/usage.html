@@ -231,10 +231,8 @@ the <code class="docutils literal notranslate"><span class="pre">Patcher</span><
 
 <span class="nd">@pytest</span><span class="o">.</span><span class="n">fixture</span>
 <span class="k">def</span> <span class="nf">fs_no_root</span><span class="p">():</span>
-    <span class="n">patcher</span> <span class="o">=</span> <span class="n">Patcher</span><span class="p">(</span><span class="n">allow_root_user</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
-    <span class="n">patcher</span><span class="o">.</span><span class="n">setUp</span><span class="p">()</span>
-    <span class="k">yield</span> <span class="n">patcher</span><span class="o">.</span><span class="n">fs</span>
-    <span class="n">patcher</span><span class="o">.</span><span class="n">tearDown</span><span class="p">()</span>
+    <span class="k">with</span> <span class="n">Patcher</span><span class="p">(</span><span class="n">allow_root_user</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span> <span class="k">as</span> <span class="n">patcher</span><span class="p">:</span>
+        <span class="k">yield</span> <span class="n">patcher</span><span class="o">.</span><span class="n">fs</span>
 
 <span class="k">def</span> <span class="nf">test_something</span><span class="p">(</span><span class="n">fs_no_root</span><span class="p">):</span>
     <span class="o">...</span>
