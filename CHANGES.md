@@ -12,10 +12,12 @@ The released versions correspond to PyPi releases.
     * new 'strict' argument in `os.path.realpath`  
 
 ### Changes
+  * Python 3.5 has reached its end of life in September 2020 and is no longer 
+    supported
   * `pathlib2` is still supported, but considered to have the same
-     functionality as `pathlib` and is no longer tested separately;
-     the previous behavior broke newer `pathlib` features if `pathlib2`
-     was installed (see [#592](../../issues/592))
+    functionality as `pathlib` and is no longer tested separately;
+    the previous behavior broke newer `pathlib` features if `pathlib2`
+    was installed (see [#592](../../issues/592))
     
 ### Fixes
   * correctly handle byte paths in `os.path.exists`
@@ -75,7 +77,7 @@ possibility to disable it.
 ### Changes
 * Added caching of patched modules to avoid lookup overhead  
 * Added `use_cache` option and `clear_cache` method to be able
-  to deal with unwanted side-effects of the newly introduced caching
+  to deal with unwanted side effects of the newly introduced caching
 
 ### Infrastructure
 * Moved CI builds to GitHub Actions for performance reasons

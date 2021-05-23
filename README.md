@@ -43,7 +43,7 @@ using convenience functions.
 
 
 ## Compatibility
-pyfakefs works with CPython 3.5 and above, on Linux, Windows and OSX 
+pyfakefs works with CPython 3.6 and above, on Linux, Windows and OSX 
 (MacOS), and with PyPy3.
 
 pyfakefs works with [PyTest](http://doc.pytest.org) version 2.8.6 or above.
