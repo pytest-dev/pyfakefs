@@ -479,10 +479,10 @@ class FakeFile:
         if names[0] == sep:
             names.pop(0)
             dir_path = sep.join(names)
-            # Windows paths with drive have a root separator entry
-            # which should be removed
-            is_drive = names and len(names[0]) == 2 and names[0][1] == ':'
-            if not is_drive:
+            drive = self.filesystem.splitdrive(dir_path)[0]
+            # if a Windows path already starts with a drive or UNC path,
+            # no extra separator is needed
+            if not drive:
                 dir_path = sep + dir_path
         else:
             dir_path = sep.join(names)
@@ -1520,9 +1520,9 @@ class FakeFilesystem:
         return self.normpath(path)
 
     def splitpath(self, path):
-        """Mimic os.path.splitpath using the specified path_separator.
+        """Mimic os.path.split using the specified path_separator.
 
-        Mimics os.path.splitpath using the path_separator that was specified
+        Mimics os.path.split using the path_separator that was specified
         for this FakeFilesystem.
 
         Args:
@@ -1532,36 +1532,31 @@ class FakeFilesystem:
             (str) A duple (pathname, basename) for which pathname does not
             end with a slash, and basename does not contain a slash.
         """
+        full_path = path
         path = self.normcase(path)
         sep = self._path_separator(path)
+        drive, path = self.splitdrive(path)
         path_components = path.split(sep)
         if not path_components:
-            return ('', '')
-
-        starts_with_drive = self._starts_with_drive_letter(path)
+            return drive, matching_string(path, '')
         basename = path_components.pop()
-        colon = matching_string(path, ':')
         if not path_components:
-            if starts_with_drive:
-                components = basename.split(colon)
-                return (components[0] + colon, components[1])
-            return ('', basename)
+            return drive, basename
         for component in path_components:
             if component:
                 # The path is not the root; it contains a non-separator
                 # component. Strip all trailing separators.
                 while not path_components[-1]:
                     path_components.pop()
-                if starts_with_drive:
-                    if not path_components:
-                        components = basename.split(colon)
-                        return (components[0] + colon, components[1])
-                    if (len(path_components) == 1 and
-                            path_components[0].endswith(colon)):
-                        return (path_components[0] + sep, basename)
-                return (sep.join(path_components), basename)
+                if not path_components:
+                    return drive, basename
+                return drive + sep.join(path_components), basename
         # Root path.  Collapse all leading separators.
-        return (sep, basename)
+        if drive and not basename:
+            return full_path, basename
+        if drive and len(drive) == 2:
+            drive += sep
+        return drive or sep, basename
 
     def splitdrive(self, path):
         """Splits the path into the drive part and the rest of the path.

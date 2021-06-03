@@ -248,6 +248,28 @@ class FakeOsModuleTest(FakeOsModuleTestBase):
         self.assertTrue(stat.S_IFREG & self.os.stat(file_path).st_mode)
         self.assertEqual(5, self.os.stat(file_path)[stat.ST_SIZE])
 
+    def test_stat_with_unc_path(self):
+        self.skip_real_fs()
+        self.check_windows_only()
+        directory = '//root/share/dir'
+        file_path = self.os.path.join(directory, 'plugh')
+        self.create_file(file_path, contents='ABCDE')
+        self.assertTrue(stat.S_IFDIR & self.os.stat(directory)[stat.ST_MODE])
+        self.assertTrue(stat.S_IFREG & self.os.stat(file_path)[stat.ST_MODE])
+        self.assertTrue(stat.S_IFREG & self.os.stat(file_path).st_mode)
+        self.assertEqual(5, self.os.stat(file_path)[stat.ST_SIZE])
+
+    def test_stat_with_drive(self):
+        self.skip_real_fs()
+        self.check_windows_only()
+        directory = 'C:/foo/dir'
+        file_path = self.os.path.join(directory, 'plugh')
+        self.create_file(file_path, contents='ABCDE')
+        self.assertTrue(stat.S_IFDIR & self.os.stat(directory)[stat.ST_MODE])
+        self.assertTrue(stat.S_IFREG & self.os.stat(file_path)[stat.ST_MODE])
+        self.assertTrue(stat.S_IFREG & self.os.stat(file_path).st_mode)
+        self.assertEqual(5, self.os.stat(file_path)[stat.ST_SIZE])
+
     def test_stat_uses_open_fd_as_path(self):
         self.skip_real_fs()
         self.assert_raises_os_error(errno.EBADF, self.os.stat, 5)

@@ -1507,6 +1507,26 @@ class DriveLetterSupportTest(TestCase):
         self.assertEqual(('!!foo!bar', '!!'),
                          self.filesystem.splitdrive('!!foo!bar!!'))
 
+    def test_split_path_with_drive(self):
+        self.assertEqual(('d:!foo', 'baz'),
+                         self.filesystem.splitpath('d:!foo!baz'))
+        self.assertEqual(('d:!foo!baz', ''),
+                         self.filesystem.splitpath('d:!foo!baz!'))
+        self.assertEqual(('c:', ''),
+                         self.filesystem.splitpath('c:'))
+        self.assertEqual(('c:!', ''),
+                         self.filesystem.splitpath('c:!'))
+        self.assertEqual(('c:!!', ''),
+                         self.filesystem.splitpath('c:!!'))
+
+    def test_split_path_with_unc_path(self):
+        self.assertEqual(('!!foo!bar', 'baz'),
+                         self.filesystem.splitpath('!!foo!bar!baz'))
+        self.assertEqual(('!!foo!bar', ''),
+                         self.filesystem.splitpath('!!foo!bar'))
+        self.assertEqual(('!!foo!bar!!', ''),
+                         self.filesystem.splitpath('!!foo!bar!!'))
+
 
 class DiskSpaceTest(TestCase):
     def setUp(self):

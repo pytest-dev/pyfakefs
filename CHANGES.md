@@ -23,7 +23,9 @@ The released versions correspond to PyPi releases.
   * correctly handle byte paths in `os.path.exists`
     (see [#595](../../issues/595))
   * Update `fake_pathlib` to support changes coming in Python 3.10
-    ([see](https://github.com/python/cpython/pull/19342))
+    ([see](https://github.com/python/cpython/pull/19342)
+  * correctly handle UNC paths in `os.path.split` and in directory path 
+    evaluation (see [#606](../../issues/606))
 
 ### Infrastructure
   * added mypy checks in CI (see [#599](../../issues/599))

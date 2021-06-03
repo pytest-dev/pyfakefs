@@ -289,6 +289,11 @@ class RealFsTestMixin:
         components = []
         while existing_path and not self.os.path.exists(existing_path):
             existing_path, component = self.os.path.split(existing_path)
+            if not component and existing_path:
+                # existing path is a drive or UNC root
+                if not self.os.path.exists(existing_path):
+                    self.filesystem.add_mount_point(existing_path)
+                break
             components.insert(0, component)
         for component in components:
             existing_path = self.os.path.join(existing_path, component)
