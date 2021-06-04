@@ -1,0 +1,203 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>Using convenience methods &#8212; pyfakefs 3.6dev documentation</title>
+    <link rel="stylesheet" href="_static/pyfakefs.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <script type="text/javascript" id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="index.html">pyfakefs 3.6dev documentation</a> &#187;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="using-convenience-methods">
+<span id="convenience-methods"></span><h1>Using convenience methods<a class="headerlink" href="#using-convenience-methods" title="Permalink to this headline">¶</a></h1>
+<p>While <code class="docutils literal notranslate"><span class="pre">pyfakefs</span></code> can be used just with the standard Python file system
+functions, there are few convenience methods in <code class="docutils literal notranslate"><span class="pre">fake_filesystem</span></code> that can
+help you setting up your tests. The methods can be accessed via the
+<code class="docutils literal notranslate"><span class="pre">fake_filesystem</span></code> instance in your tests: <code class="docutils literal notranslate"><span class="pre">Patcher.fs</span></code>, the <code class="docutils literal notranslate"><span class="pre">fs</span></code>
+fixture in PyTest, or <code class="docutils literal notranslate"><span class="pre">TestCase.fs</span></code>.</p>
+<div class="section" id="file-creation-helpers">
+<h2>File creation helpers<a class="headerlink" href="#file-creation-helpers" title="Permalink to this headline">¶</a></h2>
+<p>To create files, directories or symlinks together with all the directories
+in the path, you may use <code class="docutils literal notranslate"><span class="pre">create_file()</span></code>, <code class="docutils literal notranslate"><span class="pre">create_dir()</span></code> and
+<code class="docutils literal notranslate"><span class="pre">create_symlink()</span></code>, respectively.</p>
+<p><code class="docutils literal notranslate"><span class="pre">create_file()</span></code> also allows you to set the file mode and the file contents
+together with the encoding if needed. Alternatively, you can define a file
+size without contents - in this case, you will not be able to perform
+standard IO operations on the file (may be used to “fill up” the file system
+with large files).</p>
+<div class="code python highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">fake_filesystem_unittest</span> <span class="k">import</span> <span class="n">TestCase</span>
+
+<span class="k">class</span> <span class="nc">ExampleTestCase</span><span class="p">(</span><span class="n">TestCase</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">setUp</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">setUpPyfakefs</span><span class="p">()</span>
+
+    <span class="k">def</span> <span class="nf">test_create_file</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">file_path</span> <span class="o">=</span> <span class="s1">&#39;/foo/bar/test.txt&#39;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">create_file</span><span class="p">(</span><span class="n">file_path</span><span class="p">,</span> <span class="n">contents</span> <span class="o">=</span> <span class="s1">&#39;test&#39;</span><span class="p">)</span>
+        <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">file_path</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">assertEqual</span><span class="p">(</span><span class="s1">&#39;test&#39;</span><span class="p">,</span> <span class="n">f</span><span class="o">.</span><span class="n">read</span><span class="p">())</span>
+</pre></div>
+</div>
+<p><code class="docutils literal notranslate"><span class="pre">create_dir()</span></code> behaves like <code class="docutils literal notranslate"><span class="pre">os.makedirs()</span></code>, but can also be used in
+Python 2.</p>
+</div>
+<div class="section" id="access-to-files-in-the-real-file-system">
+<h2>Access to files in the real file system<a class="headerlink" href="#access-to-files-in-the-real-file-system" title="Permalink to this headline">¶</a></h2>
+<p>If you want to have read access to real files or directories, you can map
+them into the fake file system using <code class="docutils literal notranslate"><span class="pre">add_real_file()</span></code>,
+<code class="docutils literal notranslate"><span class="pre">add_real_directory()</span></code> and <code class="docutils literal notranslate"><span class="pre">add_real_paths()</span></code>. They take a file path, a
+directory path, or a list of paths, respectively, and make them accessible
+from the fake file system. By default, the contents of the mapped files and
+directories are read only on demand, so that mapping them is relatively
+cheap. The access to the files is by default read-only, but even if you
+add them using <code class="docutils literal notranslate"><span class="pre">read_only=False</span></code>, the files are written only in the fake
+system (e.g. in memory). The real files are never changed.</p>
+<p><code class="docutils literal notranslate"><span class="pre">add_real_file()</span></code> and <code class="docutils literal notranslate"><span class="pre">add_real_directory()</span></code> also allow you to map a
+file or a directory tree into another location in the fake filesystem via the
+argument <code class="docutils literal notranslate"><span class="pre">target_path</span></code>.</p>
+<div class="code python highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">fake_filesystem_unittest</span> <span class="k">import</span> <span class="n">TestCase</span>
+
+<span class="k">class</span> <span class="nc">ExampleTestCase</span><span class="p">(</span><span class="n">TestCase</span><span class="p">):</span>
+
+    <span class="n">fixture_path</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">dirname</span><span class="p">(</span><span class="vm">__file__</span><span class="p">),</span> <span class="s1">&#39;fixtures&#39;</span><span class="p">)</span>
+    <span class="k">def</span> <span class="nf">setUp</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">setUpPyfakefs</span><span class="p">()</span>
+        <span class="c1"># make the file accessible in the fake file system</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">add_real_directory</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">fixture_path</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">test_using_fixture1</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">fixture_path</span><span class="p">,</span> <span class="s1">&#39;fixture1.txt&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+            <span class="c1"># file contents are copied to the fake file system</span>
+            <span class="c1"># only at this point</span>
+            <span class="n">contents</span> <span class="o">=</span> <span class="n">f</span><span class="o">.</span><span class="n">read</span><span class="p">()</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="handling-mount-points">
+<h2>Handling mount points<a class="headerlink" href="#handling-mount-points" title="Permalink to this headline">¶</a></h2>
+<p>Under Linux and MacOS, the root path (<code class="docutils literal notranslate"><span class="pre">/</span></code>) is the only mount point created
+in the fake file system. If you need support for more mount points, you can add
+them using <code class="docutils literal notranslate"><span class="pre">add_mount_point()</span></code>.</p>
+<p>Under Windows, drives and UNC paths are internally handled as mount points.
+Adding a file or directory on another drive or UNC path automatically
+adds a mount point for that drive or UNC path root if needed. Explicitly
+adding mount points shall not be needed under Windows.</p>
+<p>A mount point has a separate device ID (<code class="docutils literal notranslate"><span class="pre">st_dev</span></code>) under all systems, and
+some operations (like <code class="docutils literal notranslate"><span class="pre">rename</span></code>) are not possible for files located on
+different mount points. The fake file system size (if used) is also set per
+mount point.</p>
+</div>
+<div class="section" id="setting-the-file-system-size">
+<h2>Setting the file system size<a class="headerlink" href="#setting-the-file-system-size" title="Permalink to this headline">¶</a></h2>
+<p>If you need to know the file system size in your tests (for example for
+testing cleanup scripts), you can set the fake file system size using
+<code class="docutils literal notranslate"><span class="pre">set_disk_usage()</span></code>. By default, this sets the total size in bytes of the
+root partition; if you add a path as parameter, the size will be related to
+the mount point (see above) the path is related to.</p>
+<p>By default, the size of the fake file system is considered infinite. As soon
+as you set a size, all files will occupy the space according to their size,
+and you may fail to create new files if the fake file system is full.</p>
+<div class="code python highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">fake_filesystem_unittest</span> <span class="k">import</span> <span class="n">TestCase</span>
+
+<span class="k">class</span> <span class="nc">ExampleTestCase</span><span class="p">(</span><span class="n">TestCase</span><span class="p">):</span>
+
+    <span class="k">def</span> <span class="nf">setUp</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">setUpPyfakefs</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">set_disk_usage</span><span class="p">(</span><span class="mi">100</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">test_disk_full</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="s1">&#39;/foo/bar.txt&#39;</span><span class="p">,</span> <span class="s1">&#39;w&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">assertRaises</span><span class="p">(</span><span class="ne">OSError</span><span class="p">,</span> <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">,</span> <span class="s1">&#39;a&#39;</span> <span class="o">*</span> <span class="mi">200</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>To get the file system size, you may use <code class="docutils literal notranslate"><span class="pre">get_disk_usage()</span></code>, which is
+modeled after <code class="docutils literal notranslate"><span class="pre">shutil.disk_usage()</span></code>.</p>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="index.html">Table Of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">Using convenience methods</a><ul>
+<li><a class="reference internal" href="#file-creation-helpers">File creation helpers</a></li>
+<li><a class="reference internal" href="#access-to-files-in-the-real-file-system">Access to files in the real file system</a></li>
+<li><a class="reference internal" href="#handling-mount-points">Handling mount points</a></li>
+<li><a class="reference internal" href="#setting-the-file-system-size">Setting the file system size</a></li>
+</ul>
+</li>
+</ul>
+
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="_sources/convenience_methods.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="index.html">pyfakefs 3.6dev documentation</a> &#187;</li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2009 Google Inc. All Rights Reserved.
+© Copyright 2014 Altera Corporation. All Rights Reserved.
+© Copyright 2014-2018 John McGehee.
+      Last updated on Dec 06, 2018.
+    </div>
+  </body>
+</html>
