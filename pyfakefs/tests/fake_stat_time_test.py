@@ -36,7 +36,11 @@ class FakeStatTestBase(RealFsTestCase):
     def stat_time(self, path):
         stat = self.os.stat(path)
         # sleep a bit so in the next call the time has changed
-        time.sleep(self.sleep_time)
+        current_time = time.time()
+        new_time = current_time
+        while new_time == current_time:
+            time.sleep(self.sleep_time)
+            new_time = time.time()
         return FileTime(st_ctime=stat.st_ctime,
                         st_atime=stat.st_atime,
                         st_mtime=stat.st_mtime)
