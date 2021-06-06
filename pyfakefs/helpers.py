@@ -16,6 +16,7 @@ import locale
 import platform
 import stat
 import sys
+import time
 from copy import copy
 from stat import S_IFLNK
 
@@ -64,6 +65,10 @@ def real_encoding(encoding):
     if sys.version_info >= (3, 10):
         return encoding if encoding != "locale" else None
     return encoding
+
+
+def now():
+    return time.time()
 
 
 def matching_string(matched, string):

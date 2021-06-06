@@ -20,19 +20,18 @@ import errno
 import os
 import stat
 import sys
-import time
 import unittest
 
 from pyfakefs import fake_filesystem
 from pyfakefs.fake_filesystem import set_uid, set_gid, is_root, reset_ids
 from pyfakefs.helpers import IS_WIN
-from pyfakefs.tests.test_utils import DummyTime, TestCase, RealFsTestCase
+from pyfakefs.tests.test_utils import TestCase, RealFsTestCase, time_mock
 
 
 class FakeDirectoryUnitTest(TestCase):
     def setUp(self):
-        self.orig_time = time.time
-        time.time = DummyTime(10, 1)
+        self.time = time_mock(10, 1)
+        self.time.start()
         self.filesystem = fake_filesystem.FakeFilesystem(path_separator='/')
         self.os = fake_filesystem.FakeOsModule(self.filesystem)
         self.fake_file = fake_filesystem.FakeFile(
@@ -41,13 +40,13 @@ class FakeDirectoryUnitTest(TestCase):
             'somedir', filesystem=self.filesystem)
 
     def tearDown(self):
-        time.time = self.orig_time
+        self.time.stop()
 
     def test_new_file_and_directory(self):
         self.assertTrue(stat.S_IFREG & self.fake_file.st_mode)
         self.assertTrue(stat.S_IFDIR & self.fake_dir.st_mode)
         self.assertEqual({}, self.fake_dir.contents)
-        self.assertEqual(10, self.fake_file.st_ctime)
+        self.assertEqual(12, self.fake_file.st_ctime)
 
     def test_add_entry(self):
         self.fake_dir.add_entry(self.fake_file)
@@ -134,7 +133,7 @@ class FakeDirectoryUnitTest(TestCase):
         self.assertEqual('dummy_file\0\0\0', self.fake_file.contents)
 
     def test_set_m_time(self):
-        self.assertEqual(10, self.fake_file.st_mtime)
+        self.assertEqual(12, self.fake_file.st_mtime)
         self.fake_file.st_mtime = 13
         self.assertEqual(13, self.fake_file.st_mtime)
         self.fake_file.st_mtime = 131
@@ -845,14 +844,9 @@ class OsPathInjectionRegressionTest(TestCase):
 
 class FakePathModuleTest(TestCase):
     def setUp(self):
-        self.orig_time = time.time
-        time.time = DummyTime(10, 1)
         self.filesystem = fake_filesystem.FakeFilesystem(path_separator='!')
         self.os = fake_filesystem.FakeOsModule(self.filesystem)
         self.path = self.os.path
-
-    def tearDown(self):
-        time.time = self.orig_time
 
     def check_abspath(self, is_windows):
         # the implementation differs in Windows and Posix, so test both
@@ -1102,8 +1096,7 @@ class FakePathModuleTest(TestCase):
 
     def test_get_mtime(self):
         test_file = self.filesystem.create_file('foo!bar1.txt')
-        time.time.start()
-        self.assertEqual(10, test_file.st_mtime)
+        self.assertNotEqual(24, self.path.getmtime('foo!bar1.txt'))
         test_file.st_mtime = 24
         self.assertEqual(24, self.path.getmtime('foo!bar1.txt'))
         self.assertEqual(24, self.path.getmtime(b'foo!bar1.txt'))

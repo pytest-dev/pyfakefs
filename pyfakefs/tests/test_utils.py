@@ -14,7 +14,7 @@
 # limitations under the License.
 
 """Common helper classes used in tests, or as test class base."""
-
+import contextlib
 import errno
 import os
 import platform
@@ -23,6 +23,7 @@ import stat
 import sys
 import tempfile
 import unittest
+from unittest import mock
 
 from pyfakefs import fake_filesystem
 from pyfakefs.helpers import is_byte_string, to_string
@@ -32,17 +33,40 @@ class DummyTime:
     """Mock replacement for time.time. Increases returned time on access."""
 
     def __init__(self, curr_time, increment):
-        self.curr_time = curr_time
+        self.current_time = curr_time
         self.increment = increment
-        self.started = False
-
-    def start(self):
-        self.started = True
 
     def __call__(self, *args, **kwargs):
-        if self.started:
-            self.curr_time += self.increment
-        return self.curr_time
+        current_time = self.current_time
+        self.current_time += self.increment
+        return current_time
+
+
+class DummyMock:
+    def start(self):
+        pass
+
+    def stop(self):
+        pass
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        pass
+
+
+@contextlib.contextmanager
+def mock_time(start=200, step=20):
+    tmock = time_mock(start, step)
+    tmock.start()
+    yield mock
+    tmock.stop()
+
+
+def time_mock(start=200, step=20):
+    return mock.patch('pyfakefs.fake_filesystem.now',
+                      DummyTime(start, step))
 
 
 class TestCase(unittest.TestCase):
@@ -372,6 +396,17 @@ class RealFsTestMixin:
         if len(components) >= 3:
             components[2] = components[2][:6].upper() + '~1'
         return os.sep.join(components)
+
+    def mock_time(self, start=200, step=20):
+        if not self.use_real_fs():
+            return mock_time(start, step)
+        return DummyMock()
+
+    def time_mock(self, start=200, step=20):
+        if not self.use_real_fs():
+            return mock.patch('pyfakefs.fake_filesystem.now',
+                              DummyTime(start, step))
+        return DummyMock()
 
 
 class RealFsTestCase(TestCase, RealFsTestMixin):

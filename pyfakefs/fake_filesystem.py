@@ -99,7 +99,6 @@ import io
 import locale
 import os
 import sys
-import time
 import traceback
 import uuid
 from collections import namedtuple
@@ -114,7 +113,7 @@ from pyfakefs.fake_scandir import scandir, walk
 from pyfakefs.helpers import (
     FakeStatResult, BinaryBufferIO, TextBufferIO,
     is_int_type, is_byte_string, is_unicode_string, make_string_path,
-    IS_WIN, IS_PYPY, to_string, matching_string, real_encoding
+    IS_WIN, IS_PYPY, to_string, matching_string, real_encoding, now
 )
 from pyfakefs import __version__  # noqa: F401 for upwards compatibility
 
@@ -289,7 +288,7 @@ class FakeFile:
         self._side_effect = side_effect
         self.name = name
         self.stat_result = FakeStatResult(
-            filesystem.is_windows_fs, USER_ID, GROUP_ID, time.time())
+            filesystem.is_windows_fs, USER_ID, GROUP_ID, now())
         if st_mode >> 12 == 0:
             st_mode |= S_IFREG
         self.stat_result.st_mode = st_mode
@@ -1247,7 +1246,7 @@ class FakeFilesystem:
         else:
             file_object.st_mode = ((file_object.st_mode & ~PERM_ALL) |
                                    (mode & PERM_ALL))
-        file_object.st_ctime = time.time()
+        file_object.st_ctime = now()
 
     def utime(self, path, times=None, *, ns=None, follow_symlinks=True):
         """Change the access and modified times of a file.
@@ -1287,7 +1286,7 @@ class FakeFilesystem:
             file_object.st_atime_ns = ns[0]
             file_object.st_mtime_ns = ns[1]
         else:
-            current_time = time.time()
+            current_time = now()
             file_object.st_atime = current_time
             file_object.st_mtime = current_time
 
@@ -4754,7 +4753,7 @@ class FakeFileWrapper:
         if self.allow_update and not self.raw_io:
             self.flush()
             if self._filesystem.is_windows_fs and self._changed:
-                self.file_object.st_mtime = time.time()
+                self.file_object.st_mtime = now()
         if self._closefd:
             self._filesystem._close_open_file(self.filedes)
         else:
@@ -4796,7 +4795,7 @@ class FakeFileWrapper:
                 if self._filesystem.is_windows_fs:
                     self._changed = True
                 else:
-                    current_time = time.time()
+                    current_time = now()
                     self.file_object.st_ctime = current_time
                     self.file_object.st_mtime = current_time
             self._file_epoch = self.file_object.epoch
@@ -5048,7 +5047,7 @@ class FakeFileWrapper:
             if not self.is_stream:
                 self.flush()
             if not self._filesystem.is_windows_fs:
-                self.file_object.st_atime = time.time()
+                self.file_object.st_atime = now()
         if truncate:
             return self._truncate_wrapper()
         if self._append:
@@ -5292,7 +5291,7 @@ class FakeFileOpen:
         # Not the abspath, not the filename, but the actual argument.
         file_object.opened_as = file_path
         if open_modes.truncate:
-            current_time = time.time()
+            current_time = now()
             file_object.st_mtime = current_time
             if not self.filesystem.is_windows_fs:
                 file_object.st_ctime = current_time
