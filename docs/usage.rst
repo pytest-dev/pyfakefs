@@ -50,6 +50,16 @@ plugins, so you can just use it:
        fs.create_file('/var/data/xx1.txt')
        assert os.path.exists('/var/data/xx1.txt')
 
+If you don't like the ``fs`` fixture name (``pylint`` may complain about the
+name), you may define your own alias in your ``conftest.py``:
+
+.. code:: python
+
+    @pytest.fixture
+    def fake_filesystem(fs):
+        yield fs
+
+
 Patch using fake_filesystem_unittest.Patcher
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 If you are using other means of testing like `nose <http://nose2.readthedocs.io>`__,

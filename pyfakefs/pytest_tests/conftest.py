@@ -32,3 +32,9 @@ def fs_reload_example():
     patcher.setUp()
     yield patcher.fs
     patcher.tearDown()
+
+
+@pytest.fixture
+def fake_filesystem(fs):  # noqa: F811
+    """Shows how to use an alias for the fs fixture."""
+    yield fs
