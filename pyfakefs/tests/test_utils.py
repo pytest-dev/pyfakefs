@@ -14,8 +14,6 @@
 # limitations under the License.
 
 """Common helper classes used in tests, or as test class base."""
-import contextlib
-import errno
 import os
 import platform
 import shutil
@@ -54,14 +52,6 @@ class DummyMock:
 
     def __exit__(self, exc_type, exc_val, exc_tb):
         pass
-
-
-@contextlib.contextmanager
-def mock_time(start=200, step=20):
-    tmock = time_mock(start, step)
-    tmock.start()
-    yield mock
-    tmock.stop()
 
 
 def time_mock(start=200, step=20):
@@ -355,10 +345,6 @@ class RealFsTestMixin:
         with self.open(file_path, mode) as f:
             self.assertEqual(contents, f.read())
 
-    def not_dir_error(self):
-        error = errno.ENOTDIR
-        return error
-
     def create_basepath(self):
         """Create the path used as base path in `make_path`."""
         if self.filesystem is not None:
@@ -391,18 +377,14 @@ class RealFsTestMixin:
         else:
             self.assertEqual(actual, expected)
 
-    def path_with_short_username(self, path):
+    @staticmethod
+    def path_with_short_username(path):
         components = path.split(os.sep)
         if len(components) >= 3:
             components[2] = components[2][:6].upper() + '~1'
         return os.sep.join(components)
 
     def mock_time(self, start=200, step=20):
-        if not self.use_real_fs():
-            return mock_time(start, step)
-        return DummyMock()
-
-    def time_mock(self, start=200, step=20):
         if not self.use_real_fs():
             return mock.patch('pyfakefs.fake_filesystem.now',
                               DummyTime(start, step))
