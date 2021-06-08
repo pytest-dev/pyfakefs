@@ -58,14 +58,14 @@ class FakeStatTestBase(RealFsTestCase):
             self.assertEqual(time1, time2)
 
     def open_close_new_file(self):
-        with self.time_mock():
+        with self.mock_time():
             with self.open(self.file_path, self.mode):
                 created = self.stat_time(self.file_path)
             closed = self.stat_time(self.file_path)
             return created, closed
 
     def open_write_close_new_file(self):
-        with self.time_mock():
+        with self.mock_time():
             with self.open(self.file_path, self.mode) as f:
                 created = self.stat_time(self.file_path)
                 f.write('foo')
@@ -75,7 +75,7 @@ class FakeStatTestBase(RealFsTestCase):
         return created, written, closed
 
     def open_close(self):
-        with self.time_mock():
+        with self.mock_time():
             self.create_file(self.file_path)
 
             before = self.stat_time(self.file_path)
@@ -86,7 +86,7 @@ class FakeStatTestBase(RealFsTestCase):
             return before, opened, closed
 
     def open_write_close(self):
-        with self.time_mock():
+        with self.mock_time():
             self.create_file(self.file_path)
 
             before = self.stat_time(self.file_path)
@@ -99,7 +99,7 @@ class FakeStatTestBase(RealFsTestCase):
             return before, opened, written, closed
 
     def open_flush_close(self):
-        with self.time_mock():
+        with self.mock_time():
             self.create_file(self.file_path)
 
             before = self.stat_time(self.file_path)
@@ -112,7 +112,7 @@ class FakeStatTestBase(RealFsTestCase):
             return before, opened, flushed, closed
 
     def open_write_flush(self):
-        with self.time_mock():
+        with self.mock_time():
             self.create_file(self.file_path)
 
             before = self.stat_time(self.file_path)
@@ -127,7 +127,7 @@ class FakeStatTestBase(RealFsTestCase):
             return before, opened, written, flushed, closed
 
     def open_read_flush(self):
-        with self.time_mock():
+        with self.mock_time():
             self.create_file(self.file_path)
 
             before = self.stat_time(self.file_path)
@@ -142,7 +142,7 @@ class FakeStatTestBase(RealFsTestCase):
             return before, opened, read, flushed, closed
 
     def open_read_close_new_file(self):
-        with self.time_mock():
+        with self.mock_time():
             with self.open(self.file_path, self.mode) as f:
                 created = self.stat_time(self.file_path)
                 f.read()
@@ -152,7 +152,7 @@ class FakeStatTestBase(RealFsTestCase):
             return created, read, closed
 
     def open_read_close(self):
-        with self.time_mock():
+        with self.mock_time():
             self.create_file(self.file_path)
 
             before = self.stat_time(self.file_path)
