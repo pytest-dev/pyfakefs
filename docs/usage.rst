@@ -50,13 +50,19 @@ plugins, so you can just use it:
        fs.create_file('/var/data/xx1.txt')
        assert os.path.exists('/var/data/xx1.txt')
 
-If you don't like the ``fs`` fixture name (``pylint`` may complain about the
-name), you may define your own alias in your ``conftest.py``:
+If you are bothered by the ``pylint`` warning,
+``C0103: Argument name "fs" doesn't conform to snake_case naming style
+(invalid-name)``,
+you can define a longer name in your ``conftest.py`` and use that in your
+tests:
 
 .. code:: python
 
     @pytest.fixture
-    def fake_filesystem(fs):
+    def fake_filesystem(fs):  # pylint:disable=invalid-name
+        """Variable name 'fs' causes a pylint warning. Provide a longer name
+        acceptable to pylint for use in tests.
+        """
         yield fs
 
 
