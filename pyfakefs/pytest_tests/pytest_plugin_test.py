@@ -10,6 +10,19 @@ def test_fs_fixture(fs):
     assert os.path.exists('/var/data/xx1.txt')
 
 
+def test_fs_fixture_alias(fake_filesystem):
+    fake_filesystem.create_file('/var/data/xx1.txt')
+    assert os.path.exists('/var/data/xx1.txt')
+
+
+def test_both_fixtures(fs, fake_filesystem):
+    fake_filesystem.create_file('/var/data/xx1.txt')
+    fs.create_file('/var/data/xx2.txt')
+    assert os.path.exists('/var/data/xx1.txt')
+    assert os.path.exists('/var/data/xx2.txt')
+    assert fs == fake_filesystem
+
+
 def test_pause_resume(fs):
     fake_temp_file = tempfile.NamedTemporaryFile()
     assert fs.exists(fake_temp_file.name)
