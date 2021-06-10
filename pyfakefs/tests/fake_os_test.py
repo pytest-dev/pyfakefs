@@ -2183,6 +2183,9 @@ class FakeOsModuleTest(FakeOsModuleTestBase):
 
     def test_mknod_raises_if_unsupported_options(self):
         self.check_posix_only()
+        # behavior seems to have changed in ubuntu-20.04, version 20210606.1
+        # skipping real fs tests for now
+        self.skip_real_fs()
         filename = 'abcde'
         if not is_root():
             self.assert_raises_os_error(errno.EPERM, self.os.mknod, filename,
