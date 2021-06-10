@@ -87,6 +87,19 @@ plugins, so you can just use it:</p>
     <span class="k">assert</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="s1">&#39;/var/data/xx1.txt&#39;</span><span class="p">)</span>
 </pre></div>
 </div>
+<p>If you are bothered by the <code class="docutils literal notranslate"><span class="pre">pylint</span></code> warning,
+<code class="docutils literal notranslate"><span class="pre">C0103:</span> <span class="pre">Argument</span> <span class="pre">name</span> <span class="pre">&quot;fs&quot;</span> <span class="pre">doesn't</span> <span class="pre">conform</span> <span class="pre">to</span> <span class="pre">snake_case</span> <span class="pre">naming</span> <span class="pre">style</span>
+<span class="pre">(invalid-name)</span></code>,
+you can define a longer name in your <code class="docutils literal notranslate"><span class="pre">conftest.py</span></code> and use that in your
+tests:</p>
+<div class="code python highlight-default notranslate"><div class="highlight"><pre><span></span><span class="nd">@pytest</span><span class="o">.</span><span class="n">fixture</span>
+<span class="k">def</span> <span class="nf">fake_filesystem</span><span class="p">(</span><span class="n">fs</span><span class="p">):</span>  <span class="c1"># pylint:disable=invalid-name</span>
+    <span class="sd">&quot;&quot;&quot;Variable name &#39;fs&#39; causes a pylint warning. Provide a longer name</span>
+<span class="sd">    acceptable to pylint for use in tests.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">yield</span> <span class="n">fs</span>
+</pre></div>
+</div>
 </div>
 <div class="section" id="patch-using-fake-filesystem-unittest-patcher">
 <h3>Patch using fake_filesystem_unittest.Patcher<a class="headerlink" href="#patch-using-fake-filesystem-unittest-patcher" title="Permalink to this headline">¶</a></h3>
@@ -968,7 +981,7 @@ is the convenience argument <a class="reference internal" href="#allow-root-user
         &#169; Copyright 2009 Google Inc. All Rights Reserved.
 © Copyright 2014 Altera Corporation. All Rights Reserved.
 © Copyright 2014-2021 John McGehee.
-      Last updated on Jun 08, 2021.
+      Last updated on Jun 10, 2021.
     </div>
   </body>
 </html>
