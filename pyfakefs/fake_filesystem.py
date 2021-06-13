@@ -151,6 +151,8 @@ AnyFileWrapper = Union[
     "StandardStreamWrapper", "FakePipeWrapper"
 ]
 
+AnyString = Union[str, bytes]
+
 AnyFile = Union["FakeFile", "FakeDirectory"]
 
 AnyPath = Union[str, bytes, os.PathLike]
@@ -415,7 +417,7 @@ class FakeFile:
                 self.errors)
         return cast(bytes, contents)
 
-    def _set_initial_contents(self, contents: AnyStr) -> bool:
+    def set_initial_contents(self, contents: AnyStr) -> bool:
         """Sets the file contents and size.
            Called internally after initial file creation.
 
@@ -459,7 +461,7 @@ class FakeFile:
                    or if it exceeds the available file system space.
         """
         self.encoding = real_encoding(encoding)
-        changed = self._set_initial_contents(contents)
+        changed = self.set_initial_contents(contents)
         if self._side_effect is not None:
             self._side_effect(self)
         return changed
@@ -498,7 +500,7 @@ class FakeFile:
     @property
     def path(self) -> AnyStr:
         """Return the full path of the current object."""
-        names: List[Union[str, bytes]] = []
+        names: List[AnyString] = []
         obj: Optional[FakeFile] = self
         while obj:
             names.insert(0, obj.name)
@@ -594,7 +596,7 @@ class FakeNullFile(FakeFile):
     def byte_contents(self) -> bytes:
         return b''
 
-    def _set_initial_contents(self, contents: AnyStr) -> bool:
+    def set_initial_contents(self, contents: AnyStr) -> bool:
         return False
 
 
@@ -947,7 +949,7 @@ class FakeFilesystem:
         # last used numbers for inodes (st_ino) and devices (st_dev)
         self.last_ino = 0
         self.last_dev = 0
-        self.mount_points: Dict[Union[str, bytes], Dict] = {}
+        self.mount_points: Dict[AnyString, Dict] = {}
         self.add_mount_point(self.root.name, total_size)
         self._add_standard_streams()
         self.dev_null = FakeNullFile(self)
@@ -1033,7 +1035,7 @@ class FakeFilesystem:
         return os.strerror(err_no) + ' in the fake filesystem'
 
     def raise_os_error(self, err_no: int,
-                       filename: Optional[Union[str, bytes]] = None,
+                       filename: Optional[AnyString] = None,
                        winerror: Optional[int] = None) -> NoReturn:
         """Raises OSError.
         The error message is constructed from the given error code and shall
@@ -2133,7 +2135,7 @@ class FakeFilesystem:
                 file_path, check_read_perm), check_read_perm)
         return self.lresolve(file_path)
 
-    def lresolve(self, path: AnyStr) -> AnyFile:
+    def lresolve(self, path: AnyStr) -> FakeFile:
         """Search for the specified object, resolving only parent links.
 
         This is analogous to the stat/lstat difference.  This resolves links
@@ -2456,7 +2458,7 @@ class FakeFilesystem:
 
     def create_file(self, file_path: AnyStr,
                     st_mode: int = S_IFREG | PERM_DEF_FILE,
-                    contents: Union[str, bytes] = '',
+                    contents: AnyString = '',
                     st_size: Optional[int] = None,
                     create_missing_dirs: bool = True,
                     apply_umask: bool = False,
@@ -2671,7 +2673,7 @@ class FakeFilesystem:
     def create_file_internally(
             self, file_path: AnyStr,
             st_mode: int = S_IFREG | PERM_DEF_FILE,
-            contents: Union[str, bytes] = '',
+            contents: AnyString = '',
             st_size: Optional[int] = None,
             create_missing_dirs: bool = True,
             apply_umask: bool = False,
@@ -2741,14 +2743,16 @@ class FakeFilesystem:
                 if st_size is not None:
                     file_object.set_large_file_size(st_size)
                 else:
-                    file_object._set_initial_contents(contents)  # type:ignore
+                    file_object.set_initial_contents(contents)  # type:ignore
             except OSError:
                 self.remove_object(file_path)
                 raise
 
         return file_object
 
-    def create_symlink(self, file_path, link_target, create_missing_dirs=True):
+    def create_symlink(self, file_path: AnyStr,
+                       link_target: AnyStr,
+                       create_missing_dirs: bool = True) -> FakeFile:
         """Create the specified symlink, pointed at the specified link target.
 
         Args:
@@ -2798,8 +2802,10 @@ class FakeFilesystem:
             contents=link_target,
             create_missing_dirs=create_missing_dirs)
 
-    def create_link(self, old_path, new_path,
-                    follow_symlinks=True, create_missing_dirs=True):
+    def create_link(self, old_path: AnyStr,
+                    new_path: AnyStr,
+                    follow_symlinks: bool = True,
+                    create_missing_dirs: bool = True) -> FakeFile:
         """Create a hard link at new_path, pointing at old_path.
 
         Args:
@@ -2825,7 +2831,7 @@ class FakeFilesystem:
         new_parent_directory, new_basename = self.splitpath(
             new_path_normalized)
         if not new_parent_directory:
-            new_parent_directory = self.cwd
+            new_parent_directory = matching_string(new_path, self.cwd)
 
         if not self.exists(new_parent_directory):
             if create_missing_dirs:
@@ -2852,11 +2858,13 @@ class FakeFilesystem:
 
         # abuse the name field to control the filename of the
         # newly created link
-        old_file.name = new_basename
+        old_file.name = new_basename  # type:ignore[assignment]
         self.add_object(new_parent_directory, old_file)
         return old_file
 
-    def link(self, old_path, new_path, follow_symlinks=True):
+    def link(self, old_path: AnyStr,
+             new_path: AnyStr,
+             follow_symlinks: bool = True) -> FakeFile:
         """Create a hard link at new_path, pointing at old_path.
 
         Args:
@@ -2876,14 +2884,15 @@ class FakeFilesystem:
         return self.create_link(old_path, new_path, follow_symlinks,
                                 create_missing_dirs=False)
 
-    def _is_circular_link(self, link_obj):
+    def _is_circular_link(self, link_obj: FakeFile) -> bool:
         try:
+            assert link_obj.contents
             self.resolve_path(link_obj.contents)
         except OSError as exc:
             return exc.errno == errno.ELOOP
         return False
 
-    def readlink(self, path):
+    def readlink(self, path: AnyStr) -> AnyStr:
         """Read the target of a symlink.
 
         Args:
@@ -2907,20 +2916,25 @@ class FakeFilesystem:
         if self.ends_with_path_separator(path):
             if not self.is_windows_fs and self.exists(path):
                 self.raise_os_error(errno.EINVAL, path)
-            if not self.exists(link_obj.path):
+            if not self.exists(link_obj.path):  # type:ignore
                 if self.is_windows_fs:
                     error = errno.EINVAL
                 elif self._is_circular_link(link_obj):
                     if self.is_macos:
-                        return link_obj.path
+                        return link_obj.path  # type:ignore[return-value]
                     error = errno.ELOOP
                 else:
                     error = errno.ENOENT
                 self.raise_os_error(error, link_obj.path)
 
-        return link_obj.contents
+        if isinstance(path, str):
+            assert link_obj.contents
+            return link_obj.contents
+        else:
+            assert link_obj.byte_contents
+            return link_obj.byte_contents
 
-    def makedir(self, dir_name, mode=PERM_DEF):
+    def makedir(self, dir_name: AnyStr, mode: int = PERM_DEF) -> None:
         """Create a leaf Fake directory.
 
         Args:
@@ -2964,14 +2978,17 @@ class FakeFilesystem:
         head, tail = self.splitpath(dir_name)
 
         self.add_object(
-            head, FakeDirectory(tail, mode & ~self.umask, filesystem=self))
+            to_string(head),
+            FakeDirectory(to_string(tail), mode & ~self.umask,
+                          filesystem=self))
 
-    def _path_without_trailing_separators(self, path):
+    def _path_without_trailing_separators(self, path: AnyStr) -> AnyStr:
         while self.ends_with_path_separator(path):
             path = path[:-1]
         return path
 
-    def makedirs(self, dir_name, mode=PERM_DEF, exist_ok=False):
+    def makedirs(self, dir_name: AnyStr, mode: int = PERM_DEF,
+                 exist_ok: bool = False) -> None:
         """Create a leaf Fake directory and create any non-existent
         parent dirs.
 
@@ -2989,7 +3006,6 @@ class FakeFilesystem:
         """
         if not dir_name:
             self.raise_os_error(errno.ENOENT, '')
-        dir_name = to_string(dir_name)
         ends_with_sep = self.ends_with_path_separator(dir_name)
         dir_name = self.absnormpath(dir_name)
         if (ends_with_sep and self.is_macos and
@@ -2998,7 +3014,8 @@ class FakeFilesystem:
             # to avoid EEXIST exception, remove the link
             self.remove_object(dir_name)
 
-        path_components = self._path_components(dir_name)
+        dir_name_str = to_string(dir_name)
+        path_components = self._path_components(dir_name_str)
 
         # Raise a permission denied error if the first existing directory
         # is not writeable.
@@ -3008,7 +3025,8 @@ class FakeFilesystem:
                     component not in current_dir.entries):
                 break
             else:
-                current_dir = current_dir.entries[component]
+                current_dir = cast(FakeDirectory,
+                                   current_dir.entries[component])
         try:
             self.create_dir(dir_name, mode & ~self.umask)
         except OSError as e:
@@ -3021,8 +3039,9 @@ class FakeFilesystem:
                     e.errno = errno.ENOENT
                 self.raise_os_error(e.errno, e.filename)
 
-    def _is_of_type(self, path, st_flag, follow_symlinks=True,
-                    check_read_perm=True):
+    def _is_of_type(self, path: AnyStr, st_flag: int,
+                    follow_symlinks: bool = True,
+                    check_read_perm: bool = True) -> bool:
         """Helper function to implement isdir(), islink(), etc.
 
         See the stat(2) man page for valid stat.S_I* flag values
@@ -3041,7 +3060,7 @@ class FakeFilesystem:
         """
         if path is None:
             raise TypeError
-        path = to_string(make_string_path(path))
+        path = make_string_path(path)
         try:
             obj = self.resolve(path, follow_symlinks,
                                check_read_perm=check_read_perm)
@@ -3053,7 +3072,7 @@ class FakeFilesystem:
             return False
         return False
 
-    def isdir(self, path, follow_symlinks=True):
+    def isdir(self, path: AnyStr, follow_symlinks: bool = True) -> bool:
         """Determine if path identifies a directory.
 
         Args:
@@ -3067,7 +3086,7 @@ class FakeFilesystem:
         """
         return self._is_of_type(path, S_IFDIR, follow_symlinks)
 
-    def isfile(self, path, follow_symlinks=True):
+    def isfile(self, path: AnyStr, follow_symlinks: bool = True) -> bool:
         """Determine if path identifies a regular file.
 
         Args:
@@ -3096,7 +3115,7 @@ class FakeFilesystem:
         """
         return self._is_of_type(path, S_IFLNK, follow_symlinks=False)
 
-    def confirmdir(self, target_directory):
+    def confirmdir(self, target_directory: AnyStr) -> FakeDirectory:
         """Test that the target is actually a directory, raising OSError
         if not.
 
@@ -3110,12 +3129,12 @@ class FakeFilesystem:
         Raises:
             OSError: if the target is not a directory.
         """
-        directory = self.resolve(target_directory)
+        directory = cast(FakeDirectory, self.resolve(target_directory))
         if not directory.st_mode & S_IFDIR:
             self.raise_os_error(errno.ENOTDIR, target_directory, 267)
         return directory
 
-    def remove(self, path):
+    def remove(self, path: AnyStr) -> None:
         """Remove the FakeFile object at the specified file path.
 
         Args:
@@ -3143,7 +3162,7 @@ class FakeFilesystem:
                     self.raise_os_error(error, norm_path)
 
                 norm_path = make_string_path(norm_path)
-                if path.endswith(self.path_separator):
+                if path.endswith(matching_string(path, self.path_separator)):
                     if self.is_windows_fs:
                         error = errno.EACCES
                     elif self.is_macos:
@@ -3156,7 +3175,8 @@ class FakeFilesystem:
 
         self.remove_object(norm_path)
 
-    def rmdir(self, target_directory, allow_symlink=False):
+    def rmdir(self, target_directory: AnyStr,
+              allow_symlink: bool = False) -> None:
         """Remove a leaf Fake directory.
 
         Args:
@@ -3187,7 +3207,7 @@ class FakeFilesystem:
                 self.raise_os_error(errno.ENOTEMPTY, target_directory)
             self.remove_object(target_directory)
 
-    def listdir(self, target_directory):
+    def listdir(self, target_directory: AnyStr) -> List[AnyStr]:
         """Return a list of file names in target_directory.
 
         Args:
@@ -3204,12 +3224,12 @@ class FakeFilesystem:
         target_directory = self.resolve_path(target_directory, allow_fd=True)
         directory = self.confirmdir(target_directory)
         directory_contents = directory.entries
-        return list(directory_contents.keys())
+        return list(directory_contents.keys())  # type:ignore[arg-type]
 
-    def __str__(self):
+    def __str__(self) -> str:
         return str(self.root)
 
-    def _add_standard_streams(self):
+    def _add_standard_streams(self) -> None:
         self._add_open_file(StandardStreamWrapper(sys.stdin))
         self._add_open_file(StandardStreamWrapper(sys.stdout))
         self._add_open_file(StandardStreamWrapper(sys.stderr))
