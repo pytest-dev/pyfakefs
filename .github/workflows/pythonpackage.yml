@@ -124,3 +124,24 @@ jobs:
           python -m pyfakefs.tests.performance_test
         fi
       shell: bash
+
+  dependency-check:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-2016]
+        python-version:  [3.9]
+    steps:
+      - uses: actions/checkout@v2
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v2
+        with:
+          python-version: ${{ matrix.python-version }}
+      - name: Install dependencies
+        run: |
+          pip install -r requirements.txt
+          pip install -r extra_requirements.txt
+          pip install pytest-find-dependencies
+      - name: Check dependencies
+        run: python -m pytest --find-dependencies pyfakefs/tests
+        shell: bash
