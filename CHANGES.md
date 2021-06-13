@@ -3,6 +3,10 @@ The released versions correspond to PyPi releases.
 
 ## Version 4.6.0 (as yet unreleased)
 
+### Fixes
+* added handling of path-like where missing
+* improved handling of `str`/`bytes` paths
+
 ### Infrastructure
 * added test dependency check (see [#608](../../issues/608))
 

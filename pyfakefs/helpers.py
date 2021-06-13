@@ -20,11 +20,13 @@ import sys
 import time
 from copy import copy
 from stat import S_IFLNK
-from typing import Union, Optional, Any, AnyStr, overload
+from typing import Union, Optional, Any, AnyStr, overload, cast
 
 IS_PYPY = platform.python_implementation() == 'PyPy'
 IS_WIN = sys.platform == 'win32'
 IN_DOCKER = os.path.exists('/.dockerenv')
+
+AnyPath = Union[AnyStr, os.PathLike]
 
 
 def is_int_type(val: Any) -> bool:
@@ -44,8 +46,16 @@ def is_unicode_string(val: Any) -> bool:
     return hasattr(val, 'encode')
 
 
-def make_string_path(dir_name: AnyStr) -> AnyStr:
-    return os.fspath(dir_name)
+@overload
+def make_string_path(dir_name: AnyStr) -> AnyStr: ...
+
+
+@overload
+def make_string_path(dir_name: os.PathLike) -> str: ...
+
+
+def make_string_path(dir_name: AnyPath) -> AnyStr:
+    return cast(AnyStr, os.fspath(dir_name))
 
 
 def to_string(path: AnyStr) -> str:
