@@ -2909,6 +2909,7 @@ class FakeFilesystem:
         """
         if path is None:
             raise TypeError
+        path = make_string_path(path)
         link_obj = self.lresolve(path)
         if S_IFMT(link_obj.st_mode) != S_IFLNK:
             self.raise_os_error(errno.EINVAL, path)
