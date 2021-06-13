@@ -3,6 +3,9 @@ The released versions correspond to PyPi releases.
 
 ## Version 4.6.0 (as yet unreleased)
 
+### Infrastructure
+* added test dependency check (see [#608](../../issues/608))
+
 ## [Version 4.5.0](https://pypi.python.org/pypi/pyfakefs/4.5.0) (2021-06-04)
 Adds some support for Python 3.10 and basic type checking.
 
