@@ -133,14 +133,14 @@ class ScanDirIter:
         else:
             self.abspath = self.filesystem.absnormpath(path)
             self.path = to_string(path)
-        contents = self.filesystem.confirmdir(self.abspath).contents
-        self.contents_iter = iter(contents)
+        entries = self.filesystem.confirmdir(self.abspath).entries
+        self.entry_iter = iter(entries)
 
     def __iter__(self):
         return self
 
     def __next__(self):
-        entry = self.contents_iter.__next__()
+        entry = self.entry_iter.__next__()
         dir_entry = DirEntry(self.filesystem)
         dir_entry.name = entry
         dir_entry.path = self.filesystem.joinpaths(self.path,

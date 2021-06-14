@@ -45,12 +45,13 @@ class FakeDirectoryUnitTest(TestCase):
     def test_new_file_and_directory(self):
         self.assertTrue(stat.S_IFREG & self.fake_file.st_mode)
         self.assertTrue(stat.S_IFDIR & self.fake_dir.st_mode)
-        self.assertEqual({}, self.fake_dir.contents)
+        self.assertEqual({}, self.fake_dir.entries)
         self.assertEqual(12, self.fake_file.st_ctime)
 
     def test_add_entry(self):
         self.fake_dir.add_entry(self.fake_file)
-        self.assertEqual({'foobar': self.fake_file}, self.fake_dir.contents)
+        self.assertEqual({'foobar': self.fake_file},
+                         self.fake_dir.entries)
 
     def test_get_entry(self):
         self.fake_dir.add_entry(self.fake_file)
@@ -265,7 +266,7 @@ class FakeFilesystemUnitTest(TestCase):
         self.assertEqual('/', self.filesystem.path_separator)
         self.assertTrue(stat.S_IFDIR & self.filesystem.root.st_mode)
         self.assertEqual(self.root_name, self.filesystem.root.name)
-        self.assertEqual({}, self.filesystem.root.contents)
+        self.assertEqual({}, self.filesystem.root.entries)
 
     def test_none_raises_type_error(self):
         with self.assertRaises(TypeError):
@@ -293,7 +294,7 @@ class FakeFilesystemUnitTest(TestCase):
     def test_add_object_to_root(self):
         self.filesystem.add_object(self.root_name, self.fake_file)
         self.assertEqual({'foobar': self.fake_file},
-                         self.filesystem.root.contents)
+                         self.filesystem.root.entries)
 
     def test_exists_added_file(self):
         self.filesystem.add_object(self.root_name, self.fake_file)
@@ -362,7 +363,7 @@ class FakeFilesystemUnitTest(TestCase):
         self.filesystem.add_object(self.fake_child.name, self.fake_file)
         self.assertEqual(
             {self.fake_file.name: self.fake_file},
-            self.filesystem.root.get_entry(self.fake_child.name).contents)
+            self.filesystem.root.get_entry(self.fake_child.name).entries)
 
     def test_add_object_to_regular_file_error_posix(self):
         self.filesystem.is_windows_fs = False
