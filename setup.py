@@ -83,7 +83,7 @@ params = dict(
     keywords=KEYWORDS,
     url=URL,
     classifiers=CLASSIFIERS,
-    python_requires='>=3.5',
+    python_requires='>=3.6',
     test_suite='pyfakefs.tests',
     packages=find_packages(exclude=['docs'])
 )
