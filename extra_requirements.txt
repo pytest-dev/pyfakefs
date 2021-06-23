@@ -13,6 +13,6 @@ scandir>=1.8
 # pandas + xlrd are used to test pandas-specific patches to allow
 # pyfakefs to work with pandas
 # we use the latest version to see any problems with new versions
-pandas==1.1.5
+pandas==1.2.5
 xlrd==1.2.0
 openpyxl==3.0.7
