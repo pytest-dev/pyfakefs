@@ -6,6 +6,8 @@ The released versions correspond to PyPi releases.
 ### Fixes
 * added handling of path-like where missing
 * improved handling of `str`/`bytes` paths
+* suppress all warnings while inspecting loaded modules
+  (see [#614](../../issues/614))
 
 ### Infrastructure
 * added test dependency check (see [#608](../../issues/608))
