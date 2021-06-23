@@ -716,8 +716,7 @@ class Patcher:
         with warnings.catch_warnings():
             # ignore deprecation warnings, see #542
             warnings.filterwarnings(
-                'ignore',
-                category=DeprecationWarning
+                'ignore'
             )
             self._find_modules()
 
