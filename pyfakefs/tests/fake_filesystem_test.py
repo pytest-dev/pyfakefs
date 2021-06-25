@@ -1178,7 +1178,7 @@ class FakePathModuleTest(TestCase):
             if self.is_windows:
                 private_path_function = '_get_bothseps'
             else:
-                private_path_function = '_joinrealpath'
+                private_path_function = '_join_real_path'
         if private_path_function:
             self.assertTrue(hasattr(self.path, private_path_function),
                             'Get a real os.path function '

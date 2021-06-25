@@ -58,11 +58,19 @@ def make_string_path(dir_name: AnyPath) -> AnyStr:
     return cast(AnyStr, os.fspath(dir_name))
 
 
-def to_string(path: AnyStr) -> str:
+def to_string(path: Union[AnyStr, Union[str, bytes]]) -> str:
     """Return the string representation of a byte string using the preferred
      encoding, or the string itself if path is a str."""
     if isinstance(path, bytes):
         return path.decode(locale.getpreferredencoding(False))
+    return path
+
+
+def to_bytes(path: Union[AnyStr, Union[str, bytes]]) -> bytes:
+    """Return the bytes representation of a string using the preferred
+     encoding, or the byte string itself if path is a byte string."""
+    if isinstance(path, str):
+        return bytes(path, locale.getpreferredencoding(False))
     return path
 
 
