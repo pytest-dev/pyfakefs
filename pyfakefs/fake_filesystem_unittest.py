@@ -714,7 +714,7 @@ class Patcher:
 
         temp_dir = tempfile.gettempdir()
         with warnings.catch_warnings():
-            # ignore deprecation warnings, see #542
+            # ignore warnings, see #542 and #614
             warnings.filterwarnings(
                 'ignore'
             )
