@@ -107,10 +107,10 @@ from enum import Enum
 from stat import (
     S_IFREG, S_IFDIR, S_ISLNK, S_IFMT, S_ISDIR, S_IFLNK, S_ISREG, S_IFSOCK
 )
-from types import ModuleType
+from types import ModuleType, TracebackType
 from typing import (
     List, Optional, Callable, Union, Any, Dict, Tuple, cast, AnyStr, overload,
-    NoReturn, ClassVar, IO, Iterator, TextIO
+    NoReturn, ClassVar, IO, Iterator, TextIO, Type
 )
 from pyfakefs.deprecator import Deprecator
 from pyfakefs.extra_packages import use_scandir
@@ -4926,7 +4926,10 @@ class FakeFileWrapper:
         """To support usage of this fake file with the 'with' statement."""
         return self
 
-    def __exit__(self, type: Any, value: Any, traceback: Any) -> None:
+    def __exit__(self, exc_type: Optional[Type[BaseException]],
+                 exc_val: Optional[BaseException],
+                 exc_tb: Optional[TracebackType]
+                 ) -> None:
         """To support usage of this fake file with the 'with' statement."""
         self.close()
 
@@ -5387,7 +5390,10 @@ class FakePipeWrapper:
         """To support usage of this fake pipe with the 'with' statement."""
         return self
 
-    def __exit__(self, type: Any, value: Any, traceback: Any) -> None:
+    def __exit__(self, exc_type: Optional[Type[BaseException]],
+                 exc_val: Optional[BaseException],
+                 exc_tb: Optional[TracebackType]
+                 ) -> None:
         """To support usage of this fake pipe with the 'with' statement."""
         self.close()
 
