@@ -893,7 +893,7 @@ consider also specifying the same arguments to <code class="xref py py-func docu
 </div>
 <dl class="method">
 <dt id="pyfakefs.fake_filesystem_unittest.TestCaseMixin.setUpPyfakefs">
-<code class="descname">setUpPyfakefs</code><span class="sig-paren">(</span><em>additional_skip_names=None</em>, <em>modules_to_reload=None</em>, <em>modules_to_patch=None</em>, <em>allow_root_user=True</em>, <em>use_known_patches=True</em>, <em>patch_open_code=&lt;PatchMode.OFF: 1&gt;</em>, <em>patch_default_args=False</em>, <em>use_cache=True</em><span class="sig-paren">)</span><a class="headerlink" href="#pyfakefs.fake_filesystem_unittest.TestCaseMixin.setUpPyfakefs" title="Permalink to this definition">¶</a></dt>
+<code class="descname">setUpPyfakefs</code><span class="sig-paren">(</span><em>additional_skip_names: Optional[List[Union[str</em>, <em>module]]] = None</em>, <em>modules_to_reload: Optional[List[module]] = None</em>, <em>modules_to_patch: Optional[Dict[str</em>, <em>module]] = None</em>, <em>allow_root_user: bool = True</em>, <em>use_known_patches: bool = True</em>, <em>patch_open_code: pyfakefs.fake_filesystem.PatchMode = &lt;PatchMode.OFF: 1&gt;</em>, <em>patch_default_args: bool = False</em>, <em>use_cache: bool = True</em><span class="sig-paren">)</span> &#x2192; None<a class="headerlink" href="#pyfakefs.fake_filesystem_unittest.TestCaseMixin.setUpPyfakefs" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bind the file-related modules to the <code class="xref py py-class docutils literal notranslate"><span class="pre">pyfakefs</span></code> fake file
 system instead of the real file system.  Also bind the fake <cite>open()</cite>
 function.</p>
@@ -907,7 +907,7 @@ convenient way to adapt the setting than overwriting <cite>__init__()</cite>.</p
 
 <dl class="method">
 <dt id="pyfakefs.fake_filesystem_unittest.TestCaseMixin.pause">
-<code class="descname">pause</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#pyfakefs.fake_filesystem_unittest.TestCaseMixin.pause" title="Permalink to this definition">¶</a></dt>
+<code class="descname">pause</code><span class="sig-paren">(</span><span class="sig-paren">)</span> &#x2192; None<a class="headerlink" href="#pyfakefs.fake_filesystem_unittest.TestCaseMixin.pause" title="Permalink to this definition">¶</a></dt>
 <dd><p>Pause the patching of the file system modules until <cite>resume</cite> is
 called. After that call, all file system calls are executed in the
 real file system.
@@ -916,7 +916,7 @@ Calling pause() twice is silently ignored.</p>
 
 <dl class="method">
 <dt id="pyfakefs.fake_filesystem_unittest.TestCaseMixin.resume">
-<code class="descname">resume</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#pyfakefs.fake_filesystem_unittest.TestCaseMixin.resume" title="Permalink to this definition">¶</a></dt>
+<code class="descname">resume</code><span class="sig-paren">(</span><span class="sig-paren">)</span> &#x2192; None<a class="headerlink" href="#pyfakefs.fake_filesystem_unittest.TestCaseMixin.resume" title="Permalink to this definition">¶</a></dt>
 <dd><p>Resume the patching of the file system modules if <cite>pause</cite> has
 been called before. After that call, all file system calls are
 executed in the fake file system.
@@ -927,7 +927,7 @@ Does nothing if patching is not paused.</p>
 
 <dl class="class">
 <dt id="pyfakefs.fake_filesystem_unittest.TestCase">
-<em class="property">class </em><code class="descclassname">pyfakefs.fake_filesystem_unittest.</code><code class="descname">TestCase</code><span class="sig-paren">(</span><em>methodName='runTest'</em>, <em>additional_skip_names=None</em>, <em>modules_to_reload=None</em>, <em>modules_to_patch=None</em><span class="sig-paren">)</span><a class="headerlink" href="#pyfakefs.fake_filesystem_unittest.TestCase" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><code class="descclassname">pyfakefs.fake_filesystem_unittest.</code><code class="descname">TestCase</code><span class="sig-paren">(</span><em>methodName: str = 'runTest'</em>, <em>additional_skip_names: Optional[List[Union[str</em>, <em>module]]] = None</em>, <em>modules_to_reload: Optional[List[module]] = None</em>, <em>modules_to_patch: Optional[Dict[str</em>, <em>module]] = None</em><span class="sig-paren">)</span><a class="headerlink" href="#pyfakefs.fake_filesystem_unittest.TestCase" title="Permalink to this definition">¶</a></dt>
 <dd><p>Test case class that automatically replaces file-system related
 modules by fake implementations. Inherits <a class="reference internal" href="#pyfakefs.fake_filesystem_unittest.TestCaseMixin" title="pyfakefs.fake_filesystem_unittest.TestCaseMixin"><code class="xref py py-class docutils literal notranslate"><span class="pre">TestCaseMixin</span></code></a>.</p>
 <p>The arguments are explained in <a class="reference internal" href="#pyfakefs.fake_filesystem_unittest.TestCaseMixin" title="pyfakefs.fake_filesystem_unittest.TestCaseMixin"><code class="xref py py-class docutils literal notranslate"><span class="pre">TestCaseMixin</span></code></a>.</p>
@@ -946,7 +946,7 @@ unittest.TestCase)</td>
 
 <dl class="class">
 <dt id="pyfakefs.fake_filesystem_unittest.Patcher">
-<em class="property">class </em><code class="descclassname">pyfakefs.fake_filesystem_unittest.</code><code class="descname">Patcher</code><span class="sig-paren">(</span><em>additional_skip_names=None</em>, <em>modules_to_reload=None</em>, <em>modules_to_patch=None</em>, <em>allow_root_user=True</em>, <em>use_known_patches=True</em>, <em>patch_open_code=&lt;PatchMode.OFF: 1&gt;</em>, <em>patch_default_args=False</em>, <em>use_cache=True</em><span class="sig-paren">)</span><a class="headerlink" href="#pyfakefs.fake_filesystem_unittest.Patcher" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><code class="descclassname">pyfakefs.fake_filesystem_unittest.</code><code class="descname">Patcher</code><span class="sig-paren">(</span><em>additional_skip_names: Optional[List[Union[str</em>, <em>module]]] = None</em>, <em>modules_to_reload: Optional[List[module]] = None</em>, <em>modules_to_patch: Optional[Dict[str</em>, <em>module]] = None</em>, <em>allow_root_user: bool = True</em>, <em>use_known_patches: bool = True</em>, <em>patch_open_code: pyfakefs.fake_filesystem.PatchMode = &lt;PatchMode.OFF: 1&gt;</em>, <em>patch_default_args: bool = False</em>, <em>use_cache: bool = True</em><span class="sig-paren">)</span><a class="headerlink" href="#pyfakefs.fake_filesystem_unittest.Patcher" title="Permalink to this definition">¶</a></dt>
 <dd><p>Instantiate a stub creator to bind and un-bind the file-related modules to
 the <code class="xref py py-mod docutils literal notranslate"><span class="pre">pyfakefs</span></code> fake modules.</p>
 <p>The arguments are explained in <a class="reference internal" href="#pyfakefs.fake_filesystem_unittest.TestCaseMixin" title="pyfakefs.fake_filesystem_unittest.TestCaseMixin"><code class="xref py py-class docutils literal notranslate"><span class="pre">TestCaseMixin</span></code></a>.</p>
@@ -999,20 +999,20 @@ causes any problems.</li>
 </table>
 <dl class="method">
 <dt id="pyfakefs.fake_filesystem_unittest.Patcher.setUp">
-<code class="descname">setUp</code><span class="sig-paren">(</span><em>doctester=None</em><span class="sig-paren">)</span><a class="headerlink" href="#pyfakefs.fake_filesystem_unittest.Patcher.setUp" title="Permalink to this definition">¶</a></dt>
+<code class="descname">setUp</code><span class="sig-paren">(</span><em>doctester: Any = None</em><span class="sig-paren">)</span> &#x2192; None<a class="headerlink" href="#pyfakefs.fake_filesystem_unittest.Patcher.setUp" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bind the file-related modules to the <code class="xref py py-mod docutils literal notranslate"><span class="pre">pyfakefs</span></code> fake
 modules real ones.  Also bind the fake <cite>file()</cite> and <cite>open()</cite> functions.</p>
 </dd></dl>
 
 <dl class="method">
 <dt id="pyfakefs.fake_filesystem_unittest.Patcher.tearDown">
-<code class="descname">tearDown</code><span class="sig-paren">(</span><em>doctester=None</em><span class="sig-paren">)</span><a class="headerlink" href="#pyfakefs.fake_filesystem_unittest.Patcher.tearDown" title="Permalink to this definition">¶</a></dt>
+<code class="descname">tearDown</code><span class="sig-paren">(</span><em>doctester: Any = None</em><span class="sig-paren">)</span><a class="headerlink" href="#pyfakefs.fake_filesystem_unittest.Patcher.tearDown" title="Permalink to this definition">¶</a></dt>
 <dd><p>Clear the fake filesystem bindings created by <cite>setUp()</cite>.</p>
 </dd></dl>
 
 <dl class="method">
 <dt id="pyfakefs.fake_filesystem_unittest.Patcher.pause">
-<code class="descname">pause</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#pyfakefs.fake_filesystem_unittest.Patcher.pause" title="Permalink to this definition">¶</a></dt>
+<code class="descname">pause</code><span class="sig-paren">(</span><span class="sig-paren">)</span> &#x2192; None<a class="headerlink" href="#pyfakefs.fake_filesystem_unittest.Patcher.pause" title="Permalink to this definition">¶</a></dt>
 <dd><p>Pause the patching of the file system modules until <cite>resume</cite> is
 called. After that call, all file system calls are executed in the
 real file system.
@@ -1021,7 +1021,7 @@ Calling pause() twice is silently ignored.</p>
 
 <dl class="method">
 <dt id="pyfakefs.fake_filesystem_unittest.Patcher.resume">
-<code class="descname">resume</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#pyfakefs.fake_filesystem_unittest.Patcher.resume" title="Permalink to this definition">¶</a></dt>
+<code class="descname">resume</code><span class="sig-paren">(</span><span class="sig-paren">)</span> &#x2192; None<a class="headerlink" href="#pyfakefs.fake_filesystem_unittest.Patcher.resume" title="Permalink to this definition">¶</a></dt>
 <dd><p>Resume the patching of the file system modules if <cite>pause</cite> has
 been called before. After that call, all file system calls are
 executed in the fake file system.
@@ -1048,7 +1048,7 @@ pyfakefs by simply changing their base class from <cite>:py:class`unittest.TestC
 to <cite>:py:class`pyfakefs.fake_filesystem_unittest.TestCase</cite>.</p>
 <dl class="function">
 <dt id="pyfakefs.fake_filesystem_unittest.patchfs">
-<code class="descclassname">pyfakefs.fake_filesystem_unittest.</code><code class="descname">patchfs</code><span class="sig-paren">(</span><em>_func=None</em>, <em>*</em>, <em>additional_skip_names=None</em>, <em>modules_to_reload=None</em>, <em>modules_to_patch=None</em>, <em>allow_root_user=True</em>, <em>use_known_patches=True</em>, <em>patch_open_code=&lt;PatchMode.OFF: 1&gt;</em>, <em>patch_default_args=False</em>, <em>use_cache=True</em><span class="sig-paren">)</span><a class="headerlink" href="#pyfakefs.fake_filesystem_unittest.patchfs" title="Permalink to this definition">¶</a></dt>
+<code class="descclassname">pyfakefs.fake_filesystem_unittest.</code><code class="descname">patchfs</code><span class="sig-paren">(</span><em>_func: Callable = None</em>, <em>*</em>, <em>additional_skip_names: Optional[List[Union[str</em>, <em>module]]] = None</em>, <em>modules_to_reload: Optional[List[module]] = None</em>, <em>modules_to_patch: Optional[Dict[str</em>, <em>module]] = None</em>, <em>allow_root_user: bool = True</em>, <em>use_known_patches: bool = True</em>, <em>patch_open_code: pyfakefs.fake_filesystem.PatchMode = &lt;PatchMode.OFF: 1&gt;</em>, <em>patch_default_args: bool = False</em>, <em>use_cache: bool = True</em><span class="sig-paren">)</span> &#x2192; Callable<a class="headerlink" href="#pyfakefs.fake_filesystem_unittest.patchfs" title="Permalink to this definition">¶</a></dt>
 <dd><p>Convenience decorator to use patcher with additional parameters in a
 test function.</p>
 <p>Usage:</p>
@@ -1264,7 +1264,7 @@ that is available on pypi.</p>
         &#169; Copyright 2009 Google Inc. All Rights Reserved.
 © Copyright 2014 Altera Corporation. All Rights Reserved.
 © Copyright 2014-2021 John McGehee.
-      Last updated on Jul 06, 2021.
+      Last updated on Jul 15, 2021.
     </div>
   </body>
 </html>
