@@ -1797,7 +1797,7 @@ class FakeOsModuleTest(FakeOsModuleTestBase):
             self.os.fsync(test_fd)
             # And just for sanity, double-check that this still raises
             self.assert_raises_os_error(errno.EBADF,
-                                        self.os.fsync, test_fd + 10)
+                                        self.os.fsync, test_fd + 500)
 
     def test_fsync_pass_windows(self):
         self.check_windows_only()
@@ -1809,7 +1809,7 @@ class FakeOsModuleTest(FakeOsModuleTestBase):
             self.os.fsync(test_fd)
             # And just for sanity, double-check that this still raises
             self.assert_raises_os_error(errno.EBADF,
-                                        self.os.fsync, test_fd + 10)
+                                        self.os.fsync, test_fd + 500)
         with self.open(test_file_path, 'r') as test_file:
             test_fd = test_file.fileno()
             self.assert_raises_os_error(errno.EBADF, self.os.fsync, test_fd)
@@ -1825,7 +1825,7 @@ class FakeOsModuleTest(FakeOsModuleTestBase):
         self.os.fdatasync(test_fd)
         # And just for sanity, double-check that this still raises
         self.assert_raises_os_error(errno.EBADF,
-                                    self.os.fdatasync, test_fd + 10)
+                                    self.os.fdatasync, test_fd + 500)
 
     def test_access700(self):
         # set up
