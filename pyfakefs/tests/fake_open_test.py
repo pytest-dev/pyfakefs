@@ -87,6 +87,8 @@ class FakeFileOpenTest(FakeFileOpenTestBase):
         # called.
         self.assertFalse(self.os.path.exists(file_path))
 
+    @unittest.skipIf(sys.version_info < (3, 7),
+                     'Test fails for Python 3.6 on ubuntu: https://github.com/jmcgeheeiv/pyfakefs/issues/623')
     def test_unicode_contents(self):
         file_path = self.make_path('foo')
         # note that this will work only if the string can be represented
@@ -110,6 +112,8 @@ class FakeFileOpenTest(FakeFileOpenTestBase):
             contents = f.read()
         self.assertEqual(contents, byte_fractions.decode('utf-8'))
 
+    @unittest.skipIf(sys.version_info < (3, 7),
+                     'Test fails for Python 3.6 on ubuntu: https://github.com/jmcgeheeiv/pyfakefs/issues/623')
     def test_write_str_read_bytes(self):
         file_path = self.make_path('foo')
         str_contents = 'Äsgül'
