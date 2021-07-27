@@ -93,8 +93,13 @@ class FakeFileOpenTest(FakeFileOpenTestBase):
         # by the locale preferred encoding - which under Windows is
         # usually not UTF-8, but something like Latin1, depending on the locale
         text_fractions = 'Ümläüts'
-        with self.open(file_path, 'w') as f:
-            f.write(text_fractions)
+        try:
+            with self.open(file_path, 'w') as f:
+                f.write(text_fractions)
+        except UnicodeEncodeError:
+            # see https://github.com/jmcgeheeiv/pyfakefs/issues/623
+            self.skipTest("This test does not work with an ASCII locale")
+
         with self.open(file_path) as f:
             contents = f.read()
         self.assertEqual(contents, text_fractions)
@@ -113,8 +118,12 @@ class FakeFileOpenTest(FakeFileOpenTestBase):
     def test_write_str_read_bytes(self):
         file_path = self.make_path('foo')
         str_contents = 'Äsgül'
-        with self.open(file_path, 'w') as f:
-            f.write(str_contents)
+        try:
+            with self.open(file_path, 'w') as f:
+                f.write(str_contents)
+        except UnicodeEncodeError:
+            # see https://github.com/jmcgeheeiv/pyfakefs/issues/623
+            self.skipTest("This test does not work with an ASCII locale")
         with self.open(file_path, 'rb') as f:
             contents = f.read()
         self.assertEqual(str_contents, contents.decode(
