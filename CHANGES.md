@@ -11,6 +11,8 @@ The released versions correspond to PyPi releases.
 
 ### Infrastructure
 * added test dependency check (see [#608](../../issues/608))
+* skip tests failing with ASCII locale
+  (see [#623](../../issues/623))
 
 ## [Version 4.5.0](https://pypi.python.org/pypi/pyfakefs/4.5.0) (2021-06-04)
 Adds some support for Python 3.10 and basic type checking.
