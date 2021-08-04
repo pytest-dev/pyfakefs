@@ -8,6 +8,8 @@ The released versions correspond to PyPi releases.
 * improved handling of `str`/`bytes` paths
 * suppress all warnings while inspecting loaded modules
   (see [#614](../../issues/614))
+* do not import pandas and related modules if it is not patched
+  (see [#627](../../issues/627))
 
 ### Infrastructure
 * added test dependency check (see [#608](../../issues/608))

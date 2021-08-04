@@ -59,9 +59,6 @@ from pyfakefs.fake_filesystem import (
 )
 from pyfakefs.helpers import IS_PYPY
 from pyfakefs.mox3_stubout import StubOutForTesting
-from pyfakefs.patched_packages import (
-    get_modules_to_patch, get_classes_to_patch, get_fake_module_classes
-)
 
 try:
     from importlib.machinery import ModuleSpec
@@ -474,6 +471,11 @@ class Patcher:
         self.use_cache = use_cache
 
         if use_known_patches:
+            from pyfakefs.patched_packages import (
+                get_modules_to_patch, get_classes_to_patch,
+                get_fake_module_classes
+            )
+
             modules_to_patch = modules_to_patch or {}
             modules_to_patch.update(get_modules_to_patch())
             self._class_modules.update(get_classes_to_patch())
