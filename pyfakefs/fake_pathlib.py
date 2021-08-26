@@ -731,11 +731,39 @@ class FakePathlibModule:
         """
         __slots__ = ()
 
+        def owner(self):
+            raise NotImplementedError(
+                "Path.owner() is unsupported on this system")
+
+        def group(self):
+            raise NotImplementedError(
+                "Path.group() is unsupported on this system")
+
+        def is_mount(self):
+            raise NotImplementedError(
+                "Path.is_mount() is unsupported on this system")
+
     class PosixPath(FakePath, PurePosixPath):
         """A subclass of Path and PurePosixPath that represents
         concrete non-Windows filesystem paths.
         """
         __slots__ = ()
+
+        def owner(self):
+            """Return the current user name. It is assumed that the fake
+            file system was created by the current user.
+            """
+            import pwd
+
+            return pwd.getpwuid(os.getuid()).pw_name
+
+        def group(self):
+            """Return the current group name. It is assumed that the fake
+            file system was created by the current user.
+            """
+            import grp
+
+            return grp.getgrgid(os.getgid()).gr_name
 
     Path = FakePath
 

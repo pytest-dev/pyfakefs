@@ -1056,6 +1056,24 @@ class FakePathlibUsageInOsFunctionsTest(RealPathlibTestCase):
         st = self.os.stat(path)
         self.assertEqual(4, st.st_size)
 
+    @unittest.skipIf(sys.platform == 'win32',
+                     'no pwd and grp modules in Windows')
+    def test_owner_and_group_posix(self):
+        self.check_posix_only()
+        path = self.make_path('some_file')
+        self.create_file(path)
+        self.assertTrue(self.path(path).owner())
+        self.assertTrue(self.path(path).group())
+
+    def test_owner_and_group_windows(self):
+        self.check_windows_only()
+        path = self.make_path('some_file')
+        self.create_file(path)
+        with self.assertRaises(NotImplementedError):
+            self.path(path).owner()
+        with self.assertRaises(NotImplementedError):
+            self.path(path).group()
+
 
 class RealPathlibUsageInOsFunctionsTest(FakePathlibUsageInOsFunctionsTest):
     def use_real_fs(self):
