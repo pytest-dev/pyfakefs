@@ -112,6 +112,9 @@ for automatic tests in
 <a class="reference external" href="https://ci.appveyor.com/project/jmcgeheeiv/pyfakefs">AppVeyor</a> are
 considered as reference systems, additionally the tests are run in Docker
 containers with the latest CentOS, Debian, Fedora and Ubuntu images.</li>
+<li>pyfakefs may not work correctly if file system functions are patched by
+other means (e.g. using <cite>unittest.mock.patch</cite>) - see
+<a class="reference internal" href="usage.html#usage-with-mock-open"><span class="std std-ref">Pyfakefs and mock_open</span></a> for more information</li>
 </ul>
 </div>
 <div class="section" id="history">

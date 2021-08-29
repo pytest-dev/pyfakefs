@@ -870,6 +870,20 @@ tests as non-root user in a root user environment and vice verse.
 Another possibility to run tests as non-root user in a root user environment
 is the convenience argument <a class="reference internal" href="#allow-root-user"><span class="std std-ref">allow_root_user</span></a>.</p>
 </div>
+<div class="section" id="pyfakefs-and-mock-open">
+<span id="usage-with-mock-open"></span><h3>Pyfakefs and mock_open<a class="headerlink" href="#pyfakefs-and-mock-open" title="Permalink to this headline">¶</a></h3>
+<p>If you patch <code class="docutils literal notranslate"><span class="pre">open</span></code> using <code class="docutils literal notranslate"><span class="pre">mock_open</span></code> before the initialization of
+<code class="docutils literal notranslate"><span class="pre">pyfakefs</span></code>, it will not work properly, because the <code class="docutils literal notranslate"><span class="pre">pyfakefs</span></code>
+initialization relies on <code class="docutils literal notranslate"><span class="pre">open</span></code> working correctly.
+Generally, you should not need <code class="docutils literal notranslate"><span class="pre">mock_open</span></code> if using <code class="docutils literal notranslate"><span class="pre">pyfakefs</span></code>, because you
+always can create the files with the needed content using <code class="docutils literal notranslate"><span class="pre">create_file</span></code>.
+This is true for patching any filesystem functions - avoid patching them
+while working with <code class="docutils literal notranslate"><span class="pre">pyfakefs</span></code>.
+If you still want to use <code class="docutils literal notranslate"><span class="pre">mock_open</span></code>, make sure it is only used while
+patching is in progress. For example, if you are using <code class="docutils literal notranslate"><span class="pre">pytest</span></code> with the
+<code class="docutils literal notranslate"><span class="pre">mocker</span></code> fixture used to patch <code class="docutils literal notranslate"><span class="pre">open</span></code>, make sure that the <code class="docutils literal notranslate"><span class="pre">fs</span></code> fixture is
+passed before the <code class="docutils literal notranslate"><span class="pre">mocker</span></code> fixture to ensure this.</p>
+</div>
 </div>
 </div>
 
@@ -924,6 +938,7 @@ is the convenience argument <a class="reference internal" href="#allow-root-user
 <li><a class="reference internal" href="#pyfakefs-behaves-differently-than-the-real-filesystem">Pyfakefs behaves differently than the real filesystem</a></li>
 <li><a class="reference internal" href="#os-temporary-directories">OS temporary directories</a></li>
 <li><a class="reference internal" href="#user-rights">User rights</a></li>
+<li><a class="reference internal" href="#pyfakefs-and-mock-open">Pyfakefs and mock_open</a></li>
 </ul>
 </li>
 </ul>
