@@ -5,7 +5,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Public Modules and Classes &#8212; pyfakefs 4.5.0 documentation</title>
+    <title>Public Modules and Classes &#8212; pyfakefs 4.5.1 documentation</title>
     <link rel="stylesheet" href="_static/pyfakefs.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
     <script id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
@@ -33,7 +33,7 @@
         <li class="right" >
           <a href="autopatch.html" title="Automatically find and patch file functions and modules"
              accesskey="P">previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="index.html">pyfakefs 4.5.0 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="index.html">pyfakefs 4.5.1 documentation</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">Public Modules and Classes</a></li> 
       </ul>
     </div>  
@@ -140,7 +140,7 @@ replacements.</p></li>
 </div>
 <dl class="py function">
 <dt id="pyfakefs.fake_filesystem.set_uid">
-<code class="sig-prename descclassname">pyfakefs.fake_filesystem.</code><code class="sig-name descname">set_uid</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">uid</span></em><span class="sig-paren">)</span><a class="headerlink" href="#pyfakefs.fake_filesystem.set_uid" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">pyfakefs.fake_filesystem.</code><code class="sig-name descname">set_uid</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">uid</span><span class="p">:</span> <span class="n">int</span></em><span class="sig-paren">)</span> &#x2192; None<a class="headerlink" href="#pyfakefs.fake_filesystem.set_uid" title="Permalink to this definition">¶</a></dt>
 <dd><p>Set the global user id. This is used as st_uid for new files
 and to differentiate between a normal user and the root user (uid 0).
 For the root user, some permission restrictions are ignored.</p>
@@ -153,7 +153,7 @@ For the root user, some permission restrictions are ignored.</p>
 
 <dl class="py function">
 <dt id="pyfakefs.fake_filesystem.set_gid">
-<code class="sig-prename descclassname">pyfakefs.fake_filesystem.</code><code class="sig-name descname">set_gid</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">gid</span></em><span class="sig-paren">)</span><a class="headerlink" href="#pyfakefs.fake_filesystem.set_gid" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">pyfakefs.fake_filesystem.</code><code class="sig-name descname">set_gid</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">gid</span><span class="p">:</span> <span class="n">int</span></em><span class="sig-paren">)</span> &#x2192; None<a class="headerlink" href="#pyfakefs.fake_filesystem.set_gid" title="Permalink to this definition">¶</a></dt>
 <dd><p>Set the global group id. This is only used to set st_gid for new files,
 no permision checks are performed.</p>
 <dl class="field-list simple">
@@ -168,7 +168,7 @@ no permision checks are performed.</p>
 <h2>Fake filesystem classes<a class="headerlink" href="#fake-filesystem-classes" title="Permalink to this headline">¶</a></h2>
 <dl class="py class">
 <dt id="pyfakefs.fake_filesystem.FakeFilesystem">
-<em class="property">class </em><code class="sig-prename descclassname">pyfakefs.fake_filesystem.</code><code class="sig-name descname">FakeFilesystem</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">path_separator</span><span class="o">=</span><span class="default_value">'\\'</span></em>, <em class="sig-param"><span class="n">total_size</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">patcher</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="headerlink" href="#pyfakefs.fake_filesystem.FakeFilesystem" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><code class="sig-prename descclassname">pyfakefs.fake_filesystem.</code><code class="sig-name descname">FakeFilesystem</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">path_separator</span><span class="p">:</span> <span class="n">str</span> <span class="o">=</span> <span class="default_value">'\\'</span></em>, <em class="sig-param"><span class="n">total_size</span><span class="p">:</span> <span class="n">int</span> <span class="o">=</span> <span class="default_value">None</span></em>, <em class="sig-param"><span class="n">patcher</span><span class="p">:</span> <span class="n">Any</span> <span class="o">=</span> <span class="default_value">None</span></em><span class="sig-paren">)</span><a class="headerlink" href="#pyfakefs.fake_filesystem.FakeFilesystem" title="Permalink to this definition">¶</a></dt>
 <dd><p>Provides the appearance of a real directory tree for unit testing.</p>
 <dl class="py attribute">
 <dt id="pyfakefs.fake_filesystem.FakeFilesystem.path_separator">
@@ -240,7 +240,7 @@ root filesystem.</p></li>
 </div>
 <dl class="py method">
 <dt id="pyfakefs.fake_filesystem.FakeFilesystem.pause">
-<code class="sig-name descname">pause</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#pyfakefs.fake_filesystem.FakeFilesystem.pause" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname">pause</code><span class="sig-paren">(</span><span class="sig-paren">)</span> &#x2192; None<a class="headerlink" href="#pyfakefs.fake_filesystem.FakeFilesystem.pause" title="Permalink to this definition">¶</a></dt>
 <dd><p>Pause the patching of the file system modules until <cite>resume</cite> is
 called. After that call, all file system calls are executed in the
 real file system.
@@ -256,7 +256,7 @@ Patcher object. This is also the case for the pytest <cite>fs</cite> fixture.</p
 
 <dl class="py method">
 <dt id="pyfakefs.fake_filesystem.FakeFilesystem.resume">
-<code class="sig-name descname">resume</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#pyfakefs.fake_filesystem.FakeFilesystem.resume" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname">resume</code><span class="sig-paren">(</span><span class="sig-paren">)</span> &#x2192; None<a class="headerlink" href="#pyfakefs.fake_filesystem.FakeFilesystem.resume" title="Permalink to this definition">¶</a></dt>
 <dd><p>Resume the patching of the file system modules if <cite>pause</cite> has
 been called before. After that call, all file system calls are
 executed in the fake file system.
@@ -266,7 +266,7 @@ Does nothing if patching is not paused.
 
 <dl class="py method">
 <dt id="pyfakefs.fake_filesystem.FakeFilesystem.add_mount_point">
-<code class="sig-name descname">add_mount_point</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">path</span></em>, <em class="sig-param"><span class="n">total_size</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="headerlink" href="#pyfakefs.fake_filesystem.FakeFilesystem.add_mount_point" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname">add_mount_point</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">path</span><span class="p">:</span> <span class="n">AnyStr</span></em>, <em class="sig-param"><span class="n">total_size</span><span class="p">:</span> <span class="n">Optional<span class="p">[</span>int<span class="p">]</span></span> <span class="o">=</span> <span class="default_value">None</span></em><span class="sig-paren">)</span> &#x2192; Dict<a class="headerlink" href="#pyfakefs.fake_filesystem.FakeFilesystem.add_mount_point" title="Permalink to this definition">¶</a></dt>
 <dd><p>Add a new mount point for a filesystem device.
 The mount point gets a new unique device number.</p>
 <dl class="field-list simple">
@@ -288,7 +288,7 @@ in bytes. Defaults to infinite size.</p></li>
 
 <dl class="py method">
 <dt id="pyfakefs.fake_filesystem.FakeFilesystem.get_disk_usage">
-<code class="sig-name descname">get_disk_usage</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">path</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="headerlink" href="#pyfakefs.fake_filesystem.FakeFilesystem.get_disk_usage" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname">get_disk_usage</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">path</span><span class="p">:</span> <span class="n">AnyStr</span> <span class="o">=</span> <span class="default_value">None</span></em><span class="sig-paren">)</span> &#x2192; Tuple<span class="p">[</span>int<span class="p">, </span>int<span class="p">, </span>int<span class="p">]</span><a class="headerlink" href="#pyfakefs.fake_filesystem.FakeFilesystem.get_disk_usage" title="Permalink to this definition">¶</a></dt>
 <dd><p>Return the total, used and free disk space in bytes as named tuple,
 or placeholder values simulating unlimited space if not set.</p>
 <div class="admonition note">
@@ -306,8 +306,9 @@ Defaults to the root path (e.g. ‘/’ on Unix systems).</p>
 
 <dl class="py method">
 <dt id="pyfakefs.fake_filesystem.FakeFilesystem.set_disk_usage">
-<code class="sig-name descname">set_disk_usage</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">total_size</span></em>, <em class="sig-param"><span class="n">path</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="headerlink" href="#pyfakefs.fake_filesystem.FakeFilesystem.set_disk_usage" title="Permalink to this definition">¶</a></dt>
-<dd><p>Changes the total size of the file system, preserving the used space.
+<code class="sig-name descname">set_disk_usage</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">total_size</span><span class="p">:</span> <span class="n">int</span></em>, <em class="sig-param"><span class="n">path</span><span class="p">:</span> <span class="n">Optional<span class="p">[</span>AnyStr<span class="p">]</span></span> <span class="o">=</span> <span class="default_value">None</span></em><span class="sig-paren">)</span> &#x2192; None<a class="headerlink" href="#pyfakefs.fake_filesystem.FakeFilesystem.set_disk_usage" title="Permalink to this definition">¶</a></dt>
+<dd><p>Changes the total size of the file system, preserving the
+used space.
 Example usage: set the size of an auto-mounted Windows drive.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
@@ -326,7 +327,7 @@ Defaults to the root path (e.g. ‘/’ on Unix systems).</p></li>
 
 <dl class="py method">
 <dt id="pyfakefs.fake_filesystem.FakeFilesystem.get_object">
-<code class="sig-name descname">get_object</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">file_path</span></em>, <em class="sig-param"><span class="n">check_read_perm</span><span class="o">=</span><span class="default_value">True</span></em><span class="sig-paren">)</span><a class="headerlink" href="#pyfakefs.fake_filesystem.FakeFilesystem.get_object" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname">get_object</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">file_path</span><span class="p">:</span> <span class="n">Union<span class="p">[</span>AnyStr<span class="p">, </span>os.PathLike<span class="p">]</span></span></em>, <em class="sig-param"><span class="n">check_read_perm</span><span class="p">:</span> <span class="n">bool</span> <span class="o">=</span> <span class="default_value">True</span></em><span class="sig-paren">)</span> &#x2192; <a class="reference internal" href="#pyfakefs.fake_filesystem.FakeFile" title="pyfakefs.fake_filesystem.FakeFile">pyfakefs.fake_filesystem.FakeFile</a><a class="headerlink" href="#pyfakefs.fake_filesystem.FakeFilesystem.get_object" title="Permalink to this definition">¶</a></dt>
 <dd><p>Search for the specified filesystem object within the fake
 filesystem.</p>
 <dl class="field-list simple">
@@ -348,7 +349,7 @@ does not have read permission</p></li>
 
 <dl class="py method">
 <dt id="pyfakefs.fake_filesystem.FakeFilesystem.create_dir">
-<code class="sig-name descname">create_dir</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">directory_path</span></em>, <em class="sig-param"><span class="n">perm_bits</span><span class="o">=</span><span class="default_value">511</span></em><span class="sig-paren">)</span><a class="headerlink" href="#pyfakefs.fake_filesystem.FakeFilesystem.create_dir" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname">create_dir</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">directory_path</span><span class="p">:</span> <span class="n">Union<span class="p">[</span>AnyStr<span class="p">, </span>os.PathLike<span class="p">]</span></span></em>, <em class="sig-param"><span class="n">perm_bits</span><span class="p">:</span> <span class="n">int</span> <span class="o">=</span> <span class="default_value">511</span></em><span class="sig-paren">)</span> &#x2192; <a class="reference internal" href="#pyfakefs.fake_filesystem.FakeDirectory" title="pyfakefs.fake_filesystem.FakeDirectory">pyfakefs.fake_filesystem.FakeDirectory</a><a class="headerlink" href="#pyfakefs.fake_filesystem.FakeFilesystem.create_dir" title="Permalink to this definition">¶</a></dt>
 <dd><p>Create <cite>directory_path</cite>, and all the parent directories.</p>
 <p>Helper method to set up your test faster.</p>
 <dl class="field-list simple">
@@ -369,7 +370,7 @@ does not have read permission</p></li>
 
 <dl class="py method">
 <dt id="pyfakefs.fake_filesystem.FakeFilesystem.create_file">
-<code class="sig-name descname">create_file</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">file_path</span></em>, <em class="sig-param"><span class="n">st_mode</span><span class="o">=</span><span class="default_value">33206</span></em>, <em class="sig-param"><span class="n">contents</span><span class="o">=</span><span class="default_value">''</span></em>, <em class="sig-param"><span class="n">st_size</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">create_missing_dirs</span><span class="o">=</span><span class="default_value">True</span></em>, <em class="sig-param"><span class="n">apply_umask</span><span class="o">=</span><span class="default_value">False</span></em>, <em class="sig-param"><span class="n">encoding</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">errors</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">side_effect</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="headerlink" href="#pyfakefs.fake_filesystem.FakeFilesystem.create_file" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname">create_file</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">file_path</span><span class="p">:</span> <span class="n">AnyStr</span></em>, <em class="sig-param"><span class="n">st_mode</span><span class="p">:</span> <span class="n">int</span> <span class="o">=</span> <span class="default_value">33206</span></em>, <em class="sig-param"><span class="n">contents</span><span class="p">:</span> <span class="n">Union<span class="p">[</span>str<span class="p">, </span>bytes<span class="p">]</span></span> <span class="o">=</span> <span class="default_value">''</span></em>, <em class="sig-param"><span class="n">st_size</span><span class="p">:</span> <span class="n">Optional<span class="p">[</span>int<span class="p">]</span></span> <span class="o">=</span> <span class="default_value">None</span></em>, <em class="sig-param"><span class="n">create_missing_dirs</span><span class="p">:</span> <span class="n">bool</span> <span class="o">=</span> <span class="default_value">True</span></em>, <em class="sig-param"><span class="n">apply_umask</span><span class="p">:</span> <span class="n">bool</span> <span class="o">=</span> <span class="default_value">False</span></em>, <em class="sig-param"><span class="n">encoding</span><span class="p">:</span> <span class="n">Optional<span class="p">[</span>str<span class="p">]</span></span> <span class="o">=</span> <span class="default_value">None</span></em>, <em class="sig-param"><span class="n">errors</span><span class="p">:</span> <span class="n">Optional<span class="p">[</span>str<span class="p">]</span></span> <span class="o">=</span> <span class="default_value">None</span></em>, <em class="sig-param"><span class="n">side_effect</span><span class="p">:</span> <span class="n">Optional<span class="p">[</span>Callable<span class="p">]</span></span> <span class="o">=</span> <span class="default_value">None</span></em><span class="sig-paren">)</span> &#x2192; <a class="reference internal" href="#pyfakefs.fake_filesystem.FakeFile" title="pyfakefs.fake_filesystem.FakeFile">pyfakefs.fake_filesystem.FakeFile</a><a class="headerlink" href="#pyfakefs.fake_filesystem.FakeFilesystem.create_file" title="Permalink to this definition">¶</a></dt>
 <dd><p>Create <cite>file_path</cite>, including all the parent directories along
 the way.</p>
 <p>This helper method can be used to set up tests more easily.</p>
@@ -407,7 +408,7 @@ must accept the file object as an argument.</p></li>
 
 <dl class="py method">
 <dt id="pyfakefs.fake_filesystem.FakeFilesystem.add_real_file">
-<code class="sig-name descname">add_real_file</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">source_path</span></em>, <em class="sig-param"><span class="n">read_only</span><span class="o">=</span><span class="default_value">True</span></em>, <em class="sig-param"><span class="n">target_path</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="headerlink" href="#pyfakefs.fake_filesystem.FakeFilesystem.add_real_file" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname">add_real_file</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">source_path</span><span class="p">:</span> <span class="n">AnyStr</span></em>, <em class="sig-param"><span class="n">read_only</span><span class="p">:</span> <span class="n">bool</span> <span class="o">=</span> <span class="default_value">True</span></em>, <em class="sig-param"><span class="n">target_path</span><span class="p">:</span> <span class="n">Optional<span class="p">[</span>AnyStr<span class="p">]</span></span> <span class="o">=</span> <span class="default_value">None</span></em><span class="sig-paren">)</span> &#x2192; <a class="reference internal" href="#pyfakefs.fake_filesystem.FakeFile" title="pyfakefs.fake_filesystem.FakeFile">pyfakefs.fake_filesystem.FakeFile</a><a class="headerlink" href="#pyfakefs.fake_filesystem.FakeFilesystem.add_real_file" title="Permalink to this definition">¶</a></dt>
 <dd><p>Create <cite>file_path</cite>, including all the parent directories along the
 way, for an existing real file. The contents of the real file are read
 only on demand.</p>
@@ -443,7 +444,7 @@ that <cite>pyfakefs</cite> must not modify the real file system.</p>
 
 <dl class="py method">
 <dt id="pyfakefs.fake_filesystem.FakeFilesystem.add_real_symlink">
-<code class="sig-name descname">add_real_symlink</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">source_path</span></em>, <em class="sig-param"><span class="n">target_path</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="headerlink" href="#pyfakefs.fake_filesystem.FakeFilesystem.add_real_symlink" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname">add_real_symlink</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">source_path</span><span class="p">:</span> <span class="n">Union<span class="p">[</span>AnyStr<span class="p">, </span>os.PathLike<span class="p">]</span></span></em>, <em class="sig-param"><span class="n">target_path</span><span class="p">:</span> <span class="n">Optional<span class="p">[</span>Union<span class="p">[</span>AnyStr<span class="p">, </span>os.PathLike<span class="p">]</span><span class="p">]</span></span> <span class="o">=</span> <span class="default_value">None</span></em><span class="sig-paren">)</span> &#x2192; <a class="reference internal" href="#pyfakefs.fake_filesystem.FakeFile" title="pyfakefs.fake_filesystem.FakeFile">pyfakefs.fake_filesystem.FakeFile</a><a class="headerlink" href="#pyfakefs.fake_filesystem.FakeFilesystem.add_real_symlink" title="Permalink to this definition">¶</a></dt>
 <dd><p>Create a symlink at source_path (or target_path, if given).  It will
 point to the same path as the symlink on the real filesystem.  Relative
 symlinks will point relative to their new location.  Absolute symlinks
@@ -453,11 +454,11 @@ will point to the same, absolute path as on the real filesystem.</p>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>source_path</strong> – The path to the existing symlink.</p></li>
 <li><p><strong>target_path</strong> – If given, the name of the symlink in the fake
-fileystem, otherwise, the same as <cite>source_path</cite>.</p></li>
+filesystem, otherwise, the same as <cite>source_path</cite>.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns</dt>
-<dd class="field-even"><p>the newly created FakeDirectory object.</p>
+<dd class="field-even"><p>the newly created FakeFile object.</p>
 </dd>
 <dt class="field-odd">Raises</dt>
 <dd class="field-odd"><ul class="simple">
@@ -472,7 +473,7 @@ fileystem, otherwise, the same as <cite>source_path</cite>.</p></li>
 
 <dl class="py method">
 <dt id="pyfakefs.fake_filesystem.FakeFilesystem.add_real_directory">
-<code class="sig-name descname">add_real_directory</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">source_path</span></em>, <em class="sig-param"><span class="n">read_only</span><span class="o">=</span><span class="default_value">True</span></em>, <em class="sig-param"><span class="n">lazy_read</span><span class="o">=</span><span class="default_value">True</span></em>, <em class="sig-param"><span class="n">target_path</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="headerlink" href="#pyfakefs.fake_filesystem.FakeFilesystem.add_real_directory" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname">add_real_directory</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">source_path</span><span class="p">:</span> <span class="n">Union<span class="p">[</span>AnyStr<span class="p">, </span>os.PathLike<span class="p">]</span></span></em>, <em class="sig-param"><span class="n">read_only</span><span class="p">:</span> <span class="n">bool</span> <span class="o">=</span> <span class="default_value">True</span></em>, <em class="sig-param"><span class="n">lazy_read</span><span class="p">:</span> <span class="n">bool</span> <span class="o">=</span> <span class="default_value">True</span></em>, <em class="sig-param"><span class="n">target_path</span><span class="p">:</span> <span class="n">Optional<span class="p">[</span>Union<span class="p">[</span>AnyStr<span class="p">, </span>os.PathLike<span class="p">]</span><span class="p">]</span></span> <span class="o">=</span> <span class="default_value">None</span></em><span class="sig-paren">)</span> &#x2192; <a class="reference internal" href="#pyfakefs.fake_filesystem.FakeDirectory" title="pyfakefs.fake_filesystem.FakeDirectory">pyfakefs.fake_filesystem.FakeDirectory</a><a class="headerlink" href="#pyfakefs.fake_filesystem.FakeFilesystem.add_real_directory" title="Permalink to this definition">¶</a></dt>
 <dd><p>Create a fake directory corresponding to the real directory at the
 specified path.  Add entries in the fake directory corresponding to
 the entries in the real directory.  Symlinks are supported.</p>
@@ -512,7 +513,7 @@ the target directory is the same as <cite>source_path</cite>.</p></li>
 
 <dl class="py method">
 <dt id="pyfakefs.fake_filesystem.FakeFilesystem.add_real_paths">
-<code class="sig-name descname">add_real_paths</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">path_list</span></em>, <em class="sig-param"><span class="n">read_only</span><span class="o">=</span><span class="default_value">True</span></em>, <em class="sig-param"><span class="n">lazy_dir_read</span><span class="o">=</span><span class="default_value">True</span></em><span class="sig-paren">)</span><a class="headerlink" href="#pyfakefs.fake_filesystem.FakeFilesystem.add_real_paths" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname">add_real_paths</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">path_list</span><span class="p">:</span> <span class="n">List</span></em>, <em class="sig-param"><span class="n">read_only</span><span class="p">:</span> <span class="n">bool</span> <span class="o">=</span> <span class="default_value">True</span></em>, <em class="sig-param"><span class="n">lazy_dir_read</span><span class="p">:</span> <span class="n">bool</span> <span class="o">=</span> <span class="default_value">True</span></em><span class="sig-paren">)</span> &#x2192; None<a class="headerlink" href="#pyfakefs.fake_filesystem.FakeFilesystem.add_real_paths" title="Permalink to this definition">¶</a></dt>
 <dd><p>This convenience method adds multiple files and/or directories from
 the real file system to the fake file system. See <cite>add_real_file()</cite> and
 <cite>add_real_directory()</cite>.</p>
@@ -542,7 +543,7 @@ files only as usually.</p></li>
 
 <dl class="py method">
 <dt id="pyfakefs.fake_filesystem.FakeFilesystem.create_symlink">
-<code class="sig-name descname">create_symlink</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">file_path</span></em>, <em class="sig-param"><span class="n">link_target</span></em>, <em class="sig-param"><span class="n">create_missing_dirs</span><span class="o">=</span><span class="default_value">True</span></em><span class="sig-paren">)</span><a class="headerlink" href="#pyfakefs.fake_filesystem.FakeFilesystem.create_symlink" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname">create_symlink</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">file_path</span><span class="p">:</span> <span class="n">Union<span class="p">[</span>AnyStr<span class="p">, </span>os.PathLike<span class="p">]</span></span></em>, <em class="sig-param"><span class="n">link_target</span><span class="p">:</span> <span class="n">Union<span class="p">[</span>AnyStr<span class="p">, </span>os.PathLike<span class="p">]</span></span></em>, <em class="sig-param"><span class="n">create_missing_dirs</span><span class="p">:</span> <span class="n">bool</span> <span class="o">=</span> <span class="default_value">True</span></em><span class="sig-paren">)</span> &#x2192; <a class="reference internal" href="#pyfakefs.fake_filesystem.FakeFile" title="pyfakefs.fake_filesystem.FakeFile">pyfakefs.fake_filesystem.FakeFile</a><a class="headerlink" href="#pyfakefs.fake_filesystem.FakeFilesystem.create_symlink" title="Permalink to this definition">¶</a></dt>
 <dd><p>Create the specified symlink, pointed at the specified link target.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
@@ -567,7 +568,7 @@ file_path will be created</p></li>
 
 <dl class="py class">
 <dt id="pyfakefs.fake_filesystem.FakeFile">
-<em class="property">class </em><code class="sig-prename descclassname">pyfakefs.fake_filesystem.</code><code class="sig-name descname">FakeFile</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">name</span></em>, <em class="sig-param"><span class="n">st_mode</span><span class="o">=</span><span class="default_value">33206</span></em>, <em class="sig-param"><span class="n">contents</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">filesystem</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">encoding</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">errors</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">side_effect</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="headerlink" href="#pyfakefs.fake_filesystem.FakeFile" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><code class="sig-prename descclassname">pyfakefs.fake_filesystem.</code><code class="sig-name descname">FakeFile</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">name</span><span class="p">:</span> <span class="n">AnyStr</span></em>, <em class="sig-param"><span class="n">st_mode</span><span class="p">:</span> <span class="n">int</span> <span class="o">=</span> <span class="default_value">33206</span></em>, <em class="sig-param"><span class="n">contents</span><span class="p">:</span> <span class="n">Optional<span class="p">[</span>AnyStr<span class="p">]</span></span> <span class="o">=</span> <span class="default_value">None</span></em>, <em class="sig-param"><span class="n">filesystem</span><span class="p">:</span> <span class="n">Optional<span class="p">[</span>FakeFilesystem<span class="p">]</span></span> <span class="o">=</span> <span class="default_value">None</span></em>, <em class="sig-param"><span class="n">encoding</span><span class="p">:</span> <span class="n">Optional<span class="p">[</span>str<span class="p">]</span></span> <span class="o">=</span> <span class="default_value">None</span></em>, <em class="sig-param"><span class="n">errors</span><span class="p">:</span> <span class="n">Optional<span class="p">[</span>str<span class="p">]</span></span> <span class="o">=</span> <span class="default_value">None</span></em>, <em class="sig-param"><span class="n">side_effect</span><span class="p">:</span> <span class="n">Optional[Callable[[FakeFile], None]]</span> <span class="o">=</span> <span class="default_value">None</span></em><span class="sig-paren">)</span><a class="headerlink" href="#pyfakefs.fake_filesystem.FakeFile" title="Permalink to this definition">¶</a></dt>
 <dd><p>Provides the appearance of a real file.</p>
 <dl class="simple">
 <dt>Attributes currently faked out:</dt><dd><ul class="simple">
@@ -614,8 +615,9 @@ stat.S_IFREG, stat.S_IFDIR), and the file permissions.
 If no file type is set (e.g. permission flags only), a
 regular file type is assumed.</p></li>
 <li><p><strong>contents</strong> – The contents of the filesystem object; should be a string
-or byte object for regular files, and a list of other
-FakeFile or FakeDirectory objects for FakeDirectory objects</p></li>
+or byte object for regular files, and a dict of other
+FakeFile or FakeDirectory objects wih the file names as
+keys for FakeDirectory objects</p></li>
 <li><p><strong>filesystem</strong> – The fake filesystem where the file is created.</p></li>
 <li><p><strong>encoding</strong> – If contents is a unicode string, the encoding used
 for serialization.</p></li>
@@ -639,19 +641,20 @@ must accept the file object as an argument.</p></li>
 
 <dl class="py method">
 <dt id="pyfakefs.fake_filesystem.FakeFile.is_large_file">
-<code class="sig-name descname">is_large_file</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#pyfakefs.fake_filesystem.FakeFile.is_large_file" title="Permalink to this definition">¶</a></dt>
-<dd><p>Return <cite>True</cite> if this file was initialized with size but no contents.</p>
+<code class="sig-name descname">is_large_file</code><span class="sig-paren">(</span><span class="sig-paren">)</span> &#x2192; bool<a class="headerlink" href="#pyfakefs.fake_filesystem.FakeFile.is_large_file" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return <cite>True</cite> if this file was initialized with size
+but no contents.</p>
 </dd></dl>
 
 <dl class="py method">
 <dt id="pyfakefs.fake_filesystem.FakeFile.set_contents">
-<code class="sig-name descname">set_contents</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">contents</span></em>, <em class="sig-param"><span class="n">encoding</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="headerlink" href="#pyfakefs.fake_filesystem.FakeFile.set_contents" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname">set_contents</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">contents</span><span class="p">:</span> <span class="n">AnyStr</span></em>, <em class="sig-param"><span class="n">encoding</span><span class="p">:</span> <span class="n">Optional<span class="p">[</span>str<span class="p">]</span></span> <span class="o">=</span> <span class="default_value">None</span></em><span class="sig-paren">)</span> &#x2192; bool<a class="headerlink" href="#pyfakefs.fake_filesystem.FakeFile.set_contents" title="Permalink to this definition">¶</a></dt>
 <dd><p>Sets the file contents and size and increases the modification time.
 Also executes the side_effects if available.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>contents</strong> – (str, bytes, unicode) new content of file.</p></li>
+<li><p><strong>contents</strong> – (str, bytes) new content of file.</p></li>
 <li><p><strong>encoding</strong> – (str) the encoding to be used for writing the contents
 if they are a unicode string.
 If not given, the locale preferred encoding is used.</p></li>
@@ -680,7 +683,7 @@ If not given, the locale preferred encoding is used.</p></li>
 
 <dl class="py class">
 <dt id="pyfakefs.fake_filesystem.FakeDirectory">
-<em class="property">class </em><code class="sig-prename descclassname">pyfakefs.fake_filesystem.</code><code class="sig-name descname">FakeDirectory</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">name</span></em>, <em class="sig-param"><span class="n">perm_bits</span><span class="o">=</span><span class="default_value">511</span></em>, <em class="sig-param"><span class="n">filesystem</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="headerlink" href="#pyfakefs.fake_filesystem.FakeDirectory" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><code class="sig-prename descclassname">pyfakefs.fake_filesystem.</code><code class="sig-name descname">FakeDirectory</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">name</span><span class="p">:</span> <span class="n">str</span></em>, <em class="sig-param"><span class="n">perm_bits</span><span class="p">:</span> <span class="n">int</span> <span class="o">=</span> <span class="default_value">511</span></em>, <em class="sig-param"><span class="n">filesystem</span><span class="p">:</span> <span class="n">Optional<span class="p">[</span>FakeFilesystem<span class="p">]</span></span> <span class="o">=</span> <span class="default_value">None</span></em><span class="sig-paren">)</span><a class="headerlink" href="#pyfakefs.fake_filesystem.FakeDirectory" title="Permalink to this definition">¶</a></dt>
 <dd><p>Provides the appearance of a real directory.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
@@ -693,12 +696,6 @@ is created</p></li>
 </dd>
 </dl>
 <dl class="py method">
-<dt id="pyfakefs.fake_filesystem.FakeDirectory.contents">
-<em class="property">property </em><code class="sig-name descname">contents</code><a class="headerlink" href="#pyfakefs.fake_filesystem.FakeDirectory.contents" title="Permalink to this definition">¶</a></dt>
-<dd><p>Return the list of contained directory entries.</p>
-</dd></dl>
-
-<dl class="py method">
 <dt id="pyfakefs.fake_filesystem.FakeDirectory.ordered_dirs">
 <em class="property">property </em><code class="sig-name descname">ordered_dirs</code><a class="headerlink" href="#pyfakefs.fake_filesystem.FakeDirectory.ordered_dirs" title="Permalink to this definition">¶</a></dt>
 <dd><p>Return the list of contained directory entry names ordered by
@@ -707,7 +704,7 @@ creation order.</p>
 
 <dl class="py method">
 <dt id="pyfakefs.fake_filesystem.FakeDirectory.get_entry">
-<code class="sig-name descname">get_entry</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">pathname_name</span></em><span class="sig-paren">)</span><a class="headerlink" href="#pyfakefs.fake_filesystem.FakeDirectory.get_entry" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname">get_entry</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">pathname_name</span><span class="p">:</span> <span class="n">str</span></em><span class="sig-paren">)</span> &#x2192; Union<span class="p">[</span><a class="reference internal" href="#pyfakefs.fake_filesystem.FakeFile" title="pyfakefs.fake_filesystem.FakeFile">pyfakefs.fake_filesystem.FakeFile</a><span class="p">, </span><a class="reference internal" href="#pyfakefs.fake_filesystem.FakeDirectory" title="pyfakefs.fake_filesystem.FakeDirectory">pyfakefs.fake_filesystem.FakeDirectory</a><span class="p">]</span><a class="headerlink" href="#pyfakefs.fake_filesystem.FakeDirectory.get_entry" title="Permalink to this definition">¶</a></dt>
 <dd><p>Retrieves the specified child file or directory entry.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
@@ -724,7 +721,7 @@ creation order.</p>
 
 <dl class="py method">
 <dt id="pyfakefs.fake_filesystem.FakeDirectory.remove_entry">
-<code class="sig-name descname">remove_entry</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">pathname_name</span></em>, <em class="sig-param"><span class="n">recursive</span><span class="o">=</span><span class="default_value">True</span></em><span class="sig-paren">)</span><a class="headerlink" href="#pyfakefs.fake_filesystem.FakeDirectory.remove_entry" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname">remove_entry</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">pathname_name</span><span class="p">:</span> <span class="n">str</span></em>, <em class="sig-param"><span class="n">recursive</span><span class="p">:</span> <span class="n">bool</span> <span class="o">=</span> <span class="default_value">True</span></em><span class="sig-paren">)</span> &#x2192; None<a class="headerlink" href="#pyfakefs.fake_filesystem.FakeDirectory.remove_entry" title="Permalink to this definition">¶</a></dt>
 <dd><p>Removes the specified child file or directory.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
@@ -749,6 +746,12 @@ are deleted first. Used to propagate removal errors
 <dt id="pyfakefs.fake_filesystem.FakeDirectory.size">
 <em class="property">property </em><code class="sig-name descname">size</code><a class="headerlink" href="#pyfakefs.fake_filesystem.FakeDirectory.size" title="Permalink to this definition">¶</a></dt>
 <dd><p>Return the total size of all files contained in this directory tree.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="pyfakefs.fake_filesystem.FakeDirectory.contents">
+<em class="property">property </em><code class="sig-name descname">contents</code><a class="headerlink" href="#pyfakefs.fake_filesystem.FakeDirectory.contents" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return the contents as string with the original encoding.</p>
 </dd></dl>
 
 </dd></dl>
@@ -812,7 +815,7 @@ consider also specifying the same arguments to <code class="xref py py-func docu
 </div>
 <dl class="py method">
 <dt id="pyfakefs.fake_filesystem_unittest.TestCaseMixin.setUpPyfakefs">
-<code class="sig-name descname">setUpPyfakefs</code><span class="sig-paren">(</span><em class="sig-param">additional_skip_names=None</em>, <em class="sig-param">modules_to_reload=None</em>, <em class="sig-param">modules_to_patch=None</em>, <em class="sig-param">allow_root_user=True</em>, <em class="sig-param">use_known_patches=True</em>, <em class="sig-param">patch_open_code=&lt;PatchMode.OFF: 1&gt;</em>, <em class="sig-param">patch_default_args=False</em>, <em class="sig-param">use_cache=True</em><span class="sig-paren">)</span><a class="headerlink" href="#pyfakefs.fake_filesystem_unittest.TestCaseMixin.setUpPyfakefs" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname">setUpPyfakefs</code><span class="sig-paren">(</span><em class="sig-param">additional_skip_names: Optional[List[Union[str</em>, <em class="sig-param">module]]] = None</em>, <em class="sig-param">modules_to_reload: Optional[List[module]] = None</em>, <em class="sig-param">modules_to_patch: Optional[Dict[str</em>, <em class="sig-param">module]] = None</em>, <em class="sig-param">allow_root_user: bool = True</em>, <em class="sig-param">use_known_patches: bool = True</em>, <em class="sig-param">patch_open_code: pyfakefs.fake_filesystem.PatchMode = &lt;PatchMode.OFF: 1&gt;</em>, <em class="sig-param">patch_default_args: bool = False</em>, <em class="sig-param">use_cache: bool = True</em><span class="sig-paren">)</span> &#x2192; None<a class="headerlink" href="#pyfakefs.fake_filesystem_unittest.TestCaseMixin.setUpPyfakefs" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bind the file-related modules to the <code class="xref py py-class docutils literal notranslate"><span class="pre">pyfakefs</span></code> fake file
 system instead of the real file system.  Also bind the fake <cite>open()</cite>
 function.</p>
@@ -826,7 +829,7 @@ convenient way to adapt the setting than overwriting <cite>__init__()</cite>.</p
 
 <dl class="py method">
 <dt id="pyfakefs.fake_filesystem_unittest.TestCaseMixin.pause">
-<code class="sig-name descname">pause</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#pyfakefs.fake_filesystem_unittest.TestCaseMixin.pause" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname">pause</code><span class="sig-paren">(</span><span class="sig-paren">)</span> &#x2192; None<a class="headerlink" href="#pyfakefs.fake_filesystem_unittest.TestCaseMixin.pause" title="Permalink to this definition">¶</a></dt>
 <dd><p>Pause the patching of the file system modules until <cite>resume</cite> is
 called. After that call, all file system calls are executed in the
 real file system.
@@ -835,7 +838,7 @@ Calling pause() twice is silently ignored.</p>
 
 <dl class="py method">
 <dt id="pyfakefs.fake_filesystem_unittest.TestCaseMixin.resume">
-<code class="sig-name descname">resume</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#pyfakefs.fake_filesystem_unittest.TestCaseMixin.resume" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname">resume</code><span class="sig-paren">(</span><span class="sig-paren">)</span> &#x2192; None<a class="headerlink" href="#pyfakefs.fake_filesystem_unittest.TestCaseMixin.resume" title="Permalink to this definition">¶</a></dt>
 <dd><p>Resume the patching of the file system modules if <cite>pause</cite> has
 been called before. After that call, all file system calls are
 executed in the fake file system.
@@ -846,7 +849,7 @@ Does nothing if patching is not paused.</p>
 
 <dl class="py class">
 <dt id="pyfakefs.fake_filesystem_unittest.TestCase">
-<em class="property">class </em><code class="sig-prename descclassname">pyfakefs.fake_filesystem_unittest.</code><code class="sig-name descname">TestCase</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">methodName</span><span class="o">=</span><span class="default_value">'runTest'</span></em>, <em class="sig-param"><span class="n">additional_skip_names</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">modules_to_reload</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">modules_to_patch</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="headerlink" href="#pyfakefs.fake_filesystem_unittest.TestCase" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><code class="sig-prename descclassname">pyfakefs.fake_filesystem_unittest.</code><code class="sig-name descname">TestCase</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">methodName</span><span class="p">:</span> <span class="n">str</span> <span class="o">=</span> <span class="default_value">'runTest'</span></em>, <em class="sig-param"><span class="n">additional_skip_names</span><span class="p">:</span> <span class="n">Optional<span class="p">[</span>List<span class="p">[</span>Union<span class="p">[</span>str<span class="p">, </span>module<span class="p">]</span><span class="p">]</span><span class="p">]</span></span> <span class="o">=</span> <span class="default_value">None</span></em>, <em class="sig-param"><span class="n">modules_to_reload</span><span class="p">:</span> <span class="n">Optional<span class="p">[</span>List<span class="p">[</span>module<span class="p">]</span><span class="p">]</span></span> <span class="o">=</span> <span class="default_value">None</span></em>, <em class="sig-param"><span class="n">modules_to_patch</span><span class="p">:</span> <span class="n">Optional<span class="p">[</span>Dict<span class="p">[</span>str<span class="p">, </span>module<span class="p">]</span><span class="p">]</span></span> <span class="o">=</span> <span class="default_value">None</span></em><span class="sig-paren">)</span><a class="headerlink" href="#pyfakefs.fake_filesystem_unittest.TestCase" title="Permalink to this definition">¶</a></dt>
 <dd><p>Test case class that automatically replaces file-system related
 modules by fake implementations. Inherits <a class="reference internal" href="#pyfakefs.fake_filesystem_unittest.TestCaseMixin" title="pyfakefs.fake_filesystem_unittest.TestCaseMixin"><code class="xref py py-class docutils literal notranslate"><span class="pre">TestCaseMixin</span></code></a>.</p>
 <p>The arguments are explained in <a class="reference internal" href="#pyfakefs.fake_filesystem_unittest.TestCaseMixin" title="pyfakefs.fake_filesystem_unittest.TestCaseMixin"><code class="xref py py-class docutils literal notranslate"><span class="pre">TestCaseMixin</span></code></a>.</p>
@@ -862,7 +865,7 @@ unittest.TestCase)</p>
 
 <dl class="py class">
 <dt id="pyfakefs.fake_filesystem_unittest.Patcher">
-<em class="property">class </em><code class="sig-prename descclassname">pyfakefs.fake_filesystem_unittest.</code><code class="sig-name descname">Patcher</code><span class="sig-paren">(</span><em class="sig-param">additional_skip_names=None</em>, <em class="sig-param">modules_to_reload=None</em>, <em class="sig-param">modules_to_patch=None</em>, <em class="sig-param">allow_root_user=True</em>, <em class="sig-param">use_known_patches=True</em>, <em class="sig-param">patch_open_code=&lt;PatchMode.OFF: 1&gt;</em>, <em class="sig-param">patch_default_args=False</em>, <em class="sig-param">use_cache=True</em><span class="sig-paren">)</span><a class="headerlink" href="#pyfakefs.fake_filesystem_unittest.Patcher" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><code class="sig-prename descclassname">pyfakefs.fake_filesystem_unittest.</code><code class="sig-name descname">Patcher</code><span class="sig-paren">(</span><em class="sig-param">additional_skip_names: Optional[List[Union[str</em>, <em class="sig-param">module]]] = None</em>, <em class="sig-param">modules_to_reload: Optional[List[module]] = None</em>, <em class="sig-param">modules_to_patch: Optional[Dict[str</em>, <em class="sig-param">module]] = None</em>, <em class="sig-param">allow_root_user: bool = True</em>, <em class="sig-param">use_known_patches: bool = True</em>, <em class="sig-param">patch_open_code: pyfakefs.fake_filesystem.PatchMode = &lt;PatchMode.OFF: 1&gt;</em>, <em class="sig-param">patch_default_args: bool = False</em>, <em class="sig-param">use_cache: bool = True</em><span class="sig-paren">)</span><a class="headerlink" href="#pyfakefs.fake_filesystem_unittest.Patcher" title="Permalink to this definition">¶</a></dt>
 <dd><p>Instantiate a stub creator to bind and un-bind the file-related modules to
 the <code class="xref py py-mod docutils literal notranslate"><span class="pre">pyfakefs</span></code> fake modules.</p>
 <p>The arguments are explained in <a class="reference internal" href="#pyfakefs.fake_filesystem_unittest.TestCaseMixin" title="pyfakefs.fake_filesystem_unittest.TestCaseMixin"><code class="xref py py-class docutils literal notranslate"><span class="pre">TestCaseMixin</span></code></a>.</p>
@@ -911,20 +914,20 @@ causes any problems.</p></li>
 </dl>
 <dl class="py method">
 <dt id="pyfakefs.fake_filesystem_unittest.Patcher.setUp">
-<code class="sig-name descname">setUp</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">doctester</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="headerlink" href="#pyfakefs.fake_filesystem_unittest.Patcher.setUp" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname">setUp</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">doctester</span><span class="p">:</span> <span class="n">Any</span> <span class="o">=</span> <span class="default_value">None</span></em><span class="sig-paren">)</span> &#x2192; None<a class="headerlink" href="#pyfakefs.fake_filesystem_unittest.Patcher.setUp" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bind the file-related modules to the <code class="xref py py-mod docutils literal notranslate"><span class="pre">pyfakefs</span></code> fake
 modules real ones.  Also bind the fake <cite>file()</cite> and <cite>open()</cite> functions.</p>
 </dd></dl>
 
 <dl class="py method">
 <dt id="pyfakefs.fake_filesystem_unittest.Patcher.tearDown">
-<code class="sig-name descname">tearDown</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">doctester</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="headerlink" href="#pyfakefs.fake_filesystem_unittest.Patcher.tearDown" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname">tearDown</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">doctester</span><span class="p">:</span> <span class="n">Any</span> <span class="o">=</span> <span class="default_value">None</span></em><span class="sig-paren">)</span><a class="headerlink" href="#pyfakefs.fake_filesystem_unittest.Patcher.tearDown" title="Permalink to this definition">¶</a></dt>
 <dd><p>Clear the fake filesystem bindings created by <cite>setUp()</cite>.</p>
 </dd></dl>
 
 <dl class="py method">
 <dt id="pyfakefs.fake_filesystem_unittest.Patcher.pause">
-<code class="sig-name descname">pause</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#pyfakefs.fake_filesystem_unittest.Patcher.pause" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname">pause</code><span class="sig-paren">(</span><span class="sig-paren">)</span> &#x2192; None<a class="headerlink" href="#pyfakefs.fake_filesystem_unittest.Patcher.pause" title="Permalink to this definition">¶</a></dt>
 <dd><p>Pause the patching of the file system modules until <cite>resume</cite> is
 called. After that call, all file system calls are executed in the
 real file system.
@@ -933,7 +936,7 @@ Calling pause() twice is silently ignored.</p>
 
 <dl class="py method">
 <dt id="pyfakefs.fake_filesystem_unittest.Patcher.resume">
-<code class="sig-name descname">resume</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#pyfakefs.fake_filesystem_unittest.Patcher.resume" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname">resume</code><span class="sig-paren">(</span><span class="sig-paren">)</span> &#x2192; None<a class="headerlink" href="#pyfakefs.fake_filesystem_unittest.Patcher.resume" title="Permalink to this definition">¶</a></dt>
 <dd><p>Resume the patching of the file system modules if <cite>pause</cite> has
 been called before. After that call, all file system calls are
 executed in the fake file system.
@@ -960,7 +963,7 @@ pyfakefs by simply changing their base class from <cite>:py:class`unittest.TestC
 to <cite>:py:class`pyfakefs.fake_filesystem_unittest.TestCase</cite>.</p>
 <dl class="py function">
 <dt id="pyfakefs.fake_filesystem_unittest.patchfs">
-<code class="sig-prename descclassname">pyfakefs.fake_filesystem_unittest.</code><code class="sig-name descname">patchfs</code><span class="sig-paren">(</span><em class="sig-param">_func=None</em>, <em class="sig-param">*</em>, <em class="sig-param">additional_skip_names=None</em>, <em class="sig-param">modules_to_reload=None</em>, <em class="sig-param">modules_to_patch=None</em>, <em class="sig-param">allow_root_user=True</em>, <em class="sig-param">use_known_patches=True</em>, <em class="sig-param">patch_open_code=&lt;PatchMode.OFF: 1&gt;</em>, <em class="sig-param">patch_default_args=False</em>, <em class="sig-param">use_cache=True</em><span class="sig-paren">)</span><a class="headerlink" href="#pyfakefs.fake_filesystem_unittest.patchfs" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">pyfakefs.fake_filesystem_unittest.</code><code class="sig-name descname">patchfs</code><span class="sig-paren">(</span><em class="sig-param">_func: Callable = None</em>, <em class="sig-param">*</em>, <em class="sig-param">additional_skip_names: Optional[List[Union[str</em>, <em class="sig-param">module]]] = None</em>, <em class="sig-param">modules_to_reload: Optional[List[module]] = None</em>, <em class="sig-param">modules_to_patch: Optional[Dict[str</em>, <em class="sig-param">module]] = None</em>, <em class="sig-param">allow_root_user: bool = True</em>, <em class="sig-param">use_known_patches: bool = True</em>, <em class="sig-param">patch_open_code: pyfakefs.fake_filesystem.PatchMode = &lt;PatchMode.OFF: 1&gt;</em>, <em class="sig-param">patch_default_args: bool = False</em>, <em class="sig-param">use_cache: bool = True</em><span class="sig-paren">)</span> &#x2192; Callable<a class="headerlink" href="#pyfakefs.fake_filesystem_unittest.patchfs" title="Permalink to this definition">¶</a></dt>
 <dd><p>Convenience decorator to use patcher with additional parameters in a
 test function.</p>
 <p>Usage:</p>
@@ -980,7 +983,7 @@ test function.</p>
 <h2>Faked module classes<a class="headerlink" href="#faked-module-classes" title="Permalink to this headline">¶</a></h2>
 <dl class="py class">
 <dt id="pyfakefs.fake_filesystem.FakeOsModule">
-<em class="property">class </em><code class="sig-prename descclassname">pyfakefs.fake_filesystem.</code><code class="sig-name descname">FakeOsModule</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">filesystem</span></em><span class="sig-paren">)</span><a class="headerlink" href="#pyfakefs.fake_filesystem.FakeOsModule" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><code class="sig-prename descclassname">pyfakefs.fake_filesystem.</code><code class="sig-name descname">FakeOsModule</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">filesystem</span><span class="p">:</span> <span class="n"><a class="reference internal" href="#pyfakefs.fake_filesystem.FakeFilesystem" title="pyfakefs.fake_filesystem.FakeFilesystem">pyfakefs.fake_filesystem.FakeFilesystem</a></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pyfakefs.fake_filesystem.FakeOsModule" title="Permalink to this definition">¶</a></dt>
 <dd><p>Uses FakeFilesystem to provide a fake os module replacement.</p>
 <p>Do not create os.path separately from os, as there is a necessary circular
 dependency between os and os.path to replicate the behavior of the standard
@@ -999,7 +1002,7 @@ my_os_module = fake_filesystem.FakeOsModule(filesystem)</p>
 
 <dl class="py class">
 <dt id="pyfakefs.fake_filesystem.FakePathModule">
-<em class="property">class </em><code class="sig-prename descclassname">pyfakefs.fake_filesystem.</code><code class="sig-name descname">FakePathModule</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">filesystem</span></em>, <em class="sig-param"><span class="n">os_module</span></em><span class="sig-paren">)</span><a class="headerlink" href="#pyfakefs.fake_filesystem.FakePathModule" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><code class="sig-prename descclassname">pyfakefs.fake_filesystem.</code><code class="sig-name descname">FakePathModule</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">filesystem</span><span class="p">:</span> <span class="n"><a class="reference internal" href="#pyfakefs.fake_filesystem.FakeFilesystem" title="pyfakefs.fake_filesystem.FakeFilesystem">pyfakefs.fake_filesystem.FakeFilesystem</a></span></em>, <em class="sig-param"><span class="n">os_module</span><span class="p">:</span> <span class="n"><a class="reference internal" href="#pyfakefs.fake_filesystem.FakeOsModule" title="pyfakefs.fake_filesystem.FakeOsModule">pyfakefs.fake_filesystem.FakeOsModule</a></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pyfakefs.fake_filesystem.FakePathModule" title="Permalink to this definition">¶</a></dt>
 <dd><p>Faked os.path module replacement.</p>
 <p>FakePathModule should <em>only</em> be instantiated by FakeOsModule.  See the
 FakeOsModule docstring for details.</p>
@@ -1013,7 +1016,7 @@ FakeOsModule docstring for details.</p>
 
 <dl class="py class">
 <dt id="pyfakefs.fake_filesystem.FakeFileOpen">
-<em class="property">class </em><code class="sig-prename descclassname">pyfakefs.fake_filesystem.</code><code class="sig-name descname">FakeFileOpen</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">filesystem</span></em>, <em class="sig-param"><span class="n">delete_on_close</span><span class="o">=</span><span class="default_value">False</span></em>, <em class="sig-param"><span class="n">raw_io</span><span class="o">=</span><span class="default_value">False</span></em><span class="sig-paren">)</span><a class="headerlink" href="#pyfakefs.fake_filesystem.FakeFileOpen" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><code class="sig-prename descclassname">pyfakefs.fake_filesystem.</code><code class="sig-name descname">FakeFileOpen</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">filesystem</span><span class="p">:</span> <span class="n"><a class="reference internal" href="#pyfakefs.fake_filesystem.FakeFilesystem" title="pyfakefs.fake_filesystem.FakeFilesystem">pyfakefs.fake_filesystem.FakeFilesystem</a></span></em>, <em class="sig-param"><span class="n">delete_on_close</span><span class="p">:</span> <span class="n">bool</span> <span class="o">=</span> <span class="default_value">False</span></em>, <em class="sig-param"><span class="n">raw_io</span><span class="p">:</span> <span class="n">bool</span> <span class="o">=</span> <span class="default_value">False</span></em><span class="sig-paren">)</span><a class="headerlink" href="#pyfakefs.fake_filesystem.FakeFileOpen" title="Permalink to this definition">¶</a></dt>
 <dd><p>Faked <cite>file()</cite> and <cite>open()</cite> function replacements.</p>
 <p>Returns FakeFile objects in a FakeFilesystem in place of the <cite>file()</cite>
 or <cite>open()</cite> function.</p>
@@ -1029,7 +1032,7 @@ or <cite>open()</cite> function.</p>
 
 <dl class="py class">
 <dt id="pyfakefs.fake_filesystem.FakeIoModule">
-<em class="property">class </em><code class="sig-prename descclassname">pyfakefs.fake_filesystem.</code><code class="sig-name descname">FakeIoModule</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">filesystem</span></em><span class="sig-paren">)</span><a class="headerlink" href="#pyfakefs.fake_filesystem.FakeIoModule" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><code class="sig-prename descclassname">pyfakefs.fake_filesystem.</code><code class="sig-name descname">FakeIoModule</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">filesystem</span><span class="p">:</span> <span class="n"><a class="reference internal" href="#pyfakefs.fake_filesystem.FakeFilesystem" title="pyfakefs.fake_filesystem.FakeFilesystem">pyfakefs.fake_filesystem.FakeFilesystem</a></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pyfakefs.fake_filesystem.FakeIoModule" title="Permalink to this definition">¶</a></dt>
 <dd><p>Uses FakeFilesystem to provide a fake io module replacement.</p>
 <p>Currently only used to wrap <cite>io.open()</cite> which is an alias to <cite>open()</cite>.</p>
 <p>You need a fake_filesystem to use this:
@@ -1149,7 +1152,7 @@ that is available on pypi.</p>
         <li class="right" >
           <a href="autopatch.html" title="Automatically find and patch file functions and modules"
              >previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="index.html">pyfakefs 4.5.0 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="index.html">pyfakefs 4.5.1 documentation</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">Public Modules and Classes</a></li> 
       </ul>
     </div>
@@ -1157,7 +1160,7 @@ that is available on pypi.</p>
         &#169; Copyright 2009 Google Inc. All Rights Reserved.
 © Copyright 2014 Altera Corporation. All Rights Reserved.
 © Copyright 2014-2021 John McGehee.
-      Last updated on Jun 04, 2021.
+      Last updated on Aug 29, 2021.
     </div>
   </body>
 </html>

@@ -5,7 +5,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Usage &#8212; pyfakefs 4.5.0 documentation</title>
+    <title>Usage &#8212; pyfakefs 4.5.1 documentation</title>
     <link rel="stylesheet" href="_static/pyfakefs.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
     <script id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
@@ -33,7 +33,7 @@
         <li class="right" >
           <a href="intro.html" title="Introduction"
              accesskey="P">previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="index.html">pyfakefs 4.5.0 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="index.html">pyfakefs 4.5.1 documentation</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">Usage</a></li> 
       </ul>
     </div>  
@@ -85,6 +85,19 @@ plugins, so you can just use it:</p>
     <span class="c1"># &quot;fs&quot; is the reference to the fake file system</span>
     <span class="n">fs</span><span class="o">.</span><span class="n">create_file</span><span class="p">(</span><span class="s1">&#39;/var/data/xx1.txt&#39;</span><span class="p">)</span>
     <span class="k">assert</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="s1">&#39;/var/data/xx1.txt&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>If you are bothered by the <code class="docutils literal notranslate"><span class="pre">pylint</span></code> warning,
+<code class="docutils literal notranslate"><span class="pre">C0103:</span> <span class="pre">Argument</span> <span class="pre">name</span> <span class="pre">&quot;fs&quot;</span> <span class="pre">doesn't</span> <span class="pre">conform</span> <span class="pre">to</span> <span class="pre">snake_case</span> <span class="pre">naming</span> <span class="pre">style</span>
+<span class="pre">(invalid-name)</span></code>,
+you can define a longer name in your <code class="docutils literal notranslate"><span class="pre">conftest.py</span></code> and use that in your
+tests:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="nd">@pytest</span><span class="o">.</span><span class="n">fixture</span>
+<span class="k">def</span> <span class="nf">fake_filesystem</span><span class="p">(</span><span class="n">fs</span><span class="p">):</span>  <span class="c1"># pylint:disable=invalid-name</span>
+    <span class="sd">&quot;&quot;&quot;Variable name &#39;fs&#39; causes a pylint warning. Provide a longer name</span>
+<span class="sd">    acceptable to pylint for use in tests.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">yield</span> <span class="n">fs</span>
 </pre></div>
 </div>
 </div>
@@ -857,6 +870,20 @@ tests as non-root user in a root user environment and vice verse.
 Another possibility to run tests as non-root user in a root user environment
 is the convenience argument <a class="reference internal" href="#allow-root-user"><span class="std std-ref">allow_root_user</span></a>.</p>
 </div>
+<div class="section" id="pyfakefs-and-mock-open">
+<span id="usage-with-mock-open"></span><h3>Pyfakefs and mock_open<a class="headerlink" href="#pyfakefs-and-mock-open" title="Permalink to this headline">¶</a></h3>
+<p>If you patch <code class="docutils literal notranslate"><span class="pre">open</span></code> using <code class="docutils literal notranslate"><span class="pre">mock_open</span></code> before the initialization of
+<code class="docutils literal notranslate"><span class="pre">pyfakefs</span></code>, it will not work properly, because the <code class="docutils literal notranslate"><span class="pre">pyfakefs</span></code>
+initialization relies on <code class="docutils literal notranslate"><span class="pre">open</span></code> working correctly.
+Generally, you should not need <code class="docutils literal notranslate"><span class="pre">mock_open</span></code> if using <code class="docutils literal notranslate"><span class="pre">pyfakefs</span></code>, because you
+always can create the files with the needed content using <code class="docutils literal notranslate"><span class="pre">create_file</span></code>.
+This is true for patching any filesystem functions - avoid patching them
+while working with <code class="docutils literal notranslate"><span class="pre">pyfakefs</span></code>.
+If you still want to use <code class="docutils literal notranslate"><span class="pre">mock_open</span></code>, make sure it is only used while
+patching is in progress. For example, if you are using <code class="docutils literal notranslate"><span class="pre">pytest</span></code> with the
+<code class="docutils literal notranslate"><span class="pre">mocker</span></code> fixture used to patch <code class="docutils literal notranslate"><span class="pre">open</span></code>, make sure that the <code class="docutils literal notranslate"><span class="pre">fs</span></code> fixture is
+passed before the <code class="docutils literal notranslate"><span class="pre">mocker</span></code> fixture to ensure this.</p>
+</div>
 </div>
 </div>
 
@@ -912,6 +939,7 @@ is the convenience argument <a class="reference internal" href="#allow-root-user
 <li><a class="reference internal" href="#pyfakefs-behaves-differently-than-the-real-filesystem">Pyfakefs behaves differently than the real filesystem</a></li>
 <li><a class="reference internal" href="#os-temporary-directories">OS temporary directories</a></li>
 <li><a class="reference internal" href="#user-rights">User rights</a></li>
+<li><a class="reference internal" href="#pyfakefs-and-mock-open">Pyfakefs and mock_open</a></li>
 </ul>
 </li>
 </ul>
@@ -960,7 +988,7 @@ is the convenience argument <a class="reference internal" href="#allow-root-user
         <li class="right" >
           <a href="intro.html" title="Introduction"
              >previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="index.html">pyfakefs 4.5.0 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="index.html">pyfakefs 4.5.1 documentation</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">Usage</a></li> 
       </ul>
     </div>
@@ -968,7 +996,7 @@ is the convenience argument <a class="reference internal" href="#allow-root-user
         &#169; Copyright 2009 Google Inc. All Rights Reserved.
 © Copyright 2014 Altera Corporation. All Rights Reserved.
 © Copyright 2014-2021 John McGehee.
-      Last updated on Jun 04, 2021.
+      Last updated on Aug 29, 2021.
     </div>
   </body>
 </html>

@@ -50,6 +50,22 @@ plugins, so you can just use it:
        fs.create_file('/var/data/xx1.txt')
        assert os.path.exists('/var/data/xx1.txt')
 
+If you are bothered by the ``pylint`` warning,
+``C0103: Argument name "fs" doesn't conform to snake_case naming style
+(invalid-name)``,
+you can define a longer name in your ``conftest.py`` and use that in your
+tests:
+
+.. code:: python
+
+    @pytest.fixture
+    def fake_filesystem(fs):  # pylint:disable=invalid-name
+        """Variable name 'fs' causes a pylint warning. Provide a longer name
+        acceptable to pylint for use in tests.
+        """
+        yield fs
+
+
 Patch using fake_filesystem_unittest.Patcher
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 If you are using other means of testing like `nose <http://nose2.readthedocs.io>`__,
@@ -892,3 +908,19 @@ that using ``fake_filesystem.set_uid()`` in your setup. This allows to run
 tests as non-root user in a root user environment and vice verse.
 Another possibility to run tests as non-root user in a root user environment
 is the convenience argument :ref:`allow_root_user`.
+
+.. _usage_with_mock_open:
+
+Pyfakefs and mock_open
+~~~~~~~~~~~~~~~~~~~~~~
+If you patch ``open`` using ``mock_open`` before the initialization of
+``pyfakefs``, it will not work properly, because the ``pyfakefs``
+initialization relies on ``open`` working correctly.
+Generally, you should not need ``mock_open`` if using ``pyfakefs``, because you
+always can create the files with the needed content using ``create_file``.
+This is true for patching any filesystem functions - avoid patching them
+while working with ``pyfakefs``.
+If you still want to use ``mock_open``, make sure it is only used while
+patching is in progress. For example, if you are using ``pytest`` with the
+``mocker`` fixture used to patch ``open``, make sure that the ``fs`` fixture is
+passed before the ``mocker`` fixture to ensure this.
