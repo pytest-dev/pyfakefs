@@ -85,6 +85,10 @@ Limitations
   considered as reference systems, additionally the tests are run in Docker
   containers with the latest CentOS, Debian, Fedora and Ubuntu images.
 
+- pyfakefs may not work correctly if file system functions are patched by
+  other means (e.g. using `unittest.mock.patch`) - see
+  :ref:`usage_with_mock_open` for more information
+
 History
 -------
 pyfakefs was initially developed at Google by
