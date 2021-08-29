@@ -485,6 +485,8 @@ class Patcher:
             for name, fake_module in modules_to_patch.items():
                 self._fake_module_classes[name] = fake_module
             patched_module_names = set(modules_to_patch)
+        else:
+            patched_module_names = set()
         clear_cache = not use_cache
         if use_cache:
             if patched_module_names != self.PATCHED_MODULE_NAMES:

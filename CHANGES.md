@@ -12,6 +12,7 @@ The released versions correspond to PyPi releases.
   (see [#627](../../issues/627))
 * handle `pathlib.Path.owner()` and `pathlib.Path.group` by returning 
   the current user/group name (see [#629](../../issues/629))
+* fixed handling of `use_known_patches=False` (could cause an exception)  
 
 ### Infrastructure
 * added test dependency check (see [#608](../../issues/608))
