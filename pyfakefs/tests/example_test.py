@@ -113,7 +113,7 @@ class TestExample(fake_filesystem_unittest.TestCase):  # pylint: disable=R0904
         matching_paths = sorted(example.get_glob('/test/dir1/dir*'))
         if is_windows:
             self.assertEqual(matching_paths,
-                             [r'\test\dir1\dir2a', r'\test\dir1\dir2b'])
+                             [r'/test/dir1\dir2a', r'/test/dir1\dir2b'])
         else:
             self.assertEqual(matching_paths,
                              ['/test/dir1/dir2a', '/test/dir1/dir2b'])

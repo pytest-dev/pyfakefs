@@ -35,7 +35,7 @@ class FakeGlobUnitTest(fake_filesystem_unittest.TestCase):
         self.assertEqual(glob.glob(''), [])
 
     def test_glob_star(self):
-        basedir = os.sep + 'xyzzy'
+        basedir = '/xyzzy'
         self.assertEqual([os.path.join(basedir, 'subdir'),
                           os.path.join(basedir, 'subdir2'),
                           os.path.join(basedir, 'subfile')],
@@ -46,7 +46,7 @@ class FakeGlobUnitTest(fake_filesystem_unittest.TestCase):
         self.assertEqual(['/xyzzy/subfile'], glob.glob('/xyzzy/subfile'))
 
     def test_glob_question(self):
-        basedir = os.sep + 'xyzzy'
+        basedir = '/xyzzy'
         self.assertEqual([os.path.join(basedir, 'subdir'),
                           os.path.join(basedir, 'subdir2'),
                           os.path.join(basedir, 'subfile')],
@@ -60,7 +60,7 @@ class FakeGlobUnitTest(fake_filesystem_unittest.TestCase):
         self.assertEqual([], glob.glob('nonexistent'))
 
     def test_magic_dir(self):
-        self.assertEqual([os.sep + '[Temp]'], glob.glob('/*emp*'))
+        self.assertEqual(['/[Temp]'], glob.glob('/*emp*'))
 
     def test_glob1(self):
         self.assertEqual(['[Temp]'], glob.glob1('/', '*Tem*'))

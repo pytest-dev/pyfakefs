@@ -857,7 +857,7 @@ class FakePathModuleTest(TestCase):
         self.filesystem.create_file(abspath)
         self.assertEqual(abspath, self.path.abspath(abspath))
         self.assertEqual(abspath, self.path.abspath(filename))
-        self.assertEqual(abspath, self.path.abspath(u'..!%s' % filename))
+        self.assertEqual(abspath, self.path.abspath('..!%s' % filename))
 
     def test_abspath_windows(self):
         self.check_abspath(is_windows=True)
@@ -1268,9 +1268,9 @@ class SplitPathTest(PathManipulationTestBase):
         self.assertEqual(('|a|b', 'c'), self.filesystem.splitpath('|a|b|c'))
 
     def test_root_separator_is_not_stripped(self):
-        self.assertEqual(('|', ''), self.filesystem.splitpath('|||'))
+        self.assertEqual(('|||', ''), self.filesystem.splitpath('|||'))
         self.assertEqual(('|', 'a'), self.filesystem.splitpath('|a'))
-        self.assertEqual(('|', 'a'), self.filesystem.splitpath('|||a'))
+        self.assertEqual(('|||', 'a'), self.filesystem.splitpath('|||a'))
 
     def test_empty_tail_if_path_ends_in_separator(self):
         self.assertEqual(('a|b', ''), self.filesystem.splitpath('a|b|'))
@@ -1401,6 +1401,7 @@ class AlternativePathSeparatorTest(TestCase):
 class DriveLetterSupportTest(TestCase):
     def setUp(self):
         self.filesystem = fake_filesystem.FakeFilesystem(path_separator='!')
+        self.filesystem.alternative_path_separator = '^'
         self.filesystem.is_windows_fs = True
 
     def test_initial_value(self):
@@ -1419,11 +1420,11 @@ class DriveLetterSupportTest(TestCase):
                          self.filesystem.normpath('!!foo!bar!!baz!!'))
 
     def test_normalize_path_str(self):
-        self.filesystem.cwd = u''
-        self.assertEqual(u'c:!foo!bar',
-                         self.filesystem.absnormpath(u'c:!foo!!bar'))
-        self.filesystem.cwd = u'c:!foo'
-        self.assertEqual(u'c:!foo!bar', self.filesystem.absnormpath(u'bar'))
+        self.filesystem.cwd = ''
+        self.assertEqual('c:!foo!bar',
+                         self.filesystem.absnormpath('c:!foo!!bar'))
+        self.filesystem.cwd = 'c:!foo'
+        self.assertEqual('c:!foo!bar', self.filesystem.absnormpath('bar'))
 
     def test_normalize_path_bytes(self):
         self.filesystem.cwd = b''
@@ -1433,20 +1434,30 @@ class DriveLetterSupportTest(TestCase):
         self.assertEqual(b'c:!foo!bar', self.filesystem.absnormpath(b'bar'))
 
     def test_split_path_str(self):
-        self.assertEqual((u'c:!foo', u'bar'),
-                         self.filesystem.splitpath(u'c:!foo!bar'))
-        self.assertEqual((u'c:!', u'foo'),
-                         self.filesystem.splitpath(u'c:!foo'))
-        self.assertEqual((u'!foo', u'bar'),
-                         self.filesystem.splitpath(u'!foo!bar'))
-        self.assertEqual((u'!', u'foo'),
-                         self.filesystem.splitpath(u'!foo'))
-        self.assertEqual((u'c:foo', u'bar'),
-                         self.filesystem.splitpath(u'c:foo!bar'))
-        self.assertEqual((u'c:', u'foo'),
-                         self.filesystem.splitpath(u'c:foo'))
-        self.assertEqual((u'foo', u'bar'),
-                         self.filesystem.splitpath(u'foo!bar'))
+        self.assertEqual(('c:!foo', 'bar'),
+                         self.filesystem.splitpath('c:!foo!bar'))
+        self.assertEqual(('c:!', 'foo'),
+                         self.filesystem.splitpath('c:!foo'))
+        self.assertEqual(('!foo', 'bar'),
+                         self.filesystem.splitpath('!foo!bar'))
+        self.assertEqual(('!', 'foo'),
+                         self.filesystem.splitpath('!foo'))
+        self.assertEqual(('c:foo', 'bar'),
+                         self.filesystem.splitpath('c:foo!bar'))
+        self.assertEqual(('c:', 'foo'),
+                         self.filesystem.splitpath('c:foo'))
+        self.assertEqual(('foo', 'bar'),
+                         self.filesystem.splitpath('foo!bar'))
+
+    def test_split_with_alt_separator(self):
+        self.assertEqual(('a^b', 'c'), self.filesystem.splitpath('a^b^c'))
+        self.assertEqual(('a^b!c', 'd'), self.filesystem.splitpath('a^b!c^d'))
+        self.assertEqual(('a^b!c', 'd'), self.filesystem.splitpath('a^b!c!d'))
+        self.assertEqual((b'a^b', b'c'), self.filesystem.splitpath(b'a^b^c'))
+        self.assertEqual((b'a^b!c', b'd'),
+                         self.filesystem.splitpath(b'a^b!c^d'))
+        self.assertEqual((b'a^b!c', b'd'),
+                         self.filesystem.splitpath(b'a^b!c!d'))
 
     def test_split_path_bytes(self):
         self.assertEqual((b'c:!foo', b'bar'),
@@ -1477,20 +1488,34 @@ class DriveLetterSupportTest(TestCase):
         self.assertEqual(['c:'], self.filesystem._path_components('c:'))
 
     def test_split_drive_str(self):
-        self.assertEqual((u'c:', u'!foo!bar'),
-                         self.filesystem.splitdrive(u'c:!foo!bar'))
-        self.assertEqual((u'', u'!foo!bar'),
-                         self.filesystem.splitdrive(u'!foo!bar'))
-        self.assertEqual((u'c:', u'foo!bar'),
-                         self.filesystem.splitdrive(u'c:foo!bar'))
-        self.assertEqual((u'', u'foo!bar'),
-                         self.filesystem.splitdrive(u'foo!bar'))
+        self.assertEqual(('c:', '!foo!bar'),
+                         self.filesystem.splitdrive('c:!foo!bar'))
+        self.assertEqual(('', '!foo!bar'),
+                         self.filesystem.splitdrive('!foo!bar'))
+        self.assertEqual(('c:', 'foo!bar'),
+                         self.filesystem.splitdrive('c:foo!bar'))
+        self.assertEqual(('', 'foo!bar'),
+                         self.filesystem.splitdrive('foo!bar'))
 
     def test_split_drive_bytes(self):
         self.assertEqual((b'c:', b'!foo!bar'),
                          self.filesystem.splitdrive(b'c:!foo!bar'))
         self.assertEqual((b'', b'!foo!bar'),
                          self.filesystem.splitdrive(b'!foo!bar'))
+
+    def test_split_drive_alt_sep(self):
+        self.assertEqual(('c:', '^foo^bar'),
+                         self.filesystem.splitdrive('c:^foo^bar'))
+        self.assertEqual(('', 'foo^bar'),
+                         self.filesystem.splitdrive('foo^bar'))
+        self.assertEqual(('', 'foo^bar!baz'),
+                         self.filesystem.splitdrive('foo^bar!baz'))
+        self.assertEqual((b'c:', b'^foo^bar'),
+                         self.filesystem.splitdrive(b'c:^foo^bar'))
+        self.assertEqual((b'', b'^foo^bar'),
+                         self.filesystem.splitdrive(b'^foo^bar'))
+        self.assertEqual((b'', b'^foo^bar!baz'),
+                         self.filesystem.splitdrive(b'^foo^bar!baz'))
 
     def test_split_drive_with_unc_path(self):
         self.assertEqual(('!!foo!bar', '!baz'),
@@ -1500,6 +1525,15 @@ class DriveLetterSupportTest(TestCase):
                          self.filesystem.splitdrive('!!foo!!bar'))
         self.assertEqual(('!!foo!bar', '!!'),
                          self.filesystem.splitdrive('!!foo!bar!!'))
+
+    def test_split_drive_with_unc_path_alt_sep(self):
+        self.assertEqual(('^^foo^bar', '!baz'),
+                         self.filesystem.splitdrive('^^foo^bar!baz'))
+        self.assertEqual(('', '^^foo'), self.filesystem.splitdrive('^^foo'))
+        self.assertEqual(('', '^^foo^^bar'),
+                         self.filesystem.splitdrive('^^foo^^bar'))
+        self.assertEqual(('^^foo^bar', '^^'),
+                         self.filesystem.splitdrive('^^foo^bar^^'))
 
     def test_split_path_with_drive(self):
         self.assertEqual(('d:!foo', 'baz'),
@@ -1513,13 +1547,33 @@ class DriveLetterSupportTest(TestCase):
         self.assertEqual(('c:!!', ''),
                          self.filesystem.splitpath('c:!!'))
 
+    def test_split_path_with_drive_alt_sep(self):
+        self.assertEqual(('d:^foo', 'baz'),
+                         self.filesystem.splitpath('d:^foo^baz'))
+        self.assertEqual(('d:^foo^baz', ''),
+                         self.filesystem.splitpath('d:^foo^baz^'))
+        self.assertEqual(('c:', ''),
+                         self.filesystem.splitpath('c:'))
+        self.assertEqual(('c:^', ''),
+                         self.filesystem.splitpath('c:^'))
+        self.assertEqual(('c:^^', ''),
+                         self.filesystem.splitpath('c:^^'))
+
     def test_split_path_with_unc_path(self):
-        self.assertEqual(('!!foo!bar', 'baz'),
+        self.assertEqual(('!!foo!bar!', 'baz'),
                          self.filesystem.splitpath('!!foo!bar!baz'))
         self.assertEqual(('!!foo!bar', ''),
                          self.filesystem.splitpath('!!foo!bar'))
         self.assertEqual(('!!foo!bar!!', ''),
                          self.filesystem.splitpath('!!foo!bar!!'))
+
+    def test_split_path_with_unc_path_alt_sep(self):
+        self.assertEqual(('^^foo^bar^', 'baz'),
+                         self.filesystem.splitpath('^^foo^bar^baz'))
+        self.assertEqual(('^^foo^bar', ''),
+                         self.filesystem.splitpath('^^foo^bar'))
+        self.assertEqual(('^^foo^bar^^', ''),
+                         self.filesystem.splitpath('^^foo^bar^^'))
 
 
 class DiskSpaceTest(TestCase):
@@ -1563,16 +1617,16 @@ class DiskSpaceTest(TestCase):
         self.assertEqual((100, 5, 95), self.filesystem.get_disk_usage())
 
     def test_file_system_size_after_ascii_string_file_creation(self):
-        self.filesystem.create_file('!foo!bar', contents=u'complicated')
+        self.filesystem.create_file('!foo!bar', contents='complicated')
         self.assertEqual((100, 11, 89), self.filesystem.get_disk_usage())
 
     def test_filesystem_size_after_2byte_unicode_file_creation(self):
-        self.filesystem.create_file('!foo!bar', contents=u'сложно',
+        self.filesystem.create_file('!foo!bar', contents='сложно',
                                     encoding='utf-8')
         self.assertEqual((100, 12, 88), self.filesystem.get_disk_usage())
 
     def test_filesystem_size_after_3byte_unicode_file_creation(self):
-        self.filesystem.create_file('!foo!bar', contents=u'複雑',
+        self.filesystem.create_file('!foo!bar', contents='複雑',
                                     encoding='utf-8')
         self.assertEqual((100, 6, 94), self.filesystem.get_disk_usage())
 

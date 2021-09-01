@@ -1587,31 +1587,18 @@ class FakeFilesystem:
             (str) A duple (pathname, basename) for which pathname does not
             end with a slash, and basename does not contain a slash.
         """
-        full_path = path
-        path = self.normcase(path)
-        sep: AnyStr = self.get_path_separator(path)
+        path = make_string_path(path)
+        sep = self.get_path_separator(path)
+        alt_sep = self._alternative_path_separator(path)
+        seps = sep if alt_sep is None else sep + alt_sep
         drive, path = self.splitdrive(path)
-        path_components: List[AnyStr] = path.split(sep)
-        if not path_components:
-            return drive, matching_string(path, '')
-        basename = path_components.pop()
-        if not path_components:
-            return drive, basename
-        for component in path_components:
-            if component:
-                # The path is not the root; it contains a non-separator
-                # component. Strip all trailing separators.
-                while not path_components[-1]:
-                    path_components.pop()
-                if not path_components:
-                    return drive, basename
-                return drive + sep.join(path_components), basename
-        # Root path.  Collapse all leading separators.
-        if drive and not basename:
-            return full_path, basename
-        if drive and len(drive) == 2:
-            drive += sep
-        return drive or sep, basename
+        i = len(path)
+        while i and path[i-1] not in seps:
+            i -= 1
+        head, tail = path[:i], path[i:]  # now tail has no slashes
+        # remove trailing slashes from head, unless it's all slashes
+        head = head.rstrip(seps) or head
+        return drive + head, tail
 
     def splitdrive(self, path: AnyStr) -> Tuple[AnyStr, AnyStr]:
         """Splits the path into the drive part and the rest of the path.
@@ -1630,17 +1617,17 @@ class FakeFilesystem:
         path_str = make_string_path(path)
         if self.is_windows_fs:
             if len(path_str) >= 2:
-                path_str = self.normcase(path_str)
+                norm_str = self.normcase(path_str)
                 sep = self.get_path_separator(path_str)
                 # UNC path_str handling
-                if (path_str[0:2] == sep * 2) and (
-                        path_str[2:3] != sep):
+                if (norm_str[0:2] == sep * 2) and (
+                        norm_str[2:3] != sep):
                     # UNC path_str handling - splits off the mount point
                     # instead of the drive
-                    sep_index = path_str.find(sep, 2)
+                    sep_index = norm_str.find(sep, 2)
                     if sep_index == -1:
                         return path_str[:0], path_str
-                    sep_index2 = path_str.find(sep, sep_index + 1)
+                    sep_index2 = norm_str.find(sep, sep_index + 1)
                     if sep_index2 == sep_index + 1:
                         return path_str[:0], path_str
                     if sep_index2 == -1:
@@ -2430,7 +2417,8 @@ class FakeFilesystem:
         dir_path = self.make_string_path(directory_path)
         dir_path = self.absnormpath(dir_path)
         self._auto_mount_drive_if_needed(dir_path)
-        if self.exists(dir_path, check_link=True):
+        if (self.exists(dir_path, check_link=True) and
+                dir_path not in self.mount_points):
             self.raise_os_error(errno.EEXIST, dir_path)
         path_components = self._path_components(dir_path)
         current_dir = self.root
