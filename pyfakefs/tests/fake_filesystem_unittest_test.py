@@ -97,8 +97,8 @@ class TestPyfakefsUnittest(TestPyfakefsUnittestBase):  # pylint: disable=R0904
         self.assertTrue(self.fs.exists('/fake_file.txt'))
         with open('/fake_file.txt') as f:
             content = f.read()
-        self.assertEqual(content, 'This test file was created using the '
-                                  'open() function.\n')
+        self.assertEqual('This test file was created using the '
+                         'open() function.\n', content)
 
     def test_io_open(self):
         """Fake io module is bound"""
@@ -109,8 +109,8 @@ class TestPyfakefsUnittest(TestPyfakefsUnittestBase):  # pylint: disable=R0904
         self.assertTrue(self.fs.exists('/fake_file.txt'))
         with open('/fake_file.txt') as f:
             content = f.read()
-        self.assertEqual(content, 'This test file was created using the '
-                                  'io.open() function.\n')
+        self.assertEqual('This test file was created using the '
+                         'io.open() function.\n', content)
 
     def test_os(self):
         """Fake os module is bound"""
@@ -121,22 +121,21 @@ class TestPyfakefsUnittest(TestPyfakefsUnittestBase):  # pylint: disable=R0904
     def test_glob(self):
         """Fake glob module is bound"""
         is_windows = sys.platform.startswith('win')
-        self.assertEqual(glob.glob('/test/dir1/dir*'),
-                         [])
+        self.assertEqual([], glob.glob('/test/dir1/dir*'))
         self.fs.create_dir('/test/dir1/dir2a')
         matching_paths = glob.glob('/test/dir1/dir*')
         if is_windows:
-            self.assertEqual(matching_paths, [r'\test\dir1\dir2a'])
+            self.assertEqual([r'/test/dir1\dir2a'], matching_paths)
         else:
-            self.assertEqual(matching_paths, ['/test/dir1/dir2a'])
+            self.assertEqual(['/test/dir1/dir2a'], matching_paths)
         self.fs.create_dir('/test/dir1/dir2b')
         matching_paths = sorted(glob.glob('/test/dir1/dir*'))
         if is_windows:
-            self.assertEqual(matching_paths,
-                             [r'\test\dir1\dir2a', r'\test\dir1\dir2b'])
+            self.assertEqual([r'/test/dir1\dir2a', r'/test/dir1\dir2b'],
+                             matching_paths)
         else:
-            self.assertEqual(matching_paths,
-                             ['/test/dir1/dir2a', '/test/dir1/dir2b'])
+            self.assertEqual(['/test/dir1/dir2a', '/test/dir1/dir2b'],
+                             matching_paths)
 
     def test_shutil(self):
         """Fake shutil module is bound"""
