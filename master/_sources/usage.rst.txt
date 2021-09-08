@@ -780,10 +780,10 @@ before adding any files.
 Setting the ``os`` attributes changes a number of ``pyfakefs.FakeFilesystem``
 attributes, which can also be set separately if needed:
 
-  - ``is windows_fs`` -  if ``True`` a Windows file system (NTFS) is assumed
-  - ``is_macos`` - if ``True`` and ``is windows_fs`` is ``False``, the
+  - ``is_windows_fs`` -  if ``True`` a Windows file system (NTFS) is assumed
+  - ``is_macos`` - if ``True`` and ``is_windows_fs`` is ``False``, the
     standard MacOS file system (HFS+) is assumed
-  - if ``is windows_fs`` and ``is_macos`` are ``False``, a Linux file system
+  - if ``is_windows_fs`` and ``is_macos`` are ``False``, a Linux file system
     (something like ext3) is assumed
   - ``is_case_sensitive`` is set to ``True`` under Linux and to ``False``
     under Windows and MacOS by default - you can change it to change the
