@@ -3,8 +3,12 @@ The released versions correspond to PyPi releases.
 
 ## Version 4.6.0 (as yet unreleased)
 
+### Changes
+* `os.listdir`, `os.scandir` and `pathlib.Path.listdir` now return the
+  directory list in a random order (see [#638](../../issues/638))
+
 ### Fixes
-* fixed handling of alternative path separator in `os.path.split`, 
+* fixed handling of alternative path separator in `os.path.split`,
   `os.path.splitdrive` and `glob.glob`
   (see [#632](../../issues/632))
   
