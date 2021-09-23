@@ -98,6 +98,7 @@ import heapq
 import io
 import locale
 import os
+import random
 import sys
 import traceback
 import uuid
@@ -3213,15 +3214,17 @@ class FakeFilesystem:
 
         Returns:
             A list of file names within the target directory in arbitrary
-            order.
+            order. Note that the order is intentionally not the same in
+            subsequent calls to avoid tests relying on any ordering.
 
         Raises:
             OSError: if the target is not a directory.
         """
         target_directory = self.resolve_path(target_directory, allow_fd=True)
         directory = self.confirmdir(target_directory)
-        directory_contents = directory.entries
-        return list(directory_contents.keys())  # type: ignore[arg-type]
+        directory_contents = list(directory.entries.keys())
+        random.shuffle(directory_contents)
+        return directory_contents  # type: ignore[return-value]
 
     def __str__(self) -> str:
         return str(self.root)
