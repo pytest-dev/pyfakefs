@@ -2257,14 +2257,27 @@ class FakeFilesystem:
         if new_dir_object.has_parent_object(old_object):
             self.raise_os_error(errno.EINVAL, new_path)
 
+        self._do_rename(old_dir_object, old_name, new_dir_object, new_name)
+
+    def _do_rename(self, old_dir_object, old_name, new_dir_object, new_name):
         object_to_rename = old_dir_object.get_entry(old_name)
         old_dir_object.remove_entry(old_name, recursive=False)
         object_to_rename.name = new_name
         new_name = new_dir_object._normalized_entryname(new_name)
-        if new_name in new_dir_object.entries:
-            # in case of overwriting remove the old entry first
-            new_dir_object.remove_entry(new_name)
-        new_dir_object.add_entry(object_to_rename)
+        old_entry = (new_dir_object.get_entry(new_name)
+                     if new_name in new_dir_object.entries else None)
+        try:
+            if old_entry:
+                # in case of overwriting remove the old entry first
+                new_dir_object.remove_entry(new_name)
+            new_dir_object.add_entry(object_to_rename)
+        except OSError:
+            # adding failed, roll back the changes before re-raising
+            if old_entry and new_name not in new_dir_object.entries:
+                new_dir_object.add_entry(old_entry)
+            object_to_rename.name = old_name
+            old_dir_object.add_entry(object_to_rename)
+            raise
 
     def _handle_broken_link_with_trailing_sep(self, path: AnyStr) -> None:
         # note that the check for trailing sep has to be done earlier
