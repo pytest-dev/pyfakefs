@@ -24,7 +24,7 @@ import tempfile
 import unittest
 
 from pyfakefs import fake_filesystem_unittest
-from pyfakefs.fake_filesystem import is_root
+from pyfakefs.fake_filesystem import is_root, set_uid, USER_ID
 from pyfakefs.tests.test_utils import RealFsTestMixin
 
 is_windows = sys.platform == 'win32'
@@ -38,6 +38,8 @@ class RealFsTestCase(fake_filesystem_unittest.TestCase, RealFsTestMixin):
     def setUp(self):
         RealFsTestMixin.setUp(self)
         self.cwd = os.getcwd()
+        self.uid = USER_ID
+        set_uid(1000)
         if not self.use_real_fs():
             self.setUpPyfakefs()
             self.filesystem = self.fs
@@ -47,6 +49,7 @@ class RealFsTestCase(fake_filesystem_unittest.TestCase, RealFsTestMixin):
             self.fs.set_disk_usage(1000, self.base_path)
 
     def tearDown(self):
+        set_uid(self.uid)
         RealFsTestMixin.tearDown(self)
 
     @property
@@ -57,6 +60,22 @@ class RealFsTestCase(fake_filesystem_unittest.TestCase, RealFsTestMixin):
 
 
 class FakeShutilModuleTest(RealFsTestCase):
+    @unittest.skipIf(is_windows, 'Posix specific behavior')
+    def test_catch_permission_error(self):
+        root_path = self.make_path('rootpath')
+        self.create_dir(root_path)
+        dir1_path = self.os.path.join(root_path, 'dir1')
+        dir2_path = self.os.path.join(root_path, 'dir2')
+        self.create_dir(dir1_path)
+        self.os.chmod(dir1_path, 0o555)  # remove write permissions
+        self.create_dir(dir2_path)
+        old_file_path = self.os.path.join(dir2_path, 'f1.txt')
+        new_file_path = self.os.path.join(dir1_path, 'f1.txt')
+        self.create_file(old_file_path)
+
+        with self.assertRaises(PermissionError):
+            shutil.move(old_file_path, new_file_path)
+
     def test_rmtree(self):
         directory = self.make_path('xyzzy')
         dir_path = os.path.join(directory, 'subdir')

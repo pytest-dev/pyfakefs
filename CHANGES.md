@@ -11,6 +11,9 @@ The released versions correspond to PyPi releases.
 * fixed handling of alternative path separator in `os.path.split`,
   `os.path.splitdrive` and `glob.glob`
   (see [#632](../../issues/632))
+* fixed handling of failed rename due to permission error
+  (see [#643](../../issues/643))
+
   
 ## [Version 4.5.1](https://pypi.python.org/pypi/pyfakefs/4.5.1) (2021-08-29)
 This is a bugfix release.
