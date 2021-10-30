@@ -48,7 +48,7 @@ jobs:
       fail-fast: false
       matrix:
         os: [ubuntu-latest, macOS-latest, windows-2016]
-        python-version: [3.6, 3.7, 3.8, 3.9, 3.10.0-beta.1]
+        python-version: [3.6, 3.7, 3.8, 3.9, "3.10"]
         include:
           - python-version: pypy3
             os: ubuntu-latest
@@ -98,28 +98,20 @@ jobs:
       shell: bash
     - name: Install extra dependencies
       run: |
-        # some extra dependencies are not avaialble in 3.10 Beta yet
-        # so we exclude it from all tests on extra dependencies
-        if [[ '${{ matrix.python-version }}' != '3.10.0-beta.1' ]]; then
-          pip install -r extra_requirements.txt
-        fi
+        pip install -r extra_requirements.txt
       shell: bash
     - name: Run unit tests with extra packages as non-root user
       run: |
-        if [[ '${{ matrix.python-version }}' != '3.10.0-beta.1' ]]; then
-          python -m pyfakefs.tests.all_tests
-        fi
+        python -m pyfakefs.tests.all_tests
       shell: bash
     - name: Run pytest tests
       run: |
-        if [[ '${{ matrix.python-version }}' != '3.10.0-beta.1' ]]; then
-          export PY_VERSION=${{ matrix.python-version }}
-          $GITHUB_WORKSPACE/.github/workflows/run_pytest.sh
-        fi
+        export PY_VERSION=${{ matrix.python-version }}
+        $GITHUB_WORKSPACE/.github/workflows/run_pytest.sh
       shell: bash
     - name: Run performance tests
       run: |
-        if [[ '${{ matrix.os  }}' != 'macOS-latest' && '${{ matrix.python-version }}' != '3.10.0-beta.1' ]]; then
+        if [[ '${{ matrix.os  }}' != 'macOS-latest' ]]; then
           export TEST_PERFORMANCE=1
           python -m pyfakefs.tests.performance_test
         fi
