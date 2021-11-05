@@ -391,7 +391,8 @@ class Patcher:
 
     IS_WINDOWS = sys.platform in ('win32', 'cygwin')
 
-    SKIPNAMES = {'os', 'path', 'io', 'genericpath', OS_MODULE, PATH_MODULE}
+    SKIPNAMES = {'os', 'path', 'io', 'genericpath', 'fcntl',
+                 OS_MODULE, PATH_MODULE}
 
     # hold values from last call - if changed, the cache has to be invalidated
     PATCHED_MODULE_NAMES: Set[str] = set()
@@ -537,6 +538,9 @@ class Patcher:
         if IS_PYPY:
             # in PyPy io.open, the module is referenced as _io
             self._fake_module_classes['_io'] = fake_filesystem.FakeIoModule
+        if sys.platform != 'win32':
+            self._fake_module_classes[
+                'fcntl'] = fake_filesystem.FakeFcntlModule
 
         # class modules maps class names against a list of modules they can
         # be contained in - this allows for alternative modules like

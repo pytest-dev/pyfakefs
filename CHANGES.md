@@ -6,6 +6,9 @@ The released versions correspond to PyPi releases.
 ### Changes
 * `os.listdir`, `os.scandir` and `pathlib.Path.listdir` now return the
   directory list in a random order (see [#638](../../issues/638))
+* the `fcntl` module under Unix is now mocked, e.g. all functions have no 
+  effect (this may be changed in the future if needed,
+  see [#645](../../issues/645))  
 
 ### Fixes
 * fixed handling of alternative path separator in `os.path.split`,
