@@ -4864,6 +4864,49 @@ class FakeIoModule:
         return getattr(self._io_module, name)
 
 
+if sys.platform != 'win32':
+    import fcntl
+
+    class FakeFcntlModule:
+        """Replaces the fcntl module. Only valid under Linux/MacOS,
+        currently just mocks the functionality away.
+        """
+
+        @staticmethod
+        def dir() -> List[str]:
+            """Return the list of patched function names. Used for patching
+            functions imported from the module.
+            """
+            return ['fcntl', 'ioctl', 'flock', 'lockf']
+
+        def __init__(self, filesystem: FakeFilesystem):
+            """
+            Args:
+                filesystem: FakeFilesystem used to provide file system
+                information (currently not used).
+            """
+            self.filesystem = filesystem
+            self._fcntl_module = fcntl
+
+        def fcntl(self, fd: int, cmd: int, arg: int = 0) -> Union[int, bytes]:
+            return 0
+
+        def ioctl(self, fd: int, request: int, arg: int = 0,
+                  mutate_flag: bool = True) -> Union[int, bytes]:
+            return 0
+
+        def flock(self, fd: int, operation: int) -> None:
+            pass
+
+        def lockf(self, fd: int, cmd: int, len: int = 0,
+                  start: int = 0, whence=0) -> Any:
+            pass
+
+        def __getattr__(self, name):
+            """Forwards any unfaked calls to the standard fcntl module."""
+            return getattr(self._fcntl_module, name)
+
+
 class FakeFileWrapper:
     """Wrapper for a stream object for use by a FakeFile object.
 
