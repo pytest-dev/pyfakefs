@@ -957,6 +957,7 @@ class FakeFilesystem:
         self.dev_null = FakeNullFile(self)
         # set from outside if needed
         self.patch_open_code = PatchMode.OFF
+        self.shuffle_listdir_results = False
 
     @property
     def is_linux(self) -> bool:
@@ -3227,8 +3228,8 @@ class FakeFilesystem:
 
         Returns:
             A list of file names within the target directory in arbitrary
-            order. Note that the order is intentionally not the same in
-            subsequent calls to avoid tests relying on any ordering.
+            order. If `shuffle_listdir_results` is set, the order is not the
+            same in subsequent calls to avoid tests relying on any ordering.
 
         Raises:
             OSError: if the target is not a directory.
@@ -3236,7 +3237,8 @@ class FakeFilesystem:
         target_directory = self.resolve_path(target_directory, allow_fd=True)
         directory = self.confirmdir(target_directory)
         directory_contents = list(directory.entries.keys())
-        random.shuffle(directory_contents)
+        if self.shuffle_listdir_results:
+            random.shuffle(directory_contents)
         return directory_contents  # type: ignore[return-value]
 
     def __str__(self) -> str:
