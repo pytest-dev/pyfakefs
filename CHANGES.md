@@ -3,6 +3,9 @@ The released versions correspond to PyPi releases.
 
 ## Version 4.6.0 (as yet unreleased)
 
+## [Version 4.5.3](https://pypi.python.org/pypi/pyfakefs/4.5.3) (2021-11-08)
+Reverts a change in the previous release that could cause a regression.
+
 ### Changes
 * `os.listdir`, `os.scandir` and `pathlib.Path.listdir` now return the
   directory list in a random order only if explicitly configured in the 
