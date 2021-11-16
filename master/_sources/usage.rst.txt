@@ -29,13 +29,12 @@ with the fake file system functions and modules:
             self.assertTrue(os.path.exists(file_path))
 
 The usage is explained in more detail in :ref:`auto_patch` and
-demonstrated in the files `example.py <https://github.com/jmcgeheeiv/pyfakefs/blob/master/pyfakefs/tests/example.py>`__
-and `example_test.py <https://github.com/jmcgeheeiv/pyfakefs/blob/master/pyfakefs/tests/example_test.py>`__.
+demonstrated in the files `example.py`_ and `example_test.py`_.
 
 Patch using the pytest plugin
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-If you use `pytest <https://doc.pytest.org>`__, you will be interested in
-the pytest plugin in ``pyfakefs``.
+If you use `pytest`_, you will be interested in the pytest plugin in
+``pyfakefs``.
 This automatically patches all file system functions and modules in a
 similar manner as described above.
 
@@ -68,7 +67,7 @@ tests:
 
 Patch using fake_filesystem_unittest.Patcher
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-If you are using other means of testing like `nose <http://nose2.readthedocs.io>`__,
+If you are using other means of testing like `nose`_,
 you can do the patching using ``fake_filesystem_unittest.Patcher``--the class
 doing the actual work of replacing the filesystem modules with the fake modules
 in the first two approaches.
@@ -218,11 +217,10 @@ In case of ``pytest``, you have two possibilities:
       ...
 
 - You can also pass the arguments using ``@pytest.mark.parametrize``. Note that
-  you have to provide
-  `all Patcher arguments <http://jmcgeheeiv.github.io/pyfakefs/master/modules.html#pyfakefs.fake_filesystem_unittest.Patcher>`__
-  before the needed ones, as keyword arguments cannot be used, and you have to
-  add ``indirect=True``. This makes it less readable, but gives
-  you a quick possibility to adapt a single test:
+  you have to provide `all Patcher arguments`_ before the needed ones, as
+  keyword arguments cannot be used, and you have to add ``indirect=True``.
+  This makes it less readable, but gives you a quick possibility to adapt a
+  single test:
 
 .. code:: python
 
@@ -852,17 +850,20 @@ reasons:
 A list of Python modules that are known to not work correctly with
 ``pyfakefs`` will be collected here:
 
-- ``multiprocessing`` has several issues (related to points 1 and 3 above).
+- `multiprocessing`_ has several issues (related to points 1 and 3 above).
   Currently there are no plans to fix this, but this may change in case of
   sufficient demand.
-- ``subprocess`` has very similar problems and cannot be used with
+- `subprocess`_ has very similar problems and cannot be used with
   ``pyfakefs`` to start a process. ``subprocess`` can either be mocked, if
   the process is not needed for the test, or patching can be paused to start
   a process if needed, and resumed afterwards
   (see `this issue <https://github.com/jmcgeheeiv/pyfakefs/issues/447>`__).
-- the ``Pillow`` image library does not work with pyfakefs at least if writing
+- Modules that rely on ``subprocess`` or ``multiprocessing`` to work
+  correctly, e.g. need to start other executables. Examples that have shown
+  this problem include `GitPython`_ and `plumbum`_.
+- the `Pillow`_ image library does not work with pyfakefs at least if writing
   JPEG files (see `this issue <https://github.com/jmcgeheeiv/pyfakefs/issues/529>`__)
-- ``pandas`` (the Python data analysis library) uses its own internal file
+- `pandas`_ (the Python data analysis library) uses its own internal file
   system access written in C. Thus much of ``pandas`` will not work with
   ``pyfakefs``. Having said that, ``pyfakefs`` patches ``pandas`` so that many
   of the ``read_xxx`` functions, including ``read_csv`` and ``read_excel``,
@@ -924,3 +925,15 @@ If you still want to use ``mock_open``, make sure it is only used while
 patching is in progress. For example, if you are using ``pytest`` with the
 ``mocker`` fixture used to patch ``open``, make sure that the ``fs`` fixture is
 passed before the ``mocker`` fixture to ensure this.
+
+.. _`example.py`: https://github.com/jmcgeheeiv/pyfakefs/blob/master/pyfakefs/tests/example.py
+.. _`example_test.py`: https://github.com/jmcgeheeiv/pyfakefs/blob/master/pyfakefs/tests/example_test.py
+.. _`pytest`: https://doc.pytest.org
+.. _`nose`: https://docs.nose2.io/en/latest/
+.. _`all Patcher arguments`: https://jmcgeheeiv.github.io/pyfakefs/master/modules.html#pyfakefs.fake_filesystem_unittest.Patcher
+.. _`multiprocessing`: https://docs.python.org/3/library/multiprocessing.html
+.. _`subprocess`: https://docs.python.org/3/library/subprocess.html
+.. _`GitPython`: https://pypi.org/project/GitPython/
+.. _`plumbum`: https://pypi.org/project/plumbum/
+.. _`Pillow`: https://pypi.org/project/Pillow/
+.. _`pandas`: https://pypi.org/project/pandas/
