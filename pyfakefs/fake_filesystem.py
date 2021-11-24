@@ -2463,7 +2463,7 @@ class FakeFilesystem:
 
         return current_dir
 
-    def create_file(self, file_path: AnyStr,
+    def create_file(self, file_path: AnyPath,
                     st_mode: int = S_IFREG | PERM_DEF_FILE,
                     contents: AnyString = '',
                     st_size: Optional[int] = None,
@@ -2505,9 +2505,9 @@ class FakeFilesystem:
             file_path, st_mode, contents, st_size, create_missing_dirs,
             apply_umask, encoding, errors, side_effect=side_effect)
 
-    def add_real_file(self, source_path: AnyStr,
+    def add_real_file(self, source_path: AnyPath,
                       read_only: bool = True,
-                      target_path: Optional[AnyStr] = None) -> FakeFile:
+                      target_path: Optional[AnyPath] = None) -> FakeFile:
         """Create `file_path`, including all the parent directories along the
         way, for an existing real file. The contents of the real file are read
         only on demand.
