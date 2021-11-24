@@ -406,7 +406,7 @@ does not have read permission</li>
 
 <dl class="method">
 <dt id="pyfakefs.fake_filesystem.FakeFilesystem.create_file">
-<code class="descname">create_file</code><span class="sig-paren">(</span><em>file_path: AnyStr</em>, <em>st_mode: int = 33206</em>, <em>contents: Union[str</em>, <em>bytes] = ''</em>, <em>st_size: Optional[int] = None</em>, <em>create_missing_dirs: bool = True</em>, <em>apply_umask: bool = False</em>, <em>encoding: Optional[str] = None</em>, <em>errors: Optional[str] = None</em>, <em>side_effect: Optional[Callable] = None</em><span class="sig-paren">)</span> &#x2192; pyfakefs.fake_filesystem.FakeFile<a class="headerlink" href="#pyfakefs.fake_filesystem.FakeFilesystem.create_file" title="Permalink to this definition">¶</a></dt>
+<code class="descname">create_file</code><span class="sig-paren">(</span><em>file_path: Union[AnyStr, os.PathLike], st_mode: int = 33206, contents: Union[str, bytes] = '', st_size: Optional[int] = None, create_missing_dirs: bool = True, apply_umask: bool = False, encoding: Optional[str] = None, errors: Optional[str] = None, side_effect: Optional[Callable] = None</em><span class="sig-paren">)</span> &#x2192; pyfakefs.fake_filesystem.FakeFile<a class="headerlink" href="#pyfakefs.fake_filesystem.FakeFilesystem.create_file" title="Permalink to this definition">¶</a></dt>
 <dd><p>Create <cite>file_path</cite>, including all the parent directories along
 the way.</p>
 <p>This helper method can be used to set up tests more easily.</p>
@@ -448,7 +448,7 @@ must accept the file object as an argument.</li>
 
 <dl class="method">
 <dt id="pyfakefs.fake_filesystem.FakeFilesystem.add_real_file">
-<code class="descname">add_real_file</code><span class="sig-paren">(</span><em>source_path: AnyStr</em>, <em>read_only: bool = True</em>, <em>target_path: Optional[AnyStr] = None</em><span class="sig-paren">)</span> &#x2192; pyfakefs.fake_filesystem.FakeFile<a class="headerlink" href="#pyfakefs.fake_filesystem.FakeFilesystem.add_real_file" title="Permalink to this definition">¶</a></dt>
+<code class="descname">add_real_file</code><span class="sig-paren">(</span><em>source_path: Union[AnyStr, os.PathLike], read_only: bool = True, target_path: Union[AnyStr, os.PathLike, None] = None</em><span class="sig-paren">)</span> &#x2192; pyfakefs.fake_filesystem.FakeFile<a class="headerlink" href="#pyfakefs.fake_filesystem.FakeFilesystem.add_real_file" title="Permalink to this definition">¶</a></dt>
 <dd><p>Create <cite>file_path</cite>, including all the parent directories along the
 way, for an existing real file. The contents of the real file are read
 only on demand.</p>
@@ -1264,7 +1264,7 @@ that is available on pypi.</p>
         &#169; Copyright 2009 Google Inc. All Rights Reserved.
 © Copyright 2014 Altera Corporation. All Rights Reserved.
 © Copyright 2014-2021 John McGehee.
-      Last updated on Nov 16, 2021.
+      Last updated on Nov 24, 2021.
     </div>
   </body>
 </html>
