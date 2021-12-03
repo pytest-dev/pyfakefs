@@ -3,6 +3,10 @@ The released versions correspond to PyPi releases.
 
 ## Version 4.6.0 (as yet unreleased)
 
+### Fixes
+* added missing mocked functions for fake pipe (see [#650](../../issues/650))
+
+
 ## [Version 4.5.3](https://pypi.python.org/pypi/pyfakefs/4.5.3) (2021-11-08)
 Reverts a change in the previous release that could cause a regression.
 

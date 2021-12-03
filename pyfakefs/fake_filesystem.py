@@ -518,8 +518,7 @@ class FakeFile:
                 dir_path = sep + dir_path
         else:
             dir_path = sep.join(names)
-        dir_path = self.filesystem.absnormpath(dir_path)
-        return dir_path
+        return self.filesystem.absnormpath(dir_path)
 
     @Deprecator('property path')
     def GetPath(self):
@@ -3933,10 +3932,10 @@ class FakeOsModule:
 
     def pipe(self) -> Tuple[int, int]:
         read_fd, write_fd = os.pipe()
-        read_wrapper = FakePipeWrapper(self.filesystem, read_fd)
+        read_wrapper = FakePipeWrapper(self.filesystem, read_fd, False)
         file_des = self.filesystem._add_open_file(read_wrapper)
         read_wrapper.filedes = file_des
-        write_wrapper = FakePipeWrapper(self.filesystem, write_fd)
+        write_wrapper = FakePipeWrapper(self.filesystem, write_fd, True)
         file_des = self.filesystem._add_open_file(write_wrapper)
         write_wrapper.filedes = file_des
         return read_wrapper.filedes, write_wrapper.filedes
@@ -5429,9 +5428,10 @@ class FakePipeWrapper:
     used in open files list.
     """
 
-    def __init__(self, filesystem: FakeFilesystem, fd: int):
+    def __init__(self, filesystem: FakeFilesystem, fd: int, can_write: bool):
         self._filesystem = filesystem
         self.fd = fd  # the real file descriptor
+        self.can_write = can_write
         self.file_object = None
         self.filedes: Optional[int] = None
 
@@ -5474,6 +5474,18 @@ class FakePipeWrapper:
         assert open_files is not None
         open_files.remove(self)
         os.close(self.fd)
+
+    def readable(self) -> bool:
+        """The pipe end can either be readable or writable."""
+        return not self.can_write
+
+    def writable(self) -> bool:
+        """The pipe end can either be readable or writable."""
+        return self.can_write
+
+    def seekable(self) -> bool:
+        """A pipe is not seekable."""
+        return False
 
 
 Deprecator.add(FakeFileWrapper, FakeFileWrapper.get_object, 'GetObject')
@@ -5559,7 +5571,8 @@ class FakeFileOpen:
             assert wrappers is not None
             existing_wrapper = wrappers[0]
             assert isinstance(existing_wrapper, FakePipeWrapper)
-            wrapper = FakePipeWrapper(self.filesystem, existing_wrapper.fd)
+            wrapper = FakePipeWrapper(self.filesystem, existing_wrapper.fd,
+                                      existing_wrapper.can_write)
             file_des = self.filesystem._add_open_file(wrapper)
             wrapper.filedes = file_des
             return wrapper
