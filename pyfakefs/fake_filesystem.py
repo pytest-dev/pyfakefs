@@ -1118,8 +1118,9 @@ class FakeFilesystem:
 
     def _mount_point_for_path(self, path: AnyStr) -> Dict:
         path = self.absnormpath(self._original_path(path))
-        if path in self.mount_points:
-            return self.mount_points[path]
+        for mount_path in self.mount_points:
+            if path == matching_string(path, mount_path):
+                return self.mount_points[mount_path]
         mount_path = matching_string(path, '')
         drive = self.splitdrive(path)[0]
         for root_path in self.mount_points:
@@ -2048,9 +2049,9 @@ class FakeFilesystem:
             OSError: if the object is not found.
         """
         path = make_string_path(file_path)
-        if path == self.root.name:
+        if path == matching_string(path, self.root.name):
             return self.root
-        if path == self.dev_null.name:
+        if path == matching_string(path, self.dev_null.name):
             return self.dev_null
 
         path = self._original_path(path)
@@ -2143,7 +2144,7 @@ class FakeFilesystem:
         path_str = make_string_path(path)
         if not path_str:
             raise OSError(errno.ENOENT, path_str)
-        if path_str == self.root.name:
+        if path_str == matching_string(path_str, self.root.name):
             # The root directory will never be a link
             return self.root
 
@@ -3201,7 +3202,7 @@ class FakeFilesystem:
             OSError: if removal failed per FakeFilesystem.RemoveObject.
                 Cannot remove '.'.
         """
-        if target_directory in (b'.', u'.'):
+        if target_directory == matching_string(target_directory, '.'):
             error_nr = errno.EACCES if self.is_windows_fs else errno.EINVAL
             self.raise_os_error(error_nr, target_directory)
         ends_with_sep = self.ends_with_path_separator(target_directory)
@@ -4652,7 +4653,7 @@ class FakeOsModule:
             if self.filesystem.exists(head, check_link=True):
                 self.filesystem.raise_os_error(errno.EEXIST, path)
             self.filesystem.raise_os_error(errno.ENOENT, path)
-        if tail in (b'.', u'.', b'..', u'..'):
+        if tail in (matching_string(tail, '.'), matching_string(tail, '..')):
             self.filesystem.raise_os_error(errno.ENOENT, path)
         if self.filesystem.exists(path, check_link=True):
             self.filesystem.raise_os_error(errno.EEXIST, path)

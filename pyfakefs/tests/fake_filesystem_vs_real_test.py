@@ -182,8 +182,8 @@ class FakeFilesystemVsRealTest(TestCase):
         real_err, real_value = self._get_real_value(method_name, path, real)
         fake_err, fake_value = self._get_fake_value(method_name, path, fake)
 
-        method_call = '%s' % method_name
-        method_call += '()' if path == () else '(%s)' % path
+        method_call = f'{method_name}'
+        method_call += '()' if path == () else '({path})'
         # We only compare on the error class because the acutal error contents
         # is almost always different because of the file paths.
         if _error_class(real_err) != _error_class(fake_err):
@@ -223,7 +223,11 @@ class FakeFilesystemVsRealTest(TestCase):
             if not callable(fake):
                 fake_method = getattr(fake, method_name)
             args = [] if path == () else [path]
-            fake_value = str(fake_method(*args))
+            result = fake_method(*args)
+            if isinstance(result, bytes):
+                fake_value = result.decode()
+            else:
+                fake_value = str(result)
         except Exception as e:  # pylint: disable-msg=W0703
             fake_err = e
         return fake_err, fake_value
@@ -238,7 +242,11 @@ class FakeFilesystemVsRealTest(TestCase):
             real_method = real
             if not callable(real):
                 real_method = getattr(real, method_name)
-            real_value = str(real_method(*args))
+            result = real_method(*args)
+            if isinstance(result, bytes):
+                real_value = result.decode()
+            else:
+                real_value = str(result)
         except Exception as e:  # pylint: disable-msg=W0703
             real_err = e
         return real_err, real_value

@@ -83,7 +83,7 @@ jobs:
     - name: Run unit tests without extra packages as non-root user
       run: |
         export TEST_REAL_FS=1
-        python -m pyfakefs.tests.all_tests_without_extra_packages
+        python -bb -m pyfakefs.tests.all_tests_without_extra_packages
       shell: bash
     - name: Run setup.py test (uses pytest)
       run: |
