@@ -1,11 +1,12 @@
 # pyfakefs Release Notes
 The released versions correspond to PyPi releases.
 
-## Version 4.6.0 (as yet unreleased)
+## [Version 4.5.4](https://pypi.python.org/pypi/pyfakefs/4.5.4) (2022-01-12)
+Minor bugfix release.
 
 ### Fixes
 * added missing mocked functions for fake pipe (see [#650](../../issues/650))
-
+* fixed some bytes warnings (see [#651](../../issues/651))
 
 ## [Version 4.5.3](https://pypi.python.org/pypi/pyfakefs/4.5.3) (2021-11-08)
 Reverts a change in the previous release that could cause a regression.
