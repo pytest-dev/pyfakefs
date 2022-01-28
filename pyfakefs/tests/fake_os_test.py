@@ -2750,7 +2750,7 @@ class FakeOsModuleTest(FakeOsModuleTestBase):
             with self.open(write_fd, 'wb') as f:
                 self.assertEqual(4, f.write(b'test'))
             with self.open(read_fd, 'rb') as f:
-                self.assertEqual(b'test', f.read(4))
+                self.assertEqual(b'test', f.read())
         for fd in fds:
             self.os.close(fd)
 

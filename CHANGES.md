@@ -6,6 +6,8 @@ The released versions correspond to PyPi releases.
 ### Fixes
 * correctly handle file system space for files opened in write mode
   (see [#660](../../issues/660))
+* correctly handle reading/writing pipes via file
+  (see [#661](../../issues/661)) 
 
 ## [Version 4.5.4](https://pypi.python.org/pypi/pyfakefs/4.5.4) (2022-01-12)
 Minor bugfix release.

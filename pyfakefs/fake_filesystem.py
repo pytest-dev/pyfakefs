@@ -5383,7 +5383,7 @@ class StandardStreamWrapper:
             return self.filedes
         raise OSError(errno.EBADF, 'Invalid file descriptor')
 
-    def read(self, n: int) -> bytes:
+    def read(self, n: int = -1) -> bytes:
         return cast(bytes, self._stream_object.read())
 
     def close(self) -> None:
@@ -5427,12 +5427,16 @@ class FakePipeWrapper:
     used in open files list.
     """
 
-    def __init__(self, filesystem: FakeFilesystem, fd: int, can_write: bool):
+    def __init__(self, filesystem: FakeFilesystem,
+                 fd: int, can_write: bool, mode: str = ''):
         self._filesystem = filesystem
         self.fd = fd  # the real file descriptor
         self.can_write = can_write
         self.file_object = None
         self.filedes: Optional[int] = None
+        self.real_file = None
+        if mode:
+            self.real_file = open(fd, mode)
 
     def __enter__(self) -> 'FakePipeWrapper':
         """To support usage of this fake pipe with the 'with' statement."""
@@ -5454,8 +5458,10 @@ class FakePipeWrapper:
             return self.filedes
         raise OSError(errno.EBADF, 'Invalid file descriptor')
 
-    def read(self, numBytes: int) -> bytes:
+    def read(self, numBytes: int = -1) -> bytes:
         """Read from the real pipe."""
+        if self.real_file:
+            return self.real_file.read(numBytes)
         return os.read(self.fd, numBytes)
 
     def flush(self) -> None:
@@ -5464,6 +5470,8 @@ class FakePipeWrapper:
 
     def write(self, contents: bytes) -> int:
         """Write to the real pipe."""
+        if self.real_file:
+            return self.real_file.write(contents)
         return os.write(self.fd, contents)
 
     def close(self) -> None:
@@ -5472,7 +5480,10 @@ class FakePipeWrapper:
         open_files = self._filesystem.open_files[self.filedes]
         assert open_files is not None
         open_files.remove(self)
-        os.close(self.fd)
+        if self.real_file:
+            self.real_file.close()
+        else:
+            os.close(self.fd)
 
     def readable(self) -> bool:
         """The pipe end can either be readable or writable."""
@@ -5571,7 +5582,7 @@ class FakeFileOpen:
             existing_wrapper = wrappers[0]
             assert isinstance(existing_wrapper, FakePipeWrapper)
             wrapper = FakePipeWrapper(self.filesystem, existing_wrapper.fd,
-                                      existing_wrapper.can_write)
+                                      existing_wrapper.can_write, mode)
             file_des = self.filesystem._add_open_file(wrapper)
             wrapper.filedes = file_des
             return wrapper
