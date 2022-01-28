@@ -1,6 +1,12 @@
 # pyfakefs Release Notes
 The released versions correspond to PyPi releases.
 
+## Unreleased
+
+### Fixes
+* correctly handle file system space for files opened in write mode
+  (see [#660](../../issues/660))
+
 ## [Version 4.5.4](https://pypi.python.org/pypi/pyfakefs/4.5.4) (2022-01-12)
 Minor bugfix release.
 
