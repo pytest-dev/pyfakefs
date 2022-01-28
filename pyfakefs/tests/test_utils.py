@@ -21,6 +21,7 @@ import stat
 import sys
 import tempfile
 import unittest
+from contextlib import contextmanager
 from unittest import mock
 
 from pyfakefs import fake_filesystem
@@ -68,6 +69,17 @@ class TestCase(unittest.TestCase):
 
     def assert_mode_equal(self, expected, actual):
         return self.assertEqual(stat.S_IMODE(expected), stat.S_IMODE(actual))
+
+    @contextmanager
+    def raises_os_error(self, subtype):
+        try:
+            yield
+            self.fail('No exception was raised, OSError expected')
+        except OSError as exc:
+            if isinstance(subtype, list):
+                self.assertIn(exc.errno, subtype)
+            else:
+                self.assertEqual(subtype, exc.errno)
 
     def assert_raises_os_error(self, subtype, expression, *args, **kwargs):
         """Asserts that a specific subtype of OSError is raised."""

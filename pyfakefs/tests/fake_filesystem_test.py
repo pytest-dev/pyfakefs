@@ -93,16 +93,12 @@ class FakeDirectoryUnitTest(TestCase):
             self.fake_dir.get_entry('foobar')
 
     def test_should_throw_if_set_size_is_not_integer(self):
-        def set_size():
+        with self.raises_os_error(errno.ENOSPC):
             self.fake_file.size = 0.1
 
-        self.assert_raises_os_error(errno.ENOSPC, set_size)
-
     def test_should_throw_if_set_size_is_negative(self):
-        def set_size():
+        with self.raises_os_error(errno.ENOSPC):
             self.fake_file.size = -1
-
-        self.assert_raises_os_error(errno.ENOSPC, set_size)
 
     def test_produce_empty_file_if_set_size_is_zero(self):
         self.fake_file.size = 0
@@ -123,11 +119,11 @@ class FakeDirectoryUnitTest(TestCase):
     def test_set_contents_to_dir_raises(self):
         # Regression test for #276
         self.filesystem.is_windows_fs = True
-        self.assert_raises_os_error(
-            errno.EISDIR, self.fake_dir.set_contents, 'a')
+        with self.raises_os_error(errno.EISDIR):
+            self.fake_dir.set_contents('a')
         self.filesystem.is_windows_fs = False
-        self.assert_raises_os_error(
-            errno.EISDIR, self.fake_dir.set_contents, 'a')
+        with self.raises_os_error(errno.EISDIR):
+            self.fake_dir.set_contents('a')
 
     def test_pads_with_nullbytes_if_size_is_greater_than_current_size(self):
         self.fake_file.size = 13
@@ -180,12 +176,12 @@ class SetLargeFileSizeTest(TestCase):
                                                   filesystem=filesystem)
 
     def test_should_throw_if_size_is_not_integer(self):
-        self.assert_raises_os_error(errno.ENOSPC,
-                                    self.fake_file.set_large_file_size, 0.1)
+        with self.raises_os_error(errno.ENOSPC):
+            self.fake_file.set_large_file_size(0.1)
 
     def test_should_throw_if_size_is_negative(self):
-        self.assert_raises_os_error(errno.ENOSPC,
-                                    self.fake_file.set_large_file_size, -1)
+        with self.raises_os_error(errno.ENOSPC):
+            self.fake_file.set_large_file_size(-1)
 
     def test_sets_content_none_if_size_is_non_negative_integer(self):
         self.fake_file.set_large_file_size(1000000000)
@@ -340,18 +336,18 @@ class FakeFilesystemUnitTest(TestCase):
     def test_get_nonexistent_object_from_root_error(self):
         self.filesystem.add_object(self.root_name, self.fake_file)
         self.assertEqual(self.fake_file, self.filesystem.get_object('foobar'))
-        self.assert_raises_os_error(
-            errno.ENOENT, self.filesystem.get_object, 'some_bogus_filename')
+        with self.raises_os_error(errno.ENOENT):
+            self.filesystem.get_object('some_bogus_filename')
 
     def test_remove_object_from_root(self):
         self.filesystem.add_object(self.root_name, self.fake_file)
         self.filesystem.remove_object(self.fake_file.name)
-        self.assert_raises_os_error(
-            errno.ENOENT, self.filesystem.get_object, self.fake_file.name)
+        with self.raises_os_error(errno.ENOENT):
+            self.filesystem.get_object(self.fake_file.name)
 
     def test_remove_nonexisten_object_from_root_error(self):
-        self.assert_raises_os_error(
-            errno.ENOENT, self.filesystem.remove_object, 'some_bogus_filename')
+        with self.raises_os_error(errno.ENOENT):
+            self.filesystem.remove_object('some_bogus_filename')
 
     def test_exists_removed_file(self):
         self.filesystem.add_object(self.root_name, self.fake_file)
@@ -368,16 +364,14 @@ class FakeFilesystemUnitTest(TestCase):
     def test_add_object_to_regular_file_error_posix(self):
         self.filesystem.is_windows_fs = False
         self.filesystem.add_object(self.root_name, self.fake_file)
-        self.assert_raises_os_error(errno.ENOTDIR,
-                                    self.filesystem.add_object,
-                                    self.fake_file.name, self.fake_file)
+        with self.raises_os_error(errno.ENOTDIR):
+            self.filesystem.add_object(self.fake_file.name, self.fake_file)
 
     def test_add_object_to_regular_file_error_windows(self):
         self.filesystem.is_windows_fs = True
         self.filesystem.add_object(self.root_name, self.fake_file)
-        self.assert_raises_os_error(errno.ENOENT,
-                                    self.filesystem.add_object,
-                                    self.fake_file.name, self.fake_file)
+        with self.raises_os_error(errno.ENOENT):
+            self.filesystem.add_object(self.fake_file.name, self.fake_file)
 
     def test_exists_file_added_to_child(self):
         self.filesystem.add_object(self.root_name, self.fake_child)
@@ -397,10 +391,9 @@ class FakeFilesystemUnitTest(TestCase):
     def test_get_nonexistent_object_from_child_error(self):
         self.filesystem.add_object(self.root_name, self.fake_child)
         self.filesystem.add_object(self.fake_child.name, self.fake_file)
-        self.assert_raises_os_error(errno.ENOENT, self.filesystem.get_object,
-                                    self.filesystem.joinpaths(
-                                        self.fake_child.name,
-                                        'some_bogus_filename'))
+        with self.raises_os_error(errno.ENOENT):
+            self.filesystem.get_object(self.filesystem.joinpaths(
+                self.fake_child.name, 'some_bogus_filename'))
 
     def test_remove_object_from_child(self):
         self.filesystem.add_object(self.root_name, self.fake_child)
@@ -408,23 +401,23 @@ class FakeFilesystemUnitTest(TestCase):
         target_path = self.filesystem.joinpaths(self.fake_child.name,
                                                 self.fake_file.name)
         self.filesystem.remove_object(target_path)
-        self.assert_raises_os_error(errno.ENOENT, self.filesystem.get_object,
-                                    target_path)
+        with self.raises_os_error(errno.ENOENT):
+            self.filesystem.get_object(target_path)
 
     def test_remove_object_from_child_error(self):
         self.filesystem.add_object(self.root_name, self.fake_child)
-        self.assert_raises_os_error(
-            errno.ENOENT, self.filesystem.remove_object,
-            self.filesystem.joinpaths(self.fake_child.name,
-                                      'some_bogus_filename'))
+        with self.raises_os_error(errno.ENOENT):
+            self.filesystem.remove_object(
+                self.filesystem.joinpaths(self.fake_child.name,
+                                          'some_bogus_filename'))
 
     def test_remove_object_from_non_directory_error(self):
         self.filesystem.add_object(self.root_name, self.fake_file)
-        self.assert_raises_os_error(
-            errno.ENOTDIR, self.filesystem.remove_object,
-            self.filesystem.joinpaths(
-                '%s' % self.fake_file.name,
-                'file_does_not_matter_since_parent_not_a_directory'))
+        with self.raises_os_error(errno.ENOTDIR):
+            self.filesystem.remove_object(
+                self.filesystem.joinpaths(
+                    '%s' % self.fake_file.name,
+                    'file_does_not_matter_since_parent_not_a_directory'))
 
     def test_exists_file_removed_from_child(self):
         self.filesystem.add_object(self.root_name, self.fake_child)
@@ -462,8 +455,8 @@ class FakeFilesystemUnitTest(TestCase):
     def test_create_directory_in_root_directory_already_exists_error(self):
         path = 'foo'
         self.filesystem.create_dir(path)
-        self.assert_raises_os_error(
-            errno.EEXIST, self.filesystem.create_dir, path)
+        with self.raises_os_error(errno.EEXIST):
+            self.filesystem.create_dir(path)
 
     def test_create_directory(self):
         path = 'foo/bar/baz'
@@ -482,8 +475,8 @@ class FakeFilesystemUnitTest(TestCase):
     def test_create_directory_already_exists_error(self):
         path = 'foo/bar/baz'
         self.filesystem.create_dir(path)
-        self.assert_raises_os_error(
-            errno.EEXIST, self.filesystem.create_dir, path)
+        with self.raises_os_error(errno.EEXIST):
+            self.filesystem.create_dir(path)
 
     def test_create_file_in_read_only_directory_raises_in_posix(self):
         self.filesystem.is_windows_fs = False
@@ -492,9 +485,8 @@ class FakeFilesystemUnitTest(TestCase):
         file_path = dir_path + '/baz'
 
         if not is_root():
-            self.assert_raises_os_error(errno.EACCES,
-                                        self.filesystem.create_file,
-                                        file_path)
+            with self.raises_os_error(errno.EACCES):
+                self.filesystem.create_file(file_path)
         else:
             self.filesystem.create_file(file_path)
             self.assertTrue(self.filesystem.exists(file_path))
@@ -537,8 +529,8 @@ class FakeFilesystemUnitTest(TestCase):
     def test_create_file_in_root_directory_already_exists_error(self):
         path = 'foo'
         self.filesystem.create_file(path)
-        self.assert_raises_os_error(
-            errno.EEXIST, self.filesystem.create_file, path)
+        with self.raises_os_error(errno.EEXIST):
+            self.filesystem.create_file(path)
 
     def test_create_file(self):
         path = 'foo/bar/baz'
@@ -580,8 +572,8 @@ class FakeFilesystemUnitTest(TestCase):
     def test_create_file_already_exists_error(self):
         path = 'foo/bar/baz'
         self.filesystem.create_file(path, contents='dummy_data')
-        self.assert_raises_os_error(
-            errno.EEXIST, self.filesystem.create_file, path)
+        with self.raises_os_error(errno.EEXIST):
+            self.filesystem.create_file(path)
 
     def test_create_link(self):
         path = 'foo/bar/baz'
@@ -631,10 +623,10 @@ class FakeFilesystemUnitTest(TestCase):
 
     def check_directory_access_on_file(self, error_subtype):
         self.filesystem.create_file('not_a_dir')
-        self.assert_raises_os_error(
-            error_subtype, self.filesystem.resolve, 'not_a_dir/foo')
-        self.assert_raises_os_error(
-            error_subtype, self.filesystem.lresolve, 'not_a_dir/foo/bar')
+        with self.raises_os_error(error_subtype):
+            self.filesystem.resolve('not_a_dir/foo')
+        with self.raises_os_error(error_subtype):
+            self.filesystem.lresolve('not_a_dir/foo/bar')
 
     def test_directory_access_on_file_windows(self):
         self.filesystem.is_windows_fs = True
@@ -720,8 +712,8 @@ class CaseInsensitiveFakeFilesystemTest(TestCase):
         link_path = dir_path + "/link"
         link_target = link_path + "/link"
         self.os.symlink(link_target, link_path)
-        self.assert_raises_os_error(
-            errno.ELOOP, self.os.path.getsize, link_path)
+        with self.raises_os_error(errno.ELOOP):
+            self.os.path.getsize(link_path)
 
     def test_get_mtime(self):
         test_file = self.filesystem.create_file('foo/bar1.txt')
@@ -792,8 +784,8 @@ class CaseSensitiveFakeFilesystemTest(TestCase):
     def test_get_mtime(self):
         test_file = self.filesystem.create_file('foo/bar1.txt')
         test_file.st_mtime = 24
-        self.assert_raises_os_error(
-            errno.ENOENT, self.path.getmtime, 'Foo/Bar1.TXT')
+        with self.raises_os_error(errno.ENOENT):
+            self.path.getmtime('Foo/Bar1.TXT')
 
 
 class OsPathInjectionRegressionTest(TestCase):
@@ -953,9 +945,8 @@ class FakePathModuleTest(TestCase):
         self.filesystem.cwd = '!foo'
         self.assertEqual('!foo!baz',
                          self.os.path.realpath('baz', strict=False))
-        self.assert_raises_os_error(errno.ENOENT,
-                                    self.os.path.realpath,
-                                    'baz', strict=True)
+        with self.raises_os_error(errno.ENOENT):
+            self.os.path.realpath('baz', strict=True)
         self.assertEqual('!foo!bar',
                          self.os.path.realpath('bar', strict=True))
 
@@ -1103,9 +1094,9 @@ class FakePathModuleTest(TestCase):
         self.assertEqual(24, self.path.getmtime(b'foo!bar1.txt'))
 
     def test_get_mtime_raises_os_error(self):
-        self.assertFalse(self.path.exists('it_dont_exist'))
-        self.assert_raises_os_error(errno.ENOENT, self.path.getmtime,
-                                    'it_dont_exist')
+        self.assertFalse(self.path.exists('does_not_exist'))
+        with self.raises_os_error(errno.ENOENT):
+            self.path.getmtime('does_not_exist')
 
     def test_islink(self):
         self.filesystem.create_dir('foo')
@@ -1581,15 +1572,14 @@ class DiskSpaceTest(TestCase):
         self.filesystem = fake_filesystem.FakeFilesystem(path_separator='!',
                                                          total_size=100)
         self.os = fake_filesystem.FakeOsModule(self.filesystem)
+        self.open = fake_filesystem.FakeFileOpen(self.filesystem)
 
     def test_disk_usage_on_file_creation(self):
-        fake_open = fake_filesystem.FakeFileOpen(self.filesystem)
-
         total_size = 100
         self.filesystem.add_mount_point('mount', total_size)
 
         def create_too_large_file():
-            with fake_open('!mount!file', 'w') as dest:
+            with self.open('!mount!file', 'w') as dest:
                 dest.write('a' * (total_size + 1))
 
         with self.assertRaises(OSError):
@@ -1597,7 +1587,7 @@ class DiskSpaceTest(TestCase):
 
         self.assertEqual(0, self.filesystem.get_disk_usage('!mount').used)
 
-        with fake_open('!mount!file', 'w') as dest:
+        with self.open('!mount!file', 'w') as dest:
             dest.write('a' * total_size)
 
         self.assertEqual(total_size,
@@ -1700,10 +1690,10 @@ class DiskSpaceTest(TestCase):
 
     def test_resize_file_with_size_too_large(self):
         file_object = self.filesystem.create_file('!foo!bar', st_size=50)
-        self.assert_raises_os_error(errno.ENOSPC,
-                                    file_object.set_large_file_size, 200)
-        self.assert_raises_os_error(errno.ENOSPC, file_object.set_contents,
-                                    'a' * 150)
+        with self.raises_os_error(errno.ENOSPC):
+            file_object.set_large_file_size(200)
+        with self.raises_os_error(errno.ENOSPC):
+            file_object.set_contents('a' * 150)
 
     def test_file_system_size_after_directory_rename(self):
         self.filesystem.create_file('!foo!bar', st_size=20)
@@ -1734,11 +1724,10 @@ class DiskSpaceTest(TestCase):
         self.filesystem.add_mount_point('!mount_limited', total_size=50)
         self.filesystem.add_mount_point('!mount_unlimited')
 
-        self.assert_raises_os_error(errno.ENOSPC,
-                                    self.filesystem.create_file,
-                                    '!mount_limited!foo', st_size=60)
-        self.assert_raises_os_error(errno.ENOSPC, self.filesystem.create_file,
-                                    '!bar', st_size=110)
+        with self.raises_os_error(errno.ENOSPC):
+            self.filesystem.create_file('!mount_limited!foo', st_size=60)
+        with self.raises_os_error(errno.ENOSPC):
+            self.filesystem.create_file('!bar', st_size=110)
 
         try:
             self.filesystem.create_file('!foo', st_size=60)
@@ -1765,9 +1754,8 @@ class DiskSpaceTest(TestCase):
 
     def test_set_larger_disk_size(self):
         self.filesystem.add_mount_point('!mount1', total_size=20)
-        self.assert_raises_os_error(errno.ENOSPC,
-                                    self.filesystem.create_file, '!mount1!foo',
-                                    st_size=100)
+        with self.raises_os_error(errno.ENOSPC):
+            self.filesystem.create_file('!mount1!foo', st_size=100)
         self.filesystem.set_disk_usage(total_size=200, path='!mount1')
         self.filesystem.create_file('!mount1!foo', st_size=100)
         self.assertEqual(100,
@@ -1776,9 +1764,8 @@ class DiskSpaceTest(TestCase):
     def test_set_smaller_disk_size(self):
         self.filesystem.add_mount_point('!mount1', total_size=200)
         self.filesystem.create_file('!mount1!foo', st_size=100)
-        self.assert_raises_os_error(errno.ENOSPC,
-                                    self.filesystem.set_disk_usage,
-                                    total_size=50, path='!mount1')
+        with self.raises_os_error(errno.ENOSPC):
+            self.filesystem.set_disk_usage(total_size=50, path='!mount1')
         self.filesystem.set_disk_usage(total_size=150, path='!mount1')
         self.assertEqual(50,
                          self.filesystem.get_disk_usage('!mount1!foo').free)
@@ -1811,6 +1798,31 @@ class DiskSpaceTest(TestCase):
         dest_file.set_contents(source_file.contents)
         self.assertEqual(dest_file.contents, source_file.contents)
 
+    def test_diskusage_after_open_write(self):
+        with self.open('bar.txt', 'w') as f:
+            f.write('a' * 60)
+            f.flush()
+        self.assertEqual(self.filesystem.get_disk_usage()[1], 60)
+
+    def test_disk_full_after_reopened(self):
+        with self.open('bar.txt', 'w') as f:
+            f.write('a' * 60)
+        with self.open('bar.txt') as f:
+            self.assertEqual(f.read(), 'a' * 60)
+        with self.raises_os_error(errno.ENOSPC):
+            with self.open('bar.txt', 'w') as f:
+                f.write('b' * 110)
+
+    def test_disk_full_after_reopened_rplus_seek(self):
+        with self.open('bar.txt', 'w') as f:
+            f.write('a' * 60)
+        with self.open('bar.txt') as f:
+            self.assertEqual(f.read(), 'a' * 60)
+        with self.raises_os_error(errno.ENOSPC):
+            with self.open('bar.txt', 'r+') as f:
+                f.seek(50)
+                f.write('b' * 60)
+
 
 class MountPointTest(TestCase):
     def setUp(self):
@@ -1839,10 +1851,10 @@ class MountPointTest(TestCase):
             '!foo!baz!foo!bar').st_dev)
 
     def test_that_mount_point_cannot_be_added_twice(self):
-        self.assert_raises_os_error(errno.EEXIST,
-                                    self.filesystem.add_mount_point, '!foo')
-        self.assert_raises_os_error(errno.EEXIST,
-                                    self.filesystem.add_mount_point, '!foo!')
+        with self.raises_os_error(errno.EEXIST):
+            self.filesystem.add_mount_point('!foo')
+        with self.raises_os_error(errno.EEXIST):
+            self.filesystem.add_mount_point('!foo!')
 
     def test_that_drives_are_auto_mounted(self):
         self.filesystem.is_windows_fs = True
@@ -1914,23 +1926,20 @@ class RealFileSystemAccessTest(RealFsTestCase):
 
     def test_add_non_existing_real_directory_raises(self):
         nonexisting_path = '/nonexisting'
-        self.assert_raises_os_error(errno.ENOENT,
-                                    self.filesystem.add_real_directory,
-                                    nonexisting_path)
+        with self.raises_os_error(errno.ENOENT):
+            self.filesystem.add_real_directory(nonexisting_path)
         self.assertFalse(self.filesystem.exists(nonexisting_path))
 
     def test_existing_fake_file_raises(self):
         real_file_path = __file__
         self.filesystem.create_file(real_file_path)
-        self.assert_raises_os_error(errno.EEXIST,
-                                    self.filesystem.add_real_file,
-                                    real_file_path)
+        with self.raises_os_error(errno.EEXIST):
+            self.filesystem.add_real_file(real_file_path)
 
     def test_existing_fake_directory_raises(self):
         self.filesystem.create_dir(self.root_path)
-        self.assert_raises_os_error(errno.EEXIST,
-                                    self.filesystem.add_real_directory,
-                                    self.root_path)
+        with self.raises_os_error(errno.EEXIST):
+            self.filesystem.add_real_directory(self.root_path)
 
     def check_fake_file_stat(self, fake_file, real_file_path,
                              target_path=None):
@@ -1957,8 +1966,8 @@ class RealFileSystemAccessTest(RealFsTestCase):
             real_contents = f.read()
         self.assertEqual(fake_file.byte_contents, real_contents)
         if not is_root():
-            self.assert_raises_os_error(
-                errno.EACCES, self.fake_open, real_file_path, 'w')
+            with self.raises_os_error(errno.EACCES):
+                self.fake_open(real_file_path, 'w')
         else:
             with self.fake_open(real_file_path, 'w'):
                 pass
@@ -1995,9 +2004,9 @@ class RealFileSystemAccessTest(RealFsTestCase):
     def test_add_real_file_to_existing_path(self):
         real_file_path = os.path.abspath(__file__)
         self.filesystem.create_file('/foo/bar')
-        self.assert_raises_os_error(
-            errno.EEXIST, self.filesystem.add_real_file,
-            real_file_path, target_path='/foo/bar')
+        with self.raises_os_error(errno.EEXIST):
+            self.filesystem.add_real_file(real_file_path,
+                                          target_path='/foo/bar')
 
     def test_add_real_file_to_non_existing_path(self):
         real_file_path = os.path.abspath(__file__)
@@ -2172,10 +2181,9 @@ class RealFileSystemAccessTest(RealFsTestCase):
 
     def test_add_existing_real_directory_tree_to_existing_path(self):
         self.filesystem.create_dir('/foo/bar')
-        self.assert_raises_os_error(errno.EEXIST,
-                                    self.filesystem.add_real_directory,
-                                    self.root_path,
-                                    target_path='/foo/bar')
+        with self.raises_os_error(errno.EEXIST):
+            self.filesystem.add_real_directory(
+                self.root_path, target_path='/foo/bar')
 
     def test_add_existing_real_directory_tree_to_other_path(self):
         self.filesystem.add_real_directory(self.root_path,
