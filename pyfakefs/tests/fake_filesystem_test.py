@@ -1790,7 +1790,7 @@ class DiskSpaceTest(TestCase):
         self.filesystem.create_file('d:!foo!bar!baz', st_size=100)
         self.filesystem.create_file('d:!foo!baz', st_size=100)
         self.filesystem.set_disk_usage(total_size=1000, path='d:')
-        self.assertEqual(self.filesystem.get_disk_usage('d:!foo').free, 800)
+        self.assertEqual(800, self.filesystem.get_disk_usage('d:!foo').free)
 
     def test_copying_preserves_byte_contents(self):
         source_file = self.filesystem.create_file('foo', contents=b'somebytes')
@@ -1802,16 +1802,30 @@ class DiskSpaceTest(TestCase):
         with self.open('bar.txt', 'w') as f:
             f.write('a' * 60)
             f.flush()
-        self.assertEqual(self.filesystem.get_disk_usage()[1], 60)
+        self.assertEqual(60, self.filesystem.get_disk_usage()[1])
 
     def test_disk_full_after_reopened(self):
         with self.open('bar.txt', 'w') as f:
             f.write('a' * 60)
         with self.open('bar.txt') as f:
-            self.assertEqual(f.read(), 'a' * 60)
+            self.assertEqual('a' * 60, f.read())
         with self.raises_os_error(errno.ENOSPC):
             with self.open('bar.txt', 'w') as f:
                 f.write('b' * 110)
+                with self.raises_os_error(errno.ENOSPC):
+                    f.flush()
+
+    def test_disk_full_append(self):
+        file_path = 'bar.txt'
+        with self.open(file_path, 'w') as f:
+            f.write('a' * 60)
+        with self.open(file_path) as f:
+            self.assertEqual('a' * 60, f.read())
+        with self.raises_os_error(errno.ENOSPC):
+            with self.open(file_path, 'a') as f:
+                f.write('b' * 41)
+                with self.raises_os_error(errno.ENOSPC):
+                    f.flush()
 
     def test_disk_full_after_reopened_rplus_seek(self):
         with self.open('bar.txt', 'w') as f:
@@ -1822,6 +1836,8 @@ class DiskSpaceTest(TestCase):
             with self.open('bar.txt', 'r+') as f:
                 f.seek(50)
                 f.write('b' * 60)
+                with self.raises_os_error(errno.ENOSPC):
+                    f.flush()
 
 
 class MountPointTest(TestCase):

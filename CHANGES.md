@@ -57,6 +57,8 @@ This is a bugfix release.
 * handle `pathlib.Path.owner()` and `pathlib.Path.group` by returning 
   the current user/group name (see [#629](../../issues/629))
 * fixed handling of `use_known_patches=False` (could cause an exception)  
+* removed Python 3.5 from metadata to disable installation for that version
+  (see [#615](../../issues/615))
 
 ### Infrastructure
 * added test dependency check (see [#608](../../issues/608))
@@ -65,6 +67,9 @@ This is a bugfix release.
 
 ## [Version 4.5.0](https://pypi.python.org/pypi/pyfakefs/4.5.0) (2021-06-04)
 Adds some support for Python 3.10 and basic type checking.
+
+_Note_: This version has been yanked from PyPi as it erroneously allowed
+installation under Python 3.5.
 
 ### New Features
   * added support for some Python 3.10 features:
@@ -232,8 +237,8 @@ This is a bugfix release that fixes a regression issue.
 ## [Version 4.0.2](https://pypi.python.org/pypi/pyfakefs/4.0.2) (2020-03-04)
 
 This as a patch release that only builds for Python 3. Note that 
-versions 4.0.0 and 4.0.1 will be removed from PyPi to not to be able to
-install them under Python 2. 
+versions 4.0.0 and 4.0.1 will be removed from PyPi to disable
+installing them under Python 2. 
 
 #### Fixes
   * Do not build for Python 2 (see [#524](../../issues/524))
@@ -242,14 +247,19 @@ install them under Python 2.
 
 This as a bug fix release for a regression bug.
 
+_Note_: This version has been yanked from PyPi as it erroneously allowed
+installation under Python 2. This has been fixed in version 4.0.2.
+
 #### Fixes
   * Avoid exception if using `flask-restx` (see [#523](../../issues/523))
 
 ## [Version 4.0.0](https://pypi.python.org/pypi/pyfakefs/4.0.0) (2020-03-03)
+pyfakefs 4.0.0 drops support for Python 2.7. If you still need
+Python 2.7, you can continue to use pyfakefs 3.7.x.
 
-  * pyfakefs 4.0.0 drops support for Python 2.7. If you still need
-    Python 2.7, you can continue to use pyfakefs 3.7.x. 
-    
+_Note_: This version has been yanked from PyPi as it erroneously allowed
+installation under Python 2. This has been fixed in version 4.0.2.
+
 #### Changes
   * Removed Python 2.7 and 3.4 support (see [#492](../../issues/492))
   

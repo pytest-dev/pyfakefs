@@ -455,6 +455,9 @@ class FakeFile:
                     if they are a unicode string.
                     If not given, the locale preferred encoding is used.
 
+        Returns:
+            True if the contents have been changed.
+
         Raises:
           OSError: if `st_size` is not a non-negative integer,
                    or if it exceeds the available file system space.
@@ -5049,8 +5052,9 @@ class FakeFileWrapper:
                 self._set_stream_contents(contents)
             else:
                 self._io.flush()
+            changed = self.file_object.set_contents(contents, self._encoding)
             self.update_flush_pos()
-            if self.file_object.set_contents(contents, self._encoding):
+            if changed:
                 if self._filesystem.is_windows_fs:
                     self._changed = True
                 else:
