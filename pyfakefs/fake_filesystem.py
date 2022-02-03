@@ -5571,6 +5571,10 @@ class FakeFileOpen:
             ValueError: for an invalid mode or mode combination
         """
         binary = 'b' in mode
+
+        if binary and encoding:
+            raise ValueError("binary mode doesn't take an encoding argument")
+
         newline, open_modes = self._handle_file_mode(mode, newline, open_modes)
 
         file_object, file_path, filedes, real_path = self._handle_file_arg(
