@@ -7,7 +7,9 @@ The released versions correspond to PyPi releases.
 * correctly handle file system space for files opened in write mode
   (see [#660](../../issues/660))
 * correctly handle reading/writing pipes via file
-  (see [#661](../../issues/661)) 
+  (see [#661](../../issues/661))
+* disallow `encoding` argument on binary `open()`
+  (see [#664](../../issues/664))
 
 ## [Version 4.5.4](https://pypi.python.org/pypi/pyfakefs/4.5.4) (2022-01-12)
 Minor bugfix release.

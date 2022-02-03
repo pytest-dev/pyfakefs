@@ -399,6 +399,50 @@ class FakeFilesystemVsRealTest(TestCase):
             self.fail('Behaviors do not match for %s:\n    %s' %
                       (path, '\n    '.join(differences)))
 
+    def assertFileHandleOpenBehaviorsMatch(self, *args, **kwargs):
+        """Compare open() function invocation between real and fake.
+
+        Runs open(*args, **kwargs) on both real and fake.
+
+        Args:
+            *args: args to pass through to open()
+            **kwargs: kwargs to pass through to open().
+
+        Returns:
+            None.
+
+        Raises:
+            AssertionError if underlying open() behavior differs from fake.
+        """
+        real_err = None
+        fake_err = None
+        try:
+            with open(*args, **kwargs):
+                pass
+        except Exception as e:  # pylint: disable-msg=W0703
+            real_err = e
+
+        try:
+            with self.fake_open(*args, **kwargs):
+                pass
+        except Exception as e:  # pylint: disable-msg=W0703
+            fake_err = e
+
+        # default equal in case one is None and other is not.
+        is_exception_equal = (real_err == fake_err)
+        if real_err and fake_err:
+            # exception __eq__ doesn't evaluate equal ever, thus manual check.
+            is_exception_equal = (type(real_err) is type(fake_err) and
+                                  real_err.args == fake_err.args)
+
+        if not is_exception_equal:
+            msg = (
+                "Behaviors don't match on open with args %s & kwargs %s.\n" %
+                (args, kwargs))
+            real_err_msg = 'Real open results in: %s\n' % repr(real_err)
+            fake_err_msg = 'Fake open results in: %s\n' % repr(fake_err)
+            self.fail(msg + real_err_msg + fake_err_msg)
+
     # Helpers for checks which are not straight method calls.
     @staticmethod
     def _access_real(path):
@@ -634,6 +678,18 @@ class FakeFilesystemVsRealTest(TestCase):
         self.assertFileHandleBehaviorsMatch('read', 'rb', 'other contents')
         self.assertFileHandleBehaviorsMatch('write', 'wb', 'other contents')
         self.assertFileHandleBehaviorsMatch('append', 'ab', 'other contents')
+
+        # binary cannot have encoding
+        self.assertFileHandleOpenBehaviorsMatch('read', 'rb', encoding='enc')
+        self.assertFileHandleOpenBehaviorsMatch(
+            'write', mode='wb', encoding='enc')
+        self.assertFileHandleOpenBehaviorsMatch('append', 'ab', encoding='enc')
+
+        # text can have encoding
+        self.assertFileHandleOpenBehaviorsMatch('read', 'r', encoding='utf-8')
+        self.assertFileHandleOpenBehaviorsMatch('write', 'w', encoding='utf-8')
+        self.assertFileHandleOpenBehaviorsMatch(
+            'append', 'a', encoding='utf-8')
 
 
 def main(_):
