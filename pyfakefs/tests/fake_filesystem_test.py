@@ -1814,6 +1814,8 @@ class DiskSpaceTest(TestCase):
                 f.write('b' * 110)
                 with self.raises_os_error(errno.ENOSPC):
                     f.flush()
+        with self.open('bar.txt') as f:
+            self.assertEqual('', f.read())
 
     def test_disk_full_append(self):
         file_path = 'bar.txt'
@@ -1826,6 +1828,8 @@ class DiskSpaceTest(TestCase):
                 f.write('b' * 41)
                 with self.raises_os_error(errno.ENOSPC):
                     f.flush()
+        with self.open('bar.txt') as f:
+            self.assertEqual(f.read(), 'a' * 60)
 
     def test_disk_full_after_reopened_rplus_seek(self):
         with self.open('bar.txt', 'w') as f:
@@ -1838,6 +1842,8 @@ class DiskSpaceTest(TestCase):
                 f.write('b' * 60)
                 with self.raises_os_error(errno.ENOSPC):
                     f.flush()
+        with self.open('bar.txt') as f:
+            self.assertEqual(f.read(), 'a' * 60)
 
 
 class MountPointTest(TestCase):

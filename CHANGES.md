@@ -10,6 +10,8 @@ The released versions correspond to PyPi releases.
   (see [#661](../../issues/661))
 * disallow `encoding` argument on binary `open()`
   (see [#664](../../issues/664))
+* fixed compatibility issue with pytest 7.0.0
+  (see [#666](../../issues/666))
 
 ## [Version 4.5.4](https://pypi.python.org/pypi/pyfakefs/4.5.4) (2022-01-12)
 Minor bugfix release.

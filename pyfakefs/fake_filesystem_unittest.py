@@ -681,7 +681,6 @@ class Patcher:
         for name, module in list(sys.modules.items()):
             try:
                 if (self.use_cache and module in self.CACHED_MODULES or
-                        module in self.SKIPMODULES or
                         not inspect.ismodule(module)):
                     continue
             except Exception:
@@ -692,7 +691,8 @@ class Patcher:
                 if self.use_cache:
                     self.__class__.CACHED_MODULES.add(module)
                 continue
-            skipped = (any([sn.startswith(module.__name__)
+            skipped = (module in self.SKIPMODULES or
+                       any([sn.startswith(module.__name__)
                             for sn in self._skip_names]))
             module_items = module.__dict__.copy().items()
 
@@ -703,22 +703,22 @@ class Patcher:
                 for name, mod in modules.items():
                     self.__class__.SKIPPED_FS_MODULES.setdefault(
                         name, set()).add((module, mod.__name__))
-                continue
+            else:
+                for name, mod in modules.items():
+                    self.__class__.FS_MODULES.setdefault(name, set()).add(
+                        (module, mod.__name__))
+                functions = {name: fct for name, fct in
+                             module_items
+                             if self._is_fs_function(fct)}
 
-            for name, mod in modules.items():
-                self.__class__.FS_MODULES.setdefault(name, set()).add(
-                    (module, mod.__name__))
-            functions = {name: fct for name, fct in
-                         module_items
-                         if self._is_fs_function(fct)}
+                for name, fct in functions.items():
+                    self.__class__.FS_FUNCTIONS.setdefault(
+                        (name, fct.__name__, fct.__module__),
+                        set()).add(module)
 
-            for name, fct in functions.items():
-                self.__class__.FS_FUNCTIONS.setdefault(
-                    (name, fct.__name__, fct.__module__), set()).add(module)
-
-            # find default arguments that are file system functions
-            if self.patch_default_args:
-                self._find_def_values(module_items)
+                # find default arguments that are file system functions
+                if self.patch_default_args:
+                    self._find_def_values(module_items)
 
             if self.use_cache:
                 self.__class__.CACHED_MODULES.add(module)
