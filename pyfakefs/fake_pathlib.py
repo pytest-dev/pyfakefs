@@ -845,6 +845,12 @@ class RealPathlibPathModule:
     """Patches `pathlib.Path` by passing all calls to RealPathlibModule."""
     real_pathlib = None
 
+    @classmethod
+    def __instancecheck__(cls, instance):
+        # as we cannot derive from pathlib.Path, we fake
+        # the inheritance to pass isinstance checks - see #666
+        return isinstance(instance, PurePath)
+
     def __init__(self):
         if self.real_pathlib is None:
             self.__class__.real_pathlib = RealPathlibModule()

@@ -8,7 +8,7 @@ def my_fakefs_test(fs):
     fs.create_file('/var/data/xx1.txt')
     assert os.path.exists('/var/data/xx1.txt')
 """
-
+import _pytest
 import py
 import pytest
 
@@ -16,6 +16,7 @@ from pyfakefs.fake_filesystem_unittest import Patcher
 
 Patcher.SKIPMODULES.add(py)
 Patcher.SKIPMODULES.add(pytest)
+Patcher.SKIPMODULES.add(_pytest.pathlib)
 
 
 @pytest.fixture
