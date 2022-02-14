@@ -1,7 +1,8 @@
 # pyfakefs Release Notes
 The released versions correspond to PyPi releases.
 
-## Unreleased
+## [Version 4.5.5](https://pypi.python.org/pypi/pyfakefs/4.5.5) (2022-02-14)
+Bugfix release, needed for compatibility with pytest 7.0.
 
 ### Fixes
 * correctly handle file system space for files opened in write mode
