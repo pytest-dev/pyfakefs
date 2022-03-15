@@ -104,11 +104,6 @@ jobs:
       run: |
         python -m pyfakefs.tests.all_tests
       shell: bash
-    - name: Run pytest tests
-      run: |
-        export PY_VERSION=${{ matrix.python-version }}
-        $GITHUB_WORKSPACE/.github/workflows/run_pytest.sh
-      shell: bash
     - name: Run performance tests
       run: |
         if [[ '${{ matrix.os  }}' != 'macOS-latest' ]]; then
@@ -116,6 +111,34 @@ jobs:
           python -m pyfakefs.tests.performance_test
         fi
       shell: bash
+
+  pytest-test:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-2016]
+        python-version: [3.9]
+        pytest-version: [3.0.0, 3.5.1, 4.0.2, 4.5.0, 5.0.1, 5.4.3, 6.0.2, 6.2.5, 7.0.1, 7.1.0]
+    steps:
+      - uses: actions/checkout@v2
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v2
+        with:
+          python-version: ${{ matrix.python-version }}
+      - name: Install dependencies
+        run: |
+          pip install -r requirements.txt
+          pip install -U pytest==${{ matrix.pytest-version }}
+          if [[ '${{ matrix.pytest-version }}' == '4.0.2' ]]; then
+             pip install -U attrs==19.1.0
+          fi
+        shell: bash
+      - name: Run pytest tests
+        run: |
+          export PY_VERSION=${{ matrix.python-version }}
+          $GITHUB_WORKSPACE/.github/workflows/run_pytest.sh
+        shell: bash
 
   dependency-check:
     runs-on: ${{ matrix.os }}
