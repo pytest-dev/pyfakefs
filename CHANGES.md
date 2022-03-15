@@ -3,6 +3,10 @@ The released versions correspond to PyPi releases.
 
 ## Unreleased
 
+### Fixes
+* only skip `_pytest.pathlib` in pytest versions where it is actually present
+  (see [#669](../../issues/669))
+
 ## [Version 4.5.5](https://pypi.python.org/pypi/pyfakefs/4.5.5) (2022-02-14)
 Bugfix release, needed for compatibility with pytest 7.0.
 

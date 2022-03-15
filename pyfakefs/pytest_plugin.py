@@ -16,7 +16,8 @@ from pyfakefs.fake_filesystem_unittest import Patcher
 
 Patcher.SKIPMODULES.add(py)
 Patcher.SKIPMODULES.add(pytest)
-Patcher.SKIPMODULES.add(_pytest.pathlib)
+if hasattr(_pytest, "pathlib"):
+    Patcher.SKIPMODULES.add(_pytest.pathlib)
 
 
 @pytest.fixture
