@@ -3,12 +3,19 @@ The released versions correspond to PyPi releases.
 
 ## Unreleased
 
+## [Version 4.5.6](https://pypi.python.org/pypi/pyfakefs/4.5.6) (2022-03-17)
+Fixes a regression which broke tests with older pytest versions (< 3.9).
+
+### Changes
+* minimum supported pytest version is now 3.0 (older versions do not work 
+  properly with current Python versions)
+
 ### Fixes
 * only skip `_pytest.pathlib` in pytest versions where it is actually present
   (see [#669](../../issues/669))
 
 ### Infrastructure
-* add tests with different pytest versions
+* add tests with different pytest versions, starting with 3.0
 
 ## [Version 4.5.5](https://pypi.python.org/pypi/pyfakefs/4.5.5) (2022-02-14)
 Bugfix release, needed for compatibility with pytest 7.0.
