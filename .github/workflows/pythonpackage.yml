@@ -47,7 +47,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, macOS-latest, windows-2016]
+        os: [ubuntu-latest, macOS-latest, windows-latest]
         python-version: [3.6, 3.7, 3.8, 3.9, "3.10"]
         include:
           - python-version: pypy3
@@ -91,7 +91,7 @@ jobs:
       shell: bash
     - name: Run unit tests without extra packages as root
       run: |
-        if [[ '${{ matrix.os  }}' != 'windows-2016' ]]; then
+        if [[ '${{ matrix.os  }}' != 'windows-latest' ]]; then
           # provide the same path as non-root to get the correct virtualenv
           sudo env "PATH=$PATH" python -m pyfakefs.tests.all_tests_without_extra_packages
         fi
@@ -117,7 +117,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, windows-2016]
+        os: [ubuntu-latest, windows-latest]
         python-version: [3.9]
         pytest-version: [3.0.0, 3.5.1, 4.0.2, 4.5.0, 5.0.1, 5.4.3, 6.0.2, 6.2.5, 7.0.1, 7.1.0]
     steps:
@@ -144,7 +144,7 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        os: [ubuntu-latest, windows-2016]
+        os: [ubuntu-latest, windows-latest]
         python-version:  [3.9]
     steps:
       - uses: actions/checkout@v2
