@@ -4,15 +4,15 @@
 <html>
   <head>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Automatically find and patch file functions and modules &#8212; pyfakefs 4.5.5 documentation</title>
-    <link rel="stylesheet" href="_static/pyfakefs.css" type="text/css" />
-    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
-    <script id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+
+    <title>Automatically find and patch file functions and modules &#8212; pyfakefs 4.5.6 documentation</title>
+    <link rel="stylesheet" type="text/css" href="_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="_static/pyfakefs.css" />
+    <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
     <script src="_static/jquery.js"></script>
     <script src="_static/underscore.js"></script>
     <script src="_static/doctools.js"></script>
-    <script src="_static/language_data.js"></script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
     <link rel="next" title="Public Modules and Classes" href="modules.html" />
@@ -33,7 +33,7 @@
         <li class="right" >
           <a href="usage.html" title="Usage"
              accesskey="P">previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="index.html">pyfakefs 4.5.5 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="index.html">pyfakefs 4.5.6 documentation</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">Automatically find and patch file functions and modules</a></li> 
       </ul>
     </div>  
@@ -43,7 +43,7 @@
         <div class="bodywrapper">
           <div class="body" role="main">
             
-  <div class="section" id="automatically-find-and-patch-file-functions-and-modules">
+  <section id="automatically-find-and-patch-file-functions-and-modules">
 <span id="auto-patch"></span><h1>Automatically find and patch file functions and modules<a class="headerlink" href="#automatically-find-and-patch-file-functions-and-modules" title="Permalink to this headline">¶</a></h1>
 <p>The <code class="docutils literal notranslate"><span class="pre">fake_filesystem_unittest</span></code> module automatically finds all real file
 functions and modules, and stubs them out with the fake file system functions and modules.
@@ -54,7 +54,7 @@ real file system.</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">example_test.py</span></code> tests <code class="docutils literal notranslate"><span class="pre">example.py</span></code>. During testing, the pyfakefs fake
 file system is used by <code class="docutils literal notranslate"><span class="pre">example_test.py</span></code> and <code class="docutils literal notranslate"><span class="pre">example.py</span></code> alike.</p></li>
 </ul>
-<div class="section" id="software-under-test">
+<section id="software-under-test">
 <h2>Software Under Test<a class="headerlink" href="#software-under-test" title="Permalink to this headline">¶</a></h2>
 <p><code class="docutils literal notranslate"><span class="pre">example.py</span></code> contains a few functions that manipulate files.  For instance:</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">def</span> <span class="nf">create_file</span><span class="p">(</span><span class="n">path</span><span class="p">):</span>
@@ -86,8 +86,8 @@ file system is used by <code class="docutils literal notranslate"><span class="p
 <p>No functional code in <code class="docutils literal notranslate"><span class="pre">example.py</span></code> even hints at a fake file system. In
 production, <code class="docutils literal notranslate"><span class="pre">create_file()</span></code> invokes the real file functions <code class="docutils literal notranslate"><span class="pre">open()</span></code> and
 <code class="docutils literal notranslate"><span class="pre">write()</span></code>.</p>
-</div>
-<div class="section" id="unit-tests-and-doctests">
+</section>
+<section id="unit-tests-and-doctests">
 <h2>Unit Tests and Doctests<a class="headerlink" href="#unit-tests-and-doctests" title="Permalink to this headline">¶</a></h2>
 <p><code class="docutils literal notranslate"><span class="pre">example_test.py</span></code> contains unit tests for <code class="docutils literal notranslate"><span class="pre">example.py</span></code>. <code class="docutils literal notranslate"><span class="pre">example.py</span></code>
 contains the doctests, as you can see above.</p>
@@ -101,7 +101,7 @@ and modules:</p>
 <span class="kn">import</span> <span class="nn">example</span>
 </pre></div>
 </div>
-<div class="section" id="doctests">
+<section id="doctests">
 <h3>Doctests<a class="headerlink" href="#doctests" title="Permalink to this headline">¶</a></h3>
 <p><code class="docutils literal notranslate"><span class="pre">example_test.py</span></code> defines <code class="docutils literal notranslate"><span class="pre">load_tests()</span></code>, which runs the doctests in
 <code class="docutils literal notranslate"><span class="pre">example.py</span></code>:</p>
@@ -114,8 +114,8 @@ and modules:</p>
 with the fake filesystem. Thus you can use familiar file functions like
 <code class="docutils literal notranslate"><span class="pre">os.mkdir()</span></code> as part of your test fixture and they too will operate on the
 fake file system.</p>
-</div>
-<div class="section" id="unit-test-class">
+</section>
+<section id="unit-test-class">
 <h3>Unit Test Class<a class="headerlink" href="#unit-test-class" title="Permalink to this headline">¶</a></h3>
 <p>Next comes the <code class="docutils literal notranslate"><span class="pre">unittest</span></code> test class.  This class is derived from
 <code class="docutils literal notranslate"><span class="pre">fake_filesystem_unittest.TestCase</span></code>, which is in turn derived from
@@ -148,9 +148,9 @@ fake file system.</p>
 <code class="docutils literal notranslate"><span class="pre">tearDown()</span></code>.  Write your tests as usual.  From <code class="docutils literal notranslate"><span class="pre">self.setUpPyfakefs()</span></code> to
 the end of your <code class="docutils literal notranslate"><span class="pre">tearDown()</span></code> method, all file operations will use the fake
 file system.</p>
-</div>
-</div>
-</div>
+</section>
+</section>
+</section>
 
 
             <div class="clearer"></div>
@@ -189,7 +189,7 @@ file system.</p>
   <h3 id="searchlabel">Quick search</h3>
     <div class="searchformwrapper">
     <form class="search" action="search.html" method="get">
-      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
       <input type="submit" value="Go" />
     </form>
     </div>
@@ -214,7 +214,7 @@ file system.</p>
         <li class="right" >
           <a href="usage.html" title="Usage"
              >previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="index.html">pyfakefs 4.5.5 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="index.html">pyfakefs 4.5.6 documentation</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">Automatically find and patch file functions and modules</a></li> 
       </ul>
     </div>
@@ -222,7 +222,7 @@ file system.</p>
         &#169; Copyright 2009 Google Inc. All Rights Reserved.
 © Copyright 2014 Altera Corporation. All Rights Reserved.
 © Copyright 2014-2021 John McGehee.
-      Last updated on Feb 14, 2022.
+      Last updated on Mar 17, 2022.
     </div>
   </body>
 </html>
