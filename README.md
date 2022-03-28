@@ -46,7 +46,7 @@ using convenience functions.
 pyfakefs works with CPython 3.6 and above, on Linux, Windows and OSX 
 (MacOS), and with PyPy3.
 
-pyfakefs works with [PyTest](http://doc.pytest.org) version 3.0.0 or above.
+pyfakefs works with [pytest](http://doc.pytest.org) version 3.0.0 or above.
 
 pyfakefs will not work with Python libraries that use C libraries to access the
 file system.  This is because pyfakefs cannot patch the underlying C libraries'
