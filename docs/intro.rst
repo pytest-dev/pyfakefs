@@ -9,7 +9,7 @@ The software under test requires no modification to work with pyfakefs.
 pyfakefs works with CPython 3.6 and above, on Linux, Windows and OSX
 (MacOS), and with PyPy3.
 
-pyfakefs works with `PyTest <doc.pytest.org>`__ version 3.0.0 or above.
+pyfakefs works with `pytest <doc.pytest.org>`__ version 3.0.0 or above.
 
 Installation
 ------------
