@@ -106,9 +106,9 @@ class FakeOsModuleTest(FakeOsModuleTestBase):
         self.skip_real_fs()
         dirname = self.make_path('foo', 'bar')
         self.create_dir(dirname)
-        self.assertEqual(self.os.getcwd(), self.os.path.sep)
+        self.assertEqual(self.filesystem.root_dir_name, self.os.getcwd())
         self.os.chdir(dirname)
-        self.assertEqual(self.os.getcwd(), dirname)
+        self.assertEqual(dirname, self.os.getcwd())
 
     def test_listdir(self):
         self.assert_raises_os_error(

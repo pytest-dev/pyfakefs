@@ -102,7 +102,7 @@ import random
 import sys
 import traceback
 import uuid
-from collections import namedtuple
+from collections import namedtuple, OrderedDict
 from doctest import TestResults
 from enum import Enum
 from stat import (
@@ -937,7 +937,7 @@ class FakeFilesystem:
         self.is_case_sensitive = not (self.is_windows_fs or self.is_macos)
 
         self.root = FakeDirectory(self.path_separator, filesystem=self)
-        self.cwd = self.root.name
+        self._cwd = ''
 
         # We can't query the current value without changing it:
         self.umask = os.umask(0o22)
@@ -951,8 +951,8 @@ class FakeFilesystem:
         # last used numbers for inodes (st_ino) and devices (st_dev)
         self.last_ino = 0
         self.last_dev = 0
-        self.mount_points: Dict[AnyString, Dict] = {}
-        self.add_mount_point(self.root.name, total_size)
+        self.mount_points: Dict[AnyString, Dict] = OrderedDict()
+        self._add_root_mount_point(total_size)
         self._add_standard_streams()
         self.dev_null = FakeNullFile(self)
         # set from outside if needed
@@ -962,6 +962,36 @@ class FakeFilesystem:
     @property
     def is_linux(self) -> bool:
         return not self.is_windows_fs and not self.is_macos
+
+    @property
+    def cwd(self) -> str:
+        """Return the current working directory of the fake filesystem."""
+        return self._cwd
+
+    @cwd.setter
+    def cwd(self, value: str) -> None:
+        """Set the current working directory of the fake filesystem.
+        Make sure a new drive or share is auto-mounted under Windows.
+        """
+        self._cwd = value
+        self._auto_mount_drive_if_needed(value)
+
+    @property
+    def root_dir(self) -> FakeDirectory:
+        """Return the root directory, which represents "/" under POSIX,
+        and the current drive under Windows."""
+        if self.is_windows_fs:
+            return self._mount_point_dir_for_cwd()
+        return self.root
+
+    @property
+    def root_dir_name(self) -> str:
+        """Return the root directory name, which is "/" under POSIX,
+        and the root path of the current drive under Windows."""
+        root_dir = to_string(self.root_dir.name)
+        if not root_dir.endswith(self.path_separator):
+            return root_dir + self.path_separator
+        return root_dir
 
     @property
     def os(self) -> OSType:
@@ -985,17 +1015,23 @@ class FakeFilesystem:
     def reset(self, total_size: Optional[int] = None):
         """Remove all file system contents and reset the root."""
         self.root = FakeDirectory(self.path_separator, filesystem=self)
-        self.cwd = self.root.name
 
         self.open_files = []
         self._free_fd_heap = []
         self.last_ino = 0
         self.last_dev = 0
-        self.mount_points = {}
-        self.add_mount_point(self.root.name, total_size)
+        self.mount_points = OrderedDict()
+        self._add_root_mount_point(total_size)
         self._add_standard_streams()
         from pyfakefs import fake_pathlib
         fake_pathlib.init_module(self)
+
+    def _add_root_mount_point(self, total_size):
+        mount_point = 'C:' if self.is_windows_fs else self.path_separator
+        self._cwd = mount_point
+        if not self.cwd.endswith(self.path_separator):
+            self._cwd += self.path_separator
+        self.add_mount_point(mount_point, total_size)
 
     def pause(self) -> None:
         """Pause the patching of the file system modules until `resume` is
@@ -1034,9 +1070,6 @@ class FakeFilesystem:
     def line_separator(self) -> str:
         return '\r\n' if self.is_windows_fs else '\n'
 
-    def _error_message(self, err_no: int) -> str:
-        return os.strerror(err_no) + ' in the fake filesystem'
-
     def raise_os_error(self, err_no: int,
                        filename: Optional[AnyString] = None,
                        winerror: Optional[int] = None) -> NoReturn:
@@ -1052,7 +1085,7 @@ class FakeFilesystem:
             filename: The name of the affected file, if any.
             winerror: Windows only - the specific Windows error code.
         """
-        message = self._error_message(err_no)
+        message = os.strerror(err_no) + ' in the fake filesystem'
         if (winerror is not None and sys.platform == 'win32' and
                 self.is_windows_fs):
             raise OSError(err_no, message, filename, winerror)
@@ -1067,7 +1100,7 @@ class FakeFilesystem:
         """Return the alternative path separator as the same type as path"""
         return matching_string(path, self.alternative_path_separator)
 
-    def _starts_with_sep(self, path: AnyStr) -> bool:
+    def starts_with_sep(self, path: AnyStr) -> bool:
         """Return True if path starts with a path separator."""
         sep = self.get_path_separator(path)
         altsep = self._alternative_path_separator(path)
@@ -1075,7 +1108,8 @@ class FakeFilesystem:
                 path.startswith(altsep))
 
     def add_mount_point(self, path: AnyStr,
-                        total_size: Optional[int] = None) -> Dict:
+                        total_size: Optional[int] = None,
+                        can_exist: bool = False) -> Dict:
         """Add a new mount point for a filesystem device.
         The mount point gets a new unique device number.
 
@@ -1085,36 +1119,74 @@ class FakeFilesystem:
             total_size: The new total size of the added filesystem device
                 in bytes. Defaults to infinite size.
 
+            can_exist: If True, no error is raised if the mount point
+                already exists
+
         Returns:
             The newly created mount point dict.
 
         Raises:
-            OSError: if trying to mount an existing mount point again.
+            OSError: if trying to mount an existing mount point again,
+                and `can_exist` is False.
         """
-        path = self.absnormpath(path)
-        if path in self.mount_points:
-            self.raise_os_error(errno.EEXIST, path)
+        path = self.normpath(self.normcase(path))
+        for mount_point in self.mount_points:
+            if (self.is_case_sensitive and
+                    path == matching_string(path, mount_point) or
+                    not self.is_case_sensitive and
+                    path.lower() == matching_string(
+                        path, mount_point.lower())):
+                if can_exist:
+                    return self.mount_points[mount_point]
+                self.raise_os_error(errno.EEXIST, path)
+
         self.last_dev += 1
         self.mount_points[path] = {
             'idev': self.last_dev, 'total_size': total_size, 'used_size': 0
         }
-        # special handling for root path: has been created before
-        if path == self.root.name:
+        if path == matching_string(path, self.root.name):
+            # special handling for root path: has been created before
             root_dir = self.root
             self.last_ino += 1
             root_dir.st_ino = self.last_ino
         else:
-            root_dir = self.create_dir(path)
+            root_dir = self._create_mount_point_dir(path)
         root_dir.st_dev = self.last_dev
         return self.mount_points[path]
 
-    def _auto_mount_drive_if_needed(self, path: AnyStr,
-                                    force: bool = False) -> Optional[Dict]:
-        if (self.is_windows_fs and
-                (force or not self._mount_point_for_path(path))):
+    def _create_mount_point_dir(
+            self, directory_path: AnyPath) -> FakeDirectory:
+        """A version of `create_dir` for the mount point directory creation,
+        which avoids circular calls and unneeded checks.
+         """
+        dir_path = self.make_string_path(directory_path)
+        path_components = self._path_components(dir_path)
+        current_dir = self.root
+
+        new_dirs = []
+        for component in [to_string(p) for p in path_components]:
+            directory = self._directory_content(
+                current_dir, to_string(component))[1]
+            if not directory:
+                new_dir = FakeDirectory(component, filesystem=self)
+                new_dirs.append(new_dir)
+                current_dir.add_entry(new_dir)
+                current_dir = new_dir
+            else:
+                current_dir = cast(FakeDirectory, directory)
+
+        for new_dir in new_dirs:
+            new_dir.st_mode = S_IFDIR | PERM_DEF
+
+        return current_dir
+
+    def _auto_mount_drive_if_needed(self, path: AnyStr) -> Optional[Dict]:
+        """Windows only: if `path` is located on an unmounted drive or UNC
+        mount point, the drive/mount point is added to the mount points."""
+        if self.is_windows_fs:
             drive = self.splitdrive(path)[0]
             if drive:
-                return self.add_mount_point(path=drive)
+                return self.add_mount_point(path=drive, can_exist=True)
         return None
 
     def _mount_point_for_path(self, path: AnyStr) -> Dict:
@@ -1132,9 +1204,34 @@ class FakeFilesystem:
                 mount_path = root_path
         if mount_path:
             return self.mount_points[to_string(mount_path)]
-        mount_point = self._auto_mount_drive_if_needed(path, force=True)
+        mount_point = self._auto_mount_drive_if_needed(path)
         assert mount_point
         return mount_point
+
+    def _mount_point_dir_for_cwd(self) -> FakeDirectory:
+        """Return the fake directory object of the mount point where the
+        current working directory points to."""
+        def object_from_path(file_path):
+            path_components = self._path_components(file_path)
+            target = self.root
+            for component in path_components:
+                target = target.get_entry(component)
+            return target
+
+        path = to_string(self.cwd)
+        for mount_path in self.mount_points:
+            if path == to_string(mount_path):
+                return object_from_path(mount_path)
+        mount_path = ''
+        drive = to_string(self.splitdrive(path)[0])
+        for root_path in self.mount_points:
+            str_root_path = to_string(root_path)
+            if drive and not str_root_path.startswith(drive):
+                continue
+            if (path.startswith(str_root_path) and
+                    len(str_root_path) > len(mount_path)):
+                mount_path = root_path
+        return object_from_path(mount_path)
 
     def _mount_point_for_device(self, idev: int) -> Optional[Dict]:
         for mount_point in self.mount_points.values():
@@ -1156,7 +1253,7 @@ class FakeFilesystem:
         """
         DiskUsage = namedtuple('DiskUsage', 'total, used, free')
         if path is None:
-            mount_point = self.mount_points[self.root.name]
+            mount_point = next(iter(self.mount_points.values()))
         else:
             mount_point = self._mount_point_for_path(path)
         if mount_point and mount_point['total_size'] is not None:
@@ -1184,7 +1281,7 @@ class FakeFilesystem:
             OSError: if the new space is smaller than the used size.
         """
         file_path: AnyStr = (path if path is not None  # type: ignore
-                             else self.root.name)
+                             else self.root_dir_name)
         mount_point = self._mount_point_for_path(file_path)
         if (mount_point['total_size'] is not None and
                 mount_point['used_size'] > total_size):
@@ -1341,8 +1438,9 @@ class FakeFilesystem:
             file_object.st_atime = current_time
             file_object.st_mtime = current_time
 
+    @staticmethod
     def _handle_utime_arg_errors(
-            self, ns: Optional[Tuple[int, int]],
+            ns: Optional[Tuple[int, int]],
             times: Optional[Tuple[Union[int, float], Union[int, float]]]):
         if times is not None and ns is not None:
             raise ValueError(
@@ -1524,13 +1622,17 @@ class FakeFilesystem:
                         normalized_components):])
             sep = self.path_separator
             normalized_path = sep.join(normalized_components)
-            if (self._starts_with_sep(path)
-                    and not self._starts_with_sep(normalized_path)):
+            if (self.starts_with_sep(path)
+                    and not self.starts_with_sep(normalized_path)):
                 normalized_path = sep + normalized_path
+            if (len(normalized_path) == 2 and
+                    self.starts_with_drive_letter(normalized_path)):
+                normalized_path += sep
             return normalized_path
 
         if self.is_case_sensitive or not path:
             return path
+        path = self.replace_windows_root(path)
         path_components = self._path_components(path)
         normalized_components = []
         current_dir = self.root
@@ -1564,7 +1666,7 @@ class FakeFilesystem:
         path = self.normcase(path)
         cwd = matching_string(path, self.cwd)
         if not path:
-            path = matching_string(path, self.path_separator)
+            path = self.get_path_separator(path)
         if path == matching_string(path, '.'):
             path = cwd
         elif not self._starts_with_root_path(path):
@@ -1573,8 +1675,8 @@ class FakeFilesystem:
             empty = matching_string(path, '')
             path = self.get_path_separator(path).join(
                 (cwd != root_name and cwd or empty, path))
-        if path == matching_string(path, '.'):
-            path = cwd
+        else:
+            path = self.replace_windows_root(path)
         return self.normpath(path)
 
     def splitpath(self, path: AnyStr) -> Tuple[AnyStr, AnyStr]:
@@ -1751,7 +1853,7 @@ class FakeFilesystem:
             path_components.insert(0, drive)
         return path_components
 
-    def _starts_with_drive_letter(self, file_path: AnyStr) -> bool:
+    def starts_with_drive_letter(self, file_path: AnyStr) -> bool:
         """Return True if file_path starts with a drive letter.
 
         Args:
@@ -1763,7 +1865,7 @@ class FakeFilesystem:
         """
         colon = matching_string(file_path, ':')
         if (len(file_path) >= 2 and
-                file_path[:1].isalpha and file_path[1:2] == colon):
+                file_path[0:1].isalpha and file_path[1:2] == colon):
             if self.is_windows_fs:
                 return True
             if os.name == 'nt':
@@ -1783,14 +1885,42 @@ class FakeFilesystem:
         return (file_path.startswith(root_name) or
                 not self.is_case_sensitive and file_path.lower().startswith(
                     root_name.lower()) or
-                self._starts_with_drive_letter(file_path))
+                self.starts_with_drive_letter(file_path))
+
+    def replace_windows_root(self, path: AnyStr) -> AnyStr:
+        """In windows, if a path starts with a single separator,
+        it points to the root dir of the current mount point, usually a
+        drive - replace it with that mount point path to get the real path.
+        """
+        if path and self.is_windows_fs and self.root_dir:
+            sep = self.get_path_separator(path)
+            # ignore UNC paths
+            if path[0:1] == sep and (len(path) == 1 or path[1:2] != sep):
+                # check if we already have a mount point for that path
+                for root_path in self.mount_points:
+                    root_path = matching_string(path, root_path)
+                    if path.startswith(root_path):
+                        return path
+                # must be a pointer to the current drive - replace it
+                mount_point = matching_string(path, self.root_dir_name)
+                path = mount_point + path[1:]
+        return path
 
     def _is_root_path(self, file_path: AnyStr) -> bool:
         root_name = matching_string(file_path, self.root.name)
-        return (file_path == root_name or not self.is_case_sensitive and
-                file_path.lower() == root_name.lower() or
-                2 <= len(file_path) <= 3 and
-                self._starts_with_drive_letter(file_path))
+        return file_path == root_name or self.is_mount_point(file_path)
+
+    def is_mount_point(self, file_path: AnyStr) -> bool:
+        """Return `True` if `file_path` points to a mount point."""
+        for mount_point in self.mount_points:
+            mount_point = matching_string(file_path, mount_point)
+            if (file_path == mount_point or not self.is_case_sensitive and
+                    file_path.lower() == mount_point.lower()):
+                return True
+        if self.is_windows_fs:
+            return (2 <= len(file_path) <= 3 and
+                    self.starts_with_drive_letter(file_path))
+        return False
 
     def ends_with_path_separator(self, path: Union[int, AnyPath]) -> bool:
         """Return True if ``file_path`` ends with a valid path separator."""
@@ -1854,7 +1984,7 @@ class FakeFilesystem:
             path = self.resolve_path(path)
         except OSError:
             return False
-        if path == self.root.name:
+        if self._is_root_path(path):
             return True
 
         path_components: List[str] = self._path_components(path)
@@ -1917,13 +2047,16 @@ class FakeFilesystem:
             # all parts of a relative path exist.
             self.raise_os_error(errno.ENOENT, path)
         path = self.absnormpath(self._original_path(path))
+        path = self.replace_windows_root(path)
         if self._is_root_path(path):
             return path
         if path == matching_string(path, self.dev_null.name):
             return path
         path_components = self._path_components(path)
         resolved_components = self._resolve_components(path_components)
-        return self._components_to_path(resolved_components)
+        path = self._components_to_path(resolved_components)
+        # after resolving links, we have to check again for Windows root
+        return self.replace_windows_root(path)
 
     def _components_to_path(self, component_folders):
         sep = (self.get_path_separator(component_folders[0])
@@ -2184,7 +2317,7 @@ class FakeFilesystem:
                 directory.
         """
         if not file_path:
-            target_directory = self.root
+            target_directory = self.root_dir
         else:
             target_directory = cast(FakeDirectory, self.resolve(file_path))
             if not S_ISDIR(target_directory.st_mode):
@@ -2411,7 +2544,7 @@ class FakeFilesystem:
     def make_string_path(self, path: AnyPath) -> AnyStr:
         path_str = make_string_path(path)
         os_sep = matching_string(path_str, os.sep)
-        fake_sep = matching_string(path_str, self.path_separator)
+        fake_sep = self.get_path_separator(path_str)
         return path_str.replace(os_sep, fake_sep)  # type: ignore[return-value]
 
     def create_dir(self, directory_path: AnyPath,
@@ -2446,6 +2579,8 @@ class FakeFilesystem:
             if not directory:
                 new_dir = FakeDirectory(component, filesystem=self)
                 new_dirs.append(new_dir)
+                if self.is_windows_fs and current_dir == self.root:
+                    current_dir = self.root_dir
                 current_dir.add_entry(new_dir)
                 current_dir = new_dir
             else:
@@ -2620,19 +2755,20 @@ class FakeFilesystem:
             source_path_str)
         if not os.path.exists(source_path_str):
             self.raise_os_error(errno.ENOENT, source_path_str)
-        target_path = target_path or source_path_str
+        target_path_str = make_string_path(target_path or source_path_str)
+        self._auto_mount_drive_if_needed(target_path_str)
         new_dir: FakeDirectory
         if lazy_read:
-            parent_path = os.path.split(target_path)[0]
+            parent_path = os.path.split(target_path_str)[0]
             if self.exists(parent_path):
                 parent_dir = self.get_object(parent_path)
             else:
                 parent_dir = self.create_dir(parent_path)
             new_dir = FakeDirectoryFromRealDirectory(
-                source_path_str, self, read_only, target_path)
+                source_path_str, self, read_only, target_path_str)
             parent_dir.add_entry(new_dir)
         else:
-            new_dir = self.create_dir(target_path)
+            new_dir = self.create_dir(target_path_str)
             for base, _, files in os.walk(source_path_str):
                 new_base = os.path.join(new_dir.path,  # type: ignore[arg-type]
                                         os.path.relpath(base, source_path_str))
@@ -2730,7 +2866,8 @@ class FakeFilesystem:
         if not self.exists(parent_directory):
             if not create_missing_dirs:
                 self.raise_os_error(errno.ENOENT, parent_directory)
-            self.create_dir(parent_directory)
+            parent_directory = matching_string(
+                path, self.create_dir(parent_directory).path)  # type: ignore
         else:
             parent_directory = self._original_path(parent_directory)
         if apply_umask:
@@ -2979,7 +3116,7 @@ class FakeFilesystem:
 
         dir_name = self.absnormpath(dir_name)
         if self.exists(dir_name, check_link=True):
-            if self.is_windows_fs and dir_name == self.path_separator:
+            if self.is_windows_fs and dir_name == self.root_dir_name:
                 error_nr = errno.EACCES
             else:
                 error_nr = errno.EEXIST
@@ -3032,7 +3169,7 @@ class FakeFilesystem:
 
         # Raise a permission denied error if the first existing directory
         # is not writeable.
-        current_dir = self.root
+        current_dir = self.root_dir
         for component in path_components:
             if (not hasattr(current_dir, "entries") or
                     component not in current_dir.entries):
@@ -3175,7 +3312,7 @@ class FakeFilesystem:
                         error = errno.EISDIR
                     self.raise_os_error(error, norm_path)
 
-                if path.endswith(matching_string(path, self.path_separator)):
+                if path.endswith(self.get_path_separator(path)):
                     if self.is_windows_fs:
                         error = errno.EACCES
                     elif self.is_macos:
@@ -3243,7 +3380,7 @@ class FakeFilesystem:
         return directory_contents  # type: ignore[return-value]
 
     def __str__(self) -> str:
-        return str(self.root)
+        return str(self.root_dir)
 
     def _add_standard_streams(self) -> None:
         self._add_open_file(StandardStreamWrapper(sys.stdin))
@@ -3274,7 +3411,7 @@ Deprecator.add(FakeFilesystem, FakeFilesystem.splitdrive, 'SplitDrive')
 Deprecator.add(FakeFilesystem, FakeFilesystem.joinpaths, 'JoinPaths')
 Deprecator.add(FakeFilesystem,
                FakeFilesystem._path_components, 'GetPathComponents')
-Deprecator.add(FakeFilesystem, FakeFilesystem._starts_with_drive_letter,
+Deprecator.add(FakeFilesystem, FakeFilesystem.starts_with_drive_letter,
                'StartsWithDriveLetter')
 Deprecator.add(FakeFilesystem, FakeFilesystem.exists, 'Exists')
 Deprecator.add(FakeFilesystem, FakeFilesystem.resolve_path, 'ResolvePath')
@@ -3391,7 +3528,7 @@ class FakePathModule:
         if self.filesystem.is_windows_fs:
             path = self.splitdrive(path)[1]
         path = make_string_path(path)
-        return self.filesystem._starts_with_sep(path)
+        return self.filesystem.starts_with_sep(path)
 
     def isdir(self, path: AnyStr) -> bool:
         """Determine if path identifies a directory."""
@@ -3490,9 +3627,9 @@ class FakePathModule:
         if not self.isabs(path):
             path = self.join(getcwd(), path)
         elif (self.filesystem.is_windows_fs and
-              self.filesystem._starts_with_sep(path)):
+              self.filesystem.starts_with_sep(path)):
             cwd = getcwd()
-            if self.filesystem._starts_with_drive_letter(cwd):
+            if self.filesystem.starts_with_drive_letter(cwd):
                 path = self.join(cwd[:2], path)
         return self.normpath(path)
 
@@ -3528,17 +3665,19 @@ class FakePathModule:
         if not path:
             raise ValueError("no path specified")
         path = make_string_path(path)
+        path = self.filesystem.replace_windows_root(path)
+        sep = matching_string(path, self.filesystem.path_separator)
         if start is not None:
             start = make_string_path(start)
         else:
             start = matching_string(path, self.filesystem.cwd)
+        start = self.filesystem.replace_windows_root(start)
         system_sep = matching_string(path, self._os_path.sep)
         if self.filesystem.alternative_path_separator is not None:
             altsep = matching_string(
                 path, self.filesystem.alternative_path_separator)
             path = path.replace(altsep, system_sep)
             start = start.replace(altsep, system_sep)
-        sep = matching_string(path, self.filesystem.path_separator)
         path = path.replace(sep, system_sep)
         start = start.replace(sep, system_sep)
         path = self._os_path.relpath(path, start)
@@ -4886,7 +5025,7 @@ if sys.platform != 'win32':
             """
             Args:
                 filesystem: FakeFilesystem used to provide file system
-                information (currently not used).
+                    information (currently not used).
             """
             self.filesystem = filesystem
             self._fcntl_module = fcntl

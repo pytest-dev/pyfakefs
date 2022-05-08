@@ -733,9 +733,11 @@ class PathlibTest(TestCase):
     @patchfs
     def test_cwd(self, fs):
         """Make sure fake file system is used for os in pathlib"""
-        self.assertEqual(os.path.sep, str(pathlib.Path.cwd()))
+        is_windows = sys.platform.startswith('win')
+        root_dir = 'C:' + os.path.sep if is_windows else os.path.sep
+        self.assertEqual(root_dir, str(pathlib.Path.cwd()))
         dot_abs = pathlib.Path(".").absolute()
-        self.assertEqual(os.path.sep, str(dot_abs))
+        self.assertEqual(root_dir, str(dot_abs))
         self.assertTrue(dot_abs.exists())
 
 
@@ -796,13 +798,13 @@ class TestOtherFS(fake_filesystem_unittest.TestCase):
     def test_real_file_with_home(self):
         """Regression test for #558"""
         self.fs.is_windows_fs = os.name != 'nt'
+        if self.fs.is_windows_fs:
+            self.fs.is_macos = False
+        self.fs.reset()
         self.fs.add_real_file(__file__)
         with open(__file__) as f:
             self.assertTrue(f.read())
         home = Path.home()
-        if sys.version_info < (3, 6):
-            # fspath support since Python 3.6
-            home = str(home)
         os.chdir(home)
         with open(__file__) as f:
             self.assertTrue(f.read())
@@ -867,6 +869,14 @@ class TestOtherFS(fake_filesystem_unittest.TestCase):
         # use str() to be Python 3.5 compatible
         os.chdir(str(folder))
         self.assertTrue(os.path.exists(str(file_path.relative_to(folder))))
+
+
+@unittest.skipIf(sys.platform != 'win32', 'Windows-specific behavior')
+class TestAbsolutePathOnWindows(fake_filesystem_unittest.TestCase):
+    @patchfs
+    def test_is_absolute(self, fs):
+        # regression test for #673
+        self.assertTrue(pathlib.Path(".").absolute().is_absolute())
 
 
 if __name__ == "__main__":
