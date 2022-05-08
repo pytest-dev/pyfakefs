@@ -641,7 +641,8 @@ class FakePath(pathlib.Path):
                 home = os.path.join('C:', 'Users', username)
             else:
                 home = os.path.join('home', username)
-            cls.filesystem.create_dir(home)
+            if not cls.filesystem.exists(home):
+                cls.filesystem.create_dir(home)
         return cls(home.replace(os.sep, cls.filesystem.path_separator))
 
     def samefile(self, other_path):

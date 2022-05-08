@@ -3,6 +3,11 @@ The released versions correspond to PyPi releases.
 
 ## Unreleased
 
+### Changes
+* under Windows, the root path is now effectively `C:\` instead of `\`; a 
+  path starting with `\` points to the current drive as in the real file 
+  system (see [#673](../../issues/673))
+
 ## [Version 4.5.6](https://pypi.python.org/pypi/pyfakefs/4.5.6) (2022-03-17)
 Fixes a regression which broke tests with older pytest versions (< 3.9).
 

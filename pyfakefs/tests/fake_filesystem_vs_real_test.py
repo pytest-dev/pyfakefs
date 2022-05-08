@@ -43,7 +43,7 @@ def _get_errno(raised_error):
 
 class TestCase(unittest.TestCase):
     is_windows = sys.platform.startswith('win')
-    _FAKE_FS_BASE = sep('/fakefs')
+    _FAKE_FS_BASE = 'C:\\fakefs' if is_windows else '/fakefs'
 
 
 class FakeFilesystemVsRealTest(TestCase):
