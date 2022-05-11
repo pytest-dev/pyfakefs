@@ -283,7 +283,7 @@ Does nothing if patching is not paused.
 
 <dl class="method">
 <dt id="pyfakefs.fake_filesystem.FakeFilesystem.add_mount_point">
-<code class="descname">add_mount_point</code><span class="sig-paren">(</span><em>path: AnyStr</em>, <em>total_size: Optional[int] = None</em><span class="sig-paren">)</span> &#x2192; Dict[KT, VT]<a class="headerlink" href="#pyfakefs.fake_filesystem.FakeFilesystem.add_mount_point" title="Permalink to this definition">¶</a></dt>
+<code class="descname">add_mount_point</code><span class="sig-paren">(</span><em>path: AnyStr</em>, <em>total_size: Optional[int] = None</em>, <em>can_exist: bool = False</em><span class="sig-paren">)</span> &#x2192; Dict[KT, VT]<a class="headerlink" href="#pyfakefs.fake_filesystem.FakeFilesystem.add_mount_point" title="Permalink to this definition">¶</a></dt>
 <dd><p>Add a new mount point for a filesystem device.
 The mount point gets a new unique device number.</p>
 <table class="docutils field-list" frame="void" rules="none">
@@ -294,13 +294,16 @@ The mount point gets a new unique device number.</p>
 <li><strong>path</strong> – The root path for the new mount path.</li>
 <li><strong>total_size</strong> – The new total size of the added filesystem device
 in bytes. Defaults to infinite size.</li>
+<li><strong>can_exist</strong> – If True, no error is raised if the mount point
+already exists</li>
 </ul>
 </td>
 </tr>
 <tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first">The newly created mount point dict.</p>
 </td>
 </tr>
-<tr class="field-odd field"><th class="field-name">Raises:</th><td class="field-body"><p class="first last"><code class="xref py py-exc docutils literal notranslate"><span class="pre">OSError</span></code> – if trying to mount an existing mount point again.</p>
+<tr class="field-odd field"><th class="field-name">Raises:</th><td class="field-body"><p class="first last"><code class="xref py py-exc docutils literal notranslate"><span class="pre">OSError</span></code> – if trying to mount an existing mount point again,
+and <cite>can_exist</cite> is False.</p>
 </td>
 </tr>
 </tbody>
@@ -1267,7 +1270,7 @@ that is available on pypi.</p>
         &#169; Copyright 2009 Google Inc. All Rights Reserved.
 © Copyright 2014 Altera Corporation. All Rights Reserved.
 © Copyright 2014-2021 John McGehee.
-      Last updated on Mar 29, 2022.
+      Last updated on May 11, 2022.
     </div>
   </body>
 </html>
