@@ -3,10 +3,16 @@ The released versions correspond to PyPi releases.
 
 ## Unreleased
 
+
 ### Changes
+* Python 3.6 has reached its end of life on 2021/12/23 and is no
+  longer officially supported by pyfakefs
+  ** `os.stat_float_times` has been removed in Python 3.7 and is therefore no 
+     longer supported
 * under Windows, the root path is now effectively `C:\` instead of `\`; a 
   path starting with `\` points to the current drive as in the real file 
   system (see [#673](../../issues/673))
+
 
 ## [Version 4.5.6](https://pypi.python.org/pypi/pyfakefs/4.5.6) (2022-03-17)
 Fixes a regression which broke tests with older pytest versions (< 3.9).
