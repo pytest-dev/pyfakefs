@@ -1486,6 +1486,7 @@ class FakeFileOpenLineEndingTest(FakeFileOpenTestBase):
         with self.open(file_path, mode='r', newline='\r\n') as f:
             self.assertEqual(['1\r\n', '2\n3\r4'], f.readlines())
 
+    @unittest.skipIf(sys.version_info >= (3, 10), "U flag no longer supported")
     def test_read_with_ignored_universal_newlines_flag(self):
         file_path = self.make_path('some_file')
         file_contents = b'1\r\n2\n3\r4'
@@ -1496,6 +1497,14 @@ class FakeFileOpenLineEndingTest(FakeFileOpenTestBase):
             self.assertEqual('1\r\n2\n3\r4', f.read())
         with self.open(file_path, mode='U', newline='\r') as f:
             self.assertEqual('1\r\n2\n3\r4', f.read())
+
+    @unittest.skipIf(sys.version_info < (3, 11), "U flag still supported")
+    def test_universal_newlines_flag_not_supported(self):
+        file_path = self.make_path('some_file')
+        file_contents = b'1\r\n2\n3\r4'
+        self.create_file(file_path, contents=file_contents)
+        with self.assertRaises(ValueError):
+            self.open(file_path, mode='U', newline='\r')
 
     def test_write_with_newline_arg(self):
         file_path = self.make_path('some_file')

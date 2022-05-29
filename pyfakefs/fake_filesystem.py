@@ -94,7 +94,9 @@ True
 True
 """
 import errno
+import functools
 import heapq
+import inspect
 import io
 import locale
 import os
@@ -103,6 +105,7 @@ import sys
 import traceback
 import uuid
 from collections import namedtuple, OrderedDict
+from contextlib import contextmanager
 from doctest import TestResults
 from enum import Enum
 from stat import (
@@ -3851,6 +3854,8 @@ class FakeOsModule:
     my_os_module = fake_filesystem.FakeOsModule(filesystem)
     """
 
+    use_original = False
+
     @staticmethod
     def dir() -> List[str]:
         """Return the list of patched function names. Used for patching
@@ -3879,7 +3884,7 @@ class FakeOsModule:
             filesystem: FakeFilesystem used to provide file system information
         """
         self.filesystem = filesystem
-        self._os_module: Any = os
+        self.os_module: Any = os
         self.path = FakePathModule(self.filesystem, self)
 
     @property
@@ -4790,13 +4795,15 @@ class FakeOsModule:
             tail, mode & ~self.filesystem.umask,
             filesystem=self.filesystem))
 
-    def symlink(self, src: AnyStr, dst: AnyStr, *,
+    def symlink(self, src: AnyStr, dst: AnyStr,
+                target_is_directory: bool = False, *,
                 dir_fd: Optional[int] = None) -> None:
         """Creates the specified symlink, pointed at the specified link target.
 
         Args:
             src: The target of the symlink.
             dst: Path to the symlink to create.
+            target_is_directory: Currently ignored.
             dir_fd: If not `None`, the file descriptor of a directory,
                 with `src` being relative to this directory.
 
@@ -4915,7 +4922,38 @@ class FakeOsModule:
 
     def __getattr__(self, name: str) -> Any:
         """Forwards any unfaked calls to the standard os module."""
-        return getattr(self._os_module, name)
+        return getattr(self.os_module, name)
+
+
+if sys.version_info > (3, 10):
+    def handle_original_call(f: Callable) -> Callable:
+        """Decorator used for real pathlib Path methods to ensure that
+        real os functions instead of faked ones are used.
+        Applied to all non-private methods of `FakeOsModule`."""
+        @functools.wraps(f)
+        def wrapped(*args, **kwargs):
+            if not f.__name__.startswith('_') and FakeOsModule.use_original:
+                # remove the `self` argument for FakeOsModule methods
+                if args and isinstance(args[0], FakeOsModule):
+                    args = args[1:]
+                return getattr(os, f.__name__)(*args, **kwargs)
+            return f(*args, **kwargs)
+        return wrapped
+
+    for name, fn in inspect.getmembers(FakeOsModule, inspect.isfunction):
+        setattr(FakeOsModule, name, handle_original_call(fn))
+
+
+@contextmanager
+def use_original_os():
+    """Temporarily use original os functions instead of faked ones.
+    Used to ensure that skipped modules do not use faked calls.
+    """
+    try:
+        FakeOsModule.use_original = True
+        yield
+    finally:
+        FakeOsModule.use_original = False
 
 
 class FakeIoModule:
@@ -5847,7 +5885,8 @@ class FakeFileOpen:
                                                        _OpenModes]:
         orig_modes = mode  # Save original modes for error messages.
         # Normalize modes. Handle 't' and 'U'.
-        if 'b' in mode and 't' in mode:
+        if (('b' in mode and 't' in mode) or
+                (sys.version_info > (3, 10) and 'U' in mode)):
             raise ValueError('Invalid mode: ' + mode)
         mode = mode.replace('t', '').replace('b', '')
         mode = mode.replace('rU', 'r').replace('U', 'r')

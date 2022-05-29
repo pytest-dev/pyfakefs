@@ -221,13 +221,13 @@ class FakeStatResult:
         mode = 0
         st_mode = self.st_mode
         if st_mode & stat.S_IFDIR:
-            mode |= stat.FILE_ATTRIBUTE_DIRECTORY
+            mode |= stat.FILE_ATTRIBUTE_DIRECTORY  # type:ignore[attr-defined]
         if st_mode & stat.S_IFREG:
-            mode |= stat.FILE_ATTRIBUTE_NORMAL
+            mode |= stat.FILE_ATTRIBUTE_NORMAL  # type:ignore[attr-defined]
         if st_mode & (stat.S_IFCHR | stat.S_IFBLK):
-            mode |= stat.FILE_ATTRIBUTE_DEVICE
+            mode |= stat.FILE_ATTRIBUTE_DEVICE  # type:ignore[attr-defined]
         if st_mode & stat.S_IFLNK:
-            mode |= stat.FILE_ATTRIBUTE_REPARSE_POINT
+            mode |= stat.FILE_ATTRIBUTE_REPARSE_POINT  # type:ignore
         return mode
 
     @property
