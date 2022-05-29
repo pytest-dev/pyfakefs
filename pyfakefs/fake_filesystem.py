@@ -897,10 +897,13 @@ class FakeFilesystem:
         is_macos: `True` under MacOS, or if we are faking it.
         is_case_sensitive: `True` if a case-sensitive file system is assumed.
         root: The root :py:class:`FakeDirectory` entry of the file system.
-        cwd: The current working directory path.
         umask: The umask used for newly created files, see `os.umask`.
         patcher: Holds the Patcher object if created from it. Allows access
             to the patcher object if using the pytest fs fixture.
+        patch_open_code: Defines how `io.open_code` will be patched;
+            patching can be on, off, or in automatic mode.
+        shuffle_listdir_results: If `True`, `os.listdir` will not sort the
+            results to match the real file system behavior.
     """
 
     def __init__(self, path_separator: str = os.path.sep,
@@ -4081,20 +4084,6 @@ class FakeOsModule:
         write_wrapper.filedes = file_des
         return read_wrapper.filedes, write_wrapper.filedes
 
-    @staticmethod
-    def stat_float_times(newvalue: Optional[bool] = None) -> bool:
-        """Determine whether a file's time stamps are reported as floats
-        or ints.
-
-        Calling without arguments returns the current value. The value is
-        shared by all instances of FakeOsModule.
-
-        Args:
-            newvalue: If `True`, mtime, ctime, atime are reported as floats.
-                Otherwise, they are returned as ints (rounding down).
-        """
-        return FakeStatResult.stat_float_times(newvalue)
-
     def fstat(self, fd: int) -> FakeStatResult:
         """Return the os.stat-like tuple for the FakeFile object of file_des.
 
@@ -4931,8 +4920,6 @@ class FakeOsModule:
 
 class FakeIoModule:
     """Uses FakeFilesystem to provide a fake io module replacement.
-
-    Currently only used to wrap `io.open()` which is an alias to `open()`.
 
     You need a fake_filesystem to use this:
     filesystem = fake_filesystem.FakeFilesystem()

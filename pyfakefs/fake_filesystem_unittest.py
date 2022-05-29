@@ -309,7 +309,7 @@ class TestCase(unittest.TestCase, TestCaseMixin):
         path in the fake file system.
 
         **This method is deprecated** in favor of
-        :py:meth:`FakeFilesystem..add_real_file`.
+        :py:meth:`FakeFilesystem.add_real_file`.
         `copyRealFile()` is retained with limited functionality for backward
         compatibility only.
 
