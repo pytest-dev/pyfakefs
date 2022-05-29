@@ -31,16 +31,20 @@ get the properties of the underlying fake filesystem.
 import errno
 import fnmatch
 import functools
+import inspect
 import os
 import pathlib
-from pathlib import PurePath
 import re
 import sys
+from pathlib import PurePath
+from typing import Callable
 from urllib.parse import quote_from_bytes as urlquote_from_bytes
 
 from pyfakefs import fake_scandir
 from pyfakefs.extra_packages import use_scandir
-from pyfakefs.fake_filesystem import FakeFileOpen, FakeFilesystem
+from pyfakefs.fake_filesystem import (
+    FakeFileOpen, FakeFilesystem, use_original_os
+)
 
 
 def init_module(filesystem):
@@ -98,27 +102,26 @@ class _FakeAccessor(accessor):  # type: ignore [valid-type, misc]
     if use_scandir:
         scandir = _wrap_strfunc(fake_scandir.scandir)
 
-    chmod = _wrap_strfunc(FakeFilesystem.chmod)
-
     if hasattr(os, "lchmod"):
         lchmod = _wrap_strfunc(lambda fs, path, mode: FakeFilesystem.chmod(
             fs, path, mode, follow_symlinks=False))
     else:
-        def lchmod(self, pathobj,  *args, **kwargs):
+        def lchmod(self, pathobj, *args, **kwargs):
             """Raises not implemented for Windows systems."""
             raise NotImplementedError("lchmod() not available on this system")
 
-        def chmod(self, pathobj, *args, **kwargs):
-            if "follow_symlinks" in kwargs:
-                if sys.version_info < (3, 10):
-                    raise TypeError("chmod() got an unexpected keyword "
-                                    "argument 'follow_synlinks'")
-                if (not kwargs["follow_symlinks"] and
-                        os.chmod not in os.supports_follow_symlinks):
-                    raise NotImplementedError(
-                        "`follow_symlinks` for chmod() is not available "
-                        "on this system")
-            return pathobj.filesystem.chmod(str(pathobj), *args, **kwargs)
+    def chmod(self, pathobj, *args, **kwargs):
+        if "follow_symlinks" in kwargs:
+            if sys.version_info < (3, 10):
+                raise TypeError("chmod() got an unexpected keyword "
+                                "argument 'follow_symlinks'")
+
+            if (not kwargs["follow_symlinks"] and
+                    os.os_module.chmod not in os.supports_follow_symlinks):
+                raise NotImplementedError(
+                    "`follow_symlinks` for chmod() is not available "
+                    "on this system")
+        return pathobj.filesystem.chmod(str(pathobj), *args, **kwargs)
 
     mkdir = _wrap_strfunc(FakeFilesystem.makedir)
 
@@ -793,6 +796,8 @@ class RealPath(pathlib.Path):
     Needed because `Path` in `pathlib` is always faked, even if `pathlib`
     itself is not.
     """
+    _flavour = (pathlib._WindowsFlavour() if os.name == 'nt'  # type:ignore
+                else pathlib._PosixFlavour())  # type:ignore
 
     def __new__(cls, *args, **kwargs):
         """Creates the correct subclass based on OS."""
@@ -803,6 +808,41 @@ class RealPath(pathlib.Path):
         return self
 
 
+if sys.version_info > (3, 10):
+    def with_original_os(f: Callable) -> Callable:
+        """Decorator used for real pathlib Path methods to ensure that
+        real os functions instead of faked ones are used."""
+        @functools.wraps(f)
+        def wrapped(*args, **kwargs):
+            with use_original_os():
+                return f(*args, **kwargs)
+        return wrapped
+
+    for name, fn in inspect.getmembers(RealPath, inspect.isfunction):
+        setattr(RealPath, name, with_original_os(fn))
+
+
+class RealPathlibPathModule:
+    """Patches `pathlib.Path` by passing all calls to RealPathlibModule."""
+    real_pathlib = None
+
+    @classmethod
+    def __instancecheck__(cls, instance):
+        # as we cannot derive from pathlib.Path, we fake
+        # the inheritance to pass isinstance checks - see #666
+        return isinstance(instance, PurePath)
+
+    def __init__(self):
+        if self.real_pathlib is None:
+            self.__class__.real_pathlib = RealPathlibModule()
+
+    def __call__(self, *args, **kwargs):
+        return RealPath(*args, **kwargs)
+
+    def __getattr__(self, name):
+        return getattr(self.real_pathlib.Path, name)
+
+
 class RealPathlibModule:
     """Used to replace `pathlib` for skipped modules.
     As the original `pathlib` is always patched to use the fake path,
@@ -810,8 +850,6 @@ class RealPathlibModule:
     """
 
     def __init__(self):
-        RealPathlibModule.PureWindowsPath._flavour = pathlib._WindowsFlavour()
-        RealPathlibModule.PurePosixPath._flavour = pathlib._PosixFlavour()
         self._pathlib_module = pathlib
 
     class PurePosixPath(PurePath):
@@ -840,24 +878,3 @@ class RealPathlibModule:
     def __getattr__(self, name):
         """Forwards any unfaked calls to the standard pathlib module."""
         return getattr(self._pathlib_module, name)
-
-
-class RealPathlibPathModule:
-    """Patches `pathlib.Path` by passing all calls to RealPathlibModule."""
-    real_pathlib = None
-
-    @classmethod
-    def __instancecheck__(cls, instance):
-        # as we cannot derive from pathlib.Path, we fake
-        # the inheritance to pass isinstance checks - see #666
-        return isinstance(instance, PurePath)
-
-    def __init__(self):
-        if self.real_pathlib is None:
-            self.__class__.real_pathlib = RealPathlibModule()
-
-    def __call__(self, *args, **kwargs):
-        return self.real_pathlib.Path(*args, **kwargs)
-
-    def __getattr__(self, name):
-        return getattr(self.real_pathlib.Path, name)

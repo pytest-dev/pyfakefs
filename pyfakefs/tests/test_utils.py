@@ -81,17 +81,6 @@ class TestCase(unittest.TestCase):
             else:
                 self.assertEqual(subtype, exc.errno)
 
-    def assert_raises_os_error(self, subtype, expression, *args, **kwargs):
-        """Asserts that a specific subtype of OSError is raised."""
-        try:
-            expression(*args, **kwargs)
-            self.fail('No exception was raised, OSError expected')
-        except OSError as exc:
-            if isinstance(subtype, list):
-                self.assertIn(exc.errno, subtype)
-            else:
-                self.assertEqual(subtype, exc.errno)
-
 
 class RealFsTestMixin:
     """Test mixin to allow tests to run both in the fake filesystem and in the
@@ -148,6 +137,9 @@ class RealFsTestMixin:
     def use_real_fs(self):
         """Return True if the real file system shall be tested."""
         return False
+
+    def setUpFileSystem(self):
+        pass
 
     def path_separator(self):
         """Can be overwritten to use a specific separator in the
@@ -362,7 +354,7 @@ class RealFsTestMixin:
         if self.filesystem is not None:
             old_base_path = self.base_path
             self.base_path = self.filesystem.path_separator + 'basepath'
-            if self.is_windows_fs:
+            if self.filesystem.is_windows_fs:
                 self.base_path = 'C:' + self.base_path
             if old_base_path != self.base_path:
                 if old_base_path is not None:
@@ -402,6 +394,17 @@ class RealFsTestMixin:
                               DummyTime(start, step))
         return DummyMock()
 
+    def assert_raises_os_error(self, subtype, expression, *args, **kwargs):
+        """Asserts that a specific subtype of OSError is raised."""
+        try:
+            expression(*args, **kwargs)
+            self.fail('No exception was raised, OSError expected')
+        except OSError as exc:
+            if isinstance(subtype, list):
+                self.assertIn(exc.errno, subtype)
+            else:
+                self.assertEqual(subtype, exc.errno)
+
 
 class RealFsTestCase(TestCase, RealFsTestMixin):
     """Can be used as base class for tests also running in the real
@@ -425,9 +428,6 @@ class RealFsTestCase(TestCase, RealFsTestMixin):
 
     def tearDown(self):
         RealFsTestMixin.tearDown(self)
-
-    def setUpFileSystem(self):
-        pass
 
     @property
     def is_windows_fs(self):
