@@ -217,12 +217,6 @@ no permision checks are performed.</p>
 </dd></dl>
 
 <dl class="attribute">
-<dt id="pyfakefs.fake_filesystem.FakeFilesystem.cwd">
-<code class="descname">cwd</code><a class="headerlink" href="#pyfakefs.fake_filesystem.FakeFilesystem.cwd" title="Permalink to this definition">¶</a></dt>
-<dd><p>The current working directory path.</p>
-</dd></dl>
-
-<dl class="attribute">
 <dt id="pyfakefs.fake_filesystem.FakeFilesystem.umask">
 <code class="descname">umask</code><a class="headerlink" href="#pyfakefs.fake_filesystem.FakeFilesystem.umask" title="Permalink to this definition">¶</a></dt>
 <dd><p>The umask used for newly created files, see <cite>os.umask</cite>.</p>
@@ -233,6 +227,20 @@ no permision checks are performed.</p>
 <code class="descname">patcher</code><a class="headerlink" href="#pyfakefs.fake_filesystem.FakeFilesystem.patcher" title="Permalink to this definition">¶</a></dt>
 <dd><p>Holds the Patcher object if created from it. Allows access
 to the patcher object if using the pytest fs fixture.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="pyfakefs.fake_filesystem.FakeFilesystem.patch_open_code">
+<code class="descname">patch_open_code</code><a class="headerlink" href="#pyfakefs.fake_filesystem.FakeFilesystem.patch_open_code" title="Permalink to this definition">¶</a></dt>
+<dd><p>Defines how <cite>io.open_code</cite> will be patched;
+patching can be on, off, or in automatic mode.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="pyfakefs.fake_filesystem.FakeFilesystem.shuffle_listdir_results">
+<code class="descname">shuffle_listdir_results</code><a class="headerlink" href="#pyfakefs.fake_filesystem.FakeFilesystem.shuffle_listdir_results" title="Permalink to this definition">¶</a></dt>
+<dd><p>If <cite>True</cite>, <cite>os.listdir</cite> will not sort the
+results to match the real file system behavior.</p>
 </dd></dl>
 
 <table class="docutils field-list" frame="void" rules="none">
@@ -1135,7 +1143,6 @@ or <cite>open()</cite> function.</p>
 <dt id="pyfakefs.fake_filesystem.FakeIoModule">
 <em class="property">class </em><code class="descclassname">pyfakefs.fake_filesystem.</code><code class="descname">FakeIoModule</code><span class="sig-paren">(</span><em>filesystem: pyfakefs.fake_filesystem.FakeFilesystem</em><span class="sig-paren">)</span><a class="headerlink" href="#pyfakefs.fake_filesystem.FakeIoModule" title="Permalink to this definition">¶</a></dt>
 <dd><p>Uses FakeFilesystem to provide a fake io module replacement.</p>
-<p>Currently only used to wrap <cite>io.open()</cite> which is an alias to <cite>open()</cite>.</p>
 <p>You need a fake_filesystem to use this:
 filesystem = fake_filesystem.FakeFilesystem()
 my_io_module = fake_filesystem.FakeIoModule(filesystem)</p>
@@ -1270,7 +1277,7 @@ that is available on pypi.</p>
         &#169; Copyright 2009 Google Inc. All Rights Reserved.
 © Copyright 2014 Altera Corporation. All Rights Reserved.
 © Copyright 2014-2021 John McGehee.
-      Last updated on May 19, 2022.
+      Last updated on May 30, 2022.
     </div>
   </body>
 </html>
