@@ -8,12 +8,16 @@ The released versions correspond to PyPi releases.
   longer officially supported by pyfakefs
   ** `os.stat_float_times` has been removed in Python 3.7 and is therefore no 
      longer supported
-* added some support for the upcoming Python version 3.11
-  (see [#677](../../issues/677))
 * under Windows, the root path is now effectively `C:\` instead of `\`; a 
   path starting with `\` points to the current drive as in the real file 
   system (see [#673](../../issues/673))
+* fake `pathlib.Path.owner()` and `pathlib.Path.group()` now behave like the 
+  real methods - they look up the real user/group name for the user/group id
+  that is associated with the fake file (see [#678](../../issues/678))
 
+### New Features
+* added some support for the upcoming Python version 3.11
+  (see [#677](../../issues/677))
 
 ## [Version 4.5.6](https://pypi.python.org/pypi/pyfakefs/4.5.6) (2022-03-17)
 Fixes a regression which broke tests with older pytest versions (< 3.9).

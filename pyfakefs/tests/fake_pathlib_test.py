@@ -26,6 +26,8 @@ import pathlib
 import stat
 import sys
 import unittest
+from collections import namedtuple
+from unittest import mock
 
 from pyfakefs import fake_pathlib, fake_filesystem, fake_filesystem_unittest
 from pyfakefs.fake_filesystem import is_root
@@ -1073,11 +1075,36 @@ class FakePathlibUsageInOsFunctionsTest(RealPathlibTestCase):
     @unittest.skipIf(sys.platform == 'win32',
                      'no pwd and grp modules in Windows')
     def test_owner_and_group_posix(self):
-        self.check_posix_only()
         path = self.make_path('some_file')
         self.create_file(path)
         self.assertTrue(self.path(path).owner())
         self.assertTrue(self.path(path).group())
+
+    @unittest.skipIf(sys.platform == 'win32',
+                     'no pwd and grp modules in Windows')
+    def test_changed_owner_and_group(self):
+        def fake_getpwuid(uid):
+            if uid == 42:
+                user_struct = namedtuple('user', 'pw_name, pw_uid')
+                user_struct.pw_name = 'NewUser'
+                return user_struct
+            raise KeyError
+
+        def fake_getgrgid(uid):
+            if uid == 5:
+                group_struct = namedtuple('group', 'gr_name, gr_gid')
+                group_struct.gr_name = 'NewGroup'
+                return group_struct
+            raise KeyError
+
+        self.skip_real_fs()
+        path = self.make_path('some_file')
+        self.create_file(path)
+        self.os.chown(path, 42, 5)
+        with mock.patch('pwd.getpwuid', fake_getpwuid):
+            with mock.patch('grp.getgrgid', fake_getgrgid):
+                self.assertEqual('NewUser', self.path(path).owner())
+                self.assertEqual('NewGroup', self.path(path).group())
 
     def test_owner_and_group_windows(self):
         self.check_windows_only()
