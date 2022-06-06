@@ -754,20 +754,22 @@ class FakePathlibModule:
         __slots__ = ()
 
         def owner(self):
-            """Return the current user name. It is assumed that the fake
-            file system was created by the current user.
+            """Return the username of the file owner.
+             It is assumed that `st_uid` is related to a real user,
+             otherwise `KeyError` is raised.
             """
             import pwd
 
-            return pwd.getpwuid(os.getuid()).pw_name
+            return pwd.getpwuid(self.stat().st_uid).pw_name
 
         def group(self):
-            """Return the current group name. It is assumed that the fake
-            file system was created by the current user.
+            """Return the group name of the file group.
+            It is assumed that `st_gid` is related to a real group,
+            otherwise `KeyError` is raised.
             """
             import grp
 
-            return grp.getgrgid(os.getgid()).gr_name
+            return grp.getgrgid(self.stat().st_gid).gr_name
 
     Path = FakePath
 
