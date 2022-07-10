@@ -18,6 +18,14 @@ The released versions correspond to PyPi releases.
 ### New Features
 * added some support for the upcoming Python version 3.11
   (see [#677](../../issues/677))
+* added convenience fixtures for module- and session based `fs` fixtures
+  (`fs_module` and `fs_session`)
+
+### Fixes
+* fixed an incompatibility of `tmpdir` (and probably other fixtures) with the 
+  module-scoped version of `fs`; had been introduced in 
+  pyfakefs 4.5.5 by the fix for [#666](../../issues/666)
+  (see [#684](../../issues/684))
 
 ## [Version 4.5.6](https://pypi.python.org/pypi/pyfakefs/4.5.6) (2022-03-17)
 Fixes a regression which broke tests with older pytest versions (< 3.9).
