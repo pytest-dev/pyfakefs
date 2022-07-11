@@ -64,6 +64,10 @@ tests:
         """
         yield fs
 
+For convenience, module- and session-scoped fixtures with the same
+functionality are provided, named ``fs_module`` and ``fs_session``,
+respectively.
+
 
 Patch using fake_filesystem_unittest.Patcher
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
