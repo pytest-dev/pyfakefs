@@ -792,6 +792,11 @@ class FakePathlibPathModule:
     def __getattr__(self, name):
         return getattr(self.fake_pathlib.Path, name)
 
+    @classmethod
+    def __instancecheck__(cls, instance):
+        # fake the inheritance to pass isinstance checks - see #666
+        return isinstance(instance, PurePath)
+
 
 class RealPath(pathlib.Path):
     """Replacement for `pathlib.Path` if it shall not be faked.
