@@ -3,6 +3,10 @@ The released versions correspond to PyPi releases.
 
 ## Unreleased
 
+## [Version 4.6.0](https://pypi.python.org/pypi/pyfakefs/4.6.0) (2022-07-12)
+Adds support for Python 3.11, removes support for Python 3.6, changes root 
+path behavior under Windows. 
+
 ### Changes
 * Python 3.6 has reached its end of life on 2021/12/23 and is no
   longer officially supported by pyfakefs
