@@ -1,17 +1,18 @@
 
 <!DOCTYPE html>
 
-<html>
+<html lang="en">
   <head>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
 
-    <title>API Notes &#8212; pyfakefs 4.5.6 documentation</title>
+    <title>API Notes &#8212; pyfakefs 4.6.0 documentation</title>
     <link rel="stylesheet" type="text/css" href="_static/pygments.css" />
     <link rel="stylesheet" type="text/css" href="_static/pyfakefs.css" />
     <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
     <script src="_static/jquery.js"></script>
     <script src="_static/underscore.js"></script>
+    <script src="_static/_sphinx_javascript_frameworks_compat.js"></script>
     <script src="_static/doctools.js"></script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
@@ -29,7 +30,7 @@
         <li class="right" >
           <a href="modules.html" title="Public Modules and Classes"
              accesskey="P">previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="index.html">pyfakefs 4.5.6 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="index.html">pyfakefs 4.6.0 documentation</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">API Notes</a></li> 
       </ul>
     </div>  
@@ -40,7 +41,7 @@
           <div class="body" role="main">
             
   <section id="api-notes">
-<h1>API Notes<a class="headerlink" href="#api-notes" title="Permalink to this headline">¶</a></h1>
+<h1>API Notes<a class="headerlink" href="#api-notes" title="Permalink to this heading">¶</a></h1>
 <p>With <code class="docutils literal notranslate"><span class="pre">pyfakefs</span> <span class="pre">3.4</span></code>, the public API has changed to be PEP-8 conform.
 The old API is deprecated, and will be removed in some future version of
 pyfakefs.
@@ -53,14 +54,14 @@ code:</p>
 </div>
 <p>Here is a list of selected changes:</p>
 <dl class="field-list">
-<dt class="field-odd">pyfakefs.fake_filesystem.FakeFileSystem</dt>
+<dt class="field-odd">pyfakefs.fake_filesystem.FakeFileSystem<span class="colon">:</span></dt>
 <dd class="field-odd"><p>CreateFile() -&gt; create_file()</p>
 <p>CreateDirectory() -&gt; create_dir()</p>
 <p>CreateLink() -&gt; create_symlink()</p>
 <p>GetDiskUsage() -&gt; get_disk_usage()</p>
 <p>SetDiskUsage() -&gt; set_disk_usage()</p>
 </dd>
-<dt class="field-even">pyfakefs.fake_filesystem.FakeFile</dt>
+<dt class="field-even">pyfakefs.fake_filesystem.FakeFile<span class="colon">:</span></dt>
 <dd class="field-even"><p>GetSize(), SetSize() -&gt; size (property)</p>
 <p>SetContents() -&gt; set_contents()</p>
 <p>SetATime() -&gt; st_atime (property)</p>
@@ -77,9 +78,11 @@ code:</p>
       </div>
       <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
         <div class="sphinxsidebarwrapper">
-  <h4>Previous topic</h4>
-  <p class="topless"><a href="modules.html"
-                        title="previous chapter">Public Modules and Classes</a></p>
+  <div>
+    <h4>Previous topic</h4>
+    <p class="topless"><a href="modules.html"
+                          title="previous chapter">Public Modules and Classes</a></p>
+  </div>
   <div role="note" aria-label="source link">
     <h3>This Page</h3>
     <ul class="this-page-menu">
@@ -96,7 +99,7 @@ code:</p>
     </form>
     </div>
 </div>
-<script>$('#searchbox').show(0);</script>
+<script>document.getElementById('searchbox').style.display = "block"</script>
         </div>
       </div>
       <div class="clearer"></div>
@@ -113,15 +116,15 @@ code:</p>
         <li class="right" >
           <a href="modules.html" title="Public Modules and Classes"
              >previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="index.html">pyfakefs 4.5.6 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="index.html">pyfakefs 4.6.0 documentation</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">API Notes</a></li> 
       </ul>
     </div>
     <div class="footer" role="contentinfo">
         &#169; Copyright 2009 Google Inc. All Rights Reserved.
 © Copyright 2014 Altera Corporation. All Rights Reserved.
-© Copyright 2014-2021 John McGehee.
-      Last updated on Mar 17, 2022.
+© Copyright 2014-2022 John McGehee.
+      Last updated on Jul 12, 2022.
     </div>
   </body>
 </html>

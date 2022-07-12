@@ -1,17 +1,18 @@
 
 <!DOCTYPE html>
 
-<html>
+<html lang="en">
   <head>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
 
-    <title>Introduction &#8212; pyfakefs 4.5.6 documentation</title>
+    <title>Introduction &#8212; pyfakefs 4.6.0 documentation</title>
     <link rel="stylesheet" type="text/css" href="_static/pygments.css" />
     <link rel="stylesheet" type="text/css" href="_static/pyfakefs.css" />
     <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
     <script src="_static/jquery.js"></script>
     <script src="_static/underscore.js"></script>
+    <script src="_static/_sphinx_javascript_frameworks_compat.js"></script>
     <script src="_static/doctools.js"></script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
@@ -33,7 +34,7 @@
         <li class="right" >
           <a href="index.html" title="Welcome to the pyfakefs documentation!"
              accesskey="P">previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="index.html">pyfakefs 4.5.6 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="index.html">pyfakefs 4.6.0 documentation</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">Introduction</a></li> 
       </ul>
     </div>  
@@ -44,16 +45,16 @@
           <div class="body" role="main">
             
   <section id="introduction">
-<h1>Introduction<a class="headerlink" href="#introduction" title="Permalink to this headline">¶</a></h1>
+<h1>Introduction<a class="headerlink" href="#introduction" title="Permalink to this heading">¶</a></h1>
 <p><a class="reference external" href="https://github.com/jmcgeheeiv/pyfakefs">pyfakefs</a> implements a fake file
 system that mocks the Python file system modules.
 Using pyfakefs, your tests operate on a fake file system in memory without touching the real disk.
 The software under test requires no modification to work with pyfakefs.</p>
-<p>pyfakefs works with CPython 3.6 and above, on Linux, Windows and OSX
+<p>pyfakefs works with CPython 3.7 and above, on Linux, Windows and OSX
 (MacOS), and with PyPy3.</p>
-<p>pyfakefs works with <a class="reference external" href="doc.pytest.org">PyTest</a> version 3.0.0 or above.</p>
+<p>pyfakefs works with <a class="reference external" href="doc.pytest.org">pytest</a> version 3.0.0 or above.</p>
 <section id="installation">
-<h2>Installation<a class="headerlink" href="#installation" title="Permalink to this headline">¶</a></h2>
+<h2>Installation<a class="headerlink" href="#installation" title="Permalink to this heading">¶</a></h2>
 <p>pyfakefs is available on <a class="reference external" href="https://pypi.python.org/pypi/pyfakefs/">PyPi</a>.
 The latest released version can be installed from pypi:</p>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>pip install pyfakefs
@@ -65,7 +66,7 @@ The latest released version can be installed from pypi:</p>
 </div>
 </section>
 <section id="features">
-<h2>Features<a class="headerlink" href="#features" title="Permalink to this headline">¶</a></h2>
+<h2>Features<a class="headerlink" href="#features" title="Permalink to this heading">¶</a></h2>
 <ul class="simple">
 <li><p>Code executed under pyfakefs works transparently on a memory-based file
 system without the need of special commands. The same code that works on
@@ -90,7 +91,7 @@ non-root user, independently from the actual user.</p></li>
 </ul>
 </section>
 <section id="limitations">
-<span id="id1"></span><h2>Limitations<a class="headerlink" href="#limitations" title="Permalink to this headline">¶</a></h2>
+<span id="id1"></span><h2>Limitations<a class="headerlink" href="#limitations" title="Permalink to this heading">¶</a></h2>
 <ul class="simple">
 <li><p>pyfakefs will not work with Python libraries (other than <cite>os</cite> and <cite>io</cite>) that
 use C libraries to access the file system, because it cannot patch the
@@ -118,7 +119,7 @@ other means (e.g. using <cite>unittest.mock.patch</cite>) - see
 </ul>
 </section>
 <section id="history">
-<h2>History<a class="headerlink" href="#history" title="Permalink to this headline">¶</a></h2>
+<h2>History<a class="headerlink" href="#history" title="Permalink to this heading">¶</a></h2>
 <p>pyfakefs was initially developed at Google by
 <a class="reference external" href="https://mike-bland.com/about.html">Mike Bland</a> as a modest
 fake implementation of core Python modules. It was introduced to all of
@@ -150,8 +151,9 @@ community actively maintains and extends pyfakefs.</p>
       </div>
       <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
         <div class="sphinxsidebarwrapper">
-  <h3><a href="index.html">Table of Contents</a></h3>
-  <ul>
+  <div>
+    <h3><a href="index.html">Table of Contents</a></h3>
+    <ul>
 <li><a class="reference internal" href="#">Introduction</a><ul>
 <li><a class="reference internal" href="#installation">Installation</a></li>
 <li><a class="reference internal" href="#features">Features</a></li>
@@ -161,12 +163,17 @@ community actively maintains and extends pyfakefs.</p>
 </li>
 </ul>
 
-  <h4>Previous topic</h4>
-  <p class="topless"><a href="index.html"
-                        title="previous chapter">Welcome to the pyfakefs documentation!</a></p>
-  <h4>Next topic</h4>
-  <p class="topless"><a href="usage.html"
-                        title="next chapter">Usage</a></p>
+  </div>
+  <div>
+    <h4>Previous topic</h4>
+    <p class="topless"><a href="index.html"
+                          title="previous chapter">Welcome to the pyfakefs documentation!</a></p>
+  </div>
+  <div>
+    <h4>Next topic</h4>
+    <p class="topless"><a href="usage.html"
+                          title="next chapter">Usage</a></p>
+  </div>
   <div role="note" aria-label="source link">
     <h3>This Page</h3>
     <ul class="this-page-menu">
@@ -183,7 +190,7 @@ community actively maintains and extends pyfakefs.</p>
     </form>
     </div>
 </div>
-<script>$('#searchbox').show(0);</script>
+<script>document.getElementById('searchbox').style.display = "block"</script>
         </div>
       </div>
       <div class="clearer"></div>
@@ -203,15 +210,15 @@ community actively maintains and extends pyfakefs.</p>
         <li class="right" >
           <a href="index.html" title="Welcome to the pyfakefs documentation!"
              >previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="index.html">pyfakefs 4.5.6 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="index.html">pyfakefs 4.6.0 documentation</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">Introduction</a></li> 
       </ul>
     </div>
     <div class="footer" role="contentinfo">
         &#169; Copyright 2009 Google Inc. All Rights Reserved.
 © Copyright 2014 Altera Corporation. All Rights Reserved.
-© Copyright 2014-2021 John McGehee.
-      Last updated on Mar 17, 2022.
+© Copyright 2014-2022 John McGehee.
+      Last updated on Jul 12, 2022.
     </div>
   </body>
 </html>
