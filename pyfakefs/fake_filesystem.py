@@ -5719,7 +5719,9 @@ class FakeFileOpen:
             closefd: If a file descriptor rather than file name is passed,
                 and this is set to `False`, then the file descriptor is kept
                 open when file is closed.
-            opener: not supported.
+            opener: an optional function object that will be called with
+                `file_` and the open flags (derived from `mode`) and returns
+                a file descriptor.
             open_modes: Modes for opening files if called from low-level API.
 
         Returns:
@@ -5740,6 +5742,11 @@ class FakeFileOpen:
             raise ValueError("binary mode doesn't take an encoding argument")
 
         newline, open_modes = self._handle_file_mode(mode, newline, open_modes)
+
+        if opener is not None:
+            # opener shall return a file descriptor, which will be handled
+            # here as if directly passed
+            file_ = opener(file_, open_modes)
 
         file_object, file_path, filedes, real_path = self._handle_file_arg(
             file_)
