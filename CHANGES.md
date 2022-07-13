@@ -1,7 +1,12 @@
 # pyfakefs Release Notes
 The released versions correspond to PyPi releases.
 
-## Unreleased
+## [Version 4.6.1](https://pypi.python.org/pypi/pyfakefs/4.6.1) (2022-07-13)
+Fixes incompatibility with Python 3.11 beta 4.
+
+_Note_: Python 3.11 is only supported in the current beta 4 version, problems
+with later beta or rc versions are still possible. We will try to fix such 
+problems in short order should they appear.
 
 ### Fixes
 * added support for `opener` argument in `open`, which is used in `tempfile`
