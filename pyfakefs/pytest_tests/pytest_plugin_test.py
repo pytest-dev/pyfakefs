@@ -2,6 +2,8 @@
 import os
 import tempfile
 
+import pytest
+
 from pyfakefs.fake_filesystem_unittest import Pause
 
 
@@ -50,3 +52,13 @@ def test_pause_resume_contextmanager(fs):
         assert os.path.exists(real_temp_file.name)
     assert not os.path.exists(real_temp_file.name)
     assert os.path.exists(fake_temp_file.name)
+
+
+class TestModuleScopedFsWithTmpdir:
+    @pytest.fixture(autouse=True)
+    def test_internal(self, tmpdir):
+        yield
+
+    def test_fail(self, fs_module):
+        # Regression test for #684
+        assert True

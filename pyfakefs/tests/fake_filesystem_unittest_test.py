@@ -32,8 +32,6 @@ from distutils.dir_util import copy_tree, remove_tree
 from pathlib import Path
 from unittest import TestCase, mock
 
-import pytest
-
 import pyfakefs.tests.import_as_example
 import pyfakefs.tests.logsio
 from pyfakefs import fake_filesystem_unittest, fake_filesystem
@@ -879,16 +877,6 @@ class TestAbsolutePathOnWindows(fake_filesystem_unittest.TestCase):
     def test_is_absolute(self, fs):
         # regression test for #673
         self.assertTrue(pathlib.Path(".").absolute().is_absolute())
-
-
-class TestModuleScopedFsWithTmpdir:
-    @pytest.fixture(autouse=True)
-    def test_internal(self, tmpdir):
-        yield
-
-    def test_fail(self, fs_module):
-        # Regression test for #684
-        assert True
 
 
 if __name__ == "__main__":
