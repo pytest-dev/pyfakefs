@@ -20,7 +20,7 @@ import pytest
 from pyfakefs.fake_filesystem_unittest import Patcher
 
 # import the fs fixture to be visible if pyfakefs is not installed
-from pyfakefs.pytest_plugin import fs  # noqa: F401
+from pyfakefs.pytest_plugin import fs, fs_module  # noqa: F401
 
 from pyfakefs.pytest_tests import example  # noqa: E402
 

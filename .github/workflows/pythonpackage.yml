@@ -79,7 +79,6 @@ jobs:
       run: |
         pip install wheel
         pip install -r requirements.txt
-        pip install .
     - name: Run unit tests without extra packages as non-root user
       run: |
         export TEST_REAL_FS=1

@@ -7,6 +7,10 @@ The released versions correspond to PyPi releases.
 * added support for `opener` argument in `open`, which is used in `tempfile`
   in Python 3.11 since beta 4 (see [#686](../../issues/686))
 
+### Infrastructure
+* make sure tests run without `pyfakefs` installed as a package
+  (see [#687](../../issues/687))
+
 ## [Version 4.6.0](https://pypi.python.org/pypi/pyfakefs/4.6.0) (2022-07-12)
 Adds support for Python 3.11, removes support for Python 3.6, changes root 
 path behavior under Windows. 
