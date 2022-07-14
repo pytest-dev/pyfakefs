@@ -5746,7 +5746,7 @@ class FakeFileOpen:
         if opener is not None:
             # opener shall return a file descriptor, which will be handled
             # here as if directly passed
-            file_ = opener(file_, open_modes)
+            file_ = opener(file_, self._open_flags_from_open_modes(open_modes))
 
         file_object, file_path, filedes, real_path = self._handle_file_arg(
             file_)
@@ -5770,7 +5770,7 @@ class FakeFileOpen:
         if not filedes:
             closefd = True
 
-        if (open_modes.must_not_exist and
+        if (not opener and open_modes.must_not_exist and
                 (file_object or self.filesystem.islink(file_path) and
                  not self.filesystem.is_windows_fs)):
             self.filesystem.raise_os_error(errno.EEXIST, file_path)
@@ -5818,6 +5818,26 @@ class FakeFileOpen:
         else:
             fakefile.filedes = self.filesystem._add_open_file(fakefile)
         return fakefile
+
+    @staticmethod
+    def _open_flags_from_open_modes(open_modes: _OpenModes) -> int:
+        flags = 0
+        if open_modes.can_read and open_modes.can_write:
+            flags |= os.O_RDWR
+        elif open_modes.can_read:
+            flags |= os.O_RDONLY
+        elif open_modes.can_write:
+            flags |= os.O_WRONLY
+
+        if open_modes.append:
+            flags |= os.O_APPEND
+        if open_modes.truncate:
+            flags |= os.O_TRUNC
+        if not open_modes.must_exist and open_modes.can_write:
+            flags |= os.O_CREAT
+        if open_modes.must_not_exist and open_modes.can_write:
+            flags |= os.O_EXCL
+        return flags
 
     def _init_file_object(self, file_object: Optional[FakeFile],
                           file_path: AnyStr,
