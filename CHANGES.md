@@ -3,6 +3,10 @@ The released versions correspond to PyPi releases.
 
 ## Unreleased
 
+### Fixes
+* fixed support for `opener` introduced in previous patch release 
+  (see [#689](../../issues/689))
+
 ## [Version 4.6.1](https://pypi.python.org/pypi/pyfakefs/4.6.1) (2022-07-13)
 Fixes incompatibility with Python 3.11 beta 4.
 

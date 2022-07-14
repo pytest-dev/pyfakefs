@@ -949,6 +949,98 @@ class RealFileOpenTest(FakeFileOpenTest):
         return True
 
 
+class FakeFileOpenWithOpenerTest(FakeFileOpenTestBase):
+    def opener(self, path, flags):
+        return self.os.open(path, flags)
+
+    def test_use_opener_with_read(self):
+        file_path = self.make_path('foo')
+        self.create_file(file_path, contents='test')
+        with self.open(file_path, opener=self.opener) as f:
+            assert f.read() == 'test'
+            with self.assertRaises(OSError):
+                f.write('foo')
+
+    def test_use_opener_with_read_plus(self):
+        file_path = self.make_path('foo')
+        self.create_file(file_path, contents='test')
+        with self.open(file_path, 'r+', opener=self.opener) as f:
+            assert f.read() == 'test'
+            assert f.write('bar') == 3
+        with self.open(file_path) as f:
+            assert f.read() == 'testbar'
+
+    def test_use_opener_with_write(self):
+        file_path = self.make_path('foo')
+        self.create_file(file_path, contents='foo')
+        with self.open(file_path, 'w', opener=self.opener) as f:
+            with self.assertRaises(OSError):
+                f.read()
+            assert f.write('bar') == 3
+        with self.open(file_path) as f:
+            assert f.read() == 'bar'
+
+    def test_use_opener_with_write_plus(self):
+        file_path = self.make_path('foo')
+        self.create_file(file_path, contents='test')
+        with self.open(file_path, 'w+', opener=self.opener) as f:
+            assert f.read() == ''
+            assert f.write('bar') == 3
+        with self.open(file_path) as f:
+            assert f.read() == 'bar'
+
+    def test_use_opener_with_append(self):
+        file_path = self.make_path('foo')
+        self.create_file(file_path, contents='foo')
+        with self.open(file_path, 'a', opener=self.opener) as f:
+            assert f.write('bar') == 3
+            with self.assertRaises(OSError):
+                f.read()
+        with self.open(file_path) as f:
+            assert f.read() == 'foobar'
+
+    def test_use_opener_with_append_plus(self):
+        file_path = self.make_path('foo')
+        self.create_file(file_path, contents='foo')
+        with self.open(file_path, 'a+', opener=self.opener) as f:
+            assert f.read() == ''
+            assert f.write('bar') == 3
+        with self.open(file_path) as f:
+            assert f.read() == 'foobar'
+
+    def test_use_opener_with_exclusive_write(self):
+        file_path = self.make_path('foo')
+        self.create_file(file_path, contents='test')
+        with self.assertRaises(OSError):
+            self.open(file_path, 'x', opener=self.opener)
+
+        file_path = self.make_path('bar')
+        with self.open(file_path, 'x', opener=self.opener) as f:
+            assert f.write('bar') == 3
+            with self.assertRaises(OSError):
+                f.read()
+        with self.open(file_path) as f:
+            assert f.read() == 'bar'
+
+    def test_use_opener_with_exclusive_plus(self):
+        file_path = self.make_path('foo')
+        self.create_file(file_path, contents='test')
+        with self.assertRaises(OSError):
+            self.open(file_path, 'x+', opener=self.opener)
+
+        file_path = self.make_path('bar')
+        with self.open(file_path, 'x+', opener=self.opener) as f:
+            assert f.write('bar') == 3
+            assert f.read() == ''
+        with self.open(file_path) as f:
+            assert f.read() == 'bar'
+
+
+class RealFileOpenWithOpenerTest(FakeFileOpenWithOpenerTest):
+    def use_real_fs(self):
+        return True
+
+
 @unittest.skipIf(sys.version_info < (3, 8),
                  'open_code only present since Python 3.8')
 class FakeFilePatchedOpenCodeTest(FakeFileOpenTestBase):
