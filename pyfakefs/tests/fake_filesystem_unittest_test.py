@@ -800,7 +800,6 @@ class TestOtherFS(fake_filesystem_unittest.TestCase):
         self.fs.is_windows_fs = os.name != 'nt'
         if self.fs.is_windows_fs:
             self.fs.is_macos = False
-        self.fs.reset()
         self.fs.add_real_file(__file__)
         with open(__file__) as f:
             self.assertTrue(f.read())

@@ -3,8 +3,17 @@ The released versions correspond to PyPi releases.
 
 ## Unreleased
 
+### Changes
+* automatically reset filesystem on changing `is_windows_fs` or `is_macos`
+  (see [#692](../../issues/692)) - ensures better upwards compatibility in
+  most cases
+
+  :warning: Make sure you write to the filesystem _after_ you change  
+  `is_windows_fs` or `is_macos`, otherwise the changes will be lost.
+  
+
 ### Fixes
-* fixed regression: `os.exists` returned `True` for any root drive path under Windows
+* fixed regression: `os.path.exists` returned `True` for any root drive path under Windows
 
 ## [Version 4.6.2](https://pypi.python.org/pypi/pyfakefs/4.6.2) (2022-07-14)
 Patch release that fixes an error in the previous patch.

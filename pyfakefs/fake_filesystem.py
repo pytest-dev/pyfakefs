@@ -933,14 +933,16 @@ class FakeFilesystem:
         # Windows fs on non-Windows systems and vice verse;
         # is it used to support drive letters, UNC paths and some other
         # Windows-specific features
-        self.is_windows_fs = sys.platform == 'win32'
+        self._is_windows_fs = sys.platform == 'win32'
 
         # can be used to test some MacOS-specific behavior under other systems
-        self.is_macos = sys.platform == 'darwin'
+        self._is_macos = sys.platform == 'darwin'
 
         # is_case_sensitive can be used to test pyfakefs for case-sensitive
         # file systems on non-case-sensitive systems and vice verse
-        self.is_case_sensitive = not (self.is_windows_fs or self.is_macos)
+        self.is_case_sensitive: bool = (
+            not (self.is_windows_fs or self._is_macos)
+        )
 
         self.root = FakeDirectory(self.path_separator, filesystem=self)
         self._cwd = ''
@@ -955,8 +957,8 @@ class FakeFilesystem:
         # A heap containing all free positions in self.open_files list
         self._free_fd_heap: List[int] = []
         # last used numbers for inodes (st_ino) and devices (st_dev)
-        self.last_ino = 0
-        self.last_dev = 0
+        self.last_ino: int = 0
+        self.last_dev: int = 0
         self.mount_points: Dict[AnyString, Dict] = OrderedDict()
         self._add_root_mount_point(total_size)
         self._add_standard_streams()
@@ -968,6 +970,28 @@ class FakeFilesystem:
     @property
     def is_linux(self) -> bool:
         return not self.is_windows_fs and not self.is_macos
+
+    @property
+    def is_windows_fs(self) -> bool:
+        return self._is_windows_fs
+
+    @is_windows_fs.setter
+    def is_windows_fs(self, value: bool) -> None:
+        if self._is_windows_fs != value:
+            self._is_windows_fs = value
+            self.reset()
+            FakePathModule.reset(self)
+
+    @property
+    def is_macos(self) -> bool:
+        return self._is_macos
+
+    @is_macos.setter
+    def is_macos(self, value: bool) -> None:
+        if self._is_macos != value:
+            self._is_macos = value
+            self.reset()
+            FakePathModule.reset(self)
 
     @property
     def cwd(self) -> str:
@@ -1009,8 +1033,8 @@ class FakeFilesystem:
     def os(self, value: OSType) -> None:
         """Set the simulated type of operating system underlying the fake
         file system."""
-        self.is_windows_fs = value == OSType.WINDOWS
-        self.is_macos = value == OSType.MACOS
+        self._is_windows_fs = value == OSType.WINDOWS
+        self._is_macos = value == OSType.MACOS
         self.is_case_sensitive = value == OSType.LINUX
         self.path_separator = '\\' if value == OSType.WINDOWS else '/'
         self.alternative_path_separator = ('/' if value == OSType.WINDOWS
@@ -2311,7 +2335,8 @@ class FakeFilesystem:
             return (parent_obj.get_entry(to_string(child_name)) if child_name
                     else parent_obj)
         except KeyError:
-            self.raise_os_error(errno.ENOENT, path_str)
+            pass
+        raise OSError(errno.ENOENT, path_str)
 
     def add_object(self, file_path: AnyStr, file_object: AnyFile) -> None:
         """Add a fake file or directory into the filesystem at file_path.
