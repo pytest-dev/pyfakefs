@@ -67,7 +67,6 @@ class FakeDirectoryUnitTest(TestCase):
 
     def test_path_with_drive(self):
         self.filesystem.is_windows_fs = True
-        self.filesystem.reset()
         dir_path = 'C:/foo/bar/baz'
         self.filesystem.create_dir(dir_path)
         dir_object = self.filesystem.get_object(dir_path)
@@ -83,7 +82,6 @@ class FakeDirectoryUnitTest(TestCase):
 
     def test_path_after_chdir_with_drive(self):
         self.filesystem.is_windows_fs = True
-        self.filesystem.reset()
         dir_path = 'C:/foo/bar/baz'
         self.filesystem.create_dir(dir_path)
         self.os.chdir(dir_path)
@@ -124,11 +122,9 @@ class FakeDirectoryUnitTest(TestCase):
     def test_set_contents_to_dir_raises(self):
         # Regression test for #276
         self.filesystem.is_windows_fs = True
-        self.filesystem.reset()
         with self.raises_os_error(errno.EISDIR):
             self.fake_dir.set_contents('a')
         self.filesystem.is_windows_fs = False
-        self.filesystem.reset()
         with self.raises_os_error(errno.EISDIR):
             self.fake_dir.set_contents('a')
 
@@ -320,7 +316,6 @@ class FakeFilesystemUnitTest(TestCase):
 
     def test_windows_root_dir_name(self):
         self.filesystem.is_windows_fs = True
-        self.filesystem.reset()
         self.assertEqual('C:/', self.filesystem.root_dir_name)
         self.filesystem.cwd = 'E:/foo'
         self.assertEqual('E:/', self.filesystem.root_dir_name)
@@ -333,7 +328,6 @@ class FakeFilesystemUnitTest(TestCase):
 
     def test_exists_relative_path_posix(self):
         self.filesystem.is_windows_fs = False
-        self.filesystem.reset()
         self.filesystem.create_file('/a/b/file_one')
         self.filesystem.create_file('/a/c/file_two')
         self.assertTrue(self.filesystem.exists('a/b/../c/file_two'))
@@ -351,7 +345,6 @@ class FakeFilesystemUnitTest(TestCase):
     def test_exists_relative_path_windows(self):
         self.filesystem.is_windows_fs = True
         self.filesystem.is_macos = False
-        self.filesystem.reset()
         self.filesystem.create_file('/a/b/file_one')
         self.filesystem.create_file('/a/c/file_two')
         self.assertTrue(self.filesystem.exists('a/b/../c/file_two'))
@@ -400,7 +393,6 @@ class FakeFilesystemUnitTest(TestCase):
 
     def test_add_object_to_regular_file_error_posix(self):
         self.filesystem.is_windows_fs = False
-        self.filesystem.reset()
         self.filesystem.add_object(
             self.filesystem.root_dir_name, self.fake_file)
         with self.raises_os_error(errno.ENOTDIR):
@@ -408,7 +400,6 @@ class FakeFilesystemUnitTest(TestCase):
 
     def test_add_object_to_regular_file_error_windows(self):
         self.filesystem.is_windows_fs = True
-        self.filesystem.reset()
         self.filesystem.add_object(self.root_name, self.fake_file)
         with self.raises_os_error(errno.ENOENT):
             self.filesystem.add_object(self.fake_file.name, self.fake_file)
@@ -520,7 +511,6 @@ class FakeFilesystemUnitTest(TestCase):
 
     def test_create_file_in_read_only_directory_raises_in_posix(self):
         self.filesystem.is_windows_fs = False
-        self.filesystem.reset()
         dir_path = '/foo/bar'
         self.filesystem.create_dir(dir_path, perm_bits=0o555)
         file_path = dir_path + '/baz'
@@ -534,7 +524,6 @@ class FakeFilesystemUnitTest(TestCase):
 
     def test_create_file_in_read_only_directory_possible_in_windows(self):
         self.filesystem.is_windows_fs = True
-        self.filesystem.reset()
         dir_path = 'C:/foo/bar'
         self.filesystem.create_dir(dir_path, perm_bits=0o555)
         file_path = dir_path + '/baz'
@@ -657,12 +646,10 @@ class FakeFilesystemUnitTest(TestCase):
 
     def test_lresolve_object_windows(self):
         self.filesystem.is_windows_fs = True
-        self.filesystem.reset()
         self.check_lresolve_object()
 
     def test_lresolve_object_posix(self):
         self.filesystem.is_windows_fs = False
-        self.filesystem.reset()
         self.check_lresolve_object()
 
     def check_directory_access_on_file(self, error_subtype):
@@ -674,12 +661,10 @@ class FakeFilesystemUnitTest(TestCase):
 
     def test_directory_access_on_file_windows(self):
         self.filesystem.is_windows_fs = True
-        self.filesystem.reset()
         self.check_directory_access_on_file(errno.ENOENT)
 
     def test_directory_access_on_file_posix(self):
         self.filesystem.is_windows_fs = False
-        self.filesystem.reset()
         self.check_directory_access_on_file(errno.ENOTDIR)
 
     def test_pickle_fs(self):
@@ -753,7 +738,6 @@ class CaseInsensitiveFakeFilesystemTest(TestCase):
 
     def test_getsize_with_looping_symlink(self):
         self.filesystem.is_windows_fs = False
-        self.filesystem.reset()
         dir_path = '/foo/bar'
         self.filesystem.create_dir(dir_path)
         link_path = dir_path + "/link"
@@ -891,7 +875,6 @@ class FakePathModuleTest(TestCase):
     def check_abspath(self, is_windows):
         # the implementation differs in Windows and Posix, so test both
         self.filesystem.is_windows_fs = is_windows
-        self.filesystem.reset()
         filename = 'foo'
         abspath = self.filesystem.root_dir_name + filename
         self.filesystem.create_file(abspath)
@@ -909,7 +892,6 @@ class FakePathModuleTest(TestCase):
     def check_abspath_bytes(self, is_windows):
         """abspath should return a consistent representation of a file."""
         self.filesystem.is_windows_fs = is_windows
-        self.filesystem.reset()
         filename = b'foo'
         abspath = self.filesystem.root_dir_name.encode() + filename
         self.filesystem.create_file(abspath)
@@ -943,7 +925,6 @@ class FakePathModuleTest(TestCase):
 
     def test_abs_path_with_drive_component(self):
         self.filesystem.is_windows_fs = True
-        self.filesystem.reset()
         self.filesystem.cwd = 'C:!foo'
         self.assertEqual('C:!foo!bar', self.path.abspath('bar'))
         self.assertEqual('C:!foo!bar', self.path.abspath('C:bar'))
@@ -951,13 +932,11 @@ class FakePathModuleTest(TestCase):
 
     def test_isabs_with_drive_component(self):
         self.filesystem.is_windows_fs = False
-        self.filesystem.reset()
         self.assertFalse(self.path.isabs('C:!foo'))
         self.assertFalse(self.path.isabs(b'C:!foo'))
         self.assertTrue(self.path.isabs('!'))
         self.assertTrue(self.path.isabs(b'!'))
         self.filesystem.is_windows_fs = True
-        self.filesystem.reset()
         self.assertTrue(self.path.isabs('C:!foo'))
         self.assertTrue(self.path.isabs(b'C:!foo'))
         self.assertTrue(self.path.isabs('!'))
@@ -981,7 +960,6 @@ class FakePathModuleTest(TestCase):
 
     def test_realpath_vs_abspath(self):
         self.filesystem.is_windows_fs = False
-        self.filesystem.reset()
         self.filesystem.create_file('!george!washington!bridge')
         self.filesystem.create_symlink('!first!president',
                                        '!george!washington')
@@ -1049,7 +1027,6 @@ class FakePathModuleTest(TestCase):
 
     def test_dirname_with_drive(self):
         self.filesystem.is_windows_fs = True
-        self.filesystem.reset()
         self.assertEqual('c:!foo',
                          self.path.dirname('c:!foo!bar'))
         self.assertEqual(b'c:!',
@@ -1201,7 +1178,6 @@ class FakePathModuleTest(TestCase):
 
     def test_ismount_with_drive_letters(self):
         self.filesystem.is_windows_fs = True
-        self.filesystem.reset()
         self.assertTrue(self.path.ismount('!'))
         self.assertTrue(self.path.ismount('c:!'))
         self.assertFalse(self.path.ismount('c:'))
@@ -1212,7 +1188,6 @@ class FakePathModuleTest(TestCase):
 
     def test_ismount_with_unc_paths(self):
         self.filesystem.is_windows_fs = True
-        self.filesystem.reset()
         self.assertTrue(self.path.ismount('!!a!'))
         self.assertTrue(self.path.ismount('!!a!b'))
         self.assertTrue(self.path.ismount('!!a!b!'))
@@ -1287,7 +1262,6 @@ class CollapsePathPipeSeparatorTest(PathManipulationTestBase):
         self.assertEqual(
             '|', self.filesystem.normpath('|..|..|foo|bar|..|..|'))
         self.filesystem.is_windows_fs = False  # not an UNC path
-        self.filesystem.reset()
         self.assertEqual('|', self.filesystem.normpath('||..|.|..||'))
 
     def test_conserves_up_level_references_starting_from_current_dir(self):
@@ -1398,7 +1372,6 @@ class NormalizeCaseTest(TestCase):
 
     def test_normalize_case_for_drive(self):
         self.filesystem.is_windows_fs = True
-        self.filesystem.reset()
         self.filesystem.create_file('C:/Foo/Bar')
         self.assertEqual('C:/Foo/Bar',
                          self.filesystem._original_path('c:/foo/bar'))
@@ -1465,7 +1438,6 @@ class DriveLetterSupportTest(TestCase):
         self.filesystem = fake_filesystem.FakeFilesystem(path_separator='!')
         self.filesystem.alternative_path_separator = '^'
         self.filesystem.is_windows_fs = True
-        self.filesystem.reset()
 
     def test_initial_value(self):
         filesystem = fake_filesystem.FakeFilesystem()
@@ -1870,7 +1842,6 @@ class DiskSpaceTest(TestCase):
 
     def test_disk_size_on_auto_mounted_drive_on_file_creation(self):
         self.fs.is_windows_fs = True
-        self.fs.reset()
         # drive d: shall be auto-mounted and the used size adapted
         self.fs.create_file('d:!foo!bar', st_size=100)
         self.fs.set_disk_usage(total_size=1000, path='d:')
@@ -1878,7 +1849,6 @@ class DiskSpaceTest(TestCase):
 
     def test_disk_size_on_auto_mounted_drive_on_directory_creation(self):
         self.fs.is_windows_fs = True
-        self.fs.reset()
         self.fs.create_dir('d:!foo!bar')
         self.fs.create_file('d:!foo!bar!baz', st_size=100)
         self.fs.create_file('d:!foo!baz', st_size=100)
@@ -1943,7 +1913,6 @@ class MountPointTest(TestCase):
     def setUp(self):
         self.filesystem = fake_filesystem.FakeFilesystem(path_separator='!',
                                                          total_size=100)
-        self.add_mount_points()
 
     def add_mount_points(self):
         self.filesystem.add_mount_point('!foo')
@@ -1951,24 +1920,28 @@ class MountPointTest(TestCase):
         self.filesystem.add_mount_point('!foo!baz')
 
     def test_that_new_mount_points_get_new_device_number(self):
+        self.add_mount_points()
         self.assertEqual(1, self.filesystem.get_object('!').st_dev)
         self.assertEqual(2, self.filesystem.get_object('!foo').st_dev)
         self.assertEqual(3, self.filesystem.get_object('!bar').st_dev)
         self.assertEqual(4, self.filesystem.get_object('!foo!baz').st_dev)
 
     def test_that_new_directories_get_correct_device_number(self):
+        self.add_mount_points()
         self.assertEqual(1, self.filesystem.create_dir('!foo1!bar').st_dev)
         self.assertEqual(2, self.filesystem.create_dir('!foo!bar').st_dev)
         self.assertEqual(4,
                          self.filesystem.create_dir('!foo!baz!foo!bar').st_dev)
 
     def test_that_new_files_get_correct_device_number(self):
+        self.add_mount_points()
         self.assertEqual(1, self.filesystem.create_file('!foo1!bar').st_dev)
         self.assertEqual(2, self.filesystem.create_file('!foo!bar').st_dev)
         self.assertEqual(4, self.filesystem.create_file(
             '!foo!baz!foo!bar').st_dev)
 
     def test_that_mount_point_cannot_be_added_twice(self):
+        self.add_mount_points()
         with self.raises_os_error(errno.EEXIST):
             self.filesystem.add_mount_point('!foo')
         with self.raises_os_error(errno.EEXIST):
@@ -1976,7 +1949,6 @@ class MountPointTest(TestCase):
 
     def test_that_drives_are_auto_mounted(self):
         self.filesystem.is_windows_fs = True
-        self.filesystem.reset()
         self.add_mount_points()
         self.filesystem.create_dir('d:!foo!bar')
         self.filesystem.create_file('d:!foo!baz')
@@ -1988,7 +1960,6 @@ class MountPointTest(TestCase):
 
     def test_that_drives_are_auto_mounted_case_insensitive(self):
         self.filesystem.is_windows_fs = True
-        self.filesystem.reset()
         self.add_mount_points()
         self.filesystem.is_case_sensitive = False
         self.filesystem.create_dir('D:!foo!bar')
@@ -2000,7 +1971,6 @@ class MountPointTest(TestCase):
 
     def test_that_unc_paths_are_auto_mounted(self):
         self.filesystem.is_windows_fs = True
-        self.filesystem.reset()
         self.add_mount_points()
         self.filesystem.create_dir('!!foo!bar!baz')
         self.filesystem.create_file('!!foo!bar!bip!bop')

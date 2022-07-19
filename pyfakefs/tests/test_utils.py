@@ -121,9 +121,9 @@ class RealFsTestMixin:
 
     def set_windows_fs(self, value):
         if self.filesystem is not None:
-            self.filesystem.is_windows_fs = value
+            self.filesystem._is_windows_fs = value
             if value:
-                self.filesystem.is_macos = False
+                self.filesystem._is_macos = False
             self.create_basepath()
 
     @property
@@ -169,7 +169,7 @@ class RealFsTestMixin:
                     'Testing Linux specific functionality')
         else:
             self.set_windows_fs(False)
-            self.filesystem.is_macos = False
+            self.filesystem._is_macos = False
 
     def check_macos_only(self):
         """If called at test start, the real FS test is executed only under
@@ -181,7 +181,7 @@ class RealFsTestMixin:
                     'Testing MacOS specific functionality')
         else:
             self.set_windows_fs(False)
-            self.filesystem.is_macos = True
+            self.filesystem._is_macos = True
 
     def check_linux_and_windows(self):
         """If called at test start, the real FS test is executed only under
@@ -193,7 +193,7 @@ class RealFsTestMixin:
                 raise unittest.SkipTest(
                     'Testing non-MacOs functionality')
         else:
-            self.filesystem.is_macos = False
+            self.filesystem._is_macos = False
 
     def check_case_insensitive_fs(self):
         """If called at test start, the real FS test is executed only in a
