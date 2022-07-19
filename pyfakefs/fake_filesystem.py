@@ -1923,9 +1923,11 @@ class FakeFilesystem:
             if (file_path == mount_point or not self.is_case_sensitive and
                     file_path.lower() == mount_point.lower()):
                 return True
-        if self.is_windows_fs:
-            return (2 <= len(file_path) <= 3 and
-                    self.starts_with_drive_letter(file_path))
+            if (self.is_windows_fs and len(file_path) == 3 and
+                    len(mount_point) == 2 and
+                    self.starts_with_drive_letter(file_path) and
+                    file_path[:2].lower() == mount_point.lower()):
+                return True
         return False
 
     def ends_with_path_separator(self, path: Union[int, AnyPath]) -> bool:

@@ -3,6 +3,9 @@ The released versions correspond to PyPi releases.
 
 ## Unreleased
 
+### Fixes
+* fixed regression: `os.exists` returned `True` for any root drive path under Windows
+
 ## [Version 4.6.2](https://pypi.python.org/pypi/pyfakefs/4.6.2) (2022-07-14)
 Patch release that fixes an error in the previous patch.
 
