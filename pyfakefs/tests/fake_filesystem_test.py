@@ -23,7 +23,9 @@ import sys
 import unittest
 
 from pyfakefs import fake_filesystem
-from pyfakefs.fake_filesystem import set_uid, set_gid, is_root, reset_ids
+from pyfakefs.fake_filesystem import (
+    set_uid, set_gid, is_root, reset_ids, OSType
+)
 from pyfakefs.helpers import IS_WIN
 from pyfakefs.tests.test_utils import TestCase, RealFsTestCase, time_mock
 
@@ -1022,6 +1024,16 @@ class FakePathModuleTest(TestCase):
         self.assertTrue(self.path.exists(file_path))
         self.assertTrue(self.path.exists(file_path_bytes))
         self.assertFalse(self.path.exists('!some!other!bogus!path'))
+
+    def test_exists_with_drive(self):
+        self.filesystem.os = OSType.WINDOWS
+        self.filesystem.add_mount_point('F:')
+        self.assertTrue(self.path.exists('C:'))
+        self.assertTrue(self.path.exists('c:\\'))
+        self.assertTrue(self.path.exists('f:'))
+        self.assertTrue(self.path.exists('F:\\'))
+        self.assertFalse(self.path.exists('Z:'))
+        self.assertFalse(self.path.exists('z:\\'))
 
     def test_lexists(self):
         file_path = 'foo!bar!baz'

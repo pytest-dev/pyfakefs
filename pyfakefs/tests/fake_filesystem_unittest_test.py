@@ -866,8 +866,7 @@ class TestOtherFS(fake_filesystem_unittest.TestCase):
         file_path = folder / 'C:/testfile'
         file_path.parent.mkdir(parents=True)
         file_path.touch()
-        # use str() to be Python 3.5 compatible
-        os.chdir(str(folder))
+        os.chdir(folder)
         self.assertTrue(os.path.exists(str(file_path.relative_to(folder))))
 
 
