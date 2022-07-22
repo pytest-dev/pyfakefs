@@ -605,34 +605,26 @@ class Patcher:
                       name: str,
                       module_names: List[str]) -> bool:
         try:
-            # check for __name__ first and ignore the AttributeException
-            # if it does not exist - avoids calling expansive ismodule
-            if mod.__name__ in module_names and inspect.ismodule(mod):
-                return True
+            return (inspect.ismodule(mod) and
+                    mod.__name__ in module_names
+                    or inspect.isclass(mod) and
+                    mod.__module__ in self._class_modules.get(name, []))
         except Exception:
-            pass
-        try:
-            if (name in self._class_modules and
-                    mod.__module__ in self._class_modules[name]):
-                return inspect.isclass(mod)
-        except Exception:
-            # handle AttributeError and any other exception possibly triggered
-            # by side effects of inspect methods
-            pass
-        return False
+            # handle cases where the module has no __name__ or __module__
+            # attribute - see #460, and any other exception triggered
+            # by inspect functions
+            return False
 
     def _is_fs_function(self, fct: FunctionType) -> bool:
         try:
-            # check for __name__ first and ignore the AttributeException
-            # if it does not exist - avoids calling expansive inspect
-            # methods in most cases
-            return (fct.__name__ in self._fake_module_functions and
+            return ((inspect.isfunction(fct) or
+                     inspect.isbuiltin(fct)) and
+                    fct.__name__ in self._fake_module_functions and
                     fct.__module__ in self._fake_module_functions[
-                        fct.__name__] and
-                    (inspect.isfunction(fct) or inspect.isbuiltin(fct)))
+                        fct.__name__])
         except Exception:
-            # handle AttributeError and any other exception possibly triggered
-            # by side effects of inspect methods
+            # handle cases where the function has no __name__ or __module__
+            # attribute, or any other exception in inspect functions
             return False
 
     def _def_values(
