@@ -1,6 +1,12 @@
 # pyfakefs Release Notes
 The released versions correspond to PyPi releases.
 
+## Unreleased
+
+### Fixes
+* reverted a performance optimization introduced in version 3.3.0 that
+  caused hanging tests with installed torch (see [#693](../../issues/693))
+
 ## [Version 4.6.3](https://pypi.python.org/pypi/pyfakefs/4.6.3) (2022-07-20)
 Another patch release that fixes a regression in version 4.6.
 
