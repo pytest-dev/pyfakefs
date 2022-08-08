@@ -8,6 +8,8 @@ The released versions correspond to PyPi releases.
   caused hanging tests with installed torch (see [#693](../../issues/693))
 * do not use the build-in opener in `pathlib` as it may cause problems
   (see [#697](../../issues/697))
+* add support for path-like objects in `shutil.disk_usage`
+  (see [#699](../../issues/699))
 
 ## [Version 4.6.3](https://pypi.python.org/pypi/pyfakefs/4.6.3) (2022-07-20)
 Another patch release that fixes a regression in version 4.6.
