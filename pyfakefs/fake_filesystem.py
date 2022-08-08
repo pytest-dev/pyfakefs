@@ -1285,7 +1285,8 @@ class FakeFilesystem:
         if path is None:
             mount_point = next(iter(self.mount_points.values()))
         else:
-            mount_point = self._mount_point_for_path(path)
+            file_path = make_string_path(path)
+            mount_point = self._mount_point_for_path(file_path)
         if mount_point and mount_point['total_size'] is not None:
             return DiskUsage(mount_point['total_size'],
                              mount_point['used_size'],
@@ -4395,7 +4396,8 @@ class FakeOsModule:
 
     def lstat(self, path: AnyStr, *,
               dir_fd: Optional[int] = None) -> FakeStatResult:
-        """Return the os.stat-like tuple for entry_path, not following symlinks.
+        """Return the os.stat-like tuple for entry_path,
+        not following symlinks.
 
         Args:
             path:  path to filesystem object to retrieve.

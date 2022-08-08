@@ -22,6 +22,7 @@ import shutil
 import sys
 import tempfile
 import unittest
+from pathlib import Path
 
 from pyfakefs import fake_filesystem_unittest
 from pyfakefs.fake_filesystem import is_root, set_uid, USER_ID
@@ -351,7 +352,6 @@ class FakeShutilModuleTest(RealFsTestCase):
         self.skip_real_fs()
         file_path = self.make_path('foo', 'bar')
         self.fs.create_file(file_path, st_size=400)
-        # root = self.os.path.splitdrive(file_path)[0] + self.fs.path_separator
         disk_usage = shutil.disk_usage(file_path)
         self.assertEqual(1000, disk_usage.total)
         self.assertEqual(400, disk_usage.used)
@@ -364,6 +364,17 @@ class FakeShutilModuleTest(RealFsTestCase):
         self.fs.create_file(file_path, st_size=400)
         disk_usage = shutil.disk_usage(dir_path)
         self.assertEqual((500, 400, 100), disk_usage)
+
+    def test_disk_usage_with_path(self):
+        self.skip_real_fs()
+        file_path = self.make_path('foo', 'bar')
+        self.fs.create_file(file_path, st_size=400)
+        path = Path(file_path)
+        disk_usage = shutil.disk_usage(path)
+        self.assertEqual(1000, disk_usage.total)
+        self.assertEqual(400, disk_usage.used)
+        self.assertEqual(600, disk_usage.free)
+        self.assertEqual((1000, 400, 600), disk_usage)
 
     def create_mount_point(self):
         mount_point = 'M:' if self.is_windows_fs else '/mount'
