@@ -379,6 +379,12 @@ the file <code class="docutils literal notranslate"><span class="pre">example/su
     <span class="k">assert</span> <span class="n">example</span><span class="o">.</span><span class="n">sut</span><span class="o">.</span><span class="n">check_if_exists</span><span class="p">(</span><span class="n">file_path</span><span class="p">)</span>
 </pre></div>
 </div>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">If the reloaded modules depend on each other (e.g. one imports the other),
+the order in which they are reloaded matters. The dependent module should be reloaded
+first, so that on reloading the depending module it is already correctly patched.</p>
+</div>
 </div>
 <div class="section" id="modules-to-patch">
 <h4>modules_to_patch<a class="headerlink" href="#modules-to-patch" title="Permalink to this headline">¶</a></h4>
@@ -516,6 +522,30 @@ expansive, it is not done by default. Using <code class="docutils literal notran
 search for this kind of default arguments and patch them automatically.
 You could also use the <a class="reference internal" href="#modules-to-reload"><span class="std std-ref">modules_to_reload</span></a> option with the module that
 contains the default argument instead, if you want to avoid the overhead.</p>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p>There are some cases where this option dees not work:</p>
+<ul>
+<li><p class="first">if default arguments are <em>computed</em> using file system functions:</p>
+<div class="code python highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">os</span>
+
+<span class="k">def</span> <span class="nf">some_function</span><span class="p">(</span><span class="n">use_bar</span><span class="o">=</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="s2">&quot;/foo/bar&quot;</span><span class="p">)):</span>
+    <span class="k">return</span> <span class="n">do_something</span><span class="p">()</span> <span class="k">if</span> <span class="n">use_bar</span> <span class="k">else</span> <span class="n">do_something_else</span><span class="p">()</span>
+</pre></div>
+</div>
+</li>
+<li><p class="first">if the default argument is an instance of <code class="docutils literal notranslate"><span class="pre">pathlib.Path</span></code>:</p>
+<div class="code python highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">pathlib</span>
+
+<span class="k">def</span> <span class="nf">foobar</span><span class="p">(</span><span class="n">dir_arg</span> <span class="o">=</span> <span class="n">pathlib</span><span class="o">.</span><span class="n">Path</span><span class="o">.</span><span class="n">cwd</span><span class="p">()</span> <span class="o">/</span> <span class="s1">&#39;logs&#39;</span><span class="p">):</span>
+    <span class="n">do_something</span><span class="p">(</span><span class="n">dir_arg</span><span class="p">)</span>
+</pre></div>
+</div>
+</li>
+</ul>
+<p class="last">In both cases the default arguments behave like global variables that use a file system function
+(which they basically are), and can only be handled using <a class="reference internal" href="#modules-to-reload"><span class="std std-ref">modules_to_reload</span></a>.</p>
+</div>
 </div>
 <div class="section" id="use-cache">
 <h4>use_cache<a class="headerlink" href="#use-cache" title="Permalink to this headline">¶</a></h4>
@@ -1000,7 +1030,7 @@ passed before the <code class="docutils literal notranslate"><span class="pre">m
         &#169; Copyright 2009 Google Inc. All Rights Reserved.
 © Copyright 2014 Altera Corporation. All Rights Reserved.
 © Copyright 2014-2021 John McGehee.
-      Last updated on Aug 08, 2022.
+      Last updated on Aug 14, 2022.
     </div>
   </body>
 </html>
