@@ -382,6 +382,11 @@ the file ``example/sut.py``, the following code will work:
       fs.create_dir(file_path)
       assert example.sut.check_if_exists(file_path)
 
+      
+.. note:: If the reloaded modules depend on each other (e.g. one imports the other), 
+  the order in which they are reloaded matters. The dependent module should be reloaded 
+  first, so that on reloading the depending module it is already correctly patched. 
+
 
 modules_to_patch
 ................
@@ -529,6 +534,30 @@ expansive, it is not done by default. Using ``patch_default_args`` will
 search for this kind of default arguments and patch them automatically.
 You could also use the :ref:`modules_to_reload` option with the module that
 contains the default argument instead, if you want to avoid the overhead.
+
+.. note:: There are some cases where this option dees not work:
+
+  - if default arguments are *computed* using file system functions:
+
+    .. code:: python
+
+      import os
+
+      def some_function(use_bar=os.path.exists("/foo/bar")):
+          return do_something() if use_bar else do_something_else()
+
+  - if the default argument is an instance of ``pathlib.Path``:
+
+    .. code:: python
+
+      import pathlib
+
+      def foobar(dir_arg = pathlib.Path.cwd() / 'logs'):
+          do_something(dir_arg)
+
+  In both cases the default arguments behave like global variables that use a file system function
+  (which they basically are), and can only be handled using :ref:`modules_to_reload`.
+
 
 use_cache
 .........
