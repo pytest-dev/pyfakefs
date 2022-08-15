@@ -89,6 +89,12 @@ Limitations
   other means (e.g. using `unittest.mock.patch`) - see
   :ref:`usage_with_mock_open` for more information
 
+- pyfakefs will not work correctly with
+  `behave <https://github.com/behave/behave>`__ due to the way it loads
+  the steps, if any filesystem modules are imported globally in the steps or
+  environment files; as a workaround, you may load them locally inside the
+  test steps (see `this issue <https://github.com/jmcgeheeiv/pyfakefs/issues/703>`__)
+
 History
 -------
 pyfakefs was initially developed at Google by

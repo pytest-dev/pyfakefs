@@ -115,6 +115,11 @@ containers with the latest CentOS, Debian, Fedora and Ubuntu images.</li>
 <li>pyfakefs may not work correctly if file system functions are patched by
 other means (e.g. using <cite>unittest.mock.patch</cite>) - see
 <a class="reference internal" href="usage.html#usage-with-mock-open"><span class="std std-ref">Pyfakefs and mock_open</span></a> for more information</li>
+<li>pyfakefs will not work correctly with
+<a class="reference external" href="https://github.com/behave/behave">behave</a> due to the way it loads
+the steps, if any filesystem modules are imported globally in the steps or
+environment files; as a workaround, you may load them locally inside the
+test steps (see <a class="reference external" href="https://github.com/jmcgeheeiv/pyfakefs/issues/703">this issue</a>)</li>
 </ul>
 </div>
 <div class="section" id="history">
@@ -211,7 +216,7 @@ community actively maintains and extends pyfakefs.</p>
         &#169; Copyright 2009 Google Inc. All Rights Reserved.
 © Copyright 2014 Altera Corporation. All Rights Reserved.
 © Copyright 2014-2021 John McGehee.
-      Last updated on Aug 14, 2022.
+      Last updated on Aug 15, 2022.
     </div>
   </body>
 </html>
