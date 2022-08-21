@@ -398,6 +398,13 @@ class Patcher:
     PATCHED_MODULE_NAMES: Set[str] = set()
     ADDITIONAL_SKIP_NAMES: Set[str] = set()
     PATCH_DEFAULT_ARGS = False
+    PATCHER = None
+    REF_COUNT = 0
+
+    def __new__(cls, *args, **kwargs):
+        if cls.PATCHER is None:
+            cls.PATCHER = super().__new__(cls)
+        return cls.PATCHER
 
     def __init__(self, additional_skip_names: Optional[
         List[Union[str, ModuleType]]] = None,
@@ -439,7 +446,8 @@ class Patcher:
                 feature, this argument allows to turn it off in case it
                 causes any problems.
         """
-
+        if self.REF_COUNT > 0:
+            return
         if not allow_root_user:
             # set non-root IDs even if the real user is root
             set_uid(1)
@@ -737,6 +745,9 @@ class Patcher:
         """Bind the file-related modules to the :py:mod:`pyfakefs` fake
         modules real ones.  Also bind the fake `file()` and `open()` functions.
         """
+        self.__class__.REF_COUNT += 1
+        if self.__class__.REF_COUNT > 1:
+            return
         self.has_fcopy_file = (sys.platform == 'darwin' and
                                hasattr(shutil, '_HAS_FCOPYFILE') and
                                shutil._HAS_FCOPYFILE)
@@ -826,11 +837,15 @@ class Patcher:
 
     def tearDown(self, doctester: Any = None):
         """Clear the fake filesystem bindings created by `setUp()`."""
+        self.__class__.REF_COUNT -= 1
+        if self.__class__.REF_COUNT > 0:
+            return
         self.stop_patching()
         if self.has_fcopy_file:
             shutil._HAS_FCOPYFILE = True  # type: ignore[attr-defined]
 
         reset_ids()
+        self.__class__.PATCHER = None
 
     def stop_patching(self) -> None:
         if self._patching:

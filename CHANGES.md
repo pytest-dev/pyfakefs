@@ -3,6 +3,11 @@ The released versions correspond to PyPi releases.
 
 ## Unreleased
 
+### Changes
+* `fs` fixtures cannot be nested; any nested `fs` fixture (for example 
+  inside an `fs_session` or `fs_module` fixture) will just reference the outer
+  fixture (the behavior had been unexpected before)
+
 ### Fixes
 * reverted a performance optimization introduced in version 3.3.0 that
   caused hanging tests with installed torch (see [#693](../../issues/693))
