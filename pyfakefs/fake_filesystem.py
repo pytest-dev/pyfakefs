@@ -5772,8 +5772,9 @@ class FakeFileOpen:
 
         newline, open_modes = self._handle_file_mode(mode, newline, open_modes)
 
-        # do not use the opener in pathlib, as it does nothing interesting
-        # but may not be patched under some circumstances (see #697)
+        # the pathlib opener is defined in a Path instance that may not be
+        # patched under some circumstances; as it just calls standard open(),
+        # we may ignore it, as it would not change the behavior
         if opener is not None and opener.__module__ != 'pathlib':
             # opener shall return a file descriptor, which will be handled
             # here as if directly passed
