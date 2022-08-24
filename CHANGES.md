@@ -10,6 +10,9 @@ The released versions correspond to PyPi releases.
   (see [#697](../../issues/697))
 * add support for path-like objects in `shutil.disk_usage`
   (see [#699](../../issues/699))
+* do not advertise support for Python 3.6 in `setup.py`
+  (see [#707](../../issues/707))
+
 
 ## [Version 4.6.3](https://pypi.python.org/pypi/pyfakefs/4.6.3) (2022-07-20)
 Another patch release that fixes a regression in version 4.6.
