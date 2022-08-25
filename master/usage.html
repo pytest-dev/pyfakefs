@@ -99,9 +99,18 @@ tests:</p>
     <span class="k">yield</span> <span class="n">fs</span>
 </pre></div>
 </div>
+<div class="section" id="module-and-session-scoped-fixtures">
+<h4>Module- and session scoped fixtures<a class="headerlink" href="#module-and-session-scoped-fixtures" title="Permalink to this headline">¶</a></h4>
 <p>For convenience, module- and session-scoped fixtures with the same
 functionality are provided, named <code class="docutils literal notranslate"><span class="pre">fs_module</span></code> and <code class="docutils literal notranslate"><span class="pre">fs_session</span></code>,
 respectively.</p>
+<div class="admonition caution">
+<p class="first admonition-title">Caution</p>
+<p class="last">If any of these fixtures is active, any other <code class="docutils literal notranslate"><span class="pre">fs</span></code> fixture will
+not setup / tear down the fake filesystem in the current scope; instead, it
+will just serve as a reference to the active fake filesystem.</p>
+</div>
+</div>
 </div>
 <div class="section" id="patch-using-fake-filesystem-unittest-patcher">
 <h3>Patch using fake_filesystem_unittest.Patcher<a class="headerlink" href="#patch-using-fake-filesystem-unittest-patcher" title="Permalink to this headline">¶</a></h3>
@@ -932,7 +941,10 @@ passed before the <code class="docutils literal notranslate"><span class="pre">m
 <li><a class="reference internal" href="#">Usage</a><ul>
 <li><a class="reference internal" href="#test-scenarios">Test Scenarios</a><ul>
 <li><a class="reference internal" href="#patch-using-fake-filesystem-unittest">Patch using fake_filesystem_unittest</a></li>
-<li><a class="reference internal" href="#patch-using-the-pytest-plugin">Patch using the pytest plugin</a></li>
+<li><a class="reference internal" href="#patch-using-the-pytest-plugin">Patch using the pytest plugin</a><ul>
+<li><a class="reference internal" href="#module-and-session-scoped-fixtures">Module- and session scoped fixtures</a></li>
+</ul>
+</li>
 <li><a class="reference internal" href="#patch-using-fake-filesystem-unittest-patcher">Patch using fake_filesystem_unittest.Patcher</a></li>
 <li><a class="reference internal" href="#patch-using-fake-filesystem-unittest-patchfs-decorator">Patch using fake_filesystem_unittest.patchfs decorator</a></li>
 </ul>
@@ -1030,7 +1042,7 @@ passed before the <code class="docutils literal notranslate"><span class="pre">m
         &#169; Copyright 2009 Google Inc. All Rights Reserved.
 © Copyright 2014 Altera Corporation. All Rights Reserved.
 © Copyright 2014-2021 John McGehee.
-      Last updated on Aug 24, 2022.
+      Last updated on Aug 25, 2022.
     </div>
   </body>
 </html>

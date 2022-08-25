@@ -64,9 +64,15 @@ tests:
         """
         yield fs
 
+Module- and session scoped fixtures
+...................................
 For convenience, module- and session-scoped fixtures with the same
 functionality are provided, named ``fs_module`` and ``fs_session``,
 respectively.
+
+.. caution:: If any of these fixtures is active, any other ``fs`` fixture will
+  not setup / tear down the fake filesystem in the current scope; instead, it
+  will just serve as a reference to the active fake filesystem.
 
 
 Patch using fake_filesystem_unittest.Patcher
