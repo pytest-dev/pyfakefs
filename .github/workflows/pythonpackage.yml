@@ -135,8 +135,8 @@ jobs:
         shell: bash
       - name: Run pytest tests
         run: |
-          export PY_VERSION=${{ matrix.python-version }}
-          $GITHUB_WORKSPACE/.github/workflows/run_pytest.sh
+          echo "$(python -m pytest pyfakefs/pytest_tests/pytest_plugin_failing_helper.py)" > ./testresult.txt
+          python -m pytest pyfakefs/pytest_tests
         shell: bash
 
   dependency-check:
