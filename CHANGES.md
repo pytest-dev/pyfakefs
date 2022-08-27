@@ -17,6 +17,8 @@ The released versions correspond to PyPi releases.
   (see [#699](../../issues/699))
 * do not advertise support for Python 3.6 in `setup.py`
   (see [#707](../../issues/707))
+* return the expected type from `fcntl.ioctl` and `fcntl.fcntl` calls if `arg`
+  is of type `byte`; the call itself does nothing as before 
 
 
 ## [Version 4.6.3](https://pypi.python.org/pypi/pyfakefs/4.6.3) (2022-07-20)

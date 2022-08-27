@@ -637,6 +637,8 @@ automatically.
   The first two arguments in ``create_symlink`` are reverted in relation to
   ``os.symlink`` for historical reasons.
 
+.. _real_fs_access:
+
 Access to files in the real file system
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 If you want to have read access to real files or directories, you can map
@@ -914,17 +916,29 @@ always write a new issue, of course!
 
 Pyfakefs behaves differently than the real filesystem
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-There are basically two kinds of deviations from the actual behavior:
+There are at least the following kinds of deviations from the actual behavior:
 
 - unwanted deviations that we didn't notice--if you find any of these, please
   write an issue and will try to fix it
 - behavior that depends on different OS versions and editions--as mentioned
   in :ref:`limitations`, ``pyfakefs`` uses the TravisCI systems as reference
   system and will not replicate all system-specific behavior
+- behavior that depends on low-level OS functionality that ``pyfakefs`` is not
+  able to emulate; examples are the ``fcntl.ioctl`` and ``fcntl.fcntl``
+  functions that are patched to do nothing
+
+The test code tries to access files in the real filesystem
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+The loading of the actual Python code from the real filesystem does not use
+the filesystem functions that ``pyfakefs`` patches, but in some cases it may
+access other files in the packages. An example is loading timezone information
+from configuration files. In these cases, you have to map the respective files
+or directories from the real into the fake filesystem as described in
+:ref:`real_fs_access`.
+
 
 OS temporary directories
 ~~~~~~~~~~~~~~~~~~~~~~~~
-
 Tests relying on a completely empty file system on test start will fail.
 As ``pyfakefs`` does not fake the ``tempfile`` module (as described above),
 a temporary directory is required to ensure ``tempfile`` works correctly,

@@ -5085,11 +5085,11 @@ if sys.platform != 'win32':
             self._fcntl_module = fcntl
 
         def fcntl(self, fd: int, cmd: int, arg: int = 0) -> Union[int, bytes]:
-            return 0
+            return 0 if isinstance(arg, int) else arg
 
         def ioctl(self, fd: int, request: int, arg: int = 0,
                   mutate_flag: bool = True) -> Union[int, bytes]:
-            return 0
+            return 0 if isinstance(arg, int) else arg
 
         def flock(self, fd: int, operation: int) -> None:
             pass
