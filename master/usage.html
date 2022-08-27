@@ -623,7 +623,7 @@ automatically.</p>
 </div>
 </div>
 <div class="section" id="access-to-files-in-the-real-file-system">
-<h3>Access to files in the real file system<a class="headerlink" href="#access-to-files-in-the-real-file-system" title="Permalink to this headline">¶</a></h3>
+<span id="real-fs-access"></span><h3>Access to files in the real file system<a class="headerlink" href="#access-to-files-in-the-real-file-system" title="Permalink to this headline">¶</a></h3>
 <p>If you want to have read access to real files or directories, you can map
 them into the fake file system using <code class="docutils literal notranslate"><span class="pre">add_real_file()</span></code>,
 <code class="docutils literal notranslate"><span class="pre">add_real_directory()</span></code>, <code class="docutils literal notranslate"><span class="pre">add_real_symlink()</span></code> and <code class="docutils literal notranslate"><span class="pre">add_real_paths()</span></code>.
@@ -879,14 +879,26 @@ always write a new issue, of course!</p>
 </div>
 <div class="section" id="pyfakefs-behaves-differently-than-the-real-filesystem">
 <h3>Pyfakefs behaves differently than the real filesystem<a class="headerlink" href="#pyfakefs-behaves-differently-than-the-real-filesystem" title="Permalink to this headline">¶</a></h3>
-<p>There are basically two kinds of deviations from the actual behavior:</p>
+<p>There are at least the following kinds of deviations from the actual behavior:</p>
 <ul class="simple">
 <li>unwanted deviations that we didn’t notice–if you find any of these, please
 write an issue and will try to fix it</li>
 <li>behavior that depends on different OS versions and editions–as mentioned
 in <a class="reference internal" href="intro.html#limitations"><span class="std std-ref">Limitations</span></a>, <code class="docutils literal notranslate"><span class="pre">pyfakefs</span></code> uses the TravisCI systems as reference
 system and will not replicate all system-specific behavior</li>
+<li>behavior that depends on low-level OS functionality that <code class="docutils literal notranslate"><span class="pre">pyfakefs</span></code> is not
+able to emulate; examples are the <code class="docutils literal notranslate"><span class="pre">fcntl.ioctl</span></code> and <code class="docutils literal notranslate"><span class="pre">fcntl.fcntl</span></code>
+functions that are patched to do nothing</li>
 </ul>
+</div>
+<div class="section" id="the-test-code-tries-to-access-files-in-the-real-filesystem">
+<h3>The test code tries to access files in the real filesystem<a class="headerlink" href="#the-test-code-tries-to-access-files-in-the-real-filesystem" title="Permalink to this headline">¶</a></h3>
+<p>The loading of the actual Python code from the real filesystem does not use
+the filesystem functions that <code class="docutils literal notranslate"><span class="pre">pyfakefs</span></code> patches, but in some cases it may
+access other files in the packages. An example is loading timezone information
+from configuration files. In these cases, you have to map the respective files
+or directories from the real into the fake filesystem as described in
+<a class="reference internal" href="#real-fs-access"><span class="std std-ref">Access to files in the real file system</span></a>.</p>
 </div>
 <div class="section" id="os-temporary-directories">
 <h3>OS temporary directories<a class="headerlink" href="#os-temporary-directories" title="Permalink to this headline">¶</a></h3>
@@ -982,6 +994,7 @@ passed before the <code class="docutils literal notranslate"><span class="pre">m
 <li><a class="reference internal" href="#troubleshooting">Troubleshooting</a><ul>
 <li><a class="reference internal" href="#modules-not-working-with-pyfakefs">Modules not working with pyfakefs</a></li>
 <li><a class="reference internal" href="#pyfakefs-behaves-differently-than-the-real-filesystem">Pyfakefs behaves differently than the real filesystem</a></li>
+<li><a class="reference internal" href="#the-test-code-tries-to-access-files-in-the-real-filesystem">The test code tries to access files in the real filesystem</a></li>
 <li><a class="reference internal" href="#os-temporary-directories">OS temporary directories</a></li>
 <li><a class="reference internal" href="#user-rights">User rights</a></li>
 <li><a class="reference internal" href="#pyfakefs-and-mock-open">Pyfakefs and mock_open</a></li>
@@ -1042,7 +1055,7 @@ passed before the <code class="docutils literal notranslate"><span class="pre">m
         &#169; Copyright 2009 Google Inc. All Rights Reserved.
 © Copyright 2014 Altera Corporation. All Rights Reserved.
 © Copyright 2014-2021 John McGehee.
-      Last updated on Aug 25, 2022.
+      Last updated on Aug 27, 2022.
     </div>
   </body>
 </html>
