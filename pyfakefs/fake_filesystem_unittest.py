@@ -35,10 +35,14 @@ Existing unit tests that use the real file system can be retrofitted to use
 pyfakefs by simply changing their base class from `:py:class`unittest.TestCase`
 to `:py:class`pyfakefs.fake_filesystem_unittest.TestCase`.
 """
+import _io  # type:ignore [import]
 import doctest
 import functools
+import genericpath
 import inspect
+import io
 import linecache
+import os
 import shutil
 import sys
 import tempfile
@@ -366,8 +370,6 @@ class Patcher:
     '''Stub nothing that is imported within these modules.
     `sys` is included to prevent `sys.path` from being stubbed with the fake
     `os.path`.
-    The `pytest` and `py` modules are used by pytest and have to access the
-    real file system.
     The `linecache` module is used to read the test file in case of test
     failure to get traceback information before test tear down.
     In order to make sure that reading the test file is not faked,
@@ -376,8 +378,21 @@ class Patcher:
     '''
     SKIPMODULES = {
         None, fake_filesystem, fake_filesystem_shutil,
-        sys, linecache, tokenize
+        sys, linecache, tokenize, os, io, _io, genericpath, os.path
     }
+    if sys.platform == 'win32':
+        import nt  # type:ignore [import]
+        import ntpath
+        SKIPMODULES.add(nt)
+        SKIPMODULES.add(ntpath)
+    else:
+        import posix
+        import posixpath
+        import fcntl
+        SKIPMODULES.add(posix)
+        SKIPMODULES.add(posixpath)
+        SKIPMODULES.add(fcntl)
+
     # caches all modules that do not have file system modules or function
     # to speed up _find_modules
     CACHED_MODULES: Set[ModuleType] = set()
@@ -391,8 +406,7 @@ class Patcher:
 
     IS_WINDOWS = sys.platform in ('win32', 'cygwin')
 
-    SKIPNAMES = {'os', 'path', 'io', 'genericpath', 'fcntl',
-                 OS_MODULE, PATH_MODULE}
+    SKIPNAMES: Set[str] = set()
 
     # hold values from last call - if changed, the cache has to be invalidated
     PATCHED_MODULE_NAMES: Set[str] = set()
