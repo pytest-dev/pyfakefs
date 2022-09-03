@@ -3,6 +3,7 @@ import os
 import tempfile
 
 from pyfakefs.fake_filesystem_unittest import Pause
+import pyfakefs.pytest_tests.io
 
 
 def test_fs_fixture(fs):
@@ -50,3 +51,12 @@ def test_pause_resume_contextmanager(fs):
         assert os.path.exists(real_temp_file.name)
     assert not os.path.exists(real_temp_file.name)
     assert os.path.exists(fake_temp_file.name)
+
+
+def test_use_own_io_module(fs):
+    filepath = 'foo.txt'
+    with open(filepath, 'w') as f:
+        f.write('bar')
+
+    stream = pyfakefs.pytest_tests.io.InputStream(filepath)
+    assert stream.read() == 'bar'

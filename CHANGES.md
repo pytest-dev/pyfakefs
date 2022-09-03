@@ -19,6 +19,8 @@ The released versions correspond to PyPi releases.
   (see [#707](../../issues/707))
 * return the expected type from `fcntl.ioctl` and `fcntl.fcntl` calls if `arg`
   is of type `byte`; the call itself does nothing as before 
+* do not skip filesystem modules by name to allow using own modules with 
+  the same name (see [#707](../../issues/707))
 
 
 ## [Version 4.6.3](https://pypi.python.org/pypi/pyfakefs/4.6.3) (2022-07-20)
