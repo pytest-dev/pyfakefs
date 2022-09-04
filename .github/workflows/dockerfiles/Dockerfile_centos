@@ -12,17 +12,20 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-FROM centos:7
+FROM centos:latest
 MAINTAINER jmcgeheeiv@users.noreply.github.com
-
-ENV LANG en_US.UTF-8
-ENV LANGUAGE en_US:en
-ENV LC_ALL en_US.UTF-8
 
 ARG github_repo=jmcgeheeiv/pyfakefs
 ARG github_branch=master
 
+RUN cd /etc/yum.repos.d/
+RUN sed -i 's/mirrorlist/#mirrorlist/g' /etc/yum.repos.d/CentOS-*
+RUN sed -i 's|#baseurl=http://mirror.centos.org|baseurl=http://vault.centos.org|g' /etc/yum.repos.d/CentOS-*
 RUN yum install -y python3-pip unzip wget
+
+ENV LANG en_US.UTF-8
+ENV LANGUAGE en_US:en
+ENV LC_COLLATE C.UTF-8
 
 RUN useradd -u 1000 pyfakefs
 
