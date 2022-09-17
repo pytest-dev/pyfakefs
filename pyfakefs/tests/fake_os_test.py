@@ -3328,6 +3328,28 @@ class FakeOsModuleTestCaseInsensitiveFS(FakeOsModuleTestBase):
         self.os.rename(path0, path1)
         self.assertEqual(['Beta'], sorted(self.os.listdir(path0)))
 
+    def test_renames_creates_missing_dirs(self):
+        old_path = self.make_path("foo.txt")
+        self.create_file(old_path)
+        new_path = self.make_path("new", "dir", "bar.txt")
+        self.os.renames(old_path, new_path)
+        self.assertTrue(self.os.path.exists(new_path))
+        self.assertFalse(self.os.path.exists(old_path))
+
+    def test_renames_removes_empty_dirs(self):
+        old_base_path = self.make_path("old")
+        old_path = self.make_path("old", "dir1", "dir2", "foo.txt")
+        other_file = self.os.path.join(old_base_path, "foo.png")
+        self.create_file(old_path)
+        self.create_file(other_file)
+        new_path = self.make_path("new", "bar.txt")
+        self.os.renames(old_path, new_path)
+        self.assertTrue(self.os.path.exists(new_path))
+        self.assertFalse(self.os.path.exists(old_path))
+        self.assertTrue(self.os.path.exists(old_base_path))
+        removed_path = self.os.path.join(old_base_path, "dir1")
+        self.assertFalse(self.os.path.exists(removed_path))
+
     def test_stat_with_mixed_case(self):
         # Regression test for #310
         self.skip_if_symlink_not_supported()

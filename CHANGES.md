@@ -21,7 +21,7 @@ The released versions correspond to PyPi releases.
   is of type `byte`; the call itself does nothing as before 
 * do not skip filesystem modules by name to allow using own modules with 
   the same name (see [#707](../../issues/707))
-
+* add missing support for `os.renames` (see [#714](../../issues/714))
 
 ## [Version 4.6.3](https://pypi.python.org/pypi/pyfakefs/4.6.3) (2022-07-20)
 Another patch release that fixes a regression in version 4.6.

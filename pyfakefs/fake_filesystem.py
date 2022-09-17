@@ -4477,6 +4477,32 @@ class FakeOsModule:
         dst = self._path_with_dir_fd(dst, self.rename, dst_dir_fd)
         self.filesystem.rename(src, dst)
 
+    def renames(self, old: AnyStr, new: AnyStr):
+        """Fakes `os.renames`, documentation taken from there.
+
+        Super-rename; create directories as necessary and delete any left
+        empty.  Works like rename, except creation of any intermediate
+        directories needed to make the new pathname good is attempted
+        first.  After the rename, directories corresponding to rightmost
+        path segments of the old name will be pruned until either the
+        whole path is consumed or a nonempty directory is found.
+
+        Note: this function can fail with the new directory structure made
+        if you lack permissions needed to unlink the leaf directory or
+        file.
+
+        """
+        head, tail = self.filesystem.splitpath(new)
+        if head and tail and not self.filesystem.exists(head):
+            self.makedirs(head)
+        self.rename(old, new)
+        head, tail = self.filesystem.splitpath(old)
+        if head and tail:
+            try:
+                self.removedirs(head)
+            except OSError:
+                pass
+
     def replace(self, src: AnyStr, dst: AnyStr, *,
                 src_dir_fd: Optional[int] = None,
                 dst_dir_fd: Optional[int] = None) -> None:
