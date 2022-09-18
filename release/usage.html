@@ -6,7 +6,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
 
-    <title>Usage &#8212; pyfakefs 4.6.3 documentation</title>
+    <title>Usage &#8212; pyfakefs 4.7.0 documentation</title>
     <link rel="stylesheet" type="text/css" href="_static/pygments.css" />
     <link rel="stylesheet" type="text/css" href="_static/pyfakefs.css" />
     <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
@@ -16,7 +16,7 @@
     <script src="_static/doctools.js"></script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
-    <link rel="next" title="Automatically find and patch file functions and modules" href="autopatch.html" />
+    <link rel="next" title="Troubleshooting" href="troubleshooting.html" />
     <link rel="prev" title="Introduction" href="intro.html" /> 
   </head><body>
     <div class="related" role="navigation" aria-label="related navigation">
@@ -29,12 +29,12 @@
           <a href="py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
         <li class="right" >
-          <a href="autopatch.html" title="Automatically find and patch file functions and modules"
+          <a href="troubleshooting.html" title="Troubleshooting"
              accesskey="N">next</a> |</li>
         <li class="right" >
           <a href="intro.html" title="Introduction"
              accesskey="P">previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="index.html">pyfakefs 4.6.3 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="index.html">pyfakefs 4.7.0 documentation</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">Usage</a></li> 
       </ul>
     </div>  
@@ -100,9 +100,18 @@ tests:</p>
     <span class="k">yield</span> <span class="n">fs</span>
 </pre></div>
 </div>
+<section id="module-and-session-scoped-fixtures">
+<h4>Module- and session scoped fixtures<a class="headerlink" href="#module-and-session-scoped-fixtures" title="Permalink to this heading">¶</a></h4>
 <p>For convenience, module- and session-scoped fixtures with the same
 functionality are provided, named <code class="docutils literal notranslate"><span class="pre">fs_module</span></code> and <code class="docutils literal notranslate"><span class="pre">fs_session</span></code>,
 respectively.</p>
+<div class="admonition caution">
+<p class="admonition-title">Caution</p>
+<p>If any of these fixtures is active, any other <code class="docutils literal notranslate"><span class="pre">fs</span></code> fixture will
+not setup / tear down the fake filesystem in the current scope; instead, it
+will just serve as a reference to the active fake filesystem.</p>
+</div>
+</section>
 </section>
 <section id="patch-using-fake-filesystem-unittest-patcher">
 <h3>Patch using fake_filesystem_unittest.Patcher<a class="headerlink" href="#patch-using-fake-filesystem-unittest-patcher" title="Permalink to this heading">¶</a></h3>
@@ -380,6 +389,12 @@ the file <code class="docutils literal notranslate"><span class="pre">example/su
     <span class="k">assert</span> <span class="n">example</span><span class="o">.</span><span class="n">sut</span><span class="o">.</span><span class="n">check_if_exists</span><span class="p">(</span><span class="n">file_path</span><span class="p">)</span>
 </pre></div>
 </div>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>If the reloaded modules depend on each other (e.g. one imports the other),
+the order in which they are reloaded matters. The dependent module should be reloaded
+first, so that on reloading the depending module it is already correctly patched.</p>
+</div>
 </section>
 <section id="modules-to-patch">
 <h4>modules_to_patch<a class="headerlink" href="#modules-to-patch" title="Permalink to this heading">¶</a></h4>
@@ -517,6 +532,30 @@ expansive, it is not done by default. Using <code class="docutils literal notran
 search for this kind of default arguments and patch them automatically.
 You could also use the <a class="reference internal" href="#modules-to-reload"><span class="std std-ref">modules_to_reload</span></a> option with the module that
 contains the default argument instead, if you want to avoid the overhead.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>There are some cases where this option dees not work:</p>
+<ul>
+<li><p>if default arguments are <em>computed</em> using file system functions:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">os</span>
+
+<span class="k">def</span> <span class="nf">some_function</span><span class="p">(</span><span class="n">use_bar</span><span class="o">=</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="s2">&quot;/foo/bar&quot;</span><span class="p">)):</span>
+    <span class="k">return</span> <span class="n">do_something</span><span class="p">()</span> <span class="k">if</span> <span class="n">use_bar</span> <span class="k">else</span> <span class="n">do_something_else</span><span class="p">()</span>
+</pre></div>
+</div>
+</li>
+<li><p>if the default argument is an instance of <code class="docutils literal notranslate"><span class="pre">pathlib.Path</span></code>:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">pathlib</span>
+
+<span class="k">def</span> <span class="nf">foobar</span><span class="p">(</span><span class="n">dir_arg</span> <span class="o">=</span> <span class="n">pathlib</span><span class="o">.</span><span class="n">Path</span><span class="o">.</span><span class="n">cwd</span><span class="p">()</span> <span class="o">/</span> <span class="s1">&#39;logs&#39;</span><span class="p">):</span>
+    <span class="n">do_something</span><span class="p">(</span><span class="n">dir_arg</span><span class="p">)</span>
+</pre></div>
+</div>
+</li>
+</ul>
+<p>In both cases the default arguments behave like global variables that use a file system function
+(which they basically are), and can only be handled using <a class="reference internal" href="#modules-to-reload"><span class="std std-ref">modules_to_reload</span></a>.</p>
+</div>
 </section>
 <section id="use-cache">
 <h4>use_cache<a class="headerlink" href="#use-cache" title="Permalink to this heading">¶</a></h4>
@@ -585,7 +624,7 @@ automatically.</p>
 </div>
 </section>
 <section id="access-to-files-in-the-real-file-system">
-<h3>Access to files in the real file system<a class="headerlink" href="#access-to-files-in-the-real-file-system" title="Permalink to this heading">¶</a></h3>
+<span id="real-fs-access"></span><h3>Access to files in the real file system<a class="headerlink" href="#access-to-files-in-the-real-file-system" title="Permalink to this heading">¶</a></h3>
 <p>If you want to have read access to real files or directories, you can map
 them into the fake file system using <code class="docutils literal notranslate"><span class="pre">add_real_file()</span></code>,
 <code class="docutils literal notranslate"><span class="pre">add_real_directory()</span></code>, <code class="docutils literal notranslate"><span class="pre">add_real_symlink()</span></code> and <code class="docutils literal notranslate"><span class="pre">add_real_paths()</span></code>.
@@ -771,125 +810,6 @@ respective behavior</p></li>
 </div>
 </section>
 </section>
-<section id="troubleshooting">
-<h2>Troubleshooting<a class="headerlink" href="#troubleshooting" title="Permalink to this heading">¶</a></h2>
-<section id="modules-not-working-with-pyfakefs">
-<h3>Modules not working with pyfakefs<a class="headerlink" href="#modules-not-working-with-pyfakefs" title="Permalink to this heading">¶</a></h3>
-<p>Modules may not work with <code class="docutils literal notranslate"><span class="pre">pyfakefs</span></code> for several reasons. <code class="docutils literal notranslate"><span class="pre">pyfakefs</span></code>
-works by patching some file system related modules and functions, specifically:</p>
-<ul class="simple">
-<li><p>most file system related functions in the <code class="docutils literal notranslate"><span class="pre">os</span></code> and <code class="docutils literal notranslate"><span class="pre">os.path</span></code> modules</p></li>
-<li><p>the <code class="docutils literal notranslate"><span class="pre">pathlib</span></code> module</p></li>
-<li><p>the build-in <code class="docutils literal notranslate"><span class="pre">open</span></code> function and <code class="docutils literal notranslate"><span class="pre">io.open</span></code></p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">shutil.disk_usage</span></code></p></li>
-</ul>
-<p>Other file system related modules work with <code class="docutils literal notranslate"><span class="pre">pyfakefs</span></code>, because they use
-exclusively these patched functions, specifically <code class="docutils literal notranslate"><span class="pre">shutil</span></code> (except for
-<code class="docutils literal notranslate"><span class="pre">disk_usage</span></code>), <code class="docutils literal notranslate"><span class="pre">tempfile</span></code>, <code class="docutils literal notranslate"><span class="pre">glob</span></code> and <code class="docutils literal notranslate"><span class="pre">zipfile</span></code>.</p>
-<p>A module may not work with <code class="docutils literal notranslate"><span class="pre">pyfakefs</span></code> because of one of the following
-reasons:</p>
-<ul class="simple">
-<li><p>It uses a file system related function of the mentioned modules that is
-not or not correctly patched. Mostly these are functions that are seldom
-used, but may be used in Python libraries (this has happened for example
-with a changed implementation of <code class="docutils literal notranslate"><span class="pre">shutil</span></code> in Python 3.7). Generally,
-these shall be handled in issues and we are happy to fix them.</p></li>
-<li><p>It uses file system related functions in a way that will not be patched
-automatically. This is the case for functions that are executed while
-reading a module. This case and a possibility to make them work is
-documented above under <code class="docutils literal notranslate"><span class="pre">modules_to_reload</span></code>.</p></li>
-<li><p>It uses OS specific file system functions not contained in the Python
-libraries. These will not work out of the box, and we generally will not
-support them in <code class="docutils literal notranslate"><span class="pre">pyfakefs</span></code>. If these functions are used in isolated
-functions or classes, they may be patched by using the <code class="docutils literal notranslate"><span class="pre">modules_to_patch</span></code>
-parameter (see the example for file locks in Django above), or by using
-<code class="docutils literal notranslate"><span class="pre">unittest.patch</span></code> if you don’t need to simulate the functions. We
-added some of these patches to <code class="docutils literal notranslate"><span class="pre">pyfakefs</span></code>, so that they are applied
-automatically (currently done for some <code class="docutils literal notranslate"><span class="pre">pandas</span></code> and <code class="docutils literal notranslate"><span class="pre">Django</span></code>
-functionality).</p></li>
-<li><p>It uses C libraries to access the file system. There is no way no make
-such a module work with <code class="docutils literal notranslate"><span class="pre">pyfakefs</span></code>–if you want to use it, you
-have to patch the whole module. In some cases, a library implemented in
-Python with a similar interface already exists. An example is <code class="docutils literal notranslate"><span class="pre">lxml</span></code>,
-which can be substituted with <code class="docutils literal notranslate"><span class="pre">ElementTree</span></code> in most cases for testing.</p></li>
-</ul>
-<p>A list of Python modules that are known to not work correctly with
-<code class="docutils literal notranslate"><span class="pre">pyfakefs</span></code> will be collected here:</p>
-<ul class="simple">
-<li><p><a class="reference external" href="https://docs.python.org/3/library/multiprocessing.html">multiprocessing</a> has several issues (related to points 1 and 3 above).
-Currently there are no plans to fix this, but this may change in case of
-sufficient demand.</p></li>
-<li><p><a class="reference external" href="https://docs.python.org/3/library/subprocess.html">subprocess</a> has very similar problems and cannot be used with
-<code class="docutils literal notranslate"><span class="pre">pyfakefs</span></code> to start a process. <code class="docutils literal notranslate"><span class="pre">subprocess</span></code> can either be mocked, if
-the process is not needed for the test, or patching can be paused to start
-a process if needed, and resumed afterwards
-(see <a class="reference external" href="https://github.com/jmcgeheeiv/pyfakefs/issues/447">this issue</a>).</p></li>
-<li><p>Modules that rely on <code class="docutils literal notranslate"><span class="pre">subprocess</span></code> or <code class="docutils literal notranslate"><span class="pre">multiprocessing</span></code> to work
-correctly, e.g. need to start other executables. Examples that have shown
-this problem include <a class="reference external" href="https://pypi.org/project/GitPython/">GitPython</a> and <a class="reference external" href="https://pypi.org/project/plumbum/">plumbum</a>.</p></li>
-<li><p>the <a class="reference external" href="https://pypi.org/project/Pillow/">Pillow</a> image library does not work with pyfakefs at least if writing
-JPEG files (see <a class="reference external" href="https://github.com/jmcgeheeiv/pyfakefs/issues/529">this issue</a>)</p></li>
-<li><p><a class="reference external" href="https://pypi.org/project/pandas/">pandas</a> (the Python data analysis library) uses its own internal file
-system access written in C. Thus much of <code class="docutils literal notranslate"><span class="pre">pandas</span></code> will not work with
-<code class="docutils literal notranslate"><span class="pre">pyfakefs</span></code>. Having said that, <code class="docutils literal notranslate"><span class="pre">pyfakefs</span></code> patches <code class="docutils literal notranslate"><span class="pre">pandas</span></code> so that many
-of the <code class="docutils literal notranslate"><span class="pre">read_xxx</span></code> functions, including <code class="docutils literal notranslate"><span class="pre">read_csv</span></code> and <code class="docutils literal notranslate"><span class="pre">read_excel</span></code>,
-as well as some writer functions, do work with the fake file system. If
-you use only these functions, <code class="docutils literal notranslate"><span class="pre">pyfakefs</span></code> will work with <code class="docutils literal notranslate"><span class="pre">pandas</span></code>.</p></li>
-</ul>
-<p>If you are not sure if a module can be handled, or how to do it, you can
-always write a new issue, of course!</p>
-</section>
-<section id="pyfakefs-behaves-differently-than-the-real-filesystem">
-<h3>Pyfakefs behaves differently than the real filesystem<a class="headerlink" href="#pyfakefs-behaves-differently-than-the-real-filesystem" title="Permalink to this heading">¶</a></h3>
-<p>There are basically two kinds of deviations from the actual behavior:</p>
-<ul class="simple">
-<li><p>unwanted deviations that we didn’t notice–if you find any of these, please
-write an issue and will try to fix it</p></li>
-<li><p>behavior that depends on different OS versions and editions–as mentioned
-in <a class="reference internal" href="intro.html#limitations"><span class="std std-ref">Limitations</span></a>, <code class="docutils literal notranslate"><span class="pre">pyfakefs</span></code> uses the TravisCI systems as reference
-system and will not replicate all system-specific behavior</p></li>
-</ul>
-</section>
-<section id="os-temporary-directories">
-<h3>OS temporary directories<a class="headerlink" href="#os-temporary-directories" title="Permalink to this heading">¶</a></h3>
-<p>Tests relying on a completely empty file system on test start will fail.
-As <code class="docutils literal notranslate"><span class="pre">pyfakefs</span></code> does not fake the <code class="docutils literal notranslate"><span class="pre">tempfile</span></code> module (as described above),
-a temporary directory is required to ensure <code class="docutils literal notranslate"><span class="pre">tempfile</span></code> works correctly,
-e.g., that <code class="docutils literal notranslate"><span class="pre">tempfile.gettempdir()</span></code> will return a valid value. This
-means that any newly created fake file system will always have either a
-directory named <code class="docutils literal notranslate"><span class="pre">/tmp</span></code> when running on Linux or Unix systems,
-<code class="docutils literal notranslate"><span class="pre">/var/folders/&lt;hash&gt;/T</span></code> when running on MacOs, or
-<code class="docutils literal notranslate"><span class="pre">C:\Users\&lt;user&gt;\AppData\Local\Temp</span></code> on Windows.</p>
-</section>
-<section id="user-rights">
-<h3>User rights<a class="headerlink" href="#user-rights" title="Permalink to this heading">¶</a></h3>
-<p>If you run <code class="docutils literal notranslate"><span class="pre">pyfakefs</span></code> tests as root (this happens by default if run in a
-docker container), <code class="docutils literal notranslate"><span class="pre">pyfakefs</span></code> also behaves as a root user, for example can
-write to write-protected files. This may not be the expected behavior, and
-can be changed.
-<code class="docutils literal notranslate"><span class="pre">Pyfakefs</span></code> has a rudimentary concept of user rights, which differentiates
-between root user (with the user id 0) and any other user. By default,
-<code class="docutils literal notranslate"><span class="pre">pyfakefs</span></code> assumes the user id of the current user, but you can change
-that using <code class="docutils literal notranslate"><span class="pre">fake_filesystem.set_uid()</span></code> in your setup. This allows to run
-tests as non-root user in a root user environment and vice verse.
-Another possibility to run tests as non-root user in a root user environment
-is the convenience argument <a class="reference internal" href="#allow-root-user"><span class="std std-ref">allow_root_user</span></a>.</p>
-</section>
-<section id="pyfakefs-and-mock-open">
-<span id="usage-with-mock-open"></span><h3>Pyfakefs and mock_open<a class="headerlink" href="#pyfakefs-and-mock-open" title="Permalink to this heading">¶</a></h3>
-<p>If you patch <code class="docutils literal notranslate"><span class="pre">open</span></code> using <code class="docutils literal notranslate"><span class="pre">mock_open</span></code> before the initialization of
-<code class="docutils literal notranslate"><span class="pre">pyfakefs</span></code>, it will not work properly, because the <code class="docutils literal notranslate"><span class="pre">pyfakefs</span></code>
-initialization relies on <code class="docutils literal notranslate"><span class="pre">open</span></code> working correctly.
-Generally, you should not need <code class="docutils literal notranslate"><span class="pre">mock_open</span></code> if using <code class="docutils literal notranslate"><span class="pre">pyfakefs</span></code>, because you
-always can create the files with the needed content using <code class="docutils literal notranslate"><span class="pre">create_file</span></code>.
-This is true for patching any filesystem functions - avoid patching them
-while working with <code class="docutils literal notranslate"><span class="pre">pyfakefs</span></code>.
-If you still want to use <code class="docutils literal notranslate"><span class="pre">mock_open</span></code>, make sure it is only used while
-patching is in progress. For example, if you are using <code class="docutils literal notranslate"><span class="pre">pytest</span></code> with the
-<code class="docutils literal notranslate"><span class="pre">mocker</span></code> fixture used to patch <code class="docutils literal notranslate"><span class="pre">open</span></code>, make sure that the <code class="docutils literal notranslate"><span class="pre">fs</span></code> fixture is
-passed before the <code class="docutils literal notranslate"><span class="pre">mocker</span></code> fixture to ensure this.</p>
-</section>
-</section>
 </section>
 
 
@@ -905,7 +825,10 @@ passed before the <code class="docutils literal notranslate"><span class="pre">m
 <li><a class="reference internal" href="#">Usage</a><ul>
 <li><a class="reference internal" href="#test-scenarios">Test Scenarios</a><ul>
 <li><a class="reference internal" href="#patch-using-fake-filesystem-unittest">Patch using fake_filesystem_unittest</a></li>
-<li><a class="reference internal" href="#patch-using-the-pytest-plugin">Patch using the pytest plugin</a></li>
+<li><a class="reference internal" href="#patch-using-the-pytest-plugin">Patch using the pytest plugin</a><ul>
+<li><a class="reference internal" href="#module-and-session-scoped-fixtures">Module- and session scoped fixtures</a></li>
+</ul>
+</li>
 <li><a class="reference internal" href="#patch-using-fake-filesystem-unittest-patcher">Patch using fake_filesystem_unittest.Patcher</a></li>
 <li><a class="reference internal" href="#patch-using-fake-filesystem-unittest-patchfs-decorator">Patch using fake_filesystem_unittest.patchfs decorator</a></li>
 </ul>
@@ -940,14 +863,6 @@ passed before the <code class="docutils literal notranslate"><span class="pre">m
 <li><a class="reference internal" href="#simulating-other-file-systems">Simulating other file systems</a></li>
 </ul>
 </li>
-<li><a class="reference internal" href="#troubleshooting">Troubleshooting</a><ul>
-<li><a class="reference internal" href="#modules-not-working-with-pyfakefs">Modules not working with pyfakefs</a></li>
-<li><a class="reference internal" href="#pyfakefs-behaves-differently-than-the-real-filesystem">Pyfakefs behaves differently than the real filesystem</a></li>
-<li><a class="reference internal" href="#os-temporary-directories">OS temporary directories</a></li>
-<li><a class="reference internal" href="#user-rights">User rights</a></li>
-<li><a class="reference internal" href="#pyfakefs-and-mock-open">Pyfakefs and mock_open</a></li>
-</ul>
-</li>
 </ul>
 </li>
 </ul>
@@ -960,8 +875,8 @@ passed before the <code class="docutils literal notranslate"><span class="pre">m
   </div>
   <div>
     <h4>Next topic</h4>
-    <p class="topless"><a href="autopatch.html"
-                          title="next chapter">Automatically find and patch file functions and modules</a></p>
+    <p class="topless"><a href="troubleshooting.html"
+                          title="next chapter">Troubleshooting</a></p>
   </div>
   <div role="note" aria-label="source link">
     <h3>This Page</h3>
@@ -994,20 +909,20 @@ passed before the <code class="docutils literal notranslate"><span class="pre">m
           <a href="py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
         <li class="right" >
-          <a href="autopatch.html" title="Automatically find and patch file functions and modules"
+          <a href="troubleshooting.html" title="Troubleshooting"
              >next</a> |</li>
         <li class="right" >
           <a href="intro.html" title="Introduction"
              >previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="index.html">pyfakefs 4.6.3 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="index.html">pyfakefs 4.7.0 documentation</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">Usage</a></li> 
       </ul>
     </div>
     <div class="footer" role="contentinfo">
         &#169; Copyright 2009 Google Inc. All Rights Reserved.
 © Copyright 2014 Altera Corporation. All Rights Reserved.
-© Copyright 2014-2021 John McGehee.
-      Last updated on Jul 20, 2022.
+© Copyright 2014-2022 John McGehee.
+      Last updated on Sep 18, 2022.
     </div>
   </body>
 </html>

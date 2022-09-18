@@ -6,7 +6,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
 
-    <title>Automatically find and patch file functions and modules &#8212; pyfakefs 4.6.3 documentation</title>
+    <title>Automatically find and patch file functions and modules &#8212; pyfakefs 4.7.0 documentation</title>
     <link rel="stylesheet" type="text/css" href="_static/pygments.css" />
     <link rel="stylesheet" type="text/css" href="_static/pyfakefs.css" />
     <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
@@ -17,7 +17,7 @@
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
     <link rel="next" title="Public Modules and Classes" href="modules.html" />
-    <link rel="prev" title="Usage" href="usage.html" /> 
+    <link rel="prev" title="Troubleshooting" href="troubleshooting.html" /> 
   </head><body>
     <div class="related" role="navigation" aria-label="related navigation">
       <h3>Navigation</h3>
@@ -32,9 +32,9 @@
           <a href="modules.html" title="Public Modules and Classes"
              accesskey="N">next</a> |</li>
         <li class="right" >
-          <a href="usage.html" title="Usage"
+          <a href="troubleshooting.html" title="Troubleshooting"
              accesskey="P">previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="index.html">pyfakefs 4.6.3 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="index.html">pyfakefs 4.7.0 documentation</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">Automatically find and patch file functions and modules</a></li> 
       </ul>
     </div>  
@@ -55,6 +55,12 @@ real file system.</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">example_test.py</span></code> tests <code class="docutils literal notranslate"><span class="pre">example.py</span></code>. During testing, the pyfakefs fake
 file system is used by <code class="docutils literal notranslate"><span class="pre">example_test.py</span></code> and <code class="docutils literal notranslate"><span class="pre">example.py</span></code> alike.</p></li>
 </ul>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>This example uses the Python <code class="docutils literal notranslate"><span class="pre">unittest</span></code> module for testing, but the
+functionality is similar if using the <code class="docutils literal notranslate"><span class="pre">fs</span></code> fixture in <code class="docutils literal notranslate"><span class="pre">pytest</span></code>,
+the <code class="docutils literal notranslate"><span class="pre">patchfs</span></code> decorator, or the <code class="docutils literal notranslate"><span class="pre">Patcher</span></code> class.</p>
+</div>
 <section id="software-under-test">
 <h2>Software Under Test<a class="headerlink" href="#software-under-test" title="Permalink to this heading">¶</a></h2>
 <p><code class="docutils literal notranslate"><span class="pre">example.py</span></code> contains a few functions that manipulate files.  For instance:</p>
@@ -177,8 +183,8 @@ file system.</p>
   </div>
   <div>
     <h4>Previous topic</h4>
-    <p class="topless"><a href="usage.html"
-                          title="previous chapter">Usage</a></p>
+    <p class="topless"><a href="troubleshooting.html"
+                          title="previous chapter">Troubleshooting</a></p>
   </div>
   <div>
     <h4>Next topic</h4>
@@ -219,17 +225,17 @@ file system.</p>
           <a href="modules.html" title="Public Modules and Classes"
              >next</a> |</li>
         <li class="right" >
-          <a href="usage.html" title="Usage"
+          <a href="troubleshooting.html" title="Troubleshooting"
              >previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="index.html">pyfakefs 4.6.3 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="index.html">pyfakefs 4.7.0 documentation</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">Automatically find and patch file functions and modules</a></li> 
       </ul>
     </div>
     <div class="footer" role="contentinfo">
         &#169; Copyright 2009 Google Inc. All Rights Reserved.
 © Copyright 2014 Altera Corporation. All Rights Reserved.
-© Copyright 2014-2021 John McGehee.
-      Last updated on Jul 20, 2022.
+© Copyright 2014-2022 John McGehee.
+      Last updated on Sep 18, 2022.
     </div>
   </body>
 </html>
