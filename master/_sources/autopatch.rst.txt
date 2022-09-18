@@ -11,6 +11,11 @@ The pyfakefs source code contains files that demonstrate this usage model:
 - ``example_test.py`` tests ``example.py``. During testing, the pyfakefs fake
   file system is used by ``example_test.py`` and ``example.py`` alike.
 
+.. note:: This example uses the Python ``unittest`` module for testing, but the
+  functionality is similar if using the ``fs`` fixture in ``pytest``,
+  the ``patchfs`` decorator, or the ``Patcher`` class.
+
+
 Software Under Test
 -------------------
 ``example.py`` contains a few functions that manipulate files.  For instance:

@@ -54,6 +54,12 @@ real file system.</li>
 <li><code class="docutils literal notranslate"><span class="pre">example_test.py</span></code> tests <code class="docutils literal notranslate"><span class="pre">example.py</span></code>. During testing, the pyfakefs fake
 file system is used by <code class="docutils literal notranslate"><span class="pre">example_test.py</span></code> and <code class="docutils literal notranslate"><span class="pre">example.py</span></code> alike.</li>
 </ul>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">This example uses the Python <code class="docutils literal notranslate"><span class="pre">unittest</span></code> module for testing, but the
+functionality is similar if using the <code class="docutils literal notranslate"><span class="pre">fs</span></code> fixture in <code class="docutils literal notranslate"><span class="pre">pytest</span></code>,
+the <code class="docutils literal notranslate"><span class="pre">patchfs</span></code> decorator, or the <code class="docutils literal notranslate"><span class="pre">Patcher</span></code> class.</p>
+</div>
 <div class="section" id="software-under-test">
 <h2>Software Under Test<a class="headerlink" href="#software-under-test" title="Permalink to this headline">¶</a></h2>
 <p><code class="docutils literal notranslate"><span class="pre">example.py</span></code> contains a few functions that manipulate files.  For instance:</p>
@@ -222,7 +228,7 @@ file system.</p>
         &#169; Copyright 2009 Google Inc. All Rights Reserved.
 © Copyright 2014 Altera Corporation. All Rights Reserved.
 © Copyright 2014-2021 John McGehee.
-      Last updated on Sep 17, 2022.
+      Last updated on Sep 18, 2022.
     </div>
   </body>
 </html>
