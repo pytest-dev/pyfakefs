@@ -68,14 +68,14 @@ This includes a number of modules that need to start other executables to
 function correctly. Examples that have shown this problem include `GitPython`_
 and `plumbum`_.
 
-The `Pillow`_ image library
-~~~~~~~~~~~~~~~~~~~~~~~~~~~
+The `Pillow`_ Imaging Library
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 This library partly works with ``pyfakefs``, but it is known to not work at
 least if writing JPEG files
 (see `this issue <https://github.com/jmcgeheeiv/pyfakefs/issues/529>`__)
 
-`pandas`_ - the Python data analysis library
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+The `pandas`_ data analysis toolkit
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 This uses its own internal file system access written in C, thus much of
 ``pandas`` will not work with ``pyfakefs`` out of the box. Having said that,
 ``pyfakefs`` patches ``pandas`` to use standard file-system access instead,
@@ -86,29 +86,31 @@ system. If you use only these functions, ``pyfakefs`` should work fine with
 
 `xlrd`_
 ~~~~~~~
-This libary is used by ``pandas`` to read Excel files in the `.xls` format, and
-can also be used stand-alone. Similar to ``pandas``, it is by default patched
-by ``pyfakefs`` to use normal file system functions that can be patched.
+This library is used by ``pandas`` to read Excel files in the `.xls` format,
+and can also be used stand-alone. Similar to ``pandas``, it is by default
+patched by ``pyfakefs`` to use normal file system functions that can be
+patched.
 
 `openpyxl`_
 ~~~~~~~~~~~
 This is another library that reads and writes Excel files, and is also
 used by ``pandas`` if installed. ``openpyxl`` uses ``lxml`` for some file-system
-access if it is installed - in this case ``pyfakefs`` will not able to patch
+access if it is installed--in this case ``pyfakefs`` will not be able to patch
 it correctly (``lxml`` uses C functions for file system access). It will `not`
-use ``lxml`` however, if the environment variable ``OPENPYXL_LXML` is set to
+use ``lxml`` however, if the environment variable ``OPENPYXL_LXML`` is set to
 "False" (or anything other than "True"), so if you set this variable `before`
 running the tests, it can work fine with ``pyfakefs``.
 
-Please write a new issue, if you are not sure if a module can be handled, or
-how to do it.
+If you encounter a module not working with ``pyfakefs``, and you are not sure
+if the module can be handled or how to do it, please write a new issue. We
+will check if it can be made to work, and at least add it to this list.
 
 Pyfakefs behaves differently than the real filesystem
 -----------------------------------------------------
 There are at least the following kinds of deviations from the actual behavior:
 
 - unwanted deviations that we didn't notice--if you find any of these, please
-  write an issue and will try to fix it
+  write an issue and we will try to fix it
 - behavior that depends on different OS versions and editions--as mentioned
   in :ref:`limitations`, ``pyfakefs`` uses the TravisCI systems as reference
   system and will not replicate all system-specific behavior
@@ -130,12 +132,21 @@ OS temporary directories
 ------------------------
 Tests relying on a completely empty file system on test start will fail.
 As ``pyfakefs`` does not fake the ``tempfile`` module (as described above),
-a temporary directory is required to ensure ``tempfile`` works correctly,
+a temporary directory is required to ensure that ``tempfile`` works correctly,
 e.g., that ``tempfile.gettempdir()`` will return a valid value. This
 means that any newly created fake file system will always have either a
 directory named ``/tmp`` when running on Linux or Unix systems,
 ``/var/folders/<hash>/T`` when running on MacOs, or
-``C:\Users\<user>\AppData\Local\Temp`` on Windows.
+``C:\Users\<user>\AppData\Local\Temp`` on Windows:
+
+.. code:: python
+
+  import os
+
+  def test_something(fs):
+      # the temp directory is always present at test start
+      assert len(os.listdir("/")) == 1
+
 
 User rights
 -----------
@@ -149,7 +160,16 @@ between root user (with the user id 0) and any other user. By default,
 that using ``fake_filesystem.set_uid()`` in your setup. This allows to run
 tests as non-root user in a root user environment and vice verse.
 Another possibility to run tests as non-root user in a root user environment
-is the convenience argument :ref:`allow_root_user`.
+is the convenience argument :ref:`allow_root_user`:
+
+.. code:: python
+
+  from pyfakefs.fake_filesystem_unittest import TestCase
+
+  class SomeTest(TestCase):
+      def setUp(self):
+          self.setUpPyfakefs(allow_root_user=False)
+
 
 .. _usage_with_mock_open:
 
@@ -160,12 +180,23 @@ If you patch ``open`` using ``mock_open`` before the initialization of
 initialization relies on ``open`` working correctly.
 Generally, you should not need ``mock_open`` if using ``pyfakefs``, because you
 always can create the files with the needed content using ``create_file``.
-This is true for patching any filesystem functions - avoid patching them
+This is true for patching any filesystem functions--avoid patching them
 while working with ``pyfakefs``.
 If you still want to use ``mock_open``, make sure it is only used while
 patching is in progress. For example, if you are using ``pytest`` with the
 ``mocker`` fixture used to patch ``open``, make sure that the ``fs`` fixture is
-passed before the ``mocker`` fixture to ensure this.
+passed before the ``mocker`` fixture to ensure this:
+
+.. code:: python
+
+  def test_mock_open_incorrect(mocker, fs):
+      # causes a recursion error
+      mocker.patch('builtins.open', mocker.mock_open(read_data="content"))
+
+  def test_mock_open_correct(fs, mocker):
+      # works correctly
+      mocker.patch('builtins.open', mocker.mock_open(read_data="content"))
+
 
 .. _`multiprocessing`: https://docs.python.org/3/library/multiprocessing.html
 .. _`subprocess`: https://docs.python.org/3/library/subprocess.html
