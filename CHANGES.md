@@ -1,7 +1,8 @@
 # pyfakefs Release Notes
 The released versions correspond to PyPi releases.
 
-## Unreleased
+## [Version 4.7.0](https://pypi.python.org/pypi/pyfakefs/4.7.0) (2022-09-18)
+Changed handling of nested fixtures and bug fixes.
 
 ### Changes
 * `fs` fixtures cannot be nested; any nested `fs` fixture (for example 
