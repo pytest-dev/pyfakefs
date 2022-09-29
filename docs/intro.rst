@@ -9,7 +9,8 @@ The software under test requires no modification to work with pyfakefs.
 pyfakefs works with CPython 3.7 and above, on Linux, Windows and OSX
 (MacOS), and with PyPy3.
 
-pyfakefs works with `pytest <doc.pytest.org>`__ version 3.0.0 or above.
+pyfakefs works with `pytest <doc.pytest.org>`__ version 3.0.0 or above by
+providing the `fs` fixture that enables the fake filesystem.
 
 Installation
 ------------
@@ -33,9 +34,9 @@ Features
   the real filesystem will work on the fake filesystem if running under
   pyfakefs.
 
-- pyfakefs provides direct support for `unittest` (via a `TestCase` base
-  class) and `pytest` (via a fixture), but can also be used with other test
-  frameworks.
+- pyfakefs provides direct support for `pytest` (via the `fs` fixture)
+  and `unittest` (via a `TestCase` base class), but can also be used with
+  other test frameworks.
 
 - Each pyfakefs test starts with an empty file system, but it is possible to
   map files and directories from the real file system into the fake

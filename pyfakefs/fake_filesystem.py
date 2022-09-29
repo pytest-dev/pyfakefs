@@ -207,7 +207,7 @@ def set_uid(uid: int) -> None:
 
 def set_gid(gid: int) -> None:
     """Set the global group id. This is only used to set st_gid for new files,
-    no permision checks are performed.
+    no permission checks are performed.
 
     Args:
         gid: (int) the group ID of the user calling the file system functions.
