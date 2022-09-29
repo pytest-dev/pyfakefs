@@ -2,10 +2,15 @@
 
 pyfakefs implements a fake file system that mocks the Python file system modules.
 Using pyfakefs, your tests operate on a fake file system in memory without
-touching the real disk.  The software under test requires no modification to
+touching the real disk. The software under test requires no modification to
 work with pyfakefs.
 
 pyfakefs works with Linux, Windows and MacOS.
+
+pyfakefs provides the `fs` fixture for use with `pytest`, which will 
+automatically invoke the fake filesystem. It also provides 
+the `fake_filesystem_unittest.TestCase` class for use with `unittest` and 
+the means to use the fake filesystem with other test frameworks. 
 
 ## Documentation
 
@@ -24,17 +29,11 @@ This file provides general usage instructions for pyfakefs.  There is more:
 * The [Release Notes](https://github.com/jmcgeheeiv/pyfakefs/blob/master/CHANGES.md) 
   show a list of changes in the latest versions
 
-### Linking to pyfakefs
-
-In your own documentation, please link to pyfakefs using the canonical URL <http://pyfakefs.org>.
-This URL always points to the most relevant top page for pyfakefs.
-
 ## Usage
-
-pyfakefs has support for `unittest` and `pytest`, but can also be used 
-directly using `fake_filesystem_unittest.Patcher`. Refer to the
+The simplest method to use pyfakefs is using the `fs` fixture with `pytest`. 
+Refer to the
 [usage documentation](http://jmcgeheeiv.github.io/pyfakefs/master/usage.html) 
-for more information on test scenarios, test customization and 
+for information on other test scenarios, test customization and 
 using convenience functions.
 
 
@@ -42,10 +41,11 @@ using convenience functions.
 pyfakefs works with CPython 3.7 and above, on Linux, Windows and OSX 
 (MacOS), and with PyPy3.
 
-pyfakefs works with [pytest](http://doc.pytest.org) version 3.0.0 or above.
+pyfakefs works with [pytest](http://doc.pytest.org) version 3.0.0 or above, 
+though a current version is recommended.
 
 pyfakefs will not work with Python libraries that use C libraries to access the
-file system.  This is because pyfakefs cannot patch the underlying C libraries'
+file system. This is because pyfakefs cannot patch the underlying C libraries'
 file access functions--the C libraries will always access the real file system.
 For example, pyfakefs will not work with [`lxml`](http://lxml.de/).  In this case
 `lxml` must be replaced with a pure Python alternative such as
@@ -62,19 +62,19 @@ Python 3.7 to 3.11, and with PyPy3 on Linux, using
 ### Running pyfakefs unit tests
 
 #### On the command line
-pyfakefs unit tests can be run using `unittest` or `pytest`:
+pyfakefs unit tests can be run using `pytest` (all tests) or `unittest` 
+(all tests except `pytest`-specific ones):
 
 ```bash
 $ cd pyfakefs/
 $ export PYTHONPATH=$PWD
 
+$ python -m pytest pyfakefs
 $ python -m pyfakefs.tests.all_tests
-$ python -m pyfakefs.tests.all_tests_without_extra_packages
-$ python -m pytest pyfakefs/pytest_tests/pytest_plugin_test.py
 ```
 
-These scripts are called by `tox` and Travis-CI. `tox` can be used to run tests
-locally against supported python versions:
+Similar scripts are called by `tox` and Github Actions. `tox` can be used to 
+run tests locally against supported python versions:
 
 ```bash
 $ tox
@@ -103,7 +103,7 @@ for more information.
 pyfakefs.py was initially developed at Google by Mike Bland as a modest fake
 implementation of core Python modules.  It was introduced to all of Google
 in September 2006. Since then, it has been enhanced to extend its
-functionality and usefulness.  At last count, pyfakefs is used in over 2,000
+functionality and usefulness.  At last count, pyfakefs was used in over 2,000
 Python tests at Google.
 
 Google released pyfakefs to the public in 2011 as Google Code project
