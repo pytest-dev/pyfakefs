@@ -48,38 +48,14 @@
 <div class="section" id="test-scenarios">
 <h2>Test Scenarios<a class="headerlink" href="#test-scenarios" title="Permalink to this headline">¶</a></h2>
 <p>There are several approaches for implementing tests using <code class="docutils literal notranslate"><span class="pre">pyfakefs</span></code>.</p>
-<div class="section" id="patch-using-fake-filesystem-unittest">
-<h3>Patch using fake_filesystem_unittest<a class="headerlink" href="#patch-using-fake-filesystem-unittest" title="Permalink to this headline">¶</a></h3>
-<p>If you are using the Python <code class="docutils literal notranslate"><span class="pre">unittest</span></code> package, the easiest approach is to
-use test classes derived from <code class="docutils literal notranslate"><span class="pre">fake_filesystem_unittest.TestCase</span></code>.</p>
-<p>If you call <code class="docutils literal notranslate"><span class="pre">setUpPyfakefs()</span></code> in your <code class="docutils literal notranslate"><span class="pre">setUp()</span></code>, <code class="docutils literal notranslate"><span class="pre">pyfakefs</span></code> will
-automatically find all real file functions and modules, and stub these out
-with the fake file system functions and modules:</p>
-<div class="code python highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">pyfakefs.fake_filesystem_unittest</span> <span class="k">import</span> <span class="n">TestCase</span>
-
-<span class="k">class</span> <span class="nc">ExampleTestCase</span><span class="p">(</span><span class="n">TestCase</span><span class="p">):</span>
-    <span class="k">def</span> <span class="nf">setUp</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">setUpPyfakefs</span><span class="p">()</span>
-
-    <span class="k">def</span> <span class="nf">test_create_file</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="n">file_path</span> <span class="o">=</span> <span class="s1">&#39;/test/file.txt&#39;</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">assertFalse</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">file_path</span><span class="p">))</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">create_file</span><span class="p">(</span><span class="n">file_path</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">assertTrue</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">file_path</span><span class="p">))</span>
-</pre></div>
-</div>
-<p>The usage is explained in more detail in <a class="reference internal" href="autopatch.html#auto-patch"><span class="std std-ref">Automatically find and patch file functions and modules</span></a> and
-demonstrated in the files <a class="reference external" href="https://github.com/jmcgeheeiv/pyfakefs/blob/master/pyfakefs/tests/example.py">example.py</a> and <a class="reference external" href="https://github.com/jmcgeheeiv/pyfakefs/blob/master/pyfakefs/tests/example_test.py">example_test.py</a>.</p>
-</div>
 <div class="section" id="patch-using-the-pytest-plugin">
 <h3>Patch using the pytest plugin<a class="headerlink" href="#patch-using-the-pytest-plugin" title="Permalink to this headline">¶</a></h3>
-<p>If you use <a class="reference external" href="https://doc.pytest.org">pytest</a>, you will be interested in the pytest plugin in
-<code class="docutils literal notranslate"><span class="pre">pyfakefs</span></code>.
-This automatically patches all file system functions and modules in a
-similar manner as described above.</p>
-<p>The pytest plugin provides the <code class="docutils literal notranslate"><span class="pre">fs</span></code> fixture for use in your test. The plugin
-is registered for pytest on installing <code class="docutils literal notranslate"><span class="pre">pyfakefs</span></code> as usual for pytest
-plugins, so you can just use it:</p>
+<p><code class="docutils literal notranslate"><span class="pre">pyfakefs</span></code> functions as a <a class="reference external" href="https://doc.pytest.org">pytest</a> plugin that provides the <cite>fs</cite> fixture,
+which is registered at installation time.
+Using this fixture automatically patches all file system functions with
+the fake file system functions. It also allows to access several
+convenience methods (see <a class="reference internal" href="#convenience-methods"><span class="std std-ref">Using convenience methods</span></a>).</p>
+<p>Here is an example for a simple test:</p>
 <div class="code python highlight-default notranslate"><div class="highlight"><pre><span></span><span class="k">def</span> <span class="nf">my_fakefs_test</span><span class="p">(</span><span class="n">fs</span><span class="p">):</span>
     <span class="c1"># &quot;fs&quot; is the reference to the fake file system</span>
     <span class="n">fs</span><span class="o">.</span><span class="n">create_file</span><span class="p">(</span><span class="s1">&#39;/var/data/xx1.txt&#39;</span><span class="p">)</span>
@@ -111,6 +87,29 @@ not setup / tear down the fake filesystem in the current scope; instead, it
 will just serve as a reference to the active fake filesystem.</p>
 </div>
 </div>
+</div>
+<div class="section" id="patch-using-fake-filesystem-unittest">
+<h3>Patch using fake_filesystem_unittest<a class="headerlink" href="#patch-using-fake-filesystem-unittest" title="Permalink to this headline">¶</a></h3>
+<p>If you are using the Python <code class="docutils literal notranslate"><span class="pre">unittest</span></code> package, the easiest approach is to
+use test classes derived from <code class="docutils literal notranslate"><span class="pre">fake_filesystem_unittest.TestCase</span></code>.</p>
+<p>If you call <code class="docutils literal notranslate"><span class="pre">setUpPyfakefs()</span></code> in your <code class="docutils literal notranslate"><span class="pre">setUp()</span></code>, <code class="docutils literal notranslate"><span class="pre">pyfakefs</span></code> will
+automatically find all real file functions and modules, and stub these out
+with the fake file system functions and modules:</p>
+<div class="code python highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">pyfakefs.fake_filesystem_unittest</span> <span class="k">import</span> <span class="n">TestCase</span>
+
+<span class="k">class</span> <span class="nc">ExampleTestCase</span><span class="p">(</span><span class="n">TestCase</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">setUp</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">setUpPyfakefs</span><span class="p">()</span>
+
+    <span class="k">def</span> <span class="nf">test_create_file</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">file_path</span> <span class="o">=</span> <span class="s1">&#39;/test/file.txt&#39;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">assertFalse</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">file_path</span><span class="p">))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">create_file</span><span class="p">(</span><span class="n">file_path</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">assertTrue</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">file_path</span><span class="p">))</span>
+</pre></div>
+</div>
+<p>The usage is explained in more detail in <a class="reference internal" href="autopatch.html#auto-patch"><span class="std std-ref">Automatically find and patch file functions and modules</span></a> and
+demonstrated in the files <a class="reference external" href="https://github.com/jmcgeheeiv/pyfakefs/blob/master/pyfakefs/tests/example.py">example.py</a> and <a class="reference external" href="https://github.com/jmcgeheeiv/pyfakefs/blob/master/pyfakefs/tests/example_test.py">example_test.py</a>.</p>
 </div>
 <div class="section" id="patch-using-fake-filesystem-unittest-patcher">
 <h3>Patch using fake_filesystem_unittest.Patcher<a class="headerlink" href="#patch-using-fake-filesystem-unittest-patcher" title="Permalink to this headline">¶</a></h3>
@@ -212,22 +211,6 @@ constructor:</p>
 </pre></div>
 </div>
 </div>
-<div class="section" id="unittest">
-<h4>Unittest<a class="headerlink" href="#unittest" title="Permalink to this headline">¶</a></h4>
-<p>If you are using <code class="docutils literal notranslate"><span class="pre">fake_filesystem_unittest.TestCase</span></code>, the arguments can be
-passed to <code class="docutils literal notranslate"><span class="pre">setUpPyfakefs()</span></code>, which will pass them to the <code class="docutils literal notranslate"><span class="pre">Patcher</span></code>
-instance:</p>
-<div class="code python highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">pyfakefs.fake_filesystem_unittest</span> <span class="k">import</span> <span class="n">TestCase</span>
-
-<span class="k">class</span> <span class="nc">SomeTest</span><span class="p">(</span><span class="n">TestCase</span><span class="p">):</span>
-    <span class="k">def</span> <span class="nf">setUp</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">setUpPyfakefs</span><span class="p">(</span><span class="n">allow_root_user</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
-
-    <span class="k">def</span> <span class="nf">testSomething</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="o">...</span>
-</pre></div>
-</div>
-</div>
 <div class="section" id="pytest">
 <h4>Pytest<a class="headerlink" href="#pytest" title="Permalink to this headline">¶</a></h4>
 <p>In case of <code class="docutils literal notranslate"><span class="pre">pytest</span></code>, you have two possibilities:</p>
@@ -259,6 +242,22 @@ single test:</li>
 <span class="nd">@pytest</span><span class="o">.</span><span class="n">mark</span><span class="o">.</span><span class="n">parametrize</span><span class="p">(</span><span class="s1">&#39;fs&#39;</span><span class="p">,</span> <span class="p">[[</span><span class="kc">None</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span> <span class="kc">False</span><span class="p">]],</span> <span class="n">indirect</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 <span class="k">def</span> <span class="nf">test_something</span><span class="p">(</span><span class="n">fs</span><span class="p">):</span>
     <span class="o">...</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="unittest">
+<h4>Unittest<a class="headerlink" href="#unittest" title="Permalink to this headline">¶</a></h4>
+<p>If you are using <code class="docutils literal notranslate"><span class="pre">fake_filesystem_unittest.TestCase</span></code>, the arguments can be
+passed to <code class="docutils literal notranslate"><span class="pre">setUpPyfakefs()</span></code>, which will pass them to the <code class="docutils literal notranslate"><span class="pre">Patcher</span></code>
+instance:</p>
+<div class="code python highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">pyfakefs.fake_filesystem_unittest</span> <span class="k">import</span> <span class="n">TestCase</span>
+
+<span class="k">class</span> <span class="nc">SomeTest</span><span class="p">(</span><span class="n">TestCase</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">setUp</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">setUpPyfakefs</span><span class="p">(</span><span class="n">allow_root_user</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">testSomething</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="o">...</span>
 </pre></div>
 </div>
 </div>
@@ -582,7 +581,7 @@ no problems come up.</p>
 </div>
 </div>
 <div class="section" id="using-convenience-methods">
-<h2>Using convenience methods<a class="headerlink" href="#using-convenience-methods" title="Permalink to this headline">¶</a></h2>
+<span id="convenience-methods"></span><h2>Using convenience methods<a class="headerlink" href="#using-convenience-methods" title="Permalink to this headline">¶</a></h2>
 <p>While <code class="docutils literal notranslate"><span class="pre">pyfakefs</span></code> can be used just with the standard Python file system
 functions, there are few convenience methods in <code class="docutils literal notranslate"><span class="pre">fake_filesystem</span></code> that can
 help you setting up your tests. The methods can be accessed via the
@@ -821,11 +820,11 @@ respective behavior</li>
   <ul>
 <li><a class="reference internal" href="#">Usage</a><ul>
 <li><a class="reference internal" href="#test-scenarios">Test Scenarios</a><ul>
-<li><a class="reference internal" href="#patch-using-fake-filesystem-unittest">Patch using fake_filesystem_unittest</a></li>
 <li><a class="reference internal" href="#patch-using-the-pytest-plugin">Patch using the pytest plugin</a><ul>
 <li><a class="reference internal" href="#module-and-session-scoped-fixtures">Module- and session scoped fixtures</a></li>
 </ul>
 </li>
+<li><a class="reference internal" href="#patch-using-fake-filesystem-unittest">Patch using fake_filesystem_unittest</a></li>
 <li><a class="reference internal" href="#patch-using-fake-filesystem-unittest-patcher">Patch using fake_filesystem_unittest.Patcher</a></li>
 <li><a class="reference internal" href="#patch-using-fake-filesystem-unittest-patchfs-decorator">Patch using fake_filesystem_unittest.patchfs decorator</a></li>
 </ul>
@@ -833,8 +832,8 @@ respective behavior</li>
 <li><a class="reference internal" href="#customizing-patching">Customizing patching</a><ul>
 <li><a class="reference internal" href="#using-custom-arguments">Using custom arguments</a><ul>
 <li><a class="reference internal" href="#patcher">Patcher</a></li>
-<li><a class="reference internal" href="#unittest">Unittest</a></li>
 <li><a class="reference internal" href="#pytest">Pytest</a></li>
+<li><a class="reference internal" href="#unittest">Unittest</a></li>
 <li><a class="reference internal" href="#patchfs">patchfs</a></li>
 </ul>
 </li>
@@ -915,7 +914,7 @@ respective behavior</li>
         &#169; Copyright 2009 Google Inc. All Rights Reserved.
 © Copyright 2014 Altera Corporation. All Rights Reserved.
 © Copyright 2014-2022 John McGehee.
-      Last updated on Sep 20, 2022.
+      Last updated on Sep 30, 2022.
     </div>
   </body>
 </html>

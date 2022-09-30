@@ -5,42 +5,15 @@ Test Scenarios
 --------------
 There are several approaches for implementing tests using ``pyfakefs``.
 
-Patch using fake_filesystem_unittest
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-If you are using the Python ``unittest`` package, the easiest approach is to
-use test classes derived from ``fake_filesystem_unittest.TestCase``.
-
-If you call ``setUpPyfakefs()`` in your ``setUp()``, ``pyfakefs`` will
-automatically find all real file functions and modules, and stub these out
-with the fake file system functions and modules:
-
-.. code:: python
-
-    from pyfakefs.fake_filesystem_unittest import TestCase
-
-    class ExampleTestCase(TestCase):
-        def setUp(self):
-            self.setUpPyfakefs()
-
-        def test_create_file(self):
-            file_path = '/test/file.txt'
-            self.assertFalse(os.path.exists(file_path))
-            self.fs.create_file(file_path)
-            self.assertTrue(os.path.exists(file_path))
-
-The usage is explained in more detail in :ref:`auto_patch` and
-demonstrated in the files `example.py`_ and `example_test.py`_.
-
 Patch using the pytest plugin
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-If you use `pytest`_, you will be interested in the pytest plugin in
-``pyfakefs``.
-This automatically patches all file system functions and modules in a
-similar manner as described above.
+``pyfakefs`` functions as a `pytest`_ plugin that provides the `fs` fixture,
+which is registered at installation time.
+Using this fixture automatically patches all file system functions with
+the fake file system functions. It also allows to access several
+convenience methods (see :ref:`convenience_methods`).
 
-The pytest plugin provides the ``fs`` fixture for use in your test. The plugin
-is registered for pytest on installing ``pyfakefs`` as usual for pytest
-plugins, so you can just use it:
+Here is an example for a simple test:
 
 .. code:: python
 
@@ -74,6 +47,31 @@ respectively.
   not setup / tear down the fake filesystem in the current scope; instead, it
   will just serve as a reference to the active fake filesystem.
 
+Patch using fake_filesystem_unittest
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+If you are using the Python ``unittest`` package, the easiest approach is to
+use test classes derived from ``fake_filesystem_unittest.TestCase``.
+
+If you call ``setUpPyfakefs()`` in your ``setUp()``, ``pyfakefs`` will
+automatically find all real file functions and modules, and stub these out
+with the fake file system functions and modules:
+
+.. code:: python
+
+    from pyfakefs.fake_filesystem_unittest import TestCase
+
+    class ExampleTestCase(TestCase):
+        def setUp(self):
+            self.setUpPyfakefs()
+
+        def test_create_file(self):
+            file_path = '/test/file.txt'
+            self.assertFalse(os.path.exists(file_path))
+            self.fs.create_file(file_path)
+            self.assertTrue(os.path.exists(file_path))
+
+The usage is explained in more detail in :ref:`auto_patch` and
+demonstrated in the files `example.py`_ and `example_test.py`_.
 
 Patch using fake_filesystem_unittest.Patcher
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -188,23 +186,6 @@ constructor:
   with Patcher(allow_root_user=False) as patcher:
       ...
 
-Unittest
-........
-If you are using ``fake_filesystem_unittest.TestCase``, the arguments can be
-passed to ``setUpPyfakefs()``, which will pass them to the ``Patcher``
-instance:
-
-.. code:: python
-
-  from pyfakefs.fake_filesystem_unittest import TestCase
-
-  class SomeTest(TestCase):
-      def setUp(self):
-          self.setUpPyfakefs(allow_root_user=False)
-
-      def testSomething(self):
-          ...
-
 Pytest
 ......
 
@@ -240,6 +221,22 @@ In case of ``pytest``, you have two possibilities:
   def test_something(fs):
       ...
 
+Unittest
+........
+If you are using ``fake_filesystem_unittest.TestCase``, the arguments can be
+passed to ``setUpPyfakefs()``, which will pass them to the ``Patcher``
+instance:
+
+.. code:: python
+
+  from pyfakefs.fake_filesystem_unittest import TestCase
+
+  class SomeTest(TestCase):
+      def setUp(self):
+          self.setUpPyfakefs(allow_root_user=False)
+
+      def testSomething(self):
+          ...
 
 patchfs
 .......
@@ -592,6 +589,8 @@ If you want to clear the cache just for a specific test instead, you can call
       fs.clear_cache()
       ...
 
+
+.. _convenience_methods:
 
 Using convenience methods
 -------------------------

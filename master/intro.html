@@ -51,7 +51,8 @@ Using pyfakefs, your tests operate on a fake file system in memory without touch
 The software under test requires no modification to work with pyfakefs.</p>
 <p>pyfakefs works with CPython 3.7 and above, on Linux, Windows and OSX
 (MacOS), and with PyPy3.</p>
-<p>pyfakefs works with <a class="reference external" href="doc.pytest.org">pytest</a> version 3.0.0 or above.</p>
+<p>pyfakefs works with <a class="reference external" href="doc.pytest.org">pytest</a> version 3.0.0 or above by
+providing the <cite>fs</cite> fixture that enables the fake filesystem.</p>
 <div class="section" id="installation">
 <h2>Installation<a class="headerlink" href="#installation" title="Permalink to this headline">¶</a></h2>
 <p>pyfakefs is available on <a class="reference external" href="https://pypi.python.org/pypi/pyfakefs/">PyPi</a>.
@@ -71,9 +72,9 @@ The latest released version can be installed from pypi:</p>
 system without the need of special commands. The same code that works on
 the real filesystem will work on the fake filesystem if running under
 pyfakefs.</li>
-<li>pyfakefs provides direct support for <cite>unittest</cite> (via a <cite>TestCase</cite> base
-class) and <cite>pytest</cite> (via a fixture), but can also be used with other test
-frameworks.</li>
+<li>pyfakefs provides direct support for <cite>pytest</cite> (via the <cite>fs</cite> fixture)
+and <cite>unittest</cite> (via a <cite>TestCase</cite> base class), but can also be used with
+other test frameworks.</li>
 <li>Each pyfakefs test starts with an empty file system, but it is possible to
 map files and directories from the real file system into the fake
 filesystem if needed.</li>
@@ -216,7 +217,7 @@ community actively maintains and extends pyfakefs.</p>
         &#169; Copyright 2009 Google Inc. All Rights Reserved.
 © Copyright 2014 Altera Corporation. All Rights Reserved.
 © Copyright 2014-2022 John McGehee.
-      Last updated on Sep 20, 2022.
+      Last updated on Sep 30, 2022.
     </div>
   </body>
 </html>
