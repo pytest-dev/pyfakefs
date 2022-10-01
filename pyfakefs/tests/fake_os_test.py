@@ -5045,6 +5045,22 @@ class FakeScandirTest(FakeOsModuleTestBase):
                     self.assertEqual(1, scandir_stat_nlink)
                 self.assertEqual(1, self.os.stat(self.file_path).st_nlink)
 
+    @unittest.skipIf(not hasattr(os, 'O_DIRECTORY'),
+                     "opening directory not supported")
+    @unittest.skipIf(sys.version_info < (3, 7),
+                     "fd not supported for scandir")
+    def test_scandir_with_fd(self):
+        # regression test for #723
+        temp_dir = self.make_path('tmp', 'dir')
+        self.create_dir(temp_dir)
+        self.create_file(self.os.path.join(temp_dir, 'file1'))
+        self.create_file(self.os.path.join(temp_dir, 'file2'))
+        self.create_dir(self.os.path.join(temp_dir, 'subdir'))
+        self.os.chdir(temp_dir)
+        fd = self.os.open(temp_dir, flags=os.O_RDONLY | os.O_DIRECTORY)
+        children = [dir_entry.name for dir_entry in self.os.scandir(fd)]
+        assert sorted(children) == ['file1', 'file2', 'subdir']
+
     def check_stat(self, absolute_symlink_expected_size,
                    relative_symlink_expected_size):
         self.assertEqual(self.FILE_SIZE, self.dir_entries[1].stat().st_size)
@@ -5136,9 +5152,10 @@ class RealScandirRelTest(FakeScandirRelTest):
         return True
 
 
-@unittest.skipIf(sys.version_info < (3, 7) or TestCase.is_windows or
-                 use_scandir_package,
-                 'dir_fd support for os.scandir was introduced in Python 3.7')
+@unittest.skipIf(TestCase.is_windows,
+                 'dir_fd not supported for os.scandir in Windows')
+@unittest.skipIf(use_scandir_package,
+                 'no dir_fd support for scandir package')
 class FakeScandirFdTest(FakeScandirTest):
     def tearDown(self):
         self.os.close(self.dir_fd)
