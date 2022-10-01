@@ -3,6 +3,10 @@ The released versions correspond to PyPi releases.
 
 ## Unreleased
 
+### Fixes 
+* fixed handling of `O_TMPFILE` in `os.open` (caused handling of 
+  `O_DIRECTORY` as `O_TMPFILE`) (see [#723](../../issues/723))
+
 ## [Version 4.7.0](https://pypi.python.org/pypi/pyfakefs/4.7.0) (2022-09-18)
 Changed handling of nested fixtures and bug fixes.
 

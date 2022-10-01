@@ -20,7 +20,7 @@ import os
 import sys
 
 from pyfakefs.extra_packages import use_scandir_package
-from pyfakefs.helpers import to_string
+from pyfakefs.helpers import to_string, make_string_path
 
 if sys.version_info >= (3, 6):
     BaseClass = os.PathLike
@@ -123,7 +123,8 @@ class ScanDirIter:
         if isinstance(path, int):
             if not use_scandir_package and (
                     sys.version_info < (3, 7) or
-                    self.filesystem.is_windows_fs):
+                    self.filesystem.is_windows_fs
+            ):
                 raise NotImplementedError(
                     'scandir does not support file descriptor '
                     'path argument')
@@ -131,6 +132,7 @@ class ScanDirIter:
                 self.filesystem.get_open_file(path).get_object().path)
             self.path = ''
         else:
+            path = make_string_path(path)
             self.abspath = self.filesystem.absnormpath(path)
             self.path = to_string(path)
         entries = self.filesystem.confirmdir(self.abspath).entries
