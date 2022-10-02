@@ -214,6 +214,23 @@ class FakeStatResult:
         self._st_size = val
 
     @property
+    def st_blocks(self) -> int:
+        """Return the number of 512-byte blocks allocated for the file.
+        Assumes a page size of 4096 (matches most systems).
+        Ignores that this may not be available under some systems,
+        and that the result may differ if the file has holes.
+        """
+        if self.is_windows:
+            raise AttributeError(
+                "'os.stat_result' object has no attribute 'st_blocks'")
+        page_size = 4096
+        blocks_in_page = page_size // 512
+        pages = self._st_size // page_size
+        if self._st_size % page_size:
+            pages += 1
+        return pages * blocks_in_page
+
+    @property
     def st_file_attributes(self) -> int:
         if not self.is_windows:
             raise AttributeError("module 'os.stat_result' "
