@@ -3,7 +3,11 @@ The released versions correspond to PyPi releases.
 
 ## Unreleased
 
-### Fixes 
+### New Features
+* added some support for `st_blocks` in stat result
+  (see [#722](../../issues/722))
+
+### Fixes
 * fixed handling of `O_TMPFILE` in `os.open` (caused handling of 
   `O_DIRECTORY` as `O_TMPFILE`) (see [#723](../../issues/723))
 

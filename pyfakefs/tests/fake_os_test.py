@@ -247,6 +247,31 @@ class FakeOsModuleTest(FakeOsModuleTestBase):
         self.assertTrue(stat.S_IFREG & self.os.stat(file_path).st_mode)
         self.assertEqual(5, self.os.stat(file_path)[stat.ST_SIZE])
 
+    def test_st_blocks(self):
+        self.check_posix_only()
+        file_path = self.make_path('foo1')
+        self.create_file(file_path, contents=b"")
+        self.assertEqual(0, self.os.stat(file_path).st_blocks)
+        file_path = self.make_path('foo2')
+        self.create_file(file_path, contents=b"t")
+        self.assertEqual(8, self.os.stat(file_path).st_blocks)
+        file_path = self.make_path('foo3')
+        self.create_file(file_path, contents=b"t" * 4095)
+        self.assertEqual(8, self.os.stat(file_path).st_blocks)
+        file_path = self.make_path('foo4')
+        self.create_file(file_path, contents=b"t" * 4096)
+        self.assertEqual(8, self.os.stat(file_path).st_blocks)
+        file_path = self.make_path('foo5')
+        self.create_file(file_path, contents=b"t" * 4097)
+        self.assertEqual(16, self.os.stat(file_path).st_blocks)
+
+    def test_no_st_blocks_in_windows(self):
+        self.check_windows_only()
+        file_path = self.make_path('foo')
+        self.create_file(file_path, contents=b"")
+        with self.assertRaises(AttributeError):
+            self.os.stat(file_path).st_blocks
+
     def test_stat_with_unc_path(self):
         self.skip_real_fs()
         self.check_windows_only()
