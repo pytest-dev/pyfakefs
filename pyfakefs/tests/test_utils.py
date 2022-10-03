@@ -299,10 +299,12 @@ class RealFsTestMixin:
         args = [to_string(arg) for arg in args]
         return self.os.path.join(self.base_path, *args)
 
-    def create_dir(self, dir_path):
+    def create_dir(self, dir_path, perm=0o777):
         """Create the directory at `dir_path`, including subdirectories.
         `dir_path` shall be composed using `make_path()`.
         """
+        if not dir_path:
+            return
         existing_path = dir_path
         components = []
         while existing_path and not self.os.path.exists(existing_path):
@@ -317,6 +319,7 @@ class RealFsTestMixin:
             existing_path = self.os.path.join(existing_path, component)
             self.os.mkdir(existing_path)
             self.os.chmod(existing_path, 0o777)
+        self.os.chmod(dir_path, perm)
 
     def create_file(self, file_path, contents=None, encoding=None, perm=0o666):
         """Create the given file at `file_path` with optional contents,

@@ -1413,7 +1413,8 @@ class FakeFilesystem:
             follow_symlinks: If `False` and `path` points to a symlink,
                 the link itself is affected instead of the linked object.
         """
-        file_object = self.resolve(path, follow_symlinks, allow_fd=True)
+        file_object = self.resolve(path, follow_symlinks, allow_fd=True,
+                                   check_owner=True)
         if self.is_windows_fs:
             if mode & PERM_WRITE:
                 file_object.st_mode = file_object.st_mode | 0o222
@@ -2199,7 +2200,8 @@ class FakeFilesystem:
 
     def get_object_from_normpath(self,
                                  file_path: AnyPath,
-                                 check_read_perm: bool = True) -> AnyFile:
+                                 check_read_perm: bool = True,
+                                 check_owner: bool = False) -> AnyFile:
         """Search for the specified filesystem object within the fake
         filesystem.
 
@@ -2208,6 +2210,9 @@ class FakeFilesystem:
                 path that has already been normalized/resolved.
             check_read_perm: If True, raises OSError if a parent directory
                 does not have read permission
+            check_owner: If True, and check_read_perm is also True,
+                only checks read permission if the current user id is
+                different from the file object user id
 
         Returns:
             The FakeFile object corresponding to file_path.
@@ -2236,11 +2241,21 @@ class FakeFilesystem:
                     self.raise_os_error(errno.ENOENT, path)
                 target = target.get_entry(component)  # type: ignore
                 if (not is_root() and check_read_perm and target and
-                        not target.st_mode & PERM_READ):
+                        not self._can_read(target, check_owner)):
                     self.raise_os_error(errno.EACCES, target.path)
         except KeyError:
             self.raise_os_error(errno.ENOENT, path)
         return target
+
+    @staticmethod
+    def _can_read(target, owner_can_read):
+        if target.st_uid == USER_ID:
+            if owner_can_read or target.st_mode & 0o400:
+                return True
+        if target.st_gid == GROUP_ID:
+            if target.st_mode & 0o040:
+                return True
+        return target.st_mode & 0o004
 
     def get_object(self, file_path: AnyPath,
                    check_read_perm: bool = True) -> FakeFile:
@@ -2265,7 +2280,8 @@ class FakeFilesystem:
     def resolve(self, file_path: AnyStr,
                 follow_symlinks: bool = True,
                 allow_fd: bool = False,
-                check_read_perm: bool = True) -> FakeFile:
+                check_read_perm: bool = True,
+                check_owner: bool = False) -> FakeFile:
         """Search for the specified filesystem object, resolving all links.
 
         Args:
@@ -2275,6 +2291,9 @@ class FakeFilesystem:
             allow_fd: If `True`, `file_path` may be an open file descriptor
             check_read_perm: If True, raises OSError if a parent directory
                 does not have read permission
+            check_owner: If True, and check_read_perm is also True,
+                only checks read permission if the current user id is
+                different from the file object user id
 
         Returns:
           The FakeFile object corresponding to `file_path`.
@@ -2290,7 +2309,7 @@ class FakeFilesystem:
 
         if follow_symlinks:
             return self.get_object_from_normpath(self.resolve_path(
-                file_path, check_read_perm), check_read_perm)
+                file_path, check_read_perm), check_read_perm, check_owner)
         return self.lresolve(file_path)
 
     def lresolve(self, path: AnyPath) -> FakeFile:
@@ -3299,13 +3318,17 @@ class FakeFilesystem:
         """
         return self._is_of_type(path, S_IFLNK, follow_symlinks=False)
 
-    def confirmdir(self, target_directory: AnyStr) -> FakeDirectory:
+    def confirmdir(
+            self, target_directory: AnyStr, check_owner: bool = False
+    ) -> FakeDirectory:
         """Test that the target is actually a directory, raising OSError
         if not.
 
         Args:
             target_directory: Path to the target directory within the fake
                 filesystem.
+            check_owner: If True, only checks read permission if the current
+                user id is different from the file object user id
 
         Returns:
             The FakeDirectory object corresponding to target_directory.
@@ -3313,7 +3336,8 @@ class FakeFilesystem:
         Raises:
             OSError: if the target is not a directory.
         """
-        directory = cast(FakeDirectory, self.resolve(target_directory))
+        directory = cast(FakeDirectory, self.resolve(
+            target_directory, check_owner=check_owner))
         if not directory.st_mode & S_IFDIR:
             self.raise_os_error(errno.ENOTDIR, target_directory, 267)
         return directory
@@ -3379,14 +3403,14 @@ class FakeFilesystem:
             self.raise_os_error(error_nr, target_directory)
         ends_with_sep = self.ends_with_path_separator(target_directory)
         target_directory = self.absnormpath(target_directory)
-        if self.confirmdir(target_directory):
+        if self.confirmdir(target_directory, check_owner=True):
             if not self.is_windows_fs and self.islink(target_directory):
                 if allow_symlink:
                     return
                 if not ends_with_sep or not self.is_macos:
                     self.raise_os_error(errno.ENOTDIR, target_directory)
 
-            dir_object = self.resolve(target_directory)
+            dir_object = self.resolve(target_directory, check_owner=True)
             if dir_object.entries:
                 self.raise_os_error(errno.ENOTEMPTY, target_directory)
             self.remove_object(target_directory)
@@ -4797,8 +4821,7 @@ class FakeOsModule:
         path = self._path_with_dir_fd(path, self.chown, dir_fd)
         file_object = self.filesystem.resolve(
             path, follow_symlinks, allow_fd=True)
-        if not ((is_int_type(uid) or uid is None) and
-                (is_int_type(gid) or gid is None)):
+        if not isinstance(uid, int) or not isinstance(gid, int):
             raise TypeError("An integer is required")
         if uid != -1:
             file_object.st_uid = uid
