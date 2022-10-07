@@ -51,15 +51,14 @@ from importlib.abc import Loader, MetaPathFinder
 from types import ModuleType, TracebackType, FunctionType
 from typing import (
     Any, Callable, Dict, List, Set, Tuple, Optional, Union,
-    AnyStr, Type, Iterator, cast, ItemsView, Sequence
+    Type, Iterator, cast, ItemsView, Sequence
 )
 import unittest
 import warnings
 from unittest import TestSuite
 
-from pyfakefs.deprecator import Deprecator
 from pyfakefs.fake_filesystem import (
-    set_uid, set_gid, reset_ids, PatchMode, FakeFile, FakeFilesystem
+    set_uid, set_gid, reset_ids, PatchMode, FakeFilesystem
 )
 from pyfakefs.helpers import IS_PYPY
 from pyfakefs.mox3_stubout import StubOutForTesting
@@ -304,48 +303,6 @@ class TestCase(unittest.TestCase, TestCaseMixin):
         self.additional_skip_names = additional_skip_names
         self.modules_to_reload = modules_to_reload
         self.modules_to_patch = modules_to_patch
-
-    @Deprecator('add_real_file')
-    def copyRealFile(self, real_file_path: AnyStr,
-                     fake_file_path: Optional[AnyStr] = None,
-                     create_missing_dirs: bool = True) -> FakeFile:
-        """Add the file `real_file_path` in the real file system to the same
-        path in the fake file system.
-
-        **This method is deprecated** in favor of
-        :py:meth:`FakeFilesystem.add_real_file`.
-        `copyRealFile()` is retained with limited functionality for backward
-        compatibility only.
-
-        Args:
-          real_file_path: Path to the file in both the real and fake
-            file systems
-          fake_file_path: Deprecated.  Use the default, which is
-            `real_file_path`.
-            If a value other than `real_file_path` is specified, a `ValueError`
-            exception will be raised.
-          create_missing_dirs: Deprecated.  Use the default, which creates
-            missing directories in the fake file system.  If `False` is
-            specified, a `ValueError` exception is raised.
-
-        Returns:
-          The newly created FakeFile object.
-
-        Raises:
-          OSError: If the file already exists in the fake file system.
-          ValueError: If deprecated argument values are specified.
-
-        See:
-          :py:meth:`FakeFileSystem.add_real_file`
-        """
-        if fake_file_path is not None and real_file_path != fake_file_path:
-            raise ValueError("CopyRealFile() is deprecated and no longer "
-                             "supports different real and fake file paths")
-        if not create_missing_dirs:
-            raise ValueError("CopyRealFile() is deprecated and no longer "
-                             "supports NOT creating missing directories")
-        assert self._stubber.fs is not None
-        return self._stubber.fs.add_real_file(real_file_path, read_only=False)
 
     def tearDownPyfakefs(self) -> None:
         """This method is deprecated and exists only for backward

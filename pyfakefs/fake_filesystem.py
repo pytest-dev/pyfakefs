@@ -116,7 +116,6 @@ from typing import (
     List, Optional, Callable, Union, Any, Dict, Tuple, cast, AnyStr, overload,
     NoReturn, ClassVar, IO, Iterator, TextIO, Type
 )
-from pyfakefs.deprecator import Deprecator
 from pyfakefs.extra_packages import use_scandir
 from pyfakefs.fake_scandir import scandir, walk, ScanDirIter
 from pyfakefs.helpers import (
@@ -524,45 +523,6 @@ class FakeFile:
             dir_path = sep.join(names)
         return self.filesystem.absnormpath(dir_path)
 
-    @Deprecator('property path')
-    def GetPath(self):
-        return self.path
-
-    @Deprecator('property size')
-    def GetSize(self):
-        return self.size
-
-    @Deprecator('property size')
-    def SetSize(self, value):
-        self.size = value
-
-    @Deprecator('property st_atime')
-    def SetATime(self, st_atime):
-        """Set the self.st_atime attribute.
-
-        Args:
-          st_atime: The desired access time.
-        """
-        self.st_atime = st_atime
-
-    @Deprecator('property st_mtime')
-    def SetMTime(self, st_mtime):
-        """Set the self.st_mtime attribute.
-
-        Args:
-          st_mtime: The desired modification time.
-        """
-        self.st_mtime = st_mtime
-
-    @Deprecator('property st_ctime')
-    def SetCTime(self, st_ctime):
-        """Set the self.st_ctime attribute.
-
-        Args:
-          st_ctime: The desired creation time.
-        """
-        self.st_ctime = st_ctime
-
     def __getattr__(self, item: str) -> Any:
         """Forward some properties to stat_result."""
         if item in self.stat_types:
@@ -578,18 +538,6 @@ class FakeFile:
     def __str__(self) -> str:
         return '%r(%o)' % (self.name, self.st_mode)
 
-    @Deprecator('st_ino')
-    def SetIno(self, st_ino):
-        """Set the self.st_ino attribute.
-        Note that a unique inode is assigned automatically to a new fake file.
-        This function does not guarantee uniqueness and should be used with
-        caution.
-
-        Args:
-          st_ino: (int) The desired inode.
-        """
-        self.st_ino = st_ino
-
 
 class FakeNullFile(FakeFile):
     def __init__(self, filesystem: "FakeFilesystem") -> None:
@@ -603,11 +551,6 @@ class FakeNullFile(FakeFile):
 
     def set_initial_contents(self, contents: AnyStr) -> bool:
         return False
-
-
-Deprecator.add(FakeFile, FakeFile.set_large_file_size, 'SetLargeFileSize')
-Deprecator.add(FakeFile, FakeFile.set_contents, 'SetContents')
-Deprecator.add(FakeFile, FakeFile.is_large_file, 'IsLargeFile')
 
 
 class FakeFileFromRealFile(FakeFile):
@@ -790,10 +733,6 @@ class FakeDirectory(FakeFile):
         """Setting the size is an error for a directory."""
         raise self.filesystem.raise_os_error(errno.EISDIR, self.path)
 
-    @Deprecator('property size')
-    def GetSize(self):
-        return self.size
-
     def has_parent_object(self, dir_object: "FakeDirectory") -> bool:
         """Return `True` if dir_object is a direct or indirect parent
         directory, or if both are the same object."""
@@ -812,12 +751,6 @@ class FakeDirectory(FakeFile):
                 if line:
                     description = description + '  ' + line + '\n'
         return description
-
-
-Deprecator.add(FakeDirectory, FakeDirectory.add_entry, 'AddEntry')
-Deprecator.add(FakeDirectory, FakeDirectory.get_entry, 'GetEntry')
-Deprecator.add(FakeDirectory, FakeDirectory.set_contents, 'SetContents')
-Deprecator.add(FakeDirectory, FakeDirectory.remove_entry, 'RemoveEntry')
 
 
 class FakeDirectoryFromRealDirectory(FakeDirectory):
@@ -1482,19 +1415,6 @@ class FakeFilesystem:
                 "utime: 'times' must be either a tuple of two ints or None")
         if ns is not None and len(ns) != 2:
             raise TypeError("utime: 'ns' must be a tuple of two ints")
-
-    @Deprecator
-    def SetIno(self, path, st_ino):
-        """Set the self.st_ino attribute of file at 'path'.
-        Note that a unique inode is assigned automatically to a new fake file.
-        Using this function does not guarantee uniqueness and should used
-        with caution.
-
-        Args:
-            path: Path to file.
-            st_ino: The desired inode.
-        """
-        self.get_object(path).st_ino = st_ino
 
     def _add_open_file(
             self,
@@ -3444,57 +3364,6 @@ class FakeFilesystem:
         self._add_open_file(StandardStreamWrapper(sys.stdin))
         self._add_open_file(StandardStreamWrapper(sys.stdout))
         self._add_open_file(StandardStreamWrapper(sys.stderr))
-
-
-Deprecator.add(FakeFilesystem, FakeFilesystem.get_disk_usage, 'GetDiskUsage')
-Deprecator.add(FakeFilesystem, FakeFilesystem.set_disk_usage, 'SetDiskUsage')
-Deprecator.add(FakeFilesystem,
-               FakeFilesystem.change_disk_usage, 'ChangeDiskUsage')
-Deprecator.add(FakeFilesystem, FakeFilesystem.add_mount_point, 'AddMountPoint')
-Deprecator.add(FakeFilesystem, FakeFilesystem.stat, 'GetStat')
-Deprecator.add(FakeFilesystem, FakeFilesystem.chmod, 'ChangeMode')
-Deprecator.add(FakeFilesystem, FakeFilesystem.utime, 'UpdateTime')
-Deprecator.add(FakeFilesystem, FakeFilesystem._add_open_file, 'AddOpenFile')
-Deprecator.add(FakeFilesystem,
-               FakeFilesystem._close_open_file, 'CloseOpenFile')
-Deprecator.add(FakeFilesystem, FakeFilesystem.has_open_file, 'HasOpenFile')
-Deprecator.add(FakeFilesystem, FakeFilesystem.get_open_file, 'GetOpenFile')
-Deprecator.add(FakeFilesystem,
-               FakeFilesystem.normcase, 'NormalizePathSeparator')
-Deprecator.add(FakeFilesystem, FakeFilesystem.normpath, 'CollapsePath')
-Deprecator.add(FakeFilesystem, FakeFilesystem._original_path, 'NormalizeCase')
-Deprecator.add(FakeFilesystem, FakeFilesystem.absnormpath, 'NormalizePath')
-Deprecator.add(FakeFilesystem, FakeFilesystem.splitpath, 'SplitPath')
-Deprecator.add(FakeFilesystem, FakeFilesystem.splitdrive, 'SplitDrive')
-Deprecator.add(FakeFilesystem, FakeFilesystem.joinpaths, 'JoinPaths')
-Deprecator.add(FakeFilesystem,
-               FakeFilesystem._path_components, 'GetPathComponents')
-Deprecator.add(FakeFilesystem, FakeFilesystem.starts_with_drive_letter,
-               'StartsWithDriveLetter')
-Deprecator.add(FakeFilesystem, FakeFilesystem.exists, 'Exists')
-Deprecator.add(FakeFilesystem, FakeFilesystem.resolve_path, 'ResolvePath')
-Deprecator.add(FakeFilesystem, FakeFilesystem.get_object_from_normpath,
-               'GetObjectFromNormalizedPath')
-Deprecator.add(FakeFilesystem, FakeFilesystem.get_object, 'GetObject')
-Deprecator.add(FakeFilesystem, FakeFilesystem.resolve, 'ResolveObject')
-Deprecator.add(FakeFilesystem, FakeFilesystem.lresolve, 'LResolveObject')
-Deprecator.add(FakeFilesystem, FakeFilesystem.add_object, 'AddObject')
-Deprecator.add(FakeFilesystem, FakeFilesystem.remove_object, 'RemoveObject')
-Deprecator.add(FakeFilesystem, FakeFilesystem.rename, 'RenameObject')
-Deprecator.add(FakeFilesystem, FakeFilesystem.create_dir, 'CreateDirectory')
-Deprecator.add(FakeFilesystem, FakeFilesystem.create_file, 'CreateFile')
-Deprecator.add(FakeFilesystem, FakeFilesystem.create_symlink, 'CreateLink')
-Deprecator.add(FakeFilesystem, FakeFilesystem.link, 'CreateHardLink')
-Deprecator.add(FakeFilesystem, FakeFilesystem.readlink, 'ReadLink')
-Deprecator.add(FakeFilesystem, FakeFilesystem.makedir, 'MakeDirectory')
-Deprecator.add(FakeFilesystem, FakeFilesystem.makedirs, 'MakeDirectories')
-Deprecator.add(FakeFilesystem, FakeFilesystem.isdir, 'IsDir')
-Deprecator.add(FakeFilesystem, FakeFilesystem.isfile, 'IsFile')
-Deprecator.add(FakeFilesystem, FakeFilesystem.islink, 'IsLink')
-Deprecator.add(FakeFilesystem, FakeFilesystem.confirmdir, 'ConfirmDir')
-Deprecator.add(FakeFilesystem, FakeFilesystem.remove, 'RemoveFile')
-Deprecator.add(FakeFilesystem, FakeFilesystem.rmdir, 'RemoveDirectory')
-Deprecator.add(FakeFilesystem, FakeFilesystem.listdir, 'ListDir')
 
 
 class FakePathModule:
@@ -5742,10 +5611,6 @@ class FakePipeWrapper:
     def seekable(self) -> bool:
         """A pipe is not seekable."""
         return False
-
-
-Deprecator.add(FakeFileWrapper, FakeFileWrapper.get_object, 'GetObject')
-Deprecator.add(FakeFileWrapper, FakeFileWrapper.size, 'Size')
 
 
 class FakeFileOpen:

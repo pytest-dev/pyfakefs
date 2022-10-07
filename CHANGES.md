@@ -1,7 +1,13 @@
 # pyfakefs Release Notes
 The released versions correspond to PyPi releases.
 
-## Unreleased
+## Version 5.0.0 - unreleased
+New version after the transfer to `pytest-dev`.
+
+### Changes
+* the long deprecated old-style API is now removed
+* the deprecated method `copyRealFile` has been removed - use 
+  `add_real_file` instead
 
 ### Infrastructure
 * transferred the repository to the `pytest-dev` organization
