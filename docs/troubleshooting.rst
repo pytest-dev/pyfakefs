@@ -60,7 +60,7 @@ This has very similar problems to ``multiprocessing`` and cannot be used with
 ``pyfakefs`` to start a process. ``subprocess`` can either be mocked, if
 the process is not needed for the test, or patching can be paused to start
 a process if needed, and resumed afterwards
-(see `this issue <https://github.com/jmcgeheeiv/pyfakefs/issues/447>`__).
+(see `this issue <https://github.com/pytest-dev/pyfakefs/issues/447>`__).
 
 Modules that rely on ``subprocess`` or ``multiprocessing``
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -72,7 +72,7 @@ The `Pillow`_ Imaging Library
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 This library partly works with ``pyfakefs``, but it is known to not work at
 least if writing JPEG files
-(see `this issue <https://github.com/jmcgeheeiv/pyfakefs/issues/529>`__)
+(see `this issue <https://github.com/pytest-dev/pyfakefs/issues/529>`__)
 
 The `pandas`_ data analysis toolkit
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -112,8 +112,8 @@ There are at least the following kinds of deviations from the actual behavior:
 - unwanted deviations that we didn't notice--if you find any of these, please
   write an issue and we will try to fix it
 - behavior that depends on different OS versions and editions--as mentioned
-  in :ref:`limitations`, ``pyfakefs`` uses the TravisCI systems as reference
-  system and will not replicate all system-specific behavior
+  in :ref:`limitations`, ``pyfakefs`` uses the systems used for CI tests in
+  GitHub Actions as reference system and will not replicate all system-specific behavior
 - behavior that depends on low-level OS functionality that ``pyfakefs`` is not
   able to emulate; examples are the ``fcntl.ioctl`` and ``fcntl.fcntl``
   functions that are patched to do nothing

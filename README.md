@@ -1,45 +1,45 @@
-# pyfakefs [![PyPI version](https://badge.fury.io/py/pyfakefs.svg)](https://badge.fury.io/py/pyfakefs) [![Python version](https://img.shields.io/pypi/pyversions/pyfakefs.svg)](https://img.shields.io/pypi/pyversions/pyfakefs.svg) ![Testsuite](https://github.com/jmcgeheeiv/pyfakefs/workflows/Testsuite/badge.svg)
+# pyfakefs [![PyPI version](https://badge.fury.io/py/pyfakefs.svg)](https://badge.fury.io/py/pyfakefs) [![Python version](https://img.shields.io/pypi/pyversions/pyfakefs.svg)](https://img.shields.io/pypi/pyversions/pyfakefs.svg) ![Testsuite](https://github.com/pytest-dev/pyfakefs/workflows/Testsuite/badge.svg)
 
 pyfakefs implements a fake file system that mocks the Python file system modules.
 Using pyfakefs, your tests operate on a fake file system in memory without
 touching the real disk. The software under test requires no modification to
 work with pyfakefs.
 
-pyfakefs works with Linux, Windows and MacOS.
-
 pyfakefs provides the `fs` fixture for use with `pytest`, which will 
 automatically invoke the fake filesystem. It also provides 
 the `fake_filesystem_unittest.TestCase` class for use with `unittest` and 
 the means to use the fake filesystem with other test frameworks. 
 
+pyfakefs works with Linux, Windows and macOS.
+
 ## Documentation
 
 This file provides general usage instructions for pyfakefs.  There is more:
 
-* The documentation at [GitHub Pages:](http://jmcgeheeiv.github.io/pyfakefs)
-  * The [Release documentation](http://jmcgeheeiv.github.io/pyfakefs/release)
+* The documentation at [GitHub Pages:](http://pytest-dev.github.io/pyfakefs)
+  * The [Release documentation](http://pytest-dev.github.io/pyfakefs/release)
     contains usage documentation for pyfakefs and a description of the 
     most relevant classes, methods and functions for the last version 
     released on PyPi
-  * The [Development documentation](http://jmcgeheeiv.github.io/pyfakefs/master)
-    contains the same documentation for the current master branch
-  * The [Release 3.7 documentation](http://jmcgeheeiv.github.io/pyfakefs/release37)
+  * The [Development documentation](http://pytest-dev.github.io/pyfakefs/main)
+    contains the same documentation for the current main branch
+  * The [Release 3.7 documentation](http://pytest-dev.github.io/pyfakefs/release37)
     contains usage documentation for the last version of pyfakefs 
     supporting Python 2.7
-* The [Release Notes](https://github.com/jmcgeheeiv/pyfakefs/blob/master/CHANGES.md) 
+* The [Release Notes](https://github.com/pytest-dev/pyfakefs/blob/main/CHANGES.md) 
   show a list of changes in the latest versions
 
 ## Usage
 The simplest method to use pyfakefs is using the `fs` fixture with `pytest`. 
 Refer to the
-[usage documentation](http://jmcgeheeiv.github.io/pyfakefs/master/usage.html) 
+[usage documentation](http://pytest-dev.github.io/pyfakefs/main/usage.html) 
 for information on other test scenarios, test customization and 
 using convenience functions.
 
 
 ## Compatibility
-pyfakefs works with CPython 3.7 and above, on Linux, Windows and OSX 
-(MacOS), and with PyPy3.
+pyfakefs works with CPython 3.7 and above, on Linux, Windows and macOS, and 
+with PyPy3.
 
 pyfakefs works with [pytest](http://doc.pytest.org) version 3.0.0 or above, 
 though a current version is recommended.
@@ -55,9 +55,9 @@ For example, pyfakefs will not work with [`lxml`](http://lxml.de/).  In this cas
 
 ### Continuous integration
 
-pyfakefs is currently automatically tested on Linux, MacOS and Windows, with
+pyfakefs is currently automatically tested on Linux, macOS and Windows, with
 Python 3.7 to 3.11, and with PyPy3 on Linux, using
-[GitHub Actions](https://github.com/jmcgeheeiv/pyfakefs/actions).
+[GitHub Actions](https://github.com/pytest-dev/pyfakefs/actions).
 
 ### Running pyfakefs unit tests
 
@@ -96,7 +96,7 @@ docker run -t pyfakefs
 ### Contributing to pyfakefs
 
 We always welcome contributions to the library. Check out the
-[Contributing Guide](https://github.com/jmcgeheeiv/pyfakefs/blob/master/CONTRIBUTING.md)
+[Contributing Guide](https://github.com/pytest-dev/pyfakefs/blob/main/CONTRIBUTING.md)
 for more information.
 
 ## History
@@ -117,5 +117,6 @@ Google released pyfakefs to the public in 2011 as Google Code project
 
 After the [shutdown of Google Code](http://google-opensource.blogspot.com/2015/03/farewell-to-google-code.html)
 was announced, [John McGehee](https://github.com/jmcgeheeiv) merged all three Google Code projects together
-[here on GitHub](https://github.com/jmcgeheeiv/pyfakefs) where an enthusiastic community actively supports, maintains
-and extends pyfakefs.
+[here on GitHub](https://github.com/pytest-dev/pyfakefs) where an enthusiastic community actively supports, maintains
+and extends pyfakefs. In 2022, the repository has been transferred to 
+[pytest-dev](https://github.com/pytest-dev) to ensure continuous maintenance.

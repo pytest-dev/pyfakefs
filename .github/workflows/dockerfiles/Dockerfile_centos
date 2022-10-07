@@ -15,8 +15,8 @@
 FROM centos:latest
 MAINTAINER jmcgeheeiv@users.noreply.github.com
 
-ARG github_repo=jmcgeheeiv/pyfakefs
-ARG github_branch=master
+ARG github_repo=pytest-dev/pyfakefs
+ARG github_branch=main
 
 RUN cd /etc/yum.repos.d/
 RUN sed -i 's/mirrorlist/#mirrorlist/g' /etc/yum.repos.d/CentOS-*

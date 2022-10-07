@@ -41,13 +41,13 @@ RUN apt-get clean
 
 RUN useradd -u 1000 pyfakefs
 
-RUN wget https://github.com/jmcgeheeiv/pyfakefs/archive/master.zip \
-    && unzip master.zip \
-    && chown -R pyfakefs:pyfakefs /pyfakefs-master
-WORKDIR /pyfakefs-master
+RUN wget https://github.com/pytest-dev/pyfakefs/archive/main.zip \
+    && unzip main.zip \
+    && chown -R pyfakefs:pyfakefs /pyfakefs-main
+WORKDIR /pyfakefs-main
 RUN pip3 install -r requirements.txt
 RUN pip3 install -r extra_requirements.txt
 
 USER pyfakefs
-ENV PYTHONPATH /pyfakefs-master
+ENV PYTHONPATH /pyfakefs-main
 CMD ["python3", "-m", "pyfakefs.tests.all_tests"]

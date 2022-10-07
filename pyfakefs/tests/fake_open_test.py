@@ -97,7 +97,7 @@ class FakeFileOpenTest(FakeFileOpenTestBase):
             with self.open(file_path, 'w') as f:
                 f.write(text_fractions)
         except UnicodeEncodeError:
-            # see https://github.com/jmcgeheeiv/pyfakefs/issues/623
+            # see https://github.com/pytest-dev/pyfakefs/issues/623
             self.skipTest("This test does not work with an ASCII locale")
 
         with self.open(file_path) as f:
@@ -122,7 +122,7 @@ class FakeFileOpenTest(FakeFileOpenTestBase):
             with self.open(file_path, 'w') as f:
                 f.write(str_contents)
         except UnicodeEncodeError:
-            # see https://github.com/jmcgeheeiv/pyfakefs/issues/623
+            # see https://github.com/pytest-dev/pyfakefs/issues/623
             self.skipTest("This test does not work with an ASCII locale")
         with self.open(file_path, 'rb') as f:
             contents = f.read()
