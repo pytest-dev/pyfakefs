@@ -1,13 +1,13 @@
 Introduction
 ============
 
-`pyfakefs <https://github.com/jmcgeheeiv/pyfakefs>`__ implements a fake file
+`pyfakefs <https://github.com/pytest-dev/pyfakefs>`__ implements a fake file
 system that mocks the Python file system modules.
 Using pyfakefs, your tests operate on a fake file system in memory without touching the real disk.
 The software under test requires no modification to work with pyfakefs.
 
-pyfakefs works with CPython 3.7 and above, on Linux, Windows and OSX
-(MacOS), and with PyPy3.
+pyfakefs works with CPython 3.7 and above, on Linux, Windows and macOS,
+and with PyPy3.
 
 pyfakefs works with `pytest <doc.pytest.org>`__ version 3.0.0 or above by
 providing the `fs` fixture that enables the fake filesystem.
@@ -21,11 +21,11 @@ The latest released version can be installed from pypi:
 
    pip install pyfakefs
 
-The latest master can be installed from the GitHub sources:
+The latest main can be installed from the GitHub sources:
 
 .. code:: bash
 
-   pip install git+https://github.com/jmcgeheeiv/pyfakefs
+   pip install git+https://github.com/pytest-dev/pyfakefs
 
 Features
 --------
@@ -52,7 +52,7 @@ Features
   real file system has to be used in a test step
 
 - pyfakefs defaults to the OS it is running on, but can also be configured
-  to test code running under another OS (Linux, MacOS or Windows).
+  to test code running under another OS (Linux, macOS or Windows).
 
 - pyfakefs can be configured to behave as if running as a root or as a
   non-root user, independently from the actual user.
@@ -78,12 +78,10 @@ Limitations
   Python implementations will probably not work
 
 - Differences in the behavior in different Linux distributions or different
-  MacOS or Windows versions may not be reflected in the implementation, as
+  macOS or Windows versions may not be reflected in the implementation, as
   well as some OS-specific low-level file system behavior. The systems used
-  for automatic tests in
-  `Travis.CI <https://travis-ci.org/jmcgeheeiv/pyfakefs>`__ and
-  `AppVeyor <https://ci.appveyor.com/project/jmcgeheeiv/pyfakefs>`__ are
-  considered as reference systems, additionally the tests are run in Docker
+  for automatic tests in GitHub Actions are
+  considered as reference systems. Additionally, the tests are run in Docker
   containers with the latest CentOS, Debian, Fedora and Ubuntu images.
 
 - pyfakefs may not work correctly if file system functions are patched by
@@ -94,7 +92,7 @@ Limitations
   `behave <https://github.com/behave/behave>`__ due to the way it loads
   the steps, if any filesystem modules are imported globally in the steps or
   environment files; as a workaround, you may load them locally inside the
-  test steps (see `this issue <https://github.com/jmcgeheeiv/pyfakefs/issues/703>`__)
+  test steps (see `this issue <https://github.com/pytest-dev/pyfakefs/issues/703>`__)
 
 History
 -------
@@ -118,5 +116,7 @@ After the `shutdown of Google
 Code <http://google-opensource.blogspot.com/2015/03/farewell-to-google-code.html>`__
 was announced, `John McGehee <https://github.com/jmcgeheeiv>`__ merged
 all three Google Code projects together `on
-GitHub <https://github.com/jmcgeheeiv/pyfakefs>`__ where an enthusiastic
-community actively maintains and extends pyfakefs.
+GitHub <https://github.com/pytest-dev/pyfakefs>`__ where an enthusiastic
+community actively maintains and extends pyfakefs. In 2022, the repository has
+been transferred to `pytest-dev <https://github.com/pytest-dev>`__ to ensure
+continuous maintenance.

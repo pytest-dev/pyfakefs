@@ -3,6 +3,10 @@ The released versions correspond to PyPi releases.
 
 ## Unreleased
 
+### Infrastructure
+* transferred the repository to the `pytest-dev` organization
+* renamed the `master` branch to `main`
+
 ### New Features
 * added some support for `st_blocks` in stat result
   (see [#722](../../issues/722))
@@ -407,7 +411,7 @@ installation under Python 2. This has been fixed in version 4.0.2.
 
 ## [Version 3.7.2](https://pypi.python.org/pypi/pyfakefs/3.7.2) (2020-03-02)
 
-This version backports some fixes from master.
+This version backports some fixes from main.
 
 #### Fixes
   * Fixed handling of relative paths in `lresolve` / `os.lstat`
@@ -427,7 +431,7 @@ This version adds support for Python 3.7.6 and 3.8.1.
 
 #### Fixes
   * Adapted fake `pathlib` to changes in Python 3.7.6/3.8.1   
-    (see [#508](../../issues/508)) (backported from master)
+    (see [#508](../../issues/508)) (backported from main)
     
 ## [Version 3.7](https://pypi.python.org/pypi/pyfakefs/3.7) (2019-11-23)
 
@@ -834,7 +838,7 @@ This is the last release that supports Python 2.6.
  * Support for `glob.iglob` ([#59](../../issues/59))
 
 #### Infrastructure
- * Added [auto-generated documentation](http://jmcgeheeiv.github.io/pyfakefs/)
+ * Added [auto-generated documentation](http://pytest-dev.github.io/pyfakefs/)
 
 #### Fixes
  * `shutil.move` incorrectly moves directories ([#145](../../issues/145))

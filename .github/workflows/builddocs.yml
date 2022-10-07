@@ -2,7 +2,7 @@ name: DocBuild
 
 on:
   push:
-    branches: master
+    branches: main
 
 defaults:
   run:
@@ -16,7 +16,7 @@ jobs:
         os: [ubuntu-latest]
         python-version:  [3.8]
     steps:
-      - name: Checkout master
+      - name: Checkout main
         uses: actions/checkout@v2
         with:
           path: main
@@ -40,11 +40,11 @@ jobs:
           path: doc
       - name: Copy and commit changes
         run: |
-          cp -r main/gh-pages/* doc/master
+          cp -r main/gh-pages/* doc/main
           cd doc
           git config user.name "CI Build"
           git config user.email "pyfakefs@gmail.com"
-          git add master/*
+          git add main/*
           if [ `git status -s | wc -l` = 0 ]; then
             echo "No changes in built documentation, skipping"
             exit 0
