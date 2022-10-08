@@ -1,0 +1,65 @@
+name: release-deploy
+
+on:
+  release:
+    types: [ published ]
+
+jobs:
+
+  deploy:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: true
+      matrix:
+        python-version: [ '3.10' ]
+
+    steps:
+    - uses: actions/checkout@v2
+      with:
+        path: main
+
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v2
+      with:
+        python-version: ${{ matrix.python-version }}
+
+    - name: Build package
+      run: |
+        python -m pip install --upgrade pip
+        python -m pip install build
+        cd main
+        echo "RELEASE_VERSION=$(cat pyfakefs/_version.py | cut -d "'" -f 2)" >> $GITHUB_ENV
+        python -m build
+
+    - name: Publish package to PyPI
+      uses: pypa/gh-action-pypi-publish@master
+      with:
+        user: __token__
+        password: ${{ secrets.PYPI_TOKEN }}
+
+    - name: Create release docs
+      run: |
+        python -m pip install wheel
+        python -m pip install pytest
+        python -m pip install sphinx
+        cd main/docs
+        make html
+
+    - name: Checkout gh-pages
+      uses: actions/checkout@v2
+      with:
+        ref: gh-pages
+        path: doc
+
+    - name: Copy and commit release documentation
+      run: |
+        cp -r main/gh-pages/* doc/release
+        cd doc
+        sed "s/href=\"release\/index.html\">Pyfakefs .*/href=\"release\/index.html\">Pyfakefs $RELEASE_VERSION/" index.html > index1.html
+        rm index.html
+        mv index1.html index.html
+        git config user.name "CI Build"
+        git config user.email "pyfakefs@gmail.com"
+        git add release/*
+        git commit -a -m "Release $RELEASE_VERSION documentation"
+        git push

@@ -714,7 +714,7 @@ the ``fs`` fixture.
 
 Handling mount points
 ~~~~~~~~~~~~~~~~~~~~~
-Under Linux and MacOS, the root path (``/``) is the only mount point created
+Under Linux and macOS, the root path (``/``) is the only mount point created
 in the fake file system. If you need support for more mount points, you can add
 them using ``add_mount_point()``.
 
@@ -806,7 +806,7 @@ Here is the same code using a context manager:
 
 Simulating other file systems
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-``Pyfakefs`` supports Linux, MacOS and Windows operating systems. By default,
+``Pyfakefs`` supports Linux, macOS and Windows operating systems. By default,
 the file system of the OS where the tests run is assumed, but it is possible
 to simulate other file systems to some extent. To set a specific file
 system, you can change ``pyfakefs.FakeFilesystem.os`` to one of
@@ -820,11 +820,11 @@ attributes, which can also be set separately if needed:
 
   - ``is_windows_fs`` -  if ``True`` a Windows file system (NTFS) is assumed
   - ``is_macos`` - if ``True`` and ``is_windows_fs`` is ``False``, the
-    standard MacOS file system (HFS+) is assumed
+    standard macOS file system (HFS+) is assumed
   - if ``is_windows_fs`` and ``is_macos`` are ``False``, a Linux file system
     (something like ext3) is assumed
   - ``is_case_sensitive`` is set to ``True`` under Linux and to ``False``
-    under Windows and MacOS by default - you can change it to change the
+    under Windows and macOS by default - you can change it to change the
     respective behavior
   - ``path_separator`` is set to ``\`` under Windows and to ``/`` under Posix,
     ``alternative_path_separator`` is set to ``/`` under Windows and to
