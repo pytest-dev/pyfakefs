@@ -690,7 +690,7 @@ the <code class="docutils literal notranslate"><span class="pre">fs</span></code
 </div>
 <div class="section" id="handling-mount-points">
 <h3>Handling mount points<a class="headerlink" href="#handling-mount-points" title="Permalink to this headline">¶</a></h3>
-<p>Under Linux and MacOS, the root path (<code class="docutils literal notranslate"><span class="pre">/</span></code>) is the only mount point created
+<p>Under Linux and macOS, the root path (<code class="docutils literal notranslate"><span class="pre">/</span></code>) is the only mount point created
 in the fake file system. If you need support for more mount points, you can add
 them using <code class="docutils literal notranslate"><span class="pre">add_mount_point()</span></code>.</p>
 <p>Under Windows, drives and UNC paths are internally handled as mount points.
@@ -771,7 +771,7 @@ which encapsulates the calls to <code class="docutils literal notranslate"><span
 </div>
 <div class="section" id="simulating-other-file-systems">
 <h3>Simulating other file systems<a class="headerlink" href="#simulating-other-file-systems" title="Permalink to this headline">¶</a></h3>
-<p><code class="docutils literal notranslate"><span class="pre">Pyfakefs</span></code> supports Linux, MacOS and Windows operating systems. By default,
+<p><code class="docutils literal notranslate"><span class="pre">Pyfakefs</span></code> supports Linux, macOS and Windows operating systems. By default,
 the file system of the OS where the tests run is assumed, but it is possible
 to simulate other file systems to some extent. To set a specific file
 system, you can change <code class="docutils literal notranslate"><span class="pre">pyfakefs.FakeFilesystem.os</span></code> to one of
@@ -785,11 +785,11 @@ attributes, which can also be set separately if needed:</p>
 <div><ul class="simple">
 <li><code class="docutils literal notranslate"><span class="pre">is_windows_fs</span></code> -  if <code class="docutils literal notranslate"><span class="pre">True</span></code> a Windows file system (NTFS) is assumed</li>
 <li><code class="docutils literal notranslate"><span class="pre">is_macos</span></code> - if <code class="docutils literal notranslate"><span class="pre">True</span></code> and <code class="docutils literal notranslate"><span class="pre">is_windows_fs</span></code> is <code class="docutils literal notranslate"><span class="pre">False</span></code>, the
-standard MacOS file system (HFS+) is assumed</li>
+standard macOS file system (HFS+) is assumed</li>
 <li>if <code class="docutils literal notranslate"><span class="pre">is_windows_fs</span></code> and <code class="docutils literal notranslate"><span class="pre">is_macos</span></code> are <code class="docutils literal notranslate"><span class="pre">False</span></code>, a Linux file system
 (something like ext3) is assumed</li>
 <li><code class="docutils literal notranslate"><span class="pre">is_case_sensitive</span></code> is set to <code class="docutils literal notranslate"><span class="pre">True</span></code> under Linux and to <code class="docutils literal notranslate"><span class="pre">False</span></code>
-under Windows and MacOS by default - you can change it to change the
+under Windows and macOS by default - you can change it to change the
 respective behavior</li>
 <li><code class="docutils literal notranslate"><span class="pre">path_separator</span></code> is set to <code class="docutils literal notranslate"><span class="pre">\</span></code> under Windows and to <code class="docutils literal notranslate"><span class="pre">/</span></code> under Posix,
 <code class="docutils literal notranslate"><span class="pre">alternative_path_separator</span></code> is set to <code class="docutils literal notranslate"><span class="pre">/</span></code> under Windows and to
