@@ -5,22 +5,22 @@ Using pyfakefs, your tests operate on a fake file system in memory without
 touching the real disk. The software under test requires no modification to
 work with pyfakefs.
 
-pyfakefs provides the `fs` fixture for use with `pytest`, which will 
+pyfakefs acts as a `pytest` plugin by providing the `fs` fixture, which will 
 automatically invoke the fake filesystem. It also provides 
 the `fake_filesystem_unittest.TestCase` class for use with `unittest` and 
 the means to use the fake filesystem with other test frameworks. 
 
-pyfakefs works with Linux, Windows and macOS.
+pyfakefs works with current versions of Linux, Windows and macOS.
 
 ## Documentation
 
-This file provides general usage instructions for pyfakefs.  There is more:
+This document provides a general overview for pyfakefs.  There is more:
 
 * The documentation at [GitHub Pages:](http://pytest-dev.github.io/pyfakefs)
   * The [Release documentation](http://pytest-dev.github.io/pyfakefs/release)
     contains usage documentation for pyfakefs and a description of the 
     most relevant classes, methods and functions for the last version 
-    released on PyPi
+    released on PyPI
   * The [Development documentation](http://pytest-dev.github.io/pyfakefs/main)
     contains the same documentation for the current main branch
   * The [Release 3.7 documentation](http://pytest-dev.github.io/pyfakefs/release37)
@@ -36,6 +36,16 @@ Refer to the
 for information on other test scenarios, test customization and 
 using convenience functions.
 
+## Features
+Apart from automatically mocking most file-system functions, pyfakefs 
+provides some additional features:
+- mapping files and directories from the real file system into the fake filesystem
+- configuration and tracking of the file system size
+- pause and resume of patching to be able to use the real file system inside a 
+  test step
+- (limited) emulation of other OSes (Linux, macOS or Windows)
+- configuration to behave as if running as a non-root user while running 
+  under root
 
 ## Compatibility
 pyfakefs works with CPython 3.7 and above, on Linux, Windows and macOS, and 
@@ -46,10 +56,10 @@ though a current version is recommended.
 
 pyfakefs will not work with Python libraries that use C libraries to access the
 file system. This is because pyfakefs cannot patch the underlying C libraries'
-file access functions--the C libraries will always access the real file system.
-For example, pyfakefs will not work with [`lxml`](http://lxml.de/).  In this case
-`lxml` must be replaced with a pure Python alternative such as
-[`xml.etree.ElementTree`](https://docs.python.org/3/library/xml.etree.elementtree.html).
+file access functions--the C libraries will always access the real file 
+system. Refer to the 
+[documentation](https://pytest-dev.github.io/pyfakefs/release/intro.html#limitations)
+for more information about the limitations of pyfakefs.
 
 ## Development
 

@@ -1,17 +1,18 @@
 # pyfakefs Release Notes
-The released versions correspond to PyPi releases.
+The released versions correspond to PyPI releases.
 
 ## Version 5.0.0 - unreleased
 New version after the transfer to `pytest-dev`.
 
 ### Changes
-* the long deprecated old-style API is now removed
-* the deprecated method `copyRealFile` has been removed - use 
-  `add_real_file` instead
+* the old-style API deprecated since version 3.4 has now been removed
+* the method `copyRealFile` deprecated since version 3.2 has been removed - 
+  use `add_real_file` instead
 
 ### Infrastructure
 * transferred the repository to the `pytest-dev` organization
 * renamed the `master` branch to `main`
+* added automatic PyPI release workflow 
 
 ### New Features
 * added some support for `st_blocks` in stat result
@@ -195,7 +196,7 @@ This is a bugfix release.
 ## [Version 4.5.0](https://pypi.python.org/pypi/pyfakefs/4.5.0) (2021-06-04)
 Adds some support for Python 3.10 and basic type checking.
 
-_Note_: This version has been yanked from PyPi as it erroneously allowed
+_Note_: This version has been yanked from PyPI as it erroneously allowed
 installation under Python 3.5.
 
 ### New Features
@@ -364,7 +365,7 @@ This is a bugfix release that fixes a regression issue.
 ## [Version 4.0.2](https://pypi.python.org/pypi/pyfakefs/4.0.2) (2020-03-04)
 
 This as a patch release that only builds for Python 3. Note that 
-versions 4.0.0 and 4.0.1 will be removed from PyPi to disable
+versions 4.0.0 and 4.0.1 will be removed from PyPI to disable
 installing them under Python 2. 
 
 #### Fixes
@@ -374,7 +375,7 @@ installing them under Python 2.
 
 This as a bug fix release for a regression bug.
 
-_Note_: This version has been yanked from PyPi as it erroneously allowed
+_Note_: This version has been yanked from PyPI as it erroneously allowed
 installation under Python 2. This has been fixed in version 4.0.2.
 
 #### Fixes
@@ -384,7 +385,7 @@ installation under Python 2. This has been fixed in version 4.0.2.
 pyfakefs 4.0.0 drops support for Python 2.7. If you still need
 Python 2.7, you can continue to use pyfakefs 3.7.x.
 
-_Note_: This version has been yanked from PyPi as it erroneously allowed
+_Note_: This version has been yanked from PyPI as it erroneously allowed
 installation under Python 2. This has been fixed in version 4.0.2.
 
 #### Changes
@@ -799,7 +800,7 @@ This is the last release that supports Python 2.6.
     File contents are read from the real file system only as needed ([#170](../../issues/170)).
     See `example_test.py` for a usage example.
   * Deprecated `TestCase.copyRealFile()` in favor of `add_real_file()`.
-    `copyRealFile()` remains only for backward compatability.  Also, some
+    `copyRealFile()` remains only for backward compatibility.  Also, some
     less-popular argument combinations have been disallowed.
   * Added this file you are reading, `CHANGES.md`, to the release manifest
 
@@ -908,5 +909,5 @@ This is the last release that supports Python 2.6.
  * Relative paths not supported ([#16](../../issues/16), [#17](../../issues/17)))
 
 ## Older Versions
-There are no release notes for releases 2.6 and below.  The following versions are still available on PyPi:
+There are no release notes for releases 2.6 and below.  The following versions are still available on PyPI:
  * [1.1](https://pypi.python.org/pypi/pyfakefs/1.1), [1.2](https://pypi.python.org/pypi/pyfakefs/1.2), [2.0](https://pypi.python.org/pypi/pyfakefs/2.0), [2.1](https://pypi.python.org/pypi/pyfakefs/2.1), [2.2](https://pypi.python.org/pypi/pyfakefs/2.2), [2.3](https://pypi.python.org/pypi/pyfakefs/2.3) and [2.4](https://pypi.python.org/pypi/pyfakefs/2.4)

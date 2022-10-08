@@ -14,8 +14,8 @@ providing the `fs` fixture that enables the fake filesystem.
 
 Installation
 ------------
-pyfakefs is available on `PyPi <https://pypi.python.org/pypi/pyfakefs/>`__.
-The latest released version can be installed from pypi:
+pyfakefs is available on `PyPI <https://pypi.python.org/pypi/pyfakefs/>`__.
+The latest released version can be installed from PyPI:
 
 .. code:: bash
 
