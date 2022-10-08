@@ -101,7 +101,7 @@ sufficient demand.</p>
 <code class="docutils literal notranslate"><span class="pre">pyfakefs</span></code> to start a process. <code class="docutils literal notranslate"><span class="pre">subprocess</span></code> can either be mocked, if
 the process is not needed for the test, or patching can be paused to start
 a process if needed, and resumed afterwards
-(see <a class="reference external" href="https://github.com/jmcgeheeiv/pyfakefs/issues/447">this issue</a>).</p>
+(see <a class="reference external" href="https://github.com/pytest-dev/pyfakefs/issues/447">this issue</a>).</p>
 </div>
 <div class="section" id="modules-that-rely-on-subprocess-or-multiprocessing">
 <h3>Modules that rely on <code class="docutils literal notranslate"><span class="pre">subprocess</span></code> or <code class="docutils literal notranslate"><span class="pre">multiprocessing</span></code><a class="headerlink" href="#modules-that-rely-on-subprocess-or-multiprocessing" title="Permalink to this headline">¶</a></h3>
@@ -113,7 +113,7 @@ and <a class="reference external" href="https://pypi.org/project/plumbum/">plumb
 <h3>The <a class="reference external" href="https://pypi.org/project/Pillow/">Pillow</a> Imaging Library<a class="headerlink" href="#the-pillow-imaging-library" title="Permalink to this headline">¶</a></h3>
 <p>This library partly works with <code class="docutils literal notranslate"><span class="pre">pyfakefs</span></code>, but it is known to not work at
 least if writing JPEG files
-(see <a class="reference external" href="https://github.com/jmcgeheeiv/pyfakefs/issues/529">this issue</a>)</p>
+(see <a class="reference external" href="https://github.com/pytest-dev/pyfakefs/issues/529">this issue</a>)</p>
 </div>
 <div class="section" id="the-pandas-data-analysis-toolkit">
 <h3>The <a class="reference external" href="https://pypi.org/project/pandas/">pandas</a> data analysis toolkit<a class="headerlink" href="#the-pandas-data-analysis-toolkit" title="Permalink to this headline">¶</a></h3>
@@ -153,8 +153,8 @@ will check if it can be made to work, and at least add it to this list.</p>
 <li>unwanted deviations that we didn’t notice–if you find any of these, please
 write an issue and we will try to fix it</li>
 <li>behavior that depends on different OS versions and editions–as mentioned
-in <a class="reference internal" href="intro.html#limitations"><span class="std std-ref">Limitations</span></a>, <code class="docutils literal notranslate"><span class="pre">pyfakefs</span></code> uses the TravisCI systems as reference
-system and will not replicate all system-specific behavior</li>
+in <a class="reference internal" href="intro.html#limitations"><span class="std std-ref">Limitations</span></a>, <code class="docutils literal notranslate"><span class="pre">pyfakefs</span></code> uses the systems used for CI tests in
+GitHub Actions as reference system and will not replicate all system-specific behavior</li>
 <li>behavior that depends on low-level OS functionality that <code class="docutils literal notranslate"><span class="pre">pyfakefs</span></code> is not
 able to emulate; examples are the <code class="docutils literal notranslate"><span class="pre">fcntl.ioctl</span></code> and <code class="docutils literal notranslate"><span class="pre">fcntl.fcntl</span></code>
 functions that are patched to do nothing</li>
@@ -312,7 +312,7 @@ passed before the <code class="docutils literal notranslate"><span class="pre">m
         &#169; Copyright 2009 Google Inc. All Rights Reserved.
 © Copyright 2014 Altera Corporation. All Rights Reserved.
 © Copyright 2014-2022 John McGehee.
-      Last updated on Oct 04, 2022.
+      Last updated on Oct 08, 2022.
     </div>
   </body>
 </html>
