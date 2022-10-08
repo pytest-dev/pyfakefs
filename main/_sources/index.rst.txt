@@ -16,7 +16,6 @@ Contents:
    troubleshooting
    autopatch
    modules
-   api
 
 Indices and tables
 ==================
