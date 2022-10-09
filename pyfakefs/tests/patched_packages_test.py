@@ -36,6 +36,7 @@ except ImportError:
     openpyxl = None
 
 
+@unittest.skipIf(IS_PYPY, "Has a problem with current PyPy")
 class TestPatchedPackages(fake_filesystem_unittest.TestCase):
     def setUp(self):
         self.setUpPyfakefs()
@@ -47,7 +48,6 @@ class TestPatchedPackages(fake_filesystem_unittest.TestCase):
             df = pd.read_csv(path)
             assert (df.columns == ['1', '2', '3', '4']).all()
 
-        @unittest.skipIf(IS_PYPY, "Has a problem with current PyPy")
         def test_read_table(self):
             path = '/foo/bar.csv'
             self.fs.create_file(path, contents='1|2|3|4')
@@ -55,7 +55,6 @@ class TestPatchedPackages(fake_filesystem_unittest.TestCase):
             assert (df.columns == ['1', '2', '3', '4']).all()
 
     if pd is not None and xlrd is not None:
-        @unittest.skipIf(IS_PYPY, "Has a problem with current PyPy")
         def test_read_excel(self):
             path = '/foo/bar.xlsx'
             src_path = os.path.dirname(os.path.abspath(__file__))
@@ -67,7 +66,6 @@ class TestPatchedPackages(fake_filesystem_unittest.TestCase):
             assert (df.columns == [1, 2, 3, 4]).all()
 
     if pd is not None and openpyxl is not None:
-        @unittest.skipIf(IS_PYPY, "Has a problem with current PyPy")
         def test_write_excel(self):
             self.fs.create_dir('/foo')
             path = '/foo/bar.xlsx'

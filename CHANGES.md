@@ -12,7 +12,8 @@ New version after the transfer to `pytest-dev`.
 ### Infrastructure
 * transferred the repository to the `pytest-dev` organization
 * renamed the `master` branch to `main`
-* added automatic PyPI release workflow 
+* added automatic PyPI release workflow
+* move documentation from GitHub Pages to Read the Docs 
 
 ### New Features
 * added some support for `st_blocks` in stat result
