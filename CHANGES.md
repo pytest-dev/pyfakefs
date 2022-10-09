@@ -1,6 +1,8 @@
 # pyfakefs Release Notes
 The released versions correspond to PyPI releases.
 
+## Unreleased
+
 ## [Version 5.0.0](https://pypi.python.org/pypi/pyfakefs/5.0.0) (2022-10-09)
 New version after the transfer to `pytest-dev`.
 
