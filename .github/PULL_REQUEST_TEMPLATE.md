@@ -1,8 +1,3 @@
----
-name: Bug fix or feature implementation
-about: Create a pull request for changed code
----
-
 <!--
 Please prefix your PR title with [WIP] for PRs that are still in progress.
 -->
@@ -16,3 +11,5 @@ The related issue or a description of the bug or feature that this PR addresses.
 - [ ] Entry to release notes added
 - [ ] Linter and mypy show no errors
 - [ ] Unit tests passing
+- [ ] For documentation changes: The Read the Docs preview builds and looks 
+  as expected

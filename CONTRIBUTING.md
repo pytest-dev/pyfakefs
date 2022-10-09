@@ -46,9 +46,9 @@ If you want to improve the existing documentation, you can do this also using a 
 You can contribute to:
   * the source code documentation using [Google documentation style](https://google.github.io/styleguide/pyguide.html) 
   * the [README](https://github.com/pytest-dev/pyfakefs/blob/main/README.md) using [markdown syntax](https://help.github.com/articles/basic-writing-and-formatting-syntax/)
-  * the documentation published on [GitHub Pages](http://pytest-dev.github.io/pyfakefs/),
-   located in the `docs` directory (call `make html` from that directory). 
-  For building the documentation, you will need [sphinx](http://sphinx.pocoo.org/).
+  * the documentation published on [Read the Docs](https://pytest-pyfakefs.readthedocs.io/en/latest/),
+    located in the `docs` directory (call `make html` from that directory). 
+    For building the documentation, you will need [sphinx](http://sphinx.pocoo.org/).
   * [this file](https://github.com/pytest-dev/pyfakefs/blob/main/CONTRIBUTING.md) 
   if you want to enhance the contributing guide itself
 

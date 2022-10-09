@@ -1,4 +1,5 @@
-# pyfakefs [![PyPI version](https://badge.fury.io/py/pyfakefs.svg)](https://badge.fury.io/py/pyfakefs) [![Python version](https://img.shields.io/pypi/pyversions/pyfakefs.svg)](https://img.shields.io/pypi/pyversions/pyfakefs.svg) ![Testsuite](https://github.com/pytest-dev/pyfakefs/workflows/Testsuite/badge.svg)
+# pyfakefs [![PyPI version](https://badge.fury.io/py/pyfakefs.svg)](https://badge.fury.io/py/pyfakefs) [![Python version](https://img.shields.io/pypi/pyversions/pyfakefs.svg)](https://img.shields.io/pypi/pyversions/pyfakefs.svg) ![Testsuite](https://github.com/pytest-dev/pyfakefs/workflows/Testsuite/badge.svg) [![Documentation Status](https://readthedocs.org/projects/pytest-pyfakefs/badge/?version=latest)](https://pytest-pyfakefs.readthedocs.io/en/latest/?badge=latest)
+
 
 pyfakefs implements a fake file system that mocks the Python file system modules.
 Using pyfakefs, your tests operate on a fake file system in memory without
@@ -16,14 +17,14 @@ pyfakefs works with current versions of Linux, Windows and macOS.
 
 This document provides a general overview for pyfakefs.  There is more:
 
-* The documentation at [GitHub Pages:](http://pytest-dev.github.io/pyfakefs)
-  * The [Release documentation](http://pytest-dev.github.io/pyfakefs/release)
+* The documentation at **Read the Docs**:
+  * The [Release documentation](https://pytest-pyfakefs.readthedocs.io/en/stable)
     contains usage documentation for pyfakefs and a description of the 
     most relevant classes, methods and functions for the last version 
     released on PyPI
-  * The [Development documentation](http://pytest-dev.github.io/pyfakefs/main)
+  * The [Development documentation](https://pytest-pyfakefs.readthedocs.io/en/latest)
     contains the same documentation for the current main branch
-  * The [Release 3.7 documentation](http://pytest-dev.github.io/pyfakefs/release37)
+  * The [Release 3.7 documentation](https://pytest-pyfakefs.readthedocs.io/en/v3.7.2/)
     contains usage documentation for the last version of pyfakefs 
     supporting Python 2.7
 * The [Release Notes](https://github.com/pytest-dev/pyfakefs/blob/main/CHANGES.md) 
