@@ -847,4 +847,4 @@ The following test works both under Windows and Linux:
 .. _`example_test.py`: https://github.com/pytest-dev/pyfakefs/blob/main/pyfakefs/tests/example_test.py
 .. _`pytest`: https://doc.pytest.org
 .. _`nose`: https://docs.nose2.io/en/latest/
-.. _`all Patcher arguments`: https://pytest-dev.github.io/pyfakefs/main/modules.html#pyfakefs.fake_filesystem_unittest.Patcher
+.. _`all Patcher arguments`: https://pytest-pyfakefs.readthedocs.io/en/latest/modules.html#pyfakefs.fake_filesystem_unittest.Patcher
