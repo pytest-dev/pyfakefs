@@ -33,7 +33,7 @@ This document provides a general overview for pyfakefs.  There is more:
 ## Usage
 The simplest method to use pyfakefs is using the `fs` fixture with `pytest`. 
 Refer to the
-[usage documentation](http://pytest-dev.github.io/pyfakefs/main/usage.html) 
+[usage documentation](https://pytest-pyfakefs.readthedocs.io/en/latest/usage.html) 
 for information on other test scenarios, test customization and 
 using convenience functions.
 
@@ -59,7 +59,7 @@ pyfakefs will not work with Python libraries that use C libraries to access the
 file system. This is because pyfakefs cannot patch the underlying C libraries'
 file access functions--the C libraries will always access the real file 
 system. Refer to the 
-[documentation](https://pytest-dev.github.io/pyfakefs/release/intro.html#limitations)
+[documentation](https://pytest-pyfakefs.readthedocs.io/en/latest/intro.html#limitations)
 for more information about the limitations of pyfakefs.
 
 ## Development
