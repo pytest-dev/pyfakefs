@@ -12,11 +12,11 @@ Describe the observed behavior, and what you expect to happen instead.
 In case of a crash, please provide the complete stack trace.
 
 **How To Reproduce**
-Please provide a unit test or a minimal reproducible example that shows 
+Please provide a unit test or a minimal reproducible example that shows
 the problem.
 
 **Your environment**
-Please run the following in the environment where the problem happened and 
+Please run the following in the environment where the problem happened and
 paste the output.
 ```bash
 python -c "import platform; print(platform.platform())"

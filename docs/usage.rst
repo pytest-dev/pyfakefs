@@ -385,10 +385,10 @@ the file ``example/sut.py``, the following code will work:
       fs.create_dir(file_path)
       assert example.sut.check_if_exists(file_path)
 
-      
-.. note:: If the reloaded modules depend on each other (e.g. one imports the other), 
-  the order in which they are reloaded matters. The dependent module should be reloaded 
-  first, so that on reloading the depending module it is already correctly patched. 
+
+.. note:: If the reloaded modules depend on each other (e.g. one imports the other),
+  the order in which they are reloaded matters. The dependent module should be reloaded
+  first, so that on reloading the depending module it is already correctly patched.
 
 
 modules_to_patch

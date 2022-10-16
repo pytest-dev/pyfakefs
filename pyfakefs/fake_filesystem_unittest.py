@@ -308,7 +308,6 @@ class TestCase(unittest.TestCase, TestCaseMixin):
         """This method is deprecated and exists only for backward
         compatibility. It does nothing.
         """
-        pass
 
 
 class Patcher:

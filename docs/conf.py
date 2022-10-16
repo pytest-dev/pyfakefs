@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 #
 # pyfakefs documentation build configuration file, created by
 # sphinx-quickstart on Mon Oct 31 20:05:53 2016.
