@@ -3,4 +3,4 @@
 
 
 def test_fs(fs):
-    assert False
+    assert 1 == 2

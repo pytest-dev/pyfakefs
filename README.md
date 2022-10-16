@@ -1,4 +1,4 @@
-# pyfakefs [![PyPI version](https://badge.fury.io/py/pyfakefs.svg)](https://badge.fury.io/py/pyfakefs) [![Python version](https://img.shields.io/pypi/pyversions/pyfakefs.svg)](https://img.shields.io/pypi/pyversions/pyfakefs.svg) ![Testsuite](https://github.com/pytest-dev/pyfakefs/workflows/Testsuite/badge.svg) [![Documentation Status](https://readthedocs.org/projects/pytest-pyfakefs/badge/?version=latest)](https://pytest-pyfakefs.readthedocs.io/en/latest/?badge=latest)
+# pyfakefs [![PyPI version](https://badge.fury.io/py/pyfakefs.svg)](https://badge.fury.io/py/pyfakefs) [![Python version](https://img.shields.io/pypi/pyversions/pyfakefs.svg)](https://img.shields.io/pypi/pyversions/pyfakefs.svg) ![Testsuite](https://github.com/pytest-dev/pyfakefs/workflows/Testsuite/badge.svg) [![Documentation Status](https://readthedocs.org/projects/pytest-pyfakefs/badge/?version=latest)](https://pytest-pyfakefs.readthedocs.io/en/latest/?badge=latest) [![pre-commit](https://img.shields.io/badge/pre--commit-enabled-brightgreen?logo=pre-commit&logoColor=white)](https://github.com/pre-commit/pre-commit)
 
 
 pyfakefs implements a fake file system that mocks the Python file system modules.
@@ -6,10 +6,10 @@ Using pyfakefs, your tests operate on a fake file system in memory without
 touching the real disk. The software under test requires no modification to
 work with pyfakefs.
 
-pyfakefs acts as a `pytest` plugin by providing the `fs` fixture, which will 
-automatically invoke the fake filesystem. It also provides 
-the `fake_filesystem_unittest.TestCase` class for use with `unittest` and 
-the means to use the fake filesystem with other test frameworks. 
+pyfakefs acts as a `pytest` plugin by providing the `fs` fixture, which will
+automatically invoke the fake filesystem. It also provides
+the `fake_filesystem_unittest.TestCase` class for use with `unittest` and
+the means to use the fake filesystem with other test frameworks.
 
 pyfakefs works with current versions of Linux, Windows and macOS.
 
@@ -19,46 +19,46 @@ This document provides a general overview for pyfakefs.  There is more:
 
 * The documentation at **Read the Docs**:
   * The [Release documentation](https://pytest-pyfakefs.readthedocs.io/en/stable)
-    contains usage documentation for pyfakefs and a description of the 
-    most relevant classes, methods and functions for the last version 
+    contains usage documentation for pyfakefs and a description of the
+    most relevant classes, methods and functions for the last version
     released on PyPI
   * The [Development documentation](https://pytest-pyfakefs.readthedocs.io/en/latest)
     contains the same documentation for the current main branch
   * The [Release 3.7 documentation](https://pytest-pyfakefs.readthedocs.io/en/v3.7.2/)
-    contains usage documentation for the last version of pyfakefs 
+    contains usage documentation for the last version of pyfakefs
     supporting Python 2.7
-* The [Release Notes](https://github.com/pytest-dev/pyfakefs/blob/main/CHANGES.md) 
+* The [Release Notes](https://github.com/pytest-dev/pyfakefs/blob/main/CHANGES.md)
   show a list of changes in the latest versions
 
 ## Usage
-The simplest method to use pyfakefs is using the `fs` fixture with `pytest`. 
+The simplest method to use pyfakefs is using the `fs` fixture with `pytest`.
 Refer to the
-[usage documentation](https://pytest-pyfakefs.readthedocs.io/en/latest/usage.html) 
-for information on other test scenarios, test customization and 
+[usage documentation](https://pytest-pyfakefs.readthedocs.io/en/latest/usage.html)
+for information on other test scenarios, test customization and
 using convenience functions.
 
 ## Features
-Apart from automatically mocking most file-system functions, pyfakefs 
+Apart from automatically mocking most file-system functions, pyfakefs
 provides some additional features:
 - mapping files and directories from the real file system into the fake filesystem
 - configuration and tracking of the file system size
-- pause and resume of patching to be able to use the real file system inside a 
+- pause and resume of patching to be able to use the real file system inside a
   test step
 - (limited) emulation of other OSes (Linux, macOS or Windows)
-- configuration to behave as if running as a non-root user while running 
+- configuration to behave as if running as a non-root user while running
   under root
 
 ## Compatibility
-pyfakefs works with CPython 3.7 and above, on Linux, Windows and macOS, and 
+pyfakefs works with CPython 3.7 and above, on Linux, Windows and macOS, and
 with PyPy3.
 
-pyfakefs works with [pytest](http://doc.pytest.org) version 3.0.0 or above, 
+pyfakefs works with [pytest](http://doc.pytest.org) version 3.0.0 or above,
 though a current version is recommended.
 
 pyfakefs will not work with Python libraries that use C libraries to access the
 file system. This is because pyfakefs cannot patch the underlying C libraries'
-file access functions--the C libraries will always access the real file 
-system. Refer to the 
+file access functions--the C libraries will always access the real file
+system. Refer to the
 [documentation](https://pytest-pyfakefs.readthedocs.io/en/latest/intro.html#limitations)
 for more information about the limitations of pyfakefs.
 
@@ -73,7 +73,7 @@ Python 3.7 to 3.11, and with PyPy3 on Linux, using
 ### Running pyfakefs unit tests
 
 #### On the command line
-pyfakefs unit tests can be run using `pytest` (all tests) or `unittest` 
+pyfakefs unit tests can be run using `pytest` (all tests) or `unittest`
 (all tests except `pytest`-specific ones):
 
 ```bash
@@ -84,7 +84,7 @@ $ python -m pytest pyfakefs
 $ python -m pyfakefs.tests.all_tests
 ```
 
-Similar scripts are called by `tox` and Github Actions. `tox` can be used to 
+Similar scripts are called by `tox` and Github Actions. `tox` can be used to
 run tests locally against supported python versions:
 
 ```bash
@@ -129,5 +129,5 @@ Google released pyfakefs to the public in 2011 as Google Code project
 After the [shutdown of Google Code](http://google-opensource.blogspot.com/2015/03/farewell-to-google-code.html)
 was announced, [John McGehee](https://github.com/jmcgeheeiv) merged all three Google Code projects together
 [here on GitHub](https://github.com/pytest-dev/pyfakefs) where an enthusiastic community actively supports, maintains
-and extends pyfakefs. In 2022, the repository has been transferred to 
+and extends pyfakefs. In 2022, the repository has been transferred to
 [pytest-dev](https://github.com/pytest-dev) to ensure continuous maintenance.

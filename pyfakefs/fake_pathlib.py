@@ -175,8 +175,8 @@ class _FakeFlavour(flavour):  # type: ignore [valid-type, misc]
     ext_namespace_prefix = '\\\\?\\'
 
     drive_letters = (
-            set(chr(x) for x in range(ord('a'), ord('z') + 1)) |
-            set(chr(x) for x in range(ord('A'), ord('Z') + 1))
+            {chr(x) for x in range(ord('a'), ord('z') + 1)} |
+            {chr(x) for x in range(ord('A'), ord('Z') + 1)}
     )
 
     def __init__(self, filesystem):

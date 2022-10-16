@@ -63,7 +63,7 @@ MAINTAINER_EMAIL = 'pyfakefs@johnnado.com'
 KEYWORDS = ("testing test file os shutil glob mocking unittest "
             "fakes filesystem unit").split(' ')
 
-params = dict(
+setup(
     name=NAME,
     entry_points={
         'pytest11': ['pytest_fakefs = pyfakefs.pytest_plugin'],
@@ -87,5 +87,3 @@ params = dict(
     test_suite='pyfakefs.tests',
     packages=find_packages(exclude=['docs'])
 )
-
-setup(**params)

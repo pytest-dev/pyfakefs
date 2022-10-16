@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 #
 # Copyright 2009 Google Inc. All Rights Reserved.
 #
@@ -1760,7 +1759,7 @@ class FakeOsModuleTest(FakeOsModuleTestBase):
 
         directory = self.make_path('a', 'b')
         if not is_root():
-            with self.assertRaises(Exception):
+            with self.assertRaises(OSError):
                 self.os.makedirs(directory)
         else:
             self.os.makedirs(directory)
@@ -4411,8 +4410,8 @@ class FakeOsModuleWalkTest(FakeOsModuleTestBase):
                           followlinks=False):
         # as the result of walk is unsorted, we have to check against
         # sorted results
-        result = [step for step in self.os.walk(
-            top, topdown=topdown, followlinks=followlinks)]
+        result = list(step for step in self.os.walk(
+            top, topdown=topdown, followlinks=followlinks))
         result = sorted(result, key=lambda lst: lst[0])
         expected = sorted(expected, key=lambda lst: lst[0])
         self.assertEqual(len(expected), len(result))
@@ -4602,13 +4601,13 @@ class FakeOsModuleWalkTest(FakeOsModuleTestBase):
             self.make_path('foo') + self.os.path.sep * 3 + 'bar'
         ]
         for base_dir in variants:
-            for dirpath, dirnames, filenames in self.os.walk(base_dir):
+            for dirpath, _dirnames, _filenames in self.os.walk(base_dir):
                 self.assertEqual(dirpath, base_dir)
 
         file_path = self.make_path('foo', 'bar', 'dir', 'baz')
         self.create_file(file_path)
         for base_dir in variants:
-            for dirpath, dirnames, filenames in self.os.walk(base_dir):
+            for dirpath, _dirnames, _filenames in self.os.walk(base_dir):
                 self.assertTrue(dirpath.startswith(base_dir))
 
 

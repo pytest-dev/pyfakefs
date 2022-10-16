@@ -5376,7 +5376,7 @@ class FakeFileWrapper:
         Returns:
             Wrapper which is described below.
         """
-        io_attr = getattr(self._io, 'truncate')
+        io_attr = self._io.truncate
 
         def truncate_wrapper(*args, **kwargs):
             """Wrap truncate call to call flush after truncate."""
@@ -5503,7 +5503,6 @@ class StandardStreamWrapper:
 
     def close(self) -> None:
         """We do not support closing standard streams."""
-        pass
 
     def is_stream(self) -> bool:
         return True
@@ -5581,7 +5580,6 @@ class FakePipeWrapper:
 
     def flush(self) -> None:
         """Flush the real pipe?"""
-        pass
 
     def write(self, contents: bytes) -> int:
         """Write to the real pipe."""
