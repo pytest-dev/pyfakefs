@@ -12,7 +12,7 @@ repos:
       - id: debug-statements
         language_version: python3
   - repo: https://github.com/PyCQA/autoflake
-    rev: v1.7.3
+    rev: v1.7.6
     hooks:
       - id: autoflake
         name: autoflake
