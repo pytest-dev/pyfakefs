@@ -12,16 +12,15 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-FROM centos:latest
-MAINTAINER jmcgeheeiv@users.noreply.github.com
+FROM registry.access.redhat.com/ubi9/ubi
+LABEL maintainer="John McGehee"
 
 ARG github_repo=pytest-dev/pyfakefs
 ARG github_branch=main
 
-RUN cd /etc/yum.repos.d/
-RUN sed -i 's/mirrorlist/#mirrorlist/g' /etc/yum.repos.d/CentOS-*
-RUN sed -i 's|#baseurl=http://mirror.centos.org|baseurl=http://vault.centos.org|g' /etc/yum.repos.d/CentOS-*
+RUN yum update --disablerepo=* --enablerepo=ubi-9-appstream-rpms --enablerepo=ubi-9-baseos-rpms -y
 RUN yum install -y python3-pip unzip wget
+RUN python3 --version
 
 ENV LANG en_US.UTF-8
 ENV LANGUAGE en_US:en
