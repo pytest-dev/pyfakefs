@@ -9,7 +9,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        docker-image: [debian, fedora, ubuntu]
+        docker-image: [debian, fedora, ubuntu, redhat]
     steps:
     - uses: actions/checkout@v2
     - name: Setup docker container
