@@ -27,7 +27,7 @@ from pyfakefs.pytest_tests import example  # noqa: E402
 
 @pytest.fixture
 def fs_reload_example():
-    """ Fake filesystem. """
+    """Fake filesystem."""
     patcher = Patcher(modules_to_reload=[example])
     patcher.setUp()
     yield patcher.fs

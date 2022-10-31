@@ -22,68 +22,70 @@ from setuptools import setup, find_packages
 
 from pyfakefs import __version__
 
-NAME = 'pyfakefs'
+NAME = "pyfakefs"
 REQUIRES: List[str] = []
-DESCRIPTION = ('pyfakefs implements a fake file system that mocks '
-               'the Python file system modules.')
+DESCRIPTION = (
+    "pyfakefs implements a fake file system that mocks "
+    "the Python file system modules."
+)
 
 URL = "http://pyfakefs.org"
 
 BASE_PATH = os.path.abspath(os.path.dirname(__file__))
-with open(os.path.join(BASE_PATH, 'README.md')) as f:
+with open(os.path.join(BASE_PATH, "README.md")) as f:
     LONG_DESCRIPTION = f.read()
 
 CLASSIFIERS = [
-    'Development Status :: 5 - Production/Stable',
-    'Environment :: Console',
-    'Intended Audience :: Developers',
-    'License :: OSI Approved :: Apache Software License',
+    "Development Status :: 5 - Production/Stable",
+    "Environment :: Console",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: Apache Software License",
     "Programming Language :: Python :: 3",
-    'Programming Language :: Python :: 3.7',
-    'Programming Language :: Python :: 3.8',
-    'Programming Language :: Python :: 3.9',
-    'Programming Language :: Python :: 3.10',
-    'Programming Language :: Python :: 3.11',
-    'Programming Language :: Python :: Implementation :: CPython',
-    'Programming Language :: Python :: Implementation :: PyPy',
-    'Operating System :: POSIX',
-    'Operating System :: MacOS',
-    'Operating System :: Microsoft :: Windows',
-    'Topic :: Software Development :: Libraries',
-    'Topic :: Software Development :: Libraries :: Python Modules',
-    'Topic :: Software Development :: Testing',
-    'Topic :: System :: Filesystems',
-    'Framework :: Pytest',
+    "Programming Language :: Python :: 3.7",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: Implementation :: CPython",
+    "Programming Language :: Python :: Implementation :: PyPy",
+    "Operating System :: POSIX",
+    "Operating System :: MacOS",
+    "Operating System :: Microsoft :: Windows",
+    "Topic :: Software Development :: Libraries",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+    "Topic :: Software Development :: Testing",
+    "Topic :: System :: Filesystems",
+    "Framework :: Pytest",
 ]
 
-AUTHOR = 'Google'
-AUTHOR_EMAIL = 'google-pyfakefs@google.com'
-MAINTAINER = 'John McGehee'
-MAINTAINER_EMAIL = 'pyfakefs@johnnado.com'
-KEYWORDS = ("testing test file os shutil glob mocking unittest "
-            "fakes filesystem unit").split(' ')
+AUTHOR = "Google"
+AUTHOR_EMAIL = "google-pyfakefs@google.com"
+MAINTAINER = "John McGehee"
+MAINTAINER_EMAIL = "pyfakefs@johnnado.com"
+KEYWORDS = (
+    "testing test file os shutil glob mocking unittest " "fakes filesystem unit"
+).split(" ")
 
 setup(
     name=NAME,
     entry_points={
-        'pytest11': ['pytest_fakefs = pyfakefs.pytest_plugin'],
+        "pytest11": ["pytest_fakefs = pyfakefs.pytest_plugin"],
     },
     version=__version__,
     install_requires=REQUIRES,
-
     # metadata for upload to PyPI
     author=AUTHOR,
     author_email=AUTHOR_EMAIL,
     maintainer=MAINTAINER,
     maintainer_email=MAINTAINER_EMAIL,
-    license='http://www.apache.org/licenses/LICENSE-2.0',
+    license="http://www.apache.org/licenses/LICENSE-2.0",
     description=DESCRIPTION,
     long_description=LONG_DESCRIPTION,
-    long_description_content_type='text/markdown',
+    long_description_content_type="text/markdown",
     keywords=KEYWORDS,
     url=URL,
     classifiers=CLASSIFIERS,
-    python_requires='>=3.7',
-    test_suite='pyfakefs.tests',
-    packages=find_packages(exclude=['docs'])
+    python_requires=">=3.7",
+    test_suite="pyfakefs.tests",
+    packages=find_packages(exclude=["docs"]),
 )

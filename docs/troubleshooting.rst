@@ -143,6 +143,7 @@ directory named ``/tmp`` when running on Linux or Unix systems,
 
   import os
 
+
   def test_something(fs):
       # the temp directory is always present at test start
       assert len(os.listdir("/")) == 1
@@ -165,6 +166,7 @@ is the convenience argument :ref:`allow_root_user`:
 .. code:: python
 
   from pyfakefs.fake_filesystem_unittest import TestCase
+
 
   class SomeTest(TestCase):
       def setUp(self):
@@ -191,11 +193,12 @@ passed before the ``mocker`` fixture to ensure this:
 
   def test_mock_open_incorrect(mocker, fs):
       # causes a recursion error
-      mocker.patch('builtins.open', mocker.mock_open(read_data="content"))
+      mocker.patch("builtins.open", mocker.mock_open(read_data="content"))
+
 
   def test_mock_open_correct(fs, mocker):
       # works correctly
-      mocker.patch('builtins.open', mocker.mock_open(read_data="content"))
+      mocker.patch("builtins.open", mocker.mock_open(read_data="content"))
 
 
 .. _`multiprocessing`: https://docs.python.org/3/library/multiprocessing.html

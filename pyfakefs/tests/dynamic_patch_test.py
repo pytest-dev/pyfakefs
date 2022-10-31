@@ -26,45 +26,45 @@ class TestPyfakefsUnittestBase(fake_filesystem_unittest.TestCase):
 
 
 class DynamicImportPatchTest(TestPyfakefsUnittestBase):
-    def __init__(self, methodName='runTest'):
+    def __init__(self, methodName="runTest"):
         super(DynamicImportPatchTest, self).__init__(methodName)
 
     def test_os_patch(self):
         import os
 
-        os.mkdir('test')
-        self.assertTrue(self.fs.exists('test'))
-        self.assertTrue(os.path.exists('test'))
+        os.mkdir("test")
+        self.assertTrue(self.fs.exists("test"))
+        self.assertTrue(os.path.exists("test"))
 
     def test_os_import_as_patch(self):
         import os as _os
 
-        _os.mkdir('test')
-        self.assertTrue(self.fs.exists('test'))
-        self.assertTrue(_os.path.exists('test'))
+        _os.mkdir("test")
+        self.assertTrue(self.fs.exists("test"))
+        self.assertTrue(_os.path.exists("test"))
 
     def test_os_path_patch(self):
         import os.path
 
-        os.mkdir('test')
-        self.assertTrue(self.fs.exists('test'))
-        self.assertTrue(os.path.exists('test'))
+        os.mkdir("test")
+        self.assertTrue(self.fs.exists("test"))
+        self.assertTrue(os.path.exists("test"))
 
     def test_shutil_patch(self):
         import shutil
 
         self.fs.set_disk_usage(100)
-        self.assertEqual(100, shutil.disk_usage('/').total)
+        self.assertEqual(100, shutil.disk_usage("/").total)
 
     def test_pathlib_path_patch(self):
-        file_path = 'test.txt'
+        file_path = "test.txt"
         path = pathlib.Path(file_path)
-        with path.open('w') as f:
-            f.write('test')
+        with path.open("w") as f:
+            f.write("test")
 
         self.assertTrue(self.fs.exists(file_path))
         file_object = self.fs.get_object(file_path)
-        self.assertEqual('test', file_object.contents)
+        self.assertEqual("test", file_object.contents)
 
 
 if __name__ == "__main__":

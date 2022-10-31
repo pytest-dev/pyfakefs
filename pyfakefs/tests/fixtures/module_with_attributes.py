@@ -23,8 +23,8 @@ attribute should be added here and in the test
 :py:class:`fake_filesystem_unittest_test.TestAttributesWithFakeModuleNames`.
 """
 
-os = 'os attribute value'
-path = 'path attribute value'
-pathlib = 'pathlib attribute value'
-shutil = 'shutil attribute value'
-io = 'io attribute value'
+os = "os attribute value"
+path = "path attribute value"
+pathlib = "pathlib attribute value"
+shutil = "shutil attribute value"
+io = "io attribute value"

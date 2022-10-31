@@ -29,6 +29,6 @@ if extra_packages.use_scandir_package:
 
 from pyfakefs.tests.all_tests import AllTests  # noqa: E402
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     result = unittest.TextTestRunner(verbosity=2).run(AllTests().suite())
     sys.exit(int(not result.wasSuccessful()))
