@@ -32,7 +32,7 @@ from pyfakefs.tests import (
     fake_pathlib_test,
     fake_tempfile_test,
     patched_packages_test,
-    mox3_stubout_test
+    mox3_stubout_test,
 )
 
 
@@ -41,25 +41,27 @@ class AllTests(unittest.TestSuite):
 
     def suite(self):  # pylint: disable-msg=C6409
         loader = unittest.defaultTestLoader
-        self.addTests([
-            loader.loadTestsFromModule(fake_filesystem_test),
-            loader.loadTestsFromModule(fake_filesystem_glob_test),
-            loader.loadTestsFromModule(fake_filesystem_shutil_test),
-            loader.loadTestsFromModule(fake_os_test),
-            loader.loadTestsFromModule(fake_stat_time_test),
-            loader.loadTestsFromModule(fake_open_test),
-            loader.loadTestsFromModule(fake_tempfile_test),
-            loader.loadTestsFromModule(fake_filesystem_vs_real_test),
-            loader.loadTestsFromModule(fake_filesystem_unittest_test),
-            loader.loadTestsFromModule(example_test),
-            loader.loadTestsFromModule(mox3_stubout_test),
-            loader.loadTestsFromModule(dynamic_patch_test),
-            loader.loadTestsFromModule(fake_pathlib_test),
-            loader.loadTestsFromModule(patched_packages_test)
-        ])
+        self.addTests(
+            [
+                loader.loadTestsFromModule(fake_filesystem_test),
+                loader.loadTestsFromModule(fake_filesystem_glob_test),
+                loader.loadTestsFromModule(fake_filesystem_shutil_test),
+                loader.loadTestsFromModule(fake_os_test),
+                loader.loadTestsFromModule(fake_stat_time_test),
+                loader.loadTestsFromModule(fake_open_test),
+                loader.loadTestsFromModule(fake_tempfile_test),
+                loader.loadTestsFromModule(fake_filesystem_vs_real_test),
+                loader.loadTestsFromModule(fake_filesystem_unittest_test),
+                loader.loadTestsFromModule(example_test),
+                loader.loadTestsFromModule(mox3_stubout_test),
+                loader.loadTestsFromModule(dynamic_patch_test),
+                loader.loadTestsFromModule(fake_pathlib_test),
+                loader.loadTestsFromModule(patched_packages_test),
+            ]
+        )
         return self
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     result = unittest.TextTestRunner(verbosity=2).run(AllTests().suite())
     sys.exit(int(not result.wasSuccessful()))

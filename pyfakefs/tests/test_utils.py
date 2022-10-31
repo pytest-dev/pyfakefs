@@ -56,15 +56,15 @@ class DummyMock:
 
 
 def time_mock(start=200, step=20):
-    return mock.patch('pyfakefs.fake_filesystem.now',
-                      DummyTime(start, step))
+    return mock.patch("pyfakefs.fake_filesystem.now", DummyTime(start, step))
 
 
 class TestCase(unittest.TestCase):
     """Test base class with some convenience methods and attributes"""
-    is_windows = sys.platform == 'win32'
-    is_cygwin = sys.platform == 'cygwin'
-    is_macos = sys.platform == 'darwin'
+
+    is_windows = sys.platform == "win32"
+    is_cygwin = sys.platform == "cygwin"
+    is_macos = sys.platform == "darwin"
     symlinks_can_be_tested = None
 
     def assert_mode_equal(self, expected, actual):
@@ -74,7 +74,7 @@ class TestCase(unittest.TestCase):
     def raises_os_error(self, subtype):
         try:
             yield
-            self.fail('No exception was raised, OSError expected')
+            self.fail("No exception was raised, OSError expected")
         except OSError as exc:
             if isinstance(subtype, list):
                 self.assertIn(exc.errno, subtype)
@@ -104,7 +104,7 @@ class RealFsTestMixin:
         self.base_path = None
 
     def setUp(self):
-        if not os.environ.get('TEST_REAL_FS'):
+        if not os.environ.get("TEST_REAL_FS"):
             self.skip_real_fs()
         if self.use_real_fs():
             self.base_path = tempfile.mkdtemp()
@@ -132,7 +132,7 @@ class RealFsTestMixin:
 
     @property
     def is_pypy(self):
-        return platform.python_implementation() == 'PyPy'
+        return platform.python_implementation() == "PyPy"
 
     def use_real_fs(self):
         """Return True if the real file system shall be tested."""
@@ -146,7 +146,7 @@ class RealFsTestMixin:
         fake filesystem."""
         if self.use_real_fs():
             return os.path.sep
-        return '/'
+        return "/"
 
     def check_windows_only(self):
         """If called at test start, the real FS test is executed only under
@@ -154,8 +154,7 @@ class RealFsTestMixin:
         """
         if self.use_real_fs():
             if not TestCase.is_windows:
-                raise unittest.SkipTest(
-                    'Testing Windows specific functionality')
+                raise unittest.SkipTest("Testing Windows specific functionality")
         else:
             self.set_windows_fs(True)
 
@@ -165,8 +164,7 @@ class RealFsTestMixin:
         """
         if self.use_real_fs():
             if TestCase.is_macos or TestCase.is_windows:
-                raise unittest.SkipTest(
-                    'Testing Linux specific functionality')
+                raise unittest.SkipTest("Testing Linux specific functionality")
         else:
             self.set_windows_fs(False)
             self.filesystem._is_macos = False
@@ -177,8 +175,7 @@ class RealFsTestMixin:
         """
         if self.use_real_fs():
             if not TestCase.is_macos:
-                raise unittest.SkipTest(
-                    'Testing MacOS specific functionality')
+                raise unittest.SkipTest("Testing MacOS specific functionality")
         else:
             self.set_windows_fs(False)
             self.filesystem._is_macos = True
@@ -190,8 +187,7 @@ class RealFsTestMixin:
         """
         if self.use_real_fs():
             if TestCase.is_macos:
-                raise unittest.SkipTest(
-                    'Testing non-MacOs functionality')
+                raise unittest.SkipTest("Testing non-MacOs functionality")
         else:
             self.filesystem._is_macos = False
 
@@ -203,7 +199,8 @@ class RealFsTestMixin:
         if self.use_real_fs():
             if not TestCase.is_macos and not TestCase.is_windows:
                 raise unittest.SkipTest(
-                    'Testing case insensitive specific functionality')
+                    "Testing case insensitive specific functionality"
+                )
         else:
             self.filesystem.is_case_sensitive = False
 
@@ -214,8 +211,7 @@ class RealFsTestMixin:
         """
         if self.use_real_fs():
             if TestCase.is_macos or TestCase.is_windows:
-                raise unittest.SkipTest(
-                    'Testing case sensitive specific functionality')
+                raise unittest.SkipTest("Testing case sensitive specific functionality")
         else:
             self.filesystem.is_case_sensitive = True
 
@@ -226,33 +222,44 @@ class RealFsTestMixin:
         """
         if self.use_real_fs():
             if TestCase.is_windows:
-                raise unittest.SkipTest(
-                    'Testing Posix specific functionality')
+                raise unittest.SkipTest("Testing Posix specific functionality")
         else:
             self.set_windows_fs(False)
 
     def skip_real_fs(self):
         """If called at test start, no real FS test is executed."""
         if self.use_real_fs():
-            raise unittest.SkipTest('Only tests fake FS')
+            raise unittest.SkipTest("Only tests fake FS")
 
-    def skip_real_fs_failure(self, skip_windows=True, skip_posix=True,
-                             skip_macos=True, skip_linux=True):
+    def skip_real_fs_failure(
+        self,
+        skip_windows=True,
+        skip_posix=True,
+        skip_macos=True,
+        skip_linux=True,
+    ):
         """If called at test start, no real FS test is executed for the given
         conditions. This is used to mark tests that do not pass correctly under
         certain systems and shall eventually be fixed.
         """
         if True:
-            if (self.use_real_fs() and
-                    (TestCase.is_windows and skip_windows or
-                     not TestCase.is_windows
-                     and skip_macos and skip_linux or
-                     TestCase.is_macos and skip_macos or
-                     not TestCase.is_windows and
-                     not TestCase.is_macos and skip_linux or
-                     not TestCase.is_windows and skip_posix)):
+            if self.use_real_fs() and (
+                TestCase.is_windows
+                and skip_windows
+                or not TestCase.is_windows
+                and skip_macos
+                and skip_linux
+                or TestCase.is_macos
+                and skip_macos
+                or not TestCase.is_windows
+                and not TestCase.is_macos
+                and skip_linux
+                or not TestCase.is_windows
+                and skip_posix
+            ):
                 raise unittest.SkipTest(
-                    'Skipping because FakeFS does not match real FS')
+                    "Skipping because FakeFS does not match real FS"
+                )
 
     def symlink_can_be_tested(self, force_real_fs=False):
         """Used to check if symlinks and hard links can be tested under
@@ -260,13 +267,12 @@ class RealFsTestMixin:
         not supporting links, and real tests are skipped if running without
         administrator rights.
         """
-        if (not TestCase.is_windows or
-                (not force_real_fs and not self.use_real_fs())):
+        if not TestCase.is_windows or (not force_real_fs and not self.use_real_fs()):
             return True
         if TestCase.symlinks_can_be_tested is None:
             if force_real_fs:
                 self.base_path = tempfile.mkdtemp()
-            link_path = self.make_path('link')
+            link_path = self.make_path("link")
             try:
                 self.os.symlink(self.base_path, link_path)
                 TestCase.symlinks_can_be_tested = True
@@ -281,8 +287,7 @@ class RealFsTestMixin:
         """If called at test start, tests are skipped if symlinks are not
         supported."""
         if not self.symlink_can_be_tested(force_real_fs):
-            raise unittest.SkipTest(
-                'Symlinks under Windows need admin privileges')
+            raise unittest.SkipTest("Symlinks under Windows need admin privileges")
 
     def make_path(self, *args):
         """Create a path with the given component(s). A base path is prepended
@@ -327,8 +332,7 @@ class RealFsTestMixin:
         `make_path()`.
         """
         self.create_dir(self.os.path.dirname(file_path))
-        mode = ('wb' if encoding is not None or is_byte_string(contents)
-                else 'w')
+        mode = "wb" if encoding is not None or is_byte_string(contents) else "w"
 
         if encoding is not None and contents is not None:
             contents = contents.encode(encoding)
@@ -348,7 +352,7 @@ class RealFsTestMixin:
         """Compare `contents` with the contents of the file at `file_path`.
         Asserts equality.
         """
-        mode = 'rb' if is_byte_string(contents) else 'r'
+        mode = "rb" if is_byte_string(contents) else "r"
         with self.open(file_path, mode) as f:
             self.assertEqual(contents, f.read())
 
@@ -356,9 +360,9 @@ class RealFsTestMixin:
         """Create the path used as base path in `make_path`."""
         if self.filesystem is not None:
             old_base_path = self.base_path
-            self.base_path = self.filesystem.path_separator + 'basepath'
+            self.base_path = self.filesystem.path_separator + "basepath"
             if self.filesystem.is_windows_fs:
-                self.base_path = 'C:' + self.base_path
+                self.base_path = "C:" + self.base_path
             if old_base_path != self.base_path:
                 if old_base_path is not None:
                     self.filesystem.reset()
@@ -369,18 +373,22 @@ class RealFsTestMixin:
 
     def assert_equal_paths(self, actual, expected):
         if self.is_windows:
-            actual = str(actual).replace('\\\\?\\', '')
-            expected = str(expected).replace('\\\\?\\', '')
-            if os.name == 'nt' and self.use_real_fs():
+            actual = str(actual).replace("\\\\?\\", "")
+            expected = str(expected).replace("\\\\?\\", "")
+            if os.name == "nt" and self.use_real_fs():
                 # work around a problem that the user name, but not the full
                 # path is shown as the short name
-                self.assertEqual(self.path_with_short_username(actual),
-                                 self.path_with_short_username(expected))
+                self.assertEqual(
+                    self.path_with_short_username(actual),
+                    self.path_with_short_username(expected),
+                )
             else:
                 self.assertEqual(actual, expected)
         elif self.is_macos:
-            self.assertEqual(str(actual).replace('/private/var/', '/var/'),
-                             str(expected).replace('/private/var/', '/var/'))
+            self.assertEqual(
+                str(actual).replace("/private/var/", "/var/"),
+                str(expected).replace("/private/var/", "/var/"),
+            )
         else:
             self.assertEqual(actual, expected)
 
@@ -388,20 +396,19 @@ class RealFsTestMixin:
     def path_with_short_username(path):
         components = path.split(os.sep)
         if len(components) >= 3:
-            components[2] = components[2][:6].upper() + '~1'
+            components[2] = components[2][:6].upper() + "~1"
         return os.sep.join(components)
 
     def mock_time(self, start=200, step=20):
         if not self.use_real_fs():
-            return mock.patch('pyfakefs.fake_filesystem.now',
-                              DummyTime(start, step))
+            return mock.patch("pyfakefs.fake_filesystem.now", DummyTime(start, step))
         return DummyMock()
 
     def assert_raises_os_error(self, subtype, expression, *args, **kwargs):
         """Asserts that a specific subtype of OSError is raised."""
         try:
             expression(*args, **kwargs)
-            self.fail('No exception was raised, OSError expected')
+            self.fail("No exception was raised, OSError expected")
         except OSError as exc:
             if isinstance(subtype, list):
                 self.assertIn(exc.errno, subtype)
@@ -413,7 +420,7 @@ class RealFsTestCase(TestCase, RealFsTestMixin):
     """Can be used as base class for tests also running in the real
     file system."""
 
-    def __init__(self, methodName='runTest'):
+    def __init__(self, methodName="runTest"):
         TestCase.__init__(self, methodName)
         RealFsTestMixin.__init__(self)
 
@@ -422,7 +429,8 @@ class RealFsTestCase(TestCase, RealFsTestMixin):
         self.cwd = os.getcwd()
         if not self.use_real_fs():
             self.filesystem = fake_filesystem.FakeFilesystem(
-                path_separator=self.path_separator())
+                path_separator=self.path_separator()
+            )
             self.open = fake_filesystem.FakeFileOpen(self.filesystem)
             self.os = fake_filesystem.FakeOsModule(self.filesystem)
             self.create_basepath()

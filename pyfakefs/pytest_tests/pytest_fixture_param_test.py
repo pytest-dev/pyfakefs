@@ -23,24 +23,24 @@ import pyfakefs.pytest_tests.example as example
 def test_example_file_failing(fs):
     """Test fails because EXAMPLE_FILE is cached in the module
     and not patched."""
-    fs.create_file(example.EXAMPLE_FILE, contents='stuff here')
+    fs.create_file(example.EXAMPLE_FILE, contents="stuff here")
     check_that_example_file_is_in_fake_fs()
 
 
-@pytest.mark.parametrize('fs', [[None, [example]]], indirect=True)
+@pytest.mark.parametrize("fs", [[None, [example]]], indirect=True)
 def test_example_file_passing_using_parametrized_fixture(fs):
     """Test passes if using a fixture that reloads the module containing
     EXAMPLE_FILE"""
-    fs.create_file(example.EXAMPLE_FILE, contents='stuff here')
+    fs.create_file(example.EXAMPLE_FILE, contents="stuff here")
     check_that_example_file_is_in_fake_fs()
 
 
 def check_that_example_file_is_in_fake_fs():
     with open(example.EXAMPLE_FILE) as file:
-        assert file.read() == 'stuff here'
+        assert file.read() == "stuff here"
     with example.EXAMPLE_FILE.open() as file:
-        assert file.read() == 'stuff here'
-    assert example.EXAMPLE_FILE.read_text() == 'stuff here'
+        assert file.read() == "stuff here"
+    assert example.EXAMPLE_FILE.read_text() == "stuff here"
     assert example.EXAMPLE_FILE.is_file()
 
 

@@ -23,7 +23,7 @@ Software Under Test
 .. code:: python
 
     def create_file(path):
-        '''Create the specified file and add some content to it.  Use the open()
+        """Create the specified file and add some content to it.  Use the open()
         built in function.
 
         For example, the following file operations occur in the fake file system.
@@ -42,8 +42,8 @@ Software Under Test
         >>> with open('/test/file.txt') as f:
         ...     f.readlines()
         ["This is test file '/test/file.txt'.\\n", 'It was created using the open() function.\\n']
-        '''
-        with open(path, 'w') as f:
+        """
+        with open(path, "w") as f:
             f.write("This is test file '{}'.\n".format(path))
             f.write("It was created using the open() function.\n")
 
@@ -65,6 +65,7 @@ and modules:
     import os
     import unittest
     from pyfakefs import fake_filesystem_unittest
+
     # The module under test is example:
     import example
 
@@ -76,7 +77,7 @@ Doctests
 .. code:: python
 
     def load_tests(loader, tests, ignore):
-        '''Load the pyfakefs/example.py doctest tests into unittest.'''
+        """Load the pyfakefs/example.py doctest tests into unittest."""
         return fake_filesystem_unittest.load_doctests(loader, tests, ignore, example)
 
 
@@ -94,7 +95,6 @@ Next comes the ``unittest`` test class.  This class is derived from
 .. code:: python
 
     class TestExample(fake_filesystem_unittest.TestCase):
-
         def setUp(self):
             self.setUpPyfakefs()
 
@@ -103,16 +103,16 @@ Next comes the ``unittest`` test class.  This class is derived from
             pass
 
         def test_create_file(self):
-            '''Test example.create_file()'''
+            """Test example.create_file()"""
             # The os module has been replaced with the fake os module so all of the
             # following occurs in the fake filesystem.
-            self.assertFalse(os.path.isdir('/test'))
-            os.mkdir('/test')
-            self.assertTrue(os.path.isdir('/test'))
+            self.assertFalse(os.path.isdir("/test"))
+            os.mkdir("/test")
+            self.assertTrue(os.path.isdir("/test"))
 
-            self.assertFalse(os.path.exists('/test/file.txt'))
-            example.create_file('/test/file.txt')
-            self.assertTrue(os.path.exists('/test/file.txt'))
+            self.assertFalse(os.path.exists("/test/file.txt"))
+            example.create_file("/test/file.txt")
+            self.assertTrue(os.path.exists("/test/file.txt"))
 
         ...
 

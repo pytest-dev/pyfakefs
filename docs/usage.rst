@@ -19,8 +19,8 @@ Here is an example for a simple test:
 
    def my_fakefs_test(fs):
        # "fs" is the reference to the fake file system
-       fs.create_file('/var/data/xx1.txt')
-       assert os.path.exists('/var/data/xx1.txt')
+       fs.create_file("/var/data/xx1.txt")
+       assert os.path.exists("/var/data/xx1.txt")
 
 If you are bothered by the ``pylint`` warning,
 ``C0103: Argument name "fs" doesn't conform to snake_case naming style
@@ -60,12 +60,13 @@ with the fake file system functions and modules:
 
     from pyfakefs.fake_filesystem_unittest import TestCase
 
+
     class ExampleTestCase(TestCase):
         def setUp(self):
             self.setUpPyfakefs()
 
         def test_create_file(self):
-            file_path = '/test/file.txt'
+            file_path = "/test/file.txt"
             self.assertFalse(os.path.exists(file_path))
             self.fs.create_file(file_path)
             self.assertTrue(os.path.exists(file_path))
@@ -88,10 +89,10 @@ The easiest way is to just use ``Patcher`` as a context manager:
 
    with Patcher() as patcher:
        # access the fake_filesystem object via patcher.fs
-       patcher.fs.create_file('/foo/bar', contents='test')
+       patcher.fs.create_file("/foo/bar", contents="test")
 
        # the following code works on the fake filesystem
-       with open('/foo/bar') as f:
+       with open("/foo/bar") as f:
            contents = f.read()
 
 You can also initialize ``Patcher`` manually:
@@ -101,7 +102,7 @@ You can also initialize ``Patcher`` manually:
    from pyfakefs.fake_filesystem_unittest import Patcher
 
    patcher = Patcher()
-   patcher.setUp()     # called in the initialization code
+   patcher.setUp()  # called in the initialization code
    ...
    patcher.tearDown()  # somewhere in the cleanup code
 
@@ -115,10 +116,11 @@ single function, you can write:
 
    from pyfakefs.fake_filesystem_unittest import patchfs
 
+
    @patchfs
    def test_something(fake_fs):
        # access the fake_filesystem object via fake_fs
-       fake_fs.create_file('/foo/bar', contents='test')
+       fake_fs.create_file("/foo/bar", contents="test")
 
 Note that ``fake_fs`` is a positional argument and the argument name does
 not matter. If there are additional ``mock.patch`` decorators that also
@@ -128,11 +130,12 @@ order, as shown here:
 .. code:: python
 
    @patchfs
-   @mock.patch('foo.bar')
+   @mock.patch("foo.bar")
    def test_something(fake_fs, mocked_bar):
        ...
 
-   @mock.patch('foo.bar')
+
+   @mock.patch("foo.bar")
    @patchfs
    def test_something(mocked_bar, fake_fs):
        ...
@@ -154,10 +157,9 @@ You can also use this to make a single unit test use the fake fs:
 .. code:: python
 
     class TestSomething(unittest.TestCase):
-
         @patchfs
         def test_something(self, fs):
-            fs.create_file('/foo/bar', contents='test')
+            fs.create_file("/foo/bar", contents="test")
 
 
 .. _customizing_patcher:
@@ -199,10 +201,12 @@ In case of ``pytest``, you have two possibilities:
   import pytest
   from pyfakefs.fake_filesystem_unittest import Patcher
 
+
   @pytest.fixture
   def fs_no_root():
       with Patcher(allow_root_user=False) as patcher:
           yield patcher.fs
+
 
   def test_something(fs_no_root):
       ...
@@ -217,7 +221,8 @@ In case of ``pytest``, you have two possibilities:
 
   import pytest
 
-  @pytest.mark.parametrize('fs', [[None, None, None, False]], indirect=True)
+
+  @pytest.mark.parametrize("fs", [[None, None, None, False]], indirect=True)
   def test_something(fs):
       ...
 
@@ -230,6 +235,7 @@ instance:
 .. code:: python
 
   from pyfakefs.fake_filesystem_unittest import TestCase
+
 
   class SomeTest(TestCase):
       def setUp(self):
@@ -246,6 +252,7 @@ the decorator:
 .. code:: python
 
   from pyfakefs.fake_filesystem_unittest import patchfs
+
 
   @patchfs(allow_root_user=False)
   def test_something(fake_fs):
@@ -314,6 +321,7 @@ automatically due to performance reasons (though it can be switched on using
 
   import os
 
+
   def check_if_exists(filepath, file_exists=os.path.exists):
       return file_exists(filepath)
 
@@ -335,8 +343,9 @@ an example from a related issue):
 
   import pathlib
 
+
   @click.command()
-  @click.argument('foo', type=click.Path(path_type=pathlib.Path))
+  @click.argument("foo", type=click.Path(path_type=pathlib.Path))
   def hello(foo):
       pass
 
@@ -360,28 +369,31 @@ the file ``example/sut.py``, the following code will work:
           self.setUpPyfakefs(modules_to_reload=[example.sut])
 
       def test_path_exists(self):
-          file_path = '/foo/bar'
+          file_path = "/foo/bar"
           self.fs.create_dir(file_path)
           self.assertTrue(example.sut.check_if_exists(file_path))
 
+
   # example using pytest
-  @pytest.mark.parametrize('fs', [[None, [example.sut]]], indirect=True)
+  @pytest.mark.parametrize("fs", [[None, [example.sut]]], indirect=True)
   def test_path_exists(fs):
-      file_path = '/foo/bar'
+      file_path = "/foo/bar"
       fs.create_dir(file_path)
       assert example.sut.check_if_exists(file_path)
+
 
   # example using Patcher
   def test_path_exists():
       with Patcher(modules_to_reload=[example.sut]) as patcher:
-        file_path = '/foo/bar'
-        patcher.fs.create_dir(file_path)
-        assert example.sut.check_if_exists(file_path)
+          file_path = "/foo/bar"
+          patcher.fs.create_dir(file_path)
+          assert example.sut.check_if_exists(file_path)
+
 
   # example using patchfs decorator
   @patchfs(modules_to_reload=[example.sut])
   def test_path_exists(fs):
-      file_path = '/foo/bar'
+      file_path = "/foo/bar"
       fs.create_dir(file_path)
       assert example.sut.check_if_exists(file_path)
 
@@ -408,6 +420,7 @@ has now been been integrated into ``pyfakefs``):
 
   class FakeLocks:
       """django.core.files.locks uses low level OS functions, fake it."""
+
       _locks_module = django.core.files.locks
 
       def __init__(self, fs):
@@ -428,27 +441,31 @@ has now been been integrated into ``pyfakefs``):
       def __getattr__(self, name):
           return getattr(self._locks_module, name)
 
+
   ...
   # test code using Patcher
-  with Patcher(modules_to_patch={'django.core.files.locks': FakeLocks}):
+  with Patcher(modules_to_patch={"django.core.files.locks": FakeLocks}):
       test_django_stuff()
 
   # test code using unittest
   class TestUsingDjango(fake_filesystem_unittest.TestCase):
       def setUp(self):
-          self.setUpPyfakefs(modules_to_patch={'django.core.files.locks': FakeLocks})
+          self.setUpPyfakefs(modules_to_patch={"django.core.files.locks": FakeLocks})
 
-      def test_django_stuff(self)
+      def test_django_stuff(self):
           ...
 
+
   # test code using pytest
-  @pytest.mark.parametrize('fs', [[None, None,
-    {'django.core.files.locks': FakeLocks}]], indirect=True)
+  @pytest.mark.parametrize(
+      "fs", [[None, None, {"django.core.files.locks": FakeLocks}]], indirect=True
+  )
   def test_django_stuff(fs):
       ...
 
+
   # test code using patchfs decorator
-  @patchfs(modules_to_patch={'django.core.files.locks': FakeLocks})
+  @patchfs(modules_to_patch={"django.core.files.locks": FakeLocks})
   def test_django_stuff(fake_fs):
       ...
 
@@ -462,8 +479,8 @@ can be added to ``additional_skip_names``:
 
 .. code:: python
 
-  with Patcher(additional_skip_names=['pydevd']) as patcher:
-      patcher.fs.create_file('foo')
+  with Patcher(additional_skip_names=["pydevd"]) as patcher:
+      patcher.fs.create_file("foo")
 
 Alternatively to the module names, the modules themselves may be used:
 
@@ -472,7 +489,7 @@ Alternatively to the module names, the modules themselves may be used:
   import pydevd
 
   with Patcher(additional_skip_names=[pydevd]) as patcher:
-      patcher.fs.create_file('foo')
+      patcher.fs.create_file("foo")
 
 .. _allow_root_user:
 
@@ -511,6 +528,7 @@ set ``patch_open_code`` to ``PatchMode.AUTO``:
 
   from pyfakefs.fake_filesystem_unittest import PatchMode
 
+
   @patchfs(patch_open_code=PatchMode.AUTO)
   def test_something(fs):
       ...
@@ -529,6 +547,7 @@ system function is not patched automatically:
 
   import os
 
+
   def check_if_exists(filepath, file_exists=os.path.exists):
       return file_exists(filepath)
 
@@ -546,6 +565,7 @@ contains the default argument instead, if you want to avoid the overhead.
 
       import os
 
+
       def some_function(use_bar=os.path.exists("/foo/bar")):
           return do_something() if use_bar else do_something_else()
 
@@ -555,7 +575,8 @@ contains the default argument instead, if you want to avoid the overhead.
 
       import pathlib
 
-      def foobar(dir_arg = pathlib.Path.cwd() / 'logs'):
+
+      def foobar(dir_arg=pathlib.Path.cwd() / "logs"):
           do_something(dir_arg)
 
   In both cases the default arguments behave like global variables that use a file system function
@@ -617,15 +638,16 @@ with large files, see also :ref:`set-fs-size`).
 
     from pyfakefs.fake_filesystem_unittest import TestCase
 
+
     class ExampleTestCase(TestCase):
         def setUp(self):
             self.setUpPyfakefs()
 
         def test_create_file(self):
-            file_path = '/foo/bar/test.txt'
-            self.fs.create_file(file_path, contents = 'test')
+            file_path = "/foo/bar/test.txt"
+            self.fs.create_file(file_path, contents="test")
             with open(file_path) as f:
-                self.assertEqual('test', f.read())
+                self.assertEqual("test", f.read())
 
 ``create_dir()`` behaves like ``os.makedirs()``.
 ``create_symlink`` and ``create_link`` behave like ``os.symlink`` and
@@ -659,16 +681,18 @@ fake filesystem via the argument ``target_path``.
 
     from pyfakefs.fake_filesystem_unittest import TestCase
 
+
     class ExampleTestCase(TestCase):
 
-        fixture_path = os.path.join(os.path.dirname(__file__), 'fixtures')
+        fixture_path = os.path.join(os.path.dirname(__file__), "fixtures")
+
         def setUp(self):
             self.setUpPyfakefs()
             # make the file accessible in the fake file system
             self.fs.add_real_directory(self.fixture_path)
 
         def test_using_fixture1(self):
-            with open(os.path.join(self.fixture_path, 'fixture1.txt') as f:
+            with open(os.path.join(self.fixture_path, "fixture1.txt")) as f:
                 # file contents are copied to the fake file system
                 # only at this point
                 contents = f.read()
@@ -680,15 +704,17 @@ You can do the same using ``pytest`` by using a fixture for test setup:
     import pytest
     import os
 
-    fixture_path = os.path.join(os.path.dirname(__file__), 'fixtures')
+    fixture_path = os.path.join(os.path.dirname(__file__), "fixtures")
+
 
     @pytest.fixture
     def my_fs(fs):
         fs.add_real_directory(fixture_path)
         yield fs
 
+
     def test_using_fixture1(my_fs):
-        with open(os.path.join(fixture_path, 'fixture1.txt') as f:
+        with open(os.path.join(fixture_path, "fixture1.txt")) as f:
             contents = f.read()
 
 When using ``pytest`` another option is to load the contents of the real file
@@ -700,12 +726,14 @@ the ``fs`` fixture.
     import pytest
     import os
 
+
     @pytest.fixture
     def content():
-        fixture_path = os.path.join(os.path.dirname(__file__), 'fixtures')
-        with open(os.path.join(fixture_path, 'fixture1.txt') as f:
+        fixture_path = os.path.join(os.path.dirname(__file__), "fixtures")
+        with open(os.path.join(fixture_path, "fixture1.txt")) as f:
             contents = f.read()
         return contents
+
 
     def test_using_file_contents(content, fs):
         fs.create_file("fake/path.txt")
@@ -747,16 +775,16 @@ and you may fail to create new files if the fake file system is full.
 
     from pyfakefs.fake_filesystem_unittest import TestCase
 
-    class ExampleTestCase(TestCase):
 
+    class ExampleTestCase(TestCase):
         def setUp(self):
             self.setUpPyfakefs()
             self.fs.set_disk_usage(100)
 
         def test_disk_full(self):
-            with open('/foo/bar.txt', 'w') as f:
+            with open("/foo/bar.txt", "w") as f:
                 with self.assertRaises(OSError):
-                    f.write('a' * 200)
+                    f.write("a" * 200)
                     f.flush()
 
 To get the file system size, you may use ``get_disk_usage()``, which is
@@ -777,6 +805,7 @@ Here is an example that tests the usage with the ``pyfakefs`` pytest fixture:
 
     from pyfakefs.fake_filesystem_unittest import Pause
 
+
     def test_pause_resume_contextmanager(fs):
         fake_temp_file = tempfile.NamedTemporaryFile()
         assert os.path.exists(fake_temp_file.name)
@@ -793,6 +822,7 @@ Here is the same code using a context manager:
 .. code:: python
 
     from pyfakefs.fake_filesystem_unittest import Pause
+
 
     def test_pause_resume_contextmanager(fs):
         fake_temp_file = tempfile.NamedTemporaryFile()
@@ -836,9 +866,10 @@ The following test works both under Windows and Linux:
 
   from pyfakefs.fake_filesystem import OSType
 
+
   def test_windows_paths(fs):
       fs.os = OSType.WINDOWS
-      assert r"C:\foo\bar" == os.path.join('C:\\', 'foo', 'bar'))
+      assert r"C:\foo\bar" == os.path.join("C:\\", "foo", "bar")
       assert os.path.splitdrive(r"C:\foo\bar") == ("C:", r"\foo\bar")
       assert os.path.ismount("C:")
 

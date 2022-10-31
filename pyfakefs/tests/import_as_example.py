@@ -72,7 +72,7 @@ def file_stat2(filepath):
 
 
 def system_stat(filepath):
-    if sys.platform == 'win32':
+    if sys.platform == "win32":
         from nt import stat as system_stat
     else:
         from posix import stat as system_stat

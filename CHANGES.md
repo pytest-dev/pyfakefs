@@ -5,7 +5,9 @@ The released versions correspond to PyPI releases.
 
 ### Infrastructure
 * replaced end-of-life CentOS with RedHat UBI9 docker image
-* add tests for pytest 7.2.0
+* added tests for pytest 7.2.0
+* added black to pre-commit checks, which caused some changes to the
+  coding style (max line length is now 88, always use double quotes)
 
 ## [Version 5.0.0](https://pypi.python.org/pypi/pyfakefs/5.0.0) (2022-10-09)
 New version after the transfer to `pytest-dev`.
@@ -609,6 +611,7 @@ This is mostly a bug-fix release.
     To switch them off for legacy code, use:
     ```python
     from pyfakefs.deprecator import Deprecator
+
     Deprecator.show_warnings = False
     ```
 

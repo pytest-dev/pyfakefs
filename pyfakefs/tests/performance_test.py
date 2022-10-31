@@ -17,7 +17,7 @@ import unittest
 from pyfakefs.fake_filesystem_unittest import TestCase
 from pyfakefs.helpers import IS_PYPY
 
-if os.environ.get('TEST_PERFORMANCE'):
+if os.environ.get("TEST_PERFORMANCE"):
 
     class SetupPerformanceTest(TestCase):
         @classmethod
@@ -27,8 +27,11 @@ if os.environ.get('TEST_PERFORMANCE'):
         @classmethod
         def tearDownClass(cls) -> None:
             cls.elapsed_time = time.time() - cls.start_time
-            print('Elapsed time per test for cached setup: {:.3f} ms'.format(
-                cls.elapsed_time * 10))
+            print(
+                "Elapsed time per test for cached setup: {:.3f} ms".format(
+                    cls.elapsed_time * 10
+                )
+            )
 
         def setUp(self) -> None:
             self.setUpPyfakefs()
@@ -41,13 +44,16 @@ if os.environ.get('TEST_PERFORMANCE'):
         @classmethod
         def tearDownClass(cls) -> None:
             cls.elapsed_time = time.time() - cls.start_time
-            print('Elapsed time per test for uncached setup: {:.3f} ms'.format(
-                cls.elapsed_time * 10))
+            print(
+                "Elapsed time per test for uncached setup: {:.3f} ms".format(
+                    cls.elapsed_time * 10
+                )
+            )
 
         def setUp(self) -> None:
             self.setUpPyfakefs(use_cache=False)
 
-    @unittest.skipIf(IS_PYPY, 'PyPy times are not comparable')
+    @unittest.skipIf(IS_PYPY, "PyPy times are not comparable")
     class TimePerformanceTest(TestCase):
         """Make sure performance degradation in setup is noticed.
         The numbers are related to the CI builds and may fail in local builds.

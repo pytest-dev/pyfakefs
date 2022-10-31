@@ -31,7 +31,8 @@ import shutil
 
 
 class FakeShutilModule:
-    """Uses a FakeFilesystem to provide a fake replacement for shutil module.
+    """Uses a FakeFilesystem to provide a fake replacement
+    for shutil module.
     """
 
     @staticmethod
@@ -39,7 +40,7 @@ class FakeShutilModule:
         """Return the list of patched function names. Used for patching
         functions imported from the module.
         """
-        return 'disk_usage',
+        return ("disk_usage",)
 
     def __init__(self, filesystem):
         """Construct fake shutil module using the fake filesystem.

@@ -36,6 +36,7 @@ import shutil
 
 try:
     import scandir
+
     has_scandir = True
 except ImportError:
     scandir = None
@@ -65,7 +66,7 @@ def create_file(path):
     ["This is test file '/test/file.txt'.\\n", \
 'It was created using open().\\n']
     """
-    with open(path, 'w') as f:
+    with open(path, "w") as f:
         f.write("This is test file '{0}'.\n".format(path))
         f.write("It was created using open().\n")
 
@@ -144,5 +145,5 @@ def scan_dir(path):
 
 def file_contents(path):
     """Return the contents of the given path as byte array."""
-    with open(path, 'rb') as f:
+    with open(path, "rb") as f:
         return f.read()

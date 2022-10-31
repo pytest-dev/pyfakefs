@@ -14,4 +14,4 @@
 
 from pathlib import Path
 
-EXAMPLE_FILE = Path('/test') / 'file'
+EXAMPLE_FILE = Path("/test") / "file"

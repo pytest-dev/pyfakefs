@@ -42,23 +42,25 @@ class TestPatchedPackages(fake_filesystem_unittest.TestCase):
         self.setUpPyfakefs()
 
     if pd is not None:
+
         def test_read_csv(self):
-            path = '/foo/bar.csv'
-            self.fs.create_file(path, contents='1,2,3,4')
+            path = "/foo/bar.csv"
+            self.fs.create_file(path, contents="1,2,3,4")
             df = pd.read_csv(path)
-            assert (df.columns == ['1', '2', '3', '4']).all()
+            assert (df.columns == ["1", "2", "3", "4"]).all()
 
         def test_read_table(self):
-            path = '/foo/bar.csv'
-            self.fs.create_file(path, contents='1|2|3|4')
-            df = pd.read_table(path, delimiter='|')
-            assert (df.columns == ['1', '2', '3', '4']).all()
+            path = "/foo/bar.csv"
+            self.fs.create_file(path, contents="1|2|3|4")
+            df = pd.read_table(path, delimiter="|")
+            assert (df.columns == ["1", "2", "3", "4"]).all()
 
     if pd is not None and xlrd is not None:
+
         def test_read_excel(self):
-            path = '/foo/bar.xlsx'
+            path = "/foo/bar.xlsx"
             src_path = os.path.dirname(os.path.abspath(__file__))
-            src_path = os.path.join(src_path, 'fixtures', 'excel_test.xlsx')
+            src_path = os.path.join(src_path, "fixtures", "excel_test.xlsx")
             # map the file into another location to be sure that
             # the real fs is not used
             self.fs.add_real_file(src_path, target_path=path)
@@ -66,11 +68,12 @@ class TestPatchedPackages(fake_filesystem_unittest.TestCase):
             assert (df.columns == [1, 2, 3, 4]).all()
 
     if pd is not None and openpyxl is not None:
+
         def test_write_excel(self):
-            self.fs.create_dir('/foo')
-            path = '/foo/bar.xlsx'
+            self.fs.create_dir("/foo")
+            path = "/foo/bar.xlsx"
             df = pd.DataFrame([[0, 1, 2, 3]])
             with pd.ExcelWriter(path) as writer:
                 df.to_excel(writer)
             df = pd.read_excel(path)
-            assert (df.columns == ['Unnamed: 0', 0, 1, 2, 3]).all()
+            assert (df.columns == ["Unnamed: 0", 0, 1, 2, 3]).all()

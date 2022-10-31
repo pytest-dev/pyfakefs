@@ -18,5 +18,5 @@ a name ending with "io" was skipped from patching (see #569).
 
 def file_contents(path):
     """Return the contents of the given path as byte array."""
-    with open(path, 'rb') as f:
+    with open(path, "rb") as f:
         return f.read()

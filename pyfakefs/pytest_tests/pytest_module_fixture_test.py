@@ -14,12 +14,12 @@ import os
 import pytest
 
 
-@pytest.fixture(scope='module', autouse=True)
+@pytest.fixture(scope="module", autouse=True)
 def use_fs(fs_module):
-    fs_module.create_file(os.path.join('foo', 'bar'))
+    fs_module.create_file(os.path.join("foo", "bar"))
     yield fs_module
 
 
 def test_fs_uses_fs_module(fs):
     # check that `fs` uses the same filesystem as `fs_module`
-    assert os.path.exists(os.path.join('foo', 'bar'))
+    assert os.path.exists(os.path.join("foo", "bar"))

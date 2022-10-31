@@ -1,1 +1,1 @@
-configurable_value = 'another value'
+configurable_value = "another value"

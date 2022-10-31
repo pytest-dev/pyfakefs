@@ -19,8 +19,8 @@ Patcher.SKIPMODULES.add(pytest)
 
 @pytest.fixture
 def fs(request):
-    """ Fake filesystem. """
-    if hasattr(request, 'param'):
+    """Fake filesystem."""
+    if hasattr(request, "param"):
         # pass optional parameters via @pytest.mark.parametrize
         patcher = Patcher(*request.param)
     else:
@@ -32,8 +32,8 @@ def fs(request):
 
 @pytest.fixture(scope="module")
 def fs_module(request):
-    """ Module-scoped fake filesystem fixture. """
-    if hasattr(request, 'param'):
+    """Module-scoped fake filesystem fixture."""
+    if hasattr(request, "param"):
         patcher = Patcher(*request.param)
     else:
         patcher = Patcher()
@@ -44,8 +44,8 @@ def fs_module(request):
 
 @pytest.fixture(scope="session")
 def fs_session(request):
-    """ Session-scoped fake filesystem fixture. """
-    if hasattr(request, 'param'):
+    """Session-scoped fake filesystem fixture."""
+    if hasattr(request, "param"):
         patcher = Patcher(*request.param)
     else:
         patcher = Patcher()

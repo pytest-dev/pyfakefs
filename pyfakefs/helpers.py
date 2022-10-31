@@ -22,9 +22,9 @@ from copy import copy
 from stat import S_IFLNK
 from typing import Union, Optional, Any, AnyStr, overload, cast
 
-IS_PYPY = platform.python_implementation() == 'PyPy'
-IS_WIN = sys.platform == 'win32'
-IN_DOCKER = os.path.exists('/.dockerenv')
+IS_PYPY = platform.python_implementation() == "PyPy"
+IS_WIN = sys.platform == "win32"
+IN_DOCKER = os.path.exists("/.dockerenv")
 
 AnyPath = Union[AnyStr, os.PathLike]
 
@@ -37,21 +37,23 @@ def is_int_type(val: Any) -> bool:
 def is_byte_string(val: Any) -> bool:
     """Return True if `val` is a bytes-like object, False for a unicode
     string."""
-    return not hasattr(val, 'encode')
+    return not hasattr(val, "encode")
 
 
 def is_unicode_string(val: Any) -> bool:
     """Return True if `val` is a unicode string, False for a bytes-like
     object."""
-    return hasattr(val, 'encode')
+    return hasattr(val, "encode")
 
 
 @overload
-def make_string_path(dir_name: AnyStr) -> AnyStr: ...
+def make_string_path(dir_name: AnyStr) -> AnyStr:
+    ...
 
 
 @overload
-def make_string_path(dir_name: os.PathLike) -> str: ...
+def make_string_path(dir_name: os.PathLike) -> str:
+    ...
 
 
 def make_string_path(dir_name: AnyPath) -> AnyStr:
@@ -60,7 +62,7 @@ def make_string_path(dir_name: AnyPath) -> AnyStr:
 
 def to_string(path: Union[AnyStr, Union[str, bytes]]) -> str:
     """Return the string representation of a byte string using the preferred
-     encoding, or the string itself if path is a str."""
+    encoding, or the string itself if path is a str."""
     if isinstance(path, bytes):
         return path.decode(locale.getpreferredencoding(False))
     return path
@@ -68,7 +70,7 @@ def to_string(path: Union[AnyStr, Union[str, bytes]]) -> str:
 
 def to_bytes(path: Union[AnyStr, Union[str, bytes]]) -> bytes:
     """Return the bytes representation of a string using the preferred
-     encoding, or the byte string itself if path is a byte string."""
+    encoding, or the byte string itself if path is a byte string."""
     if isinstance(path, str):
         return bytes(path, locale.getpreferredencoding(False))
     return path
@@ -93,19 +95,23 @@ def now():
 
 
 @overload
-def matching_string(matched: bytes, string: AnyStr) -> bytes: ...
+def matching_string(matched: bytes, string: AnyStr) -> bytes:
+    ...
 
 
 @overload
-def matching_string(matched: str, string: AnyStr) -> str: ...
+def matching_string(matched: str, string: AnyStr) -> str:
+    ...
 
 
 @overload
-def matching_string(matched: AnyStr, string: None) -> None: ...
+def matching_string(matched: AnyStr, string: None) -> None:
+    ...
 
 
 def matching_string(  # type: ignore[misc]
-        matched: AnyStr, string: Optional[AnyStr]) -> Optional[AnyStr]:
+    matched: AnyStr, string: Optional[AnyStr]
+) -> Optional[AnyStr]:
     """Return the string as byte or unicode depending
     on the type of matched, assuming string is an ASCII string.
     """
@@ -121,8 +127,14 @@ class FakeStatResult:
     This is needed as `os.stat_result` has no possibility to set
     nanosecond times directly.
     """
-    def __init__(self, is_windows: bool, user_id: int, group_id: int,
-                 initial_time: Optional[float] = None):
+
+    def __init__(
+        self,
+        is_windows: bool,
+        user_id: int,
+        group_id: int,
+        initial_time: Optional[float] = None,
+    ):
         self.st_mode: int = 0
         self.st_ino: Optional[int] = None
         self.st_dev: int = 0
@@ -137,17 +149,17 @@ class FakeStatResult:
 
     def __eq__(self, other: Any) -> bool:
         return (
-                isinstance(other, FakeStatResult) and
-                self._st_atime_ns == other._st_atime_ns and
-                self._st_ctime_ns == other._st_ctime_ns and
-                self._st_mtime_ns == other._st_mtime_ns and
-                self.st_size == other.st_size and
-                self.st_gid == other.st_gid and
-                self.st_uid == other.st_uid and
-                self.st_nlink == other.st_nlink and
-                self.st_dev == other.st_dev and
-                self.st_ino == other.st_ino and
-                self.st_mode == other.st_mode
+            isinstance(other, FakeStatResult)
+            and self._st_atime_ns == other._st_atime_ns
+            and self._st_ctime_ns == other._st_ctime_ns
+            and self._st_mtime_ns == other._st_mtime_ns
+            and self.st_size == other.st_size
+            and self.st_gid == other.st_gid
+            and self.st_uid == other.st_uid
+            and self.st_nlink == other.st_nlink
+            and self.st_dev == other.st_dev
+            and self.st_ino == other.st_ino
+            and self.st_mode == other.st_mode
         )
 
     def __ne__(self, other: Any) -> bool:
@@ -221,8 +233,7 @@ class FakeStatResult:
         and that the result may differ if the file has holes.
         """
         if self.is_windows:
-            raise AttributeError(
-                "'os.stat_result' object has no attribute 'st_blocks'")
+            raise AttributeError("'os.stat_result' object has no attribute 'st_blocks'")
         page_size = 4096
         blocks_in_page = page_size // 512
         pages = self._st_size // page_size
@@ -233,8 +244,9 @@ class FakeStatResult:
     @property
     def st_file_attributes(self) -> int:
         if not self.is_windows:
-            raise AttributeError("module 'os.stat_result' "
-                                 "has no attribute 'st_file_attributes'")
+            raise AttributeError(
+                "module 'os.stat_result' " "has no attribute 'st_file_attributes'"
+            )
         mode = 0
         st_mode = self.st_mode
         if st_mode & stat.S_IFDIR:
@@ -250,8 +262,9 @@ class FakeStatResult:
     @property
     def st_reparse_tag(self) -> int:
         if not self.is_windows or sys.version_info < (3, 8):
-            raise AttributeError("module 'os.stat_result' "
-                                 "has no attribute 'st_reparse_tag'")
+            raise AttributeError(
+                "module 'os.stat_result' " "has no attribute 'st_reparse_tag'"
+            )
         if self.st_mode & stat.S_IFLNK:
             return stat.IO_REPARSE_TAG_SYMLINK  # type: ignore[attr-defined]
         return 0
@@ -281,7 +294,7 @@ class FakeStatResult:
             return int(self.st_mtime)
         if item == stat.ST_CTIME:
             return int(self.st_ctime)
-        raise ValueError('Invalid item')
+        raise ValueError("Invalid item")
 
     @property
     def st_atime_ns(self) -> int:
@@ -318,21 +331,23 @@ class BinaryBufferIO(io.BytesIO):
     """Stream class that handles byte contents for files."""
 
     def __init__(self, contents: Optional[bytes]):
-        super().__init__(contents or b'')
+        super().__init__(contents or b"")
 
     def putvalue(self, value: bytes) -> None:
         self.write(value)
 
 
 class TextBufferIO(io.TextIOWrapper):
-    """Stream class that handles Python string contents for files.
-    """
+    """Stream class that handles Python string contents for files."""
 
-    def __init__(self, contents: Optional[bytes] = None,
-                 newline: Optional[str] = None,
-                 encoding: Optional[str] = None,
-                 errors: str = 'strict'):
-        self._bytestream = io.BytesIO(contents or b'')
+    def __init__(
+        self,
+        contents: Optional[bytes] = None,
+        newline: Optional[str] = None,
+        encoding: Optional[str] = None,
+        errors: str = "strict",
+    ):
+        self._bytestream = io.BytesIO(contents or b"")
         super().__init__(self._bytestream, encoding, errors, newline)
 
     def getvalue(self) -> bytes:

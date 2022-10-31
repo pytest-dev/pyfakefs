@@ -32,8 +32,11 @@ The preferred workflow for contributing code is to
 [fork](https://help.github.com/articles/fork-a-repo/) the [repository](https://github.com/pytest-dev/pyfakefs) on GitHub, clone it,
 develop on a feature branch, and [create a pull request](https://help.github.com/articles/creating-a-pull-request-from-a-fork) when done.
 There are a few things to consider for contributing code:
-  * Please use the standard [PEP-8 coding style](https://www.python.org/dev/peps/pep-0008/)
-  (your IDE or tools like [pep8](https://pypi.python.org/pypi/pep8) or [pylint](https://pypi.python.org/pypi/pylint) will help you)
+  * We ensure the [PEP-8 coding style](https://www.python.org/dev/peps/pep-0008/)
+    by using [black](https://pypi.org/project/black/) auto-format in a
+    pre-commit hook; you can locally install
+    [pre-commit](https://pypi.org/project/pre-commit/) to run the linter
+    tests on check-in or on demand (`pre-commit run --all-files`)
   * Use the [Google documentation style](https://google.github.io/styleguide/pyguide.html) to document new public classes or methods
   * Provide unit tests for bug fixes or new functionality - check the existing tests for examples
   * Provide meaningful commit messages - it is ok to amend the commits to improve the comments
