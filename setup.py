@@ -29,7 +29,7 @@ DESCRIPTION = (
     "the Python file system modules."
 )
 
-URL = "http://pyfakefs.org"
+URL = "https://github.com/pytest-dev/pyfakefs"
 
 BASE_PATH = os.path.abspath(os.path.dirname(__file__))
 with open(os.path.join(BASE_PATH, "README.md")) as f:
