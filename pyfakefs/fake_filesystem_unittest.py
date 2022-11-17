@@ -99,7 +99,7 @@ PATH_MODULE = "ntpath" if sys.platform == "win32" else "posixpath"
 
 
 def patchfs(
-    _func: Callable = None,
+    _func: Optional[Callable] = None,
     *,
     additional_skip_names: Optional[List[Union[str, ModuleType]]] = None,
     modules_to_reload: Optional[List[ModuleType]] = None,
