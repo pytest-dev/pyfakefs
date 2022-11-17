@@ -921,7 +921,7 @@ class FakeFilesystem:
     def __init__(
         self,
         path_separator: str = os.path.sep,
-        total_size: int = None,
+        total_size: Optional[int] = None,
         patcher: Any = None,
     ) -> None:
         """
@@ -1292,7 +1292,7 @@ class FakeFilesystem:
                 return mount_point
         return None
 
-    def get_disk_usage(self, path: AnyStr = None) -> Tuple[int, int, int]:
+    def get_disk_usage(self, path: Optional[AnyStr] = None) -> Tuple[int, int, int]:
         """Return the total, used and free disk space in bytes as named tuple,
         or placeholder values simulating unlimited space if not set.
 
@@ -1921,7 +1921,7 @@ class FakeFilesystem:
             the path starts with a drive letter.
         """
         colon = matching_string(file_path, ":")
-        if len(file_path) >= 2 and file_path[0:1].isalpha and file_path[1:2] == colon:
+        if len(file_path) >= 2 and file_path[0:1].isalpha() and file_path[1:2] == colon:
             if self.is_windows_fs:
                 return True
             if os.name == "nt":
@@ -3830,7 +3830,7 @@ class FakePathModule:
         path = self._os_path.relpath(path, start)
         return path.replace(system_sep, sep)
 
-    def realpath(self, filename: AnyStr, strict: bool = None) -> AnyStr:
+    def realpath(self, filename: AnyStr, strict: Optional[bool] = None) -> AnyStr:
         """Return the canonical path of the specified filename, eliminating any
         symbolic links encountered in the path.
         """
@@ -4766,7 +4766,7 @@ class FakeOsModule:
             raise
 
     def makedirs(
-        self, name: AnyStr, mode: int = PERM_DEF, exist_ok: bool = None
+        self, name: AnyStr, mode: int = PERM_DEF, exist_ok: Optional[bool] = None
     ) -> None:
         """Create a leaf Fake directory + create any non-existent parent dirs.
 
