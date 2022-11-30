@@ -30,6 +30,18 @@ def fs(request):
     patcher.tearDown()
 
 
+@pytest.fixture(scope="class")
+def fs_class(request):
+    """Class-scoped fake filesystem fixture."""
+    if hasattr(request, "param"):
+        patcher = Patcher(*request.param)
+    else:
+        patcher = Patcher()
+    patcher.setUp()
+    yield patcher.fs
+    patcher.tearDown()
+
+
 @pytest.fixture(scope="module")
 def fs_module(request):
     """Module-scoped fake filesystem fixture."""

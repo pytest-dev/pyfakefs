@@ -850,5 +850,24 @@ class TestAbsolutePathOnWindows(fake_filesystem_unittest.TestCase):
         self.assertTrue(pathlib.Path(".").absolute().is_absolute())
 
 
+@unittest.skipIf(sys.version_info < (3, 8), "Not available before Python 3.8")
+class TestClassSetup(fake_filesystem_unittest.TestCase):
+    @classmethod
+    def setUpClass(cls):
+        cls.setUpClassPyfakefs()
+        cls.fake_fs().create_file("foo/bar", contents="test")
+
+    def test_using_fs_functions(self):
+        self.assertTrue(os.path.exists("foo/bar"))
+        with open("foo/bar") as f:
+            contents = f.read()
+        self.assertEqual("test", contents)
+
+    def test_using_fakefs(self):
+        self.assertTrue(self.fs.exists("foo/bar"))
+        f = self.fs.get_object("foo/bar")
+        self.assertEqual("test", f.contents)
+
+
 if __name__ == "__main__":
     unittest.main()
