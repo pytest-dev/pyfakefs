@@ -37,15 +37,17 @@ tests:
         """
         yield fs
 
-Module- and session scoped fixtures
-...................................
-For convenience, module- and session-scoped fixtures with the same
-functionality are provided, named ``fs_module`` and ``fs_session``,
+Class-, module- and session-scoped fixtures
+...........................................
+For convenience, class-, module- and session-scoped fixtures with the same
+functionality are provided, named ``fake_fs``, ``fs_module`` and ``fs_session``,
 respectively.
 
 .. caution:: If any of these fixtures is active, any other ``fs`` fixture will
   not setup / tear down the fake filesystem in the current scope; instead, it
-  will just serve as a reference to the active fake filesystem.
+  will just serve as a reference to the active fake filesystem. That means that changes
+  done in the fake filesystem inside a test will remain there until the respective scope
+  ends.
 
 Patch using fake_filesystem_unittest
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -73,6 +75,39 @@ with the fake file system functions and modules:
 
 The usage is explained in more detail in :ref:`auto_patch` and
 demonstrated in the files `example.py`_ and `example_test.py`_.
+
+If your setup is the same for all tests in a class, you can use the class setup
+method ``setUpClassPyfakefs`` instead:
+
+.. code:: python
+
+    from pyfakefs.fake_filesystem_unittest import TestCase
+
+
+    class ExampleTestCase(TestCase):
+        def setUpClass(cls):
+            self.setUpClassPyfakefs()
+            cls.file_path = "/test/file.txt"
+            # you can access the fake fs via fake_fs() here
+            cls.fake_fs().create_file(file_path)
+
+        def test1(self):
+            self.assertTrue(os.path.exists(self.file_path))
+
+        def test2(self):
+            self.assertTrue(os.path.exists(self.file_path))
+            file_path = "/test/file2.txt"
+            # self.fs is the same instance as cls.fake_fs() above
+            self.fs.create_file(file_path)
+            self.assertTrue(os.path.exists(file_path))
+
+.. note:: This feature cannot be used with a Python version before Python 3.8 due to
+  a missing feature in ``unittest``.
+
+.. caution:: If this is used, any changes made in the fake filesystem inside a test
+  will remain there for all following tests, if they are not reverted in the test
+  itself.
+
 
 Patch using fake_filesystem_unittest.Patcher
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

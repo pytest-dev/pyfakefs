@@ -156,6 +156,9 @@ def patchfs(
     return wrap_patchfs
 
 
+DOCTEST_PATCHER = None
+
+
 def load_doctests(
     loader: Any,
     tests: TestSuite,
@@ -177,22 +180,26 @@ def load_doctests(
 
     File `example_test.py` in the pyfakefs release provides a usage example.
     """
-    _patcher = Patcher(
-        additional_skip_names=additional_skip_names,
-        modules_to_reload=modules_to_reload,
-        modules_to_patch=modules_to_patch,
-        allow_root_user=allow_root_user,
-        use_known_patches=use_known_patches,
-        patch_open_code=patch_open_code,
-        patch_default_args=patch_default_args,
-    )
-    globs = _patcher.replace_globs(vars(module))
+    has_patcher = Patcher.DOC_PATCHER is not None
+    if not has_patcher:
+        Patcher.DOC_PATCHER = Patcher(
+            additional_skip_names=additional_skip_names,
+            modules_to_reload=modules_to_reload,
+            modules_to_patch=modules_to_patch,
+            allow_root_user=allow_root_user,
+            use_known_patches=use_known_patches,
+            patch_open_code=patch_open_code,
+            patch_default_args=patch_default_args,
+            is_doc_test=True,
+        )
+    assert Patcher.DOC_PATCHER is not None
+    globs = Patcher.DOC_PATCHER.replace_globs(vars(module))
     tests.addTests(
         doctest.DocTestSuite(
             module,
             globs=globs,
-            setUp=_patcher.setUp,
-            tearDown=_patcher.tearDown,
+            setUp=Patcher.DOC_PATCHER.setUp,
+            tearDown=Patcher.DOC_PATCHER.tearDown,
         )
     )
     return tests
@@ -243,8 +250,14 @@ class TestCaseMixin:
     modules_to_patch: Optional[Dict[str, ModuleType]] = None
 
     @property
+    def patcher(self):
+        if hasattr(self, "_patcher"):
+            return self._patcher or Patcher.PATCHER
+        return Patcher.PATCHER
+
+    @property
     def fs(self) -> FakeFilesystem:
-        return cast(FakeFilesystem, self._stubber.fs)
+        return cast(FakeFilesystem, self.patcher.fs)
 
     def setUpPyfakefs(
         self,
@@ -268,13 +281,17 @@ class TestCaseMixin:
         the current test case. Settings the arguments here may be a more
         convenient way to adapt the setting than overwriting `__init__()`.
         """
+        # if the class has already a patcher setup, we use this one
+        if Patcher.PATCHER is not None:
+            return
+
         if additional_skip_names is None:
             additional_skip_names = self.additional_skip_names
         if modules_to_reload is None:
             modules_to_reload = self.modules_to_reload
         if modules_to_patch is None:
             modules_to_patch = self.modules_to_patch
-        self._stubber = Patcher(
+        self._patcher = Patcher(
             additional_skip_names=additional_skip_names,
             modules_to_reload=modules_to_reload,
             modules_to_patch=modules_to_patch,
@@ -285,8 +302,69 @@ class TestCaseMixin:
             use_cache=use_cache,
         )
 
-        self._stubber.setUp()
-        cast(TestCase, self).addCleanup(self._stubber.tearDown)
+        self._patcher.setUp()
+        cast(TestCase, self).addCleanup(self._patcher.tearDown)
+
+    @classmethod
+    def setUpClassPyfakefs(
+        cls,
+        additional_skip_names: Optional[List[Union[str, ModuleType]]] = None,
+        modules_to_reload: Optional[List[ModuleType]] = None,
+        modules_to_patch: Optional[Dict[str, ModuleType]] = None,
+        allow_root_user: bool = True,
+        use_known_patches: bool = True,
+        patch_open_code: PatchMode = PatchMode.OFF,
+        patch_default_args: bool = False,
+        use_cache: bool = True,
+    ) -> None:
+        """Similar to :py:func:`setUpPyfakefs`, but as a class method that
+        can be used in `setUpClass` instead of in `setUp`.
+        The fake filesystem will live in all test methods in the test class
+        and can be used in the usual way.
+        Note that using both :py:func:`setUpClassPyfakefs` and
+        :py:func:`setUpPyfakefs` in the same class will not work correctly.
+
+        .. note:: This method is only available from Python 3.8 onwards.
+        """
+        if sys.version_info < (3, 8):
+            raise NotImplementedError(
+                "setUpClassPyfakefs is only available in "
+                "Python versions starting from 3.8"
+            )
+
+        # if the class has already a patcher setup, we use this one
+        if Patcher.PATCHER is not None:
+            return
+
+        if additional_skip_names is None:
+            additional_skip_names = cls.additional_skip_names
+        if modules_to_reload is None:
+            modules_to_reload = cls.modules_to_reload
+        if modules_to_patch is None:
+            modules_to_patch = cls.modules_to_patch
+        Patcher.PATCHER = Patcher(
+            additional_skip_names=additional_skip_names,
+            modules_to_reload=modules_to_reload,
+            modules_to_patch=modules_to_patch,
+            allow_root_user=allow_root_user,
+            use_known_patches=use_known_patches,
+            patch_open_code=patch_open_code,
+            patch_default_args=patch_default_args,
+            use_cache=use_cache,
+        )
+
+        Patcher.PATCHER.setUp()
+        cast(TestCase, cls).addClassCleanup(Patcher.PATCHER.tearDown)
+
+    @classmethod
+    def fake_fs(cls):
+        """Convenience class method for accessing the fake filesystem.
+        For use inside `setUpClass`, after :py:func:`setUpClassPyfakefs`
+        has been called.
+        """
+        if Patcher.PATCHER:
+            return Patcher.PATCHER.fs
+        return None
 
     def pause(self) -> None:
         """Pause the patching of the file system modules until `resume` is
@@ -295,7 +373,7 @@ class TestCaseMixin:
         Calling pause() twice is silently ignored.
 
         """
-        self._stubber.pause()
+        self.patcher.pause()
 
     def resume(self) -> None:
         """Resume the patching of the file system modules if `pause` has
@@ -303,7 +381,7 @@ class TestCaseMixin:
         executed in the fake file system.
         Does nothing if patching is not paused.
         """
-        self._stubber.resume()
+        self.patcher.resume()
 
 
 class TestCase(unittest.TestCase, TestCaseMixin):
@@ -408,10 +486,16 @@ class Patcher:
     PATCHED_MODULE_NAMES: Set[str] = set()
     ADDITIONAL_SKIP_NAMES: Set[str] = set()
     PATCH_DEFAULT_ARGS = False
-    PATCHER = None
+    PATCHER: Optional["Patcher"] = None
+    DOC_PATCHER: Optional["Patcher"] = None
     REF_COUNT = 0
+    DOC_REF_COUNT = 0
 
     def __new__(cls, *args, **kwargs):
+        if kwargs.get("is_doc_test", False):
+            if cls.DOC_PATCHER is None:
+                cls.DOC_PATCHER = super().__new__(cls)
+            return cls.DOC_PATCHER
         if cls.PATCHER is None:
             cls.PATCHER = super().__new__(cls)
         return cls.PATCHER
@@ -426,6 +510,7 @@ class Patcher:
         patch_open_code: PatchMode = PatchMode.OFF,
         patch_default_args: bool = False,
         use_cache: bool = True,
+        is_doc_test: bool = False,
     ) -> None:
         """
         Args:
@@ -458,7 +543,11 @@ class Patcher:
                 feature, this argument allows to turn it off in case it
                 causes any problems.
         """
-        if self.REF_COUNT > 0:
+        self.is_doc_test = is_doc_test
+        if is_doc_test:
+            if self.DOC_REF_COUNT > 0:
+                return
+        elif self.REF_COUNT > 0:
             return
         if not allow_root_user:
             # set non-root IDs even if the real user is root
@@ -764,9 +853,14 @@ class Patcher:
         """Bind the file-related modules to the :py:mod:`pyfakefs` fake
         modules real ones.  Also bind the fake `file()` and `open()` functions.
         """
-        self.__class__.REF_COUNT += 1
-        if self.__class__.REF_COUNT > 1:
-            return
+        if self.is_doc_test:
+            self.__class__.DOC_REF_COUNT += 1
+            if self.__class__.DOC_REF_COUNT > 1:
+                return
+        else:
+            self.__class__.REF_COUNT += 1
+            if self.__class__.REF_COUNT > 1:
+                return
         self.has_fcopy_file = (
             sys.platform == "darwin"
             and hasattr(shutil, "_HAS_FCOPYFILE")
@@ -853,15 +947,23 @@ class Patcher:
 
     def tearDown(self, doctester: Any = None):
         """Clear the fake filesystem bindings created by `setUp()`."""
-        self.__class__.REF_COUNT -= 1
-        if self.__class__.REF_COUNT > 0:
-            return
+        if self.is_doc_test:
+            self.__class__.DOC_REF_COUNT -= 1
+            if self.__class__.DOC_REF_COUNT > 0:
+                return
+        else:
+            self.__class__.REF_COUNT -= 1
+            if self.__class__.REF_COUNT > 0:
+                return
         self.stop_patching()
         if self.has_fcopy_file:
             shutil._HAS_FCOPYFILE = True  # type: ignore[attr-defined]
 
         reset_ids()
-        self.__class__.PATCHER = None
+        if self.is_doc_test:
+            self.__class__.DOC_PATCHER = None
+        else:
+            self.__class__.PATCHER = None
 
     def stop_patching(self) -> None:
         if self._patching:
