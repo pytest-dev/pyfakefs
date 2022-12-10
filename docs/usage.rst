@@ -85,18 +85,21 @@ method ``setUpClassPyfakefs`` instead:
 
 
     class ExampleTestCase(TestCase):
+        @classmethod
         def setUpClass(cls):
-            self.setUpClassPyfakefs()
-            cls.file_path = "/test/file.txt"
-            # you can access the fake fs via fake_fs() here
-            cls.fake_fs().create_file(file_path)
+            cls.setUpClassPyfakefs()
+            # setup the fake filesystem using standard functions
+            pathlib.Path("/test/file1.txt").touch()
+            # you can also access the fake fs via fake_fs() if needed
+            cls.fake_fs().create_file("/test/file2.txt", contents="test")
 
         def test1(self):
-            self.assertTrue(os.path.exists(self.file_path))
+            self.assertTrue(os.path.exists("/test/file1.txt"))
+            self.assertTrue(os.path.exists("/test/file2.txt"))
 
         def test2(self):
-            self.assertTrue(os.path.exists(self.file_path))
-            file_path = "/test/file2.txt"
+            self.assertTrue(os.path.exists("/test/file1.txt"))
+            file_path = "/test/file3.txt"
             # self.fs is the same instance as cls.fake_fs() above
             self.fs.create_file(file_path)
             self.assertTrue(os.path.exists(file_path))
@@ -105,8 +108,8 @@ method ``setUpClassPyfakefs`` instead:
   a missing feature in ``unittest``.
 
 .. caution:: If this is used, any changes made in the fake filesystem inside a test
-  will remain there for all following tests, if they are not reverted in the test
-  itself.
+  will remain there for all following tests in the test class, if they are not reverted
+  in the test itself.
 
 
 Patch using fake_filesystem_unittest.Patcher
