@@ -3,6 +3,10 @@ The released versions correspond to PyPI releases.
 
 ## Unreleased
 
+### Features
+* added class level setup method `setUpClassPyfakefs` for unittest and class-scoped
+  fixture `fs_class` for pytest (see [#752](../../issues/752))
+
 ### Infrastructure
 * replaced end-of-life CentOS with RedHat UBI9 docker image
 * added tests for pytest 7.2.0
