@@ -11,7 +11,7 @@ jobs:
       matrix:
         docker-image: [debian, fedora, ubuntu, redhat]
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v3
     - name: Setup docker container
       run: |
         docker build -t pyfakefs -f $GITHUB_WORKSPACE/.github/workflows/dockerfiles/Dockerfile_${{ matrix.docker-image }} . --build-arg github_repo=$GITHUB_REPOSITORY --build-arg github_branch=$(basename $GITHUB_REF)
