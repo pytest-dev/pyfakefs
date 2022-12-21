@@ -632,6 +632,7 @@ class FakePathlibPathFileOperationTest(RealPathlibTestCase):
         self.assertTrue(path.is_symlink())
 
     @unittest.skipIf(sys.version_info < (3, 8), "link_to new in Python 3.8")
+    @unittest.skipIf(sys.version_info >= (3, 12), "link_to removed in Python 3.12")
     def test_link_to(self):
         self.skip_if_symlink_not_supported()
         file_name = self.make_path("foo", "bar.txt")

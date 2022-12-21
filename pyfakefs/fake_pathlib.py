@@ -32,8 +32,10 @@ import errno
 import fnmatch
 import functools
 import inspect
+import ntpath
 import os
 import pathlib
+import posixpath
 import re
 import sys
 from pathlib import PurePath
@@ -383,6 +385,7 @@ class _FakeWindowsFlavour(_FakeFlavour):
         | {"COM%d" % i for i in range(1, 10)}
         | {"LPT%d" % i for i in range(1, 10)}
     )
+    pathmod = ntpath
 
     def is_reserved(self, parts):
         """Return True if the path is considered reserved under Windows."""
@@ -458,6 +461,8 @@ class _FakePosixFlavour(_FakeFlavour):
     """Flavour used by PurePosixPath with some Unix specific implementations
     independent of FakeFilesystem properties.
     """
+
+    pathmod = posixpath
 
     def is_reserved(self, parts):
         return False
