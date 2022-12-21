@@ -576,6 +576,11 @@ class FakeFile:
             dir_path = sep.join(names)
         return self.filesystem.absnormpath(dir_path)
 
+    @property
+    def is_junction(self) -> bool:
+        # TODO: implement junctions
+        return False
+
     def __getattr__(self, item: str) -> Any:
         """Forward some properties to stat_result."""
         if item in self.stat_types:
@@ -3440,6 +3445,22 @@ class FakeFilesystem:
         """
         return self._is_of_type(path, S_IFLNK, follow_symlinks=False)
 
+    def isjunction(self, path: AnyPath) -> bool:
+        """Determine if path identifies a junction.
+
+        Args:
+            path: Path to filesystem object.
+
+        Returns:
+            `False` on posix systems.
+            `True` if path is a junction on Windows.
+
+        Raises:
+            TypeError: if path is None.
+        """
+        # TODO: implement junction on Windows
+        return False
+
     def confirmdir(
         self, target_directory: AnyStr, check_owner: bool = False
     ) -> FakeDirectory:
@@ -3602,6 +3623,7 @@ class FakePathModule:
             "isdir",
             "isfile",
             "islink",
+            "isjunction",
             "ismount",
             "join",
             "lexists",
@@ -3701,6 +3723,20 @@ class FakePathModule:
             TypeError: if path is None.
         """
         return self.filesystem.islink(path)
+
+    def isjunction(self, path: AnyStr) -> bool:
+        """Determine whether path is a junction.
+
+        Args:
+            path: Path to filesystem object.
+
+        Returns:
+            `True` if path is a junction.
+
+        Raises:
+            TypeError: if path is None.
+        """
+        return self.filesystem.isjunction(path)
 
     def getmtime(self, path: AnyStr) -> float:
         """Returns the modification time of the fake file.
