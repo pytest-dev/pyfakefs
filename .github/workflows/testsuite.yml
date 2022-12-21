@@ -6,14 +6,26 @@ on:
 jobs:
   tests:
     runs-on: ${{ matrix.os }}
+    continue-on-error: ${{ matrix.experimental }}
     strategy:
       fail-fast: false
       matrix:
         os: [ubuntu-latest, macOS-latest, windows-latest]
-        python-version: [3.7, 3.8, 3.9, "3.10", "3.11", "3.12-dev"]
+        python-version: [3.7, 3.8, 3.9, "3.10", "3.11"]
+        experimental: [false]
         include:
-          - python-version: "pypy-3.7"
-            os: ubuntu-latest
+          - os: ubuntu-latest
+            python-version: "pypy-3.7"
+            experimental: false
+          - os: ubuntu-latest
+            python-version: "3.12-dev"
+            experimental: true
+          - os: macOS-latest
+            python-version: "3.12-dev"
+            experimental: true
+          - os: windows-latest
+            python-version: "3.12-dev"
+            experimental: true
 
     steps:
     - uses: actions/checkout@v2
