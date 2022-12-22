@@ -70,14 +70,17 @@ jobs:
         fi
       shell: bash
     - name: Install extra dependencies
+      if: ${{ ! matrix.experimental }}
       run: |
         pip install -r extra_requirements.txt
       shell: bash
     - name: Run unit tests with extra packages as non-root user
+      if: ${{ ! matrix.experimental }}
       run: |
         python -m pyfakefs.tests.all_tests
       shell: bash
     - name: Run performance tests
+      if: ${{ ! matrix.experimental }}
       run: |
         if [[ '${{ matrix.os  }}' != 'macOS-latest' ]]; then
           export TEST_PERFORMANCE=1
