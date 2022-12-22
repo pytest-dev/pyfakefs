@@ -58,12 +58,12 @@ jobs:
         fi
       shell: bash
     - name: Install extra dependencies
-      if: ${{ python-version == "3.12-dev" }}
+      if: ${{ python-version != "3.12-dev" }}
       run: |
         pip install -r extra_requirements.txt
       shell: bash
     - name: Run unit tests with extra packages as non-root user
-      if: ${{ python-version == "3.12-dev" }}
+      if: ${{ python-version != "3.12-dev" }}
       run: |
         python -m pyfakefs.tests.all_tests
       shell: bash
