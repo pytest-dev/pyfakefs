@@ -114,6 +114,16 @@ class DirEntry(BaseClass):
         def __fspath__(self):
             return self.path
 
+    if sys.version_info >= (3, 12):
+
+        def is_junction(self) -> bool:
+            """Return True if this entry is a junction.
+            Junctions are not a part of posix semantic."""
+            if not self._filesystem.is_windows_fs:
+                return False
+            file_object = self._filesystem.resolve(self._abspath)
+            return file_object.is_junction
+
 
 class ScanDirIter:
     """Iterator for DirEntry objects returned from `scandir()`

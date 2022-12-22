@@ -513,6 +513,15 @@ class FakePathlibPathFileOperationTest(RealPathlibTestCase):
         file_path = self.path(self.make_path("text_file"))
         self.assertEqual(file_path.read_text(), "foo")
 
+    @unittest.skipIf(
+        sys.version_info < (3, 12),
+        "is_junction method new in Python 3.12",
+    )
+    def test_is_junction(self):
+        self.create_file(self.make_path("text_file"), contents="foo")
+        file_path = self.path(self.make_path("text_file"))
+        self.assertFalse(file_path.is_junction())
+
     def test_read_text_with_encoding(self):
         self.create_file(
             self.make_path("text_file"), contents="ерунда", encoding="cyrillic"
@@ -632,6 +641,7 @@ class FakePathlibPathFileOperationTest(RealPathlibTestCase):
         self.assertTrue(path.is_symlink())
 
     @unittest.skipIf(sys.version_info < (3, 8), "link_to new in Python 3.8")
+    @unittest.skipIf(sys.version_info >= (3, 12), "link_to removed in Python 3.12")
     def test_link_to(self):
         self.skip_if_symlink_not_supported()
         file_name = self.make_path("foo", "bar.txt")
