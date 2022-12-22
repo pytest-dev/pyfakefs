@@ -3449,7 +3449,7 @@ class FakeFilesystem:
     if sys.version_info >= (3, 12):
 
         def isjunction(self, path: AnyPath) -> bool:
-            """Junction are never faked."""
+            """Returns False. Junctions are never faked."""
             return False
 
     def confirmdir(
@@ -3720,7 +3720,7 @@ class FakePathModule:
     if sys.version_info >= (3, 12):
 
         def isjunction(self, path: AnyStr) -> bool:
-            """Junction are never faked."""
+            """Returns False. Junctions are never faked."""
             return self.filesystem.isjunction(path)
 
     def getmtime(self, path: AnyStr) -> float:
