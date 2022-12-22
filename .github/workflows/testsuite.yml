@@ -6,26 +6,14 @@ on:
 jobs:
   tests:
     runs-on: ${{ matrix.os }}
-    continue-on-error: ${{ matrix.experimental }}
     strategy:
       fail-fast: false
       matrix:
         os: [ubuntu-latest, macOS-latest, windows-latest]
-        python-version: [3.7, 3.8, 3.9, "3.10", "3.11"]
-        experimental: [false]
+        python-version: [3.7, 3.8, 3.9, "3.10", "3.11", "3.12-dev"]
         include:
-          - os: ubuntu-latest
-            python-version: "pypy-3.7"
-            experimental: false
-          - os: ubuntu-latest
-            python-version: "3.12-dev"
-            experimental: true
-          - os: macOS-latest
-            python-version: "3.12-dev"
-            experimental: true
-          - os: windows-latest
-            python-version: "3.12-dev"
-            experimental: true
+          - python-version: "pypy-3.7"
+            os: ubuntu-latest
 
     steps:
     - uses: actions/checkout@v2
@@ -70,17 +58,17 @@ jobs:
         fi
       shell: bash
     - name: Install extra dependencies
-      if: ${{ ! matrix.experimental }}
+      if: ${{ python-version == "3.12-dev" }}
       run: |
         pip install -r extra_requirements.txt
       shell: bash
     - name: Run unit tests with extra packages as non-root user
-      if: ${{ ! matrix.experimental }}
+      if: ${{ python-version == "3.12-dev" }}
       run: |
         python -m pyfakefs.tests.all_tests
       shell: bash
     - name: Run performance tests
-      if: ${{ ! matrix.experimental }}
+      if: ${{ python-version == "3.12-dev" }}
       run: |
         if [[ '${{ matrix.os  }}' != 'macOS-latest' ]]; then
           export TEST_PERFORMANCE=1
