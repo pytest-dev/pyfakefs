@@ -6,12 +6,15 @@ The released versions correspond to PyPI releases.
 ### Features
 * added class level setup method `setUpClassPyfakefs` for unittest and class-scoped
   fixture `fs_class` for pytest (see [#752](../../issues/752))
+* added experimental support for Python 3.12: added fake APIs for Windows junction
+  support. These are not implemented and always return `False`.
 
 ### Infrastructure
 * replaced end-of-life CentOS with RedHat UBI9 docker image
 * added tests for pytest 7.2.0
 * added black to pre-commit checks, which caused some changes to the
   coding style (max line length is now 88, always use double quotes)
+* added Python 3.12 to the test suite.
 
 ## [Version 5.0.0](https://pypi.python.org/pypi/pyfakefs/5.0.0) (2022-10-09)
 New version after the transfer to `pytest-dev`.
