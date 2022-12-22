@@ -68,7 +68,6 @@ jobs:
         python -m pyfakefs.tests.all_tests
       shell: bash
     - name: Run performance tests
-      if: ${{ python-version == "3.12-dev" }}
       run: |
         if [[ '${{ matrix.os  }}' != 'macOS-latest' ]]; then
           export TEST_PERFORMANCE=1
