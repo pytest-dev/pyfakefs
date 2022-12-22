@@ -513,6 +513,15 @@ class FakePathlibPathFileOperationTest(RealPathlibTestCase):
         file_path = self.path(self.make_path("text_file"))
         self.assertEqual(file_path.read_text(), "foo")
 
+    @unittest.skipIf(
+        sys.version_info < (3, 12),
+        "is_junction method new in Python 3.12",
+    )
+    def test_is_junction(self):
+        self.create_file(self.make_path("text_file"), contents="foo")
+        file_path = self.path(self.make_path("text_file"))
+        self.assertFalse(file_path.is_junction())
+
     def test_read_text_with_encoding(self):
         self.create_file(
             self.make_path("text_file"), contents="ерунда", encoding="cyrillic"

@@ -576,9 +576,11 @@ class FakeFile:
             dir_path = sep.join(names)
         return self.filesystem.absnormpath(dir_path)
 
-    @property
-    def is_junction(self) -> bool:
-        return self.filesystem.isjunction(self.path)
+    if sys.version_info >= (3, 12):
+
+        @property
+        def is_junction(self) -> bool:
+            return self.filesystem.isjunction(self.path)
 
     def __getattr__(self, item: str) -> Any:
         """Forward some properties to stat_result."""
@@ -3444,9 +3446,11 @@ class FakeFilesystem:
         """
         return self._is_of_type(path, S_IFLNK, follow_symlinks=False)
 
-    def isjunction(self, path: AnyPath) -> bool:
-        """Junction are never faked."""
-        return False
+    if sys.version_info >= (3, 12):
+
+        def isjunction(self, path: AnyPath) -> bool:
+            """Junction are never faked."""
+            return False
 
     def confirmdir(
         self, target_directory: AnyStr, check_owner: bool = False
@@ -3597,7 +3601,7 @@ class FakePathModule:
         """Return the list of patched function names. Used for patching
         functions imported from the module.
         """
-        return [
+        dir_list = [
             "abspath",
             "dirname",
             "exists",
@@ -3610,7 +3614,6 @@ class FakePathModule:
             "isdir",
             "isfile",
             "islink",
-            "isjunction",
             "ismount",
             "join",
             "lexists",
@@ -3622,6 +3625,9 @@ class FakePathModule:
             "splitdrive",
             "samefile",
         ]
+        if sys.version_info >= (3, 12):
+            dir_list.append("isjunction")
+        return dir_list
 
     def __init__(self, filesystem: FakeFilesystem, os_module: "FakeOsModule"):
         """Init.
@@ -3711,9 +3717,11 @@ class FakePathModule:
         """
         return self.filesystem.islink(path)
 
-    def isjunction(self, path: AnyStr) -> bool:
-        """Junction are never faked."""
-        return self.filesystem.isjunction(path)
+    if sys.version_info >= (3, 12):
+
+        def isjunction(self, path: AnyStr) -> bool:
+            """Junction are never faked."""
+            return self.filesystem.isjunction(path)
 
     def getmtime(self, path: AnyStr) -> float:
         """Returns the modification time of the fake file.
