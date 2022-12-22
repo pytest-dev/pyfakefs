@@ -578,8 +578,7 @@ class FakeFile:
 
     @property
     def is_junction(self) -> bool:
-        # TODO: implement junctions
-        return False
+        return self.filesystem.isjunction(self.path)
 
     def __getattr__(self, item: str) -> Any:
         """Forward some properties to stat_result."""
@@ -3446,19 +3445,7 @@ class FakeFilesystem:
         return self._is_of_type(path, S_IFLNK, follow_symlinks=False)
 
     def isjunction(self, path: AnyPath) -> bool:
-        """Determine if path identifies a junction.
-
-        Args:
-            path: Path to filesystem object.
-
-        Returns:
-            `False` on posix systems.
-            `True` if path is a junction on Windows.
-
-        Raises:
-            TypeError: if path is None.
-        """
-        # TODO: implement junction on Windows
+        """Junction are never faked."""
         return False
 
     def confirmdir(
@@ -3725,17 +3712,7 @@ class FakePathModule:
         return self.filesystem.islink(path)
 
     def isjunction(self, path: AnyStr) -> bool:
-        """Determine whether path is a junction.
-
-        Args:
-            path: Path to filesystem object.
-
-        Returns:
-            `True` if path is a junction.
-
-        Raises:
-            TypeError: if path is None.
-        """
+        """Junction are never faked."""
         return self.filesystem.isjunction(path)
 
     def getmtime(self, path: AnyStr) -> float:
