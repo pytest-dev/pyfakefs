@@ -15,6 +15,7 @@ The released versions correspond to PyPI releases.
 * added black to pre-commit checks, which caused some changes to the
   coding style (max line length is now 88, always use double quotes)
 * added Python 3.12 to the test suite.
+* migrated to [setuptools declarative syntax](https://setuptools.pypa.io/en/latest/userguide/declarative_config.html).
 
 ## [Version 5.0.0](https://pypi.python.org/pypi/pyfakefs/5.0.0) (2022-10-09)
 New version after the transfer to `pytest-dev`.
