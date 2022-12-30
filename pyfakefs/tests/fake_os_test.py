@@ -2812,6 +2812,10 @@ class FakeOsModuleTest(FakeOsModuleTestBase):
         self.os.close(read_fd)
         self.os.close(write_fd)
 
+    @unittest.skipIf(
+        sys.platform not in ("win32", "darwin", "linux"),
+        "Pipe implementation may differ on other platforms",
+    )
     def test_write_to_read_fd(self):
         read_fd, write_fd = self.os.pipe()
         self.assert_raises_os_error(errno.EBADF, self.os.write, read_fd, b"test")
