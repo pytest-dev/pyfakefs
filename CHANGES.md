@@ -3,6 +3,9 @@ The released versions correspond to PyPI releases.
 
 ## Unreleased
 
+## [Version 5.1.0](https://pypi.python.org/pypi/pyfakefs/5.1.0) (2023-01-12)
+New version before Debian freeze
+
 ### Features
 * added class level setup method `setUpClassPyfakefs` for unittest and class-scoped
   fixture `fs_class` for pytest (see [#752](../../issues/752))
