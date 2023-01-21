@@ -1438,7 +1438,13 @@ class FakeFilesystem:
                 error_nr = errno.EINVAL if self.is_windows_fs else errno.ENOTDIR
                 self.raise_os_error(error_nr, entry_path)
 
-    def chmod(self, path: AnyStr, mode: int, follow_symlinks: bool = True) -> None:
+    def chmod(
+        self,
+        path: AnyStr,
+        mode: int,
+        follow_symlinks: bool = True,
+        force_unix_mode: bool = False,
+    ) -> None:
         """Change the permissions of a file as encoded in integer mode.
 
         Args:
@@ -1446,11 +1452,13 @@ class FakeFilesystem:
             mode: (int) Permissions.
             follow_symlinks: If `False` and `path` points to a symlink,
                 the link itself is affected instead of the linked object.
+            force_unix_mode: if True and run under Windows, the mode is not
+                adapted for Windows to allow making dirs unreadable
         """
         file_object = self.resolve(
             path, follow_symlinks, allow_fd=True, check_owner=True
         )
-        if self.is_windows_fs:
+        if self.is_windows_fs and not force_unix_mode:
             if mode & PERM_WRITE:
                 file_object.st_mode = file_object.st_mode | 0o222
             else:
@@ -2355,7 +2363,7 @@ class FakeFilesystem:
 
         if follow_symlinks:
             return self.get_object_from_normpath(
-                self.resolve_path(file_path, check_read_perm),
+                self.resolve_path(file_path, allow_fd),
                 check_read_perm,
                 check_owner,
             )

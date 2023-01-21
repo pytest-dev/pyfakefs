@@ -911,6 +911,29 @@ The following test works both under Windows and Linux:
       assert os.path.splitdrive(r"C:\foo\bar") == ("C:", r"\foo\bar")
       assert os.path.ismount("C:")
 
+Set file as inaccessible under Windows
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Normally, if you try to set a file or directory as inaccessible using ``chmod`` under
+Windows, the value you provide is masked by a value that always ensures that no read
+permissions for any user are removed. In reality, there is the possibility to make
+a file or directory unreadable using the Windows ACL API, which is not directly
+supported in the Python filesystem API. To make this possible to test, there is the
+possibility to use the ``force_unix_mode`` argument to ``FakeFilesystem.chmod``:
+
+.. code:: python
+
+    def test_is_file_for_unreadable_dir_windows(fs):
+        fs.os = OSType.WINDOWS
+        path = pathlib.Path("/foo/bar")
+        fs.create_file(path)
+        # normal chmod does not really set the mode to 0
+        self.fs.chmod("/foo", 0o000)
+        assert path.is_file()
+        # but it does in forced UNIX mode
+        fs.chmod("/foo", 0o000, force_unix_mode=True)
+        with pytest.raises(PermissionError):
+            path.is_file()
+
 
 .. _`example.py`: https://github.com/pytest-dev/pyfakefs/blob/main/pyfakefs/tests/example.py
 .. _`example_test.py`: https://github.com/pytest-dev/pyfakefs/blob/main/pyfakefs/tests/example_test.py

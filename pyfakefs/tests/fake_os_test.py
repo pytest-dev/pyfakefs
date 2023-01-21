@@ -5366,14 +5366,21 @@ class FakeExtendedAttributeTest(FakeOsModuleTestBase):
 class FakeOsUnreadableDirTest(FakeOsModuleTestBase):
     def setUp(self):
         if self.use_real_fs():
-            # make sure no dir is created if skipped
+            # unreadable dirs in Windows are only simulated
+            # and cannot be created in the real OS using file system
+            # functions only
             self.check_posix_only()
         super(FakeOsUnreadableDirTest, self).setUp()
-        self.check_posix_only()
         self.dir_path = self.make_path("some_dir")
         self.file_path = self.os.path.join(self.dir_path, "some_file")
         self.create_file(self.file_path)
-        self.os.chmod(self.dir_path, 0o000)
+        self.chmod(self.dir_path, 0o000)
+
+    def chmod(self, path, mode):
+        if self.is_windows_fs:
+            self.filesystem.chmod(path, mode, force_unix_mode=True)
+        else:
+            self.os.chmod(path, mode)
 
     def test_listdir_unreadable_dir(self):
         if not is_root():
@@ -5382,12 +5389,13 @@ class FakeOsUnreadableDirTest(FakeOsModuleTestBase):
             self.assertEqual(["some_file"], self.os.listdir(self.dir_path))
 
     def test_listdir_user_readable_dir(self):
-        self.os.chmod(self.dir_path, 0o600)
+        self.chmod(self.dir_path, 0o600)
         self.assertEqual(["some_file"], self.os.listdir(self.dir_path))
-        self.os.chmod(self.dir_path, 0o000)
+        self.chmod(self.dir_path, 0o000)
 
     def test_listdir_user_readable_dir_from_other_user(self):
         self.skip_real_fs()  # won't change user in real fs
+        self.check_posix_only()
         user_id = USER_ID
         set_uid(user_id + 1)
         dir_path = self.make_path("dir1")
@@ -5412,6 +5420,7 @@ class FakeOsUnreadableDirTest(FakeOsModuleTestBase):
 
     def test_listdir_group_readable_dir_from_other_group(self):
         self.skip_real_fs()  # won't change user in real fs
+        self.check_posix_only()
         group_id = GROUP_ID
         set_gid(group_id + 1)
         dir_path = self.make_path("dir1")
@@ -5438,9 +5447,9 @@ class FakeOsUnreadableDirTest(FakeOsModuleTestBase):
         self.assertEqual(0, self.os.stat(self.dir_path).st_mode & 0o666)
 
     def test_chmod_unreadable_dir(self):
-        self.os.chmod(self.dir_path, 0o666)
+        self.chmod(self.dir_path, 0o666)
         self.assertEqual(0o666, self.os.stat(self.dir_path).st_mode & 0o666)
-        self.os.chmod(self.dir_path, 0o000)
+        self.chmod(self.dir_path, 0o000)
         self.assertEqual(0, self.os.stat(self.dir_path).st_mode & 0o666)
 
     def test_stat_file_in_unreadable_dir(self):
@@ -5450,6 +5459,7 @@ class FakeOsUnreadableDirTest(FakeOsModuleTestBase):
             self.assertEqual(0, self.os.stat(self.file_path).st_size)
 
     def test_remove_unreadable_dir(self):
+        self.check_posix_only()
         dir_path = self.make_path("dir1")
         self.create_dir(dir_path, perm=0o000)
         self.assertTrue(self.os.path.exists(dir_path))

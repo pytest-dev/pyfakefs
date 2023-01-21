@@ -29,7 +29,7 @@ from collections import namedtuple
 from unittest import mock
 
 from pyfakefs import fake_pathlib, fake_filesystem, fake_filesystem_unittest
-from pyfakefs.fake_filesystem import is_root
+from pyfakefs.fake_filesystem import is_root, OSType
 from pyfakefs.helpers import IS_PYPY
 from pyfakefs.tests.test_utils import RealFsTestMixin
 
@@ -762,7 +762,6 @@ class RealPathlibPathFileOperationTest(FakePathlibPathFileOperationTest):
         return True
 
 
-@unittest.skipIf(sys.version_info < (3, 6), "path-like objects new in Python 3.6")
 class FakePathlibUsageInOsFunctionsTest(RealPathlibTestCase):
     """Test that many os / os.path functions accept a path-like object
     since Python 3.6. The functionality of these functions is tested
@@ -1121,7 +1120,6 @@ class RealPathlibUsageInOsFunctionsTest(FakePathlibUsageInOsFunctionsTest):
         return True
 
 
-@unittest.skipIf(sys.version_info < (3, 6), "Path-like objects new in Python 3.6")
 class FakeFilesystemPathLikeObjectTest(unittest.TestCase):
     def setUp(self):
         self.filesystem = fake_filesystem.FakeFilesystem(path_separator="/")
@@ -1178,6 +1176,24 @@ class FakeFilesystemPathLikeObjectTest(unittest.TestCase):
             stat.S_IFDIR,
             self.os.stat(fake_dirpath_string).st_mode & stat.S_IFDIR,
         )
+
+
+class FakeFilesystemChmodTest(fake_filesystem_unittest.TestCase):
+    def setUp(self) -> None:
+        self.setUpPyfakefs()
+
+    @unittest.skipIf(sys.platform != "win32", "Windows specific test")
+    def test_is_file_for_unreadable_dir_windows(self):
+        self.fs.os = OSType.WINDOWS
+        path = pathlib.Path("/foo/bar")
+        self.fs.create_file(path)
+        # normal chmod does not really set the mode to 0
+        self.fs.chmod("/foo", 0o000)
+        self.assertTrue(path.is_file())
+        # but it does in forced UNIX mode
+        self.fs.chmod("/foo", 0o000, force_unix_mode=True)
+        with self.assertRaises(PermissionError):
+            path.is_file()
 
 
 if __name__ == "__main__":
