@@ -923,7 +923,7 @@ class Patcher:
                     self._stubs.smart_set(module, name, self.unfaked_modules[attr])
 
     def patch_defaults(self) -> None:
-        for (fct, idx, ft) in self.FS_DEFARGS:
+        for fct, idx, ft in self.FS_DEFARGS:
             method, mod_name = self._fake_module_functions[ft.__name__][ft.__module__]
             fake_module = self.fake_modules[mod_name]
             attr = method.__get__(fake_module, fake_module.__class__)
@@ -977,7 +977,7 @@ class Patcher:
                 sys.meta_path.pop(0)
 
     def unset_defaults(self) -> None:
-        for (fct, idx, ft) in self.FS_DEFARGS:
+        for fct, idx, ft in self.FS_DEFARGS:
             new_defaults = []
             for i, d in enumerate(cast(Tuple, fct.__defaults__)):
                 if i == idx:

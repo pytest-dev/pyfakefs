@@ -157,6 +157,6 @@ class StubOutForTesting:
         # undone)
         self.cache.reverse()
 
-        for (parent, old_child, child_name) in self.cache:
+        for parent, old_child, child_name in self.cache:
             setattr(parent, child_name, old_child)
         self.cache = []
