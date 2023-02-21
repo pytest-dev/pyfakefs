@@ -127,6 +127,26 @@ from configuration files. In these cases, you have to map the respective files
 or directories from the real into the fake filesystem as described in
 :ref:`real_fs_access`.
 
+If you are using Django, various dependencies may expect both the project
+directory and the ``site-packages`` installation to exist in the fake filesystem.
+
+Here's an example of how to add these using pytest::
+
+
+    import os
+    import django
+    import pytest
+
+    @pytest.fixture
+    def fake_fs(fs):
+        PROJECT_BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+        fs.add_real_paths(
+            [
+                PROJECT_BASE_DIR,
+                os.path.dirname(django.__file__),
+            ]
+        )
+        return fs
 
 OS temporary directories
 ------------------------
