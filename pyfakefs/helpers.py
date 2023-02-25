@@ -22,11 +22,64 @@ from copy import copy
 from stat import S_IFLNK
 from typing import Union, Optional, Any, AnyStr, overload, cast
 
+AnyString = Union[str, bytes]
+AnyPath = Union[AnyStr, os.PathLike]
+
 IS_PYPY = platform.python_implementation() == "PyPy"
 IS_WIN = sys.platform == "win32"
 IN_DOCKER = os.path.exists("/.dockerenv")
 
-AnyPath = Union[AnyStr, os.PathLike]
+PERM_READ = 0o400  # Read permission bit.
+PERM_WRITE = 0o200  # Write permission bit.
+PERM_EXE = 0o100  # Execute permission bit.
+PERM_DEF = 0o777  # Default permission bits.
+PERM_DEF_FILE = 0o666  # Default permission bits (regular file)
+PERM_ALL = 0o7777  # All permission bits.
+
+if sys.platform == "win32":
+    USER_ID = 1
+    GROUP_ID = 1
+else:
+    USER_ID = os.getuid()
+    GROUP_ID = os.getgid()
+
+
+def set_uid(uid: int) -> None:
+    """Set the global user id. This is used as st_uid for new files
+    and to differentiate between a normal user and the root user (uid 0).
+    For the root user, some permission restrictions are ignored.
+
+    Args:
+        uid: (int) the user ID of the user calling the file system functions.
+    """
+    global USER_ID
+    USER_ID = uid
+
+
+def set_gid(gid: int) -> None:
+    """Set the global group id. This is only used to set st_gid for new files,
+    no permission checks are performed.
+
+    Args:
+        gid: (int) the group ID of the user calling the file system functions.
+    """
+    global GROUP_ID
+    GROUP_ID = gid
+
+
+def reset_ids() -> None:
+    """Set the global user ID and group ID back to default values."""
+    if sys.platform == "win32":
+        set_uid(1)
+        set_gid(1)
+    else:
+        set_uid(os.getuid())
+        set_gid(os.getgid())
+
+
+def is_root() -> bool:
+    """Return True if the current user is the root user."""
+    return USER_ID == 0
 
 
 def is_int_type(val: Any) -> bool:
@@ -111,7 +164,7 @@ def matching_string(matched: AnyStr, string: None) -> None:
 
 def matching_string(  # type: ignore[misc]
     matched: AnyStr, string: Optional[AnyStr]
-) -> Optional[AnyStr]:
+) -> Optional[AnyString]:
     """Return the string as byte or unicode depending
     on the type of matched, assuming string is an ASCII string.
     """

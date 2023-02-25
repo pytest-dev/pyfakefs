@@ -178,7 +178,7 @@ can be changed.
 ``Pyfakefs`` has a rudimentary concept of user rights, which differentiates
 between root user (with the user id 0) and any other user. By default,
 ``pyfakefs`` assumes the user id of the current user, but you can change
-that using ``fake_filesystem.set_uid()`` in your setup. This allows to run
+that using ``pyfakefs.helpers.set_uid()`` in your setup. This allows to run
 tests as non-root user in a root user environment and vice verse.
 Another possibility to run tests as non-root user in a root user environment
 is the convenience argument :ref:`allow_root_user`:

@@ -21,7 +21,7 @@ import stat
 import sys
 import unittest
 
-from pyfakefs import fake_filesystem
+from pyfakefs import fake_filesystem, fake_os, fake_open
 from pyfakefs.fake_filesystem import (
     set_uid,
     set_gid,
@@ -36,7 +36,7 @@ from pyfakefs.tests.test_utils import TestCase, RealFsTestCase, time_mock
 class FakeDirectoryUnitTest(TestCase):
     def setUp(self):
         self.filesystem = fake_filesystem.FakeFilesystem(path_separator="/")
-        self.os = fake_filesystem.FakeOsModule(self.filesystem)
+        self.os = fake_os.FakeOsModule(self.filesystem)
         self.time = time_mock(10, 1)
         self.time.start()
         self.fake_file = fake_filesystem.FakeFile(
@@ -145,25 +145,25 @@ class FakeDirectoryUnitTest(TestCase):
 
     def test_file_inode(self):
         filesystem = fake_filesystem.FakeFilesystem(path_separator="/")
-        fake_os = fake_filesystem.FakeOsModule(filesystem)
+        fake_os_module = fake_os.FakeOsModule(filesystem)
         file_path = "some_file1"
         filesystem.create_file(file_path, contents="contents here1")
-        self.assertLess(0, fake_os.stat(file_path)[stat.ST_INO])
+        self.assertLess(0, fake_os_module.stat(file_path)[stat.ST_INO])
 
         file_obj = filesystem.get_object(file_path)
         file_obj.st_ino = 43
-        self.assertEqual(43, fake_os.stat(file_path)[stat.ST_INO])
+        self.assertEqual(43, fake_os_module.stat(file_path)[stat.ST_INO])
 
     def test_directory_inode(self):
         filesystem = fake_filesystem.FakeFilesystem(path_separator="/")
-        fake_os = fake_filesystem.FakeOsModule(filesystem)
+        fake_os_module = fake_os.FakeOsModule(filesystem)
         dirpath = "testdir"
         filesystem.create_dir(dirpath)
-        self.assertLess(0, fake_os.stat(dirpath)[stat.ST_INO])
+        self.assertLess(0, fake_os_module.stat(dirpath)[stat.ST_INO])
 
         dir_obj = filesystem.get_object(dirpath)
         dir_obj.st_ino = 43
-        self.assertEqual(43, fake_os.stat(dirpath)[stat.ST_INO])
+        self.assertEqual(43, fake_os_module.stat(dirpath)[stat.ST_INO])
 
     def test_directory_size(self):
         fs = fake_filesystem.FakeFilesystem(path_separator="/")
@@ -691,7 +691,7 @@ class CaseInsensitiveFakeFilesystemTest(TestCase):
     def setUp(self):
         self.filesystem = fake_filesystem.FakeFilesystem(path_separator="/")
         self.filesystem.is_case_sensitive = False
-        self.os = fake_filesystem.FakeOsModule(self.filesystem)
+        self.os = fake_os.FakeOsModule(self.filesystem)
         self.path = self.os.path
 
     def test_get_object(self):
@@ -772,7 +772,7 @@ class CaseSensitiveFakeFilesystemTest(TestCase):
     def setUp(self):
         self.filesystem = fake_filesystem.FakeFilesystem(path_separator="/")
         self.filesystem.is_case_sensitive = True
-        self.os = fake_filesystem.FakeOsModule(self.filesystem)
+        self.os = fake_os.FakeOsModule(self.filesystem)
         self.path = self.os.path
 
     def test_get_object(self):
@@ -845,7 +845,7 @@ class OsPathInjectionRegressionTest(TestCase):
         # The bug was that when os.path gets faked, the FakePathModule doesn't
         # get called in self.os.walk(). FakePathModule now insists that it is
         # created as part of FakeOsModule.
-        self.os = fake_filesystem.FakeOsModule(self.filesystem)
+        self.os = fake_os.FakeOsModule(self.filesystem)
 
     def tearDown(self):
         os.path = self.os_path
@@ -880,7 +880,7 @@ class OsPathInjectionRegressionTest(TestCase):
 class FakePathModuleTest(TestCase):
     def setUp(self):
         self.filesystem = fake_filesystem.FakeFilesystem(path_separator="!")
-        self.os = fake_filesystem.FakeOsModule(self.filesystem)
+        self.os = fake_os.FakeOsModule(self.filesystem)
         self.path = self.os.path
 
     def check_abspath(self, is_windows):
@@ -1356,9 +1356,9 @@ class JoinPathTest(PathManipulationTestBase):
 class PathSeparatorTest(TestCase):
     def test_os_path_sep_matches_fake_filesystem_separator(self):
         filesystem = fake_filesystem.FakeFilesystem(path_separator="!")
-        fake_os = fake_filesystem.FakeOsModule(filesystem)
-        self.assertEqual("!", fake_os.sep)
-        self.assertEqual("!", fake_os.path.sep)
+        fake_os_module = fake_os.FakeOsModule(filesystem)
+        self.assertEqual("!", fake_os_module.sep)
+        self.assertEqual("!", fake_os_module.path.sep)
 
 
 class NormalizeCaseTest(TestCase):
@@ -1422,9 +1422,9 @@ class AlternativePathSeparatorTest(TestCase):
         self.assertIsNone(filesystem.alternative_path_separator)
 
     def test_alt_sep(self):
-        fake_os = fake_filesystem.FakeOsModule(self.filesystem)
-        self.assertEqual("?", fake_os.altsep)
-        self.assertEqual("?", fake_os.path.altsep)
+        fake_os_module = fake_os.FakeOsModule(self.filesystem)
+        self.assertEqual("?", fake_os_module.altsep)
+        self.assertEqual("?", fake_os_module.path.altsep)
 
     def test_collapse_path_with_mixed_separators(self):
         self.assertEqual("!foo!bar", self.filesystem.normpath("!foo??bar"))
@@ -1585,8 +1585,8 @@ class DriveLetterSupportTest(TestCase):
 class DiskSpaceTest(TestCase):
     def setUp(self):
         self.fs = fake_filesystem.FakeFilesystem(path_separator="!", total_size=100)
-        self.os = fake_filesystem.FakeOsModule(self.fs)
-        self.open = fake_filesystem.FakeFileOpen(self.fs)
+        self.os = fake_os.FakeOsModule(self.fs)
+        self.open = fake_open.FakeFileOpen(self.fs)
 
     def test_disk_usage_on_file_creation(self):
         total_size = 100

@@ -28,9 +28,9 @@ import unittest
 from collections import namedtuple
 from unittest import mock
 
-from pyfakefs import fake_pathlib, fake_filesystem, fake_filesystem_unittest
-from pyfakefs.fake_filesystem import is_root, OSType
-from pyfakefs.helpers import IS_PYPY
+from pyfakefs import fake_pathlib, fake_filesystem, fake_filesystem_unittest, fake_os
+from pyfakefs.fake_filesystem import OSType
+from pyfakefs.helpers import IS_PYPY, is_root
 from pyfakefs.tests.test_utils import RealFsTestMixin
 
 is_windows = sys.platform == "win32"
@@ -1124,7 +1124,7 @@ class FakeFilesystemPathLikeObjectTest(unittest.TestCase):
     def setUp(self):
         self.filesystem = fake_filesystem.FakeFilesystem(path_separator="/")
         self.pathlib = fake_pathlib.FakePathlibModule(self.filesystem)
-        self.os = fake_filesystem.FakeOsModule(self.filesystem)
+        self.os = fake_os.FakeOsModule(self.filesystem)
 
     def test_create_dir_with_pathlib_path(self):
         dir_path_string = "foo/bar/baz"

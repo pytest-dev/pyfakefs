@@ -44,11 +44,9 @@ from urllib.parse import quote_from_bytes as urlquote_from_bytes
 
 from pyfakefs import fake_scandir
 from pyfakefs.extra_packages import use_scandir
-from pyfakefs.fake_filesystem import (
-    FakeFileOpen,
-    FakeFilesystem,
-    use_original_os,
-)
+from pyfakefs.fake_filesystem import FakeFilesystem
+from pyfakefs.fake_open import FakeFileOpen
+from pyfakefs.fake_os import use_original_os
 
 
 def init_module(filesystem):

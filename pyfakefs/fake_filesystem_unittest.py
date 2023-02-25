@@ -85,7 +85,7 @@ except ImportError:
 
 from importlib import reload
 
-from pyfakefs import fake_filesystem
+from pyfakefs import fake_filesystem, fake_io, fake_os, fake_open, fake_path, fake_file
 from pyfakefs import fake_filesystem_shutil
 from pyfakefs import fake_pathlib
 from pyfakefs import mox3_stubout
@@ -444,6 +444,11 @@ class Patcher:
         None,
         fake_filesystem,
         fake_filesystem_shutil,
+        fake_os,
+        fake_io,
+        fake_open,
+        fake_path,
+        fake_file,
         sys,
         linecache,
         tokenize,
@@ -640,14 +645,14 @@ class Patcher:
         # and a test in fake_filesystem_unittest_test.py, class
         # TestAttributesWithFakeModuleNames.
         self._fake_module_classes = {
-            "os": fake_filesystem.FakeOsModule,
+            "os": fake_os.FakeOsModule,
             "shutil": fake_filesystem_shutil.FakeShutilModule,
-            "io": fake_filesystem.FakeIoModule,
+            "io": fake_io.FakeIoModule,
             "pathlib": fake_pathlib.FakePathlibModule,
         }
         if IS_PYPY:
             # in PyPy io.open, the module is referenced as _io
-            self._fake_module_classes["_io"] = fake_filesystem.FakeIoModule
+            self._fake_module_classes["_io"] = fake_io.FakeIoModule
         if sys.platform != "win32":
             self._fake_module_classes["fcntl"] = fake_filesystem.FakeFcntlModule
 

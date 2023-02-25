@@ -3,6 +3,13 @@ The released versions correspond to PyPI releases.
 
 ## Unreleased
 
+### Changes
+* Fake module classes previously defined in `fake_filesystem` have now moved to
+  their own modules: `fake_os.FakeOsModule`, `fake_path.FakePathModule`,
+  `fake_io.FakeIoModule` and `fake_open.FakeFileOpen`. Additionally, all fake file
+  classes have been moved to `fake_file`. While most of the changes shall be upwards
+  compatible, we cannot exclude that we missed some problems.
+
 ### Features
 * added possibility to set a path inaccessible under Windows by using `chown()` with
   the `force_unix_mode` flag (see [#720](../../issues/720))

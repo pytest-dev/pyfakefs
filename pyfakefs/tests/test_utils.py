@@ -24,7 +24,7 @@ import unittest
 from contextlib import contextmanager
 from unittest import mock
 
-from pyfakefs import fake_filesystem
+from pyfakefs import fake_filesystem, fake_open, fake_os
 from pyfakefs.helpers import is_byte_string, to_string
 
 
@@ -56,7 +56,7 @@ class DummyMock:
 
 
 def time_mock(start=200, step=20):
-    return mock.patch("pyfakefs.fake_filesystem.now", DummyTime(start, step))
+    return mock.patch("pyfakefs.helpers.now", DummyTime(start, step))
 
 
 class TestCase(unittest.TestCase):
@@ -401,7 +401,7 @@ class RealFsTestMixin:
 
     def mock_time(self, start=200, step=20):
         if not self.use_real_fs():
-            return mock.patch("pyfakefs.fake_filesystem.now", DummyTime(start, step))
+            return time_mock(start, step)
         return DummyMock()
 
     def assert_raises_os_error(self, subtype, expression, *args, **kwargs):
@@ -431,8 +431,8 @@ class RealFsTestCase(TestCase, RealFsTestMixin):
             self.filesystem = fake_filesystem.FakeFilesystem(
                 path_separator=self.path_separator()
             )
-            self.open = fake_filesystem.FakeFileOpen(self.filesystem)
-            self.os = fake_filesystem.FakeOsModule(self.filesystem)
+            self.open = fake_open.FakeFileOpen(self.filesystem)
+            self.os = fake_os.FakeOsModule(self.filesystem)
             self.create_basepath()
 
         self.setUpFileSystem()
