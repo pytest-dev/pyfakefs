@@ -13,7 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""Unit tests for fake_filesystem.FakeOpen."""
+"""Unit tests for fake_os.FakeOsModule."""
 
 import errno
 import os
@@ -21,15 +21,13 @@ import stat
 import sys
 import unittest
 
-from pyfakefs.helpers import IN_DOCKER, IS_PYPY
+from pyfakefs.helpers import IN_DOCKER, IS_PYPY, GROUP_ID, USER_ID
 
-from pyfakefs import fake_filesystem
+from pyfakefs import fake_filesystem, fake_os, fake_open, fake_file
 from pyfakefs.fake_filesystem import (
     FakeFileOpen,
     is_root,
-    USER_ID,
     set_uid,
-    GROUP_ID,
     set_gid,
 )
 from pyfakefs.extra_packages import (
@@ -4886,8 +4884,8 @@ class FakeOsModuleDirFdTest(FakeOsModuleTestBase):
 class StatPropagationTest(TestCase):
     def setUp(self):
         self.filesystem = fake_filesystem.FakeFilesystem(path_separator="/")
-        self.os = fake_filesystem.FakeOsModule(self.filesystem)
-        self.open = fake_filesystem.FakeFileOpen(self.filesystem)
+        self.os = fake_os.FakeOsModule(self.filesystem)
+        self.open = fake_open.FakeFileOpen(self.filesystem)
 
     def test_file_size_updated_via_close(self):
         """test that file size gets updated via close()."""
@@ -4938,7 +4936,7 @@ class StatPropagationTest(TestCase):
         added_content = "foo bar"
         fh = self.open(file_path, "a")
         self.assertRaises(
-            fake_filesystem.FakeLargeFileIoException,
+            fake_file.FakeLargeFileIoException,
             lambda: fh.write(added_content),
         )
 

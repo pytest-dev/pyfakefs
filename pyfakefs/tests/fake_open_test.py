@@ -13,7 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""Unit tests for fake_filesystem.FakeOsModule."""
+"""Unit tests for fake_open.FakeOsModule."""
 
 import errno
 import io
@@ -24,8 +24,9 @@ import sys
 import time
 import unittest
 
-from pyfakefs import fake_filesystem
-from pyfakefs.fake_filesystem import is_root, PERM_READ, FakeIoModule
+from pyfakefs import fake_filesystem, helpers
+from pyfakefs.helpers import is_root
+from pyfakefs.fake_io import FakeIoModule
 from pyfakefs.fake_filesystem_unittest import PatchMode
 from pyfakefs.tests.test_utils import RealFsTestCase
 
@@ -405,7 +406,7 @@ class FakeFileOpenTest(FakeFileOpenTestBase):
     def create_with_permission(self, file_path, perm_bits):
         self.create_file(file_path)
         self.os.chmod(file_path, perm_bits)
-        if perm_bits & PERM_READ:
+        if perm_bits & helpers.PERM_READ:
             st = self.os.stat(file_path)
             self.assert_mode_equal(perm_bits, st.st_mode)
             self.assertTrue(st.st_mode & stat.S_IFREG)
@@ -703,9 +704,7 @@ class FakeFileOpenTest(FakeFileOpenTestBase):
     def test_can_read_from_block_device(self):
         self.skip_real_fs()
         device_path = "device"
-        self.filesystem.create_file(
-            device_path, stat.S_IFBLK | fake_filesystem.PERM_ALL
-        )
+        self.filesystem.create_file(device_path, stat.S_IFBLK | helpers.PERM_ALL)
         with self.open(device_path, "r") as fh:
             self.assertEqual("", fh.read())
 

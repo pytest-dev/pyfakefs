@@ -21,9 +21,9 @@ This demonstrates the usage of the
 The modules related to file handling are bound to the respective fake modules:
 
 >>> os     #doctest: +ELLIPSIS
-<pyfakefs.fake_filesystem.FakeOsModule object...>
+<pyfakefs.fake_os.FakeOsModule object...>
 >>> os.path     #doctest: +ELLIPSIS
-<pyfakefs.fake_filesystem.FakePathModule object...>
+<pyfakefs.fake_path.FakePathModule object...>
 >>> shutil     #doctest: +ELLIPSIS
 <pyfakefs.fake_filesystem_shutil.FakeShutilModule object...>
 

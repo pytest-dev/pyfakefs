@@ -25,7 +25,7 @@ import unittest
 from pathlib import Path
 
 from pyfakefs import fake_filesystem_unittest
-from pyfakefs.fake_filesystem import is_root, set_uid, USER_ID
+from pyfakefs.helpers import USER_ID, set_uid, is_root
 from pyfakefs.tests.test_utils import RealFsTestMixin
 
 is_windows = sys.platform == "win32"
