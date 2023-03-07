@@ -156,7 +156,7 @@ a temporary directory is required to ensure that ``tempfile`` works correctly,
 e.g., that ``tempfile.gettempdir()`` will return a valid value. This
 means that any newly created fake file system will always have either a
 directory named ``/tmp`` when running on Linux or Unix systems,
-``/var/folders/<hash>/T`` when running on MacOs, or
+``/var/folders/<hash>/T`` when running on macOS, or
 ``C:\Users\<user>\AppData\Local\Temp`` on Windows:
 
 .. code:: python
@@ -168,6 +168,8 @@ directory named ``/tmp`` when running on Linux or Unix systems,
       # the temp directory is always present at test start
       assert len(os.listdir("/")) == 1
 
+Under macOS, a symlink to the actual temp directory is created additionally as `/tmp`
+in the fake filesystem.
 
 User rights
 -----------
