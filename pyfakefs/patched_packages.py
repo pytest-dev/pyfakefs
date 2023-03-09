@@ -117,7 +117,6 @@ if parsers is not None:
 
         class TextFileReader(parsers.TextFileReader):
             def __init__(self, *args, **kwargs):
-                kwargs["engine"] = "python"
                 super().__init__(*args, **kwargs)
 
         def __getattr__(self, name):
