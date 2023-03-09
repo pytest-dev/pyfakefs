@@ -9,6 +9,8 @@ The released versions correspond to PyPI releases.
   `fake_io.FakeIoModule` and `fake_open.FakeFileOpen`. Additionally, all fake file
   classes have been moved to `fake_file`. While most of the changes shall be upwards
   compatible, we cannot exclude that we missed some problems.
+* Patching of parsers for pandas >= 1.2 is removed since pandas now uses Python fs functions
+  internally even when the engine selected is "c".
 
 ### Features
 * added possibility to set a path inaccessible under Windows by using `chown()` with
