@@ -95,8 +95,8 @@ if xlrd is not None:
             return getattr(self._xlrd_module, name)
 
 
-# From pandas v 1.2 onwards the python fs functions are used even when the engine selected is "c".
-# This means that we don't explicitly have to change the engine.
+# From pandas v 1.2 onwards the python fs functions are used even when the engine
+# selected is "c". This means that we don't explicitly have to change the engine.
 patch_pandas = parsers is not None and [int(v) for v in pd.__version__.split(".")] < [
     1,
     2,
