@@ -32,6 +32,13 @@ try:
 except ImportError:
     locks = None
 
+# From pandas v 1.2 onwards the python fs functions are used even when the engine
+# selected is "c". This means that we don't explicitly have to change the engine.
+patch_pandas = parsers is not None and [int(v) for v in pd.__version__.split(".")] < [
+    1,
+    2,
+    0,
+]
 
 def get_modules_to_patch():
     modules_to_patch = {}
@@ -44,14 +51,14 @@ def get_modules_to_patch():
 
 def get_classes_to_patch():
     classes_to_patch = {}
-    if parsers is not None:
+    if patch_pandas:
         classes_to_patch["TextFileReader"] = "pandas.io.parsers"
     return classes_to_patch
 
 
 def get_fake_module_classes():
     fake_module_classes = {}
-    if parsers is not None:
+    if patch_pandas:
         fake_module_classes["TextFileReader"] = FakeTextFileReader
     return fake_module_classes
 
@@ -95,13 +102,6 @@ if xlrd is not None:
             return getattr(self._xlrd_module, name)
 
 
-# From pandas v 1.2 onwards the python fs functions are used even when the engine
-# selected is "c". This means that we don't explicitly have to change the engine.
-patch_pandas = parsers is not None and [int(v) for v in pd.__version__.split(".")] < [
-    1,
-    2,
-    0,
-]
 if patch_pandas:
     # we currently need to add fake modules for both the parser module and
     # the contained text reader - maybe this can be simplified
