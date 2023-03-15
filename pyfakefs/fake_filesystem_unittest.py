@@ -889,10 +889,16 @@ class Patcher:
         linecache.open = self.original_open  # type: ignore[attr-defined]
         tokenize._builtin_open = self.original_open  # type: ignore
 
-        # the temp directory is assumed to exist at least in `tempfile1`,
+        # the temp directory is assumed to exist at least in `tempfile`,
         # so we create it here for convenience
         assert self.fs is not None
         self.fs.create_dir(temp_dir)
+        if sys.platform == "darwin" and not self.fs.exists("/tmp"):
+            # under macOS, we also create a link in /tmp for convenience
+            self.fs.create_symlink("/tmp", temp_dir)
+            # reset the used size to 0 to avoid having the link size counted
+            # which would make disk size tests more complicated
+            next(iter(self.fs.mount_points.values()))["used_size"] = 0
 
     def start_patching(self) -> None:
         if not self._patching:

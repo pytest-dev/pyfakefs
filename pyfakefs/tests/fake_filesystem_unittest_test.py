@@ -634,6 +634,21 @@ class TestPyfakefsTestCase(unittest.TestCase):
         self.assertIsInstance(self.test_case, fake_filesystem_unittest.TestCaseMixin)
 
 
+class TestTempDirCreation(fake_filesystem_unittest.TestCase):
+    """Test that the temp directory exists at test start."""
+
+    def setUp(self):
+        self.setUpPyfakefs()
+
+    def testTempDirExists(self):
+        self.assertTrue(os.path.exists(tempfile.gettempdir()))
+
+    @unittest.skipIf(sys.platform == "win32", "POSIX only test")
+    def testTmpExists(self):
+        # directory under Linux, link under macOS
+        self.assertTrue(os.path.exists("/tmp"))
+
+
 class TestTempFileReload(unittest.TestCase):
     """Regression test for #356 to make sure that reloading the tempfile
     does not affect other tests."""
