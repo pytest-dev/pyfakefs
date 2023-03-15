@@ -40,6 +40,7 @@ patch_pandas = parsers is not None and [int(v) for v in pd.__version__.split("."
     0,
 ]
 
+
 def get_modules_to_patch():
     modules_to_patch = {}
     if xlrd is not None:
