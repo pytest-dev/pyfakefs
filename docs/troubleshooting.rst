@@ -66,7 +66,9 @@ Modules that rely on ``subprocess`` or ``multiprocessing``
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 This includes a number of modules that need to start other executables to
 function correctly. Examples that have shown this problem include `GitPython`_
-and `plumbum`_.
+and `plumbum`_. Calling ``find_library`` also uses ``subprocess`` and does not work in
+the fake filesystem.
+
 
 The `Pillow`_ Imaging Library
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
