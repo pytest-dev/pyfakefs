@@ -101,7 +101,7 @@ class FakePathModule:
             "samefile",
         ]
         if sys.version_info >= (3, 12):
-            dir_list.append("isjunction")
+            dir_list += ["isjunction", "splitroot"]
         return dir_list
 
     def __init__(self, filesystem: "FakeFilesystem", os_module: "FakeOsModule"):
@@ -197,6 +197,12 @@ class FakePathModule:
         def isjunction(self, path: AnyStr) -> bool:
             """Returns False. Junctions are never faked."""
             return self.filesystem.isjunction(path)
+
+        def splitroot(self, path: AnyStr):
+            """Split a pathname into drive, root and tail.
+            Implementation taken from ntpath and posixpath.
+            """
+            return self.filesystem.splitroot(path)
 
     def getmtime(self, path: AnyStr) -> float:
         """Returns the modification time of the fake file.
@@ -473,3 +479,52 @@ class FakePathModule:
     def __getattr__(self, name: str) -> Any:
         """Forwards any non-faked calls to the real os.path."""
         return getattr(self._os_path, name)
+
+
+if sys.platform == "win32":
+
+    class FakeNtModule:
+        """Under windows, a few function of `os.path` are taken from the `nt` module
+        for performance reasons. These are patched here.
+        """
+
+        @staticmethod
+        def dir():
+            if sys.version_info >= (3, 12):
+                return ["_path_exists", "_path_isfile", "_path_isdir", "_path_islink"]
+            else:
+                return ["_isdir"]
+
+        def __init__(self, filesystem: "FakeFilesystem"):
+            """Init.
+
+            Args:
+                filesystem: FakeFilesystem used to provide file system information
+            """
+            import nt
+
+            self.filesystem = filesystem
+            self.nt_module: Any = nt
+
+        if sys.version_info >= (3, 12):
+
+            def _path_isdir(self, path: AnyStr) -> bool:
+                return self.filesystem.isdir(path)
+
+            def _path_isfile(self, path: AnyStr) -> bool:
+                return self.filesystem.isfile(path)
+
+            def _path_islink(self, path: AnyStr) -> bool:
+                return self.filesystem.islink(path)
+
+            def _path_exists(self, path: AnyStr) -> bool:
+                return self.filesystem.exists(path)
+
+        else:
+
+            def _isdir(self, path: AnyStr) -> bool:
+                return self.filesystem.isdir(path)
+
+        def __getattr__(self, name: str) -> Any:
+            """Forwards any non-faked calls to the real nt module."""
+            return getattr(self.nt_module, name)

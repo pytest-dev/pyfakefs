@@ -325,6 +325,7 @@ class FakeFilesystem:
         """Remove all file system contents and reset the root."""
         self.root = FakeDirectory(self.path_separator, filesystem=self)
 
+        self.dev_null = FakeNullFile(self)
         self.open_files = []
         self._free_fd_heap = []
         self.last_ino = 0
@@ -1070,6 +1071,62 @@ class FakeFilesystem:
                 if path_str[1:2] == matching_string(path_str, ":"):
                     return path_str[:2], path_str[2:]
         return path_str[:0], path_str
+
+    def splitroot(self, path: AnyStr):
+        """Split a pathname into drive, root and tail.
+        Implementation taken from ntpath and posixpath.
+        """
+        p = os.fspath(path)
+        if isinstance(p, bytes):
+            sep = self.path_separator.encode()
+            altsep = None
+            if self.alternative_path_separator:
+                altsep = self.alternative_path_separator.encode()
+            colon = b":"
+            unc_prefix = b"\\\\?\\UNC\\"
+            empty = b""
+        else:
+            sep = self.path_separator
+            altsep = self.alternative_path_separator
+            colon = ":"
+            unc_prefix = "\\\\?\\UNC\\"
+            empty = ""
+        if self.is_windows_fs:
+            normp = p.replace(altsep, sep) if altsep else p
+            if normp[:1] == sep:
+                if normp[1:2] == sep:
+                    # UNC drives, e.g. \\server\share or \\?\UNC\server\share
+                    # Device drives, e.g. \\.\device or \\?\device
+                    start = 8 if normp[:8].upper() == unc_prefix else 2
+                    index = normp.find(sep, start)
+                    if index == -1:
+                        return p, empty, empty
+                    index2 = normp.find(sep, index + 1)
+                    if index2 == -1:
+                        return p, empty, empty
+                    return p[:index2], p[index2 : index2 + 1], p[index2 + 1 :]
+                else:
+                    # Relative path with root, e.g. \Windows
+                    return empty, p[:1], p[1:]
+            elif normp[1:2] == colon:
+                if normp[2:3] == sep:
+                    # Absolute drive-letter path, e.g. X:\Windows
+                    return p[:2], p[2:3], p[3:]
+                else:
+                    # Relative path with drive, e.g. X:Windows
+                    return p[:2], empty, p[2:]
+            else:
+                # Relative path, e.g. Windows
+                return empty, empty, p
+        else:
+            if p[:1] != sep:
+                # Relative path, e.g.: 'foo'
+                return empty, empty, p
+            elif p[1:2] != sep or p[2:3] == sep:
+                # Absolute path, e.g.: '/foo', '///foo', '////foo', etc.
+                return empty, sep, p[1:]
+            else:
+                return empty, p[:2], p[2:]
 
     def _join_paths_with_drive_support(self, *all_paths: AnyStr) -> AnyStr:
         """Taken from Python 3.5 os.path.join() code in ntpath.py

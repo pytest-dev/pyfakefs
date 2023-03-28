@@ -653,7 +653,9 @@ class Patcher:
         if IS_PYPY:
             # in PyPy io.open, the module is referenced as _io
             self._fake_module_classes["_io"] = fake_io.FakeIoModule
-        if sys.platform != "win32":
+        if sys.platform == "win32":
+            self._fake_module_classes["nt"] = fake_path.FakeNtModule
+        else:
             self._fake_module_classes["fcntl"] = fake_filesystem.FakeFcntlModule
 
         # class modules maps class names against a list of modules they can

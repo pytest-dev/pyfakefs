@@ -181,10 +181,27 @@ class TestPatchingImports(TestPyfakefsUnittestBase):
         self.fs.create_dir(file_path)
         self.assertTrue(pyfakefs.tests.import_as_example.check_if_exists3(file_path))
 
-    def test_import_function_from_os_path(self):
+    def test_import_exists_from_os_path(self):
         file_path = "/foo/bar"
         self.fs.create_dir(file_path)
         self.assertTrue(pyfakefs.tests.import_as_example.check_if_exists5(file_path))
+
+    def test_import_isfile_from_os_path(self):
+        file_path = "/foo/bar"
+        self.fs.create_file(file_path)
+        self.assertTrue(pyfakefs.tests.import_as_example.check_if_isfile(file_path))
+
+    def test_import_isdir_from_os_path(self):
+        file_path = "/foo/bar"
+        self.fs.create_dir(file_path)
+        self.assertTrue(pyfakefs.tests.import_as_example.check_if_isdir(file_path))
+
+    def test_import_islink_from_os_path(self):
+        file_path = "/foo/bar"
+        link_path = "/foo/link"
+        self.fs.create_file(file_path)
+        self.fs.create_symlink(link_path, file_path)
+        self.assertTrue(pyfakefs.tests.import_as_example.check_if_islink(link_path))
 
     def test_import_function_from_os_path_as_other_name(self):
         file_path = "/foo/bar"

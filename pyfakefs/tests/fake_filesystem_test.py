@@ -1230,6 +1230,14 @@ class FakePathModuleTest(TestCase):
             )
         self.assertFalse(hasattr(self.path, "nonexistent"))
 
+    def test_splitroot_posix(self):
+        self.filesystem.is_windows_fs = False
+        self.assertEqual(("", "", "foo!bar"), self.filesystem.splitroot("foo!bar"))
+        self.assertEqual(("", "!", "foo!bar"), self.filesystem.splitroot("!foo!bar"))
+        self.assertEqual(
+            ("", "!!", "foo!!bar"), self.filesystem.splitroot("!!foo!!bar")
+        )
+
 
 class PathManipulationTestBase(TestCase):
     def setUp(self):
@@ -1580,6 +1588,44 @@ class DriveLetterSupportTest(TestCase):
         )
         self.assertEqual(("^^foo^bar", ""), self.filesystem.splitpath("^^foo^bar"))
         self.assertEqual(("^^foo^bar^^", ""), self.filesystem.splitpath("^^foo^bar^^"))
+
+    def test_splitroot_with_drive(self):
+        self.assertEqual(
+            ("E:", "!", "foo!bar"), self.filesystem.splitroot("E:!foo!bar")
+        )
+        self.assertEqual(
+            ("E:", "!", "!foo!!!bar"), self.filesystem.splitroot("E:!!foo!!!bar")
+        )
+        self.assertEqual(
+            (b"E:", b"!", b"!foo!!!bar"), self.filesystem.splitroot(b"E:!!foo!!!bar")
+        )
+        self.assertEqual(
+            ("C:", "^", "foo^bar"), self.filesystem.splitroot("C:^foo^bar")
+        )
+
+    def test_splitroot_with_unc_path(self):
+        self.assertEqual(
+            ("!!foo!bar", "!", "baz"), self.filesystem.splitroot("!!foo!bar!baz")
+        )
+        self.assertEqual(
+            ("!!?!UNC", "!", "foo!bar"), self.filesystem.splitroot("!!?!UNC!foo!bar")
+        )
+        self.assertEqual(
+            ("^^foo^bar", "^", "baz"), self.filesystem.splitroot("^^foo^bar^baz")
+        )
+        self.assertEqual(
+            (b"!!foo!bar", b"!", b"baz"), self.filesystem.splitroot(b"!!foo!bar!baz")
+        )
+
+    def test_splitroot_with_empty_parts(self):
+        self.assertEqual(("", "", ""), self.filesystem.splitroot(""))
+        self.assertEqual(("", "!", "foo"), self.filesystem.splitroot("!foo"))
+        self.assertEqual(("!!foo!bar", "", ""), self.filesystem.splitroot("!!foo!bar"))
+        self.assertEqual(("!!foo", "", ""), self.filesystem.splitroot("!!foo"))
+        self.assertEqual(
+            ("!!foo!bar", "!", ""), self.filesystem.splitroot("!!foo!bar!")
+        )
+        self.assertEqual(("C:", "", "foo!bar"), self.filesystem.splitroot("C:foo!bar"))
 
 
 class DiskSpaceTest(TestCase):
