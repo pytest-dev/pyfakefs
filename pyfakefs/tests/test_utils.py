@@ -431,11 +431,14 @@ class RealFsTestCase(TestCase, RealFsTestMixin):
             self.filesystem = fake_filesystem.FakeFilesystem(
                 path_separator=self.path_separator()
             )
+        self.setup_fake_fs()
+        self.setUpFileSystem()
+
+    def setup_fake_fs(self):
+        if not self.use_real_fs():
             self.open = fake_open.FakeFileOpen(self.filesystem)
             self.os = fake_os.FakeOsModule(self.filesystem)
             self.create_basepath()
-
-        self.setUpFileSystem()
 
     def tearDown(self):
         RealFsTestMixin.tearDown(self)

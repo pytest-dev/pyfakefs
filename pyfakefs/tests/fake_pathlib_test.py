@@ -203,8 +203,8 @@ class RealPathlibInitializationWithDriveTest(FakePathlibInitializationWithDriveT
 class FakePathlibPurePathTest(RealPathlibTestCase):
     """Tests functionality present in PurePath class."""
 
-    @unittest.skipIf(is_windows, "POSIX specific behavior")
     def test_is_reserved_posix(self):
+        self.check_posix_only()
         self.assertFalse(self.path("/dev").is_reserved())
         self.assertFalse(self.path("/").is_reserved())
         self.assertFalse(self.path("COM1").is_reserved())

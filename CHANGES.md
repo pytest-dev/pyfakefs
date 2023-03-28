@@ -17,6 +17,8 @@ The released versions correspond to PyPI releases.
 ### Features
 * added possibility to set a path inaccessible under Windows by using `chown()` with
   the `force_unix_mode` flag (see [#720](../../issues/720))
+* added support for changes in Python 3.12 (currently in last beta version)
+* added support for `os.path.splitroot` (new in Python 3.12)
 
 ## [Version 5.1.0](https://pypi.python.org/pypi/pyfakefs/5.1.0) (2023-01-12)
 New version before Debian freeze
