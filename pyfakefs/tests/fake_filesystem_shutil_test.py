@@ -231,6 +231,15 @@ class FakeShutilModuleTest(RealFsTestCase):
         self.assertAlmostEqual(src_stat.st_atime, dst_stat.st_atime, places=2)
         self.assertAlmostEqual(src_stat.st_mtime, dst_stat.st_mtime, places=2)
 
+    def test_copystat_symlinks(self):
+        f = self.make_path("xyzzy")
+        self.create_file(f)
+        sym1 = self.make_path("sym1")
+        sym2 = self.make_path("sym2")
+        self.create_symlink(sym1, f)
+        self.create_symlink(sym2, f)
+        shutil.copystat(sym1, sym2, follow_symlinks=False)
+
     def test_copy2(self):
         src_file = self.make_path("xyzzy")
         self.create_file(src_file)
