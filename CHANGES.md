@@ -1,7 +1,9 @@
 # pyfakefs Release Notes
 The released versions correspond to PyPI releases.
 
-## Unreleased
+## [Version 5.2.0](https://pypi.python.org/pypi/pyfakefs/5.2.0) (2023-03-31)
+Supports current Python 3.12 version (alpha 6). We plan to make patch releases in
+case of breaking changes in alpha or beta versions.
 
 ### Changes
 * Fake module classes previously defined in `fake_filesystem` have now moved to
@@ -17,7 +19,7 @@ The released versions correspond to PyPI releases.
 ### Features
 * added possibility to set a path inaccessible under Windows by using `chown()` with
   the `force_unix_mode` flag (see [#720](../../issues/720))
-* added support for changes in Python 3.12 (currently in last beta version)
+* added support for current Python 3.12 version (alpha 6)
 * added support for `os.path.splitroot` (new in Python 3.12)
 
 ## [Version 5.1.0](https://pypi.python.org/pypi/pyfakefs/5.1.0) (2023-01-12)
