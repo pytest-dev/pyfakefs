@@ -36,6 +36,7 @@ from typing import (
     cast,
     AnyStr,
     TYPE_CHECKING,
+    Set,
 )
 
 from pyfakefs.extra_packages import use_scandir
@@ -146,6 +147,10 @@ class FakeOsModule:
         self.filesystem = filesystem
         self.os_module: Any = os
         self.path = FakePathModule(self.filesystem, self)
+        self._supports_follow_symlinks: Optional[Set] = None
+        self._supports_dir_fd: Optional[Set] = None
+        self._supports_effective_ids: Optional[Set] = None
+        self._supports_fd: Optional[Set] = None
 
     @property
     def devnull(self) -> str:
@@ -890,8 +895,7 @@ class FakeOsModule:
             path = path
         if dir_fd is not None:
             # check if fd is supported for the built-in real function
-            real_fct = getattr(os, fct.__name__)
-            if real_fct not in self.supports_dir_fd:
+            if fct not in self.supports_dir_fd:
                 raise NotImplementedError("dir_fd unavailable on this platform")
             if isinstance(path, int):
                 raise ValueError(
@@ -998,7 +1002,7 @@ class FakeOsModule:
                 the link itself is queried instead of the linked object.
         """
         if not follow_symlinks and (
-            os.chmod not in os.supports_follow_symlinks or IS_PYPY
+            self.chmod not in self.supports_follow_symlinks or IS_PYPY
         ):
             raise NotImplementedError(
                 "`follow_symlinks` for chmod() is not available " "on this system"
@@ -1267,6 +1271,43 @@ class FakeOsModule:
             dest.flush()
             return written
         return 0
+
+    def fake_functions(self, original_functions) -> Set:
+        functions = set()
+        for fn in original_functions:
+            if hasattr(self, fn.__name__):
+                functions.add(getattr(self, fn.__name__))
+            else:
+                functions.add(fn)
+        return functions
+
+    @property
+    def supports_follow_symlinks(self) -> Set[Callable]:
+        if self._supports_follow_symlinks is None:
+            self._supports_follow_symlinks = self.fake_functions(
+                self.os_module.supports_follow_symlinks
+            )
+        return self._supports_follow_symlinks
+
+    @property
+    def supports_dir_fd(self) -> Set[Callable]:
+        if self._supports_dir_fd is None:
+            self._supports_dir_fd = self.fake_functions(self.os_module.supports_dir_fd)
+        return self._supports_dir_fd
+
+    @property
+    def supports_fd(self) -> Set[Callable]:
+        if self._supports_fd is None:
+            self._supports_fd = self.fake_functions(self.os_module.supports_fd)
+        return self._supports_fd
+
+    @property
+    def supports_effective_ids(self) -> Set[Callable]:
+        if self._supports_effective_ids is None:
+            self._supports_effective_ids = self.fake_functions(
+                self.os_module.supports_effective_ids
+            )
+        return self._supports_effective_ids
 
     def __getattr__(self, name: str) -> Any:
         """Forwards any unfaked calls to the standard os module."""
