@@ -132,7 +132,7 @@ class _FakeAccessor(accessor):  # type: ignore [valid-type, misc]
 
             if (
                 not kwargs["follow_symlinks"]
-                and os.os_module.chmod not in os.supports_follow_symlinks
+                and os.os_module.chmod not in os.os_module.supports_follow_symlinks
             ):
                 raise NotImplementedError(
                     "`follow_symlinks` for chmod() is not available " "on this system"

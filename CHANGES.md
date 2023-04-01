@@ -1,6 +1,13 @@
 # pyfakefs Release Notes
 The released versions correspond to PyPI releases.
 
+## Unreleased
+
+### Fixes
+* Properties defining the capabilities of some `os` functions like
+  `os.supports_follow_symlinks` are now properly faked to contain the fake functions
+  if the real functions are faked (see [#799](../../issues/799))
+
 ## [Version 5.2.0](https://pypi.python.org/pypi/pyfakefs/5.2.0) (2023-03-31)
 Supports current Python 3.12 version (alpha 6). We plan to make patch releases in
 case of breaking changes in alpha or beta versions.

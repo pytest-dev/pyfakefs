@@ -2011,7 +2011,7 @@ class FakeOsModuleTest(FakeOsModuleTestBase):
         self.createTestFile(path)
         link_path = self.make_path("link_to_some_file")
         self.create_symlink(link_path, path)
-        if os.chmod not in os.supports_follow_symlinks or IS_PYPY:
+        if self.os.chmod not in self.os.supports_follow_symlinks or IS_PYPY:
             with self.assertRaises(NotImplementedError):
                 self.os.chmod(link_path, 0o6543, follow_symlinks=False)
         else:
@@ -2865,6 +2865,21 @@ class FakeOsModuleTest(FakeOsModuleTestBase):
         self.assertEqual(10, self.os.stat(file_path).st_size)
         with self.open(file_path) as f:
             self.assertEqual("0123456789", f.read())
+
+    def test_capabilities(self):
+        """Make sure that the fake capabilities are the same as the real ones."""
+        self.assertEqual(
+            self.os.stat in self.os.supports_follow_symlinks,
+            os.stat in os.supports_follow_symlinks,
+        )
+        self.assertEqual(self.os.stat in self.os.supports_fd, os.stat in os.supports_fd)
+        self.assertEqual(
+            self.os.stat in self.os.supports_dir_fd, os.stat in os.supports_dir_fd
+        )
+        self.assertEqual(
+            self.os.stat in self.os.supports_effective_ids,
+            os.stat in os.supports_effective_ids,
+        )
 
 
 class RealOsModuleTest(FakeOsModuleTest):
@@ -4661,7 +4676,7 @@ class RealOsModuleWalkTest(FakeOsModuleWalkTest):
 class FakeOsModuleDirFdTest(FakeOsModuleTestBase):
     def setUp(self):
         super(FakeOsModuleDirFdTest, self).setUp()
-        self.os.supports_dir_fd = set()
+        self.os.supports_dir_fd.clear()
         self.filesystem.is_windows_fs = False
         self.filesystem.create_dir("/foo/bar")
         self.dir_fd = self.os.open("/foo", os.O_RDONLY)
@@ -4675,7 +4690,7 @@ class FakeOsModuleDirFdTest(FakeOsModuleTestBase):
             self.os.F_OK,
             dir_fd=self.dir_fd,
         )
-        self.os.supports_dir_fd.add(os.access)
+        self.os.supports_dir_fd.add(self.os.access)
         self.assertTrue(self.os.access("baz", self.os.F_OK, dir_fd=self.dir_fd))
 
     def test_chmod(self):
@@ -4686,7 +4701,7 @@ class FakeOsModuleDirFdTest(FakeOsModuleTestBase):
             0o6543,
             dir_fd=self.dir_fd,
         )
-        self.os.supports_dir_fd.add(os.chmod)
+        self.os.supports_dir_fd.add(self.os.chmod)
         self.os.chmod("baz", 0o6543, dir_fd=self.dir_fd)
         st = self.os.stat("/foo/baz")
         self.assert_mode_equal(0o6543, st.st_mode)
@@ -4701,7 +4716,7 @@ class FakeOsModuleDirFdTest(FakeOsModuleTestBase):
             101,
             dir_fd=self.dir_fd,
         )
-        self.os.supports_dir_fd.add(os.chown)
+        self.os.supports_dir_fd.add(self.os.chown)
         self.os.chown("baz", 100, 101, dir_fd=self.dir_fd)
         st = self.os.stat("/foo/baz")
         self.assertEqual(st[stat.ST_UID], 100)
@@ -4715,7 +4730,7 @@ class FakeOsModuleDirFdTest(FakeOsModuleTestBase):
             "/bat",
             src_dir_fd=self.dir_fd,
         )
-        self.os.supports_dir_fd.add(os.link)
+        self.os.supports_dir_fd.add(self.os.link)
         self.os.link("baz", "/bat", src_dir_fd=self.dir_fd)
         self.assertTrue(self.os.path.exists("/bat"))
 
@@ -4727,7 +4742,7 @@ class FakeOsModuleDirFdTest(FakeOsModuleTestBase):
             "/bat",
             dst_dir_fd=self.dir_fd,
         )
-        self.os.supports_dir_fd.add(os.link)
+        self.os.supports_dir_fd.add(self.os.link)
         self.os.link("/foo/baz", "bat", dst_dir_fd=self.dir_fd)
         self.assertTrue(self.os.path.exists("/foo/bat"))
 
@@ -4739,7 +4754,7 @@ class FakeOsModuleDirFdTest(FakeOsModuleTestBase):
             "/bat",
             dir_fd=self.dir_fd,
         )
-        self.os.supports_dir_fd.add(os.symlink)
+        self.os.supports_dir_fd.add(self.os.symlink)
         self.os.symlink("baz", "/bat", dir_fd=self.dir_fd)
         self.assertTrue(self.os.path.exists("/bat"))
 
@@ -4753,7 +4768,7 @@ class FakeOsModuleDirFdTest(FakeOsModuleTestBase):
             "/geo/metro/lemon/pie",
             dir_fd=self.dir_fd,
         )
-        self.os.supports_dir_fd.add(os.readlink)
+        self.os.supports_dir_fd.add(self.os.readlink)
         self.assertEqual(
             "/foo/baz",
             self.os.readlink("/geo/metro/lemon/pie", dir_fd=self.dir_fd),
@@ -4761,13 +4776,13 @@ class FakeOsModuleDirFdTest(FakeOsModuleTestBase):
 
     def test_stat(self):
         self.assertRaises(NotImplementedError, self.os.stat, "baz", dir_fd=self.dir_fd)
-        self.os.supports_dir_fd.add(os.stat)
+        self.os.supports_dir_fd.add(self.os.stat)
         st = self.os.stat("baz", dir_fd=self.dir_fd)
         self.assertEqual(st.st_mode, 0o100666)
 
     def test_lstat(self):
         self.assertRaises(NotImplementedError, self.os.lstat, "baz", dir_fd=self.dir_fd)
-        self.os.supports_dir_fd.add(os.lstat)
+        self.os.supports_dir_fd.add(self.os.lstat)
         st = self.os.lstat("baz", dir_fd=self.dir_fd)
         self.assertEqual(st.st_mode, 0o100666)
 
@@ -4775,13 +4790,13 @@ class FakeOsModuleDirFdTest(FakeOsModuleTestBase):
         self.assertRaises(
             NotImplementedError, self.os.mkdir, "newdir", dir_fd=self.dir_fd
         )
-        self.os.supports_dir_fd.add(os.mkdir)
+        self.os.supports_dir_fd.add(self.os.mkdir)
         self.os.mkdir("newdir", dir_fd=self.dir_fd)
         self.assertTrue(self.os.path.exists("/foo/newdir"))
 
     def test_rmdir(self):
         self.assertRaises(NotImplementedError, self.os.rmdir, "bar", dir_fd=self.dir_fd)
-        self.os.supports_dir_fd.add(os.rmdir)
+        self.os.supports_dir_fd.add(self.os.rmdir)
         self.os.rmdir("bar", dir_fd=self.dir_fd)
         self.assertFalse(self.os.path.exists("/foo/bar"))
 
@@ -4790,7 +4805,7 @@ class FakeOsModuleDirFdTest(FakeOsModuleTestBase):
         self.assertRaises(
             NotImplementedError, self.os.mknod, "newdir", dir_fd=self.dir_fd
         )
-        self.os.supports_dir_fd.add(os.mknod)
+        self.os.supports_dir_fd.add(self.os.mknod)
         self.os.mknod("newdir", dir_fd=self.dir_fd)
         self.assertTrue(self.os.path.exists("/foo/newdir"))
 
@@ -4802,7 +4817,7 @@ class FakeOsModuleDirFdTest(FakeOsModuleTestBase):
             "/foo/batz",
             src_dir_fd=self.dir_fd,
         )
-        self.os.supports_dir_fd.add(os.rename)
+        self.os.supports_dir_fd.add(self.os.rename)
         self.os.rename("bar", "/foo/batz", src_dir_fd=self.dir_fd)
         self.assertTrue(self.os.path.exists("/foo/batz"))
 
@@ -4814,7 +4829,7 @@ class FakeOsModuleDirFdTest(FakeOsModuleTestBase):
             "/foo/batz",
             dst_dir_fd=self.dir_fd,
         )
-        self.os.supports_dir_fd.add(os.rename)
+        self.os.supports_dir_fd.add(self.os.rename)
         self.os.rename("/foo/bar", "batz", dst_dir_fd=self.dir_fd)
         self.assertTrue(self.os.path.exists("/foo/batz"))
 
@@ -4826,7 +4841,7 @@ class FakeOsModuleDirFdTest(FakeOsModuleTestBase):
             "/foo/batz",
             src_dir_fd=self.dir_fd,
         )
-        self.os.supports_dir_fd.add(os.rename)
+        self.os.supports_dir_fd.add(self.os.rename)
         self.os.replace("bar", "/foo/batz", src_dir_fd=self.dir_fd)
         self.assertTrue(self.os.path.exists("/foo/batz"))
 
@@ -4838,7 +4853,7 @@ class FakeOsModuleDirFdTest(FakeOsModuleTestBase):
             "/foo/batz",
             dst_dir_fd=self.dir_fd,
         )
-        self.os.supports_dir_fd.add(os.rename)
+        self.os.supports_dir_fd.add(self.os.rename)
         self.os.replace("/foo/bar", "batz", dst_dir_fd=self.dir_fd)
         self.assertTrue(self.os.path.exists("/foo/batz"))
 
@@ -4846,7 +4861,7 @@ class FakeOsModuleDirFdTest(FakeOsModuleTestBase):
         self.assertRaises(
             NotImplementedError, self.os.remove, "baz", dir_fd=self.dir_fd
         )
-        self.os.supports_dir_fd.add(os.remove)
+        self.os.supports_dir_fd.add(self.os.remove)
         self.os.remove("baz", dir_fd=self.dir_fd)
         self.assertFalse(self.os.path.exists("/foo/baz"))
 
@@ -4854,7 +4869,7 @@ class FakeOsModuleDirFdTest(FakeOsModuleTestBase):
         self.assertRaises(
             NotImplementedError, self.os.unlink, "baz", dir_fd=self.dir_fd
         )
-        self.os.supports_dir_fd.add(os.unlink)
+        self.os.supports_dir_fd.add(self.os.unlink)
         self.os.unlink("baz", dir_fd=self.dir_fd)
         self.assertFalse(self.os.path.exists("/foo/baz"))
 
@@ -4866,7 +4881,7 @@ class FakeOsModuleDirFdTest(FakeOsModuleTestBase):
             (1, 2),
             dir_fd=self.dir_fd,
         )
-        self.os.supports_dir_fd.add(os.utime)
+        self.os.supports_dir_fd.add(self.os.utime)
         self.os.utime("baz", times=(1, 2), dir_fd=self.dir_fd)
         st = self.os.stat("/foo/baz")
         self.assertEqual(1, st.st_atime)
@@ -4880,7 +4895,7 @@ class FakeOsModuleDirFdTest(FakeOsModuleTestBase):
             os.O_RDONLY,
             dir_fd=self.dir_fd,
         )
-        self.os.supports_dir_fd.add(os.open)
+        self.os.supports_dir_fd.add(self.os.open)
         fd = self.os.open("baz", os.O_RDONLY, dir_fd=self.dir_fd)
         self.assertLess(0, fd)
 

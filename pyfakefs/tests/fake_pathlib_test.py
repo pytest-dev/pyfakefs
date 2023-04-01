@@ -402,7 +402,7 @@ class FakePathlibFileObjectPropertyTest(RealPathlibTestCase):
         self.skip_if_symlink_not_supported()
         file_stat = self.os.stat(self.file_path)
         link_stat = self.os.lstat(self.file_link_path)
-        if self.real_os.chmod not in os.supports_follow_symlinks or IS_PYPY:
+        if self.os.chmod not in self.os.supports_follow_symlinks or IS_PYPY:
             with self.assertRaises(NotImplementedError):
                 self.path(self.file_link_path).chmod(0o444, follow_symlinks=False)
         else:
