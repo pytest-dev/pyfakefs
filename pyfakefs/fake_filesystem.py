@@ -550,17 +550,17 @@ class FakeFilesystem:
         """Return the fake directory object of the mount point where the
         current working directory points to."""
 
-        def object_from_path(file_path):
+        def object_from_path(file_path) -> FakeDirectory:
             path_components = self._path_components(file_path)
             target = self.root
             for component in path_components:
-                target = target.get_entry(component)
+                target = cast(FakeDirectory, target.get_entry(component))
             return target
 
         path = to_string(self.cwd)
         for mount_path in self.mount_points:
             if path == to_string(mount_path):
-                return object_from_path(mount_path)  # pytype: disable=bad-return-type
+                return object_from_path(mount_path)
         mount_path = ""
         drive = to_string(self.splitdrive(path)[0])
         for root_path in self.mount_points:
@@ -569,7 +569,7 @@ class FakeFilesystem:
                 continue
             if path.startswith(str_root_path) and len(str_root_path) > len(mount_path):
                 mount_path = root_path
-        return object_from_path(mount_path)  # pytype: disable=bad-return-type
+        return object_from_path(mount_path)
 
     def _mount_point_for_device(self, idev: int) -> Optional[Dict]:
         for mount_point in self.mount_points.values():

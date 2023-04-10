@@ -78,11 +78,7 @@ from pyfakefs.fake_filesystem import (
 from pyfakefs.helpers import IS_PYPY
 from pyfakefs.mox3_stubout import StubOutForTesting
 
-try:
-    from importlib.machinery import ModuleSpec
-except ImportError:
-    ModuleSpec = object  # type: ignore[assignment, misc]
-
+from importlib.machinery import ModuleSpec
 from importlib import reload
 
 from pyfakefs import fake_filesystem, fake_io, fake_os, fake_open, fake_path, fake_file
@@ -677,16 +673,18 @@ class Patcher:
         # `from os import stat`
         # each patched function name has to be looked up separately
         for mod_name, fake_module in self._fake_module_classes.items():
-            if hasattr(fake_module, "dir") and inspect.isfunction(fake_module.dir):
-                for fct_name in fake_module.dir():
-                    module_attr = (getattr(fake_module, fct_name), mod_name)
-                    self._fake_module_functions.setdefault(fct_name, {})[
-                        mod_name
-                    ] = module_attr
-                    if mod_name == "os":
+            if hasattr(fake_module, "dir"):
+                module_dir = fake_module.dir
+                if inspect.isfunction(module_dir):
+                    for fct_name in fake_module.dir():
+                        module_attr = (getattr(fake_module, fct_name), mod_name)
                         self._fake_module_functions.setdefault(fct_name, {})[
-                            OS_MODULE
+                            mod_name
                         ] = module_attr
+                        if mod_name == "os":
+                            self._fake_module_functions.setdefault(fct_name, {})[
+                                OS_MODULE
+                            ] = module_attr
 
         # special handling for functions in os.path
         fake_module = fake_filesystem.FakePathModule
