@@ -560,7 +560,7 @@ class FakeFilesystem:
         path = to_string(self.cwd)
         for mount_path in self.mount_points:
             if path == to_string(mount_path):
-                return object_from_path(mount_path)
+                return object_from_path(mount_path)  # pytype: disable=bad-return-type
         mount_path = ""
         drive = to_string(self.splitdrive(path)[0])
         for root_path in self.mount_points:
@@ -569,7 +569,7 @@ class FakeFilesystem:
                 continue
             if path.startswith(str_root_path) and len(str_root_path) > len(mount_path):
                 mount_path = root_path
-        return object_from_path(mount_path)
+        return object_from_path(mount_path)  # pytype: disable=bad-return-type
 
     def _mount_point_for_device(self, idev: int) -> Optional[Dict]:
         for mount_point in self.mount_points.values():
@@ -926,8 +926,12 @@ class FakeFilesystem:
         drive, path_str = self.splitdrive(path_str)
         sep = self.get_path_separator(path_str)
         is_absolute_path = path_str.startswith(sep)
-        path_components: List[AnyStr] = path_str.split(sep)
-        collapsed_path_components: List[AnyStr] = []
+        path_components: List[AnyStr] = path_str.split(
+            sep
+        )  # pytype: disable=invalid-annotation
+        collapsed_path_components: List[
+            AnyStr
+        ] = []  # pytype: disable=invalid-annotation
         dot = matching_string(path_str, ".")
         dotdot = matching_string(path_str, "..")
         for component in path_components:
@@ -1580,7 +1584,7 @@ class FakeFilesystem:
                 link_path = sep.join(components)
             # Don't call self.NormalizePath(), as we don't want to prepend
             # self.cwd.
-            return self.normpath(link_path)
+            return self.normpath(link_path)  # pytype: disable=bad-return-type
         raise ValueError("Invalid link")
 
     def get_object_from_normpath(

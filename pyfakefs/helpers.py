@@ -120,7 +120,7 @@ def make_string_path(dir_name: os.PathLike) -> str:
 
 
 def make_string_path(dir_name: AnyPath) -> AnyStr:
-    return cast(AnyStr, os.fspath(dir_name))
+    return cast(AnyStr, os.fspath(dir_name))  # pytype: disable=invalid-annotation
 
 
 def to_string(path: Union[AnyStr, Union[str, bytes]]) -> str:
@@ -182,7 +182,7 @@ def matching_string(  # type: ignore[misc]
         return string
     if isinstance(matched, bytes) and isinstance(string, str):
         return string.encode(locale.getpreferredencoding(False))
-    return string
+    return string  # pytype: disable=bad-return-type
 
 
 class FakeStatResult:

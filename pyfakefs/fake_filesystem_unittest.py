@@ -909,7 +909,9 @@ class Patcher:
         for (name, ft_name, ft_mod), modules in self.FS_FUNCTIONS.items():
             method, mod_name = self._fake_module_functions[ft_name][ft_mod]
             fake_module = self.fake_modules[mod_name]
-            attr = method.__get__(fake_module, fake_module.__class__)
+            attr = method.__get__(
+                fake_module, fake_module.__class__
+            )  # pytype: disable=attribute-error
             for module in modules:
                 self._stubs.smart_set(module, name, attr)
 
@@ -927,7 +929,9 @@ class Patcher:
         for fct, idx, ft in self.FS_DEFARGS:
             method, mod_name = self._fake_module_functions[ft.__name__][ft.__module__]
             fake_module = self.fake_modules[mod_name]
-            attr = method.__get__(fake_module, fake_module.__class__)
+            attr = method.__get__(
+                fake_module, fake_module.__class__
+            )  # pytype: disable=attribute-error
             new_defaults = []
             assert fct.__defaults__ is not None
             for i, d in enumerate(fct.__defaults__):

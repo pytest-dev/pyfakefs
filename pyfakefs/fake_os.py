@@ -503,7 +503,9 @@ class FakeOsModule:
 
         path_str = self.filesystem.cwd if path is None else path
         file_obj = self.filesystem.resolve(
-            cast(AnyStr, path_str), follow_symlinks, allow_fd=True
+            cast(AnyStr, path_str),  # pytype: disable=invalid-annotation
+            follow_symlinks,
+            allow_fd=True,
         )
         return list(file_obj.xattr.keys())
 

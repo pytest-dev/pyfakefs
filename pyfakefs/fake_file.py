@@ -352,7 +352,7 @@ class FakeFile:
     @property
     def path(self) -> AnyStr:
         """Return the full path of the current object."""
-        names: List[AnyStr] = []
+        names: List[AnyStr] = []  # pytype: disable=invalid-annotation
         obj: Optional[FakeFile] = self
         while obj:
             names.insert(0, matching_string(self.name, obj.name))  # type: ignore
@@ -1280,7 +1280,7 @@ class FakePipeWrapper:
     def read(self, numBytes: int = -1) -> bytes:
         """Read from the real pipe."""
         if self.real_file:
-            return self.real_file.read(numBytes)
+            return self.real_file.read(numBytes)  # pytype: disable=bad-return-type
         return os.read(self.fd, numBytes)
 
     def flush(self) -> None:
