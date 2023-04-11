@@ -1,6 +1,12 @@
 # pyfakefs Release Notes
 The released versions correspond to PyPI releases.
 
+## Unreleased
+
+### Fixes
+* The test fixture is now included in the source distribution and installed
+  with the package.
+
 ## [Version 5.2.1](https://pypi.python.org/pypi/pyfakefs/5.2.1) (2023-04-11)
 Support for latest Python 3.12 version.
 
