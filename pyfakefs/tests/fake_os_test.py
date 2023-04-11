@@ -5200,10 +5200,12 @@ class FakeScandirTest(FakeOsModuleTestBase):
         self, absolute_symlink_expected_size, relative_symlink_expected_size
     ):
         self.assertEqual(self.FILE_SIZE, self.dir_entries[1].stat().st_size)
-        self.assertEqual(
-            int(self.os.stat(self.dir_path).st_ctime),
-            int(self.dir_entries[0].stat().st_ctime),
-        )
+        if not self.is_windows_fs or sys.version_info < (3, 12):
+            # behavior of st_ctime changed in 3.12, to be adapted later
+            self.assertEqual(
+                int(self.os.stat(self.dir_path).st_ctime),
+                int(self.dir_entries[0].stat().st_ctime),
+            )
 
         if self.supports_symlinks:
             self.assertEqual(self.LINKED_FILE_SIZE, self.dir_entries[3].stat().st_size)
@@ -5234,10 +5236,12 @@ class FakeScandirTest(FakeOsModuleTestBase):
         self.check_stat(0, 0)
 
     def test_index_access_to_stat_times_returns_int(self):
-        self.assertEqual(
-            self.os.stat(self.dir_path)[stat.ST_CTIME],
-            int(self.dir_entries[0].stat().st_ctime),
-        )
+        if not self.is_windows_fs or sys.version_info < (3, 12):
+            # behavior of st_ctime changed in 3.12, to be adapted later
+            self.assertEqual(
+                self.os.stat(self.dir_path)[stat.ST_CTIME],
+                int(self.dir_entries[0].stat().st_ctime),
+            )
         if self.supports_symlinks:
             self.assertEqual(
                 self.os.stat(self.linked_dir_path)[stat.ST_MTIME],
