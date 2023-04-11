@@ -520,39 +520,41 @@ class FakePath(pathlib.Path):
                 if cls.filesystem.is_windows_fs
                 else FakePathlibModule.PosixPath
             )
-        self = cls._from_parts(args)
-        return self
+        if sys.version_info < (3, 12):
+            return cls._from_parts(args)
+        else:
+            return object.__new__(cls)
 
-    @classmethod
-    def _from_parts(cls, args, init=False):  # pylint: disable=unused-argument
-        # Overwritten to call _init to set the fake accessor,
-        # which is not done since Python 3.10
-        self = object.__new__(cls)
-        self._init()
-        parse_fct = (
-            self._parse_parts if sys.version_info >= (3, 12) else self._parse_args
-        )
-        drv, root, parts = parse_fct(args)
-        self._drv = drv
-        self._root = root
-        self._parts = parts
-        return self
+    if sys.version_info[:2] == (3, 10):
+        # Overwritten class methods to call _init to set the fake accessor,
+        # which is not done in Python 3.10, and not needed from Python 3.11 on
+        @classmethod
+        def _from_parts(cls, args, init=False):  # pylint: disable=unused-argument
+            self = object.__new__(cls)
+            self._init()
+            drv, root, parts = self._parse_args(args)
+            self._drv = drv
+            self._root = root
+            self._parts = parts
+            return self
 
-    @classmethod
-    def _from_parsed_parts(cls, drv, root, parts):
-        # Overwritten to call _init to set the fake accessor,
-        # which is not done since Python 3.10
-        self = object.__new__(cls)
-        self._init()
-        self._drv = drv
-        self._root = root
-        self._parts = parts
-        return self
+        @classmethod
+        def _from_parsed_parts(cls, drv, root, parts):
+            self = object.__new__(cls)
+            self._drv = drv
+            self._root = root
+            self._parts = parts
+            self._init()
+            return self
 
-    def _init(self, template=None):
-        """Initializer called from base class."""
-        self._accessor = _fake_accessor
-        self._closed = False
+    if sys.version_info < (3, 11):
+
+        def _init(self, template=None):
+            """Initializer called from base class."""
+            # only needed until Python 3.10
+            self._accessor = _fake_accessor
+            # only needed until Python 3.8
+            self._closed = False
 
     def _path(self):
         """Returns the underlying path string as used by the fake
@@ -591,8 +593,7 @@ class FakePath(pathlib.Path):
                         "resolve() got an unexpected keyword argument 'strict'"
                     )
                 strict = True
-            if self._closed:
-                self._raise_closed()
+            self._raise_on_closed()
             path = self._flavour.resolve(self, strict=strict)
             if path is None:
                 self.stat()
@@ -607,8 +608,7 @@ class FakePath(pathlib.Path):
             OSError: if the target object is a directory, the path is invalid
                 or permission is denied.
         """
-        if self._closed:
-            self._raise_closed()
+        self._raise_on_closed()
         return FakeFileOpen(self.filesystem)(
             self._path(), mode, buffering, encoding, errors, newline
         )
@@ -720,6 +720,10 @@ class FakePath(pathlib.Path):
             )
         )
 
+    def _raise_on_closed(self):
+        if sys.version_info < (3, 9) and self._closed:
+            self._raise_closed()
+
     def touch(self, mode=0o666, exist_ok=True):
         """Create a fake file for the path with the given access mode,
         if it doesn't exist.
@@ -732,8 +736,7 @@ class FakePath(pathlib.Path):
         Raises:
             FileExistsError: if the file exists and exits_ok is False.
         """
-        if self._closed:
-            self._raise_closed()
+        self._raise_on_closed()
         if self.exists():
             if exist_ok:
                 self.filesystem.utime(self._path(), times=None)
@@ -751,7 +754,7 @@ class FakePath(pathlib.Path):
 
         def is_absolute(self):
             if self.filesystem.is_windows_fs:
-                return self._drv and self._root
+                return self.drive and self.root
             return os.path.isabs(self._path())
 
         def is_reserved(self):
@@ -887,8 +890,10 @@ class RealPath(pathlib.Path):
                 if os.name == "nt"
                 else RealPathlibModule.PosixPath
             )
-        self = cls._from_parts(args)
-        return self
+        if sys.version_info < (3, 12):
+            return cls._from_parts(args)
+        else:
+            return object.__new__(cls)
 
 
 if sys.version_info > (3, 10):

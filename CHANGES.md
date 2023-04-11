@@ -3,6 +3,9 @@ The released versions correspond to PyPI releases.
 
 ## Unreleased
 
+### Changes
+* Adapted fake pathlib to changes in Python 3.12a7 (last alpha version)
+
 ### Fixes
 * Properties defining the capabilities of some `os` functions like
   `os.supports_follow_symlinks` are now properly faked to contain the fake functions
