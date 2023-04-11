@@ -1,7 +1,8 @@
 # pyfakefs Release Notes
 The released versions correspond to PyPI releases.
 
-## Unreleased
+## [Version 5.2.1](https://pypi.python.org/pypi/pyfakefs/5.2.1) (2023-04-11)
+Support for latest Python 3.12 version.
 
 ### Changes
 * Adapted fake pathlib to changes in Python 3.12a7 (last alpha version)
