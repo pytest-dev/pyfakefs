@@ -44,6 +44,11 @@ else:
     GROUP_ID = os.getgid()
 
 
+def get_uid() -> int:
+    """Get the global user id. Same as ``os.getuid()``"""
+    return USER_ID
+
+
 def set_uid(uid: int) -> None:
     """Set the global user id. This is used as st_uid for new files
     and to differentiate between a normal user and the root user (uid 0).
@@ -54,6 +59,11 @@ def set_uid(uid: int) -> None:
     """
     global USER_ID
     USER_ID = uid
+
+
+def get_gid() -> int:
+    """Get the global group id. Same as ``os.getgid()``"""
+    return GROUP_ID
 
 
 def set_gid(gid: int) -> None:

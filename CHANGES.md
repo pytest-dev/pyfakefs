@@ -3,9 +3,17 @@ The released versions correspond to PyPI releases.
 
 ## Unreleased
 
+### Changes
+* Made the user and group IDs accessible via dedicated ``get_uid`` and ``get_gid``
+  functions (for symmetry to ``set_uid`` / ``set_gid``)
+
 ### Fixes
 * The test fixture is now included in the source distribution and installed
   with the package.
+* Some public constants in `fake_filesystem` that had been moved to `helpers` are
+  made accessible from there again (see [#809](../../issues/809)).
+* Add missing fake implementations for `os.getuid` and `os.getgid` (Posix only)
+
 
 ## [Version 5.2.1](https://pypi.python.org/pypi/pyfakefs/5.2.1) (2023-04-11)
 Support for latest Python 3.12 version.

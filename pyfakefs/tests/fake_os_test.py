@@ -21,7 +21,7 @@ import stat
 import sys
 import unittest
 
-from pyfakefs.helpers import IN_DOCKER, IS_PYPY, GROUP_ID, USER_ID
+from pyfakefs.helpers import IN_DOCKER, IS_PYPY, get_uid, get_gid
 
 from pyfakefs import fake_filesystem, fake_os, fake_open, fake_file
 from pyfakefs.fake_filesystem import (
@@ -5403,6 +5403,26 @@ class FakeOsUnreadableDirTest(FakeOsModuleTestBase):
         else:
             self.os.chmod(path, mode)
 
+    def test_getuid(self):
+        self.skip_real_fs()  # won't change user in real fs
+        self.check_posix_only()
+        uid = self.os.getuid()
+        set_uid(uid + 10)
+        self.assertEqual(uid + 10, self.os.getuid())
+        self.assertEqual(uid + 10, get_uid())
+        set_uid(uid)
+        self.assertEqual(uid, self.os.getuid())
+
+    def test_getgid(self):
+        self.skip_real_fs()  # won't change group in real fs
+        self.check_posix_only()
+        gid = self.os.getgid()
+        set_gid(gid + 10)
+        self.assertEqual(gid + 10, self.os.getgid())
+        self.assertEqual(gid + 10, get_gid())
+        set_gid(gid)
+        self.assertEqual(gid, self.os.getgid())
+
     def test_listdir_unreadable_dir(self):
         if not is_root():
             self.assert_raises_os_error(errno.EACCES, self.os.listdir, self.dir_path)
@@ -5417,7 +5437,7 @@ class FakeOsUnreadableDirTest(FakeOsModuleTestBase):
     def test_listdir_user_readable_dir_from_other_user(self):
         self.skip_real_fs()  # won't change user in real fs
         self.check_posix_only()
-        user_id = USER_ID
+        user_id = get_uid()
         set_uid(user_id + 1)
         dir_path = self.make_path("dir1")
         self.create_dir(dir_path, perm=0o600)
@@ -5431,7 +5451,7 @@ class FakeOsUnreadableDirTest(FakeOsModuleTestBase):
 
     def test_listdir_group_readable_dir_from_other_user(self):
         self.skip_real_fs()  # won't change user in real fs
-        user_id = USER_ID
+        user_id = get_uid()
         set_uid(user_id + 1)
         dir_path = self.make_path("dir1")
         self.create_dir(dir_path, perm=0o660)
@@ -5442,7 +5462,7 @@ class FakeOsUnreadableDirTest(FakeOsModuleTestBase):
     def test_listdir_group_readable_dir_from_other_group(self):
         self.skip_real_fs()  # won't change user in real fs
         self.check_posix_only()
-        group_id = GROUP_ID
+        group_id = self.os.getgid()
         set_gid(group_id + 1)
         dir_path = self.make_path("dir1")
         self.create_dir(dir_path, perm=0o060)
@@ -5456,7 +5476,7 @@ class FakeOsUnreadableDirTest(FakeOsModuleTestBase):
 
     def test_listdir_other_readable_dir_from_other_group(self):
         self.skip_real_fs()  # won't change user in real fs
-        group_id = GROUP_ID
+        group_id = get_gid()
         set_gid(group_id + 1)
         dir_path = self.make_path("dir1")
         self.create_dir(dir_path, perm=0o004)
@@ -5489,7 +5509,7 @@ class FakeOsUnreadableDirTest(FakeOsModuleTestBase):
 
     def test_remove_unreadable_dir_from_other_user(self):
         self.skip_real_fs()  # won't change user in real fs
-        user_id = USER_ID
+        user_id = get_uid()
         set_uid(user_id + 1)
         dir_path = self.make_path("dir1")
         self.create_dir(dir_path, perm=0o000)

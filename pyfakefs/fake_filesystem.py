@@ -159,9 +159,18 @@ if sys.platform != "win32":
 PatchMode = fake_io.PatchMode
 
 is_root = helpers.is_root
+get_uid = helpers.get_uid
 set_uid = helpers.set_uid
+get_gid = helpers.get_gid
 set_gid = helpers.set_gid
 reset_ids = helpers.reset_ids
+
+PERM_READ = helpers.PERM_READ
+PERM_WRITE = helpers.PERM_WRITE
+PERM_EXE = helpers.PERM_EXE
+PERM_DEF = helpers.PERM_DEF
+PERM_DEF_FILE = helpers.PERM_DEF_FILE
+PERM_ALL = helpers.PERM_ALL
 
 
 class FakeFilesystem:
@@ -735,7 +744,7 @@ class FakeFilesystem:
         times: Optional[Tuple[Union[int, float], Union[int, float]]] = None,
         *,
         ns: Optional[Tuple[int, int]] = None,
-        follow_symlinks: bool = True
+        follow_symlinks: bool = True,
     ) -> None:
         """Change the access and modified times of a file.
 
@@ -1620,10 +1629,10 @@ class FakeFilesystem:
 
     @staticmethod
     def _can_read(target, owner_can_read):
-        if target.st_uid == helpers.USER_ID:
+        if target.st_uid == helpers.get_uid():
             if owner_can_read or target.st_mode & 0o400:
                 return True
-        if target.st_gid == helpers.GROUP_ID:
+        if target.st_gid == get_gid():
             if target.st_mode & 0o040:
                 return True
         return target.st_mode & 0o004
@@ -2912,6 +2921,15 @@ def _run_doctest() -> TestResults:
     import pyfakefs
 
     return doctest.testmod(pyfakefs.fake_filesystem)
+
+
+def __getattr__(name):
+    # backwards compatibility for read access to globals moved to helpers
+    if name == "USER_ID":
+        return helpers.USER_ID
+    if name == "GROUP_ID":
+        return helpers.GROUP_ID
+    raise AttributeError(f"No attribute {name!r}.")
 
 
 if __name__ == "__main__":
