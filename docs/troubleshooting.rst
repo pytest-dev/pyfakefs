@@ -170,8 +170,12 @@ directory named ``/tmp`` when running on Linux or Unix systems,
       # the temp directory is always present at test start
       assert len(os.listdir("/")) == 1
 
-Under macOS, a symlink to the actual temp directory is created additionally as `/tmp`
-in the fake filesystem.
+Under macOS and linux, if the actual temp path is not `/tmp` (which is always the case
+under macOS), a symlink to the actual temp directory is additionally created as `/tmp`
+in the fake filesystem. Note that the file size of this link is ignored while
+calculating the fake filesystem size, so that the used size with an otherwise empty
+fake filesystem can always be assumed to be 0.
+
 
 User rights
 -----------

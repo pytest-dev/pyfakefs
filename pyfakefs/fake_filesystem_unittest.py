@@ -895,8 +895,8 @@ class Patcher:
         # so we create it here for convenience
         assert self.fs is not None
         self.fs.create_dir(temp_dir)
-        if sys.platform == "darwin" and not self.fs.exists("/tmp"):
-            # under macOS, we also create a link in /tmp for convenience
+        if sys.platform != "win32" and not self.fs.exists("/tmp"):
+            # under Posix, we also create a link in /tmp if the path does not exist
             self.fs.create_symlink("/tmp", temp_dir)
             # reset the used size to 0 to avoid having the link size counted
             # which would make disk size tests more complicated

@@ -13,6 +13,8 @@ The released versions correspond to PyPI releases.
 * Some public constants in `fake_filesystem` that had been moved to `helpers` are
   made accessible from there again (see [#809](../../issues/809)).
 * Add missing fake implementations for `os.getuid` and `os.getgid` (Posix only)
+* Make sure a `/tmp` path exists under linux (`TMPDIR` may point elsewhere)
+  (see [#810](../../issues/810))
 
 
 ## [Version 5.2.1](https://pypi.python.org/pypi/pyfakefs/5.2.1) (2023-04-11)
