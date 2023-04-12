@@ -7,7 +7,7 @@ Public Modules and Classes
 Fake filesystem module
 ----------------------
 .. automodule:: pyfakefs.helpers
-    :members: set_uid, set_gid, reset_ids, is_root
+    :members: get_uid, set_uid, get_gid, set_gid, reset_ids, is_root
 
 Fake filesystem classes
 -----------------------

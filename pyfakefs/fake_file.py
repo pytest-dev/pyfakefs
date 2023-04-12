@@ -159,7 +159,10 @@ class FakeFile:
         self._side_effect: Optional[Callable] = side_effect
         self.name: AnyStr = name  # type: ignore[assignment]
         self.stat_result = FakeStatResult(
-            filesystem.is_windows_fs, helpers.USER_ID, helpers.GROUP_ID, helpers.now()
+            filesystem.is_windows_fs,
+            helpers.get_uid(),
+            helpers.get_gid(),
+            helpers.now(),
         )
         if st_mode >> 12 == 0:
             st_mode |= S_IFREG

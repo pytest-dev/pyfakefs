@@ -65,6 +65,8 @@ from pyfakefs.helpers import (
     PERM_EXE,
     PERM_DEF,
     is_root,
+    get_uid,
+    get_gid,
 )
 
 if TYPE_CHECKING:
@@ -133,6 +135,11 @@ class FakeOsModule:
                 "listxattr",
                 "removexattr",
                 "setxattr",
+            ]
+        if sys.platform != "win32":
+            _dir += [
+                "getgid",
+                "getuid",
             ]
         if use_scandir:
             _dir += ["scandir"]
@@ -1271,6 +1278,22 @@ class FakeOsModule:
             dest.flush()
             return written
         return 0
+
+    def getuid(self) -> int:
+        """Returns the user id set in the fake filesystem.
+        If not changed using ``set_uid``, this is the uid of the real system.
+        """
+        if self.filesystem.is_windows_fs:
+            raise NameError("name 'getuid' is not defined")
+        return get_uid()
+
+    def getgid(self) -> int:
+        """Returns the group id set in the fake filesystem.
+        If not changed using ``set_gid``, this is the gid of the real system.
+        """
+        if self.filesystem.is_windows_fs:
+            raise NameError("name 'getgid' is not defined")
+        return get_gid()
 
     def fake_functions(self, original_functions) -> Set:
         functions = set()
