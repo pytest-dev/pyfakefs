@@ -1,7 +1,8 @@
 # pyfakefs Release Notes
 The released versions correspond to PyPI releases.
 
-## Unreleased
+## [Version 5.2.2](https://pypi.python.org/pypi/pyfakefs/5.2.2) (2023-04-13)
+Fixes a regression in 5.2.0
 
 ### Changes
 * Made the user and group IDs accessible via dedicated ``get_uid`` and ``get_gid``
