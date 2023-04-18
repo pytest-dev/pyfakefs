@@ -6,10 +6,16 @@ Using pyfakefs, your tests operate on a fake file system in memory without
 touching the real disk. The software under test requires no modification to
 work with pyfakefs.
 
-pyfakefs acts as a `pytest` plugin by providing the `fs` fixture, which will
-automatically invoke the fake filesystem. It also provides
-the `fake_filesystem_unittest.TestCase` class for use with `unittest` and
-the means to use the fake filesystem with other test frameworks.
+Pyfakefs creates a new empty in-memory file system at each test start, which replaces
+the real filesystem during the test. Think of pyfakefs as making a per-test temporary
+directory, except for an entire file system.
+
+There are several means to achieve this: by using
+the `fs` fixture if running pytest, by using `fake_filesystem_unittest.TestCase` as a
+base class if using unittest, by using a `fake_filesystem_unittest.Patcher` instance
+as a context manager, or by using the `patchfs` decorator.
+
+
 
 pyfakefs works with current versions of Linux, Windows and macOS.
 

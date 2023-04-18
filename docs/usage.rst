@@ -40,7 +40,7 @@ tests:
 Class-, module- and session-scoped fixtures
 ...........................................
 For convenience, class-, module- and session-scoped fixtures with the same
-functionality are provided, named ``fake_fs``, ``fs_module`` and ``fs_session``,
+functionality are provided, named ``fs_class``, ``fs_module`` and ``fs_session``,
 respectively.
 
 .. caution:: If any of these fixtures is active, any other ``fs`` fixture will
