@@ -21,6 +21,6 @@ paste the output.
 ```bash
 python -c "import platform; print(platform.platform())"
 python -c "import sys; print('Python', sys.version)"
-python -c "from pyfakefs.fake_filesystem import __version__; print('pyfakefs', __version__)"
+python -c "from pyfakefs import __version__; print('pyfakefs', __version__)"
 python -c "import pytest; print('pytest', pytest.__version__)"
 ```
