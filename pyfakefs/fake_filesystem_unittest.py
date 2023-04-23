@@ -35,7 +35,7 @@ Existing unit tests that use the real file system can be retrofitted to use
 pyfakefs by simply changing their base class from `:py:class`unittest.TestCase`
 to `:py:class`pyfakefs.fake_filesystem_unittest.TestCase`.
 """
-import _io  # type:ignore [import]
+import _io  # type:ignore[import]
 import doctest
 import functools
 import genericpath
@@ -844,7 +844,7 @@ class Patcher:
             self._stubs.smart_unset_all()
         self._stubs = mox3_stubout.StubOutForTesting()
 
-        self.fs = fake_filesystem.FakeFilesystem(patcher=self)
+        self.fs = fake_filesystem.FakeFilesystem(patcher=self, create_temp_dir=True)
         self.fs.patch_open_code = self.patch_open_code
         for name in self._fake_module_classes:
             self.fake_modules[name] = self._fake_module_classes[name](self.fs)
@@ -876,7 +876,6 @@ class Patcher:
         if self.has_fcopy_file:
             shutil._HAS_FCOPYFILE = False  # type: ignore[attr-defined]
 
-        temp_dir = tempfile.gettempdir()
         with warnings.catch_warnings():
             # ignore warnings, see #542 and #614
             warnings.filterwarnings("ignore")
@@ -890,17 +889,6 @@ class Patcher:
         self.start_patching()
         linecache.open = self.original_open  # type: ignore[attr-defined]
         tokenize._builtin_open = self.original_open  # type: ignore
-
-        # the temp directory is assumed to exist at least in `tempfile`,
-        # so we create it here for convenience
-        assert self.fs is not None
-        self.fs.create_dir(temp_dir)
-        if sys.platform != "win32" and not self.fs.exists("/tmp"):
-            # under Posix, we also create a link in /tmp if the path does not exist
-            self.fs.create_symlink("/tmp", temp_dir)
-            # reset the used size to 0 to avoid having the link size counted
-            # which would make disk size tests more complicated
-            next(iter(self.fs.mount_points.values()))["used_size"] = 0
 
     def start_patching(self) -> None:
         if not self._patching:

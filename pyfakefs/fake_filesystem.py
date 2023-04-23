@@ -85,6 +85,7 @@ import heapq
 import os
 import random
 import sys
+import tempfile
 from collections import namedtuple, OrderedDict
 from doctest import TestResults
 from enum import Enum
@@ -197,12 +198,17 @@ class FakeFilesystem:
         path_separator: str = os.path.sep,
         total_size: Optional[int] = None,
         patcher: Any = None,
+        create_temp_dir: bool = False,
     ) -> None:
         """
         Args:
             path_separator:  optional substitute for os.path.sep
             total_size: if not None, the total size in bytes of the
                 root filesystem.
+            patcher: the Patcher instance if created from the Patcher
+            create_temp_dir: If True, a temp directory is created on initialization.
+                Under Posix, if the temp directory is not `/tmp`, a link to the temp
+                path is additionally created at `/tmp`.
 
         Example usage to use the same path separator under all systems:
 
@@ -212,6 +218,7 @@ class FakeFilesystem:
         self.path_separator: str = path_separator
         self.alternative_path_separator: Optional[str] = os.path.altsep
         self.patcher = patcher
+        self.create_temp_dir = create_temp_dir
         if path_separator != os.sep:
             self.alternative_path_separator = None
 
@@ -247,6 +254,7 @@ class FakeFilesystem:
         self._add_root_mount_point(total_size)
         self._add_standard_streams()
         self.dev_null: Any = FakeNullFile(self)
+        self._create_temp_dir()
         # set from outside if needed
         self.patch_open_code = PatchMode.OFF
         self.shuffle_listdir_results = False
@@ -342,6 +350,7 @@ class FakeFilesystem:
         self.mount_points = OrderedDict()
         self._add_root_mount_point(total_size)
         self._add_standard_streams()
+        self._create_temp_dir()
         from pyfakefs import fake_pathlib
 
         fake_pathlib.init_module(self)
@@ -1380,7 +1389,7 @@ class FakeFilesystem:
         """
         if check_link and self.islink(file_path):
             return True
-        path = to_string(make_string_path(file_path))
+        path = to_string(self.make_string_path(file_path))
         if path is None:
             raise TypeError
         if not path:
@@ -2914,6 +2923,21 @@ class FakeFilesystem:
         self._add_open_file(StandardStreamWrapper(sys.stdin))
         self._add_open_file(StandardStreamWrapper(sys.stdout))
         self._add_open_file(StandardStreamWrapper(sys.stderr))
+
+    def _create_temp_dir(self):
+        if not self.create_temp_dir:
+            return
+        # the temp directory is assumed to exist at least in `tempfile`,
+        # so we create it here for convenience
+        temp_dir = tempfile.gettempdir()
+        if not self.exists(temp_dir):
+            self.create_dir(temp_dir)
+        if sys.platform != "win32" and not self.exists("/tmp"):
+            # under Posix, we also create a link in /tmp if the path does not exist
+            self.create_symlink("/tmp", temp_dir)
+            # reset the used size to 0 to avoid having the link size counted
+            # which would make disk size tests more complicated
+            next(iter(self.mount_points.values()))["used_size"] = 0
 
 
 def _run_doctest() -> TestResults:

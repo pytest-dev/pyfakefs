@@ -2,6 +2,7 @@
 import os
 import tempfile
 
+from pyfakefs.fake_filesystem import OSType
 from pyfakefs.fake_filesystem_unittest import Pause
 import pyfakefs.pytest_tests.io
 
@@ -60,3 +61,18 @@ def test_use_own_io_module(fs):
 
     stream = pyfakefs.pytest_tests.io.InputStream(filepath)
     assert stream.read() == "bar"
+
+
+def test_switch_to_windows(fs):
+    fs.os = OSType.WINDOWS
+    assert os.path.exists(tempfile.gettempdir())
+
+
+def test_switch_to_linux(fs):
+    fs.os = OSType.LINUX
+    assert os.path.exists(tempfile.gettempdir())
+
+
+def test_switch_to_macos(fs):
+    fs.os = OSType.MACOS
+    assert os.path.exists(tempfile.gettempdir())

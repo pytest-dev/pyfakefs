@@ -657,11 +657,11 @@ class TestTempDirCreation(fake_filesystem_unittest.TestCase):
     def setUp(self):
         self.setUpPyfakefs()
 
-    def testTempDirExists(self):
+    def test_tempdir_exists(self):
         self.assertTrue(os.path.exists(tempfile.gettempdir()))
 
     @unittest.skipIf(sys.platform == "win32", "POSIX only test")
-    def testTmpExists(self):
+    def test_tmp_exists(self):
         # directory or link under Linux, link under macOS
         self.assertTrue(os.path.exists("/tmp"))
 
