@@ -235,7 +235,7 @@ class FakeFilesystem:
         # file systems on non-case-sensitive systems and vice verse
         self.is_case_sensitive: bool = not (self.is_windows_fs or self._is_macos)
 
-        self.root = FakeDirectory(self.path_separator, filesystem=self)
+        self.root: FakeDirectory
         self._cwd = ""
 
         # We can't query the current value without changing it:
@@ -251,10 +251,9 @@ class FakeFilesystem:
         self.last_ino: int = 0
         self.last_dev: int = 0
         self.mount_points: Dict[AnyString, Dict] = OrderedDict()
-        self._add_root_mount_point(total_size)
-        self._add_standard_streams()
-        self.dev_null: Any = FakeNullFile(self)
-        self._create_temp_dir()
+        self.dev_null: Any = None
+        self.reset(total_size=total_size, init_pathlib=False)
+
         # set from outside if needed
         self.patch_open_code = PatchMode.OFF
         self.shuffle_listdir_results = False
@@ -338,22 +337,24 @@ class FakeFilesystem:
         self.reset()
         FakePathModule.reset(self)
 
-    def reset(self, total_size: Optional[int] = None):
+    def reset(self, total_size: Optional[int] = None, init_pathlib: bool = True):
         """Remove all file system contents and reset the root."""
         self.root = FakeDirectory(self.path_separator, filesystem=self)
 
         self.dev_null = FakeNullFile(self)
-        self.open_files = []
-        self._free_fd_heap = []
+        self.open_files.clear()
+        self._free_fd_heap.clear()
         self.last_ino = 0
         self.last_dev = 0
-        self.mount_points = OrderedDict()
+        self.mount_points.clear()
         self._add_root_mount_point(total_size)
         self._add_standard_streams()
-        self._create_temp_dir()
-        from pyfakefs import fake_pathlib
+        if self.create_temp_dir:
+            self._create_temp_dir()
+        if init_pathlib:
+            from pyfakefs import fake_pathlib
 
-        fake_pathlib.init_module(self)
+            fake_pathlib.init_module(self)
 
     def _add_root_mount_point(self, total_size):
         mount_point = "C:" if self.is_windows_fs else self.path_separator
@@ -2925,8 +2926,6 @@ class FakeFilesystem:
         self._add_open_file(StandardStreamWrapper(sys.stderr))
 
     def _create_temp_dir(self):
-        if not self.create_temp_dir:
-            return
         # the temp directory is assumed to exist at least in `tempfile`,
         # so we create it here for convenience
         temp_dir = tempfile.gettempdir()
