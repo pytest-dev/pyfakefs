@@ -85,6 +85,7 @@ import heapq
 import os
 import random
 import sys
+import tempfile
 from collections import namedtuple, OrderedDict
 from doctest import TestResults
 from enum import Enum
@@ -197,12 +198,17 @@ class FakeFilesystem:
         path_separator: str = os.path.sep,
         total_size: Optional[int] = None,
         patcher: Any = None,
+        create_temp_dir: bool = False,
     ) -> None:
         """
         Args:
             path_separator:  optional substitute for os.path.sep
             total_size: if not None, the total size in bytes of the
                 root filesystem.
+            patcher: the Patcher instance if created from the Patcher
+            create_temp_dir: If True, a temp directory is created on initialization.
+                Under Posix, if the temp directory is not `/tmp`, a link to the temp
+                path is additionally created at `/tmp`.
 
         Example usage to use the same path separator under all systems:
 
@@ -212,6 +218,7 @@ class FakeFilesystem:
         self.path_separator: str = path_separator
         self.alternative_path_separator: Optional[str] = os.path.altsep
         self.patcher = patcher
+        self.create_temp_dir = create_temp_dir
         if path_separator != os.sep:
             self.alternative_path_separator = None
 
@@ -228,7 +235,7 @@ class FakeFilesystem:
         # file systems on non-case-sensitive systems and vice verse
         self.is_case_sensitive: bool = not (self.is_windows_fs or self._is_macos)
 
-        self.root = FakeDirectory(self.path_separator, filesystem=self)
+        self.root: FakeDirectory
         self._cwd = ""
 
         # We can't query the current value without changing it:
@@ -244,9 +251,9 @@ class FakeFilesystem:
         self.last_ino: int = 0
         self.last_dev: int = 0
         self.mount_points: Dict[AnyString, Dict] = OrderedDict()
-        self._add_root_mount_point(total_size)
-        self._add_standard_streams()
-        self.dev_null: Any = FakeNullFile(self)
+        self.dev_null: Any = None
+        self.reset(total_size=total_size, init_pathlib=False)
+
         # set from outside if needed
         self.patch_open_code = PatchMode.OFF
         self.shuffle_listdir_results = False
@@ -330,21 +337,24 @@ class FakeFilesystem:
         self.reset()
         FakePathModule.reset(self)
 
-    def reset(self, total_size: Optional[int] = None):
+    def reset(self, total_size: Optional[int] = None, init_pathlib: bool = True):
         """Remove all file system contents and reset the root."""
         self.root = FakeDirectory(self.path_separator, filesystem=self)
 
         self.dev_null = FakeNullFile(self)
-        self.open_files = []
-        self._free_fd_heap = []
+        self.open_files.clear()
+        self._free_fd_heap.clear()
         self.last_ino = 0
         self.last_dev = 0
-        self.mount_points = OrderedDict()
+        self.mount_points.clear()
         self._add_root_mount_point(total_size)
         self._add_standard_streams()
-        from pyfakefs import fake_pathlib
+        if self.create_temp_dir:
+            self._create_temp_dir()
+        if init_pathlib:
+            from pyfakefs import fake_pathlib
 
-        fake_pathlib.init_module(self)
+            fake_pathlib.init_module(self)
 
     def _add_root_mount_point(self, total_size):
         mount_point = "C:" if self.is_windows_fs else self.path_separator
@@ -1380,7 +1390,7 @@ class FakeFilesystem:
         """
         if check_link and self.islink(file_path):
             return True
-        path = to_string(make_string_path(file_path))
+        path = to_string(self.make_string_path(file_path))
         if path is None:
             raise TypeError
         if not path:
@@ -2914,6 +2924,19 @@ class FakeFilesystem:
         self._add_open_file(StandardStreamWrapper(sys.stdin))
         self._add_open_file(StandardStreamWrapper(sys.stdout))
         self._add_open_file(StandardStreamWrapper(sys.stderr))
+
+    def _create_temp_dir(self):
+        # the temp directory is assumed to exist at least in `tempfile`,
+        # so we create it here for convenience
+        temp_dir = tempfile.gettempdir()
+        if not self.exists(temp_dir):
+            self.create_dir(temp_dir)
+        if sys.platform != "win32" and not self.exists("/tmp"):
+            # under Posix, we also create a link in /tmp if the path does not exist
+            self.create_symlink("/tmp", temp_dir)
+            # reset the used size to 0 to avoid having the link size counted
+            # which would make disk size tests more complicated
+            next(iter(self.mount_points.values()))["used_size"] = 0
 
 
 def _run_doctest() -> TestResults:

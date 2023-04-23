@@ -1,6 +1,12 @@
 # pyfakefs Release Notes
 The released versions correspond to PyPI releases.
 
+## Unreleased
+
+### Fixes
+* Re-create temp directory if it had been created before on resetting file system
+  (see [#814](../../issues/814)).
+
 ## [Version 5.2.2](https://pypi.python.org/pypi/pyfakefs/5.2.2) (2023-04-13)
 Fixes a regression in 5.2.0
 
