@@ -1477,7 +1477,7 @@ class FakeFilesystem:
         resolved_components = self._resolve_components(path_components)
         path = self._components_to_path(resolved_components)
         # after resolving links, we have to check again for Windows root
-        return self.replace_windows_root(path)
+        return self.replace_windows_root(path)  # pytype: disable=bad-return-type
 
     def _components_to_path(self, component_folders):
         sep = (
