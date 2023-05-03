@@ -35,7 +35,6 @@ from typing import (
     TYPE_CHECKING,
 )
 
-from pyfakefs import __version__  # noqa: F401 for upwards compatibility
 from pyfakefs.helpers import (
     make_string_path,
     to_string,
@@ -501,7 +500,7 @@ if sys.platform == "win32":
             Args:
                 filesystem: FakeFilesystem used to provide file system information
             """
-            import nt
+            import nt  # type:ignore[import]
 
             self.filesystem = filesystem
             self.nt_module: Any = nt

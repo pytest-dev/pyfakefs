@@ -7,6 +7,9 @@ The released versions correspond to PyPI releases.
 * Re-create temp directory if it had been created before on resetting file system
   (see [#814](../../issues/814)).
 
+### Infrastructure
+* Added pytype check for non-test modules in CI (see [#599](../../issues/599)).
+
 ## [Version 5.2.2](https://pypi.python.org/pypi/pyfakefs/5.2.2) (2023-04-13)
 Fixes a regression in 5.2.0
 

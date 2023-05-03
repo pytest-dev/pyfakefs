@@ -90,12 +90,12 @@ def _wrap_binary_strfunc_reverse(strfunc):
 
 
 try:
-    accessor = pathlib._Accessor  # type: ignore [attr-defined]
+    accessor = pathlib._Accessor  # type: ignore[attr-defined]
 except AttributeError:
     accessor = object
 
 
-class _FakeAccessor(accessor):  # type: ignore [valid-type, misc]
+class _FakeAccessor(accessor):  # type: ignore[valid-type, misc]
     """Accessor which forwards some of the functions to FakeFilesystem
     methods.
     """
@@ -132,7 +132,7 @@ class _FakeAccessor(accessor):  # type: ignore [valid-type, misc]
 
             if (
                 not kwargs["follow_symlinks"]
-                and os.os_module.chmod not in os.os_module.supports_follow_symlinks
+                and os.chmod not in os.supports_follow_symlinks
             ):
                 raise NotImplementedError(
                     "`follow_symlinks` for chmod() is not available " "on this system"
@@ -185,9 +185,9 @@ class _FakeAccessor(accessor):  # type: ignore [valid-type, misc]
 _fake_accessor = _FakeAccessor()
 
 if sys.version_info < (3, 12):
-    flavour = pathlib._Flavour  # type: ignore [attr-defined]
+    flavour = pathlib._Flavour  # type: ignore[attr-defined]
 
-    class _FakeFlavour(flavour):  # type: ignore [valid-type, misc]
+    class _FakeFlavour(flavour):  # type: ignore[valid-type, misc]
         """Fake Flavour implementation used by PurePath and _Flavour"""
 
         filesystem = None
@@ -521,7 +521,7 @@ class FakePath(pathlib.Path):
                 else FakePathlibModule.PosixPath
             )
         if sys.version_info < (3, 12):
-            return cls._from_parts(args)
+            return cls._from_parts(args)  # pytype: disable=attribute-error
         else:
             return object.__new__(cls)
 
@@ -529,10 +529,10 @@ class FakePath(pathlib.Path):
         # Overwritten class methods to call _init to set the fake accessor,
         # which is not done in Python 3.10, and not needed from Python 3.11 on
         @classmethod
-        def _from_parts(cls, args, init=False):  # pylint: disable=unused-argument
+        def _from_parts(cls, args):
             self = object.__new__(cls)
             self._init()
-            drv, root, parts = self._parse_args(args)
+            drv, root, parts = self._parse_args(args)  # pytype: disable=attribute-error
             self._drv = drv
             self._root = root
             self._parts = parts
@@ -594,7 +594,9 @@ class FakePath(pathlib.Path):
                     )
                 strict = True
             self._raise_on_closed()
-            path = self._flavour.resolve(self, strict=strict)
+            path = self._flavour.resolve(
+                self, strict=strict
+            )  # pytype: disable=attribute-error
             if path is None:
                 self.stat()
                 path = str(self.absolute())
@@ -620,14 +622,16 @@ class FakePath(pathlib.Path):
             OSError: if the target object is a directory, the path is
                 invalid or permission is denied.
         """
-        with FakeFileOpen(self.filesystem)(self._path(), mode="rb") as f:
+        with FakeFileOpen(self.filesystem)(
+            self._path(), mode="rb"
+        ) as f:  # pytype: disable=attribute-error
             return f.read()
 
     def read_text(self, encoding=None, errors=None):
         """
         Open the fake file in text mode, read it, and close the file.
         """
-        with FakeFileOpen(self.filesystem)(
+        with FakeFileOpen(self.filesystem)(  # pytype: disable=attribute-error
             self._path(), mode="r", encoding=encoding, errors=errors
         ) as f:
             return f.read()
@@ -642,7 +646,9 @@ class FakePath(pathlib.Path):
         """
         # type-check for the buffer interface before truncating the file
         view = memoryview(data)
-        with FakeFileOpen(self.filesystem)(self._path(), mode="wb") as f:
+        with FakeFileOpen(self.filesystem)(
+            self._path(), mode="wb"
+        ) as f:  # pytype: disable=attribute-error
             return f.write(view)
 
     def write_text(self, data, encoding=None, errors=None, newline=None):
@@ -667,7 +673,7 @@ class FakePath(pathlib.Path):
             raise TypeError(
                 "write_text() got an unexpected " "keyword argument 'newline'"
             )
-        with FakeFileOpen(self.filesystem)(
+        with FakeFileOpen(self.filesystem)(  # pytype: disable=attribute-error
             self._path(),
             mode="w",
             encoding=encoding,
@@ -886,12 +892,12 @@ class RealPath(pathlib.Path):
         """Creates the correct subclass based on OS."""
         if cls is RealPathlibModule.Path:
             cls = (
-                RealPathlibModule.WindowsPath
+                RealPathlibModule.WindowsPath  # pytype: disable=attribute-error
                 if os.name == "nt"
-                else RealPathlibModule.PosixPath
+                else RealPathlibModule.PosixPath  # pytype: disable=attribute-error
             )
         if sys.version_info < (3, 12):
-            return cls._from_parts(args)
+            return cls._from_parts(args)  # pytype: disable=attribute-error
         else:
             return object.__new__(cls)
 

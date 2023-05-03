@@ -102,7 +102,7 @@ class FakeIoModule:
                 for sn in self.skip_names
             ]
         ):
-            return io.open(
+            return io.open(  # pytype: disable=wrong-arg-count
                 file,
                 mode,
                 buffering,

@@ -550,11 +550,11 @@ class FakeFilesystem:
         """Return the fake directory object of the mount point where the
         current working directory points to."""
 
-        def object_from_path(file_path):
+        def object_from_path(file_path) -> FakeDirectory:
             path_components = self._path_components(file_path)
             target = self.root
             for component in path_components:
-                target = target.get_entry(component)
+                target = cast(FakeDirectory, target.get_entry(component))
             return target
 
         path = to_string(self.cwd)
@@ -926,8 +926,12 @@ class FakeFilesystem:
         drive, path_str = self.splitdrive(path_str)
         sep = self.get_path_separator(path_str)
         is_absolute_path = path_str.startswith(sep)
-        path_components: List[AnyStr] = path_str.split(sep)
-        collapsed_path_components: List[AnyStr] = []
+        path_components: List[AnyStr] = path_str.split(
+            sep
+        )  # pytype: disable=invalid-annotation
+        collapsed_path_components: List[
+            AnyStr
+        ] = []  # pytype: disable=invalid-annotation
         dot = matching_string(path_str, ".")
         dotdot = matching_string(path_str, "..")
         for component in path_components:
@@ -1473,7 +1477,7 @@ class FakeFilesystem:
         resolved_components = self._resolve_components(path_components)
         path = self._components_to_path(resolved_components)
         # after resolving links, we have to check again for Windows root
-        return self.replace_windows_root(path)
+        return self.replace_windows_root(path)  # pytype: disable=bad-return-type
 
     def _components_to_path(self, component_folders):
         sep = (
@@ -1580,7 +1584,7 @@ class FakeFilesystem:
                 link_path = sep.join(components)
             # Don't call self.NormalizePath(), as we don't want to prepend
             # self.cwd.
-            return self.normpath(link_path)
+            return self.normpath(link_path)  # pytype: disable=bad-return-type
         raise ValueError("Invalid link")
 
     def get_object_from_normpath(

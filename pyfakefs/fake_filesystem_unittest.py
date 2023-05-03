@@ -78,11 +78,7 @@ from pyfakefs.fake_filesystem import (
 from pyfakefs.helpers import IS_PYPY
 from pyfakefs.mox3_stubout import StubOutForTesting
 
-try:
-    from importlib.machinery import ModuleSpec
-except ImportError:
-    ModuleSpec = object  # type: ignore[assignment, misc]
-
+from importlib.machinery import ModuleSpec
 from importlib import reload
 
 from pyfakefs import fake_filesystem, fake_io, fake_os, fake_open, fake_path, fake_file
@@ -677,16 +673,18 @@ class Patcher:
         # `from os import stat`
         # each patched function name has to be looked up separately
         for mod_name, fake_module in self._fake_module_classes.items():
-            if hasattr(fake_module, "dir") and inspect.isfunction(fake_module.dir):
-                for fct_name in fake_module.dir():
-                    module_attr = (getattr(fake_module, fct_name), mod_name)
-                    self._fake_module_functions.setdefault(fct_name, {})[
-                        mod_name
-                    ] = module_attr
-                    if mod_name == "os":
+            if hasattr(fake_module, "dir"):
+                module_dir = fake_module.dir
+                if inspect.isfunction(module_dir):
+                    for fct_name in fake_module.dir():
+                        module_attr = (getattr(fake_module, fct_name), mod_name)
                         self._fake_module_functions.setdefault(fct_name, {})[
-                            OS_MODULE
+                            mod_name
                         ] = module_attr
+                        if mod_name == "os":
+                            self._fake_module_functions.setdefault(fct_name, {})[
+                                OS_MODULE
+                            ] = module_attr
 
         # special handling for functions in os.path
         fake_module = fake_filesystem.FakePathModule
@@ -909,7 +907,9 @@ class Patcher:
         for (name, ft_name, ft_mod), modules in self.FS_FUNCTIONS.items():
             method, mod_name = self._fake_module_functions[ft_name][ft_mod]
             fake_module = self.fake_modules[mod_name]
-            attr = method.__get__(fake_module, fake_module.__class__)
+            attr = method.__get__(
+                fake_module, fake_module.__class__
+            )  # pytype: disable=attribute-error
             for module in modules:
                 self._stubs.smart_set(module, name, attr)
 
@@ -927,7 +927,9 @@ class Patcher:
         for fct, idx, ft in self.FS_DEFARGS:
             method, mod_name = self._fake_module_functions[ft.__name__][ft.__module__]
             fake_module = self.fake_modules[mod_name]
-            attr = method.__get__(fake_module, fake_module.__class__)
+            attr = method.__get__(
+                fake_module, fake_module.__class__
+            )  # pytype: disable=attribute-error
             new_defaults = []
             assert fct.__defaults__ is not None
             for i, d in enumerate(fct.__defaults__):

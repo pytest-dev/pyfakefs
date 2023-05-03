@@ -4,6 +4,21 @@ on:
   [push, pull_request]
 
 jobs:
+  pytype:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Check out repository
+      uses: actions/checkout@v3
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: "3.10"
+    - name: install pytype
+      run: pip install pytype pytest scandir pathlib2 pandas xlrd django
+    - name: Run pytype
+      run: |
+        pytype pyfakefs --keep-going --exclude pyfakefs/tests/* --exclude pyfakefs/pytest_tests/*
+
   tests:
     runs-on: ${{ matrix.os }}
     strategy:

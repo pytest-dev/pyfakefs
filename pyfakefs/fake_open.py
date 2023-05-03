@@ -283,7 +283,9 @@ class FakeFileOpen:
             if self.filesystem.islink(file_path):
                 link_object = self.filesystem.resolve(file_path, follow_symlinks=False)
                 assert link_object.contents is not None
-                target_path = cast(AnyStr, link_object.contents)
+                target_path = cast(
+                    AnyStr, link_object.contents
+                )  # pytype: disable=invalid-annotation
             else:
                 target_path = file_path
             if self.filesystem.ends_with_path_separator(target_path):
@@ -317,10 +319,15 @@ class FakeFileOpen:
             )
             assert file_object is not None
             path = file_object.name
-            return file_object, cast(AnyStr, path), filedes, cast(AnyStr, path)
+            return (
+                file_object,
+                cast(AnyStr, path),  # pytype: disable=invalid-annotation
+                filedes,
+                cast(AnyStr, path),  # pytype: disable=invalid-annotation
+            )
 
         # open a file file by path
-        file_path = cast(AnyStr, file_)
+        file_path = cast(AnyStr, file_)  # pytype: disable=invalid-annotation
         if file_path == self.filesystem.dev_null.name:
             file_object = self.filesystem.dev_null
             real_path = file_path

@@ -12,7 +12,8 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
+# Disable attribute errors - attributes not be found in mixin (shall be cleaned up...)
+# pytype: disable=attribute-error
 """Common helper classes used in tests, or as test class base."""
 import os
 import platform

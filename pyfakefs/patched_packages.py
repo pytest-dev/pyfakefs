@@ -53,7 +53,7 @@ def get_modules_to_patch():
 def get_classes_to_patch():
     classes_to_patch = {}
     if patch_pandas:
-        classes_to_patch["TextFileReader"] = "pandas.io.parsers"
+        classes_to_patch["TextFileReader"] = ["pandas.io.parsers"]
     return classes_to_patch
 
 
