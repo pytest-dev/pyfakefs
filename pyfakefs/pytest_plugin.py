@@ -13,8 +13,15 @@ import pytest
 
 from pyfakefs.fake_filesystem_unittest import Patcher
 
+try:
+    from _pytest import pathlib
+except ImportError:
+    pathlib = None
+
 Patcher.SKIPMODULES.add(py)
 Patcher.SKIPMODULES.add(pytest)
+if pathlib is not None:
+    Patcher.SKIPMODULES.add(pathlib)
 
 
 @pytest.fixture
