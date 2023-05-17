@@ -6,6 +6,8 @@ The released versions correspond to PyPI releases.
 ### Fixes
 * Re-create temp directory if it had been created before on resetting file system
   (see [#814](../../issues/814)).
+* Exclude pytest `pathlib` modules from patching to avoid mixup of patched/unpatched
+  code (see [#814](../../issues/814)).
 
 ### Infrastructure
 * Added pytype check for non-test modules in CI (see [#599](../../issues/599)).

@@ -116,6 +116,10 @@ jobs:
         run: |
           echo "$(python -m pytest pyfakefs/pytest_tests/pytest_plugin_failing_helper.py)" > ./testresult.txt
           python -m pytest pyfakefs/pytest_tests
+          if [[ '${{ matrix.pytest-version }}' > '3.0.0' ]]; then
+            cd pyfakefs/pytest_tests/ns_package
+            python -m pytest --log-cli-level=INFO test
+          fi
         shell: bash
 
   dependency-check:
