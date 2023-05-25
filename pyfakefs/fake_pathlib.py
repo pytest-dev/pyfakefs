@@ -764,12 +764,12 @@ class FakePath(pathlib.Path):
             return os.path.isabs(self._path())
 
         def is_reserved(self):
-            if not self.filesystem.is_windows_fs or not self._parts:
+            if not self.filesystem.is_windows_fs or not self._tail:
                 return False
-            if self._parts[0].startswith("\\\\"):
+            if self._tail[0].startswith("\\\\"):
                 # UNC paths are never reserved.
                 return False
-            name = self._parts[-1].partition(".")[0].partition(":")[0].rstrip(" ")
+            name = self._tail[-1].partition(".")[0].partition(":")[0].rstrip(" ")
             return name.upper() in pathlib._WIN_RESERVED_NAMES
 
 
