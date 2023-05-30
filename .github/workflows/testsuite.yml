@@ -14,7 +14,7 @@ jobs:
       with:
         python-version: "3.10"
     - name: install pytype
-      run: pip install pytype pytest scandir pathlib2 pandas xlrd django
+      run: pip install setuptools pytype pytest scandir pathlib2 pandas xlrd django
     - name: Run pytype
       run: |
         pytype pyfakefs --keep-going --exclude pyfakefs/tests/* --exclude pyfakefs/pytest_tests/*
@@ -54,7 +54,7 @@ jobs:
 
     - name: Install dependencies
       run: |
-        pip install wheel
+        pip install setuptools wheel
         pip install -r requirements.txt
     - name: Run unit tests without extra packages as non-root user
       run: |
