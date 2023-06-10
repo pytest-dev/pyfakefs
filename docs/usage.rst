@@ -729,7 +729,7 @@ fake filesystem via the argument ``target_path``.
             # make the file accessible in the fake file system
             self.fs.add_real_directory(self.fixture_path)
 
-        def test_using_fixture1(self):
+        def test_using_fixture(self):
             with open(os.path.join(self.fixture_path, "fixture1.txt")) as f:
                 # file contents are copied to the fake file system
                 # only at this point
@@ -751,9 +751,15 @@ You can do the same using ``pytest`` by using a fixture for test setup:
         yield fs
 
 
-    def test_using_fixture1(my_fs):
+    @pytest.mark.usefixtures("my_fs")
+    def test_using_fixture():
         with open(os.path.join(fixture_path, "fixture1.txt")) as f:
             contents = f.read()
+
+.. note::
+  If you are not using the fixture directly in the test, you can use
+  ``@pytest.mark.usefixtures`` instead of passing the fixture as an argument.
+  This avoids warnings about unused arguments from linters.
 
 When using ``pytest`` another option is to load the contents of the real file
 in a fixture and pass this fixture to the test function **before** passing

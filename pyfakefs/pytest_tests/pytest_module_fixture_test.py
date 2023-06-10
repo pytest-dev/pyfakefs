@@ -20,6 +20,7 @@ def use_fs(fs_module):
     yield fs_module
 
 
-def test_fs_uses_fs_module(fs):
+@pytest.mark.usefixtures("fs")
+def test_fs_uses_fs_module():
     # check that `fs` uses the same filesystem as `fs_module`
     assert os.path.exists(os.path.join("foo", "bar"))
