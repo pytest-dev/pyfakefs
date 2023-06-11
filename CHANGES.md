@@ -9,7 +9,8 @@ The released versions correspond to PyPI releases.
 * Exclude pytest `pathlib` modules from patching to avoid mixup of patched/unpatched
   code (see [#814](../../issues/814)).
 * Adapt to changes in Python 3.12 beta1 (only working partially,
-  see [#830](../../issues/830) and [#831](../../issues/831))
+  see [#830](../../issues/830) and [#831](../../issues/831)).
+* Adapt to changes in `shutil` in Python 3.12 beta2 (see [#814](../../issues/814)).
 
 ### Infrastructure
 * Added pytype check for non-test modules in CI (see [#599](../../issues/599)).
