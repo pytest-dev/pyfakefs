@@ -26,7 +26,9 @@ ARG github_branch=main
 RUN apt-get update && apt-get install -y \
     python3-pip \
     unzip \
-    wget
+    wget \
+    python3-venv
+
 RUN apt-get clean
 
 RUN useradd -u 1000 pyfakefs
@@ -37,10 +39,11 @@ RUN mkdir -p work \
 RUN WORK_DIR=`ls -d work/*`; mv $WORK_DIR work/pyfakefs
 RUN chown -R pyfakefs:pyfakefs work/pyfakefs
 WORKDIR work/pyfakefs
-RUN pip3 install -r requirements.txt
-RUN pip3 install -r extra_requirements.txt
+RUN python3 -m venv ../venv
+RUN ../venv/bin/pip install -r requirements.txt
+RUN ../venv/bin/pip install -r extra_requirements.txt
 
 USER pyfakefs
 ENV PYTHONPATH work/pyfakefs
 ENV TEST_REAL_FS=1
-CMD ["python3", "-m", "pyfakefs.tests.all_tests"]
+CMD ["../venv/bin/python", "-m", "pyfakefs.tests.all_tests"]
