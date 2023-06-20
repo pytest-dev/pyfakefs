@@ -7,7 +7,7 @@ repos:
       - id: black
         args: [ --safe, --quiet ]
   - repo: https://github.com/asottile/blacken-docs
-    rev: 1.13.0
+    rev: 1.14.0
     hooks:
       - id: blacken-docs
         additional_dependencies: [ black==22.12.0 ]
