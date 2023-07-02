@@ -69,6 +69,11 @@ function correctly. Examples that have shown this problem include `GitPython`_
 and `plumbum`_. Calling ``find_library`` also uses ``subprocess`` and does not work in
 the fake filesystem.
 
+`sqlite3`_ (build-in)
+~~~~~~~~~~~~~~~~~~~~~~~~
+This is a database adapter written in C, which uses the database C API to access files.
+This (and similar database adapters) will not work with ``pyfakefs``, as it will always
+access the real filesystem.
 
 The `Pillow`_ Imaging Library
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -231,6 +236,7 @@ passed before the ``mocker`` fixture to ensure this:
 
 .. _`multiprocessing`: https://docs.python.org/3/library/multiprocessing.html
 .. _`subprocess`: https://docs.python.org/3/library/subprocess.html
+.. _`sqlite3`: https://docs.python.org/3/library/sqlite3.html
 .. _`GitPython`: https://pypi.org/project/GitPython/
 .. _`plumbum`: https://pypi.org/project/plumbum/
 .. _`Pillow`: https://pypi.org/project/Pillow/
