@@ -47,6 +47,7 @@ from pyfakefs.extra_packages import use_scandir
 from pyfakefs.fake_filesystem import FakeFilesystem
 from pyfakefs.fake_open import FakeFileOpen
 from pyfakefs.fake_os import FakeOsModule, use_original_os
+from pyfakefs.helpers import IS_PYPY
 
 
 def init_module(filesystem):
@@ -130,9 +131,8 @@ class _FakeAccessor(accessor):  # type: ignore[valid-type, misc]
                     "chmod() got an unexpected keyword " "argument 'follow_symlinks'"
                 )
 
-            if (
-                not kwargs["follow_symlinks"]
-                and os.chmod not in os.supports_follow_symlinks
+            if not kwargs["follow_symlinks"] and (
+                os.chmod not in os.supports_follow_symlinks or IS_PYPY
             ):
                 raise NotImplementedError(
                     "`follow_symlinks` for chmod() is not available " "on this system"
@@ -916,7 +916,8 @@ if sys.version_info > (3, 10):
         return wrapped
 
     for name, fn in inspect.getmembers(RealPath, inspect.isfunction):
-        setattr(RealPath, name, with_original_os(fn))
+        if not name.startswith("__"):
+            setattr(RealPath, name, with_original_os(fn))
 
 
 class RealPathlibPathModule:

@@ -33,6 +33,7 @@ from typing import (
 
 from pyfakefs.fake_file import AnyFileWrapper
 from pyfakefs.fake_open import FakeFileOpen
+from pyfakefs.helpers import IS_PYPY
 
 if TYPE_CHECKING:
     from pyfakefs.fake_filesystem import FakeFilesystem
@@ -124,7 +125,7 @@ class FakeIoModule:
             function may be overridden by an earlier call to the
             PyFile_SetOpenCodeHook(). This behavior is not reproduced here.
             """
-            if not isinstance(path, str):
+            if not isinstance(path, str) and not IS_PYPY:
                 raise TypeError("open_code() argument 'path' must be str, not int")
             patch_mode = self.filesystem.patch_open_code
             if (

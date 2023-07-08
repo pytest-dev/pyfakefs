@@ -1348,7 +1348,7 @@ if sys.version_info > (3, 10):
 
         @functools.wraps(f)
         def wrapped(*args, **kwargs):
-            if not f.__name__.startswith("_") and FakeOsModule.use_original:
+            if FakeOsModule.use_original:
                 # remove the `self` argument for FakeOsModule methods
                 if args and isinstance(args[0], FakeOsModule):
                     args = args[1:]
@@ -1358,7 +1358,8 @@ if sys.version_info > (3, 10):
         return wrapped
 
     for name, fn in inspect.getmembers(FakeOsModule, inspect.isfunction):
-        setattr(FakeOsModule, name, handle_original_call(fn))
+        if not fn.__name__.startswith("_"):
+            setattr(FakeOsModule, name, handle_original_call(fn))
 
 
 @contextmanager

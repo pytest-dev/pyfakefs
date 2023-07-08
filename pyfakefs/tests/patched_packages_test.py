@@ -15,6 +15,7 @@ Provides patches for some commonly used modules that enable them to work
 with pyfakefs.
 """
 import os
+import sys
 import unittest
 
 from pyfakefs import fake_filesystem_unittest
@@ -36,7 +37,9 @@ except ImportError:
     openpyxl = None
 
 
-@unittest.skipIf(IS_PYPY, "Has a problem with current PyPy")
+@unittest.skipIf(
+    IS_PYPY and sys.version_info < (3, 8), "Has a problem with older PyPy versions"
+)
 class TestPatchedPackages(fake_filesystem_unittest.TestCase):
     def setUp(self):
         self.setUpPyfakefs()

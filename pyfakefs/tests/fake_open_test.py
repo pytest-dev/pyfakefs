@@ -25,7 +25,7 @@ import time
 import unittest
 
 from pyfakefs import fake_filesystem, helpers
-from pyfakefs.helpers import is_root
+from pyfakefs.helpers import is_root, IS_PYPY
 from pyfakefs.fake_io import FakeIoModule
 from pyfakefs.fake_filesystem_unittest import PatchMode
 from pyfakefs.tests.test_utils import RealFsTestCase
@@ -1057,9 +1057,18 @@ class FakeFilePatchedOpenCodeTest(FakeFileOpenTestBase):
             self.filesystem.patch_open_code = False
         super(FakeFilePatchedOpenCodeTest, self).tearDown()
 
+    @unittest.skipIf(IS_PYPY, "Different behavior in PyPy")
     def test_invalid_path(self):
         with self.assertRaises(TypeError):
             self.open_code(4)
+
+    @unittest.skipIf(not IS_PYPY, "Different behavior in PyPy")
+    def test_open_code_fd_pypy(self):
+        file_path = self.make_path("foo")
+        self.create_file(file_path, contents="test")
+        fd = self.os.open(file_path, os.O_RDONLY)
+        with self.open_code(fd) as f:
+            assert f.read() == b"test"
 
     def test_byte_contents_open_code(self):
         byte_fractions = b"\xe2\x85\x93 \xe2\x85\x94 \xe2\x85\x95 \xe2\x85\x96"
@@ -1090,6 +1099,7 @@ class FakeFileUnpatchedOpenCodeTest(FakeFileOpenTestBase):
         else:
             self.open_code = self.fake_io_module.open_code
 
+    @unittest.skipIf(IS_PYPY, "Different behavior in PyPy")
     def test_invalid_path(self):
         with self.assertRaises(TypeError):
             self.open_code(4)

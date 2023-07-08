@@ -10,6 +10,7 @@ def my_fakefs_test(fs):
 """
 import py
 import pytest
+from _pytest import capture
 
 from pyfakefs.fake_filesystem_unittest import Patcher
 
@@ -20,6 +21,7 @@ except ImportError:
 
 Patcher.SKIPMODULES.add(py)
 Patcher.SKIPMODULES.add(pytest)
+Patcher.SKIPMODULES.add(capture)
 if pathlib is not None:
     Patcher.SKIPMODULES.add(pathlib)
 
