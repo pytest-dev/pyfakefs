@@ -11,6 +11,7 @@ The released versions correspond to PyPI releases.
 * Adapt to changes in Python 3.12 beta1 (only working partially,
   see [#830](../../issues/830) and [#831](../../issues/831)).
 * Adapt to changes in `shutil` in Python 3.12 beta2 (see [#814](../../issues/814)).
+* Fix support for newer PyPi versions (see [#859](../../issues/859)).
 
 ### Documentation
 * Added a note regarding the incompatibility of the built-in `sqlite3` module with
@@ -18,6 +19,7 @@ The released versions correspond to PyPI releases.
 
 ### Infrastructure
 * Added pytype check for non-test modules in CI (see [#599](../../issues/599)).
+* Added tests for different pypy3 versions.
 
 ## [Version 5.2.2](https://pypi.python.org/pypi/pyfakefs/5.2.2) (2023-04-13)
 Fixes a regression in 5.2.0

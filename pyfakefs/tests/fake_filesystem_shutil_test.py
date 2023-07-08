@@ -25,7 +25,7 @@ import unittest
 from pathlib import Path
 
 from pyfakefs import fake_filesystem_unittest
-from pyfakefs.helpers import get_uid, set_uid, is_root
+from pyfakefs.helpers import get_uid, set_uid, is_root, IS_PYPY
 from pyfakefs.tests.test_utils import RealFsTestMixin
 
 is_windows = sys.platform == "win32"
@@ -231,6 +231,7 @@ class FakeShutilModuleTest(RealFsTestCase):
         self.assertAlmostEqual(src_stat.st_atime, dst_stat.st_atime, places=2)
         self.assertAlmostEqual(src_stat.st_mtime, dst_stat.st_mtime, places=2)
 
+    @unittest.skipIf(IS_PYPY, "Functionality not supported in PyPy")
     def test_copystat_symlinks(self):
         """Regression test for #799"""
         self.skip_if_symlink_not_supported()
