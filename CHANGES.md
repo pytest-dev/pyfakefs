@@ -3,6 +3,10 @@ The released versions correspond to PyPI releases.
 
 ## Unreleased
 
+
+## [Version 5.2.3](https://pypi.python.org/pypi/pyfakefs/5.2.3) (2023-07-10)
+Adds compatibility with PyPy 3.10 and Python 3.12.
+
 ### Fixes
 * Re-create temp directory if it had been created before on resetting file system
   (see [#814](../../issues/814)).
