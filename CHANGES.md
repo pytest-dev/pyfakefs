@@ -24,6 +24,7 @@ Adds compatibility with PyPy 3.10 and Python 3.12.
 ### Infrastructure
 * Added pytype check for non-test modules in CI (see [#599](../../issues/599)).
 * Added tests for different pypy3 versions.
+* Added codespell hook to pre-commit
 
 ## [Version 5.2.2](https://pypi.python.org/pypi/pyfakefs/5.2.2) (2023-04-13)
 Fixes a regression in 5.2.0
@@ -126,7 +127,7 @@ Changed handling of nested fixtures and bug fixes.
 ### Fixes
 * reverted a performance optimization introduced in version 3.3.0 that
   caused hanging tests with installed torch (see [#693](../../issues/693))
-* do not use the build-in opener in `pathlib` as it may cause problems
+* do not use the built-in opener in `pathlib` as it may cause problems
   (see [#697](../../issues/697))
 * add support for path-like objects in `shutil.disk_usage`
   (see [#699](../../issues/699))
@@ -601,11 +602,11 @@ and Python 3.4 (possible bug fix releases notwithstanding).
 
 ## [Version 3.5.8](https://pypi.python.org/pypi/pyfakefs/3.5.8) (2019-06-21)
 
-Another bug-fix release that mainly fixes a regression wih Python 2 that has
+Another bug-fix release that mainly fixes a regression with Python 2 that has
 been introduced in version 3.5.3.
 
 #### Fixes
-  * regression: patching build-in `open` under Python 2 broke unit tests
+  * regression: patching built-in `open` under Python 2 broke unit tests
     (see [#469](../../issues/469))
   * fixed writing to file added with `add_real_file`
     (see [#470](../../issues/470))

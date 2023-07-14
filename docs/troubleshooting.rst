@@ -11,7 +11,7 @@ works by patching some file system related modules and functions, specifically:
 
 - most file system related functions in the ``os`` and ``os.path`` modules
 - the ``pathlib`` module
-- the build-in ``open`` function and ``io.open``
+- the built-in ``open`` function and ``io.open``
 - ``shutil.disk_usage``
 
 Other file system related modules work with ``pyfakefs``, because they use
@@ -48,13 +48,13 @@ reasons:
 A list of Python modules that are known to not work correctly with
 ``pyfakefs`` will be collected here:
 
-`multiprocessing`_ (build-in)
+`multiprocessing`_ (built-in)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 This module has several issues (related to points 1 and 3 above).
 Currently there are no plans to fix this, but this may change in case of
 sufficient demand.
 
-`subprocess`_ (build-in)
+`subprocess`_ (built-in)
 ~~~~~~~~~~~~~~~~~~~~~~~~
 This has very similar problems to ``multiprocessing`` and cannot be used with
 ``pyfakefs`` to start a process. ``subprocess`` can either be mocked, if
@@ -69,7 +69,7 @@ function correctly. Examples that have shown this problem include `GitPython`_
 and `plumbum`_. Calling ``find_library`` also uses ``subprocess`` and does not work in
 the fake filesystem.
 
-`sqlite3`_ (build-in)
+`sqlite3`_ (built-in)
 ~~~~~~~~~~~~~~~~~~~~~~~~
 This is a database adapter written in C, which uses the database C API to access files.
 This (and similar database adapters) will not work with ``pyfakefs``, as it will always

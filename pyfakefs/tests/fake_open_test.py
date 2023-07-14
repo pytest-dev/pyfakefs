@@ -265,7 +265,7 @@ class FakeFileOpenTest(FakeFileOpenTestBase):
             self.assertEqual(contents, fake_file.read())
 
     def test_overwrite_existing_file(self):
-        file_path = self.make_path("overwite")
+        file_path = self.make_path("overwrite")
         self.create_file(file_path, contents="To disappear")
         new_contents = [
             "Only these lines",
