@@ -143,7 +143,7 @@ class FakeFile:
                 regular file type is assumed.
             contents: The contents of the filesystem object; should be a string
                 or byte object for regular files, and a dict of other
-                FakeFile or FakeDirectory objects wih the file names as
+                FakeFile or FakeDirectory objects with the file names as
                 keys for FakeDirectory objects
             filesystem: The fake filesystem where the file is created.
             encoding: If contents is a unicode string, the encoding used

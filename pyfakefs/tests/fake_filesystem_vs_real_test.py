@@ -27,7 +27,7 @@ from pyfakefs.helpers import IS_PYPY
 
 
 def sep(path):
-    """Converts slashes in the path to the architecture's path seperator."""
+    """Converts slashes in the path to the architecture's path separator."""
     if isinstance(path, str):
         return path.replace("/", os.sep)
     return path
@@ -188,7 +188,7 @@ class FakeFilesystemVsRealTest(TestCase):
 
         method_call = f"{method_name}"
         method_call += "()" if path == () else "({path})"
-        # We only compare on the error class because the acutal error contents
+        # We only compare on the error class because the actual error contents
         # is almost always different because of the file paths.
         if _error_class(real_err) != _error_class(fake_err):
             if real_err is None:

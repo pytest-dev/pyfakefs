@@ -1582,7 +1582,7 @@ class FakeOsModuleTest(FakeOsModuleTestBase):
         self.assertTrue(self.os.path.exists(self.make_path("foo")))
 
     def test_mkdir_raises_if_empty_directory_name(self):
-        """mkdir raises exeption if creating directory named ''."""
+        """mkdir raises exception if creating directory named ''."""
         directory = ""
         self.assert_raises_os_error(errno.ENOENT, self.os.mkdir, directory)
 
