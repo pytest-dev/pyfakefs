@@ -1090,7 +1090,7 @@ class DynamicPatcher(MetaPathFinder, Loader):
         if name not in self.modules:
             self._loaded_module_names.add(name)
             return False
-        if name in sys.modules and type(sys.modules[name]) == self.modules[name]:
+        if name in sys.modules and type(sys.modules[name]) is self.modules[name]:
             return False
         return True
 
