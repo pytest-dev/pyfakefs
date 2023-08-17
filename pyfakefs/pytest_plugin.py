@@ -8,6 +8,7 @@ def my_fakefs_test(fs):
     fs.create_file('/var/data/xx1.txt')
     assert os.path.exists('/var/data/xx1.txt')
 """
+
 import py
 import pytest
 from _pytest import capture
@@ -17,7 +18,7 @@ from pyfakefs.fake_filesystem_unittest import Patcher
 try:
     from _pytest import pathlib
 except ImportError:
-    pathlib = None
+    pathlib = None  # type:ignore[assignment]
 
 Patcher.SKIPMODULES.add(py)
 Patcher.SKIPMODULES.add(pytest)
@@ -73,3 +74,9 @@ def fs_session(request):
     patcher.setUp()
     yield patcher.fs
     patcher.tearDown()
+
+
+@pytest.hookimpl(tryfirst=True)
+def pytest_sessionfinish(session, exitstatus):
+    """Make sure that the cache is cleared before the final test shutdown."""
+    Patcher.clear_fs_cache()

@@ -3,6 +3,10 @@ The released versions correspond to PyPI releases.
 
 ## Unreleased
 
+### Fixes
+* Clear the patched module cache on session shutdown (pytest only)
+  (see [#866](../../issues/866)). Added a class method `Patcher.cler_fs_cache`
+  for clearing the patched module cache.
 
 ## [Version 5.2.3](https://pypi.python.org/pypi/pyfakefs/5.2.3) (2023-07-10)
 Adds compatibility with PyPy 3.10 and Python 3.12.

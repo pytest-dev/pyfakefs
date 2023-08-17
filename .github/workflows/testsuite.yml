@@ -112,6 +112,8 @@ jobs:
         run: |
           pip install -r requirements.txt
           pip install -U pytest==${{ matrix.pytest-version }}
+          pip install opentimelineio
+          pip install -e .
           if [[ '${{ matrix.pytest-version }}' == '4.0.2' ]]; then
              pip install -U attrs==19.1.0
           fi
