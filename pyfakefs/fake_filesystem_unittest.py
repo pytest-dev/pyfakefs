@@ -629,13 +629,19 @@ class Patcher:
         self._dyn_patcher: Optional[DynamicPatcher] = None
         self._patching = False
 
-    def clear_cache(self) -> None:
+    @classmethod
+    def clear_fs_cache(cls) -> None:
         """Clear the module cache."""
-        self.__class__.CACHED_MODULES = set()
-        self.__class__.FS_MODULES = {}
-        self.__class__.FS_FUNCTIONS = {}
-        self.__class__.FS_DEFARGS = []
-        self.__class__.SKIPPED_FS_MODULES = {}
+        print("Clearing the cache")
+        cls.CACHED_MODULES = set()
+        cls.FS_MODULES = {}
+        cls.FS_FUNCTIONS = {}
+        cls.FS_DEFARGS = []
+        cls.SKIPPED_FS_MODULES = {}
+
+    def clear_cache(self) -> None:
+        """Clear the module cache (convenience instance method)."""
+        self.__class__.clear_fs_cache()
 
     def _init_fake_module_classes(self) -> None:
         # IMPORTANT TESTING NOTE: Whenever you add a new module below, test

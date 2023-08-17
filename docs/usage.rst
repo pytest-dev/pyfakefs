@@ -625,8 +625,7 @@ use_cache
 .........
 If True (the default), patched and non-patched modules are cached between tests
 to avoid the performance hit of the file system function lookup (the
-patching itself is reverted after each test). As this is a new
-feature, this argument allows to turn it off in case it causes any problems:
+patching itself is reverted after each test). This argument allows to turn it off in case it causes any problems:
 
 .. code:: python
 
@@ -635,9 +634,22 @@ feature, this argument allows to turn it off in case it causes any problems:
       fake_fs.create_file("foo", contents="test")
       ...
 
-Please write an issue if you encounter any problem that can be fixed by using
-this parameter. Note that this argument may be removed in a later version, if
-no problems come up.
+If using ``pytest``, the cache is always cleared before the final test shutdown, as there has been a problem
+happening on shutdown related to removing the cached modules.
+This does not happen for other test methods so far.
+
+If you think you have encountered a similar problem with ``unittest``, you may try to clear the cache
+during module shutdown using the class method for clearing the cache:
+
+.. code:: python
+
+  from pyfakefs.fake_filesystem_unittest import Patcher
+
+
+  def tearDownModule():
+      Patcher.clear_fs_cache()
+
+Please write an issue if you encounter any problem that can be fixed by using this parameter.
 
 If you want to clear the cache just for a specific test instead, you can call
 ``clear_cache`` on the ``Patcher`` or the ``fake_filesystem`` instance:
