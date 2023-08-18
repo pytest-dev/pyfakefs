@@ -3,6 +3,9 @@ The released versions correspond to PyPI releases.
 
 ## Unreleased
 
+## [Version 5.2.3](https://pypi.python.org/pypi/pyfakefs/5.2.3) (2023-08-18)
+Fixes a rare problem on pytest shutdown.
+
 ### Fixes
 * Clear the patched module cache on session shutdown (pytest only)
   (see [#866](../../issues/866)). Added a class method `Patcher.cler_fs_cache`
