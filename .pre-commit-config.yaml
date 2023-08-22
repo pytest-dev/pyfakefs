@@ -14,7 +14,7 @@ repos:
       - id: black
         args: [ --safe, --quiet ]
   - repo: https://github.com/asottile/blacken-docs
-    rev: 1.15.0
+    rev: 1.16.0
     hooks:
       - id: blacken-docs
         additional_dependencies: [ black==22.12.0 ]
@@ -45,7 +45,7 @@ repos:
           - flake8-bugbear
         args: ["--extend-ignore=E203", "--max-line-length=88"]
   - repo: https://github.com/pre-commit/mirrors-mypy
-    rev: v1.4.1
+    rev: v1.5.1
     hooks:
       - id: mypy
         exclude: (docs|pyfakefs/tests)
