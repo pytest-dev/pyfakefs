@@ -27,6 +27,7 @@ import sys
 import unittest
 from collections import namedtuple
 from unittest import mock
+from unittest.mock import patch
 
 from pyfakefs import fake_pathlib, fake_filesystem, fake_filesystem_unittest, fake_os
 from pyfakefs.fake_filesystem import OSType
@@ -461,23 +462,31 @@ class FakePathlibFileObjectPropertyTest(RealPathlibTestCase):
             self.path.cwd(), self.path(self.os.path.realpath(dir_path))
         )
 
-    def test_expanduser(self):
-        if is_windows:
-            self.assertEqual(
-                self.path("~").expanduser(),
-                self.path(os.environ["USERPROFILE"].replace("\\", "/")),
-            )
-        else:
-            self.assertEqual(self.path("~").expanduser(), self.path(os.environ["HOME"]))
+    @unittest.skipIf(sys.platform != "win32", "Windows specific test")
+    @patch.dict(os.environ, {"USERPROFILE": r"C:\Users\John"})
+    def test_expanduser_windows(self):
+        self.assertEqual(
+            self.path("~").expanduser(),
+            self.path("C:/Users/John"),
+        )
 
-    def test_home(self):
-        if is_windows:
-            self.assertEqual(
-                self.path(os.environ["USERPROFILE"].replace("\\", "/")),
-                self.path.home(),
-            )
-        else:
-            self.assertEqual(self.path(os.environ["HOME"]), self.path.home())
+    @unittest.skipIf(sys.platform == "win32", "Posix specific test")
+    @patch.dict(os.environ, {"HOME": "/home/john"})
+    def test_expanduser_posix(self):
+        self.assertEqual(self.path("~").expanduser(), self.path("/home/john"))
+
+    @unittest.skipIf(sys.platform != "win32", "Windows specific test")
+    @patch.dict(os.environ, {"USERPROFILE": r"C:\Users\John"})
+    def test_home_windows(self):
+        self.assertEqual(
+            self.path(self.path("C:/Users/John")),
+            self.path.home(),
+        )
+
+    @unittest.skipIf(sys.platform == "win32", "Posix specific test")
+    @patch.dict(os.environ, {"HOME": "/home/john"})
+    def test_home_posix(self):
+        self.assertEqual(self.path("/home/john"), self.path.home())
 
 
 class RealPathlibFileObjectPropertyTest(FakePathlibFileObjectPropertyTest):

@@ -5,6 +5,7 @@ The released versions correspond to PyPI releases.
 
 ### Fixes
 * removed a leftover debug print statement (see [#869](../../issues/869))
+* make sure tests work without HOME environment set (see [#870](../../issues/870))
 
 ## [Version 5.2.3](https://pypi.python.org/pypi/pyfakefs/5.2.3) (2023-08-18)
 Fixes a rare problem on pytest shutdown.

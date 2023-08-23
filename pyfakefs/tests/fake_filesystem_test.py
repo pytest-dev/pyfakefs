@@ -20,6 +20,7 @@ import os
 import stat
 import sys
 import unittest
+from unittest.mock import patch
 
 from pyfakefs import fake_filesystem, fake_os, fake_open
 from pyfakefs.fake_filesystem import (
@@ -1061,17 +1062,22 @@ class FakePathModuleTest(TestCase):
         components = [b"foo", b"bar", b"baz"]
         self.assertEqual(b"foo!bar!baz", self.path.join(*components))
 
+    @unittest.skipIf(sys.platform != "win32", "Windows specific test")
+    @patch.dict(os.environ, {"USERPROFILE": r"C:\Users\John"})
+    def test_expand_user_windows(self):
+        self.assertEqual(self.path.expanduser("~"), "C:!Users!John")
+
+    @unittest.skipIf(sys.platform == "win32", "Posix specific test")
+    @patch.dict(os.environ, {"HOME": "/home/john"})
     def test_expand_user(self):
-        if self.is_windows:
-            self.assertEqual(
-                self.path.expanduser("~"),
-                self.os.environ["USERPROFILE"].replace("\\", "!"),
-            )
-        else:
-            self.assertEqual(
-                self.path.expanduser("~"),
-                self.os.environ["HOME"].replace("/", "!"),
-            )
+        self.assertEqual(self.path.expanduser("~"), "!home!john")
+
+    @patch.dict(os.environ, {}, clear=True)
+    def test_expand_user_no_home_environment(self):
+        """Make sure this also works without HOME / USERPROFILE set"""
+        # we just check that it does not crash and has some result,
+        # as the result is system-dependent
+        self.assertTrue(self.path.expanduser("~"))
 
     @unittest.skipIf(
         TestCase.is_windows or TestCase.is_cygwin,

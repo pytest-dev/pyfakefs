@@ -815,6 +815,7 @@ class TestOtherFS(fake_filesystem_unittest.TestCase):
     def setUp(self):
         self.setUpPyfakefs()
 
+    @mock.patch.dict(os.environ, {"HOME": "/home/john"})
     def test_real_file_with_home(self):
         """Regression test for #558"""
         self.fs.is_windows_fs = os.name != "nt"
