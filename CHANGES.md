@@ -3,6 +3,9 @@ The released versions correspond to PyPI releases.
 
 ## Unreleased
 
+### Changes
+* removed support for Python 3.7 (end of life)
+
 ### Fixes
 * removed a leftover debug print statement (see [#869](../../issues/869))
 * make sure tests work without HOME environment set (see [#870](../../issues/870))

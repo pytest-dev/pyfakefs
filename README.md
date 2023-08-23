@@ -55,7 +55,7 @@ provides some additional features:
   under root
 
 ## Compatibility
-pyfakefs works with CPython 3.7 and above, on Linux, Windows and macOS, and
+pyfakefs works with CPython 3.8 and above, on Linux, Windows and macOS, and
 with PyPy3.
 
 pyfakefs works with [pytest](http://doc.pytest.org) version 3.0.0 or above,
@@ -73,7 +73,7 @@ for more information about the limitations of pyfakefs.
 ### Continuous integration
 
 pyfakefs is currently automatically tested on Linux, macOS and Windows, with
-Python 3.7 to 3.11, and with PyPy3 on Linux, using
+Python 3.8 to 3.12, and with PyPy3 on Linux, using
 [GitHub Actions](https://github.com/pytest-dev/pyfakefs/actions).
 
 ### Running pyfakefs unit tests
