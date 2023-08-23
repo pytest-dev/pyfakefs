@@ -3,6 +3,9 @@ The released versions correspond to PyPI releases.
 
 ## Unreleased
 
+### Fixes
+* removed a leftover debug print statement (see [#869](../../issues/869))
+
 ## [Version 5.2.3](https://pypi.python.org/pypi/pyfakefs/5.2.3) (2023-08-18)
 Fixes a rare problem on pytest shutdown.
 

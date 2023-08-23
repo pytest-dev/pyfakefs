@@ -632,7 +632,6 @@ class Patcher:
     @classmethod
     def clear_fs_cache(cls) -> None:
         """Clear the module cache."""
-        print("Clearing the cache")
         cls.CACHED_MODULES = set()
         cls.FS_MODULES = {}
         cls.FS_FUNCTIONS = {}
