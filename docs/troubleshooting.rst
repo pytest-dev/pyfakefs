@@ -233,6 +233,30 @@ passed before the ``mocker`` fixture to ensure this:
       # works correctly
       mocker.patch("builtins.open", mocker.mock_open(read_data="content"))
 
+Pathlib.Path objects created outside of tests
+---------------------------------------------
+An pattern which is more often seen with the increased usage of `pathlib` is the
+creation of global `pathlib.Path` objects (instead of string paths) that are used
+in the tests. As these objects are created in the real filesystem, they are not of the same
+type as faked `pathlib.Path` objects, and both will always compare as not equal,
+regardless of the path they point to:
+
+.. code:: python
+
+  import pathlib
+
+  FOLDER = pathlib.Path(__file__).parent
+  FILE = FOLDER / "file.csv"
+
+
+  def test_one(fs):
+      fake_file = pathlib.Path(fs.create_file(FILE).path)
+      assert FILE == fake_file  # fails, compares different objects
+      assert str(FILE) == str(fake_file)  # succeeds, compares the actual paths
+
+Generally, mixing objects in the real filesystem and the fake filesystem
+is problematic and better avoided.
+
 
 .. _`multiprocessing`: https://docs.python.org/3/library/multiprocessing.html
 .. _`subprocess`: https://docs.python.org/3/library/subprocess.html

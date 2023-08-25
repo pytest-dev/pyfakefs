@@ -675,8 +675,10 @@ for the ``patchfs`` decorator.
 File creation helpers
 ~~~~~~~~~~~~~~~~~~~~~
 To create files, directories or symlinks together with all the directories
-in the path, you may use ``create_file()``, ``create_dir()``,
-``create_symlink()`` and ``create_link()``, respectively.
+in the path, you may use :py:meth:`create_file()<pyfakefs.fake_filesystem.FakeFilesystem.create_file>`,
+:py:meth:`create_dir()<pyfakefs.fake_filesystem.FakeFilesystem.create_dir>`,
+:py:meth:`create_symlink()<pyfakefs.fake_filesystem.FakeFilesystem.create_symlink>` and
+:py:meth:`create_link()<pyfakefs.fake_filesystem.FakeFilesystem.create_link>`, respectively.
 
 ``create_file()`` also allows you to set the file mode and the file contents
 together with the encoding if needed. Alternatively, you can define a file
@@ -713,8 +715,10 @@ automatically.
 Access to files in the real file system
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 If you want to have read access to real files or directories, you can map
-them into the fake file system using ``add_real_file()``,
-``add_real_directory()``, ``add_real_symlink()`` and ``add_real_paths()``.
+them into the fake file system using :py:meth:`add_real_file()<pyfakefs.fake_filesystem.FakeFilesystem.add_real_file>`,
+:py:meth:`add_real_directory()<pyfakefs.fake_filesystem.FakeFilesystem.add_real_directory>`,
+:py:meth:`add_real_symlink()<pyfakefs.fake_filesystem.FakeFilesystem.add_real_symlink>` and
+:py:meth:`add_real_paths()<pyfakefs.fake_filesystem.FakeFilesystem.add_real_paths>`.
 They take a file path, a directory path, a symlink path, or a list of paths,
 respectively, and make them accessible from the fake file system. By
 default, the contents of the mapped files and directories are read only on
@@ -800,7 +804,7 @@ Handling mount points
 ~~~~~~~~~~~~~~~~~~~~~
 Under Linux and macOS, the root path (``/``) is the only mount point created
 in the fake file system. If you need support for more mount points, you can add
-them using ``add_mount_point()``.
+them using :py:meth:`add_mount_point()<pyfakefs.fake_filesystem.FakeFilesystem.add_mount_point>`.
 
 Under Windows, drives and UNC paths are internally handled as mount points.
 Adding a file or directory on another drive or UNC path automatically
@@ -818,7 +822,7 @@ Setting the file system size
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 If you need to know the file system size in your tests (for example for
 testing cleanup scripts), you can set the fake file system size using
-``set_disk_usage()``. By default, this sets the total size in bytes of the
+:py:meth:`set_disk_usage()<pyfakefs.fake_filesystem.FakeFilesystem.set_disk_usage>`. By default, this sets the total size in bytes of the
 root partition; if you add a path as parameter, the size will be related to
 the mount point (see above) the path is related to.
 
@@ -843,7 +847,7 @@ and you may fail to create new files if the fake file system is full.
                     f.write("a" * 200)
                     f.flush()
 
-To get the file system size, you may use ``get_disk_usage()``, which is
+To get the file system size, you may use :py:meth:`get_disk_usage()<pyfakefs.fake_filesystem.FakeFilesystem.get_disk_usage>`, which is
 modeled after ``shutil.disk_usage()``.
 
 Suspending patching

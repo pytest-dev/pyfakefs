@@ -183,7 +183,8 @@ class FakeFilesystem:
         is_windows_fs: `True` in a real or faked Windows file system.
         is_macos: `True` under MacOS, or if we are faking it.
         is_case_sensitive: `True` if a case-sensitive file system is assumed.
-        root: The root :py:class:`FakeDirectory` entry of the file system.
+        root: The root :py:class:`FakeDirectory<pyfakefs.fake_file.FakeDirectory>` entry
+            of the file system.
         umask: The umask used for newly created files, see `os.umask`.
         patcher: Holds the Patcher object if created from it. Allows access
             to the patcher object if using the pytest fs fixture.
@@ -364,15 +365,15 @@ class FakeFilesystem:
         self.add_mount_point(mount_point, total_size)
 
     def pause(self) -> None:
-        """Pause the patching of the file system modules until `resume` is
+        """Pause the patching of the file system modules until :py:meth:`resume` is
         called. After that call, all file system calls are executed in the
         real file system.
-        Calling pause() twice is silently ignored.
+        Calling `pause()` twice is silently ignored.
         Only allowed if the file system object was created by a
-        Patcher object. This is also the case for the pytest `fs` fixture.
+        `Patcher` object. This is also the case for the pytest `fs` fixture.
 
         Raises:
-            RuntimeError: if the file system was not created by a Patcher.
+            RuntimeError: if the file system was not created by a `Patcher`.
         """
         if self.patcher is None:
             raise RuntimeError(
@@ -382,7 +383,7 @@ class FakeFilesystem:
         self.patcher.pause()
 
     def resume(self) -> None:
-        """Resume the patching of the file system modules if `pause` has
+        """Resume the patching of the file system modules if :py:meth:`pause` has
         been called before. After that call, all file system calls are
         executed in the fake file system.
         Does nothing if patching is not paused.
@@ -456,8 +457,8 @@ class FakeFilesystem:
             total_size: The new total size of the added filesystem device
                 in bytes. Defaults to infinite size.
 
-            can_exist: If True, no error is raised if the mount point
-                already exists
+            can_exist: If `True`, no error is raised if the mount point
+                already exists.
 
         Returns:
             The newly created mount point dict.
@@ -581,7 +582,7 @@ class FakeFilesystem:
         """Return the total, used and free disk space in bytes as named tuple,
         or placeholder values simulating unlimited space if not set.
 
-        .. note:: This matches the return value of shutil.disk_usage().
+        .. note:: This matches the return value of ``shutil.disk_usage()``.
 
         Args:
             path: The disk space is returned for the file system device where
@@ -642,7 +643,7 @@ class FakeFilesystem:
             st_dev: The device ID for the respective file system.
 
         Raises:
-            OSError: if usage_change exceeds the free file system space
+            OSError: if `usage_change` exceeds the free file system space
         """
         mount_point = self._mount_point_for_device(st_dev)
         if mount_point:
@@ -1656,12 +1657,14 @@ class FakeFilesystem:
         filesystem.
 
         Args:
-            file_path: Specifies the target FakeFile object to retrieve.
+            file_path: Specifies the target
+                :py:class:`FakeFile<pyfakefs.fake_file.FakeFile>` object to retrieve.
             check_read_perm: If True, raises OSError if a parent directory
                 does not have read permission
 
         Returns:
-            The FakeFile object corresponding to `file_path`.
+            The :py:class:`FakeFile<pyfakefs.fake_file.FakeFile>` object corresponding
+            to `file_path`.
 
         Raises:
             OSError: if the object is not found.
@@ -2034,16 +2037,18 @@ class FakeFilesystem:
     def create_dir(
         self, directory_path: AnyPath, perm_bits: int = helpers.PERM_DEF
     ) -> FakeDirectory:
-        """Create `directory_path`, and all the parent directories.
+        """Create `directory_path` and all the parent directories, and return
+        the created :py:class:`FakeDirectory<pyfakefs.fake_file.FakeDirectory>` object.
 
         Helper method to set up your test faster.
 
         Args:
             directory_path: The full directory path to create.
-            perm_bits: The permission bits as set by `chmod`.
+            perm_bits: The permission bits as set by ``chmod``.
 
         Returns:
-            The newly created FakeDirectory object.
+            The newly created
+            :py:class:`FakeDirectory<pyfakefs.fake_file.FakeDirectory>` object.
 
         Raises:
             OSError: if the directory already exists.
@@ -2095,29 +2100,30 @@ class FakeFilesystem:
         side_effect: Optional[Callable] = None,
     ) -> FakeFile:
         """Create `file_path`, including all the parent directories along
-        the way.
+        the way, and return the created
+        :py:class:`FakeFile<pyfakefs.fake_file.FakeFile>` object.
 
         This helper method can be used to set up tests more easily.
 
         Args:
             file_path: The path to the file to create.
-            st_mode: The stat constant representing the file type.
-            contents: the contents of the file. If not given and st_size is
-                None, an empty file is assumed.
+            st_mode: The `stat` constant representing the file type.
+            contents: the contents of the file. If not given and `st_size` is
+                `None`, an empty file is assumed.
             st_size: file size; only valid if contents not given. If given,
                 the file is considered to be in "large file mode" and trying
                 to read from or write to the file will result in an exception.
             create_missing_dirs: If `True`, auto create missing directories.
             apply_umask: `True` if the current umask must be applied
                 on `st_mode`.
-            encoding: If `contents` is a unicode string, the encoding used
+            encoding: If `contents` is of type `str`, the encoding used
                 for serialization.
             errors: The error mode used for encoding/decoding errors.
-            side_effect: function handle that is executed when file is written,
+            side_effect: function handle that is executed when the file is written,
                 must accept the file object as an argument.
 
         Returns:
-            The newly created FakeFile object.
+            The newly created :py:class:`FakeFile<pyfakefs.fake_file.FakeFile>` object.
 
         Raises:
             OSError: if the file already exists.
@@ -2142,8 +2148,9 @@ class FakeFilesystem:
         target_path: Optional[AnyPath] = None,
     ) -> FakeFile:
         """Create `file_path`, including all the parent directories along the
-        way, for an existing real file. The contents of the real file are read
-        only on demand.
+        way, for an existing real file, and return the created
+        :py:class:`FakeFile<pyfakefs.fake_file.FakeFile>` object.
+        The contents of the real file are read only on demand.
 
         Args:
             source_path: Path to an existing file in the real file system
@@ -2154,7 +2161,7 @@ class FakeFilesystem:
                 otherwise it is equal to `source_path`.
 
         Returns:
-            the newly created FakeFile object.
+            the newly created :py:class:`FakeFile<pyfakefs.fake_file.FakeFile>` object.
 
         Raises:
             OSError: if the file does not exist in the real file system.
@@ -2181,9 +2188,10 @@ class FakeFilesystem:
     def add_real_symlink(
         self, source_path: AnyPath, target_path: Optional[AnyPath] = None
     ) -> FakeFile:
-        """Create a symlink at source_path (or target_path, if given).  It will
-        point to the same path as the symlink on the real filesystem.  Relative
-        symlinks will point relative to their new location.  Absolute symlinks
+        """Create a symlink at `source_path` (or `target_path`, if given) and return
+        the created :py:class:`FakeFile<pyfakefs.fake_file.FakeFile>` object.
+        It will point to the same path as the symlink on the real filesystem.
+        Relative symlinks will point relative to their new location.  Absolute symlinks
         will point to the same, absolute path as on the real filesystem.
 
         Args:
@@ -2192,7 +2200,7 @@ class FakeFilesystem:
                 filesystem, otherwise, the same as `source_path`.
 
         Returns:
-            the newly created FakeFile object.
+            the newly created :py:class:`FakeFile<pyfakefs.fake_file.FakeFile>` object.
 
         Raises:
             OSError: if the directory does not exist in the real file system.
@@ -2220,7 +2228,9 @@ class FakeFilesystem:
         target_path: Optional[AnyPath] = None,
     ) -> FakeDirectory:
         """Create a fake directory corresponding to the real directory at the
-        specified path.  Add entries in the fake directory corresponding to
+        specified path, and return the created
+        :py:class:`FakeDirectory<pyfakefs.fake_file.FakeDirectory>` object.
+        Add entries in the fake directory corresponding to
         the entries in the real directory.  Symlinks are supported.
 
         Args:
@@ -2240,7 +2250,8 @@ class FakeFilesystem:
                 the target directory is the same as `source_path`.
 
         Returns:
-            the newly created FakeDirectory object.
+            the newly created
+            :py:class:`FakeDirectory<pyfakefs.fake_file.FakeDirectory>` object.
 
         Raises:
             OSError: if the directory does not exist in the real file system.
@@ -2295,18 +2306,18 @@ class FakeFilesystem:
         lazy_dir_read: bool = True,
     ) -> None:
         """This convenience method adds multiple files and/or directories from
-        the real file system to the fake file system. See `add_real_file()` and
-        `add_real_directory()`.
+        the real file system to the fake file system. See :py:meth:`add_real_file` and
+        :py:meth:`add_real_directory`.
 
         Args:
             path_list: List of file and directory paths in the real file
                 system.
-            read_only: If set, all files and files under under the directories
+            read_only: If set, all files and files under the directories
                 are treated as read-only, e.g. a write access raises an
                 exception; otherwise, writing to the files changes the fake
                 files only as usually.
             lazy_dir_read: Uses lazy reading of directory contents if set
-                (see `add_real_directory`)
+                (see :py:meth:`add_real_directory`)
 
         Raises:
             OSError: if any of the files and directories in the list
@@ -2415,16 +2426,18 @@ class FakeFilesystem:
         link_target: AnyPath,
         create_missing_dirs: bool = True,
     ) -> FakeFile:
-        """Create the specified symlink, pointed at the specified link target.
+        """Create the specified symlink, pointed at the specified link target,
+        and return the created :py:class:`FakeFile<pyfakefs.fake_file.FakeFile>` object
+        representing the link.
 
         Args:
             file_path:  path to the symlink to create
             link_target:  the target of the symlink
             create_missing_dirs: If `True`, any missing parent directories of
-                file_path will be created
+                `file_path` will be created
 
         Returns:
-            The newly created FakeFile object.
+            The newly created :py:class:`FakeFile<pyfakefs.fake_file.FakeFile>` object.
 
         Raises:
             OSError: if the symlink could not be created
@@ -2473,22 +2486,25 @@ class FakeFilesystem:
         follow_symlinks: bool = True,
         create_missing_dirs: bool = True,
     ) -> FakeFile:
-        """Create a hard link at new_path, pointing at old_path.
+        """Create a hard link at `new_path`, pointing at `old_path`,
+        and return the created :py:class:`FakeFile<pyfakefs.fake_file.FakeFile>` object
+        representing the link.
 
         Args:
             old_path: An existing link to the target file.
             new_path: The destination path to create a new link at.
-            follow_symlinks: If False and old_path is a symlink, link the
+            follow_symlinks: If `False` and `old_path` is a symlink, link the
                 symlink instead of the object it points to.
             create_missing_dirs: If `True`, any missing parent directories of
-                file_path will be created
+                `file_path` will be created
 
         Returns:
-            The FakeFile object referred to by old_path.
+            The :py:class:`FakeFile<pyfakefs.fake_file.FakeFile>` object referred to
+            by `old_path`.
 
         Raises:
-            OSError:  if something already exists at new_path.
-            OSError:  if old_path is a directory.
+            OSError:  if something already exists at `new_path`.
+            OSError:  if `old_path` is a directory.
             OSError:  if the parent directory doesn't exist.
         """
         old_path_str = make_string_path(old_path)
