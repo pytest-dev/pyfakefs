@@ -238,7 +238,7 @@ Pathlib.Path objects created outside of tests
 An pattern which is more often seen with the increased usage of ``pathlib`` is the
 creation of global ``pathlib.Path`` objects (instead of string paths) that are imported
 into the tests. As these objects are created in the real filesystem,
-they are not of the same type as faked ``pathlib.Path`` objects,
+they do not have the same attributes as fake ``pathlib.Path`` objects,
 and both will always compare as not equal,
 regardless of the path they point to:
 
