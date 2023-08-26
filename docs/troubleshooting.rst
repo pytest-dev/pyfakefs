@@ -235,10 +235,10 @@ passed before the ``mocker`` fixture to ensure this:
 
 Pathlib.Path objects created outside of tests
 ---------------------------------------------
-An pattern which is more often seen with the increased usage of `pathlib` is the
-creation of global `pathlib.Path` objects (instead of string paths) that are imported
+An pattern which is more often seen with the increased usage of ``pathlib`` is the
+creation of global ``pathlib.Path`` objects (instead of string paths) that are imported
 into the tests. As these objects are created in the real filesystem,
-they are not of the same type as faked `pathlib.Path` objects,
+they do not have the same attributes as fake ``pathlib.Path`` objects,
 and both will always compare as not equal,
 regardless of the path they point to:
 
@@ -254,7 +254,7 @@ regardless of the path they point to:
   def test_path_equality(fs):
       # This Path was made after the fake filesystem is set up,
       # and thus patching within pathlib is in effect
-      fake_file_path = pathlib.Path(fs.create_file(FILE_PATH).path)
+      fake_file_path = pathlib.Path(str(FILE_PATH))
 
       assert FILE_PATH == fake_file_path  # fails, compares different objects
       assert str(FILE_PATH) == str(fake_file_path)  # succeeds, compares the actual paths
