@@ -250,6 +250,7 @@ regardless of the path they point to:
   # stands up the fake filesystem
   FILE_PATH = pathlib.Path(__file__).parent / "file.csv"
 
+
   def test_path_equality(fs):
       # This Path was made after the fake filesystem is set up,
       # and thus patching within pathlib is in effect
