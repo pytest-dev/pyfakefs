@@ -246,15 +246,12 @@ regardless of the path they point to:
 
   import pathlib
 
-  import pytest
-
   # This Path was made in the real filesystem, before the test
   # stands up the fake filesystem
   FILE_PATH = pathlib.Path(__file__).parent / "file.csv"
 
 
-  @pytest.mark.usefixtures("fs")
-  def test_path_equality():
+  def test_path_equality(fs):
       # This Path was made after the fake filesystem is set up,
       # and thus patching within pathlib is in effect
       fake_file_path = pathlib.Path(str(FILE_PATH))
