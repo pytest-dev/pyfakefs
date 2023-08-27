@@ -547,8 +547,7 @@ these libraries so that they will work with the fake filesystem. Currently, this
 includes patches for ``pandas`` read methods like ``read_csv`` and
 ``read_excel``, and for ``Django`` file locks--more may follow. Ordinarily,
 the default value of ``use_known_patches`` should be used, but it is present
-to allow users to disable this patching in case it causes any problems. It
-may be removed or replaced by more fine-grained arguments in future releases.
+to allow users to disable this patching in case it causes any problems.
 
 patch_open_code
 ...............
@@ -570,9 +569,6 @@ set ``patch_open_code`` to ``PatchMode.AUTO``:
   @patchfs(patch_open_code=PatchMode.AUTO)
   def test_something(fs):
       ...
-
-.. note:: This argument is subject to change or removal in future
-  versions of ``pyfakefs``, depending on the upcoming use cases.
 
 .. _patch_default_args:
 
