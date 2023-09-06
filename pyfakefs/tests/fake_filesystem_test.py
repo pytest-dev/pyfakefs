@@ -1062,7 +1062,9 @@ class FakePathModuleTest(TestCase):
         components = [b"foo", b"bar", b"baz"]
         self.assertEqual(b"foo!bar!baz", self.path.join(*components))
 
-    @unittest.skipIf(sys.platform != "win32", "Windows specific test")
+    @unittest.skipIf(
+        sys.platform != "win32" or sys.version_info < (3, 8), "Windows specific test"
+    )
     @patch.dict(os.environ, {"USERPROFILE": r"C:\Users\John"})
     def test_expand_user_windows(self):
         self.assertEqual(self.path.expanduser("~"), "C:!Users!John")
