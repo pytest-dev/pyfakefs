@@ -462,7 +462,9 @@ class FakePathlibFileObjectPropertyTest(RealPathlibTestCase):
             self.path.cwd(), self.path(self.os.path.realpath(dir_path))
         )
 
-    @unittest.skipIf(sys.platform != "win32", "Windows specific test")
+    @unittest.skipIf(
+        sys.platform != "win32" or sys.version_info < (3, 8), "Windows specific test"
+    )
     @patch.dict(os.environ, {"USERPROFILE": r"C:\Users\John"})
     def test_expanduser_windows(self):
         self.assertEqual(
@@ -475,7 +477,9 @@ class FakePathlibFileObjectPropertyTest(RealPathlibTestCase):
     def test_expanduser_posix(self):
         self.assertEqual(self.path("~").expanduser(), self.path("/home/john"))
 
-    @unittest.skipIf(sys.platform != "win32", "Windows specific test")
+    @unittest.skipIf(
+        sys.platform != "win32" or sys.version_info < (3, 8), "Windows specific test"
+    )
     @patch.dict(os.environ, {"USERPROFILE": r"C:\Users\John"})
     def test_home_windows(self):
         self.assertEqual(
