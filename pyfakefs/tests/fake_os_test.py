@@ -5261,8 +5261,8 @@ class FakeScandirTest(FakeOsModuleTestBase):
             self.assertEqual(file_stat.st_dev, self.dir_entries[5].stat().st_dev)
 
     @unittest.skipIf(
-        sys.version_info < (3, 6) or not use_builtin_scandir,
-        "Path-like objects have been introduced in Python 3.6",
+        not use_builtin_scandir,
+        "Path-like objects not available in scandir package",
     )
     def test_path_like(self):
         self.assertTrue(isinstance(self.dir_entries[0], os.PathLike))

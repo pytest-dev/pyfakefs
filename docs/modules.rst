@@ -29,7 +29,7 @@ Unittest module classes
 -----------------------
 
 .. autoclass:: pyfakefs.fake_filesystem_unittest.TestCaseMixin
-    :members: fs, setUpPyfakefs, pause, resume
+    :members: fs, setUpPyfakefs, setUpClassPyfakefs, pause, resume
 
 .. autoclass:: pyfakefs.fake_filesystem_unittest.TestCase
 

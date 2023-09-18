@@ -776,8 +776,8 @@ class RealPathlibPathFileOperationTest(FakePathlibPathFileOperationTest):
 
 
 class FakePathlibUsageInOsFunctionsTest(RealPathlibTestCase):
-    """Test that many os / os.path functions accept a path-like object
-    since Python 3.6. The functionality of these functions is tested
+    """Test that many `os` / `os.path` functions accept a path-like object.
+    The functionality of these functions is tested
     elsewhere, we just check that they accept a fake path object as an
     argument.
     """
