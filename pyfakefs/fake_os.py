@@ -460,8 +460,7 @@ class FakeOsModule:
         `path`.
 
         Args:
-            path: File path, file descriptor or path-like object (for
-                Python >= 3.6).
+            path: File path, file descriptor or path-like object.
             attribute: (str or bytes) The attribute name.
             follow_symlinks: (bool) If True (the default), symlinks in the
                 path are traversed.
@@ -487,8 +486,8 @@ class FakeOsModule:
         """Return a list of the extended filesystem attributes on `path`.
 
         Args:
-            path: File path, file descriptor or path-like object (for
-                Python >= 3.6). If None, the current directory is used.
+            path: File path, file descriptor or path-like object.
+               If None, the current directory is used.
             follow_symlinks: (bool) If True (the default), symlinks in the
                 path are traversed.
 
@@ -512,11 +511,10 @@ class FakeOsModule:
     def removexattr(
         self, path: AnyStr, attribute: AnyString, *, follow_symlinks: bool = True
     ) -> None:
-        """Removes the extended filesystem attribute attribute from `path`.
+        """Removes the extended filesystem attribute from `path`.
 
         Args:
-            path: File path, file descriptor or path-like object (for
-                Python >= 3.6).
+            path: File path, file descriptor or path-like object
             attribute: (str or bytes) The attribute name.
             follow_symlinks: (bool) If True (the default), symlinks in the
                 path are traversed.
@@ -546,8 +544,7 @@ class FakeOsModule:
         `path`.
 
         Args:
-            path: File path, file descriptor or path-like object (for
-                Python >= 3.6).
+            path: File path, file descriptor or path-like object.
             attribute: The attribute name (str or bytes).
             value: (byte-like) The value to be set.
             follow_symlinks: (bool) If True (the default), symlinks in the

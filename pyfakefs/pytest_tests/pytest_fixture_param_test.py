@@ -11,7 +11,6 @@
 # limitations under the License.
 
 # Example for a test using a custom pytest fixture with an argument to Patcher
-# Needs Python >= 3.6
 import os
 
 import pytest

@@ -351,8 +351,8 @@ class FakePathModule:
         """Return whether path1 and path2 point to the same file.
 
         Args:
-            path1: first file path or path object (Python >=3.6)
-            path2: second file path or path object (Python >=3.6)
+            path1: first file path or path object
+            path2: second file path or path object
 
         Raises:
             OSError: if one of the paths does not point to an existing

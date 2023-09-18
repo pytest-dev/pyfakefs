@@ -207,7 +207,7 @@ class TestCaseMixin:
     modules by fake implementations.
 
     Attributes:
-        additional_skip_names: names of modules inside of which no module
+        additional_skip_names: names of modules where no module
             replacement shall be performed, in addition to the names in
             :py:attr:`fake_filesystem_unittest.Patcher.SKIPNAMES`.
             Instead of the module names, the modules themselves may be used.
@@ -220,7 +220,7 @@ class TestCaseMixin:
             fully qualified patched module names. Can be used to add patching
             of modules not provided by `pyfakefs`.
 
-    If you specify some of these attributes here and you have DocTests,
+    If you specify some of these attributes here, and you have DocTests,
     consider also specifying the same arguments to :py:func:`load_doctests`.
 
     Example usage in derived test classes::
@@ -322,6 +322,8 @@ class TestCaseMixin:
         :py:func:`setUpPyfakefs` in the same class will not work correctly.
 
         .. note:: This method is only available from Python 3.8 onwards.
+        .. note:: If using `pytest` as testrunner, you need at least pytest 6.2
+            for this method to work.
         """
         if sys.version_info < (3, 8):
             raise NotImplementedError(
@@ -516,7 +518,7 @@ class Patcher:
     ) -> None:
         """
         Args:
-            additional_skip_names: names of modules inside of which no module
+            additional_skip_names: names of modules where no module
                 replacement shall be performed, in addition to the names in
                 :py:attr:`fake_filesystem_unittest.Patcher.SKIPNAMES`.
                 Instead of the module names, the modules themselves
@@ -1021,7 +1023,7 @@ class Patcher:
 class Pause:
     """Simple context manager that allows to pause/resume patching the
     filesystem. Patching is paused in the context manager, and resumed after
-    going out of it's scope.
+    going out of its scope.
     """
 
     def __init__(self, caller: Union[Patcher, TestCaseMixin, FakeFilesystem]):

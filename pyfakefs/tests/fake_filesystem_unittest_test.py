@@ -761,10 +761,6 @@ class PathlibTest(TestCase):
 
 
 class TestDeprecationSuppression(fake_filesystem_unittest.TestCase):
-    @unittest.skipIf(
-        sys.version_info[1] == 6,
-        "Test fails for Python 3.6 for unknown reason",
-    )
     def test_no_deprecation_warning(self):
         """Ensures that deprecation warnings are suppressed during module
         lookup, see #542.

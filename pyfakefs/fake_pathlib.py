@@ -579,10 +579,9 @@ class FakePath(pathlib.Path):
             Args:
                 strict: If False (default) no exception is raised if the path
                     does not exist.
-                    New in Python 3.6.
 
             Raises:
-                OSError: if the path doesn't exist (strict=True or Python < 3.6)
+                OSError: if the path doesn't exist (strict=True)
             """
             if sys.version_info >= (3, 6):
                 if strict is None:
