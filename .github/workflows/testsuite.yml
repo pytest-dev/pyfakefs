@@ -8,7 +8,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - name: Check out repository
-      uses: actions/checkout@v3
+      uses: actions/checkout@v4
     - name: Set up Python
       uses: actions/setup-python@v4
       with:
@@ -35,7 +35,7 @@ jobs:
             os: ubuntu-latest
 
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
     - name: Set up Python ${{ matrix.python-version }}
       uses: actions/setup-python@v4
       with:
@@ -77,12 +77,12 @@ jobs:
         fi
       shell: bash
     - name: Install extra dependencies
-      if: ${{ matrix.python-version != '3.12-dev' }}
+      if: ${{ matrix.python-version != '3.12-dev' && matrix.python-version != 'pypy-3.10' }}
       run: |
         pip install -r extra_requirements.txt
       shell: bash
     - name: Run unit tests with extra packages as non-root user
-      if: ${{ matrix.python-version != '3.12-dev' }}
+      if: ${{ matrix.python-version != '3.12-dev' && matrix.python-version != 'pypy-3.10' }}
       run: |
         python -m pyfakefs.tests.all_tests
       shell: bash
@@ -103,7 +103,7 @@ jobs:
         python-version: ["3.9"]
         pytest-version: [3.0.0, 3.5.1, 4.0.2, 4.5.0, 5.0.1, 5.4.3, 6.0.2, 6.2.5, 7.0.1, 7.1.3, 7.2.0, 7.3.1, 7.4.0]
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - name: Set up Python ${{ matrix.python-version }}
         uses: actions/setup-python@v4
         with:
@@ -135,7 +135,7 @@ jobs:
         os: [ubuntu-latest, windows-latest]
         python-version:  ["3.10"]
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - name: Set up Python ${{ matrix.python-version }}
         uses: actions/setup-python@v4
         with:
