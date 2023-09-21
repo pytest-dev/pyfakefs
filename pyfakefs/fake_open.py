@@ -319,7 +319,7 @@ class FakeFileOpen:
             )
             assert file_object is not None
             path = file_object.name
-            return (
+            return (  # pytype: disable=bad-return-type
                 file_object,
                 cast(AnyStr, path),  # pytype: disable=invalid-annotation
                 filedes,
