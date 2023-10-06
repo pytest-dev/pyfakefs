@@ -220,7 +220,9 @@ class FakePathModule:
             file_obj = self.filesystem.resolve(path)
             return file_obj.st_mtime
         except OSError:
-            self.filesystem.raise_os_error(errno.ENOENT, winerror=3)
+            self.filesystem.raise_os_error(
+                errno.ENOENT, winerror=3
+            )  # pytype: disable=bad-return-type
 
     def getatime(self, path: AnyStr) -> float:
         """Returns the last access time of the fake file.
@@ -242,7 +244,7 @@ class FakePathModule:
             file_obj = self.filesystem.resolve(path)
         except OSError:
             self.filesystem.raise_os_error(errno.ENOENT)
-        return file_obj.st_atime
+        return file_obj.st_atime  # pytype: disable=name-error
 
     def getctime(self, path: AnyStr) -> float:
         """Returns the creation time of the fake file.
@@ -261,7 +263,7 @@ class FakePathModule:
             file_obj = self.filesystem.resolve(path)
         except OSError:
             self.filesystem.raise_os_error(errno.ENOENT)
-        return file_obj.st_ctime
+        return file_obj.st_ctime  # pytype: disable=name-error
 
     def abspath(self, path: AnyStr) -> AnyStr:
         """Return the absolute version of a path."""
