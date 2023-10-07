@@ -2642,12 +2642,16 @@ class FakeFilesystem:
 
         if self.is_windows_fs:
             dir_name = self.absnormpath(dir_name)
-        parent_dir, _ = self.splitpath(dir_name)
+        parent_dir, rest = self.splitpath(dir_name)
         if parent_dir:
             base_dir = self.normpath(parent_dir)
             ellipsis = matching_string(parent_dir, self.path_separator + "..")
             if parent_dir.endswith(ellipsis) and not self.is_windows_fs:
                 base_dir, dummy_dotdot, _ = parent_dir.partition(ellipsis)
+            if self.is_windows_fs and not rest and not self.exists(base_dir):
+                # under Windows, the parent dir may be a drive or UNC path
+                # which has to be mounted
+                self._auto_mount_drive_if_needed(parent_dir)
             if not self.exists(base_dir):
                 self.raise_os_error(errno.ENOENT, base_dir)
 

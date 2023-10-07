@@ -706,6 +706,18 @@ class FakePathlibPathFileOperationTest(RealPathlibTestCase):
             errno.EEXIST, self.path(file_name).mkdir, exist_ok=True
         )
 
+    @unittest.skipIf(not is_windows, "Windows specific behavior")
+    def test_mkdir_with_automount_unc_path(self):
+        self.skip_real_fs()
+        self.path(r"\\test\unc\foo").mkdir(parents=True)
+        self.assertTrue(self.path(r"\\test\unc\foo").exists())
+
+    @unittest.skipIf(not is_windows, "Windows specific behavior")
+    def test_mkdir_with_automount_drive(self):
+        self.skip_real_fs()
+        self.path(r"d:\foo\bar").mkdir(parents=True)
+        self.assertTrue(self.path(r"d:\foo\bar").exists())
+
     def test_rmdir(self):
         dir_name = self.make_path("foo", "bar")
         self.create_dir(dir_name)
