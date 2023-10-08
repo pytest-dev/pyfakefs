@@ -36,7 +36,6 @@ pyfakefs by simply changing their base class from `:py:class`unittest.TestCase`
 to `:py:class`pyfakefs.fake_filesystem_unittest.TestCase`.
 """
 import _io  # type:ignore[import]
-import builtins
 import doctest
 import functools
 import genericpath
@@ -562,7 +561,6 @@ class Patcher:
         # save the original open function for use in pytest plugin
         self.original_open = open
         self.patch_open_code = patch_open_code
-        self.fake_open: fake_open.FakeFileOpen
 
         if additional_skip_names is not None:
             skip_names = [
@@ -655,8 +653,8 @@ class Patcher:
             "io": fake_io.FakeIoModule,
             "pathlib": fake_pathlib.FakePathlibModule,
         }
-        if IS_PYPY:
-            # in PyPy io.open, the module is referenced as _io
+        if IS_PYPY or sys.version_info >= (3, 12):
+            # in PyPy and later cpython versions, the module is referenced as _io
             self._fake_module_classes["_io"] = fake_io.FakeIoModule
         if sys.platform == "win32":
             self._fake_module_classes["nt"] = fake_path.FakeNtModule
@@ -853,7 +851,6 @@ class Patcher:
 
         self.fs = fake_filesystem.FakeFilesystem(patcher=self, create_temp_dir=True)
         self.fs.patch_open_code = self.patch_open_code
-        self.fake_open = fake_open.FakeFileOpen(self.fs)
         for name in self._fake_module_classes:
             self.fake_modules[name] = self._fake_module_classes[name](self.fs)
             if hasattr(self.fake_modules[name], "skip_names"):
@@ -932,9 +929,6 @@ class Patcher:
             for module, attr in modules:
                 if attr in self.unfaked_modules:
                     self._stubs.smart_set(module, name, self.unfaked_modules[attr])
-        if sys.version_info >= (3, 12):
-            # workaround for patching open - does not work with skip modules
-            self._stubs.smart_set(builtins, "open", self.fake_open)
 
     def patch_defaults(self) -> None:
         for fct, idx, ft in self.FS_DEFARGS:

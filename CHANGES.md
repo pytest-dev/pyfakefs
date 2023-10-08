@@ -3,11 +3,15 @@ The released versions correspond to PyPI releases.
 
 ## Unreleased
 
+### Changes
+* add official support for Python 3.12
+
 ### Fixes
 * removed a leftover debug print statement (see [#869](../../issues/869))
 * make sure tests work without HOME environment set (see [#870](../../issues/870))
 * automount drive or UNC path under Windows if needed for `pathlib.Path.mkdir()`
   (see [#890](../../issues/890))
+* adapt patching `io.open` to work with Python 3.12 (see [#836](../../issues/836))
 
 ## [Version 5.2.3](https://pypi.python.org/pypi/pyfakefs/5.2.3) (2023-08-18)
 Fixes a rare problem on pytest shutdown.
