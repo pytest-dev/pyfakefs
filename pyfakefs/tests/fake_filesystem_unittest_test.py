@@ -18,6 +18,7 @@
 Test the :py:class`pyfakefs.fake_filesystem_unittest.TestCase` base class.
 """
 import glob
+import importlib.util
 import io
 import multiprocessing
 import os
@@ -28,6 +29,8 @@ import sys
 import tempfile
 import unittest
 import warnings
+from contextlib import redirect_stdout
+from io import StringIO
 from pathlib import Path
 from unittest import TestCase, mock
 
@@ -228,14 +231,12 @@ class TestPatchingImports(TestPyfakefsUnittestBase):
         stat_result = pyfakefs.tests.import_as_example.file_stat2(file_path)
         self.assertEqual(3, stat_result.st_size)
 
-    @unittest.skipIf(sys.version_info >= (3, 12), "Currently not working in 3.12")
     def test_import_open_as_other_name(self):
         file_path = "/foo/bar"
         self.fs.create_file(file_path, contents=b"abc")
         contents = pyfakefs.tests.import_as_example.file_contents1(file_path)
         self.assertEqual("abc", contents)
 
-    @unittest.skipIf(sys.version_info >= (3, 12), "Currently not working in 3.12")
     def test_import_io_open_as_other_name(self):
         file_path = "/foo/bar"
         self.fs.create_file(file_path, contents=b"abc")
@@ -398,10 +399,6 @@ class AdditionalSkipNamesTest(fake_filesystem_unittest.TestCase):
         self.fs.create_file("foo")
         self.assertFalse(pyfakefs.tests.import_as_example.check_if_exists7("foo"))
 
-    @unittest.skipIf(
-        sys.version_info >= (3, 12),
-        "Skip modules currently not working for open in 3.12",
-    )
     def test_open_succeeds(self):
         pyfakefs.tests.import_as_example.open_this_file()
 
@@ -447,10 +444,6 @@ class AdditionalSkipNamesModuleTest(fake_filesystem_unittest.TestCase):
         self.fs.create_file("foo")
         self.assertFalse(pyfakefs.tests.import_as_example.check_if_exists7("foo"))
 
-    @unittest.skipIf(
-        sys.version_info >= (3, 12),
-        "Skip modules currently not working for open in 3.12",
-    )
     def test_open_succeeds(self):
         pyfakefs.tests.import_as_example.open_this_file()
 
@@ -787,6 +780,7 @@ def load_configs(configs):
     return retval
 
 
+@unittest.skipIf(sys.version_info < (3, 8), "open_code new in Python 3.8")
 class AutoPatchOpenCodeTestCase(fake_filesystem_unittest.TestCase):
     """Test patching open_code in auto mode, see issue #554."""
 
@@ -805,6 +799,18 @@ class AutoPatchOpenCodeTestCase(fake_filesystem_unittest.TestCase):
 
     def test_run_module(self):
         load_configs([self.config_module])
+
+    def import_foo(self):
+        spec = importlib.util.spec_from_file_location("bar", "/foo/bar.py")
+        mod = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(mod)
+
+    @unittest.skipIf(sys.platform == "win32", "Not yet working under Windows")
+    def test_exec_module_in_fake_fs(self):
+        self.fs.create_file("/foo/bar.py", contents="print('hello')")
+        with redirect_stdout(StringIO()) as stdout:
+            self.import_foo()
+        assert stdout.getvalue() == "hello\n"
 
 
 class TestOtherFS(fake_filesystem_unittest.TestCase):

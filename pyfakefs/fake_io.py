@@ -95,9 +95,16 @@ class FakeIoModule:
         # specific modules; instead we check if the caller is a skipped
         # module (should work in most cases)
         stack = traceback.extract_stack(limit=2)
+        # handle the case that we try to call the original `open_code`
+        # and get here instead (since Python 3.12)
+        from_open_code = (
+            sys.version_info >= (3, 12)
+            and stack[0].name == "open_code"
+            and stack[0].line == "return self._io_module.open_code(path)"
+        )
         module_name = os.path.splitext(stack[0].filename)[0]
         module_name = module_name.replace(os.sep, ".")
-        if any(
+        if from_open_code or any(
             [
                 module_name == sn or module_name.endswith("." + sn)
                 for sn in self.skip_names
