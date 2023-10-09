@@ -11,14 +11,15 @@ The released versions correspond to PyPI releases.
 * make sure tests work without HOME environment set (see [#870](../../issues/870))
 * automount drive or UNC path under Windows if needed for `pathlib.Path.mkdir()`
   (see [#890](../../issues/890))
-* adapt patching `io.open` to work with Python 3.12 (see [#836](../../issues/836))
+* adapt patching `io.open` and `io.open_code` to work with Python 3.12
+  (see [#836](../../issues/836) and [#892](../../issues/892))
 
 ## [Version 5.2.3](https://pypi.python.org/pypi/pyfakefs/5.2.3) (2023-08-18)
 Fixes a rare problem on pytest shutdown.
 
 ### Fixes
 * Clear the patched module cache on session shutdown (pytest only)
-  (see [#866](../../issues/866)). Added a class method `Patcher.cler_fs_cache`
+  (see [#866](../../issues/866)). Added a class method `Patcher.clear_fs_cache`
   for clearing the patched module cache.
 
 ## [Version 5.2.3](https://pypi.python.org/pypi/pyfakefs/5.2.3) (2023-07-10)
