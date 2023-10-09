@@ -39,6 +39,7 @@ from pyfakefs.helpers import (
     make_string_path,
     to_string,
     matching_string,
+    to_bytes,
 )
 
 if TYPE_CHECKING:
@@ -506,6 +507,14 @@ if sys.platform == "win32":
 
             self.filesystem = filesystem
             self.nt_module: Any = nt
+
+        def getcwd(self) -> str:
+            """Return current working directory."""
+            return to_string(self.filesystem.cwd)
+
+        def getcwdb(self) -> bytes:
+            """Return current working directory as bytes."""
+            return to_bytes(self.filesystem.cwd)
 
         if sys.version_info >= (3, 12):
 

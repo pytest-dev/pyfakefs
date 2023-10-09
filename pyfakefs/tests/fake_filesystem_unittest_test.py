@@ -805,7 +805,6 @@ class AutoPatchOpenCodeTestCase(fake_filesystem_unittest.TestCase):
         mod = importlib.util.module_from_spec(spec)
         spec.loader.exec_module(mod)
 
-    @unittest.skipIf(sys.platform == "win32", "Not yet working under Windows")
     def test_exec_module_in_fake_fs(self):
         self.fs.create_file("/foo/bar.py", contents="print('hello')")
         with redirect_stdout(StringIO()) as stdout:
