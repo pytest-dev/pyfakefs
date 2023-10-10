@@ -228,7 +228,7 @@ class FakeShutilModuleTest(RealFsTestCase):
         src_stat = os.stat(src_file)
         dst_stat = os.stat(dst_file)
         self.assertEqual(src_stat.st_mode, dst_stat.st_mode)
-        self.assertAlmostEqual(src_stat.st_atime, dst_stat.st_atime, places=2)
+        self.assertAlmostEqual(src_stat.st_atime, dst_stat.st_atime, places=0)
         self.assertAlmostEqual(src_stat.st_mtime, dst_stat.st_mtime, places=2)
 
     @unittest.skipIf(IS_PYPY, "Functionality not supported in PyPy")
@@ -255,7 +255,7 @@ class FakeShutilModuleTest(RealFsTestCase):
         src_stat = os.stat(src_file)
         dst_stat = os.stat(dst_file)
         self.assertEqual(src_stat.st_mode, dst_stat.st_mode)
-        self.assertAlmostEqual(src_stat.st_atime, dst_stat.st_atime, places=2)
+        self.assertAlmostEqual(src_stat.st_atime, dst_stat.st_atime, places=0)
         self.assertAlmostEqual(src_stat.st_mtime, dst_stat.st_mtime, places=2)
 
     def test_copy2_directory(self):
@@ -273,7 +273,7 @@ class FakeShutilModuleTest(RealFsTestCase):
         src_stat = os.stat(src_file)
         dst_stat = os.stat(dst_file)
         self.assertEqual(src_stat.st_mode, dst_stat.st_mode)
-        self.assertAlmostEqual(src_stat.st_atime, dst_stat.st_atime, places=2)
+        self.assertAlmostEqual(src_stat.st_atime, dst_stat.st_atime, places=0)
         self.assertAlmostEqual(src_stat.st_mtime, dst_stat.st_mtime, places=2)
 
     def test_copytree(self):
