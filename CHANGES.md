@@ -3,6 +3,9 @@ The released versions correspond to PyPI releases.
 
 ## Unreleased
 
+## [Version 5.3.0](https://pypi.python.org/pypi/pyfakefs/5.3.0) (2023-10-11)
+Adds official support for Python 3.12.
+
 ### Changes
 * add official support for Python 3.12
 
