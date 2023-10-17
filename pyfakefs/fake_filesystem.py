@@ -2028,7 +2028,7 @@ class FakeFilesystem:
         except AttributeError:
             self.raise_os_error(errno.ENOTDIR, file_path)
 
-    def make_string_path(self, path: AnyPath) -> AnyStr:
+    def make_string_path(self, path: AnyPath) -> AnyStr:  # type: ignore[type-var]
         path_str = make_string_path(path)
         os_sep = matching_string(path_str, os.sep)
         fake_sep = self.get_path_separator(path_str)

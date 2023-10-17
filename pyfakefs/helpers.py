@@ -119,7 +119,7 @@ def make_string_path(dir_name: os.PathLike) -> str:
     ...
 
 
-def make_string_path(dir_name: AnyPath) -> AnyStr:
+def make_string_path(dir_name: AnyPath) -> AnyStr:  # type: ignore[type-var]
     return cast(AnyStr, os.fspath(dir_name))  # pytype: disable=invalid-annotation
 
 
