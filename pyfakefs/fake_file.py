@@ -350,7 +350,7 @@ class FakeFile:
         self.epoch += 1
 
     @property
-    def path(self) -> AnyStr:
+    def path(self) -> AnyStr:  # type: ignore[type-var]
         """Return the full path of the current object."""
         names: List[AnyStr] = []  # pytype: disable=invalid-annotation
         obj: Optional[FakeFile] = self
