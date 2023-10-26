@@ -8,6 +8,8 @@ Adds official support for Python 3.12.
 
 ### Changes
 * add official support for Python 3.12
+* changed behavior of `add_real_directory` to be able to map a real directory
+  to an existing directory in the fake filesystem (see #901)
 
 ### Fixes
 * removed a leftover debug print statement (see [#869](../../issues/869))

@@ -17,8 +17,10 @@
 import contextlib
 import errno
 import os
+import shutil
 import stat
 import sys
+import tempfile
 import unittest
 from unittest.mock import patch
 
@@ -2046,10 +2048,88 @@ class RealFileSystemAccessTest(RealFsTestCase):
         with self.raises_os_error(errno.EEXIST):
             self.filesystem.add_real_file(real_file_path)
 
-    def test_existing_fake_directory_raises(self):
-        self.filesystem.create_dir(self.root_path)
-        with self.raises_os_error(errno.EEXIST):
-            self.filesystem.add_real_directory(self.root_path)
+    @contextlib.contextmanager
+    def create_real_paths(self):
+        real_dir_root = os.path.join(tempfile.gettempdir(), "root")
+        try:
+            for dir_name in ("foo", "bar"):
+                real_dir = os.path.join(real_dir_root, dir_name)
+                os.makedirs(real_dir, exist_ok=True)
+                with open(os.path.join(real_dir, "test.txt"), "w") as f:
+                    f.write("test")
+                sub_dir = os.path.join(real_dir, "sub")
+                os.makedirs(sub_dir, exist_ok=True)
+                with open(os.path.join(sub_dir, "sub.txt"), "w") as f:
+                    f.write("sub")
+            yield real_dir_root
+        finally:
+            shutil.rmtree(real_dir_root, ignore_errors=True)
+
+    def test_existing_fake_directory_is_merged_lazily(self):
+        self.filesystem.create_file(os.path.join("/", "root", "foo", "test1.txt"))
+        self.filesystem.create_dir(os.path.join("root", "baz"))
+        with self.create_real_paths() as root_dir:
+            self.filesystem.add_real_directory(root_dir, target_path="/root")
+            self.assertTrue(
+                self.filesystem.exists(os.path.join("root", "foo", "test.txt"))
+            )
+            self.assertTrue(
+                self.filesystem.exists(os.path.join("root", "foo", "test1.txt"))
+            )
+            self.assertTrue(
+                self.filesystem.exists(os.path.join("root", "bar", "sub", "sub.txt"))
+            )
+            self.assertTrue(self.filesystem.exists(os.path.join("root", "baz")))
+
+    def test_existing_fake_directory_is_merged(self):
+        self.filesystem.create_file(os.path.join("/", "root", "foo", "test1.txt"))
+        self.filesystem.create_dir(os.path.join("root", "baz"))
+        with self.create_real_paths() as root_dir:
+            self.filesystem.add_real_directory(
+                root_dir, target_path="/root", lazy_read=False
+            )
+            self.assertTrue(
+                self.filesystem.exists(os.path.join("root", "foo", "test.txt"))
+            )
+            self.assertTrue(
+                self.filesystem.exists(os.path.join("root", "foo", "test1.txt"))
+            )
+            self.assertTrue(
+                self.filesystem.exists(os.path.join("root", "bar", "sub", "sub.txt"))
+            )
+            self.assertTrue(self.filesystem.exists(os.path.join("root", "baz")))
+
+    def test_fake_files_cannot_be_overwritten(self):
+        self.filesystem.create_file(os.path.join("/", "root", "foo", "test.txt"))
+        with self.create_real_paths() as root_dir:
+            with self.raises_os_error(errno.EEXIST):
+                self.filesystem.add_real_directory(root_dir, target_path="/root")
+
+    def test_cannot_overwrite_file_with_dir(self):
+        self.filesystem.create_file(os.path.join("/", "root", "foo"))
+        with self.create_real_paths() as root_dir:
+            with self.raises_os_error(errno.ENOTDIR):
+                self.filesystem.add_real_directory(root_dir, target_path="/root/")
+
+    def test_cannot_overwrite_symlink_with_dir(self):
+        self.filesystem.create_symlink(
+            os.path.join("/", "root", "foo"), os.path.join("/", "root", "link")
+        )
+        with self.create_real_paths() as root_dir:
+            with self.raises_os_error(errno.EEXIST):
+                self.filesystem.add_real_directory(root_dir, target_path="/root/")
+
+    def test_symlink_is_merged(self):
+        self.skip_if_symlink_not_supported(force_real_fs=True)
+        self.filesystem.create_dir(os.path.join("/", "root", "foo"))
+        with self.create_real_paths() as root_dir:
+            link_path = os.path.join(root_dir, "link.txt")
+            target_path = os.path.join("foo", "sub", "sub.txt")
+            os.symlink(target_path, link_path)
+            self.filesystem.add_real_directory(root_dir, target_path="/root")
+            fake_link_path = os.path.join("/", "root", "link.txt")
+            self.assertTrue(self.filesystem.exists(fake_link_path))
+            self.assertTrue(self.filesystem.islink(fake_link_path))
 
     def check_fake_file_stat(self, fake_file, real_file_path, target_path=None):
         if target_path is None or target_path == real_file_path:
@@ -2366,11 +2446,6 @@ class RealFileSystemAccessTest(RealFsTestCase):
                 self.filesystem.exists("/path/fixtures/symlink_file_relative")
             )
 
-    def test_add_existing_real_directory_tree_to_existing_path(self):
-        self.filesystem.create_dir("/foo/bar")
-        with self.raises_os_error(errno.EEXIST):
-            self.filesystem.add_real_directory(self.root_path, target_path="/foo/bar")
-
     def test_add_existing_real_directory_tree_to_other_path(self):
         self.filesystem.add_real_directory(self.root_path, target_path="/foo/bar")
         self.assertFalse(
@@ -2420,7 +2495,7 @@ class RealFileSystemAccessTest(RealFsTestCase):
         self.filesystem.set_disk_usage(disk_size, real_dir_path)
         self.filesystem.add_real_directory(real_dir_path)
 
-        # the directory contents have not been read, the the disk usage
+        # the directory contents have not been read, the disk usage
         # has not changed
         self.assertEqual(disk_size, self.filesystem.get_disk_usage(real_dir_path).free)
         # checking for existence shall read the directory contents
