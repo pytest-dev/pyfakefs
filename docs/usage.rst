@@ -726,7 +726,9 @@ files are never changed.
 
 ``add_real_file()``, ``add_real_directory()`` and ``add_real_symlink()`` also
 allow you to map a file or a directory tree into another location in the
-fake filesystem via the argument ``target_path``.
+fake filesystem via the argument ``target_path``. If the target directory already exists
+in the fake filesystem, the directory contents are merged. If a file in the fake filesystem
+would be overwritten by a file from the real filesystem, an exception is raised.
 
 .. code:: python
 

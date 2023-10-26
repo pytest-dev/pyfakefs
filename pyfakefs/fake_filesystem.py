@@ -2232,6 +2232,8 @@ class FakeFilesystem:
         :py:class:`FakeDirectory<pyfakefs.fake_file.FakeDirectory>` object.
         Add entries in the fake directory corresponding to
         the entries in the real directory.  Symlinks are supported.
+        If the target directory already exists in the fake filesystem, the directory
+        contents are merged. Overwriting existing files is not allowed.
 
         Args:
             source_path: The path to the existing directory.
@@ -2254,49 +2256,78 @@ class FakeFilesystem:
             :py:class:`FakeDirectory<pyfakefs.fake_file.FakeDirectory>` object.
 
         Raises:
-            OSError: if the directory does not exist in the real file system.
-            OSError: if the directory already exists in the fake file system.
+            OSError: if the directory does not exist in the real filesystem.
+            OSError: if a file or link exists in the fake filesystem where a real
+                file or directory shall be mapped.
         """
-        source_path_str = make_string_path(source_path)  # TODO: add test
+        source_path_str = make_string_path(source_path)
         source_path_str = self._path_without_trailing_separators(source_path_str)
         if not os.path.exists(source_path_str):
             self.raise_os_error(errno.ENOENT, source_path_str)
         target_path_str = make_string_path(target_path or source_path_str)
+
+        # get rid of inconsistencies between real and fake path separators
+        if os.altsep is not None:
+            target_path_str = os.path.normpath(target_path_str)
+        if os.sep != self.path_separator:
+            target_path_str = target_path_str.replace(os.sep, self.path_separator)
+
         self._auto_mount_drive_if_needed(target_path_str)
-        new_dir: FakeDirectory
         if lazy_read:
-            parent_path = os.path.split(target_path_str)[0]
-            if self.exists(parent_path):
-                parent_dir = self.get_object(parent_path)
-            else:
-                parent_dir = self.create_dir(parent_path)
-            new_dir = FakeDirectoryFromRealDirectory(
-                source_path_str, self, read_only, target_path_str
+            self._create_fake_from_real_dir_lazily(
+                source_path_str, target_path_str, read_only
             )
-            parent_dir.add_entry(new_dir)
         else:
-            new_dir = self.create_dir(target_path_str)
-            for base, _, files in os.walk(source_path_str):
-                new_base = os.path.join(
-                    new_dir.path,  # type: ignore[arg-type]
-                    os.path.relpath(base, source_path_str),
-                )
-                for fileEntry in os.listdir(base):
-                    abs_fileEntry = os.path.join(base, fileEntry)
+            self._create_fake_from_real_dir(source_path_str, target_path_str, read_only)
+        return cast(FakeDirectory, self.get_object(target_path_str))
 
-                    if not os.path.islink(abs_fileEntry):
-                        continue
-
-                    self.add_real_symlink(
-                        abs_fileEntry, os.path.join(new_base, fileEntry)
-                    )
-                for fileEntry in files:
-                    path = os.path.join(base, fileEntry)
-                    if os.path.islink(path):
-                        continue
+    def _create_fake_from_real_dir(self, source_path_str, target_path_str, read_only):
+        if not self.exists(target_path_str):
+            self.create_dir(target_path_str)
+        for base, _, files in os.walk(source_path_str):
+            new_base = os.path.join(
+                target_path_str,
+                os.path.relpath(base, source_path_str),
+            )
+            for file_entry in os.listdir(base):
+                file_path = os.path.join(base, file_entry)
+                if os.path.islink(file_path):
+                    self.add_real_symlink(file_path, os.path.join(new_base, file_entry))
+            for file_entry in files:
+                path = os.path.join(base, file_entry)
+                if not os.path.islink(path):
                     self.add_real_file(
-                        path, read_only, os.path.join(new_base, fileEntry)
+                        path, read_only, os.path.join(new_base, file_entry)
                     )
+
+    def _create_fake_from_real_dir_lazily(
+        self, source_path_str, target_path_str, read_only
+    ):
+        if self.exists(target_path_str):
+            if not self.isdir(target_path_str):
+                raise OSError(errno.ENOTDIR, "Mapping target is not a directory")
+            for entry in os.listdir(source_path_str):
+                src_entry_path = os.path.join(source_path_str, entry)
+                target_entry_path = os.path.join(target_path_str, entry)
+                if os.path.isdir(src_entry_path):
+                    self.add_real_directory(
+                        src_entry_path, read_only, True, target_entry_path
+                    )
+                elif os.path.islink(src_entry_path):
+                    self.add_real_symlink(src_entry_path, target_entry_path)
+                elif os.path.isfile(src_entry_path):
+                    self.add_real_file(src_entry_path, read_only, target_entry_path)
+            return self.get_object(target_path_str)
+
+        parent_path = os.path.split(target_path_str)[0]
+        if self.exists(parent_path):
+            parent_dir = self.get_object(parent_path)
+        else:
+            parent_dir = self.create_dir(parent_path)
+        new_dir = FakeDirectoryFromRealDirectory(
+            source_path_str, self, read_only, target_path_str
+        )
+        parent_dir.add_entry(new_dir)
         return new_dir
 
     def add_real_paths(
@@ -2322,8 +2353,8 @@ class FakeFilesystem:
         Raises:
             OSError: if any of the files and directories in the list
                 does not exist in the real file system.
-            OSError: if any of the files and directories in the list
-                already exists in the fake file system.
+            OSError: if a file or link exists in the fake filesystem where a real
+                file or directory shall be mapped.
         """
         for path in path_list:
             if os.path.isdir(path):
