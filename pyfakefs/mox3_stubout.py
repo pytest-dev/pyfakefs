@@ -61,14 +61,9 @@ class StubOutForTesting:
         This method supports the case where attr_name is a staticmethod or a
         classmethod of obj.
 
-        Notes:
-          - If obj is an instance, then it is its class that will actually be
-            stubbed. Note that the method Set() does not do that: if obj is
-            an instance, it (and not its class) will be stubbed.
-          - The stubbing is using the builtin getattr and setattr. So, the
-            __get__ and __set__ will be called when stubbing (TODO: A better
-            idea would probably be to manipulate obj.__dict__ instead of
-            getattr() and setattr()).
+        If obj is an instance, then it is its class that will actually be
+        stubbed. Note that the method Set() does not do that: if obj is an
+        instance, it (and not its class) will be stubbed.
 
         Raises AttributeError if the attribute cannot be found.
         """
