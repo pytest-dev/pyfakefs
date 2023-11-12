@@ -3,6 +3,10 @@ The released versions correspond to PyPI releases.
 
 ## Unreleased
 
+### Fixes
+* fixes the problem that filesystem patching was still active in the pytest
+  logreport phase (see [#904](../../issues/904))
+
 ## [Version 5.3.0](https://pypi.python.org/pypi/pyfakefs/5.3.0) (2023-10-11)
 Adds official support for Python 3.12.
 
