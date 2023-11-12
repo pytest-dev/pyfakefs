@@ -628,6 +628,7 @@ class Patcher:
         self._isStale = True
         self._dyn_patcher: Optional[DynamicPatcher] = None
         self._patching = False
+        self._paused = False
 
     @classmethod
     def clear_fs_cache(cls) -> None:
@@ -898,6 +899,7 @@ class Patcher:
     def start_patching(self) -> None:
         if not self._patching:
             self._patching = True
+            self._paused = False
 
             self.patch_modules()
             self.patch_functions()
@@ -975,16 +977,21 @@ class Patcher:
         else:
             self.__class__.PATCHER = None
 
-    def stop_patching(self) -> None:
+    def stop_patching(self, temporary=False) -> None:
         if self._patching:
             self._isStale = True
             self._patching = False
+            self._paused = temporary
             if self._stubs:
                 self._stubs.smart_unset_all()
             self.unset_defaults()
             if self._dyn_patcher:
                 self._dyn_patcher.cleanup()
                 sys.meta_path.pop(0)
+
+    @property
+    def is_patching(self):
+        return self._patching
 
     def unset_defaults(self) -> None:
         for fct, idx, ft in self.FS_DEFARGS:
@@ -1003,7 +1010,7 @@ class Patcher:
         Calling pause() twice is silently ignored.
 
         """
-        self.stop_patching()
+        self.stop_patching(temporary=True)
 
     def resume(self) -> None:
         """Resume the patching of the file system modules if `pause` has
@@ -1011,7 +1018,8 @@ class Patcher:
         executed in the fake file system.
         Does nothing if patching is not paused.
         """
-        self.start_patching()
+        if self._paused:
+            self.start_patching()
 
 
 class Pause:

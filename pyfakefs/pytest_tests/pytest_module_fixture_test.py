@@ -20,7 +20,19 @@ def use_fs(fs_module):
     yield fs_module
 
 
+@pytest.fixture(autouse=True)
+def check_patching_stopped(fs):
+    # patching shall be paused at test end, even in module scope (see #904)
+    yield
+    assert not fs.patcher.is_patching
+
+
 @pytest.mark.usefixtures("fs")
-def test_fs_uses_fs_module():
+def test_fs_uses_fs_module1():
     # check that `fs` uses the same filesystem as `fs_module`
+    assert os.path.exists(os.path.join("foo", "bar"))
+
+
+def test_fs_uses_fs_module2(fs):
+    # check that testing was not stopped by the first test
     assert os.path.exists(os.path.join("foo", "bar"))
