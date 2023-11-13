@@ -71,7 +71,10 @@ class StubOutForTesting:
             not inspect.isclass(obj) and attr_name in obj.__dict__
         ):
             orig_obj = obj
-            orig_attr = obj.__dict__[attr_name]
+            if attr_name in obj.__dict__:
+                orig_attr = obj.__dict__[attr_name]
+            else:
+                orig_attr = None
 
         else:
             if not inspect.isclass(obj):
