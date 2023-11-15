@@ -1,7 +1,12 @@
 # pyfakefs Release Notes
 The released versions correspond to PyPI releases.
 
-## Unreleased
+## [Version 5.3.1](https://pypi.python.org/pypi/pyfakefs/5.3.0) (2023-11-15)
+Mostly a bugfix release.
+
+### Changes
+* changed behavior of `add_real_directory` to be able to map a real directory
+  to an existing directory in the fake filesystem (see [#901](../../issues/901))
 
 ### Fixes
 * fixes the problem that filesystem patching was still active in the pytest
@@ -14,8 +19,6 @@ Adds official support for Python 3.12.
 
 ### Changes
 * add official support for Python 3.12
-* changed behavior of `add_real_directory` to be able to map a real directory
-  to an existing directory in the fake filesystem (see #901)
 
 ### Fixes
 * removed a leftover debug print statement (see [#869](../../issues/869))
