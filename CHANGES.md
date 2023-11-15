@@ -6,7 +6,7 @@ The released versions correspond to PyPI releases.
 ### Fixes
 * fixes the problem that filesystem patching was still active in the pytest
   logreport phase (see [#904](../../issues/904))
-* Restores compatability with PyTorch 2.0 and above, as well as with other
+* Restores compatibility with PyTorch 2.0 and above, as well as with other
   classes that have custom __setattr__ methods (see [#905](../../pull/905)).
 
 ## [Version 5.3.0](https://pypi.python.org/pypi/pyfakefs/5.3.0) (2023-10-11)
