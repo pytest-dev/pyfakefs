@@ -656,7 +656,7 @@ class Patcher:
         }
         if IS_PYPY or sys.version_info >= (3, 12):
             # in PyPy and later cpython versions, the module is referenced as _io
-            self._fake_module_classes["_io"] = fake_io.FakeIoModule
+            self._fake_module_classes["_io"] = fake_io.FakeIoModule2
         if sys.platform == "win32":
             self._fake_module_classes["nt"] = fake_path.FakeNtModule
         else:

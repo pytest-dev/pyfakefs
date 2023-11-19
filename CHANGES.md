@@ -1,6 +1,11 @@
 # pyfakefs Release Notes
 The released versions correspond to PyPI releases.
 
+## Unreleased
+
+### Fixes
+* fixed a problem with patching `_io` under Python 3.12 (see [#910](../../issues/910))
+
 ## [Version 5.3.1](https://pypi.python.org/pypi/pyfakefs/5.3.0) (2023-11-15)
 Mostly a bugfix release.
 

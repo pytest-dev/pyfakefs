@@ -77,13 +77,15 @@ jobs:
         fi
       shell: bash
     - name: Install extra dependencies
-      if: ${{ matrix.python-version != '3.12-dev' && matrix.python-version != 'pypy-3.10' }}
+      if: ${{ matrix.python-version != 'pypy-3.10' }}
       run: |
         pip install -r extra_requirements.txt
+        pip install zstandard cffi  # needed to test #910
       shell: bash
     - name: Run unit tests with extra packages as non-root user
-      if: ${{ matrix.python-version != '3.12-dev' && matrix.python-version != 'pypy-3.10' }}
+      if: ${{ matrix.python-version != 'pypy-3.10' }}
       run: |
+        export PYTHON_ZSTANDARD_IMPORT_POLICY=cffi  # needed to test #910
         python -m pyfakefs.tests.all_tests
       shell: bash
     - name: Run performance tests
