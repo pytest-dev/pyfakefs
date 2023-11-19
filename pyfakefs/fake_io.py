@@ -15,6 +15,7 @@
 """ Uses :py:class:`FakeIoModule` to provide a
     fake ``io`` module replacement.
 """
+import _io  # pytype: disable=import-error
 import io
 import os
 import sys
@@ -148,6 +149,18 @@ class FakeIoModule:
     def __getattr__(self, name):
         """Forwards any unfaked calls to the standard io module."""
         return getattr(self._io_module, name)
+
+
+class FakeIoModule2(FakeIoModule):
+    """Similar to ``FakeIoModule``, but fakes `_io` instead of `io`."""
+
+    def __init__(self, filesystem: "FakeFilesystem"):
+        """
+        Args:
+            filesystem: FakeFilesystem used to provide file system information.
+        """
+        super().__init__(filesystem)
+        self._io_module = _io
 
 
 if sys.platform != "win32":
