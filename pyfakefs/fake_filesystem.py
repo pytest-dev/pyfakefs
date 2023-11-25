@@ -1464,6 +1464,11 @@ class FakeFilesystem:
         if path is None:
             # file.open(None) raises TypeError, so mimic that.
             raise TypeError("Expected file system path string, received None")
+        if sys.platform == "win32" and self.os != OSType.WINDOWS:
+            path = path.replace(
+                matching_string(path, os.sep),
+                matching_string(path, self.path_separator),
+            )
         if not path or not self._valid_relative_path(path):
             # file.open('') raises OSError, so mimic that, and validate that
             # all parts of a relative path exist.
