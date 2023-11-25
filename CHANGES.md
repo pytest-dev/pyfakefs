@@ -5,6 +5,8 @@ The released versions correspond to PyPI releases.
 
 ### Fixes
 * fixed a problem with patching `_io` under Python 3.12 (see [#910](../../issues/910))
+* fixed a problem with accessing the temp path if emulating Linux under Windows
+  (see [#912](../../issues/912))
 
 ## [Version 5.3.1](https://pypi.python.org/pypi/pyfakefs/5.3.0) (2023-11-15)
 Mostly a bugfix release.

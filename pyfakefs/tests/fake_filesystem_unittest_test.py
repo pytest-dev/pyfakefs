@@ -890,6 +890,13 @@ class TestOtherFS(fake_filesystem_unittest.TestCase):
         os.chdir(folder)
         self.assertTrue(os.path.exists(str(file_path.relative_to(folder))))
 
+    @unittest.skipIf(sys.platform != "win32", "Windows-specific test")
+    def test_tempfile_access(self):
+        # regression test for #912
+        self.fs.os = OSType.LINUX
+        tmp_file = tempfile.TemporaryFile()
+        assert tmp_file
+
 
 @unittest.skipIf(sys.platform != "win32", "Windows-specific behavior")
 class TestAbsolutePathOnWindows(fake_filesystem_unittest.TestCase):
