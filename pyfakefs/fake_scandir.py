@@ -261,7 +261,7 @@ def walk(filesystem, top, topdown=True, onerror=None, followlinks=False):
             if not topdown:
                 yield top_contents
 
-    return do_walk(to_string(top), top_most=True)
+    return do_walk(make_string_path(to_string(top)), top_most=True)
 
 
 class FakeScanDirModule:

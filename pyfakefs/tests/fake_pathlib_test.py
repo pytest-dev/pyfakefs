@@ -1139,6 +1139,18 @@ class FakePathlibUsageInOsFunctionsTest(RealPathlibTestCase):
         with self.assertRaises(NotImplementedError):
             self.path(path).group()
 
+    def test_walk(self):
+        """Regression test for #915 - walk results shall be strings."""
+        base_dir = self.make_path("foo")
+        base_path = self.path(base_dir)
+        self.create_dir(base_path)
+        self.create_file(base_path / "1.txt")
+        self.create_file(base_path / "bar" / "2.txt")
+        result = list(step for step in self.os.walk(base_path))
+        assert len(result) == 2
+        assert result[0] == (base_dir, ["bar"], ["1.txt"])
+        assert result[1] == (self.os.path.join(base_dir, "bar"), [], ["2.txt"])
+
 
 class RealPathlibUsageInOsFunctionsTest(FakePathlibUsageInOsFunctionsTest):
     def use_real_fs(self):
