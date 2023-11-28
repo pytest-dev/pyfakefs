@@ -9,6 +9,8 @@ The released versions correspond to PyPI releases.
   (see [#912](../../issues/912))
 * fixed result of `os.walk` with a path-like top directory
   (see [#915](../../issues/915))
+* properly fixed the problem that filesystem patching was still active in the pytest
+  logreport phase (see [#904](../../issues/904)), the previous fix was incomplete
 
 ## [Version 5.3.1](https://pypi.python.org/pypi/pyfakefs/5.3.0) (2023-11-15)
 Mostly a bugfix release.
