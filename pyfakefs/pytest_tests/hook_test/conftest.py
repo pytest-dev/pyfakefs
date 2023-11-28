@@ -9,23 +9,17 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-import os
+from pathlib import Path
 
 import pytest
 
 
-@pytest.fixture(scope="module", autouse=True)
-def use_fs(fs_module):
-    fs_module.create_file(os.path.join("foo", "bar"))
-    yield fs_module
+# Used for testing paused patching during reporting.
 
 
-@pytest.mark.usefixtures("fs")
-def test_fs_uses_fs_module1():
-    # check that `fs` uses the same filesystem as `fs_module`
-    assert os.path.exists(os.path.join("foo", "bar"))
-
-
-def test_fs_uses_fs_module2(fs):
-    # check that testing was not stopped by the first test
-    assert os.path.exists(os.path.join("foo", "bar"))
+@pytest.hookimpl
+def pytest_runtest_logreport(report):
+    if report.when == "call":
+        report_path = Path(__file__).parent / "report.txt"
+        with open(report_path, "w") as f:
+            f.write("Test")

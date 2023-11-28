@@ -82,14 +82,12 @@ def pytest_sessionfinish(session, exitstatus):
     Patcher.clear_fs_cache()
 
 
-@pytest.hookimpl(tryfirst=True)
+@pytest.hookimpl(hookwrapper=True, tryfirst=True)
 def pytest_runtest_logreport(report):
     """Make sure that patching is not active during reporting."""
-    if report.when == "call" and Patcher.PATCHER is not None:
+    pause = Patcher.PATCHER is not None and report.when == "call"
+    if pause:
         Patcher.PATCHER.pause()
-
-
-def pytest_runtest_call(item):
-    """Resume paused patching before test start."""
-    if Patcher.PATCHER is not None:
+    yield
+    if pause:
         Patcher.PATCHER.resume()
