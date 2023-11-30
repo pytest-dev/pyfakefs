@@ -1,7 +1,8 @@
 # pyfakefs Release Notes
 The released versions correspond to PyPI releases.
 
-## Unreleased
+## [Version 5.3.2](https://pypi.python.org/pypi/pyfakefs/5.3.2) (2023-11-30)
+Bugfix release.
 
 ### Fixes
 * fixed a problem with patching `_io` under Python 3.12 (see [#910](../../issues/910))
@@ -12,7 +13,7 @@ The released versions correspond to PyPI releases.
 * properly fixed the problem that filesystem patching was still active in the pytest
   logreport phase (see [#904](../../issues/904)), the previous fix was incomplete
 
-## [Version 5.3.1](https://pypi.python.org/pypi/pyfakefs/5.3.0) (2023-11-15)
+## [Version 5.3.1](https://pypi.python.org/pypi/pyfakefs/5.3.1) (2023-11-15)
 Mostly a bugfix release.
 
 ### Changes
@@ -39,7 +40,7 @@ Adds official support for Python 3.12.
 * adapt patching `io.open` and `io.open_code` to work with Python 3.12
   (see [#836](../../issues/836) and [#892](../../issues/892))
 
-## [Version 5.2.3](https://pypi.python.org/pypi/pyfakefs/5.2.3) (2023-08-18)
+## [Version 5.2.4](https://pypi.python.org/pypi/pyfakefs/5.2.4) (2023-08-18)
 Fixes a rare problem on pytest shutdown.
 
 ### Fixes
@@ -329,7 +330,7 @@ This is a bugfix release.
 * skip tests failing with ASCII locale
   (see [#623](../../issues/623))
 
-## [Version 4.5.0](https://pypi.python.org/pypi/pyfakefs/4.5.0) (2021-06-04)
+## Version 4.5.0 (2021-06-04)
 Adds some support for Python 3.10 and basic type checking.
 
 _Note_: This version has been yanked from PyPI as it erroneously allowed
@@ -436,7 +437,7 @@ release.
     `patch_default_args` has been added that switches this behavior on
     (see [#567](../../issues/567)).
   * Added performance improvements in the test setup, including caching the
-    the unpatched modules
+    unpatched modules
 
 ## [Version 4.2.1](https://pypi.python.org/pypi/pyfakefs/4.2.1) (2020-11-02)
 
@@ -507,7 +508,7 @@ installing them under Python 2.
 #### Fixes
   * Do not build for Python 2 (see [#524](../../issues/524))
 
-## [Version 4.0.1](https://pypi.python.org/pypi/pyfakefs/4.0.1) (2020-03-03)
+## Version 4.0.1 (2020-03-03)
 
 This as a bug fix release for a regression bug.
 
@@ -517,7 +518,7 @@ installation under Python 2. This has been fixed in version 4.0.2.
 #### Fixes
   * Avoid exception if using `flask-restx` (see [#523](../../issues/523))
 
-## [Version 4.0.0](https://pypi.python.org/pypi/pyfakefs/4.0.0) (2020-03-03)
+## Version 4.0.0 (2020-03-03)
 pyfakefs 4.0.0 drops support for Python 2.7. If you still need
 Python 2.7, you can continue to use pyfakefs 3.7.x.
 
