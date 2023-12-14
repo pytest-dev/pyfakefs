@@ -1,6 +1,11 @@
 # pyfakefs Release Notes
 The released versions correspond to PyPI releases.
 
+## Unreleased
+
+### Fixes
+* fixes handling of unhashable modules which cannot be cached (see [#923](../../issues/923))
+
 ## [Version 5.3.2](https://pypi.python.org/pypi/pyfakefs/5.3.2) (2023-11-30)
 Bugfix release.
 

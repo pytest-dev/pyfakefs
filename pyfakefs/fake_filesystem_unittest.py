@@ -805,7 +805,11 @@ class Patcher:
                 # see https://github.com/pytest-dev/py/issues/73
                 # and any other exception triggered by inspect.ismodule
                 if self.use_cache:
-                    self.__class__.CACHED_MODULES.add(module)
+                    try:
+                        self.__class__.CACHED_MODULES.add(module)
+                    except TypeError:
+                        # unhashable module - don't cache it
+                        pass
                 continue
             skipped = module in self.SKIPMODULES or any(
                 [sn.startswith(module.__name__) for sn in self._skip_names]
