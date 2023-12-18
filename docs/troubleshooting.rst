@@ -129,10 +129,21 @@ The test code tries to access files in the real filesystem
 ----------------------------------------------------------
 The loading of the actual Python code from the real filesystem does not use
 the filesystem functions that ``pyfakefs`` patches, but in some cases it may
-access other files in the packages. An example is loading timezone information
+access other files in the packages. An example is the ``pytz`` module, which is loading timezone information
 from configuration files. In these cases, you have to map the respective files
 or directories from the real into the fake filesystem as described in
-:ref:`real_fs_access`.
+:ref:`real_fs_access`. For the timezone example, this could look like the following::
+
+    from pathlib import Path
+    import pytz
+    from pyfakefs.fake_filesystem_unittest import TestCase
+
+
+    class ExampleTestCase(TestCase):
+        def setUp(self):
+            self.setUpPyfakefs()
+            info_dir = Path(pytz.__file__).parent / "zoneinfo"
+            self.fs.add_real_directory(info_dir)
 
 If you are using Django, various dependencies may expect both the project
 directory and the ``site-packages`` installation to exist in the fake filesystem.
