@@ -5046,7 +5046,7 @@ class FakeScandirTest(FakeOsModuleTestBase):
             self.create_dir(self.linked_dir_path)
             self.create_file(
                 self.linked_file_path, contents=b"a" * self.LINKED_FILE_SIZE
-            ),
+            )
             self.create_symlink(self.dir_link_path, self.linked_dir_path)
             self.create_symlink(self.file_link_path, self.linked_file_path)
             self.create_symlink(self.dir_rel_link_path, self.rel_linked_dir_path)
