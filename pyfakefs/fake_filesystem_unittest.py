@@ -104,7 +104,7 @@ def patchfs(
     use_known_patches: bool = True,
     patch_open_code: PatchMode = PatchMode.OFF,
     patch_default_args: bool = False,
-    use_cache: bool = True
+    use_cache: bool = True,
 ) -> Callable:
     """Convenience decorator to use patcher with additional parameters in a
     test function.
@@ -1091,12 +1091,14 @@ class DynamicPatcher(MetaPathFinder, Loader):
         reloaded_module_names = [
             module.__name__ for module in self._patcher.modules_to_reload
         ]
-        # Dereference all modules loaded during the test so they will reload on
-        # the next use, ensuring that no faked modules are referenced after the
-        # test.
+        # Reload all modules loaded during the test, ensuring that
+        # no faked modules are referenced after the test.
         for name in self._loaded_module_names:
             if name in sys.modules and name not in reloaded_module_names:
-                del sys.modules[name]
+                try:
+                    reload(sys.modules[name])
+                except Exception:
+                    del sys.modules[name]
 
     def needs_patch(self, name: str) -> bool:
         """Check if the module with the given name shall be replaced."""
