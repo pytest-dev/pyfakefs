@@ -105,6 +105,7 @@ def patchfs(
     patch_open_code: PatchMode = PatchMode.OFF,
     patch_default_args: bool = False,
     use_cache: bool = True,
+    use_dynamic_patch: bool = True,
 ) -> Callable:
     """Convenience decorator to use patcher with additional parameters in a
     test function.
@@ -132,6 +133,7 @@ def patchfs(
                 patch_open_code=patch_open_code,
                 patch_default_args=patch_default_args,
                 use_cache=use_cache,
+                use_dynamic_patch=use_dynamic_patch,
             ) as p:
                 args = list(args)
                 args.append(p.fs)
@@ -167,6 +169,7 @@ def load_doctests(
     use_known_patches: bool = True,
     patch_open_code: PatchMode = PatchMode.OFF,
     patch_default_args: bool = False,
+    use_dynamic_patch: bool = True,
 ) -> TestSuite:  # pylint:disable=unused-argument
     """Load the doctest tests for the specified module into unittest.
         Args:
@@ -186,6 +189,7 @@ def load_doctests(
             use_known_patches=use_known_patches,
             patch_open_code=patch_open_code,
             patch_default_args=patch_default_args,
+            use_dynamic_patch=use_dynamic_patch,
             is_doc_test=True,
         )
     assert Patcher.DOC_PATCHER is not None
@@ -312,6 +316,7 @@ class TestCaseMixin:
         patch_open_code: PatchMode = PatchMode.OFF,
         patch_default_args: bool = False,
         use_cache: bool = True,
+        use_dynamic_patch: bool = True,
     ) -> None:
         """Similar to :py:func:`setUpPyfakefs`, but as a class method that
         can be used in `setUpClass` instead of in `setUp`.
@@ -349,6 +354,7 @@ class TestCaseMixin:
             patch_open_code=patch_open_code,
             patch_default_args=patch_default_args,
             use_cache=use_cache,
+            use_dynamic_patch=use_dynamic_patch,
         )
 
         Patcher.PATCHER.setUp()
@@ -513,6 +519,7 @@ class Patcher:
         patch_open_code: PatchMode = PatchMode.OFF,
         patch_default_args: bool = False,
         use_cache: bool = True,
+        use_dynamic_patch: bool = True,
         is_doc_test: bool = False,
     ) -> None:
         """
@@ -545,6 +552,9 @@ class Patcher:
                 cached between tests for performance reasons. As this is a new
                 feature, this argument allows to turn it off in case it
                 causes any problems.
+           use_dynamic_patch: If `True`, dynamic patching after setup is used
+                (for example for modules loaded locally inside of functions).
+                Can be switched off if it causes unwanted side effects.
         """
         self.is_doc_test = is_doc_test
         if is_doc_test:
@@ -582,6 +592,7 @@ class Patcher:
             self.modules_to_reload.extend(modules_to_reload)
         self.patch_default_args = patch_default_args
         self.use_cache = use_cache
+        self.use_dynamic_patch = use_dynamic_patch
 
         if use_known_patches:
             from pyfakefs.patched_packages import (
@@ -914,6 +925,9 @@ class Patcher:
             for module in self.modules_to_reload:
                 if sys.modules.get(module.__name__) is module:
                     reload(module)
+            if not self.use_dynamic_patch:
+                self._dyn_patcher.cleanup()
+                sys.meta_path.pop(0)
 
     def patch_functions(self) -> None:
         assert self._stubs is not None
@@ -989,7 +1003,7 @@ class Patcher:
             if self._stubs:
                 self._stubs.smart_unset_all()
             self.unset_defaults()
-            if self._dyn_patcher:
+            if self.use_dynamic_patch and self._dyn_patcher:
                 self._dyn_patcher.cleanup()
                 sys.meta_path.pop(0)
 
