@@ -7,6 +7,8 @@ The released versions correspond to PyPI releases.
 * fixes handling of unhashable modules which cannot be cached (see [#923](../../issues/923))
 * reload modules loaded by the dynamic patcher instead of removing them - sometimes they may
   not be reloaded automatically (see [#932](../../issues/932))
+* add back argument `use_dynamic_patch` as a fallback for similar problems
+
 
 ## [Version 5.3.2](https://pypi.python.org/pypi/pyfakefs/5.3.2) (2023-11-30)
 Bugfix release.

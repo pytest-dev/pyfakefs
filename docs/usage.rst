@@ -657,6 +657,13 @@ If you want to clear the cache just for a specific test instead, you can call
       fs.clear_cache()
       ...
 
+use_dynamic_patch
+~~~~~~~~~~~~~~~~~
+If ``True`` (the default), dynamic patching after setup is used (for example
+for modules loaded locally inside of functions).
+Can be switched off if it causes unwanted side effects, which happened at least in
+once instance while testing a django project.
+
 
 .. _convenience_methods:
 
