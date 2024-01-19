@@ -269,6 +269,7 @@ class TestCaseMixin:
         patch_open_code: PatchMode = PatchMode.OFF,
         patch_default_args: bool = False,
         use_cache: bool = True,
+        use_dynamic_patch: bool = True,
     ) -> None:
         """Bind the file-related modules to the :py:class:`pyfakefs` fake file
         system instead of the real file system.  Also bind the fake `open()`
@@ -300,6 +301,7 @@ class TestCaseMixin:
             patch_open_code=patch_open_code,
             patch_default_args=patch_default_args,
             use_cache=use_cache,
+            use_dynamic_patch=use_dynamic_patch,
         )
 
         self._patcher.setUp()

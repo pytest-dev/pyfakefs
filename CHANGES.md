@@ -1,7 +1,7 @@
 # pyfakefs Release Notes
 The released versions correspond to PyPI releases.
 
-## [Version 5.3.3](https://pypi.python.org/pypi/pyfakefs/5.3.3) (2024-01-19)
+## [Version 5.3.4](https://pypi.python.org/pypi/pyfakefs/5.3.4) (2024-01-19)
 Bugfix release.
 
 ### Fixes
