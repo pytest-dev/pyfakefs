@@ -1,6 +1,11 @@
 # pyfakefs Release Notes
 The released versions correspond to PyPI releases.
 
+## Unreleased
+
+### Packaging
+* include `tox.ini` and a few more files into the source distribution (see [#937](../../issues/937))
+
 ## [Version 5.3.4](https://pypi.python.org/pypi/pyfakefs/5.3.4) (2024-01-19)
 Bugfix release.
 
