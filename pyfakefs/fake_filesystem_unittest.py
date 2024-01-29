@@ -47,6 +47,7 @@ import shutil
 import sys
 import tempfile
 import tokenize
+from enum import Enum
 from importlib.abc import Loader, MetaPathFinder
 from types import ModuleType, TracebackType, FunctionType
 from typing import (
@@ -94,6 +95,14 @@ OS_MODULE = "nt" if sys.platform == "win32" else "posix"
 PATH_MODULE = "ntpath" if sys.platform == "win32" else "posixpath"
 
 
+class ModuleCleanupMode(Enum):
+    """Defines the behavior of module cleanup on dynamic patcher shutdown."""
+
+    AUTO = 1
+    DELETE = 2
+    RELOAD = 3
+
+
 def patchfs(
     _func: Optional[Callable] = None,
     *,
@@ -106,6 +115,7 @@ def patchfs(
     patch_default_args: bool = False,
     use_cache: bool = True,
     use_dynamic_patch: bool = True,
+    module_cleanup_mode: ModuleCleanupMode = ModuleCleanupMode.AUTO,
 ) -> Callable:
     """Convenience decorator to use patcher with additional parameters in a
     test function.
@@ -134,6 +144,7 @@ def patchfs(
                 patch_default_args=patch_default_args,
                 use_cache=use_cache,
                 use_dynamic_patch=use_dynamic_patch,
+                module_cleanup_mode=module_cleanup_mode,
             ) as p:
                 args = list(args)
                 args.append(p.fs)
@@ -170,6 +181,7 @@ def load_doctests(
     patch_open_code: PatchMode = PatchMode.OFF,
     patch_default_args: bool = False,
     use_dynamic_patch: bool = True,
+    module_cleanup_mode: ModuleCleanupMode = ModuleCleanupMode.AUTO,
 ) -> TestSuite:  # pylint:disable=unused-argument
     """Load the doctest tests for the specified module into unittest.
         Args:
@@ -190,6 +202,7 @@ def load_doctests(
             patch_open_code=patch_open_code,
             patch_default_args=patch_default_args,
             use_dynamic_patch=use_dynamic_patch,
+            module_cleanup_mode=module_cleanup_mode,
             is_doc_test=True,
         )
     assert Patcher.DOC_PATCHER is not None
@@ -270,6 +283,7 @@ class TestCaseMixin:
         patch_default_args: bool = False,
         use_cache: bool = True,
         use_dynamic_patch: bool = True,
+        module_cleanup_mode: ModuleCleanupMode = ModuleCleanupMode.AUTO,
     ) -> None:
         """Bind the file-related modules to the :py:class:`pyfakefs` fake file
         system instead of the real file system.  Also bind the fake `open()`
@@ -302,6 +316,7 @@ class TestCaseMixin:
             patch_default_args=patch_default_args,
             use_cache=use_cache,
             use_dynamic_patch=use_dynamic_patch,
+            module_cleanup_mode=module_cleanup_mode,
         )
 
         self._patcher.setUp()
@@ -319,6 +334,7 @@ class TestCaseMixin:
         patch_default_args: bool = False,
         use_cache: bool = True,
         use_dynamic_patch: bool = True,
+        module_cleanup_mode: ModuleCleanupMode = ModuleCleanupMode.AUTO,
     ) -> None:
         """Similar to :py:func:`setUpPyfakefs`, but as a class method that
         can be used in `setUpClass` instead of in `setUp`.
@@ -357,6 +373,7 @@ class TestCaseMixin:
             patch_default_args=patch_default_args,
             use_cache=use_cache,
             use_dynamic_patch=use_dynamic_patch,
+            module_cleanup_mode=module_cleanup_mode,
         )
 
         Patcher.PATCHER.setUp()
@@ -522,6 +539,7 @@ class Patcher:
         patch_default_args: bool = False,
         use_cache: bool = True,
         use_dynamic_patch: bool = True,
+        module_cleanup_mode: ModuleCleanupMode = ModuleCleanupMode.AUTO,
         is_doc_test: bool = False,
     ) -> None:
         """
@@ -554,9 +572,14 @@ class Patcher:
                 cached between tests for performance reasons. As this is a new
                 feature, this argument allows to turn it off in case it
                 causes any problems.
-           use_dynamic_patch: If `True`, dynamic patching after setup is used
+            use_dynamic_patch: If `True`, dynamic patching after setup is used
                 (for example for modules loaded locally inside of functions).
                 Can be switched off if it causes unwanted side effects.
+            module_cleanup_mode: Defines how the modules in the dynamic patcher are
+                cleaned up after the test. The default (AUTO) currently depends
+                on the availability of the `django` module, DELETE will delete
+                all dynamically loaded modules, RELOAD will reload them.
+                This option is subject to change in later versions.
         """
         self.is_doc_test = is_doc_test
         if is_doc_test:
@@ -595,6 +618,7 @@ class Patcher:
         self.patch_default_args = patch_default_args
         self.use_cache = use_cache
         self.use_dynamic_patch = use_dynamic_patch
+        self.module_cleanup_mode = module_cleanup_mode
 
         if use_known_patches:
             from pyfakefs.patched_packages import (
@@ -928,7 +952,7 @@ class Patcher:
                 if sys.modules.get(module.__name__) is module:
                     reload(module)
             if not self.use_dynamic_patch:
-                self._dyn_patcher.cleanup()
+                self._dyn_patcher.cleanup(ModuleCleanupMode.DELETE)
                 sys.meta_path.pop(0)
 
     def patch_functions(self) -> None:
@@ -1006,7 +1030,7 @@ class Patcher:
                 self._stubs.smart_unset_all()
             self.unset_defaults()
             if self.use_dynamic_patch and self._dyn_patcher:
-                self._dyn_patcher.cleanup()
+                self._dyn_patcher.cleanup(self.module_cleanup_mode)
                 sys.meta_path.pop(0)
 
     @property
@@ -1098,7 +1122,7 @@ class DynamicPatcher(MetaPathFinder, Loader):
         for name, module in self.modules.items():
             sys.modules[name] = module
 
-    def cleanup(self) -> None:
+    def cleanup(self, cleanup_mode: ModuleCleanupMode) -> None:
         for module_name in self.sysmodules:
             sys.modules[module_name] = self.sysmodules[module_name]
         for module in self._patcher.modules_to_reload:
@@ -1107,13 +1131,24 @@ class DynamicPatcher(MetaPathFinder, Loader):
         reloaded_module_names = [
             module.__name__ for module in self._patcher.modules_to_reload
         ]
-        # Reload all modules loaded during the test, ensuring that
-        # no faked modules are referenced after the test.
+        # Delete all modules loaded during the test, ensuring that
+        # they are reloaded after the test.
+        # If cleanup_mode is set to RELOAD, or it is AUTO and django is imported,
+        # reload the modules instead - this is a workaround related to some internal
+        # module caching by django, that will likely change in the future.
+        if cleanup_mode == ModuleCleanupMode.AUTO:
+            if "django" in sys.modules:
+                cleanup_mode = ModuleCleanupMode.RELOAD
+            else:
+                cleanup_mode = ModuleCleanupMode.DELETE
         for name in self._loaded_module_names:
             if name in sys.modules and name not in reloaded_module_names:
-                try:
-                    reload(sys.modules[name])
-                except Exception:
+                if cleanup_mode == ModuleCleanupMode.RELOAD:
+                    try:
+                        reload(sys.modules[name])
+                    except Exception:
+                        del sys.modules[name]
+                else:
                     del sys.modules[name]
 
     def needs_patch(self, name: str) -> bool:
