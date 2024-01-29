@@ -664,6 +664,20 @@ for modules loaded locally inside of functions).
 Can be switched off if it causes unwanted side effects, which happened at least in
 once instance while testing a django project.
 
+module_cleanup_mode
+~~~~~~~~~~~~~~~~~~~
+This is a setting that works around a potential problem with the cleanup of
+dynamically loaded modules (e.g. modules loaded after the test has started),
+known to occur with `django` applications.
+The setting is subject to change or removal in future versions, provided a better
+solution for the problem is found.
+
+The setting defines how the dynamically loaded modules are cleaned up after the test
+to ensure that no patched modules can be used after the test has finished.
+The default (AUTO) currently depends on the availability of the `django` module,
+DELETE will delete all dynamically loaded modules and RELOAD will reload them.
+Under some rare conditions, changing this setting may help to avoid problems related
+to incorrect test cleanup.
 
 .. _convenience_methods:
 

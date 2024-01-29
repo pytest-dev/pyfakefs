@@ -3,6 +3,11 @@ The released versions correspond to PyPI releases.
 
 ## Unreleased
 
+### Fixes
+* Fixes a regression due to the changed behavior of the dynamic patcher cleanup (see [#939](../../issues/939)).
+  The change is now by default only made if the `django` module is loaded, and the behavior can
+  be changed using the new argument `module_cleanup_mode`.
+
 ### Packaging
 * include `tox.ini` and a few more files into the source distribution (see [#937](../../issues/937))
 
