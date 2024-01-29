@@ -1,4 +1,5 @@
 """Tests that the pytest plugin properly provides the "fs" fixture"""
+
 import os
 import tempfile
 

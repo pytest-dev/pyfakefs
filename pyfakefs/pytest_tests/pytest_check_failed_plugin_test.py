@@ -2,6 +2,7 @@
 Uses the output from running pytest with pytest_plugin_failing_helper.py.
 Regression test for #381.
 """
+
 import os
 
 import pytest

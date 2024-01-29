@@ -368,14 +368,12 @@ class FakePathModule:
     @overload
     def _join_real_path(
         self, path: str, rest: str, seen: Dict[str, Optional[str]]
-    ) -> Tuple[str, bool]:
-        ...
+    ) -> Tuple[str, bool]: ...
 
     @overload
     def _join_real_path(
         self, path: bytes, rest: bytes, seen: Dict[bytes, Optional[bytes]]
-    ) -> Tuple[bytes, bool]:
-        ...
+    ) -> Tuple[bytes, bool]: ...
 
     def _join_real_path(
         self, path: AnyStr, rest: AnyStr, seen: Dict[AnyStr, Optional[AnyStr]]
