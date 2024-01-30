@@ -1,7 +1,8 @@
 # pyfakefs Release Notes
 The released versions correspond to PyPI releases.
 
-## Unreleased
+## [Version 5.3.5](https://pypi.python.org/pypi/pyfakefs/5.3.5) (2024-01-30)
+Fixes a regression.
 
 ### Fixes
 * Fixes a regression due to the changed behavior of the dynamic patcher cleanup (see [#939](../../issues/939)).
