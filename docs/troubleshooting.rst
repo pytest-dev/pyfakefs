@@ -273,6 +273,10 @@ regardless of the path they point to:
 Generally, mixing objects in the real filesystem and the fake filesystem
 is problematic and better avoided.
 
+.. note:: This problem only happens in Python versions up to 3.10. In Python 3.11,
+  `pathlib` has been restructured so that a pathlib path no longer contains a reference
+  to the original filesystem accessor, and it can safely be used in the fake filesystem.
+
 
 .. _`multiprocessing`: https://docs.python.org/3/library/multiprocessing.html
 .. _`subprocess`: https://docs.python.org/3/library/subprocess.html
