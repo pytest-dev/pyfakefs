@@ -145,6 +145,8 @@ or directories from the real into the fake filesystem as described in
             info_dir = Path(pytz.__file__).parent / "zoneinfo"
             self.fs.add_real_directory(info_dir)
 
+.. note:: In newer django versions, `tzdata` is used instead of `pytz`, but the usage will be the same.
+
 If you are using Django, various dependencies may expect both the project
 directory and the ``site-packages`` installation to exist in the fake filesystem.
 
