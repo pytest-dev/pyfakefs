@@ -18,9 +18,15 @@ import sys
 
 try:
     import pandas as pd
-    import pandas.io.parsers as parsers
+
+    try:
+        import pandas.io.parsers as parsers
+    except ImportError:
+        parsers = None
 except ImportError:
+    pd = None
     parsers = None
+
 
 try:
     import xlrd
@@ -55,6 +61,15 @@ def get_classes_to_patch():
     if patch_pandas:
         classes_to_patch["TextFileReader"] = ["pandas.io.parsers"]
     return classes_to_patch
+
+
+def get_cleanup_handlers():
+    handlers = {}
+    if pd is not None:
+        handlers["pandas.core.arrays.arrow.extension_types"] = (
+            handle_extension_type_cleanup
+        )
+    return handlers
 
 
 def get_fake_module_classes():
@@ -132,6 +147,23 @@ if patch_pandas:
         def __getattr__(self, name):
             """Forwards any unfaked calls to the standard xlrd module."""
             return getattr(self._parsers_module, name)
+
+
+if pd is not None:
+
+    def handle_extension_type_cleanup():
+        # the module registers two extension types on load
+        # on reload it raises if the extensions have not been unregistered before
+        try:
+            import pyarrow
+
+            # the code to register these types has been in the module
+            # since it was created (in pandas 1.5)
+            pyarrow.unregister_extension_type("pandas.interval")
+            pyarrow.unregister_extension_type("pandas.period")
+        except ImportError:
+            pass
+        return False
 
 
 if locks is not None:
