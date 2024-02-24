@@ -1,6 +1,12 @@
 # pyfakefs Release Notes
 The released versions correspond to PyPI releases.
 
+## Unreleased
+
+### Fixes
+* Fixed a specific problem on reloading a pandas-related module (see [#947](../../issues/947)),
+  added possibility for unload hooks for specific modules
+
 ## [Version 5.3.5](https://pypi.python.org/pypi/pyfakefs/5.3.5) (2024-01-30)
 Fixes a regression.
 

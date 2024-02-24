@@ -619,18 +619,21 @@ class Patcher:
         self.use_cache = use_cache
         self.use_dynamic_patch = use_dynamic_patch
         self.module_cleanup_mode = module_cleanup_mode
+        self.cleanup_handlers: Dict[str, Callable[[], bool]] = {}
 
         if use_known_patches:
             from pyfakefs.patched_packages import (
                 get_modules_to_patch,
                 get_classes_to_patch,
                 get_fake_module_classes,
+                get_cleanup_handlers,
             )
 
             modules_to_patch = modules_to_patch or {}
             modules_to_patch.update(get_modules_to_patch())
             self._class_modules.update(get_classes_to_patch())
             self._fake_module_classes.update(get_fake_module_classes())
+            self.cleanup_handlers.update(get_cleanup_handlers())
 
         if modules_to_patch is not None:
             for name, fake_module in modules_to_patch.items():
@@ -679,6 +682,22 @@ class Patcher:
     def clear_cache(self) -> None:
         """Clear the module cache (convenience instance method)."""
         self.__class__.clear_fs_cache()
+
+    def register_cleanup_handler(self, name: str, handler: Callable[[], bool]):
+        """Register a handler for cleaning up a module after it had been loaded by
+        the dynamic patcher. This allows to handle modules that cannot be reloaded
+        without unwanted side effects.
+
+        Args:
+            name: The fully qualified module name.
+            handler: A callable that may do any module cleanup, or do nothing
+                and return `True` in case reloading shall be prevented.
+
+        Returns:
+            `True` if no further cleanup/reload shall occur after the handler is
+                executed, `False` if the cleanup/reload shall still happen.
+        """
+        self.cleanup_handlers[name] = handler
 
     def _init_fake_module_classes(self) -> None:
         # IMPORTANT TESTING NOTE: Whenever you add a new module below, test
@@ -946,7 +965,9 @@ class Patcher:
             self.patch_functions()
             self.patch_defaults()
 
-            self._dyn_patcher = DynamicPatcher(self)
+            self._dyn_patcher = DynamicPatcher(
+                self, cleanup_handlers=self.cleanup_handlers
+            )
             sys.meta_path.insert(0, self._dyn_patcher)
             for module in self.modules_to_reload:
                 if sys.modules.get(module.__name__) is module:
@@ -1106,11 +1127,16 @@ class DynamicPatcher(MetaPathFinder, Loader):
     Implements the protocol needed for import hooks.
     """
 
-    def __init__(self, patcher: Patcher) -> None:
+    def __init__(
+        self,
+        patcher: Patcher,
+        cleanup_handlers: Optional[Dict[str, Callable[[], bool]]] = None,
+    ) -> None:
         self._patcher = patcher
         self.sysmodules = {}
         self.modules = self._patcher.fake_modules
         self._loaded_module_names: Set[str] = set()
+        self.cleanup_handlers = cleanup_handlers or {}
 
         # remove all modules that have to be patched from `sys.modules`,
         # otherwise the find_... methods will not be called
@@ -1143,6 +1169,8 @@ class DynamicPatcher(MetaPathFinder, Loader):
                 cleanup_mode = ModuleCleanupMode.DELETE
         for name in self._loaded_module_names:
             if name in sys.modules and name not in reloaded_module_names:
+                if name in self.cleanup_handlers and self.cleanup_handlers[name]():
+                    continue
                 if cleanup_mode == ModuleCleanupMode.RELOAD:
                     try:
                         reload(sys.modules[name])
