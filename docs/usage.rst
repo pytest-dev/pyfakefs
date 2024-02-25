@@ -675,23 +675,29 @@ use_dynamic_patch
 ~~~~~~~~~~~~~~~~~
 If ``True`` (the default), dynamic patching after setup is used (for example
 for modules loaded locally inside of functions).
-Can be switched off if it causes unwanted side effects, which happened at least in
-once instance while testing a django project.
+Can be switched off if it causes unwanted side effects, though that would mean that
+dynamically loaded modules are no longer patched, if they use file system functions.
 
 module_cleanup_mode
 ~~~~~~~~~~~~~~~~~~~
 This is a setting that works around a potential problem with the cleanup of
-dynamically loaded modules (e.g. modules loaded after the test has started),
-known to occur with `django` applications.
-The setting is subject to change or removal in future versions, provided a better
-solution for the problem is found.
+dynamically loaded modules (e.g. modules loaded after the test has started).
+As the original problem related to `django` has now been resolved in another way (see below),
+the setting may not be needed anymore, and is subject to removal in a future version.
 
-The setting defines how the dynamically loaded modules are cleaned up after the test
-to ensure that no patched modules can be used after the test has finished.
-The default (ModuleCleanupMode.AUTO) currently depends on the availability of the `django` module,
-DELETE will delete all dynamically loaded modules and RELOAD will reload them.
+The setting defines how the dynamically loaded modules are cleaned up after the test.
+Any dynamically loaded module is cleaned up after the test to ensure that no patched modules
+can be used after that.
+The default (`ModuleCleanupMode.AUTO`) is currently the same as `ModuleCleanupMode.DELETE`.
+`DELETE` will delete all dynamically loaded modules (so that they are reloaded the next time
+they are needed), while `RELOAD` will reload them immediately.
 Under some rare conditions, changing this setting may help to avoid problems related
 to incorrect test cleanup.
+
+Problems with unloading dynamically loaded modules may also be solved more
+specifically by registering a handler for specific modules (using `Patcher.register_cleanup_handler`),
+that will be called during the cleanup process. This is used internally
+to handle known problems with the `django` and `pandas` packages.
 
 .. _convenience_methods:
 
