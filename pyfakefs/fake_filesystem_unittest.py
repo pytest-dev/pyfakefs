@@ -619,7 +619,7 @@ class Patcher:
         self.use_cache = use_cache
         self.use_dynamic_patch = use_dynamic_patch
         self.module_cleanup_mode = module_cleanup_mode
-        self.cleanup_handlers: Dict[str, Callable[[], bool]] = {}
+        self.cleanup_handlers: Dict[str, Callable[[str], bool]] = {}
 
         if use_known_patches:
             from pyfakefs.patched_packages import (
@@ -683,7 +683,7 @@ class Patcher:
         """Clear the module cache (convenience instance method)."""
         self.__class__.clear_fs_cache()
 
-    def register_cleanup_handler(self, name: str, handler: Callable[[], bool]):
+    def register_cleanup_handler(self, name: str, handler: Callable[[str], bool]):
         """Register a handler for cleaning up a module after it had been loaded by
         the dynamic patcher. This allows to handle modules that cannot be reloaded
         without unwanted side effects.
@@ -965,9 +965,7 @@ class Patcher:
             self.patch_functions()
             self.patch_defaults()
 
-            self._dyn_patcher = DynamicPatcher(
-                self, cleanup_handlers=self.cleanup_handlers
-            )
+            self._dyn_patcher = DynamicPatcher(self)
             sys.meta_path.insert(0, self._dyn_patcher)
             for module in self.modules_to_reload:
                 if sys.modules.get(module.__name__) is module:
@@ -1127,16 +1125,12 @@ class DynamicPatcher(MetaPathFinder, Loader):
     Implements the protocol needed for import hooks.
     """
 
-    def __init__(
-        self,
-        patcher: Patcher,
-        cleanup_handlers: Optional[Dict[str, Callable[[], bool]]] = None,
-    ) -> None:
+    def __init__(self, patcher: Patcher) -> None:
         self._patcher = patcher
         self.sysmodules = {}
         self.modules = self._patcher.fake_modules
         self._loaded_module_names: Set[str] = set()
-        self.cleanup_handlers = cleanup_handlers or {}
+        self.cleanup_handlers = patcher.cleanup_handlers
 
         # remove all modules that have to be patched from `sys.modules`,
         # otherwise the find_... methods will not be called
@@ -1159,17 +1153,13 @@ class DynamicPatcher(MetaPathFinder, Loader):
         ]
         # Delete all modules loaded during the test, ensuring that
         # they are reloaded after the test.
-        # If cleanup_mode is set to RELOAD, or it is AUTO and django is imported,
-        # reload the modules instead - this is a workaround related to some internal
-        # module caching by django, that will likely change in the future.
+        # If cleanup_mode is set to RELOAD, reload the modules instead.
+        # This is probably not needed anymore with the cleanup handlers in place.
         if cleanup_mode == ModuleCleanupMode.AUTO:
-            if "django" in sys.modules:
-                cleanup_mode = ModuleCleanupMode.RELOAD
-            else:
-                cleanup_mode = ModuleCleanupMode.DELETE
+            cleanup_mode = ModuleCleanupMode.DELETE
         for name in self._loaded_module_names:
             if name in sys.modules and name not in reloaded_module_names:
-                if name in self.cleanup_handlers and self.cleanup_handlers[name]():
+                if name in self.cleanup_handlers and self.cleanup_handlers[name](name):
                     continue
                 if cleanup_mode == ModuleCleanupMode.RELOAD:
                     try:
