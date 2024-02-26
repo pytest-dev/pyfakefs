@@ -321,7 +321,9 @@ class FakeFilesystem:
         return (
             OSType.WINDOWS
             if self.is_windows_fs
-            else OSType.MACOS if self.is_macos else OSType.LINUX
+            else OSType.MACOS
+            if self.is_macos
+            else OSType.LINUX
         )
 
     @os.setter
@@ -928,9 +930,9 @@ class FakeFilesystem:
         path_components: List[AnyStr] = path_str.split(
             sep
         )  # pytype: disable=invalid-annotation
-        collapsed_path_components: List[AnyStr] = (
-            []
-        )  # pytype: disable=invalid-annotation
+        collapsed_path_components: List[
+            AnyStr
+        ] = []  # pytype: disable=invalid-annotation
         dot = matching_string(path_str, ".")
         dotdot = matching_string(path_str, "..")
         for component in path_components:
@@ -1218,10 +1220,12 @@ class FakeFilesystem:
         return matching_string(file_paths[0], "").join(joined_path_segments)
 
     @overload
-    def _path_components(self, path: str) -> List[str]: ...
+    def _path_components(self, path: str) -> List[str]:
+        ...
 
     @overload
-    def _path_components(self, path: bytes) -> List[bytes]: ...
+    def _path_components(self, path: bytes) -> List[bytes]:
+        ...
 
     def _path_components(self, path: AnyStr) -> List[AnyStr]:
         """Breaks the path into a list of component names.
@@ -1884,7 +1888,9 @@ class FakeFilesystem:
                 error = (
                     errno.ENOENT
                     if self.is_macos
-                    else errno.EINVAL if self.is_windows_fs else errno.ENOTDIR
+                    else errno.EINVAL
+                    if self.is_windows_fs
+                    else errno.ENOTDIR
                 )
                 self.raise_os_error(error, path)
 
@@ -2413,7 +2419,8 @@ class FakeFilesystem:
             if not create_missing_dirs:
                 self.raise_os_error(errno.ENOENT, parent_directory)
             parent_directory = matching_string(
-                path, self.create_dir(parent_directory).path  # type: ignore
+                path,
+                self.create_dir(parent_directory).path,  # type: ignore
             )
         else:
             parent_directory = self._original_path(parent_directory)

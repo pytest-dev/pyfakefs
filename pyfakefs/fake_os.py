@@ -219,7 +219,7 @@ class FakeOsModule:
         flags: int,
         mode: Optional[int] = None,
         *,
-        dir_fd: Optional[int] = None
+        dir_fd: Optional[int] = None,
     ) -> int:
         """Return the file descriptor for a FakeFile.
 
@@ -538,7 +538,7 @@ class FakeOsModule:
         value: bytes,
         flags: int = 0,
         *,
-        follow_symlinks: bool = True
+        follow_symlinks: bool = True,
     ) -> None:
         """Sets the value of the given extended filesystem attribute for
         `path`.
@@ -634,7 +634,7 @@ class FakeOsModule:
         path: AnyStr,
         *,
         dir_fd: Optional[int] = None,
-        follow_symlinks: bool = True
+        follow_symlinks: bool = True,
     ) -> FakeStatResult:
         """Return the os.stat-like tuple for the FakeFile object of entry_path.
 
@@ -712,7 +712,7 @@ class FakeOsModule:
         dst: AnyStr,
         *,
         src_dir_fd: Optional[int] = None,
-        dst_dir_fd: Optional[int] = None
+        dst_dir_fd: Optional[int] = None,
     ) -> None:
         """Rename a FakeFile object at old_file_path to new_file_path,
         preserving all properties.
@@ -774,7 +774,7 @@ class FakeOsModule:
         dst: AnyStr,
         *,
         src_dir_fd: Optional[int] = None,
-        dst_dir_fd: Optional[int] = None
+        dst_dir_fd: Optional[int] = None,
     ) -> None:
         """Renames a FakeFile object at old_file_path to new_file_path,
         preserving all properties.
@@ -957,7 +957,7 @@ class FakeOsModule:
         *,
         dir_fd: Optional[int] = None,
         effective_ids: bool = False,
-        follow_symlinks: bool = True
+        follow_symlinks: bool = True,
     ) -> bool:
         """Check if a file exists and has the specified permissions.
 
@@ -995,7 +995,7 @@ class FakeOsModule:
         mode: int,
         *,
         dir_fd: Optional[int] = None,
-        follow_symlinks: bool = True
+        follow_symlinks: bool = True,
     ) -> None:
         """Change the permissions of a file as encoded in integer mode.
 
@@ -1067,7 +1067,7 @@ class FakeOsModule:
         gid: int,
         *,
         dir_fd: Optional[int] = None,
-        follow_symlinks: bool = True
+        follow_symlinks: bool = True,
     ) -> None:
         """Set ownership of a faked file.
 
@@ -1102,7 +1102,7 @@ class FakeOsModule:
         mode: Optional[int] = None,
         device: int = 0,
         *,
-        dir_fd: Optional[int] = None
+        dir_fd: Optional[int] = None,
     ) -> None:
         """Create a filesystem node named 'filename'.
 
@@ -1153,7 +1153,7 @@ class FakeOsModule:
         dst: AnyStr,
         target_is_directory: bool = False,
         *,
-        dir_fd: Optional[int] = None
+        dir_fd: Optional[int] = None,
     ) -> None:
         """Creates the specified symlink, pointed at the specified link target.
 
@@ -1176,7 +1176,7 @@ class FakeOsModule:
         dst: AnyStr,
         *,
         src_dir_fd: Optional[int] = None,
-        dst_dir_fd: Optional[int] = None
+        dst_dir_fd: Optional[int] = None,
     ) -> None:
         """Create a hard link at new_path, pointing at old_path.
 
