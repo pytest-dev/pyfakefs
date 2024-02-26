@@ -2,17 +2,18 @@ default_language_version:
   python: "3.10"
 
 repos:
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: "v0.2.0"
+    hooks:
+      - id: ruff
+        args: ["--fix"]
+      - id: ruff-format
   - repo: https://github.com/codespell-project/codespell
     rev: v2.2.6
     hooks:
       - id: codespell
         args:
           - --ignore-words-list=wronly,afile
-  - repo: https://github.com/psf/black
-    rev: 24.2.0
-    hooks:
-      - id: black
-        args: [ --safe, --quiet ]
   - repo: https://github.com/asottile/blacken-docs
     rev: 1.16.0
     hooks:
@@ -36,14 +37,6 @@ repos:
         args: ["--in-place", "--remove-unused-variables", "--remove-all-unused-imports"]
         language: python
         files: \.py$
-  - repo: https://github.com/PyCQA/flake8
-    rev: 7.0.0
-    hooks:
-      - id: flake8
-        language_version: python3
-        additional_dependencies:
-          - flake8-bugbear
-        args: ["--extend-ignore=E203", "--max-line-length=88"]
   - repo: https://github.com/pre-commit/mirrors-mypy
     rev: v1.8.0
     hooks:

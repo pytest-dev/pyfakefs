@@ -292,7 +292,9 @@ class FakeFileOpen:
                 error = (
                     errno.EINVAL
                     if self.filesystem.is_windows_fs
-                    else errno.ENOENT if self.filesystem.is_macos else errno.EISDIR
+                    else errno.ENOENT
+                    if self.filesystem.is_macos
+                    else errno.EISDIR
                 )
                 self.filesystem.raise_os_error(error, file_path)
             file_object = self.filesystem.create_file_internally(

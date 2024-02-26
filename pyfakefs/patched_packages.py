@@ -80,9 +80,9 @@ def reload_handler(name):
 def get_cleanup_handlers():
     handlers = {}
     if pd is not None:
-        handlers["pandas.core.arrays.arrow.extension_types"] = (
-            handle_extension_type_cleanup
-        )
+        handlers[
+            "pandas.core.arrays.arrow.extension_types"
+        ] = handle_extension_type_cleanup
     if django is not None:
         for module_name in django_view_modules():
             handlers[module_name] = lambda name=module_name: reload_handler(name)
