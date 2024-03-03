@@ -7,6 +7,7 @@ The released versions correspond to PyPI releases.
 * Fixed a specific problem on reloading a pandas-related module (see [#947](../../issues/947)),
   added possibility for unload hooks for specific modules
 * Use this also to reload django views (see [#932](../../issues/932))
+* Fixed `EncodingWarning` for Python >= 3.11 (see [#957](../../issues/957))
 
 ## [Version 5.3.5](https://pypi.python.org/pypi/pyfakefs/5.3.5) (2024-01-30)
 Fixes a regression.

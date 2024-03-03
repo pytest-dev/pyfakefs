@@ -16,7 +16,6 @@
 """
 import errno
 import io
-import locale
 import os
 import sys
 from stat import (
@@ -52,6 +51,7 @@ from pyfakefs.helpers import (
     real_encoding,
     AnyPath,
     AnyString,
+    get_locale_encoding,
 )
 
 if TYPE_CHECKING:
@@ -190,7 +190,7 @@ class FakeFile:
         """Return the contents as string with the original encoding."""
         if isinstance(self.byte_contents, bytes):
             return self.byte_contents.decode(
-                self.encoding or locale.getpreferredencoding(False),
+                self.encoding or get_locale_encoding(),
                 errors=self.errors,
             )
         return None
@@ -263,7 +263,7 @@ class FakeFile:
         if is_unicode_string(contents):
             contents = bytes(
                 cast(str, contents),
-                self.encoding or locale.getpreferredencoding(False),
+                self.encoding or get_locale_encoding(),
                 self.errors,
             )
         return cast(bytes, contents)
@@ -745,7 +745,7 @@ class FakeFileWrapper:
         self._use_line_buffer = not binary and buffering == 1
 
         contents = file_object.byte_contents
-        self._encoding = encoding or locale.getpreferredencoding(False)
+        self._encoding = encoding or get_locale_encoding()
         errors = errors or "strict"
         self._io: Union[BinaryBufferIO, TextBufferIO] = (
             BinaryBufferIO(contents)

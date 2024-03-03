@@ -109,6 +109,12 @@ def is_unicode_string(val: Any) -> bool:
     return hasattr(val, "encode")
 
 
+def get_locale_encoding():
+    if sys.version_info >= (3, 11):
+        return locale.getencoding()
+    return locale.getpreferredencoding(False)
+
+
 @overload
 def make_string_path(dir_name: AnyStr) -> AnyStr:
     ...
@@ -127,7 +133,7 @@ def to_string(path: Union[AnyStr, Union[str, bytes]]) -> str:
     """Return the string representation of a byte string using the preferred
     encoding, or the string itself if path is a str."""
     if isinstance(path, bytes):
-        return path.decode(locale.getpreferredencoding(False))
+        return path.decode(get_locale_encoding())
     return path
 
 
@@ -135,7 +141,7 @@ def to_bytes(path: Union[AnyStr, Union[str, bytes]]) -> bytes:
     """Return the bytes representation of a string using the preferred
     encoding, or the byte string itself if path is a byte string."""
     if isinstance(path, str):
-        return bytes(path, locale.getpreferredencoding(False))
+        return bytes(path, get_locale_encoding())
     return path
 
 
@@ -181,7 +187,7 @@ def matching_string(  # type: ignore[misc]
     if string is None:
         return string
     if isinstance(matched, bytes) and isinstance(string, str):
-        return string.encode(locale.getpreferredencoding(False))
+        return string.encode(get_locale_encoding())
     return string  # pytype: disable=bad-return-type
 
 

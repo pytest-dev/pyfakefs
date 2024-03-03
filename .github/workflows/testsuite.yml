@@ -21,6 +21,8 @@ jobs:
 
   tests:
     runs-on: ${{ matrix.os }}
+    env:
+      PYTHONWARNDEFAULTENCODING: true
     strategy:
       fail-fast: false
       matrix:

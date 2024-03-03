@@ -17,7 +17,6 @@
 
 import errno
 import io
-import locale
 import os
 import stat
 import sys
@@ -25,7 +24,7 @@ import time
 import unittest
 
 from pyfakefs import fake_filesystem, helpers
-from pyfakefs.helpers import is_root, IS_PYPY
+from pyfakefs.helpers import is_root, IS_PYPY, get_locale_encoding
 from pyfakefs.fake_io import FakeIoModule
 from pyfakefs.fake_filesystem_unittest import PatchMode
 from pyfakefs.tests.test_utils import RealFsTestCase
@@ -119,14 +118,12 @@ class FakeFileOpenTest(FakeFileOpenTestBase):
         try:
             with self.open(file_path, "w") as f:
                 f.write(str_contents)
-        except UnicodeEncodeError:
+            with self.open(file_path, "rb") as f:
+                contents = f.read()
+            self.assertEqual(str_contents, contents.decode(get_locale_encoding()))
+        except UnicodeError:
             # see https://github.com/pytest-dev/pyfakefs/issues/623
             self.skipTest("This test does not work with an ASCII locale")
-        with self.open(file_path, "rb") as f:
-            contents = f.read()
-        self.assertEqual(
-            str_contents, contents.decode(locale.getpreferredencoding(False))
-        )
 
     def test_open_valid_file(self):
         contents = [
