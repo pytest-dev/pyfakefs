@@ -391,6 +391,21 @@ class FakeFile:
     def __str__(self) -> str:
         return "%r(%o)" % (self.name, self.st_mode)
 
+    def has_permission(self, permission_bits: int) -> bool:
+        """Checks if the given permissions are set in the fake file.
+
+        Args:
+            permission_bits: The permission bits as set for the user.
+
+        Returns:
+            True if the permissions are set in the correct class (user/group/other).
+        """
+        if helpers.get_uid() == self.stat_result.st_uid:
+            return self.st_mode & permission_bits == permission_bits
+        if helpers.get_gid() == self.stat_result.st_gid:
+            return self.st_mode & (permission_bits >> 3) == permission_bits >> 3
+        return self.st_mode & (permission_bits >> 6) == permission_bits >> 6
+
 
 class FakeNullFile(FakeFile):
     def __init__(self, filesystem: "FakeFilesystem") -> None:
@@ -504,8 +519,8 @@ class FakeDirectory(FakeFile):
         """
         if (
             not helpers.is_root()
-            and not self.st_mode & helpers.PERM_WRITE
             and not self.filesystem.is_windows_fs
+            and not self.has_permission(helpers.PERM_WRITE)
         ):
             raise OSError(errno.EACCES, "Permission Denied", self.path)
 
@@ -572,9 +587,8 @@ class FakeDirectory(FakeFile):
             if self.filesystem.has_open_file(entry):
                 self.filesystem.raise_os_error(errno.EACCES, pathname_name)
         else:
-            if not helpers.is_root() and (
-                self.st_mode & (helpers.PERM_WRITE | helpers.PERM_EXE)
-                != helpers.PERM_WRITE | helpers.PERM_EXE
+            if not helpers.is_root() and not self.has_permission(
+                helpers.PERM_WRITE | helpers.PERM_EXE
             ):
                 self.filesystem.raise_os_error(errno.EACCES, pathname_name)
 

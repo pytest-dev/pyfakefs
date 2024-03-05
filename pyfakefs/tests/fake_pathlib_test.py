@@ -450,6 +450,51 @@ class FakePathlibFileObjectPropertyTest(RealPathlibTestCase):
             path = str(list(it)[0])
             self.assertTrue(path.endswith("some_file"))
 
+    def test_iterdir_and_glob_without_exe_permission(self):
+        # regression test for #960
+        self.check_posix_only()
+        self.skip_root()
+        directory = self.path(self.make_path("testdir"))
+        file_path = directory / "file.txt"
+        self.create_file(file_path, contents="hey", perm=0o777)
+        directory.chmod(0o655)  # rw-r-xr-x
+        # We cannot create any files in the directory, because that requires
+        # searching it
+        another_file = self.path(self.make_path("file.txt"))
+        self.create_file(another_file, contents="hey")
+        with self.assertRaises(PermissionError):
+            self.os.link(another_file, directory / "link.txt")
+        # We can enumerate the directory using iterdir and glob:
+        assert len(list(directory.iterdir())) == 1
+        assert list(directory.iterdir())[0] == file_path
+        assert len(list(directory.glob("*.txt"))) == 1
+        assert list(directory.glob("*.txt"))[0] == file_path
+
+        # We cannot read files inside of the directory,
+        # even if we have read access to the file
+        with self.assertRaises(PermissionError):
+            file_path.stat()
+        with self.assertRaises(PermissionError):
+            file_path.read_text()
+
+    def test_iterdir_impossible_without_read_permission(self):
+        # regression test for #960
+        self.check_posix_only()
+        self.skip_root()
+        directory = self.path(self.make_path("testdir"))
+        file_path = directory / "file.txt"
+        self.create_file(file_path, contents="hey", perm=0o777)
+        directory.chmod(0o355)  # -wxr-xr-x
+
+        # We cannot enumerate the directory using iterdir:
+        with self.assertRaises(PermissionError):
+            list(directory.iterdir())
+        # glob does not find the file
+        assert len(list(directory.glob("*.txt"))) == 0
+        # we can access the file if we know the file name
+        assert file_path.stat().st_mode & 0o777 == 0o777
+        assert file_path.read_text() == "hey"
+
     def test_resolve_nonexisting_file(self):
         path = self.path(self.make_path("/path", "to", "file", "this can not exist"))
         self.assertEqual(path, path.resolve())

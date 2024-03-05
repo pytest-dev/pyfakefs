@@ -26,7 +26,7 @@ from contextlib import contextmanager
 from unittest import mock
 
 from pyfakefs import fake_filesystem, fake_open, fake_os
-from pyfakefs.helpers import is_byte_string, to_string
+from pyfakefs.helpers import is_byte_string, to_string, is_root
 
 
 class DummyTime:
@@ -226,6 +226,12 @@ class RealFsTestMixin:
                 raise unittest.SkipTest("Testing Posix specific functionality")
         else:
             self.set_windows_fs(False)
+
+    @staticmethod
+    def skip_root():
+        """Skips the test if run as root."""
+        if is_root():
+            raise unittest.SkipTest("Test only valid for non-root user")
 
     def skip_real_fs(self):
         """If called at test start, no real FS test is executed."""

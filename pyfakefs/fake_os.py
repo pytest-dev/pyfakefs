@@ -422,7 +422,7 @@ class FakeOsModule:
         directory = self.filesystem.resolve(path)
         # A full implementation would check permissions all the way
         # up the tree.
-        if not is_root() and not directory.st_mode | PERM_EXE:
+        if not is_root() and not directory.has_permission(PERM_EXE):
             self.filesystem.raise_os_error(errno.EACCES, directory.name)
         self.filesystem.cwd = path  # type: ignore[assignment]
 
