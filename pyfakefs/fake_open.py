@@ -270,8 +270,8 @@ class FakeFileOpen:
     ) -> FakeFile:
         if file_object:
             if not is_root() and (
-                (open_modes.can_read and not file_object.st_mode & PERM_READ)
-                or (open_modes.can_write and not file_object.st_mode & PERM_WRITE)
+                (open_modes.can_read and not file_object.has_permission(PERM_READ))
+                or (open_modes.can_write and not file_object.has_permission(PERM_WRITE))
             ):
                 self.filesystem.raise_os_error(errno.EACCES, file_path)
             if open_modes.can_write:

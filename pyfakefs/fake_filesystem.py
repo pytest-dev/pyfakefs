@@ -674,6 +674,7 @@ class FakeFilesystem:
                 follow_symlinks,
                 allow_fd=True,
                 check_read_perm=False,
+                check_exe_perm=False,
             )
         except TypeError:
             file_object = self.resolve(entry_path)
@@ -681,7 +682,7 @@ class FakeFilesystem:
             # make sure stat raises if a parent dir is not readable
             parent_dir = file_object.parent_dir
             if parent_dir:
-                self.get_object(parent_dir.path)  # type: ignore[arg-type]
+                self.get_object(parent_dir.path, check_read_perm=False)  # type: ignore[arg-type]
 
         self.raise_for_filepath_ending_with_separator(
             entry_path, file_object, follow_symlinks
@@ -1597,6 +1598,7 @@ class FakeFilesystem:
         self,
         file_path: AnyPath,
         check_read_perm: bool = True,
+        check_exe_perm: bool = True,
         check_owner: bool = False,
     ) -> AnyFile:
         """Search for the specified filesystem object within the fake
@@ -1607,6 +1609,8 @@ class FakeFilesystem:
                 path that has already been normalized/resolved.
             check_read_perm: If True, raises OSError if a parent directory
                 does not have read permission
+            check_exe_perm: If True, raises OSError if a parent directory
+                does not have execute (e.g. search) permission
             check_owner: If True, and check_read_perm is also True,
                 only checks read permission if the current user id is
                 different from the file object user id
@@ -1638,9 +1642,11 @@ class FakeFilesystem:
                 target = target.get_entry(component)  # type: ignore
                 if (
                     not is_root()
-                    and check_read_perm
+                    and (check_read_perm or check_exe_perm)
                     and target
-                    and not self._can_read(target, check_owner)
+                    and not self._can_read(
+                        target, check_read_perm, check_exe_perm, check_owner
+                    )
                 ):
                     self.raise_os_error(errno.EACCES, target.path)
         except KeyError:
@@ -1648,14 +1654,15 @@ class FakeFilesystem:
         return target
 
     @staticmethod
-    def _can_read(target, owner_can_read):
-        if target.st_uid == helpers.get_uid():
-            if owner_can_read or target.st_mode & 0o400:
-                return True
-        if target.st_gid == get_gid():
-            if target.st_mode & 0o040:
-                return True
-        return target.st_mode & 0o004
+    def _can_read(target, check_read_perm, check_exe_perm, owner_can_read):
+        if owner_can_read and target.st_uid == helpers.get_uid():
+            return True
+        permission = helpers.PERM_READ if check_read_perm else 0
+        if S_ISDIR(target.st_mode) and check_exe_perm:
+            permission |= helpers.PERM_EXE
+        if not permission:
+            return True
+        return target.has_permission(permission)
 
     def get_object(self, file_path: AnyPath, check_read_perm: bool = True) -> FakeFile:
         """Search for the specified filesystem object within the fake
@@ -1684,6 +1691,7 @@ class FakeFilesystem:
         follow_symlinks: bool = True,
         allow_fd: bool = False,
         check_read_perm: bool = True,
+        check_exe_perm: bool = True,
         check_owner: bool = False,
     ) -> FakeFile:
         """Search for the specified filesystem object, resolving all links.
@@ -1695,6 +1703,8 @@ class FakeFilesystem:
             allow_fd: If `True`, `file_path` may be an open file descriptor
             check_read_perm: If True, raises OSError if a parent directory
                 does not have read permission
+            check_read_perm: If True, raises OSError if a parent directory
+                does not have execute permission
             check_owner: If True, and check_read_perm is also True,
                 only checks read permission if the current user id is
                 different from the file object user id
@@ -1714,6 +1724,7 @@ class FakeFilesystem:
             return self.get_object_from_normpath(
                 self.resolve_path(file_path, allow_fd),
                 check_read_perm,
+                check_exe_perm,
                 check_owner,
             )
         return self.lresolve(file_path)
@@ -1756,7 +1767,7 @@ class FakeFilesystem:
                 if not self.is_windows_fs and isinstance(parent_obj, FakeFile):
                     self.raise_os_error(errno.ENOTDIR, path_str)
                 self.raise_os_error(errno.ENOENT, path_str)
-            if not parent_obj.st_mode & helpers.PERM_READ:
+            if not parent_obj.has_permission(helpers.PERM_READ):
                 self.raise_os_error(errno.EACCES, parent_directory)
             return (
                 parent_obj.get_entry(to_string(child_name))
@@ -1781,7 +1792,10 @@ class FakeFilesystem:
         if not file_path:
             target_directory = self.root_dir
         else:
-            target_directory = cast(FakeDirectory, self.resolve(file_path))
+            target_directory = cast(
+                FakeDirectory,
+                self.resolve(file_path, check_read_perm=False, check_exe_perm=True),
+            )
             if not S_ISDIR(target_directory.st_mode):
                 error = errno.ENOENT if self.is_windows_fs else errno.ENOTDIR
                 self.raise_os_error(error, file_path)
@@ -2859,7 +2873,11 @@ class FakeFilesystem:
             return False
 
     def confirmdir(
-        self, target_directory: AnyStr, check_owner: bool = False
+        self,
+        target_directory: AnyStr,
+        check_read_perm: bool = True,
+        check_exe_perm: bool = True,
+        check_owner: bool = False,
     ) -> FakeDirectory:
         """Test that the target is actually a directory, raising OSError
         if not.
@@ -2867,6 +2885,10 @@ class FakeFilesystem:
         Args:
             target_directory: Path to the target directory within the fake
                 filesystem.
+            check_read_perm: If True, raises OSError if the directory
+                does not have read permission
+            check_exe_perm: If True, raises OSError if the directory
+                does not have execute (e.g. search) permission
             check_owner: If True, only checks read permission if the current
                 user id is different from the file object user id
 
@@ -2878,7 +2900,12 @@ class FakeFilesystem:
         """
         directory = cast(
             FakeDirectory,
-            self.resolve(target_directory, check_owner=check_owner),
+            self.resolve(
+                target_directory,
+                check_read_perm=check_read_perm,
+                check_exe_perm=check_exe_perm,
+                check_owner=check_owner,
+            ),
         )
         if not directory.st_mode & S_IFDIR:
             self.raise_os_error(errno.ENOTDIR, target_directory, 267)
@@ -2972,7 +2999,7 @@ class FakeFilesystem:
             OSError: if the target is not a directory.
         """
         target_directory = self.resolve_path(target_directory, allow_fd=True)
-        directory = self.confirmdir(target_directory)
+        directory = self.confirmdir(target_directory, check_exe_perm=False)
         directory_contents = list(directory.entries.keys())
         if self.shuffle_listdir_results:
             random.shuffle(directory_contents)

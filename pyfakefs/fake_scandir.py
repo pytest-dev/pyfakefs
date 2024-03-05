@@ -146,7 +146,7 @@ class ScanDirIter:
             path = make_string_path(path)
             self.abspath = self.filesystem.absnormpath(path)
             self.path = to_string(path)
-        entries = self.filesystem.confirmdir(self.abspath).entries
+        entries = self.filesystem.confirmdir(self.abspath, check_exe_perm=False).entries
         self.entry_iter = iter(entries)
 
     def __iter__(self):

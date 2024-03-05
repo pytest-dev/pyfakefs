@@ -21,7 +21,7 @@ import stat
 import sys
 import unittest
 
-from pyfakefs.helpers import IN_DOCKER, IS_PYPY, get_uid, get_gid
+from pyfakefs.helpers import IN_DOCKER, IS_PYPY, get_uid, get_gid, reset_ids
 
 from pyfakefs import fake_filesystem, fake_os, fake_open, fake_file
 from pyfakefs.fake_filesystem import (
@@ -2139,6 +2139,27 @@ class FakeOsModuleTest(FakeOsModuleTestBase):
         self.assertFalse(self.os.path.exists(file_path))
         self.assert_raises_os_error(errno.ENOENT, self.os.chown, file_path, 100, 100)
 
+    def test_fail_add_entry_to_readonly_dir(self):
+        # regression test for #959
+        self.check_posix_only()
+        self.skip_real_fs()  # cannot change owner to root
+        if is_root():
+            self.skipTest("Non-root test only")
+
+        # create directory owned by root with permissions 0o755 (rwxr-xr-x)
+        ro_dir = self.make_path("readonly-dir")
+        self.create_dir(ro_dir, perm=0o755)
+        self.os.chown(ro_dir, 0, 0)
+
+        # adding a new entry to the readonly subdirectory should fail
+        with self.assertRaises(PermissionError):
+            with self.open(f"{ro_dir}/file.txt", "w"):
+                pass
+        file_path = self.make_path("file.txt")
+        self.create_file(file_path)
+        with self.assertRaises(PermissionError):
+            self.os.link(file_path, self.os.path.join(ro_dir, "file.txt"))
+
     def test_classify_directory_contents(self):
         """Directory classification should work correctly."""
         root_directory = self.make_path("foo")
@@ -2919,6 +2940,53 @@ class FakeOsModuleTestCaseInsensitiveFS(FakeOsModuleTestBase):
         self.create_symlink(self.make_path("symlink"), self.make_path("xyzzy"))
         files.sort()
         self.assertEqual(files, sorted(self.os.listdir(self.make_path("SymLink"))))
+
+    def test_listdir_possible_without_exe_permission(self):
+        # regression test for #960
+        self.check_posix_only()
+        self.skip_root()
+        directory = self.make_path("testdir")
+        file_path = self.os.path.join(directory, "file.txt")
+        self.create_file(file_path, contents="hey", perm=0o777)
+        self.os.chmod(directory, 0o655)  # rw-r-xr-x
+        # We cannot create any files in the directory, because that requires
+        # searching it
+        another_file = self.make_path("file.txt")
+        self.create_file(another_file, contents="hey")
+        with self.assertRaises(PermissionError):
+            self.os.link(another_file, self.os.path.join(directory, "link.txt"))
+        # We can enumerate the directory using listdir and scandir:
+        assert self.os.listdir(directory) == ["file.txt"]
+        assert len(list(self.os.scandir(directory))) == 1
+
+        # We cannot read files inside of the directory,
+        # even if we have read access to the file
+        with self.assertRaises(PermissionError):
+            self.os.stat(file_path)
+        with self.assertRaises(PermissionError):
+            with self.open(file_path) as f:
+                f.read()
+
+    def test_listdir_impossible_without_read_permission(self):
+        # regression test for #960
+        self.check_posix_only()
+        self.skip_root()
+        directory = self.make_path("testdir")
+        file_path = self.os.path.join(directory, "file.txt")
+        self.create_file(file_path, contents="hey", perm=0o777)
+        self.os.chmod(directory, 0o355)  # -wxr-xr-x
+        another_file = self.make_path("file.txt")
+        self.create_file(another_file, contents="hey")
+        self.os.link(another_file, self.os.path.join(directory, "link.txt"))
+        # We cannot enumerate the directory using listdir or scandir:
+        with self.assertRaises(PermissionError):
+            self.os.listdir(directory)
+        with self.assertRaises(PermissionError):
+            self.os.scandir(directory)
+        # we can access the file if we know the file name
+        assert self.os.stat(file_path).st_mode & 0o777 == 0o777
+        with self.open(file_path) as f:
+            assert f.read() == "hey"
 
     def test_fdopen_mode(self):
         self.skip_real_fs()
@@ -5410,7 +5478,7 @@ class FakeOsUnreadableDirTest(FakeOsModuleTestBase):
         set_uid(uid + 10)
         self.assertEqual(uid + 10, self.os.getuid())
         self.assertEqual(uid + 10, get_uid())
-        set_uid(uid)
+        reset_ids()
         self.assertEqual(uid, self.os.getuid())
 
     def test_getgid(self):
@@ -5420,7 +5488,7 @@ class FakeOsUnreadableDirTest(FakeOsModuleTestBase):
         set_gid(gid + 10)
         self.assertEqual(gid + 10, self.os.getgid())
         self.assertEqual(gid + 10, get_gid())
-        set_gid(gid)
+        reset_ids()
         self.assertEqual(gid, self.os.getgid())
 
     def test_listdir_unreadable_dir(self):
@@ -5442,7 +5510,7 @@ class FakeOsUnreadableDirTest(FakeOsModuleTestBase):
         dir_path = self.make_path("dir1")
         self.create_dir(dir_path, perm=0o600)
         self.assertTrue(self.os.path.exists(dir_path))
-        set_uid(user_id)
+        reset_ids()
         if not is_root():
             with self.assertRaises(PermissionError):
                 self.os.listdir(dir_path)
@@ -5451,12 +5519,11 @@ class FakeOsUnreadableDirTest(FakeOsModuleTestBase):
 
     def test_listdir_group_readable_dir_from_other_user(self):
         self.skip_real_fs()  # won't change user in real fs
-        user_id = get_uid()
-        set_uid(user_id + 1)
+        set_uid(get_uid() + 1)
         dir_path = self.make_path("dir1")
         self.create_dir(dir_path, perm=0o660)
         self.assertTrue(self.os.path.exists(dir_path))
-        set_uid(user_id)
+        reset_ids()
         self.assertEqual([], self.os.listdir(dir_path))
 
     def test_listdir_group_readable_dir_from_other_group(self):
@@ -5475,14 +5542,15 @@ class FakeOsUnreadableDirTest(FakeOsModuleTestBase):
             self.assertEqual([], self.os.listdir(dir_path))
 
     def test_listdir_other_readable_dir_from_other_group(self):
+        self.check_posix_only()
         self.skip_real_fs()  # won't change user in real fs
-        group_id = get_gid()
-        set_gid(group_id + 1)
         dir_path = self.make_path("dir1")
-        self.create_dir(dir_path, perm=0o004)
+        self.create_dir(dir_path, 0o004)
+        set_uid(get_uid() + 1)
+        set_gid(get_gid() + 1)
         self.assertTrue(self.os.path.exists(dir_path))
-        set_gid(group_id)
         self.assertEqual([], self.os.listdir(dir_path))
+        reset_ids()
 
     def test_stat_unreadable_dir(self):
         self.assertEqual(0, self.os.stat(self.dir_path).st_mode & 0o666)
@@ -5509,12 +5577,11 @@ class FakeOsUnreadableDirTest(FakeOsModuleTestBase):
 
     def test_remove_unreadable_dir_from_other_user(self):
         self.skip_real_fs()  # won't change user in real fs
-        user_id = get_uid()
-        set_uid(user_id + 1)
+        set_uid(get_uid() + 1)
         dir_path = self.make_path("dir1")
         self.create_dir(dir_path, perm=0o000)
         self.assertTrue(self.os.path.exists(dir_path))
-        set_uid(user_id)
+        reset_ids()
         if not is_root():
             with self.assertRaises(PermissionError):
                 self.os.rmdir(dir_path)

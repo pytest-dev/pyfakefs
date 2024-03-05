@@ -3,11 +3,19 @@ The released versions correspond to PyPI releases.
 
 ## Unreleased
 
+### Changes
+* The handling of file permissions under Posix is should now mostly match the behavior
+  of the real filesystem, which may change the behavior of some tests
+
 ### Fixes
 * Fixed a specific problem on reloading a pandas-related module (see [#947](../../issues/947)),
   added possibility for unload hooks for specific modules
 * Use this also to reload django views (see [#932](../../issues/932))
 * Fixed `EncodingWarning` for Python >= 3.11 (see [#957](../../issues/957))
+* Consider directory ownership while adding or removing directory entries
+  (see [#959](../../issues/959))
+* Fixed handling of directory enumeration and search permissions under Posix systems
+  (see [#960](../../issues/960))
 
 ## [Version 5.3.5](https://pypi.python.org/pypi/pyfakefs/5.3.5) (2024-01-30)
 Fixes a regression.
