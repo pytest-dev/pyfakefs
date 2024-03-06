@@ -51,7 +51,7 @@ respectively.
   not setup / tear down the fake filesystem in the current scope; instead, it
   will just serve as a reference to the active fake filesystem. That means that changes
   done in the fake filesystem inside a test will remain there until the respective scope
-  ends.
+  ends (see also :ref:`nested_patcher_invocation`).
 
 Patch using fake_filesystem_unittest
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

@@ -134,6 +134,8 @@ from configuration files. In these cases, you have to map the respective files
 or directories from the real into the fake filesystem as described in
 :ref:`real_fs_access`. For the timezone example, this could look like the following::
 
+.. code:: python
+
     from pathlib import Path
     import pytz
     from pyfakefs.fake_filesystem_unittest import TestCase
@@ -150,12 +152,14 @@ or directories from the real into the fake filesystem as described in
 If you are using Django, various dependencies may expect both the project
 directory and the ``site-packages`` installation to exist in the fake filesystem.
 
-Here's an example of how to add these using pytest::
+Here's an example of how to add these using pytest:
 
+.. code:: python
 
     import os
     import django
     import pytest
+
 
     @pytest.fixture
     def fake_fs(fs):
@@ -278,6 +282,48 @@ is problematic and better avoided.
 .. note:: This problem only happens in Python versions up to 3.10. In Python 3.11,
   `pathlib` has been restructured so that a pathlib path no longer contains a reference
   to the original filesystem accessor, and it can safely be used in the fake filesystem.
+
+.. _nested_patcher_invocation:
+
+Nested file system fixtures and Patcher invocations
+---------------------------------------------------
+``pyfakefs`` does not support nested faked file systems. Instead, it uses reference counting
+on the single fake filesystem instance. That means, if you are trying to create a fake filesystem
+inside a fake filesystem, only the reference count will increase, and any arguments you may pass
+to the patcher or fixture are ignored. Likewise, if you leave a nested fake filesystem,
+only the reference count is decreased and nothing is reverted.
+
+There are some situations where that may happen, probably without you noticing:
+
+* If you use the module- or session based variants of the ``fs`` fixture (e.g. ``fs_module`` or
+  ``fs_session``), you may still use the ``fs`` fixture in single tests. This will practically
+  reference the module- or session based fake filesystem, instead of creating a new one.
+
+.. code:: python
+
+  @pytest.fixture(scope="module", autouse=True)
+  def use_fs(fs_module):
+      # do some setup...
+      yield fs_module
+
+
+  def test_something(fs):
+      do_more_fs_setup()
+      test_something()
+      # the fs setup done in this test is not reverted!
+
+* If you invoke a ``Patcher`` instance inside a test with the ``fs`` fixture (or with an active
+  ``fs_module`` or ``fs_session`` fixture), this will be ignored. For example:
+
+.. code:: python
+
+  def test_something(fs):
+      with Patcher(allow_root_user=False):
+          # root user is still allowed
+          do_stuff()
+
+* The same is true, if you use ``setUpPyfakefs`` or ``setUpClassPyfakefs`` in a unittest context, or if you use
+  the ``patchfs`` decorator. ``Patcher`` instances created in the tests will be ignored likewise.
 
 
 .. _`multiprocessing`: https://docs.python.org/3/library/multiprocessing.html
