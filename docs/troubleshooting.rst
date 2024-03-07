@@ -325,6 +325,59 @@ There are some situations where that may happen, probably without you noticing:
 * The same is true, if you use ``setUpPyfakefs`` or ``setUpClassPyfakefs`` in a unittest context, or if you use
   the ``patchfs`` decorator. ``Patcher`` instances created in the tests will be ignored likewise.
 
+.. _failing_dyn_patcher:
+
+Tests failing after a test using pyfakefs
+-----------------------------------------
+If previously passing tests fail after a test using ``pyfakefs``, something may be wrong with reverting the
+patches. The most likely cause is a problem with the dynamic patcher, which is invoked if modules are loaded
+dynamically during the tests. These modules are removed after the test, and reloaded the next time they are
+imported, to avoid any remaining patched functions or variables. Sometimes, there is a problem with that reload.
+
+If you want to know if your problem is indeed with the dynamic patcher, you can switch it off by setting
+:ref:`use_dynamic_patch` to `False` (here an example with pytest):
+
+.. code:: python
+
+  @pytest.fixture
+  def fs_no_dyn_patch():
+      with Patcher(use_dynamic_patch=False):
+          yield
+
+
+  def test_something(fs_no_dyn_patch):
+      ...  # do the testing
+
+If in this case the following tests pass as expected, the dynamic patcher is indeed the problem.
+If your ``pyfakefs`` test also works with that setting, you may just use this. Otherwise,
+the dynamic patcher is needed, and the concrete problem has to be fixed. There is the possibility
+to add a hook for the cleanup of a specific module, which allows to change the process of unloading
+the module. This is currently used in ``pyfakefs`` for two cases: to reload ``django`` views instead of
+just unloading them (needed due to some django internals), and for the reload of a specific module
+in ``pandas``, which does not work out of the box.
+
+A cleanup handler takes the module name as an argument, and returns a Boolean that indicates if the
+cleanup was handled (by returning `True`), or if the module should still be unloaded. This handler has to
+be added to the patcher:
+
+.. code:: python
+
+  def handler_no_cleanup(_name):
+      # This is the simplest case: no cleanup is done at all.
+      # This makes only sense if you are sure that no file system functions are called.
+      return True
+
+
+  @pytest.fixture
+  def my_fs():
+      with Patcher():
+          patcher["modulename"] = handler_no_cleanup
+          yield
+
+As this may not be trivial, we recommend to write an issue in ``pyfakefs`` with a reproducible example.
+We will analyze the problem, and if we find a solution we will either get this fixed in ``pyfakefs``
+(if it is related to a commonly used module), or help you to resolve it.
+
 
 .. _`multiprocessing`: https://docs.python.org/3/library/multiprocessing.html
 .. _`subprocess`: https://docs.python.org/3/library/subprocess.html
