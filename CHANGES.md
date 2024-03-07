@@ -6,6 +6,8 @@ The released versions correspond to PyPI releases.
 ### Changes
 * the handling of file permissions under Posix is should now mostly match the behavior
   of the real filesystem, which may change the behavior of some tests
+* removed the argument `module_cleanup_mode`, that was introduced as a temporary workaround
+  in the previous version - related problems shall be handled using a cleanup handler
 
 ### Fixes
 * fixed a specific problem on reloading a pandas-related module (see [#947](../../issues/947)),

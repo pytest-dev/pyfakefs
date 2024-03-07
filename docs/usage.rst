@@ -678,24 +678,10 @@ for modules loaded locally inside of functions).
 Can be switched off if it causes unwanted side effects, though that would mean that
 dynamically loaded modules are no longer patched, if they use file system functions.
 
-module_cleanup_mode
-~~~~~~~~~~~~~~~~~~~
-This is a setting that works around a potential problem with the cleanup of
-dynamically loaded modules (e.g. modules loaded after the test has started).
-As the original problem related to `django` has now been resolved in another way (see below),
-the setting may not be needed anymore, and is subject to removal in a future version.
-
-The setting defines how the dynamically loaded modules are cleaned up after the test.
-Any dynamically loaded module is cleaned up after the test to ensure that no patched modules
-can be used after that.
-The default (`ModuleCleanupMode.AUTO`) is currently the same as `ModuleCleanupMode.DELETE`.
-`DELETE` will delete all dynamically loaded modules (so that they are reloaded the next time
-they are needed), while `RELOAD` will reload them immediately.
-Under some rare conditions, changing this setting may help to avoid problems related
-to incorrect test cleanup.
-
-Problems with unloading dynamically loaded modules may also be solved more
-specifically by registering a handler for specific modules (using `Patcher.register_cleanup_handler`),
+A possible problem with dynamically loaded modules is their unloading, for example if
+reloading the module fails after unloading due to a problem in the module.
+This kind of problem may be solved more specifically by registering a handler
+for specific modules (using `Patcher.register_cleanup_handler`),
 that will be called during the cleanup process. This is used internally
 to handle known problems with the `django` and `pandas` packages.
 
