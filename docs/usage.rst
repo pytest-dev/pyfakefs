@@ -671,19 +671,16 @@ If you want to clear the cache just for a specific test instead, you can call
       fs.clear_cache()
       ...
 
+.. _use_dynamic_patch:
+
 use_dynamic_patch
 ~~~~~~~~~~~~~~~~~
 If ``True`` (the default), dynamic patching after setup is used (for example
 for modules loaded locally inside of functions).
 Can be switched off if it causes unwanted side effects, though that would mean that
 dynamically loaded modules are no longer patched, if they use file system functions.
+See also :ref:`failing_dyn_patcher` in the troubleshooting guide for more information.
 
-A possible problem with dynamically loaded modules is their unloading, for example if
-reloading the module fails after unloading due to a problem in the module.
-This kind of problem may be solved more specifically by registering a handler
-for specific modules (using `Patcher.register_cleanup_handler`),
-that will be called during the cleanup process. This is used internally
-to handle known problems with the `django` and `pandas` packages.
 
 .. _convenience_methods:
 
