@@ -18,6 +18,7 @@ import errno
 import io
 import os
 import sys
+import traceback
 from stat import (
     S_IFREG,
     S_IFDIR,
@@ -585,7 +586,24 @@ class FakeDirectory(FakeFile):
             if entry.st_mode & helpers.PERM_WRITE == 0:
                 self.filesystem.raise_os_error(errno.EACCES, pathname_name)
             if self.filesystem.has_open_file(entry):
-                self.filesystem.raise_os_error(errno.EACCES, pathname_name)
+                raise_error = True
+                if os.name == "posix" and not hasattr(os, "O_TMPFILE"):
+                    # special handling for emulating Windows under macOS and PyPi
+                    # tempfile uses unlink based on the real OS while deleting
+                    # a temporary file, so we ignore that error in this specific case
+                    st = traceback.extract_stack(limit=6)
+                    if sys.version_info < (3, 10):
+                        if (
+                            st[1].name == "TemporaryFile"
+                            and st[1].line == "_os.unlink(name)"
+                        ):
+                            raise_error = False
+                    else:
+                        # TemporaryFile implementation has changed in Python 3.10
+                        if st[0].name == "opener" and st[0].line == "_os.unlink(name)":
+                            raise_error = False
+                if raise_error:
+                    self.filesystem.raise_os_error(errno.EACCES, pathname_name)
         else:
             if not helpers.is_root() and not self.has_permission(
                 helpers.PERM_WRITE | helpers.PERM_EXE

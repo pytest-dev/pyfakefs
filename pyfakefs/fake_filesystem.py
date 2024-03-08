@@ -3013,10 +3013,27 @@ class FakeFilesystem:
         self._add_open_file(StandardStreamWrapper(sys.stdout))
         self._add_open_file(StandardStreamWrapper(sys.stderr))
 
+    def _tempdir_name(self):
+        """This logic is extracted from tempdir._candidate_tempdir_list.
+        We cannot rely on tempdir.gettempdir() in an empty filesystem, as it tries
+        to write to the filesystem to ensure that the tempdir is valid.
+        """
+        # reset the cached tempdir in tempfile
+        tempfile.tempdir = None
+        for env_name in "TMPDIR", "TEMP", "TMP":
+            dir_name = os.getenv(env_name)
+            if dir_name:
+                return dir_name
+        # we have to check the real OS temp path here, as this is what
+        # tempfile assumes
+        if os.name == "nt":
+            return os.path.expanduser(r"~\AppData\Local\Temp")
+        return "/tmp"
+
     def _create_temp_dir(self):
         # the temp directory is assumed to exist at least in `tempfile`,
         # so we create it here for convenience
-        temp_dir = tempfile.gettempdir()
+        temp_dir = self._tempdir_name()
         if not self.exists(temp_dir):
             self.create_dir(temp_dir)
         if sys.platform != "win32" and not self.exists("/tmp"):

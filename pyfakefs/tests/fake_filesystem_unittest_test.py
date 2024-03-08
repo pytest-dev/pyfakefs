@@ -925,5 +925,31 @@ class TestClassSetup(fake_filesystem_unittest.TestCase):
         self.assertEqual("test", f.contents)
 
 
+class TestTempPathCreation(fake_filesystem_unittest.TestCase):
+    """Regression test for #965. Checks that the temp file system
+    is properly created with a root-owned root path.
+    """
+
+    def setUp(self):
+        self.setUpPyfakefs()
+
+    def check_write_tmp_after_reset(self, os_type):
+        self.fs.os = os_type
+        # Mark '/' to be modifiable by only root
+        os.chown("/", 0, 0)
+        os.chmod("/", 0b111_101_101)
+        with tempfile.TemporaryFile("wb") as f:
+            assert f.write(b"foo") == 3
+
+    def test_write_tmp_linux(self):
+        self.check_write_tmp_after_reset(OSType.LINUX)
+
+    def test_write_tmp_macos(self):
+        self.check_write_tmp_after_reset(OSType.MACOS)
+
+    def test_write_tmp_windows(self):
+        self.check_write_tmp_after_reset(OSType.WINDOWS)
+
+
 if __name__ == "__main__":
     unittest.main()
