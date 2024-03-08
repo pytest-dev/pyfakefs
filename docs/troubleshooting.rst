@@ -179,8 +179,7 @@ As ``pyfakefs`` does not fake the ``tempfile`` module (as described above),
 a temporary directory is required to ensure that ``tempfile`` works correctly,
 e.g., that ``tempfile.gettempdir()`` will return a valid value. This
 means that any newly created fake file system will always have either a
-directory named ``/tmp`` when running on Linux or Unix systems,
-``/var/folders/<hash>/T`` when running on macOS, or
+directory named ``/tmp`` when running on POSIX systems, or
 ``C:\Users\<user>\AppData\Local\Temp`` on Windows:
 
 .. code:: python
@@ -192,11 +191,13 @@ directory named ``/tmp`` when running on Linux or Unix systems,
       # the temp directory is always present at test start
       assert len(os.listdir("/")) == 1
 
-Under macOS and linux, if the actual temp path is not `/tmp` (which is always the case
-under macOS), a symlink to the actual temp directory is additionally created as `/tmp`
-in the fake filesystem. Note that the file size of this link is ignored while
+Under macOS and linux, if the actual temp path is not `/tmp` (which will be the case if an environment variable
+`TEMPDIR`, `TEMP` or `TMP` points to another path), a symlink to the actual temp directory is additionally created
+as `/tmp` in the fake filesystem. Note that the file size of this link is ignored while
 calculating the fake filesystem size, so that the used size with an otherwise empty
 fake filesystem can always be assumed to be 0.
+Note also that the temp directory may not be what you expect, if you emulate another file system. For example,
+if you emulate Windows under Linux, the default temp directory will be at `C:\\tmp`.
 
 
 User rights
