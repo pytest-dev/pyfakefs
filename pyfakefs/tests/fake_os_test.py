@@ -40,11 +40,20 @@ from pyfakefs.tests.test_utils import TestCase, RealFsTestCase
 
 
 class FakeOsModuleTestBase(RealFsTestCase):
+    def setUp(self):
+        super().setUp()
+        self.umask = self.os.umask(0o022)
+
+    def tearDown(self):
+        self.os.umask(self.umask)
+
     def createTestFile(self, path):
         self.create_file(path)
         self.assertTrue(self.os.path.exists(path))
         st = self.os.stat(path)
-        self.assertEqual(0o666, stat.S_IMODE(st.st_mode))
+        # under Windows, the umask has no effect
+        mode = 0o666 if self.is_windows_fs else 0o0644
+        self.assertEqual(mode, stat.S_IMODE(st.st_mode))
         self.assertTrue(st.st_mode & stat.S_IFREG)
         self.assertFalse(st.st_mode & stat.S_IFDIR)
 
@@ -52,14 +61,15 @@ class FakeOsModuleTestBase(RealFsTestCase):
         self.create_dir(path)
         self.assertTrue(self.os.path.exists(path))
         st = self.os.stat(path)
-        self.assertEqual(0o777, stat.S_IMODE(st.st_mode))
+        mode = 0o777 if self.is_windows_fs else 0o755
+        self.assertEqual(mode, stat.S_IMODE(st.st_mode))
         self.assertFalse(st.st_mode & stat.S_IFREG)
         self.assertTrue(st.st_mode & stat.S_IFDIR)
 
 
 class FakeOsModuleTest(FakeOsModuleTestBase):
     def setUp(self):
-        super(FakeOsModuleTest, self).setUp()
+        super().setUp()
         self.rwx = self.os.R_OK | self.os.W_OK | self.os.X_OK
         self.rw = self.os.R_OK | self.os.W_OK
 
@@ -2082,7 +2092,8 @@ class FakeOsModuleTest(FakeOsModuleTestBase):
         else:
             self.os.chmod(link_path, 0o6543, follow_symlinks=False)
             st = self.os.stat(link_path)
-            self.assert_mode_equal(0o666, st.st_mode)
+            mode = 0o644 if self.is_macos else 0o666
+            self.assert_mode_equal(mode, st.st_mode)
             st = self.os.stat(link_path, follow_symlinks=False)
             self.assert_mode_equal(0o6543, st.st_mode)
 
@@ -2097,7 +2108,7 @@ class FakeOsModuleTest(FakeOsModuleTestBase):
         self.os.lchmod(link_path, 0o6543)
 
         st = self.os.stat(link_path)
-        self.assert_mode_equal(0o666, st.st_mode)
+        self.assert_mode_equal(0o644, st.st_mode)
         st = self.os.lstat(link_path)
         self.assert_mode_equal(0o6543, st.st_mode)
 
@@ -2807,9 +2818,9 @@ class FakeOsModuleTest(FakeOsModuleTestBase):
 
     def test_umask(self):
         self.check_posix_only()
-        umask = os.umask(0o22)
-        os.umask(umask)
-        self.assertEqual(umask, self.os.umask(0o22))
+        umask = self.os.umask(0o22)
+        self.assertEqual(umask, self.os.umask(0o12))
+        self.os.umask(umask)
 
     def test_mkdir_umask_applied(self):
         """mkdir creates a directory with umask applied."""
@@ -2826,7 +2837,7 @@ class FakeOsModuleTest(FakeOsModuleTestBase):
     def test_makedirs_umask_applied(self):
         """makedirs creates a directories with umask applied."""
         self.check_posix_only()
-        self.os.umask(0o22)
+        umask = self.os.umask(0o22)
         self.os.makedirs(self.make_path("p1", "dir1"))
         self.assert_mode_equal(0o755, self.os.stat(self.make_path("p1")).st_mode)
         self.assert_mode_equal(
@@ -2838,6 +2849,7 @@ class FakeOsModuleTest(FakeOsModuleTestBase):
         self.assert_mode_equal(
             0o710, self.os.stat(self.make_path("p2", "dir2")).st_mode
         )
+        self.os.umask(umask)
 
     def test_mknod_umask_applied(self):
         """mkdir creates a device with umask applied."""
@@ -2998,7 +3010,7 @@ class RealOsModuleTest(FakeOsModuleTest):
 
 class FakeOsModuleTestCaseInsensitiveFS(FakeOsModuleTestBase):
     def setUp(self):
-        super(FakeOsModuleTestCaseInsensitiveFS, self).setUp()
+        super().setUp()
         self.check_case_insensitive_fs()
         self.rwx = self.os.R_OK | self.os.W_OK | self.os.X_OK
         self.rw = self.os.R_OK | self.os.W_OK
@@ -3072,7 +3084,7 @@ class FakeOsModuleTestCaseInsensitiveFS(FakeOsModuleTestBase):
         with self.assertRaises(PermissionError):
             self.os.scandir(directory)
         # we can access the file if we know the file name
-        assert self.os.stat(file_path).st_mode & 0o777 == 0o777
+        assert self.os.stat(file_path).st_mode & 0o777 == 0o755
         with self.open(file_path) as f:
             assert f.read() == "hey"
 
@@ -4109,10 +4121,6 @@ class FakeOsModuleTimeTest(FakeOsModuleTestBase):
 class FakeOsModuleLowLevelFileOpTest(FakeOsModuleTestBase):
     """Test low level functions `os.open()`, `os.read()` and `os.write()`."""
 
-    def setUp(self):
-        os.umask(0o022)
-        super(FakeOsModuleLowLevelFileOpTest, self).setUp()
-
     def test_open_read_only(self):
         file_path = self.make_path("file1")
         self.create_file(file_path, contents=b"contents")
@@ -4830,7 +4838,7 @@ class RealOsModuleWalkTest(FakeOsModuleWalkTest):
 
 class FakeOsModuleDirFdTest(FakeOsModuleTestBase):
     def setUp(self):
-        super(FakeOsModuleDirFdTest, self).setUp()
+        super().setUp()
         self.check_posix_only()
         if not self.use_real_fs():
             # in the real OS, we test the option as is, in the fake OS
@@ -4948,11 +4956,11 @@ class FakeOsModuleDirFdTest(FakeOsModuleTestBase):
                 os_stat()
         self.add_supported_function(self.os.stat)
         if self.os.stat in self.os.supports_dir_fd:
-            self.assertEqual(os_stat().st_mode, 0o100666)
+            self.assertEqual(os_stat().st_mode, 0o100644)
 
     def test_lstat(self):
         st = self.os.lstat(self.fname, dir_fd=self.dir_fd)
-        self.assertEqual(st.st_mode, 0o100666)
+        self.assertEqual(st.st_mode, 0o100644)
 
     def test_mkdir(self):
         def os_mkdir():
@@ -5185,7 +5193,7 @@ class FakeScandirTest(FakeOsModuleTestBase):
     LINKED_FILE_SIZE = 10
 
     def setUp(self):
-        super(FakeScandirTest, self).setUp()
+        super().setUp()
         self.supports_symlinks = not self.is_windows or not self.use_real_fs()
 
         if use_scandir_package:
@@ -5484,7 +5492,7 @@ class RealScandirRelTest(FakeScandirRelTest):
 class FakeScandirFdTest(FakeScandirTest):
     def tearDown(self):
         self.os.close(self.dir_fd)
-        super(FakeScandirFdTest, self).tearDown()
+        super().tearDown()
 
     def scandir_path(self):
         # When scandir is called with a filedescriptor, only the name of the
@@ -5514,7 +5522,7 @@ class RealScandirFdRelTest(FakeScandirFdRelTest):
 
 class FakeExtendedAttributeTest(FakeOsModuleTestBase):
     def setUp(self):
-        super(FakeExtendedAttributeTest, self).setUp()
+        super().setUp()
         self.check_linux_only()
         self.dir_path = self.make_path("foo")
         self.file_path = self.os.path.join(self.dir_path, "bar")
@@ -5570,7 +5578,7 @@ class FakeOsUnreadableDirTest(FakeOsModuleTestBase):
             # and cannot be created in the real OS using file system
             # functions only
             self.check_posix_only()
-        super(FakeOsUnreadableDirTest, self).setUp()
+        super().setUp()
         self.dir_path = self.make_path("some_dir")
         self.file_path = self.os.path.join(self.dir_path, "some_file")
         self.create_file(self.file_path)
@@ -5618,7 +5626,7 @@ class FakeOsUnreadableDirTest(FakeOsModuleTestBase):
         self.check_posix_only()
         user_id = get_uid()
         set_uid(user_id + 1)
-        dir_path = self.make_path("dir1")
+        dir_path = "/dir1"
         self.create_dir(dir_path, perm=0o600)
         self.assertTrue(self.os.path.exists(dir_path))
         reset_ids()
@@ -5630,8 +5638,9 @@ class FakeOsUnreadableDirTest(FakeOsModuleTestBase):
 
     def test_listdir_group_readable_dir_from_other_user(self):
         self.skip_real_fs()  # won't change user in real fs
+        self.check_posix_only()
         set_uid(get_uid() + 1)
-        dir_path = self.make_path("dir1")
+        dir_path = "/dir1"
         self.create_dir(dir_path, perm=0o660)
         self.assertTrue(self.os.path.exists(dir_path))
         reset_ids()
@@ -5642,7 +5651,7 @@ class FakeOsUnreadableDirTest(FakeOsModuleTestBase):
         self.check_posix_only()
         group_id = self.os.getgid()
         set_gid(group_id + 1)
-        dir_path = self.make_path("dir1")
+        dir_path = "/dir1"
         self.create_dir(dir_path, perm=0o060)
         self.assertTrue(self.os.path.exists(dir_path))
         set_gid(group_id)
@@ -5687,9 +5696,10 @@ class FakeOsUnreadableDirTest(FakeOsModuleTestBase):
         self.assertFalse(self.os.path.exists(dir_path))
 
     def test_remove_unreadable_dir_from_other_user(self):
+        self.check_posix_only()
         self.skip_real_fs()  # won't change user in real fs
         set_uid(get_uid() + 1)
-        dir_path = self.make_path("dir1")
+        dir_path = "/dir1"
         self.create_dir(dir_path, perm=0o000)
         self.assertTrue(self.os.path.exists(dir_path))
         reset_ids()

@@ -286,6 +286,7 @@ class RealPathlibPurePathTest(FakePathlibPurePathTest):
 class FakePathlibFileObjectPropertyTest(RealPathlibTestCase):
     def setUp(self):
         super(FakePathlibFileObjectPropertyTest, self).setUp()
+        self.umask = self.os.umask(0o022)
         self.file_path = self.make_path("home", "jane", "test.py")
         self.create_file(self.file_path, contents=b"a" * 100)
         self.create_dir(self.make_path("home", "john"))
@@ -303,6 +304,9 @@ class FakePathlibFileObjectPropertyTest(RealPathlibTestCase):
             self.make_path("broken_file_link"),
             self.make_path("home", "none", "test.py"),
         )
+
+    def tearDown(self):
+        self.os.umask(self.umask)
 
     def test_exists(self):
         self.skip_if_symlink_not_supported()
@@ -373,14 +377,15 @@ class FakePathlibFileObjectPropertyTest(RealPathlibTestCase):
         self.skip_if_symlink_not_supported()
         self.check_lstat(0)
 
-    @unittest.skipIf(is_windows, "Linux specific behavior")
+    @unittest.skipIf(is_windows, "POSIX specific behavior")
     def test_chmod(self):
-        self.check_linux_only()
+        self.check_posix_only()
         file_stat = self.os.stat(self.file_path)
-        self.assertEqual(file_stat.st_mode, stat.S_IFREG | 0o666)
+        self.assertEqual(file_stat.st_mode, stat.S_IFREG | 0o644)
         link_stat = self.os.lstat(self.file_link_path)
         # we get stat.S_IFLNK | 0o755 under MacOs
-        self.assertEqual(link_stat.st_mode, stat.S_IFLNK | 0o777)
+        mode = 0o755 if self.is_macos else 0o777
+        self.assertEqual(link_stat.st_mode, stat.S_IFLNK | mode)
 
     def test_lchmod(self):
         self.skip_if_symlink_not_supported()
@@ -391,7 +396,7 @@ class FakePathlibFileObjectPropertyTest(RealPathlibTestCase):
                 self.path(self.file_link_path).lchmod(0o444)
         else:
             self.path(self.file_link_path).lchmod(0o444)
-            self.assertEqual(file_stat.st_mode, stat.S_IFREG | 0o666)
+            self.assertEqual(file_stat.st_mode, stat.S_IFREG | 0o644)
             # the exact mode depends on OS and Python version
             self.assertEqual(link_stat.st_mode & 0o777700, stat.S_IFLNK | 0o700)
 
@@ -408,7 +413,7 @@ class FakePathlibFileObjectPropertyTest(RealPathlibTestCase):
                 self.path(self.file_link_path).chmod(0o444, follow_symlinks=False)
         else:
             self.path(self.file_link_path).chmod(0o444, follow_symlinks=False)
-            self.assertEqual(file_stat.st_mode, stat.S_IFREG | 0o666)
+            self.assertEqual(file_stat.st_mode, stat.S_IFREG | 0o644)
             # the exact mode depends on OS and Python version
             self.assertEqual(link_stat.st_mode & 0o777700, stat.S_IFLNK | 0o700)
 
@@ -492,7 +497,7 @@ class FakePathlibFileObjectPropertyTest(RealPathlibTestCase):
         # glob does not find the file
         assert len(list(directory.glob("*.txt"))) == 0
         # we can access the file if we know the file name
-        assert file_path.stat().st_mode & 0o777 == 0o777
+        assert file_path.stat().st_mode & 0o777 == 0o755
         assert file_path.read_text() == "hey"
 
     def test_resolve_nonexisting_file(self):
