@@ -2117,7 +2117,7 @@ class FakeFilesystem:
         # set the permission after creating the directories
         # to allow directory creation inside a read-only directory
         for new_dir in new_dirs:
-            new_dir.st_mode = S_IFDIR | perm_bits
+            new_dir.st_mode = S_IFDIR | (perm_bits & ~self.umask)
 
         return current_dir
 
@@ -2128,7 +2128,7 @@ class FakeFilesystem:
         contents: AnyString = "",
         st_size: Optional[int] = None,
         create_missing_dirs: bool = True,
-        apply_umask: bool = False,
+        apply_umask: bool = True,
         encoding: Optional[str] = None,
         errors: Optional[str] = None,
         side_effect: Optional[Callable] = None,
@@ -2403,7 +2403,7 @@ class FakeFilesystem:
         contents: AnyString = "",
         st_size: Optional[int] = None,
         create_missing_dirs: bool = True,
-        apply_umask: bool = False,
+        apply_umask: bool = True,
         encoding: Optional[str] = None,
         errors: Optional[str] = None,
         read_from_real_fs: bool = False,
@@ -2543,6 +2543,7 @@ class FakeFilesystem:
             st_mode=S_IFLNK | helpers.PERM_DEF,
             contents=link_target_path,
             create_missing_dirs=create_missing_dirs,
+            apply_umask=self.is_macos,
         )
 
     def create_link(
@@ -2790,7 +2791,7 @@ class FakeFilesystem:
             else:
                 current_dir = cast(FakeDirectory, current_dir.entries[component])
         try:
-            self.create_dir(dir_name, mode & ~self.umask)
+            self.create_dir(dir_name, mode)
         except OSError as e:
             if e.errno == errno.EACCES:
                 # permission denied - propagate exception

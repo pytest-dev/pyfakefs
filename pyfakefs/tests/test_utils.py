@@ -312,7 +312,7 @@ class RealFsTestMixin:
         args = [to_string(arg) for arg in args]
         return self.os.path.join(self.base_path, *args)
 
-    def create_dir(self, dir_path, perm=0o777):
+    def create_dir(self, dir_path, perm=0o777, apply_umask=True):
         """Create the directory at `dir_path`, including subdirectories.
         `dir_path` shall be composed using `make_path()`.
         """
@@ -332,9 +332,15 @@ class RealFsTestMixin:
             existing_path = self.os.path.join(existing_path, component)
             self.os.mkdir(existing_path)
             self.os.chmod(existing_path, 0o777)
+        if apply_umask:
+            umask = self.os.umask(0o022)
+            perm &= ~umask
+            self.os.umask(umask)
         self.os.chmod(dir_path, perm)
 
-    def create_file(self, file_path, contents=None, encoding=None, perm=0o666):
+    def create_file(
+        self, file_path, contents=None, encoding=None, perm=0o666, apply_umask=True
+    ):
         """Create the given file at `file_path` with optional contents,
         including subdirectories. `file_path` shall be composed using
         `make_path()`.
@@ -347,6 +353,10 @@ class RealFsTestMixin:
         with self.open(file_path, mode) as f:
             if contents is not None:
                 f.write(contents)
+        if apply_umask:
+            umask = self.os.umask(0o022)
+            perm &= ~umask
+            self.os.umask(umask)
         self.os.chmod(file_path, perm)
 
     def create_symlink(self, link_path, target_path):
