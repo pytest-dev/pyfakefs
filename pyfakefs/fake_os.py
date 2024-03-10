@@ -671,7 +671,7 @@ class FakeOsModule:
             OSError: if the filesystem object doesn't exist.
         """
         # stat should return the tuple representing return value of os.stat
-        path = self._path_with_dir_fd(path, self.lstat, dir_fd)
+        path = self._path_with_dir_fd(path, self.lstat, dir_fd, check_supported=False)
         return self.filesystem.stat(path, follow_symlinks=False)
 
     def remove(self, path: AnyStr, dir_fd: Optional[int] = None) -> None:
@@ -687,7 +687,7 @@ class FakeOsModule:
             OSError: if path does not exist.
             OSError: if removal failed.
         """
-        path = self._path_with_dir_fd(path, self.remove, dir_fd)
+        path = self._path_with_dir_fd(path, self.remove, dir_fd, check_supported=False)
         self.filesystem.remove(path)
 
     def unlink(self, path: AnyStr, *, dir_fd: Optional[int] = None) -> None:
@@ -798,8 +798,12 @@ class FakeOsModule:
             OSError: if the file would be moved to another filesystem
                 (e.g. mount point)
         """
-        src = self._path_with_dir_fd(src, self.rename, src_dir_fd)
-        dst = self._path_with_dir_fd(dst, self.rename, dst_dir_fd)
+        src = self._path_with_dir_fd(
+            src, self.rename, src_dir_fd, check_supported=False
+        )
+        dst = self._path_with_dir_fd(
+            dst, self.rename, dst_dir_fd, check_supported=False
+        )
         self.filesystem.rename(src, dst, force_replace=True)
 
     def rmdir(self, path: AnyStr, *, dir_fd: Optional[int] = None) -> None:
@@ -891,7 +895,11 @@ class FakeOsModule:
         self.filesystem.makedirs(name, mode, exist_ok)
 
     def _path_with_dir_fd(
-        self, path: AnyStr, fct: Callable, dir_fd: Optional[int]
+        self,
+        path: AnyStr,
+        fct: Callable,
+        dir_fd: Optional[int],
+        check_supported: bool = True,
     ) -> AnyStr:
         """Return the path considering dir_fd. Raise on invalid parameters."""
         try:
@@ -901,7 +909,7 @@ class FakeOsModule:
             path = path
         if dir_fd is not None:
             # check if fd is supported for the built-in real function
-            if fct not in self.supports_dir_fd:
+            if check_supported and (fct not in self.supports_dir_fd):
                 raise NotImplementedError("dir_fd unavailable on this platform")
             if isinstance(path, int):
                 raise ValueError(
@@ -1162,12 +1170,12 @@ class FakeOsModule:
             dst: Path to the symlink to create.
             target_is_directory: Currently ignored.
             dir_fd: If not `None`, the file descriptor of a directory,
-                with `src` being relative to this directory.
+                with `dst` being relative to this directory.
 
         Raises:
             OSError:  if the file already exists.
         """
-        src = self._path_with_dir_fd(src, self.symlink, dir_fd)
+        dst = self._path_with_dir_fd(dst, self.symlink, dir_fd)
         self.filesystem.create_symlink(dst, src, create_missing_dirs=False)
 
     def link(
@@ -1178,7 +1186,7 @@ class FakeOsModule:
         src_dir_fd: Optional[int] = None,
         dst_dir_fd: Optional[int] = None,
     ) -> None:
-        """Create a hard link at new_path, pointing at old_path.
+        """Create a hard link at dst, pointing at src.
 
         Args:
             src: An existing path to the target file.

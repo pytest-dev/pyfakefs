@@ -20,6 +20,7 @@ The released versions correspond to PyPI releases.
   (see [#960](../../issues/960))
 * fixed creation of the temp directory in the fake file system after a filesystem reset
   (see [#965](../../issues/965))
+* fixed handling of `dirfd` in `os.symlink` (see [#968](../../issues/968))
 
 ## [Version 5.3.5](https://pypi.python.org/pypi/pyfakefs/5.3.5) (2024-01-30)
 Fixes a regression.

@@ -4744,228 +4744,252 @@ class RealOsModuleWalkTest(FakeOsModuleWalkTest):
 class FakeOsModuleDirFdTest(FakeOsModuleTestBase):
     def setUp(self):
         super(FakeOsModuleDirFdTest, self).setUp()
-        self.os.supports_dir_fd.clear()
-        self.filesystem.is_windows_fs = False
-        self.filesystem.create_dir("/foo/bar")
-        self.dir_fd = self.os.open("/foo", os.O_RDONLY)
-        self.filesystem.create_file("/foo/baz")
+        self.check_posix_only()
+        if not self.use_real_fs():
+            # in the real OS, we test the option as is, in the fake OS
+            # we test both the supported and unsupported option
+            self.os.supports_dir_fd.clear()
+        self.dir_fd_path = self.make_path("foo")
+        self.create_dir(self.dir_fd_path)
+        self.dir_fd = self.os.open(self.dir_fd_path, os.O_RDONLY)
+        self.fname = "baz"
+        self.fpath = self.os.path.join(self.dir_fd_path, self.fname)
+        self.create_file(self.fpath)
+
+    def add_supported_function(self, fct):
+        if not self.use_real_fs():
+            self.os.supports_dir_fd.add(fct)
 
     def test_access(self):
-        self.assertRaises(
-            NotImplementedError,
-            self.os.access,
-            "baz",
-            self.os.F_OK,
-            dir_fd=self.dir_fd,
-        )
-        self.os.supports_dir_fd.add(self.os.access)
-        self.assertTrue(self.os.access("baz", self.os.F_OK, dir_fd=self.dir_fd))
+        def os_access():
+            return self.os.access(self.fname, self.os.F_OK, dir_fd=self.dir_fd)
+
+        if self.os.access not in self.os.supports_dir_fd:
+            with self.assertRaises(NotImplementedError):
+                os_access()
+        self.add_supported_function(self.os.access)
+        if self.os.access in self.os.supports_dir_fd:
+            self.assertTrue(os_access())
 
     def test_chmod(self):
-        self.assertRaises(
-            NotImplementedError,
-            self.os.chmod,
-            "baz",
-            0o6543,
-            dir_fd=self.dir_fd,
-        )
-        self.os.supports_dir_fd.add(self.os.chmod)
-        self.os.chmod("baz", 0o6543, dir_fd=self.dir_fd)
-        st = self.os.stat("/foo/baz")
-        self.assert_mode_equal(0o6543, st.st_mode)
+        def os_chmod():
+            self.os.chmod(self.fname, 0o6543, dir_fd=self.dir_fd)
+
+        if self.os.chmod not in self.os.supports_dir_fd:
+            with self.assertRaises(NotImplementedError):
+                os_chmod()
+        self.add_supported_function(self.os.chmod)
+        if self.os.chmod in self.os.supports_dir_fd:
+            os_chmod()
+            st = self.os.stat(self.fpath)
+            self.assert_mode_equal(0o6543, st.st_mode)
 
     @unittest.skipIf(not hasattr(os, "chown"), "chown not on all platforms available")
     def test_chown(self):
-        self.assertRaises(
-            NotImplementedError,
-            self.os.chown,
-            "baz",
-            100,
-            101,
-            dir_fd=self.dir_fd,
-        )
-        self.os.supports_dir_fd.add(self.os.chown)
-        self.os.chown("baz", 100, 101, dir_fd=self.dir_fd)
-        st = self.os.stat("/foo/baz")
-        self.assertEqual(st[stat.ST_UID], 100)
-        self.assertEqual(st[stat.ST_GID], 101)
+        def os_chown():
+            self.os.chown(self.fname, 100, 101, dir_fd=self.dir_fd)
+
+        self.skip_real_fs()
+        if self.os.chown not in self.os.supports_dir_fd:
+            with self.assertRaises(NotImplementedError):
+                os_chown()
+        self.add_supported_function(self.os.chown)
+        os_chown()
+        st = self.os.stat(self.fpath)
+        self.assertEqual(100, st[stat.ST_UID])
+        self.assertEqual(101, st[stat.ST_GID])
 
     def test_link_src_fd(self):
-        self.assertRaises(
-            NotImplementedError,
-            self.os.link,
-            "baz",
-            "/bat",
-            src_dir_fd=self.dir_fd,
-        )
-        self.os.supports_dir_fd.add(self.os.link)
-        self.os.link("baz", "/bat", src_dir_fd=self.dir_fd)
-        self.assertTrue(self.os.path.exists("/bat"))
+        def os_link():
+            self.os.link(self.fname, link_dest, src_dir_fd=self.dir_fd)
+
+        link_dest = self.make_path("bat")
+        if self.os.link not in self.os.supports_dir_fd:
+            with self.assertRaises(NotImplementedError):
+                os_link()
+        self.add_supported_function(self.os.link)
+        if self.os.link in self.os.supports_dir_fd:
+            os_link()
+            self.assertTrue(self.os.path.exists(link_dest))
 
     def test_link_dst_fd(self):
-        self.assertRaises(
-            NotImplementedError,
-            self.os.link,
-            "baz",
-            "/bat",
-            dst_dir_fd=self.dir_fd,
-        )
-        self.os.supports_dir_fd.add(self.os.link)
-        self.os.link("/foo/baz", "bat", dst_dir_fd=self.dir_fd)
-        self.assertTrue(self.os.path.exists("/foo/bat"))
+        def os_link():
+            self.os.link(self.fpath, "bat", dst_dir_fd=self.dir_fd)
+
+        if self.os.link not in self.os.supports_dir_fd:
+            with self.assertRaises(NotImplementedError):
+                os_link()
+        self.add_supported_function(self.os.link)
+        if self.os.link in self.os.supports_dir_fd:
+            os_link()
+            link_path = self.os.path.join(self.dir_fd_path, "bat")
+            self.assertTrue(self.os.path.exists(link_path))
 
     def test_symlink(self):
-        self.assertRaises(
-            NotImplementedError,
-            self.os.symlink,
-            "baz",
-            "/bat",
-            dir_fd=self.dir_fd,
-        )
-        self.os.supports_dir_fd.add(self.os.symlink)
-        self.os.symlink("baz", "/bat", dir_fd=self.dir_fd)
-        self.assertTrue(self.os.path.exists("/bat"))
+        def os_symlink():
+            self.os.symlink(self.fpath, "bat", dir_fd=self.dir_fd)
+
+        if self.os.symlink not in self.os.supports_dir_fd:
+            with self.assertRaises(NotImplementedError):
+                os_symlink()
+        self.add_supported_function(self.os.symlink)
+        if self.os.symlink in self.os.supports_dir_fd:
+            os_symlink()
+            link_path = self.os.path.join(self.dir_fd_path, "bat")
+            self.assertTrue(self.os.path.exists(link_path))
 
     def test_readlink(self):
-        self.skip_if_symlink_not_supported()
-        self.filesystem.create_symlink("/meyer/lemon/pie", "/foo/baz")
-        self.filesystem.create_symlink("/geo/metro", "/meyer")
-        self.assertRaises(
-            NotImplementedError,
-            self.os.readlink,
-            "/geo/metro/lemon/pie",
-            dir_fd=self.dir_fd,
-        )
-        self.os.supports_dir_fd.add(self.os.readlink)
-        self.assertEqual(
-            "/foo/baz",
-            self.os.readlink("/geo/metro/lemon/pie", dir_fd=self.dir_fd),
-        )
+        def os_readlink():
+            return self.os.readlink("lemon/tree", dir_fd=self.dir_fd)
+
+        link_dir = self.os.path.join(self.dir_fd_path, "lemon")
+        self.create_dir(link_dir)
+        self.create_symlink(self.os.path.join(link_dir, "tree"), self.fpath)
+        if self.os.readlink not in self.os.supports_dir_fd:
+            with self.assertRaises(NotImplementedError):
+                os_readlink()
+        self.add_supported_function(self.os.readlink)
+        if self.os.readlink in self.os.supports_dir_fd:
+            self.assertEqual(self.fpath, os_readlink())
 
     def test_stat(self):
-        self.assertRaises(NotImplementedError, self.os.stat, "baz", dir_fd=self.dir_fd)
-        self.os.supports_dir_fd.add(self.os.stat)
-        st = self.os.stat("baz", dir_fd=self.dir_fd)
-        self.assertEqual(st.st_mode, 0o100666)
+        def os_stat():
+            return self.os.stat(self.fname, dir_fd=self.dir_fd)
+
+        if self.os.stat not in self.os.supports_dir_fd:
+            with self.assertRaises(NotImplementedError):
+                os_stat()
+        self.add_supported_function(self.os.stat)
+        if self.os.stat in self.os.supports_dir_fd:
+            self.assertEqual(os_stat().st_mode, 0o100666)
 
     def test_lstat(self):
-        self.assertRaises(NotImplementedError, self.os.lstat, "baz", dir_fd=self.dir_fd)
-        self.os.supports_dir_fd.add(self.os.lstat)
-        st = self.os.lstat("baz", dir_fd=self.dir_fd)
+        st = self.os.lstat(self.fname, dir_fd=self.dir_fd)
         self.assertEqual(st.st_mode, 0o100666)
 
     def test_mkdir(self):
-        self.assertRaises(
-            NotImplementedError, self.os.mkdir, "newdir", dir_fd=self.dir_fd
-        )
-        self.os.supports_dir_fd.add(self.os.mkdir)
-        self.os.mkdir("newdir", dir_fd=self.dir_fd)
-        self.assertTrue(self.os.path.exists("/foo/newdir"))
+        def os_mkdir():
+            self.os.mkdir("newdir", dir_fd=self.dir_fd)
+
+        newdir_path = self.os.path.join(self.dir_fd_path, "newdir")
+        if self.os.mkdir not in self.os.supports_dir_fd:
+            with self.assertRaises(NotImplementedError):
+                os_mkdir()
+        self.add_supported_function(self.os.mkdir)
+        if self.os.mkdir in self.os.supports_dir_fd:
+            os_mkdir()
+            self.assertTrue(self.os.path.exists(newdir_path))
 
     def test_rmdir(self):
-        self.assertRaises(NotImplementedError, self.os.rmdir, "bar", dir_fd=self.dir_fd)
-        self.os.supports_dir_fd.add(self.os.rmdir)
-        self.os.rmdir("bar", dir_fd=self.dir_fd)
-        self.assertFalse(self.os.path.exists("/foo/bar"))
+        def os_rmdir():
+            self.os.rmdir("dir", dir_fd=self.dir_fd)
+
+        dir_path = self.os.path.join(self.dir_fd_path, "dir")
+        self.create_dir(dir_path)
+        self.assertTrue(self.os.path.exists(dir_path))
+        if self.os.rmdir not in self.os.supports_dir_fd:
+            with self.assertRaises(NotImplementedError):
+                os_rmdir()
+        self.add_supported_function(self.os.rmdir)
+        if self.os.rmdir in self.os.supports_dir_fd:
+            os_rmdir()
+            self.assertFalse(self.os.path.exists(dir_path))
 
     @unittest.skipIf(not hasattr(os, "mknod"), "mknod not on all platforms available")
     def test_mknod(self):
-        self.assertRaises(
-            NotImplementedError, self.os.mknod, "newdir", dir_fd=self.dir_fd
-        )
-        self.os.supports_dir_fd.add(self.os.mknod)
-        self.os.mknod("newdir", dir_fd=self.dir_fd)
-        self.assertTrue(self.os.path.exists("/foo/newdir"))
+        def os_mknod():
+            self.os.mknod("newdir", dir_fd=self.dir_fd)
+
+        if self.os.mknod not in self.os.supports_dir_fd:
+            with self.assertRaises(NotImplementedError):
+                os_mknod()
+        self.add_supported_function(self.os.mknod)
+        if self.os.mknod in self.os.supports_dir_fd:
+            os_mknod()
+            newdir_path = self.os.path.join(self.dir_fd_path, "newdir")
+            self.assertTrue(self.os.path.exists(newdir_path))
 
     def test_rename_src_fd(self):
-        self.assertRaises(
-            NotImplementedError,
-            self.os.rename,
-            "baz",
-            "/foo/batz",
-            src_dir_fd=self.dir_fd,
-        )
-        self.os.supports_dir_fd.add(self.os.rename)
-        self.os.rename("bar", "/foo/batz", src_dir_fd=self.dir_fd)
-        self.assertTrue(self.os.path.exists("/foo/batz"))
+        def os_rename():
+            self.os.rename(self.fname, new_name, src_dir_fd=self.dir_fd)
+
+        new_name = self.os.path.join(self.dir_fd_path, "batz")
+        if self.os.rename not in self.os.supports_dir_fd:
+            with self.assertRaises(NotImplementedError):
+                os_rename()
+        self.add_supported_function(self.os.rename)
+        if self.os.rename in self.os.supports_dir_fd:
+            os_rename()
+            self.assertTrue(self.os.path.exists(new_name))
 
     def test_rename_dst_fd(self):
-        self.assertRaises(
-            NotImplementedError,
-            self.os.rename,
-            "baz",
-            "/foo/batz",
-            dst_dir_fd=self.dir_fd,
-        )
-        self.os.supports_dir_fd.add(self.os.rename)
-        self.os.rename("/foo/bar", "batz", dst_dir_fd=self.dir_fd)
-        self.assertTrue(self.os.path.exists("/foo/batz"))
+        def os_rename():
+            self.os.rename(self.fpath, "batz", dst_dir_fd=self.dir_fd)
+
+        if self.os.rename not in self.os.supports_dir_fd:
+            with self.assertRaises(NotImplementedError):
+                os_rename()
+        self.add_supported_function(self.os.rename)
+        if self.os.rename in self.os.supports_dir_fd:
+            os_rename()
+            new_path = self.os.path.join(self.dir_fd_path, "batz")
+            self.assertTrue(self.os.path.exists(new_path))
 
     def test_replace_src_fd(self):
-        self.assertRaises(
-            NotImplementedError,
-            self.os.rename,
-            "baz",
-            "/foo/batz",
-            src_dir_fd=self.dir_fd,
-        )
-        self.os.supports_dir_fd.add(self.os.rename)
-        self.os.replace("bar", "/foo/batz", src_dir_fd=self.dir_fd)
-        self.assertTrue(self.os.path.exists("/foo/batz"))
+        new_name = self.os.path.join(self.dir_fd_path, "batz")
+        self.os.replace(self.fname, new_name, src_dir_fd=self.dir_fd)
+        self.assertTrue(self.os.path.exists(new_name))
 
     def test_replace_dst_fd(self):
-        self.assertRaises(
-            NotImplementedError,
-            self.os.rename,
-            "baz",
-            "/foo/batz",
-            dst_dir_fd=self.dir_fd,
-        )
-        self.os.supports_dir_fd.add(self.os.rename)
-        self.os.replace("/foo/bar", "batz", dst_dir_fd=self.dir_fd)
-        self.assertTrue(self.os.path.exists("/foo/batz"))
+        self.os.replace(self.fpath, "batz", dst_dir_fd=self.dir_fd)
+        new_path = self.os.path.join(self.dir_fd_path, "batz")
+        self.assertTrue(self.os.path.exists(new_path))
 
     def test_remove(self):
-        self.assertRaises(
-            NotImplementedError, self.os.remove, "baz", dir_fd=self.dir_fd
-        )
-        self.os.supports_dir_fd.add(self.os.remove)
-        self.os.remove("baz", dir_fd=self.dir_fd)
-        self.assertFalse(self.os.path.exists("/foo/baz"))
+        self.os.remove(self.fname, dir_fd=self.dir_fd)
+        self.assertFalse(self.os.path.exists(self.fpath))
 
     def test_unlink(self):
-        self.assertRaises(
-            NotImplementedError, self.os.unlink, "baz", dir_fd=self.dir_fd
-        )
-        self.os.supports_dir_fd.add(self.os.unlink)
-        self.os.unlink("baz", dir_fd=self.dir_fd)
-        self.assertFalse(self.os.path.exists("/foo/baz"))
+        def os_unlink():
+            self.os.unlink(self.fname, dir_fd=self.dir_fd)
+
+        if self.os.unlink not in self.os.supports_dir_fd:
+            with self.assertRaises(NotImplementedError):
+                os_unlink()
+        self.add_supported_function(self.os.unlink)
+        if self.os.unlink in self.os.supports_dir_fd:
+            os_unlink()
+            self.assertFalse(self.os.path.exists(self.fpath))
 
     def test_utime(self):
-        self.assertRaises(
-            NotImplementedError,
-            self.os.utime,
-            "baz",
-            (1, 2),
-            dir_fd=self.dir_fd,
-        )
-        self.os.supports_dir_fd.add(self.os.utime)
-        self.os.utime("baz", times=(1, 2), dir_fd=self.dir_fd)
-        st = self.os.stat("/foo/baz")
-        self.assertEqual(1, st.st_atime)
-        self.assertEqual(2, st.st_mtime)
+        def os_utime():
+            self.os.utime(self.fname, times=(1, 2), dir_fd=self.dir_fd)
+
+        if self.os.utime not in self.os.supports_dir_fd:
+            with self.assertRaises(NotImplementedError):
+                os_utime()
+        self.add_supported_function(self.os.utime)
+        if self.os.utime in self.os.supports_dir_fd:
+            os_utime()
+            st = self.os.stat(self.fpath)
+            self.assertEqual(1, st.st_atime)
+            self.assertEqual(2, st.st_mtime)
 
     def test_open(self):
-        self.assertRaises(
-            NotImplementedError,
-            self.os.open,
-            "baz",
-            os.O_RDONLY,
-            dir_fd=self.dir_fd,
-        )
-        self.os.supports_dir_fd.add(self.os.open)
-        fd = self.os.open("baz", os.O_RDONLY, dir_fd=self.dir_fd)
-        self.assertLess(0, fd)
+        def os_open():
+            return self.os.open(self.fname, os.O_RDONLY, dir_fd=self.dir_fd)
+
+        if self.os.open not in self.os.supports_dir_fd:
+            with self.assertRaises(NotImplementedError):
+                os_open()
+        self.add_supported_function(self.os.open)
+        if self.os.open in self.os.supports_dir_fd:
+            self.assertLess(0, os_open())
+
+
+class RealOsModuleDirFdTest(FakeOsModuleDirFdTest):
+    def use_real_fs(self):
+        return True
 
 
 class StatPropagationTest(TestCase):
