@@ -2705,6 +2705,29 @@ class FakeOsModuleTest(FakeOsModuleTestBase):
         self.os.unlink(file1_path)
         self.assertEqual(self.os.stat(file2_path).st_nlink, 1)
 
+    @unittest.skipIf(IS_PYPY, "follow_symlinks not supported in PyPi")
+    def test_link_no_follow_symlink(self):
+        self.skip_if_symlink_not_supported()
+        target_path = self.make_path("target_path")
+        self.create_file(target_path, contents="foo")
+        symlink_path = self.make_path("symlink_to_file")
+        self.create_symlink(symlink_path, target_path)
+        link_path = self.make_path("link_to_symlink")
+        self.os.link(symlink_path, link_path, follow_symlinks=False)
+        self.assertTrue(self.os.path.islink(link_path))
+
+    @unittest.skipIf(not IS_PYPY, "follow_symlinks only not supported in PyPi")
+    def test_link_follow_symlink_not_supported_inPypy(self):
+        self.skip_if_symlink_not_supported()
+        target_path = self.make_path("target_path")
+        self.create_file(target_path, contents="foo")
+        symlink_path = self.make_path("symlink_to_file")
+        self.create_symlink(symlink_path, target_path)
+        link_path = self.make_path("link_to_symlink")
+        with self.assertRaises(OSError) as cm:
+            self.os.link(symlink_path, link_path, follow_symlinks=False)
+        self.assertEqual(errno.EINVAL, cm.exception.errno)
+
     def test_nlink_for_directories(self):
         self.skip_real_fs()
         self.create_dir(self.make_path("foo", "bar"))
