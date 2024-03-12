@@ -1185,6 +1185,7 @@ class FakeOsModule:
         *,
         src_dir_fd: Optional[int] = None,
         dst_dir_fd: Optional[int] = None,
+        follow_symlinks: Optional[bool] = None,
     ) -> None:
         """Create a hard link at dst, pointing at src.
 
@@ -1195,14 +1196,21 @@ class FakeOsModule:
                 with `src` being relative to this directory.
             dst_dir_fd: If not `None`, the file descriptor of a directory,
                 with `dst` being relative to this directory.
+            follow_symlinks: (bool) If True (the default), symlinks in the
+                path are traversed.
 
         Raises:
             OSError:  if something already exists at new_path.
             OSError:  if the parent directory doesn't exist.
         """
+        if IS_PYPY and follow_symlinks is not None:
+            raise OSError(errno.EINVAL, "Invalid argument: follow_symlinks")
+        if follow_symlinks is None:
+            follow_symlinks = True
+
         src = self._path_with_dir_fd(src, self.link, src_dir_fd)
         dst = self._path_with_dir_fd(dst, self.link, dst_dir_fd)
-        self.filesystem.link(src, dst)
+        self.filesystem.link(src, dst, follow_symlinks=follow_symlinks)
 
     def fsync(self, fd: int) -> None:
         """Perform fsync for a fake file (in other words, do nothing).
