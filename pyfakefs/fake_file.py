@@ -53,6 +53,7 @@ from pyfakefs.helpers import (
     AnyPath,
     AnyString,
     get_locale_encoding,
+    _OpenModes,
 )
 
 if TYPE_CHECKING:
@@ -134,6 +135,7 @@ class FakeFile:
         encoding: Optional[str] = None,
         errors: Optional[str] = None,
         side_effect: Optional[Callable[["FakeFile"], None]] = None,
+        open_modes: Optional[_OpenModes] = None,
     ):
         """
         Args:
@@ -152,6 +154,7 @@ class FakeFile:
             errors: The error mode used for encoding/decoding errors.
             side_effect: function handle that is executed when file is written,
                 must accept the file object as an argument.
+            open_modes: The modes the file was opened with (e.g. can read, write etc.)
         """
         # to be backwards compatible regarding argument order, we raise on None
         if filesystem is None:
@@ -180,6 +183,7 @@ class FakeFile:
         # Linux specific: extended file system attributes
         self.xattr: Dict = {}
         self.opened_as: AnyString = ""
+        self.open_modes = open_modes
 
     @property
     def byte_contents(self) -> Optional[bytes]:
@@ -755,6 +759,7 @@ class FakeFileWrapper:
         errors: Optional[str],
         buffering: int,
         raw_io: bool,
+        opened_as_fd: bool,
         is_stream: bool = False,
     ):
         self.file_object = file_object
@@ -766,6 +771,7 @@ class FakeFileWrapper:
         self._file_epoch = file_object.epoch
         self.raw_io = raw_io
         self._binary = binary
+        self.opened_as_fd = opened_as_fd
         self.is_stream = is_stream
         self._changed = False
         self._buffer_size = buffering
@@ -844,8 +850,17 @@ class FakeFileWrapper:
             return
 
         # for raw io, all writes are flushed immediately
-        if self.allow_update and not self.raw_io:
-            self.flush()
+        if not self.raw_io:
+            try:
+                self.flush()
+            except OSError as e:
+                if e.errno == errno.EBADF:
+                    # if we get here, we have an open file descriptor
+                    # without write permission, which has to be closed
+                    assert self.filedes
+                    self._filesystem._close_open_file(self.filedes)
+                raise
+
             if self._filesystem.is_windows_fs and self._changed:
                 self.file_object.st_mtime = helpers.now()
 
@@ -880,8 +895,12 @@ class FakeFileWrapper:
 
     def flush(self) -> None:
         """Flush file contents to 'disk'."""
+        if self.is_stream:
+            return
+
         self._check_open_file()
-        if self.allow_update and not self.is_stream:
+
+        if self.allow_update:
             contents = self._io.getvalue()
             if self._append:
                 self._sync_io()
@@ -901,9 +920,15 @@ class FakeFileWrapper:
                     self.file_object.st_ctime = current_time
                     self.file_object.st_mtime = current_time
             self._file_epoch = self.file_object.epoch
-
-            if not self.is_stream:
-                self._flush_related_files()
+            self._flush_related_files()
+        else:
+            buf_length = len(self._io.getvalue())
+            content_length = 0
+            if self.file_object.byte_contents is not None:
+                content_length = len(self.file_object.byte_contents)
+            # an error is only raised if there is something to flush
+            if content_length != buf_length:
+                self._filesystem.raise_os_error(errno.EBADF)
 
     def update_flush_pos(self) -> None:
         self._flush_pos = self._io.tell()
@@ -1146,7 +1171,7 @@ class FakeFileWrapper:
             self._check_open_file()
         if not self._read and reading:
             return self._read_error()
-        if not self.allow_update and writing:
+        if not self.opened_as_fd and not self.allow_update and writing:
             return self._write_error()
 
         if reading:

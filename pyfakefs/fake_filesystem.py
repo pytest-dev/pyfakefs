@@ -814,7 +814,7 @@ class FakeFilesystem:
         if ns is not None and len(ns) != 2:
             raise TypeError("utime: 'ns' must be a tuple of two ints")
 
-    def _add_open_file(self, file_obj: AnyFileWrapper) -> int:
+    def add_open_file(self, file_obj: AnyFileWrapper) -> int:
         """Add file_obj to the list of open files on the filesystem.
         Used internally to manage open files.
 
@@ -860,13 +860,29 @@ class FakeFilesystem:
         Returns:
             Open file object.
         """
+        try:
+            return self.get_open_files(file_des)[0]
+        except IndexError:
+            self.raise_os_error(errno.EBADF, str(file_des))
+
+    def get_open_files(self, file_des: int) -> List[AnyFileWrapper]:
+        """Return the list of open files for a file descriptor.
+
+        Args:
+            file_des: File descriptor of the open files.
+
+        Raises:
+            OSError: an invalid file descriptor.
+            TypeError: filedes is not an integer.
+
+        Returns:
+            List of open file objects.
+        """
         if not is_int_type(file_des):
             raise TypeError("an integer is required")
         valid = file_des < len(self.open_files)
         if valid:
-            file_list = self.open_files[file_des]
-            if file_list is not None:
-                return file_list[0]
+            return self.open_files[file_des] or []
         self.raise_os_error(errno.EBADF, str(file_des))
 
     def has_open_file(self, file_object: FakeFile) -> bool:
@@ -3008,9 +3024,9 @@ class FakeFilesystem:
         return str(self.root_dir)
 
     def _add_standard_streams(self) -> None:
-        self._add_open_file(StandardStreamWrapper(sys.stdin))
-        self._add_open_file(StandardStreamWrapper(sys.stdout))
-        self._add_open_file(StandardStreamWrapper(sys.stderr))
+        self.add_open_file(StandardStreamWrapper(sys.stdin))
+        self.add_open_file(StandardStreamWrapper(sys.stdout))
+        self.add_open_file(StandardStreamWrapper(sys.stderr))
 
     def _tempdir_name(self):
         """This logic is extracted from tempdir._candidate_tempdir_list.

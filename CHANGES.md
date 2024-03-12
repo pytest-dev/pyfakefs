@@ -29,6 +29,7 @@ The released versions correspond to PyPI releases.
 * fixed handling of missing attribute in `os.getxattr` (see [#971](../../issues/971))
 * fixed permission problem with `shutil.rmtree` if emulating Windows under POSIX
   (see [#979](../../issues/979))
+* fixed handling of errors on opening files via file descriptor (see [#967](../../issues/967))
 
 ### Infrastructure
 * replace `undefined` by own minimal implementation to avoid importing it

@@ -291,7 +291,7 @@ class FakeOsModule:
                 ) or open_modes.can_write:
                     self.filesystem.raise_os_error(errno.EISDIR, path)
                 dir_wrapper = FakeDirWrapper(obj, path, self.filesystem)
-                file_des = self.filesystem._add_open_file(dir_wrapper)
+                file_des = self.filesystem.add_open_file(dir_wrapper)
                 dir_wrapper.filedes = file_des
                 return file_des
 
@@ -373,10 +373,10 @@ class FakeOsModule:
     def pipe(self) -> Tuple[int, int]:
         read_fd, write_fd = os.pipe()
         read_wrapper = FakePipeWrapper(self.filesystem, read_fd, False)
-        file_des = self.filesystem._add_open_file(read_wrapper)
+        file_des = self.filesystem.add_open_file(read_wrapper)
         read_wrapper.filedes = file_des
         write_wrapper = FakePipeWrapper(self.filesystem, write_fd, True)
-        file_des = self.filesystem._add_open_file(write_wrapper)
+        file_des = self.filesystem.add_open_file(write_wrapper)
         write_wrapper.filedes = file_des
         return read_wrapper.filedes, write_wrapper.filedes
 
