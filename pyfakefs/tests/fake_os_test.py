@@ -218,22 +218,51 @@ class FakeOsModuleTest(FakeOsModuleTestBase):
             self.assertFalse(f is fake_file3)
         self.assert_raises_os_error(errno.EBADF, self.os.fdopen, fileno2)
 
-    def test_fdopen_mode(self):
-        self.skip_real_fs()
-        file_path1 = self.make_path("some_file1")
-        self.create_file(file_path1, contents="contents here1")
-        self.os.chmod(file_path1, (stat.S_IFREG | 0o666) ^ stat.S_IWRITE)
-
-        fake_file1 = self.open(file_path1, "r")
-        fileno1 = fake_file1.fileno()
-        self.os.fdopen(fileno1)
-        self.os.fdopen(fileno1, "r")
-        if not is_root():
-            with self.assertRaises(OSError):
-                self.os.fdopen(fileno1, "w")
+    def test_fdopen_twice(self):
+        file_path = self.make_path("some_file1")
+        self.create_file(file_path, contents="contents here1")
+        fake_file = self.open(file_path, "r")
+        fd = fake_file.fileno()
+        self.open(fd)
+        if not IS_PYPY:
+            with self.assertRaises(OSError) as cm:
+                self.open(fd)
+            self.assertEqual(errno.EBADF, cm.exception.errno)
         else:
-            self.os.fdopen(fileno1, "w")
-            self.os.close(fileno1)
+            self.open(fd)
+            self.os.close(fd)
+
+    def test_open_fd_write_mode_for_ro_file(self):
+        # Create a writable file handle to a read-only file, see #967
+        file_path = self.make_path("file.txt")
+        fd = self.os.open(file_path, os.O_CREAT | os.O_WRONLY, 0o555)
+        with self.open(fd, "w") as out:
+            out.write("hey")
+        with self.open(file_path) as f:
+            assert f.read() == "hey"
+        self.os.chmod(file_path, 0o655)
+
+    def test_open_fd_read_mode_for_ro_file(self):
+        # Create a read-only handle to a read-only file, see #967
+        file_path = self.make_path("file.txt")
+        fd = self.os.open(file_path, os.O_CREAT | os.O_RDONLY, 0x555)
+        # Attempt to open a write stream to the underlying file
+        out = self.open(fd, "wb")
+        out.flush()  # Does not fail: The buffer is empty, so no write()
+
+        # Fails: Tries to flush a non-empty buffer
+        out.write(b"a")  # file.write() may fail by an implicit flush!
+        with self.assertRaises(OSError) as cm:
+            out.flush()
+        assert cm.exception.errno == errno.EBADF
+
+        # Fails: Tries to flush() again
+        with self.assertRaises(OSError) as cm:
+            out.close()
+        assert cm.exception.errno == errno.EBADF
+
+        out.close()  # Okay: The file is already closed
+        self.os.chmod(file_path, 0o655)
 
     def test_fstat(self):
         directory = self.make_path("xyzzy")
@@ -3047,22 +3076,21 @@ class FakeOsModuleTestCaseInsensitiveFS(FakeOsModuleTestBase):
         with self.open(file_path) as f:
             assert f.read() == "hey"
 
-    def test_fdopen_mode(self):
-        self.skip_real_fs()
+    def test_fdopen_twice(self):
         file_path1 = self.make_path("some_file1")
-        file_path2 = self.make_path("Some_File1")
-        file_path3 = self.make_path("SOME_file1")
+        file_path2 = self.make_path("SOME_file1")
         self.create_file(file_path1, contents="contents here1")
-        self.os.chmod(file_path2, (stat.S_IFREG | 0o666) ^ stat.S_IWRITE)
 
-        fake_file1 = self.open(file_path3, "r")
+        fake_file1 = self.open(file_path2, "r")
         fileno1 = fake_file1.fileno()
         self.os.fdopen(fileno1)
-        self.os.fdopen(fileno1, "r")
-        if not is_root():
-            self.assertRaises(OSError, self.os.fdopen, fileno1, "w")
+        if not IS_PYPY:
+            with self.assertRaises(OSError) as cm:
+                self.open(fileno1)
+            self.assertEqual(errno.EBADF, cm.exception.errno)
         else:
-            self.os.fdopen(fileno1, "w")
+            self.open(fileno1)
+            self.os.close(fileno1)
 
     def test_stat(self):
         directory = self.make_path("xyzzy")

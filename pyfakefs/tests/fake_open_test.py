@@ -959,6 +959,14 @@ class FakeFileOpenWithOpenerTest(FakeFileOpenTestBase):
             with self.assertRaises(OSError):
                 f.write("foo")
 
+    def test_no_opener_with_read(self):
+        file_path = self.make_path("foo")
+        self.create_file(file_path, contents="test")
+        with self.open(file_path) as f:
+            assert f.read() == "test"
+            with self.assertRaises(OSError):
+                f.write("foo")
+
     def test_use_opener_with_read_plus(self):
         file_path = self.make_path("foo")
         self.create_file(file_path, contents="test")

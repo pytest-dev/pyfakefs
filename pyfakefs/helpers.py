@@ -19,6 +19,7 @@ import platform
 import stat
 import sys
 import time
+from collections import namedtuple
 from copy import copy
 from stat import S_IFLNK
 from typing import Union, Optional, Any, AnyStr, overload, cast
@@ -36,6 +37,11 @@ PERM_EXE = 0o100  # Execute permission bit.
 PERM_DEF = 0o777  # Default permission bits.
 PERM_DEF_FILE = 0o666  # Default permission bits (regular file)
 PERM_ALL = 0o7777  # All permission bits.
+
+_OpenModes = namedtuple(
+    "_OpenModes",
+    "must_exist can_read can_write truncate append must_not_exist",
+)
 
 if sys.platform == "win32":
     USER_ID = 1
