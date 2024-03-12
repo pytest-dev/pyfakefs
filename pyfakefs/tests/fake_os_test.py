@@ -565,6 +565,42 @@ class FakeOsModuleTest(FakeOsModuleTestBase):
         self.check_windows_only()
         self.check_open_raises_with_trailing_separator(errno.EINVAL)
 
+    @unittest.skipIf(not hasattr(os, "O_DIRECTORY"), "opening directory not supported")
+    def test_open_raises_if_not_dir(self):
+        self.check_posix_only()
+        file_path = self.make_path("file.txt")
+        self.create_file(file_path, contents="foo")
+        with self.assertRaises(NotADirectoryError):
+            self.os.open(file_path, os.O_RDONLY | os.O_DIRECTORY)
+        dir_path = self.make_path("dir")
+        self.create_dir(dir_path)
+        with self.assertRaises(IsADirectoryError):
+            self.os.open(dir_path, os.O_RDWR | os.O_DIRECTORY)
+
+    @unittest.skipIf(not hasattr(os, "O_NOFOLLOW"), "NOFOLLOW attribute not supported")
+    def test_open_nofollow_symlink_raises(self):
+        self.skip_if_symlink_not_supported()
+        file_path = self.make_path("file.txt")
+        self.create_file(file_path, contents="foo")
+        link_path = self.make_path("link")
+        self.create_symlink(link_path, file_path)
+        with self.assertRaises(OSError) as cm:
+            self.os.open(link_path, os.O_RDONLY | os.O_NOFOLLOW)
+        assert cm.exception.errno == errno.ELOOP
+
+    @unittest.skipIf(not hasattr(os, "O_NOFOLLOW"), "NOFOLLOW attribute not supported")
+    def test_open_nofollow_symlink_as_parent_works(self):
+        self.skip_if_symlink_not_supported()
+        dir_path = self.make_path("dir")
+        self.create_dir(dir_path)
+        link_path = self.make_path("link")
+        self.create_symlink(link_path, dir_path)
+        file_path = self.os.path.join(link_path, "file.txt")
+        self.create_file(file_path, contents="foo")
+        fd = self.os.open(file_path, os.O_RDONLY | os.O_NOFOLLOW)
+        self.assertGreater(fd, 0)
+        self.os.close(fd)
+
     def test_lexists_with_trailing_separator_linux_windows(self):
         self.check_linux_and_windows()
         self.skip_if_symlink_not_supported()
@@ -5298,7 +5334,6 @@ class FakeScandirTest(FakeOsModuleTestBase):
                 self.assertEqual(1, self.os.stat(self.file_path).st_nlink)
 
     @unittest.skipIf(not hasattr(os, "O_DIRECTORY"), "opening directory not supported")
-    @unittest.skipIf(sys.version_info < (3, 7), "fd not supported for scandir")
     def test_scandir_with_fd(self):
         # regression test for #723
         temp_dir = self.make_path("tmp", "dir")

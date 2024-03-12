@@ -23,6 +23,10 @@ The released versions correspond to PyPI releases.
 * fixed handling of `dirfd` in `os.symlink` (see [#968](../../issues/968))
 * add missing `follow_symlink` argument to `os.link` (see [#973](../../issues/973))
 
+### Enhancements
+* added support for `O_NOFOLLOW` and `O_DIRECTORY` flags in `os.open`
+  (see [#972](../../issues/972) and [#974](../../issues/974))
+
 ## [Version 5.3.5](https://pypi.python.org/pypi/pyfakefs/5.3.5) (2024-01-30)
 Fixes a regression.
 

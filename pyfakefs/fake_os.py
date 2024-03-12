@@ -247,6 +247,18 @@ class FakeOsModule:
             else:
                 mode = 0o777 & ~self._umask()
 
+        has_directory_flag = (
+            hasattr(os, "O_DIRECTORY") and flags & os.O_DIRECTORY == os.O_DIRECTORY
+        )
+        if has_directory_flag and not self.filesystem.isdir(path):
+            raise OSError(errno.ENOTDIR, "path is not a directory", path)
+
+        has_follow_flag = (
+            hasattr(os, "O_NOFOLLOW") and flags & os.O_NOFOLLOW == os.O_NOFOLLOW
+        )
+        if has_follow_flag and self.filesystem.islink(path):
+            raise OSError(errno.ELOOP, "path is a symlink", path)
+
         has_tmpfile_flag = (
             hasattr(os, "O_TMPFILE") and flags & os.O_TMPFILE == os.O_TMPFILE
         )
