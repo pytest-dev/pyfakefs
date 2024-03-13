@@ -5496,26 +5496,25 @@ class FakeExtendedAttributeTest(FakeOsModuleTestBase):
         self.assertEqual([], self.os.listxattr(self.dir_path))
         self.assertEqual([], self.os.listxattr(self.file_path))
 
+    def test_getxattr_raises_for_non_existing_file(self):
+        with self.assertRaises(FileNotFoundError):
+            self.os.getxattr("bogus_path", "test")
+
+    def test_getxattr_raises_for_non_existing_attribute(self):
+        with self.assertRaises(OSError) as cm:
+            self.os.getxattr(self.file_path, "bogus")
+        self.assertEqual(errno.ENODATA, cm.exception.errno)
+
     def test_setxattr(self):
-        self.assertRaises(TypeError, self.os.setxattr, self.file_path, "test", "value")
-        self.assert_raises_os_error(
-            errno.EEXIST,
-            self.os.setxattr,
-            self.file_path,
-            "test",
-            b"value",
-            self.os.XATTR_REPLACE,
-        )
+        with self.assertRaises(TypeError):
+            self.os.setxattr(self.file_path, "test", "value")
+        with self.assertRaises(FileExistsError):
+            self.os.setxattr(self.file_path, "test", b"value", self.os.XATTR_REPLACE)
         self.os.setxattr(self.file_path, "test", b"value")
         self.assertEqual(b"value", self.os.getxattr(self.file_path, "test"))
-        self.assert_raises_os_error(
-            errno.ENODATA,
-            self.os.setxattr,
-            self.file_path,
-            "test",
-            b"value",
-            self.os.XATTR_CREATE,
-        )
+        with self.assertRaises(OSError) as cm:
+            self.os.setxattr(self.file_path, "test", b"value", self.os.XATTR_CREATE)
+        self.assertEqual(errno.ENODATA, cm.exception.errno)
 
     def test_removeattr(self):
         self.os.removexattr(self.file_path, "test")
@@ -5525,7 +5524,9 @@ class FakeExtendedAttributeTest(FakeOsModuleTestBase):
         self.assertEqual(b"value", self.os.getxattr(self.file_path, "test"))
         self.os.removexattr(self.file_path, "test")
         self.assertEqual([], self.os.listxattr(self.file_path))
-        self.assertIsNone(self.os.getxattr(self.file_path, "test"))
+        with self.assertRaises(OSError) as cm:
+            self.os.getxattr(self.file_path, "test")
+        self.assertEqual(errno.ENODATA, cm.exception.errno)
 
     def test_default_path(self):
         self.os.chdir(self.dir_path)

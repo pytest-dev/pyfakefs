@@ -690,7 +690,7 @@ While ``pyfakefs`` can be used just with the standard Python file system
 functions, there are a few convenience methods in ``fake_filesystem`` that can
 help you setting up your tests. The methods can be accessed via the
 ``fake_filesystem`` instance in your tests: ``Patcher.fs``, the ``fs``
-fixture in pytest, ``TestCase.fs`` for ``unittest``, and the ``fs`` argument
+fixture in pytest, ``TestCase.fs`` for ``unittest``, and the positional argument
 for the ``patchfs`` decorator.
 
 File creation helpers
@@ -964,6 +964,10 @@ The following test works both under Windows and Linux:
       assert r"C:\foo\bar" == os.path.join("C:\\", "foo", "bar")
       assert os.path.splitdrive(r"C:\foo\bar") == ("C:", r"\foo\bar")
       assert os.path.ismount("C:")
+
+.. note:: Only behavior not relying on OS-specific functionality is emulated on another system.
+  For example, if you use the Linux-specific functionality of extended attributes (``os.getxattr`` etc.)
+  in your code, you have to test this under Linux.
 
 Set file as inaccessible under Windows
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

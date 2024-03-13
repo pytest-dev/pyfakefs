@@ -491,6 +491,8 @@ class FakeOsModule:
         if isinstance(attribute, bytes):
             attribute = attribute.decode(sys.getfilesystemencoding())
         file_obj = self.filesystem.resolve(path, follow_symlinks, allow_fd=True)
+        if attribute not in file_obj.xattr:
+            raise OSError(errno.ENODATA, "No data available", path)
         return file_obj.xattr.get(attribute)
 
     def listxattr(
