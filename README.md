@@ -120,7 +120,7 @@ for more information.
 pyfakefs.py was initially developed at Google by Mike Bland as a modest fake
 implementation of core Python modules.  It was introduced to all of Google
 in September 2006. Since then, it has been enhanced to extend its
-functionality and usefulness.  At last count, pyfakefs was used in over 2,000
+functionality and usefulness.  At last count, pyfakefs was used in over 20,000
 Python tests at Google.
 
 Google released pyfakefs to the public in 2011 as Google Code project
