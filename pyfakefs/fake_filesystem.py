@@ -80,6 +80,7 @@ True
 >>> stat.S_ISDIR(os_module.stat(os_module.path.dirname(pathname)).st_mode)
 True
 """
+
 import errno
 import heapq
 import os
@@ -1221,12 +1222,10 @@ class FakeFilesystem:
         return matching_string(file_paths[0], "").join(joined_path_segments)
 
     @overload
-    def _path_components(self, path: str) -> List[str]:
-        ...
+    def _path_components(self, path: str) -> List[str]: ...
 
     @overload
-    def _path_components(self, path: bytes) -> List[bytes]:
-        ...
+    def _path_components(self, path: bytes) -> List[bytes]: ...
 
     def _path_components(self, path: AnyStr) -> List[AnyStr]:
         """Breaks the path into a list of component names.

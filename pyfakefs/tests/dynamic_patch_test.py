@@ -13,6 +13,7 @@
 """
 Tests for patching modules loaded after `setUpPyfakefs()`.
 """
+
 import pathlib
 import unittest
 

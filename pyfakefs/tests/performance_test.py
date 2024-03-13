@@ -10,6 +10,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """Shall provide tests to check performance overhead of pyfakefs."""
+
 import os
 import time
 import unittest

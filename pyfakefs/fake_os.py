@@ -12,9 +12,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-""" Uses :py:class:`FakeOsModule` to provide a
-    fake :py:mod:`os` module replacement.
+"""Uses :py:class:`FakeOsModule` to provide a
+fake :py:mod:`os` module replacement.
 """
+
 import errno
 import functools
 import inspect

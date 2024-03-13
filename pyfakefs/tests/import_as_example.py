@@ -14,6 +14,7 @@
 Example module that is used for testing modules that import file system modules
 to be patched under another name.
 """
+
 import os as my_os
 import pathlib
 import sys

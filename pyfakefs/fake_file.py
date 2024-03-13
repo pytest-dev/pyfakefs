@@ -12,8 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""Fake implementations for different file objects.
-"""
+"""Fake implementations for different file objects."""
+
 import errno
 import io
 import os

@@ -16,6 +16,7 @@ Works with both the function integrated into the `os` module since Python 3.5
 and the standalone function available in the standalone `scandir` python
 package.
 """
+
 import os
 import sys
 

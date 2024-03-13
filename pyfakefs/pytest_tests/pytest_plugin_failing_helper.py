@@ -1,4 +1,4 @@
-""" Failing test to test stacktrace output - see
+"""Failing test to test stacktrace output - see
 ``pytest_check_failed_plugin_test.py``."""
 
 

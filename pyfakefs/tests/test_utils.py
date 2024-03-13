@@ -15,6 +15,7 @@
 # Disable attribute errors - attributes not be found in mixin (shall be cleaned up...)
 # pytype: disable=attribute-error
 """Common helper classes used in tests, or as test class base."""
+
 import os
 import platform
 import shutil

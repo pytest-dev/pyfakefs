@@ -14,6 +14,7 @@
 Example module that is used for testing the functionality of
 :py:class`pyfakefs.mox_stubout.StubOutForTesting`.
 """
+
 import datetime
 import math
 import os
