@@ -12,8 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""A fake open() function replacement. See ``fake_filesystem`` for usage.
-"""
+"""A fake open() function replacement. See ``fake_filesystem`` for usage."""
+
 import errno
 import os
 import sys

@@ -14,6 +14,7 @@
 over modules. The code is modeled after code in xmlbuilder.py in Python 3.6.
 See issue #542.
 """
+
 import warnings
 
 

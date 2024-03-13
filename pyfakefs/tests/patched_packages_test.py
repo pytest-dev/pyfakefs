@@ -14,6 +14,7 @@
 Provides patches for some commonly used modules that enable them to work
 with pyfakefs.
 """
+
 import os
 import sys
 import unittest

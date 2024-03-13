@@ -12,9 +12,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-""" Uses :py:class:`FakeIoModule` to provide a
-    fake ``io`` module replacement.
+"""Uses :py:class:`FakeIoModule` to provide a
+fake ``io`` module replacement.
 """
+
 import _io  # pytype: disable=import-error
 import io
 import os

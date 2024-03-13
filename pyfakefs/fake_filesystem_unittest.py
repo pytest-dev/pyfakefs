@@ -35,6 +35,7 @@ Existing unit tests that use the real file system can be retrofitted to use
 pyfakefs by simply changing their base class from `:py:class`unittest.TestCase`
 to `:py:class`pyfakefs.fake_filesystem_unittest.TestCase`.
 """
+
 import _io  # type:ignore[import]
 import doctest
 import functools
@@ -730,12 +731,12 @@ class Patcher:
         fake_module = fake_filesystem.FakePathModule
         for fct_name in fake_module.dir():
             module_attr = (getattr(fake_module, fct_name), PATH_MODULE)
-            self._fake_module_functions.setdefault(fct_name, {})[
-                "genericpath"
-            ] = module_attr
-            self._fake_module_functions.setdefault(fct_name, {})[
-                PATH_MODULE
-            ] = module_attr
+            self._fake_module_functions.setdefault(fct_name, {})["genericpath"] = (
+                module_attr
+            )
+            self._fake_module_functions.setdefault(fct_name, {})[PATH_MODULE] = (
+                module_attr
+            )
 
     def __enter__(self) -> "Patcher":
         """Context manager for usage outside of

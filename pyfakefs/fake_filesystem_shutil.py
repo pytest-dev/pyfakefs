@@ -26,6 +26,7 @@ work fine with the fake file system if `os`/`os.path` are patched.
   `fake_filesystem_unittest.TestCase`, pytest fs fixture,
   or directly `Patcher`.
 """
+
 import os
 import shutil
 import sys

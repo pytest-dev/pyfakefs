@@ -17,6 +17,7 @@
 """
 Test the :py:class`pyfakefs.fake_filesystem_unittest.TestCase` base class.
 """
+
 import glob
 import importlib.util
 import io

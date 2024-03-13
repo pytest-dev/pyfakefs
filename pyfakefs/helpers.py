@@ -11,6 +11,7 @@
 # limitations under the License.
 
 """Helper classes use for fake file system implementation."""
+
 import io
 import locale
 import os
@@ -116,13 +117,11 @@ def get_locale_encoding():
 
 
 @overload
-def make_string_path(dir_name: AnyStr) -> AnyStr:
-    ...
+def make_string_path(dir_name: AnyStr) -> AnyStr: ...
 
 
 @overload
-def make_string_path(dir_name: os.PathLike) -> str:
-    ...
+def make_string_path(dir_name: os.PathLike) -> str: ...
 
 
 def make_string_path(dir_name: AnyPath) -> AnyStr:  # type: ignore[type-var]
@@ -164,18 +163,15 @@ def now():
 
 
 @overload
-def matching_string(matched: bytes, string: AnyStr) -> bytes:
-    ...
+def matching_string(matched: bytes, string: AnyStr) -> bytes: ...
 
 
 @overload
-def matching_string(matched: str, string: AnyStr) -> str:
-    ...
+def matching_string(matched: str, string: AnyStr) -> str: ...
 
 
 @overload
-def matching_string(matched: AnyStr, string: None) -> None:
-    ...
+def matching_string(matched: AnyStr, string: None) -> None: ...
 
 
 def matching_string(  # type: ignore[misc]

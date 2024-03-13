@@ -17,6 +17,7 @@
 Note that almost all of the functionality is delegated to the real `shutil`
 and works correctly with the fake filesystem because of the faked `os` module.
 """
+
 import os
 import shutil
 import sys
