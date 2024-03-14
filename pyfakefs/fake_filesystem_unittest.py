@@ -919,6 +919,10 @@ class Patcher:
         if self.has_fcopy_file:
             shutil._HAS_FCOPYFILE = False  # type: ignore[attr-defined]
 
+        # do not use the fd functions, as they may not be available in the target OS
+        if hasattr(shutil, "_use_fd_functions"):
+            shutil._use_fd_functions = False  # type: ignore[module-attr]
+
         with warnings.catch_warnings():
             # ignore warnings, see #542 and #614
             warnings.filterwarnings("ignore")

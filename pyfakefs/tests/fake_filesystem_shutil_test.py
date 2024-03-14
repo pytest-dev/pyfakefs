@@ -192,6 +192,15 @@ class FakeShutilModuleTest(RealFsTestCase):
         self.assertFalse(NonLocal.errorHandled)
         self.assertEqual(NonLocal.errorPath, "")
 
+    def test_rmtree_in_windows(self):
+        # regression test for #979
+        self.check_windows_only()
+        base_path = self.make_path("foo", "bar")
+        self.os.makedirs(self.os.path.join(base_path, "res"))
+        self.assertTrue(self.os.path.exists(base_path))
+        shutil.rmtree(base_path)
+        self.assertFalse(self.os.path.exists(base_path))
+
     def test_copy(self):
         src_file = self.make_path("xyzzy")
         dst_file = self.make_path("xyzzy_copy")
