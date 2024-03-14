@@ -23,6 +23,8 @@ The released versions correspond to PyPI releases.
 * fixed handling of `dirfd` in `os.symlink` (see [#968](../../issues/968))
 * add missing `follow_symlink` argument to `os.link` (see [#973](../../issues/973))
 * fixed handling of missing attribute in `os.getxattr` (see [#971](../../issues/971))
+* fixed permission problem with `shutil.rmtree` if emulating Windows under POSIX
+  (see [#979](../../issues/979))
 
 ### Enhancements
 * added support for `O_NOFOLLOW` and `O_DIRECTORY` flags in `os.open`
