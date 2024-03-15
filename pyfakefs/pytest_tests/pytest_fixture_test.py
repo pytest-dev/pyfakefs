@@ -13,10 +13,10 @@
 # Example for a test using a custom pytest fixture with an argument to Patcher
 
 import pytest
-import undefined
 
 import pyfakefs.pytest_tests.example as example
 from pyfakefs.fake_filesystem_unittest import Patcher
+from pyfakefs.pytest_tests import unhashable
 
 
 @pytest.mark.xfail
@@ -42,10 +42,9 @@ def test_example_file_passing_using_patcher():
         check_that_example_file_is_in_fake_fs()
 
 
-def test_undefined(fs):
+def test_unhashable(fs):
     # regression test for #923
-    with pytest.raises(NotImplementedError):
-        print(undefined)
+    print(unhashable)
 
 
 def check_that_example_file_is_in_fake_fs():

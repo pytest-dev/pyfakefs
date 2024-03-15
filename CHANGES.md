@@ -9,6 +9,10 @@ The released versions correspond to PyPI releases.
 * removed the argument `module_cleanup_mode`, that was introduced as a temporary workaround
   in the previous version - related problems shall be handled using a cleanup handler
 
+### Enhancements
+* added support for `O_NOFOLLOW` and `O_DIRECTORY` flags in `os.open`
+  (see [#972](../../issues/972) and [#974](../../issues/974))
+
 ### Fixes
 * fixed a specific problem on reloading a pandas-related module (see [#947](../../issues/947)),
   added possibility for unload hooks for specific modules
@@ -26,9 +30,10 @@ The released versions correspond to PyPI releases.
 * fixed permission problem with `shutil.rmtree` if emulating Windows under POSIX
   (see [#979](../../issues/979))
 
-### Enhancements
-* added support for `O_NOFOLLOW` and `O_DIRECTORY` flags in `os.open`
-  (see [#972](../../issues/972) and [#974](../../issues/974))
+### Infrastructure
+* replace `undefined` by own minimal implementation to avoid importing it
+  (see [#981](../../discussions/981))
+
 
 ## [Version 5.3.5](https://pypi.python.org/pypi/pyfakefs/5.3.5) (2024-01-30)
 Fixes a regression.

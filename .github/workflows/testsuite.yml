@@ -116,7 +116,7 @@ jobs:
         run: |
           pip install -r requirements.txt
           pip install -U pytest==${{ matrix.pytest-version }}
-          pip install opentimelineio undefined pandas parquet pyarrow
+          pip install opentimelineio pandas parquet pyarrow
           pip install -e .
           if [[ '${{ matrix.pytest-version }}' == '4.0.2' ]]; then
              pip install -U attrs==19.1.0
