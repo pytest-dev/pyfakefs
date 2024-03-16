@@ -223,6 +223,9 @@ is the convenience argument :ref:`allow_root_user`:
       def setUp(self):
           self.setUpPyfakefs(allow_root_user=False)
 
+``Pyfakefs`` also handles file permissions under UNIX systems while accessing files.
+If accessing files as another user and/or group, the respective group/other file
+permissions are considered.
 
 .. _usage_with_mock_open:
 

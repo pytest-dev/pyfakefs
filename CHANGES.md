@@ -4,7 +4,7 @@ The released versions correspond to PyPI releases.
 ## Unreleased
 
 ### Changes
-* the handling of file permissions under Posix is should now mostly match the behavior
+* the handling of file permissions under Posix should now mostly match the behavior
   of the real filesystem, which may change the behavior of some tests
 * removed the argument `module_cleanup_mode`, that was introduced as a temporary workaround
   in the previous version - related problems shall be handled using a cleanup handler
@@ -12,6 +12,7 @@ The released versions correspond to PyPI releases.
 ### Enhancements
 * added support for `O_NOFOLLOW` and `O_DIRECTORY` flags in `os.open`
   (see [#972](../../issues/972) and [#974](../../issues/974))
+* added support for fake `os.dup`, `os.dup2` and `os.lseek` (see [#970](../../issues/970))
 
 ### Fixes
 * fixed a specific problem on reloading a pandas-related module (see [#947](../../issues/947)),

@@ -3002,6 +3002,65 @@ class FakeOsModuleTest(FakeOsModuleTestBase):
             os.stat in os.supports_effective_ids,
         )
 
+    def test_dup(self):
+        with self.assertRaises(OSError) as cm:
+            self.os.dup(500)
+        self.assertEqual(errno.EBADF, cm.exception.errno)
+        file_path = self.make_path("test.txt")
+        self.create_file(file_path, contents="heythere")
+        fd1 = self.os.open(file_path, os.O_RDONLY)
+        fd2 = self.os.dup(fd1)
+        self.assertEqual(b"hey", self.os.read(fd1, 3))
+        self.assertEqual(b"there", self.os.read(fd1, 10))
+        self.os.close(fd1)
+        self.os.close(fd2)
+
+    def test_dup_uses_freed_fd(self):
+        file_path1 = self.make_path("foo.txt")
+        file_path2 = self.make_path("bar.txt")
+        self.create_file(file_path1, contents="foo here")
+        self.create_file(file_path2, contents="bar here")
+        fd1 = self.os.open(file_path1, os.O_RDONLY)
+        fd2 = self.os.open(file_path2, os.O_RDONLY)
+        self.os.close(fd1)
+        fd3 = self.os.dup(fd2)
+        self.assertEqual(fd1, fd3)
+        self.os.close(fd2)
+
+    def test_dup2_uses_existing_fd(self):
+        with self.assertRaises(OSError) as cm:
+            self.os.dup2(500, 501)
+        self.assertEqual(errno.EBADF, cm.exception.errno)
+
+        file_path1 = self.make_path("foo.txt")
+        file_path2 = self.make_path("bar.txt")
+        self.create_file(file_path1, contents="foo here")
+        self.create_file(file_path2, contents="bar here")
+        fd1 = self.os.open(file_path1, os.O_RDONLY)
+        fd2 = self.os.open(file_path2, os.O_RDONLY)
+        self.assertEqual(b"bar", self.os.read(fd2, 3))
+        fd2 = self.os.dup2(fd1, fd2)
+        self.assertEqual(b"foo", self.os.read(fd2, 3))
+        self.os.lseek(fd2, 0, 0)
+        self.assertEqual(b"foo", self.os.read(fd1, 3))
+        self.os.close(fd2)
+
+    def test_dup2_with_new_fd(self):
+        file_path1 = self.make_path("foo.txt")
+        file_path2 = self.make_path("bar.txt")
+        self.create_file(file_path1)
+        self.create_file(file_path2)
+        fd1 = self.os.open(file_path1, os.O_RDONLY)
+        fd2 = fd1 + 2
+        self.assertEqual(fd2, self.os.dup2(fd1, fd2))
+        fd3 = self.os.open(file_path2, os.O_RDONLY)
+        fd4 = self.os.dup(fd3)
+        self.os.close(fd4)
+        self.os.close(fd2)
+        # we have a free position before fd2 that is now filled
+        self.assertEqual(fd1 + 1, fd3)
+        self.assertEqual(fd1 + 3, fd4)
+
 
 class RealOsModuleTest(FakeOsModuleTest):
     def use_real_fs(self):
