@@ -138,7 +138,7 @@ class FakeShutilModuleTest(RealFsTestCase):
         self.create_file(os.path.join(dir_path, "bar"))
         file_path = os.path.join(dir_path, "baz")
         self.create_file(file_path)
-        with open(file_path):
+        with open(file_path, encoding="utf8"):
             shutil.rmtree(dir_path)
         self.assertFalse(os.path.exists(file_path))
 
@@ -149,7 +149,7 @@ class FakeShutilModuleTest(RealFsTestCase):
         self.create_file(os.path.join(dir_path, "bar"))
         file_path = os.path.join(dir_path, "baz")
         self.create_file(file_path)
-        with open(file_path):
+        with open(file_path, encoding="utf8"):
             with self.assertRaises(OSError):
                 shutil.rmtree(dir_path)
         self.assertTrue(os.path.exists(dir_path))

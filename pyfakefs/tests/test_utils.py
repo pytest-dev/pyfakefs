@@ -347,10 +347,13 @@ class RealFsTestMixin:
         """
         self.create_dir(self.os.path.dirname(file_path))
         mode = "wb" if encoding is not None or is_byte_string(contents) else "w"
+        kwargs = {"mode": mode}
 
         if encoding is not None and contents is not None:
             contents = contents.encode(encoding)
-        with self.open(file_path, mode) as f:
+        if mode == "w":
+            kwargs["encoding"] = "utf8"
+        with self.open(file_path, **kwargs) as f:
             if contents is not None:
                 f.write(contents)
         if apply_umask:
@@ -371,7 +374,10 @@ class RealFsTestMixin:
         Asserts equality.
         """
         mode = "rb" if is_byte_string(contents) else "r"
-        with self.open(file_path, mode) as f:
+        kwargs = {"mode": mode}
+        if mode == "r":
+            kwargs["encoding"] = "utf8"
+        with self.open(file_path, **kwargs) as f:
             self.assertEqual(contents, f.read())
 
     def create_basepath(self):

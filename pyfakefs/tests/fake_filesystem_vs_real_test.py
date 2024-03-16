@@ -65,10 +65,10 @@ class FakeFilesystemVsRealTest(TestCase):
             os.mkdir(real_path)
             self.fake_os.mkdir(fake_path)
         if file_type == "f":
-            fh = open(real_path, "w")
+            fh = open(real_path, "w", encoding="utf8")
             fh.write(contents or "")
             fh.close()
-            fh = self.fake_open(fake_path, "w")
+            fh = self.fake_open(fake_path, "w", encoding="utf8")
             fh.write(contents or "")
             fh.close()
         # b for binary file
@@ -318,8 +318,11 @@ class FakeFilesystemVsRealTest(TestCase):
         Returns:
             A description of the difference in behavior, or None.
         """
-        with open(path, mode) as real_fh:
-            with self.fake_open(path, mode) as fake_fh:
+        kwargs = {}
+        if "b" not in mode:
+            kwargs["encoding"] = "utf8"
+        with open(path, mode, **kwargs) as real_fh:
+            with self.fake_open(path, mode, **kwargs) as fake_fh:
                 return self._compare_behaviors(
                     method_name, data, real_fh, fake_fh, method_returns_data
                 )

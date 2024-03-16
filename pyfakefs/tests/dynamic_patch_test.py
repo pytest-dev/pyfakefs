@@ -60,7 +60,7 @@ class DynamicImportPatchTest(TestPyfakefsUnittestBase):
     def test_pathlib_path_patch(self):
         file_path = "test.txt"
         path = pathlib.Path(file_path)
-        with path.open("w") as f:
+        with path.open("w", encoding="utf8") as f:
             f.write("test")
 
         self.assertTrue(self.fs.exists(file_path))

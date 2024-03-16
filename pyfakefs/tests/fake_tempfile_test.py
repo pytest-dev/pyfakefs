@@ -44,7 +44,7 @@ class FakeTempfileModuleTest(fake_filesystem_unittest.TestCase):
         file_obj = self.fs.get_object(obj.name)
         contents = file_obj.contents
         self.assertEqual("foo", contents)
-        obj = tempfile.NamedTemporaryFile(mode="w", delete=False)
+        obj = tempfile.NamedTemporaryFile(mode="w", encoding="utf8", delete=False)
         obj.write("foo")
         obj.close()
         file_obj = self.fs.get_object(obj.name)

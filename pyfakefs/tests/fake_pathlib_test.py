@@ -480,7 +480,7 @@ class FakePathlibFileObjectPropertyTest(RealPathlibTestCase):
         with self.assertRaises(PermissionError):
             file_path.stat()
         with self.assertRaises(PermissionError):
-            file_path.read_text()
+            file_path.read_text(encoding="utf8")
 
     def test_iterdir_impossible_without_read_permission(self):
         # regression test for #960
@@ -498,7 +498,7 @@ class FakePathlibFileObjectPropertyTest(RealPathlibTestCase):
         assert len(list(directory.glob("*.txt"))) == 0
         # we can access the file if we know the file name
         assert file_path.stat().st_mode & 0o777 == 0o755
-        assert file_path.read_text() == "hey"
+        assert file_path.read_text(encoding="utf8") == "hey"
 
     def test_resolve_nonexisting_file(self):
         path = self.path(self.make_path("/path", "to", "file", "this can not exist"))
@@ -567,14 +567,14 @@ class FakePathlibPathFileOperationTest(RealPathlibTestCase):
     def test_open(self):
         self.create_dir(self.make_path("foo"))
         with self.assertRaises(OSError):
-            self.path(self.make_path("foo", "bar.txt")).open()
-        self.path(self.make_path("foo", "bar.txt")).open("w").close()
+            self.path(self.make_path("foo", "bar.txt")).open(encoding="utf8")
+        self.path(self.make_path("foo", "bar.txt")).open("w", encoding="utf8").close()
         self.assertTrue(self.os.path.exists(self.make_path("foo", "bar.txt")))
 
     def test_read_text(self):
         self.create_file(self.make_path("text_file"), contents="foo")
         file_path = self.path(self.make_path("text_file"))
-        self.assertEqual(file_path.read_text(), "foo")
+        self.assertEqual(file_path.read_text(encoding="utf8"), "foo")
 
     @unittest.skipIf(
         sys.version_info < (3, 12),
@@ -595,7 +595,7 @@ class FakePathlibPathFileOperationTest(RealPathlibTestCase):
     def test_write_text(self):
         path_name = self.make_path("text_file")
         file_path = self.path(path_name)
-        file_path.write_text(str("foo"))
+        file_path.write_text("foo", encoding="utf8")
         self.assertTrue(self.os.path.exists(path_name))
         self.check_contents(path_name, "foo")
 
@@ -609,13 +609,13 @@ class FakePathlibPathFileOperationTest(RealPathlibTestCase):
     @unittest.skipIf(sys.version_info < (3, 10), "newline argument new in Python 3.10")
     def test_write_with_newline_arg(self):
         path = self.path(self.make_path("some_file"))
-        path.write_text("1\r\n2\n3\r4", newline="")
+        path.write_text("1\r\n2\n3\r4", newline="", encoding="utf8")
         self.check_contents(path, b"1\r\n2\n3\r4")
-        path.write_text("1\r\n2\n3\r4", newline="\n")
+        path.write_text("1\r\n2\n3\r4", newline="\n", encoding="utf8")
         self.check_contents(path, b"1\r\n2\n3\r4")
-        path.write_text("1\r\n2\n3\r4", newline="\r\n")
+        path.write_text("1\r\n2\n3\r4", newline="\r\n", encoding="utf8")
         self.check_contents(path, b"1\r\r\n2\r\n3\r4")
-        path.write_text("1\r\n2\n3\r4", newline="\r")
+        path.write_text("1\r\n2\n3\r4", newline="\r", encoding="utf8")
         self.check_contents(path, b"1\r\r2\r3\r4")
 
     def test_read_bytes(self):
