@@ -56,14 +56,14 @@ class TestPatcher(TestCase):
     def test_context_manager(self):
         with Patcher() as patcher:
             patcher.fs.create_file("/foo/bar", contents="test")
-            with open("/foo/bar") as f:
+            with open("/foo/bar", encoding="utf8") as f:
                 contents = f.read()
             self.assertEqual("test", contents)
 
     @patchfs
     def test_context_decorator(self, fake_fs):
         fake_fs.create_file("/foo/bar", contents="test")
-        with open("/foo/bar") as f:
+        with open("/foo/bar", encoding="utf8") as f:
             contents = f.read()
         self.assertEqual("test", contents)
 
@@ -73,7 +73,7 @@ class TestPatchfsArgumentOrder(TestCase):
     @mock.patch("os.system")
     def test_argument_order1(self, fake_fs, patched_system):
         fake_fs.create_file("/foo/bar", contents="test")
-        with open("/foo/bar") as f:
+        with open("/foo/bar", encoding="utf8") as f:
             contents = f.read()
         self.assertEqual("test", contents)
         os.system("foo")
@@ -83,7 +83,7 @@ class TestPatchfsArgumentOrder(TestCase):
     @patchfs
     def test_argument_order2(self, patched_system, fake_fs):
         fake_fs.create_file("/foo/bar", contents="test")
-        with open("/foo/bar") as f:
+        with open("/foo/bar", encoding="utf8") as f:
             contents = f.read()
         self.assertEqual("test", contents)
         os.system("foo")
@@ -102,10 +102,10 @@ class TestPyfakefsUnittest(TestPyfakefsUnittestBase):  # pylint: disable=R0904
     def test_open(self):
         """Fake `open()` function is bound"""
         self.assertFalse(os.path.exists("/fake_file.txt"))
-        with open("/fake_file.txt", "w") as f:
+        with open("/fake_file.txt", "w", encoding="utf8") as f:
             f.write("This test file was created using the open() function.\n")
         self.assertTrue(self.fs.exists("/fake_file.txt"))
-        with open("/fake_file.txt") as f:
+        with open("/fake_file.txt", encoding="utf8") as f:
             content = f.read()
         self.assertEqual(
             "This test file was created using the " "open() function.\n",
@@ -115,10 +115,10 @@ class TestPyfakefsUnittest(TestPyfakefsUnittestBase):  # pylint: disable=R0904
     def test_io_open(self):
         """Fake io module is bound"""
         self.assertFalse(os.path.exists("/fake_file.txt"))
-        with io.open("/fake_file.txt", "w") as f:
+        with io.open("/fake_file.txt", "w", encoding="utf8") as f:
             f.write("This test file was created using the" " io.open() function.\n")
         self.assertTrue(self.fs.exists("/fake_file.txt"))
-        with open("/fake_file.txt") as f:
+        with open("/fake_file.txt", encoding="utf8") as f:
             content = f.read()
         self.assertEqual(
             "This test file was created using the " "io.open() function.\n",
@@ -160,7 +160,7 @@ class TestPyfakefsUnittest(TestPyfakefsUnittestBase):  # pylint: disable=R0904
 
     def test_fakepathlib(self):
         p = pathlib.Path("/fake_file.txt")
-        with p.open("w") as f:
+        with p.open("w", encoding="utf8") as f:
             f.write("text")
         is_windows = sys.platform.startswith("win")
         if is_windows:
@@ -532,7 +532,7 @@ class NoRootUserTest(fake_filesystem_unittest.TestCase):
         self.fs.create_file(file_path)
         os.chmod(file_path, 0o400)
         with self.assertRaises(OSError):
-            open(file_path, "w")
+            open(file_path, "w", encoding="utf8")
 
 
 class PauseResumeTest(fake_filesystem_unittest.TestCase):
@@ -824,11 +824,11 @@ class TestOtherFS(fake_filesystem_unittest.TestCase):
         if self.fs.is_windows_fs:
             self.fs.is_macos = False
         self.fs.add_real_file(__file__)
-        with open(__file__) as f:
+        with open(__file__, encoding="utf8") as f:
             self.assertTrue(f.read())
         home = Path.home()
         os.chdir(home)
-        with open(__file__) as f:
+        with open(__file__, encoding="utf8") as f:
             self.assertTrue(f.read())
 
     def test_windows(self):
@@ -916,7 +916,7 @@ class TestClassSetup(fake_filesystem_unittest.TestCase):
 
     def test_using_fs_functions(self):
         self.assertTrue(os.path.exists("foo/bar"))
-        with open("foo/bar") as f:
+        with open("foo/bar", encoding="utf8") as f:
             contents = f.read()
         self.assertEqual("test", contents)
 

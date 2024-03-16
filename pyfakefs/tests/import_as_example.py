@@ -96,12 +96,12 @@ def system_stat(filepath):
 
 
 def file_contents1(filepath):
-    with bltn_open(filepath) as f:
+    with bltn_open(filepath, encoding="utf8") as f:
         return f.read()
 
 
 def file_contents2(filepath):
-    with io_open(filepath) as f:
+    with io_open(filepath, encoding="utf8") as f:
         return f.read()
 
 
@@ -112,7 +112,7 @@ def exists_this_file():
 
 def open_this_file():
     """Works only in real fs"""
-    with open(__file__):
+    with open(__file__, encoding="utf8"):
         pass
 
 

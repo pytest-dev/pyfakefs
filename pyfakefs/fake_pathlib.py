@@ -749,7 +749,7 @@ class FakePath(pathlib.Path):
             else:
                 self.filesystem.raise_os_error(errno.EEXIST, self._path())
         else:
-            fake_file = self.open("w")
+            fake_file = self.open("w", encoding="utf8")
             fake_file.close()
             self.chmod(mode)
 

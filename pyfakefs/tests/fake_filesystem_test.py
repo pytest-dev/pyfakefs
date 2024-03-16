@@ -605,7 +605,7 @@ class FakeFilesystemUnitTest(TestCase):
         fake_open = fake_filesystem.FakeFileOpen(self.filesystem)
         path = "foo/bar/baz"
         self.filesystem.create_file(path, contents=None)
-        with fake_open(path) as f:
+        with fake_open(path, encoding="utf8") as f:
             self.assertEqual("", f.read())
 
     def test_create_file_with_incorrect_mode_type(self):
@@ -1649,7 +1649,7 @@ class DiskSpaceTest(TestCase):
         self.fs.add_mount_point("!mount", total_size)
 
         def create_too_large_file():
-            with self.open("!mount!file", "w") as dest:
+            with self.open("!mount!file", "w", encoding="utf8") as dest:
                 dest.write("a" * (total_size + 1))
 
         with self.assertRaises(OSError):
@@ -1657,7 +1657,7 @@ class DiskSpaceTest(TestCase):
 
         self.assertEqual(0, self.fs.get_disk_usage("!mount").used)
 
-        with self.open("!mount!file", "w") as dest:
+        with self.open("!mount!file", "w", encoding="utf8") as dest:
             dest.write("a" * total_size)
 
         self.assertEqual(total_size, self.fs.get_disk_usage("!mount").used)
@@ -1882,50 +1882,50 @@ class DiskSpaceTest(TestCase):
         self.assertEqual(dest_file.contents, source_file.contents)
 
     def test_diskusage_after_open_write(self):
-        with self.open("bar.txt", "w") as f:
+        with self.open("bar.txt", "w", encoding="utf8") as f:
             f.write("a" * 60)
             f.flush()
         self.assertEqual(60, self.fs.get_disk_usage()[1])
 
     def test_disk_full_after_reopened(self):
-        with self.open("bar.txt", "w") as f:
+        with self.open("bar.txt", "w", encoding="utf8") as f:
             f.write("a" * 60)
-        with self.open("bar.txt") as f:
+        with self.open("bar.txt", encoding="utf8") as f:
             self.assertEqual("a" * 60, f.read())
         with self.raises_os_error(errno.ENOSPC):
-            with self.open("bar.txt", "w") as f:
+            with self.open("bar.txt", "w", encoding="utf8") as f:
                 f.write("b" * 110)
                 with self.raises_os_error(errno.ENOSPC):
                     f.flush()
-        with self.open("bar.txt") as f:
+        with self.open("bar.txt", encoding="utf8") as f:
             self.assertEqual("", f.read())
 
     def test_disk_full_append(self):
         file_path = "bar.txt"
-        with self.open(file_path, "w") as f:
+        with self.open(file_path, "w", encoding="utf8") as f:
             f.write("a" * 60)
-        with self.open(file_path) as f:
+        with self.open(file_path, encoding="utf8") as f:
             self.assertEqual("a" * 60, f.read())
         with self.raises_os_error(errno.ENOSPC):
-            with self.open(file_path, "a") as f:
+            with self.open(file_path, "a", encoding="utf8") as f:
                 f.write("b" * 41)
                 with self.raises_os_error(errno.ENOSPC):
                     f.flush()
-        with self.open("bar.txt") as f:
+        with self.open("bar.txt", encoding="utf8") as f:
             self.assertEqual(f.read(), "a" * 60)
 
     def test_disk_full_after_reopened_rplus_seek(self):
-        with self.open("bar.txt", "w") as f:
+        with self.open("bar.txt", "w", encoding="utf8") as f:
             f.write("a" * 60)
-        with self.open("bar.txt") as f:
+        with self.open("bar.txt", encoding="utf8") as f:
             self.assertEqual(f.read(), "a" * 60)
         with self.raises_os_error(errno.ENOSPC):
-            with self.open("bar.txt", "r+") as f:
+            with self.open("bar.txt", "r+", encoding="utf8") as f:
                 f.seek(50)
                 f.write("b" * 60)
                 with self.raises_os_error(errno.ENOSPC):
                     f.flush()
-        with self.open("bar.txt") as f:
+        with self.open("bar.txt", encoding="utf8") as f:
             self.assertEqual(f.read(), "a" * 60)
 
 
@@ -2055,11 +2055,13 @@ class RealFileSystemAccessTest(RealFsTestCase):
             for dir_name in ("foo", "bar"):
                 real_dir = os.path.join(real_dir_root, dir_name)
                 os.makedirs(real_dir, exist_ok=True)
-                with open(os.path.join(real_dir, "test.txt"), "w") as f:
+                with open(
+                    os.path.join(real_dir, "test.txt"), "w", encoding="utf8"
+                ) as f:
                     f.write("test")
                 sub_dir = os.path.join(real_dir, "sub")
                 os.makedirs(sub_dir, exist_ok=True)
-                with open(os.path.join(sub_dir, "sub.txt"), "w") as f:
+                with open(os.path.join(sub_dir, "sub.txt"), "w", encoding="utf8") as f:
                     f.write("sub")
             yield real_dir_root
         finally:
@@ -2203,7 +2205,7 @@ class RealFileSystemAccessTest(RealFsTestCase):
         # regression test for #470
         real_file_path = os.path.abspath(__file__)
         self.filesystem.add_real_file(real_file_path, read_only=False)
-        with self.fake_open(real_file_path, "w") as f:
+        with self.fake_open(real_file_path, "w", encoding="utf8") as f:
             f.write("foo")
 
         with self.fake_open(real_file_path, "rb") as f:
@@ -2289,7 +2291,7 @@ class RealFileSystemAccessTest(RealFsTestCase):
 
         self.filesystem.create_file("/etc/something")
 
-        with fake_open("/etc/something", "w") as f:
+        with fake_open("/etc/something", "w", encoding="utf8") as f:
             f.write("good morning")
 
         try:
@@ -2385,7 +2387,8 @@ class RealFileSystemAccessTest(RealFsTestCase):
                     "pyfakefs",
                     "tests",
                     "fixtures/symlink_file_absolute_outside",
-                )
+                ),
+                encoding="utf8",
             ).read(),
             "good morning",
         )
@@ -2585,14 +2588,14 @@ class FileSideEffectTests(TestCase):
     def test_side_effect_called(self):
         fake_open = fake_filesystem.FakeFileOpen(self.filesystem)
         self.side_effect_called = False
-        with fake_open("/a/b/file_one", "w") as handle:
+        with fake_open("/a/b/file_one", "w", encoding="utf8") as handle:
             handle.write("foo")
         self.assertTrue(self.side_effect_called)
 
     def test_side_effect_file_object(self):
         fake_open = fake_filesystem.FakeFileOpen(self.filesystem)
         self.side_effect_called = False
-        with fake_open("/a/b/file_one", "w") as handle:
+        with fake_open("/a/b/file_one", "w", encoding="utf8") as handle:
             handle.write("foo")
         self.assertEqual(self.side_effect_file_object_content, "foo")
 
