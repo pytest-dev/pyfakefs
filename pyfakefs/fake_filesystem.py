@@ -814,7 +814,7 @@ class FakeFilesystem:
         if ns is not None and len(ns) != 2:
             raise TypeError("utime: 'ns' must be a tuple of two ints")
 
-    def add_open_file(self, file_obj: AnyFileWrapper) -> int:
+    def add_open_file(self, file_obj: AnyFileWrapper, new_fd: int = -1) -> int:
         """Add file_obj to the list of open files on the filesystem.
         Used internally to manage open files.
 
@@ -822,10 +822,31 @@ class FakeFilesystem:
 
         Args:
             file_obj: File object to be added to open files list.
+            new_fd: The optional new file descriptor.
 
         Returns:
             File descriptor number for the file object.
         """
+        if new_fd >= 0:
+            size = len(self.open_files)
+            if new_fd < size:
+                open_files = self.open_files[new_fd]
+                if open_files:
+                    for f in open_files:
+                        try:
+                            f.close()
+                        except OSError:
+                            pass
+                if new_fd in self._free_fd_heap:
+                    self._free_fd_heap.remove(new_fd)
+                self.open_files[new_fd] = [file_obj]
+            else:
+                for fd in range(size, new_fd):
+                    self.open_files.append([])
+                    heapq.heappush(self._free_fd_heap, fd)
+                self.open_files.append([file_obj])
+            return new_fd
+
         if self._free_fd_heap:
             open_fd = heapq.heappop(self._free_fd_heap)
             self.open_files[open_fd] = [file_obj]
@@ -834,7 +855,7 @@ class FakeFilesystem:
         self.open_files.append([file_obj])
         return len(self.open_files) - 1
 
-    def _close_open_file(self, file_des: int) -> None:
+    def close_open_file(self, file_des: int) -> None:
         """Remove file object with given descriptor from the list
         of open files.
 

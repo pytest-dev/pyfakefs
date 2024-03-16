@@ -858,7 +858,7 @@ class FakeFileWrapper:
                     # if we get here, we have an open file descriptor
                     # without write permission, which has to be closed
                     assert self.filedes
-                    self._filesystem._close_open_file(self.filedes)
+                    self._filesystem.close_open_file(self.filedes)
                 raise
 
             if self._filesystem.is_windows_fs and self._changed:
@@ -866,7 +866,7 @@ class FakeFileWrapper:
 
         assert self.filedes is not None
         if self._closefd:
-            self._filesystem._close_open_file(self.filedes)
+            self._filesystem.close_open_file(self.filedes)
         else:
             open_files = self._filesystem.open_files[self.filedes]
             assert open_files is not None
@@ -1288,7 +1288,7 @@ class FakeDirWrapper:
     def close(self) -> None:
         """Close the directory."""
         assert self.filedes is not None
-        self._filesystem._close_open_file(self.filedes)
+        self._filesystem.close_open_file(self.filedes)
 
 
 class FakePipeWrapper:

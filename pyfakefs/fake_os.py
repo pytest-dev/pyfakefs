@@ -102,12 +102,15 @@ class FakeOsModule:
             "chmod",
             "chown",
             "close",
+            "dup",
+            "dup2",
             "fstat",
             "fsync",
             "getcwd",
             "lchmod",
             "link",
             "listdir",
+            "lseek",
             "lstat",
             "makedirs",
             "mkdir",
@@ -321,6 +324,16 @@ class FakeOsModule:
         file_handle = self.filesystem.get_open_file(fd)
         file_handle.close()
 
+    def dup(self, fd: int) -> int:
+        file_handle = self.filesystem.get_open_file(fd)
+        return self.filesystem.add_open_file(file_handle)
+
+    def dup2(self, fd: int, fd2: int, inheritable: bool = True) -> int:
+        if fd == fd2:
+            return fd
+        file_handle = self.filesystem.get_open_file(fd)
+        return self.filesystem.add_open_file(file_handle, fd2)
+
     def read(self, fd: int, n: int) -> bytes:
         """Read number of bytes from a file descriptor, returns bytes read.
 
@@ -369,6 +382,13 @@ class FakeOsModule:
         file_handle.write(contents)
         file_handle.flush()
         return len(contents)
+
+    def lseek(self, fd: int, pos: int, whence: int):
+        file_handle = self.filesystem.get_open_file(fd)
+        if isinstance(file_handle, FakeFileWrapper):
+            file_handle.seek(pos, whence)
+        else:
+            raise OSError(errno.EBADF, "Bad file descriptor for fseek")
 
     def pipe(self) -> Tuple[int, int]:
         read_fd, write_fd = os.pipe()
