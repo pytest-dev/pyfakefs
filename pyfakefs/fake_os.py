@@ -254,7 +254,11 @@ class FakeOsModule:
         has_directory_flag = (
             hasattr(os, "O_DIRECTORY") and flags & os.O_DIRECTORY == os.O_DIRECTORY
         )
-        if has_directory_flag and not self.filesystem.isdir(path):
+        if (
+            has_directory_flag
+            and self.filesystem.exists(path)
+            and not self.filesystem.isdir(path)
+        ):
             raise OSError(errno.ENOTDIR, "path is not a directory", path)
 
         has_follow_flag = (

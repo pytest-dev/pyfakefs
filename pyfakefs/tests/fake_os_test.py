@@ -605,8 +605,10 @@ class FakeOsModuleTest(FakeOsModuleTestBase):
         self.check_open_raises_with_trailing_separator(errno.EINVAL)
 
     @unittest.skipIf(not hasattr(os, "O_DIRECTORY"), "opening directory not supported")
-    def test_open_raises_if_not_dir(self):
+    def test_open_with_o_directory(self):
         self.check_posix_only()
+        with self.assertRaises(FileNotFoundError):
+            self.os.open("bogus", os.O_RDONLY | os.O_DIRECTORY)
         file_path = self.make_path("file.txt")
         self.create_file(file_path, contents="foo")
         with self.assertRaises(NotADirectoryError):
