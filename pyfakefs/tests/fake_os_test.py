@@ -3014,8 +3014,8 @@ class FakeOsModuleTest(FakeOsModuleTestBase):
         fd2 = self.os.dup(fd1)
         self.assertEqual(b"hey", self.os.read(fd1, 3))
         self.assertEqual(b"there", self.os.read(fd1, 10))
-        self.os.close(fd1)
         self.os.close(fd2)
+        self.os.close(fd1)
 
     def test_dup_uses_freed_fd(self):
         file_path1 = self.make_path("foo.txt")
