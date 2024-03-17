@@ -326,7 +326,7 @@ class FakeOsModule:
             TypeError: if file descriptor is not an integer.
         """
         file_handle = self.filesystem.get_open_file(fd)
-        file_handle.close()
+        file_handle.close_fd(fd)
 
     def dup(self, fd: int) -> int:
         file_handle = self.filesystem.get_open_file(fd)

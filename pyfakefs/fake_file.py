@@ -845,6 +845,11 @@ class FakeFileWrapper:
 
     def close(self) -> None:
         """Close the file."""
+        self.close_fd(self.filedes)
+
+    def close_fd(self, fd: Optional[int]) -> None:
+        """Close the file for the given file descriptor."""
+
         # ignore closing a closed file
         if not self._is_open():
             return
@@ -864,11 +869,11 @@ class FakeFileWrapper:
             if self._filesystem.is_windows_fs and self._changed:
                 self.file_object.st_mtime = helpers.now()
 
-        assert self.filedes is not None
+        assert fd is not None
         if self._closefd:
-            self._filesystem.close_open_file(self.filedes)
+            self._filesystem.close_open_file(fd)
         else:
-            open_files = self._filesystem.open_files[self.filedes]
+            open_files = self._filesystem.open_files[fd]
             assert open_files is not None
             open_files.remove(self)
         if self.delete_on_close:
@@ -1256,6 +1261,9 @@ class StandardStreamWrapper:
     def close(self) -> None:
         """We do not support closing standard streams."""
 
+    def close_fd(self, fd: Optional[int]) -> None:
+        """We do not support closing standard streams."""
+
     def is_stream(self) -> bool:
         return True
 
@@ -1287,8 +1295,12 @@ class FakeDirWrapper:
 
     def close(self) -> None:
         """Close the directory."""
-        assert self.filedes is not None
-        self._filesystem.close_open_file(self.filedes)
+        self.close_fd(self.filedes)
+
+    def close_fd(self, fd: Optional[int]) -> None:
+        """Close the directory."""
+        assert fd is not None
+        self._filesystem.close_open_file(fd)
 
 
 class FakePipeWrapper:
@@ -1351,8 +1363,12 @@ class FakePipeWrapper:
 
     def close(self) -> None:
         """Close the pipe descriptor."""
-        assert self.filedes is not None
-        open_files = self._filesystem.open_files[self.filedes]
+        self.close_fd(self.filedes)
+
+    def close_fd(self, fd: Optional[int]) -> None:
+        """Close the pipe descriptor with the given file descriptor."""
+        assert fd is not None
+        open_files = self._filesystem.open_files[fd]
         assert open_files is not None
         open_files.remove(self)
         if self.real_file:
