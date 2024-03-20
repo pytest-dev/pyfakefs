@@ -1893,6 +1893,14 @@ class FakeOsModuleTest(FakeOsModuleTestBase):
         self.assert_raises_os_error(errno.ENOENT, self.os.makedirs, "", exist_ok=False)
         self.assert_raises_os_error(errno.ENOENT, self.os.makedirs, "", exist_ok=True)
 
+    def test_makedirs_with_relative_paths(self):
+        # regression test for #987
+        path = self.make_path("base", "foo", "..", "bar")
+        self.os.makedirs(path)
+        self.assertTrue(self.os.path.isdir(self.make_path("base", "bar")))
+        self.assertTrue(self.os.path.isdir(self.make_path("base", "foo")))
+        self.assertFalse(self.os.path.isdir(self.make_path("base", "foo", "bar")))
+
     # test fsync and fdatasync
     def test_fsync_raises_on_non_int(self):
         with self.assertRaises(TypeError):
