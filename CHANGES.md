@@ -32,6 +32,7 @@ The released versions correspond to PyPI releases.
   (see [#979](../../issues/979))
 * fixed handling of errors on opening files via file descriptor (see [#967](../../issues/967))
 * fixed handling of `umask` - it is now applied by default
+* fixed behavior of `os.makedirs` (see [#987](../../issues/987))
 
 ### Infrastructure
 * replace `undefined` by own minimal implementation to avoid importing it

@@ -931,7 +931,27 @@ class FakeOsModule:
         """
         if exist_ok is None:
             exist_ok = False
-        self.filesystem.makedirs(name, mode, exist_ok)
+
+        # copied and adapted from real implementation in os.py (Python 3.12)
+        head, tail = self.filesystem.splitpath(name)
+        if not tail:
+            head, tail = self.filesystem.splitpath(head)
+        if head and tail and not self.filesystem.exists(head):
+            try:
+                self.makedirs(head, exist_ok=exist_ok)
+            except FileExistsError:
+                pass
+            cdir = self.filesystem.cwd
+            if isinstance(tail, bytes):
+                if tail == bytes(cdir, "ASCII"):
+                    return
+            elif tail == cdir:
+                return
+        try:
+            self.mkdir(name, mode)
+        except OSError:
+            if not exist_ok or not self.filesystem.isdir(name):
+                raise
 
     def _path_with_dir_fd(
         self,
