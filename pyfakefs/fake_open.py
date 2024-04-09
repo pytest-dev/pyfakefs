@@ -144,12 +144,6 @@ class FakeFileOpen:
 
         newline, open_modes = self._handle_file_mode(mode, newline, open_modes)
         opened_as_fd = isinstance(file_, int)
-        if opened_as_fd and not helpers.IS_PYPY:
-            fd: int = cast(int, file_)
-            # cannot open the same file descriptor twice, except in PyPy
-            for f in self.filesystem.get_open_files(fd):
-                if isinstance(f, FakeFileWrapper) and f.opened_as_fd:
-                    raise OSError(errno.EBADF, "Bad file descriptor")
 
         # the pathlib opener is defined in a Path instance that may not be
         # patched under some circumstances; as it just calls standard open(),
