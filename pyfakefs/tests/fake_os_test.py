@@ -231,18 +231,18 @@ class FakeOsModuleTest(FakeOsModuleTestBase):
         self.assert_raises_os_error(errno.EBADF, self.os.fdopen, fileno2, **kwargs)
 
     def test_fdopen_twice(self):
+        # regression test for #997
         file_path = self.make_path("some_file1")
         self.create_file(file_path, contents="contents here1")
         fake_file = self.open(file_path, "r", encoding="utf8")
         fd = fake_file.fileno()
-        self.open(fd, encoding="utf8")
-        if not IS_PYPY:
-            with self.assertRaises(OSError) as cm:
-                self.open(fd, encoding="utf8")
-            self.assertEqual(errno.EBADF, cm.exception.errno)
-        else:
-            self.open(fd, encoding="utf8")
-            self.os.close(fd)
+        # note: we need to assign the files to objects,
+        # otherwise the file will be closed immediately in the CPython implementation
+        # note that this case is not (and will probably not be) handled in pyfakefs
+        file1 = self.open(fd, encoding="utf8")  # noqa: F841
+        file2 = self.open(fd, encoding="utf8")  # noqa: F841
+
+        self.os.close(fd)
 
     def test_open_fd_write_mode_for_ro_file(self):
         # Create a writable file handle to a read-only file, see #967
@@ -3158,22 +3158,6 @@ class FakeOsModuleTestCaseInsensitiveFS(FakeOsModuleTestBase):
         assert self.os.stat(file_path).st_mode & 0o777 == 0o755
         with self.open(file_path, encoding="utf8") as f:
             assert f.read() == "hey"
-
-    def test_fdopen_twice(self):
-        file_path1 = self.make_path("some_file1")
-        file_path2 = self.make_path("SOME_file1")
-        self.create_file(file_path1, contents="contents here1")
-
-        fake_file1 = self.open(file_path2, "r", encoding="utf8")
-        fileno1 = fake_file1.fileno()
-        self.os.fdopen(fileno1, encoding="utf8")
-        if not IS_PYPY:
-            with self.assertRaises(OSError) as cm:
-                self.open(fileno1, encoding="utf8")
-            self.assertEqual(errno.EBADF, cm.exception.errno)
-        else:
-            self.open(fileno1, encoding="utf8")
-            self.os.close(fileno1)
 
     def test_stat(self):
         directory = self.make_path("xyzzy")
