@@ -44,6 +44,9 @@ class RealPathlibTestCase(fake_filesystem_unittest.TestCase, RealFsTestMixin):
         fake_filesystem_unittest.TestCase.__init__(self, methodName)
         RealFsTestMixin.__init__(self)
 
+    def used_pathlib(self):
+        return pathlib
+
     def setUp(self):
         RealFsTestMixin.setUp(self)
         self.filesystem = None
@@ -52,8 +55,8 @@ class RealPathlibTestCase(fake_filesystem_unittest.TestCase, RealFsTestMixin):
             self.setUpPyfakefs()
             self.filesystem = self.fs
             self.create_basepath()
-        self.pathlib = pathlib
-        self.path = pathlib.Path
+        self.pathlib = self.used_pathlib()
+        self.path = self.pathlib.Path
         self.os = os
         self.open = open
 

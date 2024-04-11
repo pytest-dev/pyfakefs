@@ -11,7 +11,8 @@
 # limitations under the License.
 
 """Imports external packages that replace or emulate internal packages.
-If the external module is not present, the built-in module is imported.
+These packages are not needed with any current Python version,
+and their support in pyfakefs will be removed in a an upcoming release.
 """
 
 try:
@@ -20,18 +21,6 @@ except ImportError:
     pathlib2 = None
 
 try:
-    import scandir
-
-    use_scandir_package = True
-    use_builtin_scandir = False
+    import scandir as scandir
 except ImportError:
-    try:
-        from os import scandir  # noqa: F401
-
-        use_builtin_scandir = True
-        use_scandir_package = False
-    except ImportError:
-        use_builtin_scandir = False
-        use_scandir_package = False
-
-use_scandir = use_scandir_package or use_builtin_scandir
+    scandir = None

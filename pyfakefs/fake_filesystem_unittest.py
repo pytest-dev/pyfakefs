@@ -83,13 +83,11 @@ from importlib.machinery import ModuleSpec
 from importlib import reload
 
 from pyfakefs import fake_filesystem, fake_io, fake_os, fake_open, fake_path, fake_file
+from pyfakefs import fake_legacy_modules
 from pyfakefs import fake_filesystem_shutil
 from pyfakefs import fake_pathlib
 from pyfakefs import mox3_stubout
-from pyfakefs.extra_packages import pathlib2, use_scandir
-
-if use_scandir:
-    from pyfakefs import fake_scandir
+from pyfakefs.legacy_packages import pathlib2, scandir
 
 OS_MODULE = "nt" if sys.platform == "win32" else "posix"
 PATH_MODULE = "ntpath" if sys.platform == "win32" else "posixpath"
@@ -701,13 +699,15 @@ class Patcher:
         self._class_modules["Path"] = ["pathlib"]
         self._unfaked_module_classes["pathlib"] = fake_pathlib.RealPathlibModule
         if pathlib2:
-            self._fake_module_classes["pathlib2"] = fake_pathlib.FakePathlibModule
+            self._fake_module_classes["pathlib2"] = (
+                fake_legacy_modules.FakePathlib2Module
+            )
             self._class_modules["Path"].append("pathlib2")
             self._unfaked_module_classes["pathlib2"] = fake_pathlib.RealPathlibModule
+        if scandir:
+            self._fake_module_classes["scandir"] = fake_legacy_modules.FakeScanDirModule
         self._fake_module_classes["Path"] = fake_pathlib.FakePathlibPathModule
         self._unfaked_module_classes["Path"] = fake_pathlib.RealPathlibPathModule
-        if use_scandir:
-            self._fake_module_classes["scandir"] = fake_scandir.FakeScanDirModule
 
     def _init_fake_module_functions(self) -> None:
         # handle patching function imported separately like

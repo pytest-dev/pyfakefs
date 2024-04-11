@@ -32,7 +32,7 @@ import sys
 import unittest
 
 from pyfakefs import fake_filesystem_unittest
-from pyfakefs.extra_packages import use_scandir_package
+from pyfakefs.legacy_packages import scandir
 from pyfakefs.tests import example  # The module under test
 
 
@@ -143,9 +143,7 @@ class TestExample(fake_filesystem_unittest.TestCase):  # pylint: disable=R0904
         self.assertTrue(entries[1].is_symlink())
         self.assertTrue(entries[2].is_file())
 
-    @unittest.skipIf(
-        not use_scandir_package, "Testing only if scandir module is installed"
-    )
+    @unittest.skipIf(scandir is None, "Testing only if scandir module is installed")
     def test_scandir_scandir(self):
         """Test example.scandir() which uses `scandir.scandir()`.
 

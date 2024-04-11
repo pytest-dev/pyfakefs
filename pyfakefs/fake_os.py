@@ -40,7 +40,6 @@ from typing import (
     Set,
 )
 
-from pyfakefs.extra_packages import use_scandir
 from pyfakefs.fake_file import (
     FakeDirectory,
     FakeDirWrapper,
@@ -122,6 +121,7 @@ class FakeOsModule:
             "removedirs",
             "rename",
             "rmdir",
+            "scandir",
             "stat",
             "symlink",
             "umask",
@@ -145,8 +145,6 @@ class FakeOsModule:
                 "getgid",
                 "getuid",
             ]
-        if use_scandir:
-            _dir += ["scandir"]
         return _dir
 
     def __init__(self, filesystem: "FakeFilesystem"):

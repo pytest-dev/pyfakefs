@@ -1,6 +1,17 @@
 # pyfakefs Release Notes
 The released versions correspond to PyPI releases.
 
+## Planned changes for next major release (6.0.0)
+* remove support for patching legacy modules `scandir` and `pathlib2`
+* remove support for Python 3.7
+
+## Unreleased
+
+### Changes
+* The usage of the `pathlib2` and `scandir` modules in pyfakefs is now deprecated.
+  They will now cause deprecation warnings if still used. Support for patching
+  these modules will be removed in pyfakefs 6.0.
+
 ## [Version 5.4.1](https://pypi.python.org/pypi/pyfakefs/5.4.0) (2024-04-11)
 Fixes a regression.
 

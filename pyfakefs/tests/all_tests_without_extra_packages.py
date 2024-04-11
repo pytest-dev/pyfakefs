@@ -16,16 +16,10 @@ Excludes tests using external scandir package."""
 import sys
 import unittest
 
-from pyfakefs import extra_packages
+from pyfakefs import legacy_packages
 
-if extra_packages.use_scandir_package:
-    extra_packages.use_scandir_package = False
-    try:
-        from os import scandir
-    except ImportError:
-        scandir = None
-    extra_packages.scandir = scandir
-    extra_packages.use_scandir = scandir
+legacy_packages.scandir = None
+legacy_packages.pathlib2 = None
 
 from pyfakefs.tests.all_tests import AllTests  # noqa: E402
 
