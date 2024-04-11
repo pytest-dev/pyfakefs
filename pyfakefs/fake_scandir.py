@@ -20,16 +20,10 @@ package.
 import os
 import sys
 
-from pyfakefs.extra_packages import use_scandir_package
 from pyfakefs.helpers import to_string, make_string_path
 
-if sys.version_info >= (3, 6):
-    BaseClass = os.PathLike
-else:
-    BaseClass = object
 
-
-class DirEntry(BaseClass):
+class DirEntry(os.PathLike):
     """Emulates os.DirEntry. Note that we did not enforce keyword only
     arguments."""
 
@@ -133,9 +127,7 @@ class ScanDirIter:
     def __init__(self, filesystem, path):
         self.filesystem = filesystem
         if isinstance(path, int):
-            if not use_scandir_package and (
-                sys.version_info < (3, 7) or self.filesystem.is_windows_fs
-            ):
+            if self.filesystem.is_windows_fs:
                 raise NotImplementedError(
                     "scandir does not support file descriptor " "path argument"
                 )
@@ -263,61 +255,3 @@ def walk(filesystem, top, topdown=True, onerror=None, followlinks=False):
                 yield top_contents
 
     return do_walk(make_string_path(to_string(top)), top_most=True)
-
-
-class FakeScanDirModule:
-    """Uses FakeFilesystem to provide a fake `scandir` module replacement.
-
-    .. Note:: The ``scandir`` function is a part of the standard ``os`` module
-      since Python 3.5. This class handles the separate ``scandir`` module
-      that is available on pypi.
-
-    You need a fake_filesystem to use this:
-    `filesystem = fake_filesystem.FakeFilesystem()`
-    `fake_scandir_module = fake_filesystem.FakeScanDirModule(filesystem)`
-    """
-
-    @staticmethod
-    def dir():
-        """Return the list of patched function names. Used for patching
-        functions imported from the module.
-        """
-        return "scandir", "walk"
-
-    def __init__(self, filesystem):
-        self.filesystem = filesystem
-
-    def scandir(self, path="."):
-        """Return an iterator of DirEntry objects corresponding to the entries
-        in the directory given by path.
-
-        Args:
-            path: Path to the target directory within the fake filesystem.
-
-        Returns:
-            an iterator to an unsorted list of os.DirEntry objects for
-            each entry in path.
-
-        Raises:
-            OSError: if the target is not a directory.
-        """
-        return scandir(self.filesystem, path)
-
-    def walk(self, top, topdown=True, onerror=None, followlinks=False):
-        """Perform a walk operation over the fake filesystem.
-
-        Args:
-            top: The root directory from which to begin walk.
-            topdown: Determines whether to return the tuples with the root as
-                the first entry (`True`) or as the last, after all the child
-                directory tuples (`False`).
-          onerror: If not `None`, function which will be called to handle the
-                `os.error` instance provided when `os.listdir()` fails.
-          followlinks: If `True`, symbolic links are followed.
-
-        Yields:
-            (path, directories, nondirectories) for top and each of its
-            subdirectories.  See the documentation for the builtin os module
-            for further details.
-        """
-        return walk(self.filesystem, top, topdown, onerror, followlinks)

@@ -54,7 +54,7 @@ jobs:
       uses: actions/cache@v4
       with:
         path: ${{ steps.pip-cache.outputs.dir }}
-        key: ${{ matrix.os }}-${{ matrix.python-version }}-pip-${{ hashFiles('**/requirements.txt') }}-${{ hashFiles('**/extra_requirements.txt') }}
+        key: ${{ matrix.os }}-${{ matrix.python-version }}-pip-${{ hashFiles('**/requirements.txt') }}-${{ hashFiles('**/extra_requirements.txt') }}-${{ hashFiles('**/legacy_requirements.txt') }}
         restore-keys: |
           ${{ matrix.os }}-${{ matrix.python-version }}-pip-
 
@@ -82,6 +82,7 @@ jobs:
       if: ${{ matrix.python-version != 'pypy-3.10' }}
       run: |
         pip install -r extra_requirements.txt
+        pip install -r legacy_requirements.txt
         pip install zstandard cffi  # needed to test #910
       shell: bash
     - name: Run unit tests with extra packages as non-root user
@@ -148,6 +149,7 @@ jobs:
         run: |
           pip install -r requirements.txt
           pip install -r extra_requirements.txt
+          pip install -r legacy_requirements.txt
           pip install pytest-find-dependencies
       - name: Check dependencies
         run: python -m pytest --find-dependencies pyfakefs/tests

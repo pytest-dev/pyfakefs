@@ -21,8 +21,6 @@ import stat
 import sys
 import unittest
 
-from pyfakefs.helpers import IN_DOCKER, IS_PYPY, get_uid, get_gid, reset_ids
-
 from pyfakefs import fake_filesystem, fake_os, fake_open, fake_file
 from pyfakefs.fake_filesystem import (
     FakeFileOpen,
@@ -30,12 +28,7 @@ from pyfakefs.fake_filesystem import (
     set_uid,
     set_gid,
 )
-from pyfakefs.extra_packages import (
-    use_scandir,
-    use_scandir_package,
-    use_builtin_scandir,
-)
-
+from pyfakefs.helpers import IN_DOCKER, IS_PYPY, get_uid, get_gid, reset_ids
 from pyfakefs.tests.test_utils import TestCase, RealFsTestCase
 
 
@@ -5244,28 +5237,17 @@ class StatPropagationTest(TestCase):
         fh.close()
 
 
-@unittest.skipIf(not use_scandir, "only run if scandir is available")
 class FakeScandirTest(FakeOsModuleTestBase):
     FILE_SIZE = 50
     LINKED_FILE_SIZE = 10
 
+    def used_scandir(self):
+        return self.os.scandir
+
     def setUp(self):
         super().setUp()
         self.supports_symlinks = not self.is_windows or not self.use_real_fs()
-
-        if use_scandir_package:
-            if self.use_real_fs():
-                from scandir import scandir
-            else:
-                import pyfakefs.fake_scandir
-
-                def fake_scan_dir(p):
-                    return pyfakefs.fake_scandir.scandir(self.filesystem, p)
-
-                scandir = fake_scan_dir
-        else:
-            scandir = self.os.scandir
-        self.scandir = scandir
+        self.scandir = self.used_scandir()
 
         self.directory = self.make_path("xyzzy", "plugh")
         link_dir = self.make_path("linked", "plugh")
@@ -5383,7 +5365,7 @@ class FakeScandirTest(FakeOsModuleTestBase):
         )
 
     def test_inode(self):
-        if use_scandir and self.use_real_fs():
+        if self.use_real_fs():
             if self.is_windows:
                 self.skipTest("inode seems not to work in scandir module under Windows")
             if IN_DOCKER:
@@ -5503,10 +5485,6 @@ class FakeScandirTest(FakeOsModuleTestBase):
             self.assertEqual(file_stat.st_ino, self.dir_entries[5].stat().st_ino)
             self.assertEqual(file_stat.st_dev, self.dir_entries[5].stat().st_dev)
 
-    @unittest.skipIf(
-        not use_builtin_scandir,
-        "Path-like objects not available in scandir package",
-    )
     def test_path_like(self):
         self.assertTrue(isinstance(self.dir_entries[0], os.PathLike))
         self.assertEqual(
@@ -5545,7 +5523,6 @@ class RealScandirRelTest(FakeScandirRelTest):
 
 
 @unittest.skipIf(TestCase.is_windows, "dir_fd not supported for os.scandir in Windows")
-@unittest.skipIf(use_scandir_package, "no dir_fd support for scandir package")
 class FakeScandirFdTest(FakeScandirTest):
     def tearDown(self):
         self.os.close(self.dir_fd)

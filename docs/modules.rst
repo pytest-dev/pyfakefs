@@ -54,5 +54,3 @@ Faked module classes
 .. autoclass:: pyfakefs.fake_filesystem_shutil.FakeShutilModule
 
 .. autoclass:: pyfakefs.fake_pathlib.FakePathlibModule
-
-.. autoclass:: pyfakefs.fake_scandir.FakeScanDirModule

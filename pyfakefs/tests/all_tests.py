@@ -32,6 +32,7 @@ from pyfakefs.tests import (
     fake_pathlib_test,
     fake_tempfile_test,
     patched_packages_test,
+    fake_legacy_modules_test,
     mox3_stubout_test,
 )
 
@@ -57,6 +58,7 @@ class AllTests(unittest.TestSuite):
                 loader.loadTestsFromModule(dynamic_patch_test),
                 loader.loadTestsFromModule(fake_pathlib_test),
                 loader.loadTestsFromModule(patched_packages_test),
+                loader.loadTestsFromModule(fake_legacy_modules_test),
             ]
         )
         return self
