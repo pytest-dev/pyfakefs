@@ -1,7 +1,8 @@
 # pyfakefs Release Notes
 The released versions correspond to PyPI releases.
 
-## Unreleased
+## [Version 5.4.1](https://pypi.python.org/pypi/pyfakefs/5.4.0) (2024-04-11)
+Fixes a regression.
 
 ### Fixes
 * fixed a regression from version 5.4.0 that incorrectly handled files opened twice via file descriptor
