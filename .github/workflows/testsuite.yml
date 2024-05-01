@@ -35,6 +35,9 @@ jobs:
             os: ubuntu-latest
           - python-version: "pypy-3.10"
             os: ubuntu-latest
+        exclude:
+          - python-version: 3.7
+            os: macOS-latest
 
     steps:
     - uses: actions/checkout@v4
