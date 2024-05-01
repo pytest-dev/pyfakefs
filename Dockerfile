@@ -39,7 +39,7 @@ RUN apt-get update && apt-get install -y \
     wget
 RUN apt-get clean
 
-RUN useradd -u 1000 pyfakefs
+RUN useradd pyfakefs
 
 RUN wget https://github.com/pytest-dev/pyfakefs/archive/main.zip \
     && unzip main.zip \

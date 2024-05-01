@@ -23,7 +23,7 @@ ARG github_branch=main
 
 RUN dnf install -y python3-pip unzip wget
 
-RUN useradd -u 1000 pyfakefs
+RUN useradd pyfakefs
 
 RUN mkdir -p work \
     && wget https://github.com/$github_repo/archive/$github_branch.zip -O archive.zip \
