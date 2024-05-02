@@ -2050,7 +2050,8 @@ class RealFileSystemAccessTest(RealFsTestCase):
 
     @contextlib.contextmanager
     def create_real_paths(self):
-        real_dir_root = os.path.join(tempfile.gettempdir(), "root")
+        temp_directory = tempfile.mkdtemp()
+        real_dir_root = os.path.join(temp_directory, "root")
         try:
             for dir_name in ("foo", "bar"):
                 real_dir = os.path.join(real_dir_root, dir_name)
@@ -2065,7 +2066,7 @@ class RealFileSystemAccessTest(RealFsTestCase):
                     f.write("sub")
             yield real_dir_root
         finally:
-            shutil.rmtree(real_dir_root, ignore_errors=True)
+            shutil.rmtree(temp_directory, ignore_errors=True)
 
     def test_existing_fake_directory_is_merged_lazily(self):
         self.filesystem.create_file(os.path.join("/", "root", "foo", "test1.txt"))
@@ -2262,9 +2263,17 @@ class RealFileSystemAccessTest(RealFsTestCase):
             for link in symlinks:
                 os.unlink(link[1])
 
+    @staticmethod
+    def _setup_temp_directory():
+        real_directory = tempfile.mkdtemp()
+        os.mkdir(os.path.join(real_directory, "fixtures"))
+        with open(os.path.join(real_directory, "all_tests.py"), "w"):
+            pass
+        return real_directory
+
     def test_add_existing_real_directory_symlink(self):
         fake_open = fake_filesystem.FakeFileOpen(self.filesystem)
-        real_directory = os.path.join(self.root_path, "pyfakefs", "tests")
+        real_directory = self._setup_temp_directory()
         symlinks = [
             (
                 "..",
@@ -2310,9 +2319,7 @@ class RealFileSystemAccessTest(RealFsTestCase):
         self.assertTrue(
             self.filesystem.exists(
                 os.path.join(
-                    self.root_path,
-                    "pyfakefs",
-                    "tests",
+                    real_directory,
                     "fixtures/symlink_dir_relative",
                 )
             )
@@ -2320,9 +2327,7 @@ class RealFileSystemAccessTest(RealFsTestCase):
         self.assertTrue(
             self.filesystem.exists(
                 os.path.join(
-                    self.root_path,
-                    "pyfakefs",
-                    "tests",
+                    real_directory,
                     "fixtures/symlink_dir_relative/all_tests.py",
                 )
             )
@@ -2330,9 +2335,7 @@ class RealFileSystemAccessTest(RealFsTestCase):
         self.assertTrue(
             self.filesystem.exists(
                 os.path.join(
-                    self.root_path,
-                    "pyfakefs",
-                    "tests",
+                    real_directory,
                     "fixtures/symlink_file_relative",
                 )
             )
@@ -2342,9 +2345,7 @@ class RealFileSystemAccessTest(RealFsTestCase):
         self.assertTrue(
             self.filesystem.exists(
                 os.path.join(
-                    self.root_path,
-                    "pyfakefs",
-                    "tests",
+                    real_directory,
                     "fixtures/symlink_dir_absolute",
                 )
             )
@@ -2352,9 +2353,7 @@ class RealFileSystemAccessTest(RealFsTestCase):
         self.assertTrue(
             self.filesystem.exists(
                 os.path.join(
-                    self.root_path,
-                    "pyfakefs",
-                    "tests",
+                    real_directory,
                     "fixtures/symlink_dir_absolute/all_tests.py",
                 )
             )
@@ -2362,9 +2361,7 @@ class RealFileSystemAccessTest(RealFsTestCase):
         self.assertTrue(
             self.filesystem.exists(
                 os.path.join(
-                    self.root_path,
-                    "pyfakefs",
-                    "tests",
+                    real_directory,
                     "fixtures/symlink_file_absolute",
                 )
             )
@@ -2374,9 +2371,7 @@ class RealFileSystemAccessTest(RealFsTestCase):
         self.assertTrue(
             self.filesystem.exists(
                 os.path.join(
-                    self.root_path,
-                    "pyfakefs",
-                    "tests",
+                    real_directory,
                     "fixtures/symlink_file_absolute_outside",
                 )
             )
@@ -2384,9 +2379,7 @@ class RealFileSystemAccessTest(RealFsTestCase):
         self.assertEqual(
             fake_open(
                 os.path.join(
-                    self.root_path,
-                    "pyfakefs",
-                    "tests",
+                    real_directory,
                     "fixtures/symlink_file_absolute_outside",
                 ),
                 encoding="utf8",
@@ -2396,7 +2389,7 @@ class RealFileSystemAccessTest(RealFsTestCase):
 
     def test_add_existing_real_directory_symlink_target_path(self):
         self.skip_if_symlink_not_supported(force_real_fs=True)
-        real_directory = os.path.join(self.root_path, "pyfakefs", "tests")
+        real_directory = self._setup_temp_directory()
         symlinks = [
             (
                 "..",
@@ -2421,7 +2414,7 @@ class RealFileSystemAccessTest(RealFsTestCase):
 
     def test_add_existing_real_directory_symlink_lazy_read(self):
         self.skip_if_symlink_not_supported(force_real_fs=True)
-        real_directory = os.path.join(self.root_path, "pyfakefs", "tests")
+        real_directory = self._setup_temp_directory()
         symlinks = [
             (
                 "..",
