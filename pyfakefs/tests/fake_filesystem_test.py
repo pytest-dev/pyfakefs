@@ -2256,10 +2256,11 @@ class RealFileSystemAccessTest(RealFsTestCase):
         for link in symlinks:
             os.symlink(link[0], link[1])
 
-        yield
-
-        for link in symlinks:
-            os.unlink(link[1])
+        try:
+            yield
+        finally:
+            for link in symlinks:
+                os.unlink(link[1])
 
     def test_add_existing_real_directory_symlink(self):
         fake_open = fake_filesystem.FakeFileOpen(self.filesystem)
