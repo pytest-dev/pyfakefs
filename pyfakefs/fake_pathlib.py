@@ -392,6 +392,13 @@ if sys.version_info < (3, 12):
         )
         pathmod = ntpath
 
+        def __init__(self, *args, **kwargs):
+            super().__init__(*args, **kwargs)
+            # Because this class is used with pure Windows paths,
+            # the separators must be filesystem-independent.
+            self.sep = "\\"
+            self.altsep = "/"
+
         def is_reserved(self, parts):
             """Return True if the path is considered reserved under Windows."""
 
