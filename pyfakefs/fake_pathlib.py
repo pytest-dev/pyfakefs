@@ -60,10 +60,15 @@ def init_module(filesystem):
     else:
         # in Python 3.12, the flavour is no longer an own class,
         # but points to the os-specific path module (posixpath/ntpath)
-        fake_os = FakeOsModule(filesystem)
-        fake_path = fake_os.path
-        FakePathlibModule.PureWindowsPath._flavour = fake_path
-        FakePathlibModule.PurePosixPath._flavour = fake_path
+        fake_posix_os = FakeOsModule(filesystem)
+        fake_posix_path = fake_posix_os.path
+        FakePathlibModule.PurePosixPath._flavour = fake_posix_path
+        # The Windows path separators must be customized.
+        fake_nt_os = FakeOsModule(filesystem)
+        fake_nt_path = fake_nt_os.path
+        fake_nt_path.sep = "\\"
+        fake_nt_path.altsep = "/"
+        FakePathlibModule.PureWindowsPath._flavour = fake_nt_path
 
 
 def _wrap_strfunc(strfunc):
