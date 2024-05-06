@@ -1286,5 +1286,31 @@ class FakeFilesystemChmodTest(fake_filesystem_unittest.TestCase):
             path.is_file()
 
 
+class FakePathlibModulePurePathTest(unittest.TestCase):
+    def test_windows_pure_path_parsing(self):
+        """Verify faked pure Windows paths use filesystem-independent separators."""
+
+        path = r"C:\Windows\cmd.exe"
+        self.assertEqual(
+            fake_pathlib.FakePathlibModule.PureWindowsPath(path).stem,
+            pathlib.PureWindowsPath(path).stem,
+        )
+
+        path = r"C:/Windows/cmd.exe"
+        self.assertEqual(
+            fake_pathlib.FakePathlibModule.PureWindowsPath(path).stem,
+            pathlib.PureWindowsPath(path).stem,
+        )
+
+    def test_posix_pure_path_parsing(self):
+        """Verify faked pure POSIX paths use filesystem-independent separators."""
+
+        path = r"/bin/bash"
+        self.assertEqual(
+            fake_pathlib.FakePathlibModule.PurePosixPath(path).stem,
+            pathlib.PurePosixPath(path).stem,
+        )
+
+
 if __name__ == "__main__":
     unittest.main(verbosity=2)

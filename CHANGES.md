@@ -11,6 +11,9 @@ The released versions correspond to PyPI releases.
 * The usage of the `pathlib2` and `scandir` modules in pyfakefs is now deprecated.
   They will now cause deprecation warnings if still used. Support for patching
   these modules will be removed in pyfakefs 6.0.
+* `PureWindowsPath` and `PurePosixPath` now use filesystem-independent path separators,
+  and their path-parsing behaviors are now consistent regardless of runtime platform
+  and/or faked filesystem customization (see [#1006](../../issues/1006)).
 
 ## [Version 5.4.1](https://pypi.python.org/pypi/pyfakefs/5.4.0) (2024-04-11)
 Fixes a regression.

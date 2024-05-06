@@ -55,15 +55,38 @@ def init_module(filesystem):
     # pylint: disable=protected-access
     FakePath.filesystem = filesystem
     if sys.version_info < (3, 12):
-        FakePathlibModule.PureWindowsPath._flavour = _FakeWindowsFlavour(filesystem)
-        FakePathlibModule.PurePosixPath._flavour = _FakePosixFlavour(filesystem)
+        FakePathlibModule.WindowsPath._flavour = _FakeWindowsFlavour(filesystem)
+        FakePathlibModule.PosixPath._flavour = _FakePosixFlavour(filesystem)
+
+        # Pure POSIX path separators must be filesystem-independent.
+        fake_pure_posix_flavour = _FakePosixFlavour(filesystem)
+        fake_pure_posix_flavour.sep = "/"
+        fake_pure_posix_flavour.altsep = None
+        FakePathlibModule.PurePosixPath._flavour = fake_pure_posix_flavour
+
+        # Pure Windows path separators must be filesystem-independent.
+        fake_pure_nt_flavour = _FakePosixFlavour(filesystem)
+        fake_pure_nt_flavour.sep = "\\"
+        fake_pure_nt_flavour.altsep = "/"
+        FakePathlibModule.PureWindowsPath._flavour = fake_pure_nt_flavour
     else:
         # in Python 3.12, the flavour is no longer an own class,
         # but points to the os-specific path module (posixpath/ntpath)
         fake_os = FakeOsModule(filesystem)
-        fake_path = fake_os.path
-        FakePathlibModule.PureWindowsPath._flavour = fake_path
-        FakePathlibModule.PurePosixPath._flavour = fake_path
+        FakePathlibModule.PosixPath._flavour = fake_os.path
+        FakePathlibModule.WindowsPath._flavour = fake_os.path
+
+        # Pure POSIX path separators must be filesystem independent.
+        fake_pure_posix_os = FakeOsModule(filesystem)
+        fake_pure_posix_os.path.sep = "/"
+        fake_pure_posix_os.path.altsep = None
+        FakePathlibModule.PurePosixPath._flavour = fake_pure_posix_os.path
+
+        # Pure Windows path separators must be filesystem independent.
+        fake_pure_nt_os = FakeOsModule(filesystem)
+        fake_pure_nt_os.path.sep = "\\"
+        fake_pure_nt_os.path.altsep = "/"
+        FakePathlibModule.PureWindowsPath._flavour = fake_pure_nt_os.path
 
 
 def _wrap_strfunc(strfunc):
