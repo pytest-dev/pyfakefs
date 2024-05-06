@@ -55,20 +55,38 @@ def init_module(filesystem):
     # pylint: disable=protected-access
     FakePath.filesystem = filesystem
     if sys.version_info < (3, 12):
-        FakePathlibModule.PureWindowsPath._flavour = _FakeWindowsFlavour(filesystem)
-        FakePathlibModule.PurePosixPath._flavour = _FakePosixFlavour(filesystem)
+        FakePathlibModule.WindowsPath._flavour = _FakeWindowsFlavour(filesystem)
+        FakePathlibModule.PosixPath._flavour = _FakePosixFlavour(filesystem)
+
+        # Pure POSIX path separators must be filesystem-independent.
+        fake_pure_posix_flavour = _FakePosixFlavour(filesystem)
+        fake_pure_posix_flavour.sep = "/"
+        fake_pure_posix_flavour.altsep = None
+        FakePathlibModule.PurePosixPath._flavour = fake_pure_posix_flavour
+
+        # Pure Windows path separators must be filesystem-independent.
+        fake_pure_nt_flavour = _FakePosixFlavour(filesystem)
+        fake_pure_nt_flavour.sep = "\\"
+        fake_pure_nt_flavour.altsep = "/"
+        FakePathlibModule.PureWindowsPath._flavour = fake_pure_nt_flavour
     else:
         # in Python 3.12, the flavour is no longer an own class,
         # but points to the os-specific path module (posixpath/ntpath)
-        fake_posix_os = FakeOsModule(filesystem)
-        fake_posix_path = fake_posix_os.path
-        FakePathlibModule.PurePosixPath._flavour = fake_posix_path
-        # The Windows path separators must be customized.
-        fake_nt_os = FakeOsModule(filesystem)
-        fake_nt_path = fake_nt_os.path
-        fake_nt_path.sep = "\\"
-        fake_nt_path.altsep = "/"
-        FakePathlibModule.PureWindowsPath._flavour = fake_nt_path
+        fake_os = FakeOsModule(filesystem)
+        FakePathlibModule.PosixPath._flavour = fake_os.path
+        FakePathlibModule.WindowsPath._flavour = fake_os.path
+
+        # Pure POSIX path separators must be filesystem independent.
+        fake_pure_posix_os = FakeOsModule(filesystem)
+        fake_pure_posix_os.path.sep = "/"
+        fake_pure_posix_os.path.altsep = None
+        FakePathlibModule.PurePosixPath._flavour = fake_pure_posix_os.path
+
+        # Pure Windows path separators must be filesystem independent.
+        fake_pure_nt_os = FakeOsModule(filesystem)
+        fake_pure_nt_os.path.sep = "\\"
+        fake_pure_nt_os.path.altsep = "/"
+        FakePathlibModule.PureWindowsPath._flavour = fake_pure_nt_os.path
 
 
 def _wrap_strfunc(strfunc):
@@ -396,13 +414,6 @@ if sys.version_info < (3, 12):
             | {"LPT%d" % i for i in range(1, 10)}
         )
         pathmod = ntpath
-
-        def __init__(self, *args, **kwargs):
-            super().__init__(*args, **kwargs)
-            # Because this class is used with pure Windows paths,
-            # the separators must be filesystem-independent.
-            self.sep = "\\"
-            self.altsep = "/"
 
         def is_reserved(self, parts):
             """Return True if the path is considered reserved under Windows."""
