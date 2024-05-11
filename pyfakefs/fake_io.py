@@ -18,9 +18,7 @@ fake ``io`` module replacement.
 
 import _io  # pytype: disable=import-error
 import io
-import os
 import sys
-import traceback
 from enum import Enum
 from typing import (
     List,
@@ -34,7 +32,7 @@ from typing import (
 )
 
 from pyfakefs.fake_file import AnyFileWrapper
-from pyfakefs.fake_open import FakeFileOpen
+from pyfakefs.fake_open import fake_open
 from pyfakefs.helpers import IS_PYPY
 
 if TYPE_CHECKING:
@@ -92,39 +90,17 @@ class FakeIoModule:
         """Redirect the call to FakeFileOpen.
         See FakeFileOpen.call() for description.
         """
-        # workaround for built-in open called from skipped modules (see #552)
-        # as open is not imported explicitly, we cannot patch it for
-        # specific modules; instead we check if the caller is a skipped
-        # module (should work in most cases)
-        stack = traceback.extract_stack(limit=2)
-        # handle the case that we try to call the original `open_code`
-        # and get here instead (since Python 3.12)
-        from_open_code = (
-            sys.version_info >= (3, 12)
-            and stack[0].name == "open_code"
-            and stack[0].line == "return self._io_module.open_code(path)"
-        )
-        module_name = os.path.splitext(stack[0].filename)[0]
-        module_name = module_name.replace(os.sep, ".")
-        if from_open_code or any(
-            [
-                module_name == sn or module_name.endswith("." + sn)
-                for sn in self.skip_names
-            ]
-        ):
-            return io.open(  # pytype: disable=wrong-arg-count
-                file,
-                mode,
-                buffering,
-                encoding,
-                errors,
-                newline,
-                closefd,
-                opener,
-            )
-        fake_open = FakeFileOpen(self.filesystem)
         return fake_open(
-            file, mode, buffering, encoding, errors, newline, closefd, opener
+            self.filesystem,
+            self.skip_names,
+            file,
+            mode,
+            buffering,
+            encoding,
+            errors,
+            newline,
+            closefd,
+            opener,
         )
 
     if sys.version_info >= (3, 8):

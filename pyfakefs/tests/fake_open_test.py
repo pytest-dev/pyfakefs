@@ -26,7 +26,8 @@ import unittest
 from pyfakefs import fake_filesystem, helpers
 from pyfakefs.helpers import is_root, IS_PYPY, get_locale_encoding
 from pyfakefs.fake_io import FakeIoModule
-from pyfakefs.fake_filesystem_unittest import PatchMode
+from pyfakefs.fake_filesystem_unittest import PatchMode, Patcher
+from pyfakefs.tests.skip_open import read_open
 from pyfakefs.tests.test_utils import RealFsTestCase
 
 
@@ -2102,6 +2103,13 @@ class ResolvePathTest(FakeFileOpenTestBase):
 class RealResolvePathTest(ResolvePathTest):
     def use_real_fs(self):
         return True
+
+
+class SkipOpenTest(unittest.TestCase):
+    def test_open_in_skipped_module(self):
+        with Patcher(additional_skip_names=["skip_open"]):
+            contents = read_open("skip_open.py")
+            self.assertTrue(contents.startswith("# Licensed under the Apache License"))
 
 
 if __name__ == "__main__":

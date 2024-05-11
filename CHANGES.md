@@ -15,6 +15,9 @@ The released versions correspond to PyPI releases.
   and their path-parsing behaviors are now consistent regardless of runtime platform
   and/or faked filesystem customization (see [#1006](../../issues/1006)).
 
+### Fixes
+* correctly use real open calls in pathlib for skipped modules (see [#1012](../../issues/1012))
+
 ## [Version 5.4.1](https://pypi.python.org/pypi/pyfakefs/5.4.0) (2024-04-11)
 Fixes a regression.
 

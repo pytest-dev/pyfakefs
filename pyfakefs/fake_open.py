@@ -15,8 +15,10 @@
 """A fake open() function replacement. See ``fake_filesystem`` for usage."""
 
 import errno
+import io
 import os
 import sys
+import traceback
 from stat import (
     S_ISDIR,
 )
@@ -28,6 +30,9 @@ from typing import (
     cast,
     AnyStr,
     TYPE_CHECKING,
+    Callable,
+    IO,
+    List,
 )
 
 from pyfakefs import helpers
@@ -61,6 +66,54 @@ _OPEN_MODE_MAP = {
     "x": (False, False, True, False, False, True),
     "x+": (False, True, True, False, False, True),
 }
+
+
+def fake_open(
+    filesystem: "FakeFilesystem",
+    skip_names: List[str],
+    file: Union[AnyStr, int],
+    mode: str = "r",
+    buffering: int = -1,
+    encoding: Optional[str] = None,
+    errors: Optional[str] = None,
+    newline: Optional[str] = None,
+    closefd: bool = True,
+    opener: Optional[Callable] = None,
+) -> Union[AnyFileWrapper, IO[Any]]:
+    """Redirect the call to FakeFileOpen.
+    See FakeFileOpen.call() for description.
+    """
+    # workaround for built-in open called from skipped modules (see #552)
+    # as open is not imported explicitly, we cannot patch it for
+    # specific modules; instead we check if the caller is a skipped
+    # module (should work in most cases)
+    stack = traceback.extract_stack(limit=3)
+    # handle the case that we try to call the original `open_code`
+    # and get here instead (since Python 3.12)
+    from_open_code = (
+        sys.version_info >= (3, 12)
+        and stack[0].name == "open_code"
+        and stack[0].line == "return self._io_module.open_code(path)"
+    )
+    module_name = os.path.splitext(stack[0].filename)[0]
+    module_name = module_name.replace(os.sep, ".")
+    if from_open_code or any(
+        [module_name == sn or module_name.endswith("." + sn) for sn in skip_names]
+    ):
+        return io.open(  # pytype: disable=wrong-arg-count
+            file,
+            mode,
+            buffering,
+            encoding,
+            errors,
+            newline,
+            closefd,
+            opener,
+        )
+    fake_file_open = FakeFileOpen(filesystem)
+    return fake_file_open(
+        file, mode, buffering, encoding, errors, newline, closefd, opener
+    )
 
 
 class FakeFileOpen:
@@ -288,7 +341,6 @@ class FakeFileOpen:
             if open_modes.can_write:
                 if open_modes.truncate:
                     file_object.set_contents("")
-            file_object
         else:
             if open_modes.must_exist:
                 self.filesystem.raise_os_error(errno.ENOENT, file_path)
@@ -344,7 +396,7 @@ class FakeFileOpen:
                 can_write,
             )
 
-        # open a file file by path
+        # open a file by path
         file_path = cast(AnyStr, file_)  # pytype: disable=invalid-annotation
         if file_path == self.filesystem.dev_null.name:
             file_object = self.filesystem.dev_null

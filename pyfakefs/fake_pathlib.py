@@ -40,12 +40,12 @@ import posixpath
 import re
 import sys
 from pathlib import PurePath
-from typing import Callable
+from typing import Callable, List
 from urllib.parse import quote_from_bytes as urlquote_from_bytes
 
 from pyfakefs import fake_scandir
 from pyfakefs.fake_filesystem import FakeFilesystem
-from pyfakefs.fake_open import FakeFileOpen
+from pyfakefs.fake_open import FakeFileOpen, fake_open
 from pyfakefs.fake_os import FakeOsModule, use_original_os
 from pyfakefs.helpers import IS_PYPY
 
@@ -532,6 +532,7 @@ class FakePath(pathlib.Path):
 
     # the underlying fake filesystem
     filesystem = None
+    skip_names: List[str] = []
 
     def __new__(cls, *args, **kwargs):
         """Creates the correct subclass based on OS."""
@@ -631,8 +632,15 @@ class FakePath(pathlib.Path):
                 or permission is denied.
         """
         self._raise_on_closed()
-        return FakeFileOpen(self.filesystem)(
-            self._path(), mode, buffering, encoding, errors, newline
+        return fake_open(
+            self.filesystem,
+            self.skip_names,
+            self._path(),
+            mode,
+            buffering,
+            encoding,
+            errors,
+            newline,
         )
 
     def read_bytes(self):
@@ -878,6 +886,15 @@ class FakePathlibPathModule:
     def __init__(self, filesystem=None):
         if self.fake_pathlib is None:
             self.__class__.fake_pathlib = FakePathlibModule(filesystem)
+
+    @property
+    def skip_names(self):
+        return []  # not used, here to allow a setter
+
+    @skip_names.setter
+    def skip_names(self, value):
+        # this is set from the patcher and passed to the fake Path class
+        self.fake_pathlib.Path.skip_names = value
 
     def __call__(self, *args, **kwargs):
         return self.fake_pathlib.Path(*args, **kwargs)
