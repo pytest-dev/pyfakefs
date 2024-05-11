@@ -31,7 +31,9 @@ from unittest.mock import patch
 
 from pyfakefs import fake_pathlib, fake_filesystem, fake_filesystem_unittest, fake_os
 from pyfakefs.fake_filesystem import OSType
+from pyfakefs.fake_filesystem_unittest import Patcher
 from pyfakefs.helpers import IS_PYPY, is_root
+from pyfakefs.tests.skip_open import read_pathlib
 from pyfakefs.tests.test_utils import RealFsTestMixin
 
 is_windows = sys.platform == "win32"
@@ -1310,6 +1312,14 @@ class FakePathlibModulePurePathTest(unittest.TestCase):
             fake_pathlib.FakePathlibModule.PurePosixPath(path).stem,
             pathlib.PurePosixPath(path).stem,
         )
+
+
+class SkipOpenTest(unittest.TestCase):
+    def test_open_pathlib_in_skipped_module(self):
+        # regression test for #1012
+        with Patcher(additional_skip_names=["skip_open"]):
+            contents = read_pathlib("skip_open.py")
+            self.assertTrue(contents.startswith("# Licensed under the Apache License"))
 
 
 if __name__ == "__main__":
