@@ -5,7 +5,8 @@ The released versions correspond to PyPI releases.
 * remove support for patching legacy modules `scandir` and `pathlib2`
 * remove support for Python 3.7
 
-## Unreleased
+## [Version 5.5.0](https://pypi.python.org/pypi/pyfakefs/5.5.0) (2024-05-12)
+Deprecates the usage of `pathlib2` and `scandir`.
 
 ### Changes
 * The usage of the `pathlib2` and `scandir` modules in pyfakefs is now deprecated.
@@ -16,6 +17,7 @@ The released versions correspond to PyPI releases.
   and/or faked filesystem customization (see [#1006](../../issues/1006)).
 
 ### Fixes
+* fixed handling of Windows `pathlib` paths under POSIX and vice verse (see [#1006](../../issues/1006))
 * correctly use real open calls in pathlib for skipped modules (see [#1012](../../issues/1012))
 
 ## [Version 5.4.1](https://pypi.python.org/pypi/pyfakefs/5.4.0) (2024-04-11)
