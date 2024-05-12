@@ -23,6 +23,7 @@ jobs:
     runs-on: ${{ matrix.os }}
     env:
       PYTHONWARNDEFAULTENCODING: true
+      PIP_DISABLE_PIP_VERSION_CHECK: 1
     strategy:
       fail-fast: false
       matrix:
@@ -104,12 +105,14 @@ jobs:
 
   pytest-test:
     runs-on: ${{ matrix.os }}
+    env:
+      PIP_DISABLE_PIP_VERSION_CHECK: 1
     strategy:
       fail-fast: false
       matrix:
         os: [ubuntu-latest, macOS-latest, windows-latest]
         python-version: ["3.9"]
-        pytest-version: [3.0.0, 3.5.1, 4.0.2, 4.5.0, 5.0.1, 5.4.3, 6.0.2, 6.2.5, 7.0.1, 7.1.3, 7.2.0, 7.3.1, 7.4.0]
+        pytest-version: [3.0.0, 3.5.1, 4.0.2, 4.5.0, 5.0.1, 5.4.3, 6.0.2, 6.2.5, 7.0.1, 7.4.4, 8.0.2, 8.1.2, 8.2.0]
     steps:
       - uses: actions/checkout@v4
       - name: Set up Python ${{ matrix.python-version }}
@@ -118,12 +121,13 @@ jobs:
           python-version: ${{ matrix.python-version }}
       - name: Install dependencies
         run: |
-          pip install -r requirements.txt
-          pip install -U pytest==${{ matrix.pytest-version }}
-          pip install opentimelineio pandas parquet pyarrow
-          pip install -e .
+          python -m pip install --upgrade pip
+          python -m pip install -r requirements.txt
+          python -m pip install -U pytest==${{ matrix.pytest-version }}
+          python -m pip install opentimelineio pandas parquet pyarrow
+          python -m pip install -e .
           if [[ '${{ matrix.pytest-version }}' == '4.0.2' ]]; then
-             pip install -U attrs==19.1.0
+             python -m pip install -U attrs==19.1.0
           fi
         shell: bash
       - name: Run pytest tests
