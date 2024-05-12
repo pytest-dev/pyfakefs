@@ -49,9 +49,11 @@ jobs:
 
     - name: Get pip cache dir
       id: pip-cache
+      shell: bash
       run: |
         python -m pip install --upgrade pip
-        echo "::set-output name=dir::$(pip cache dir)"
+        echo "dir=$(pip cache dir)" >> $GITHUB_OUTPUT
+        echo "dir=$(pip cache dir)" >> $env:GITHUB_OUTPUT
 
     - name: Cache dependencies
       id: cache-dep
@@ -77,7 +79,7 @@ jobs:
       shell: bash
     - name: Run unit tests without extra packages as root
       run: |
-        if [[ '${{ matrix.os  }}' != 'windows-latest' ]]; then
+        if [[ '${{ matrix.os }}' != 'windows-latest' ]]; then
           # provide the same path as non-root to get the correct virtualenv
           sudo env "PATH=$PATH" python -m pyfakefs.tests.all_tests_without_extra_packages
         fi
@@ -97,7 +99,7 @@ jobs:
       shell: bash
     - name: Run performance tests
       run: |
-        if [[ '${{ matrix.os  }}' != 'macOS-latest' ]]; then
+        if [[ '${{ matrix.os }}' != 'macOS-latest' ]]; then
           export TEST_PERFORMANCE=1
           python -m pyfakefs.tests.performance_test
         fi
