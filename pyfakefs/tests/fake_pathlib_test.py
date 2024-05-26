@@ -31,9 +31,12 @@ from unittest.mock import patch
 
 from pyfakefs import fake_pathlib, fake_filesystem, fake_filesystem_unittest, fake_os
 from pyfakefs.fake_filesystem import OSType
-from pyfakefs.fake_filesystem_unittest import Patcher
 from pyfakefs.helpers import IS_PYPY, is_root
-from pyfakefs.tests.skip_open import read_pathlib
+from pyfakefs.tests.skipped_pathlib import (
+    read_bytes_pathlib,
+    read_pathlib,
+    read_text_pathlib,
+)
 from pyfakefs.tests.test_utils import RealFsTestMixin
 
 is_windows = sys.platform == "win32"
@@ -1314,12 +1317,24 @@ class FakePathlibModulePurePathTest(unittest.TestCase):
         )
 
 
-class SkipOpenTest(unittest.TestCase):
-    def test_open_pathlib_in_skipped_module(self):
+class SkipPathlibTest(fake_filesystem_unittest.TestCase):
+    def setUp(self):
+        self.setUpPyfakefs(additional_skip_names=["skipped_pathlib"])
+
+    def test_open_in_skipped_module(self):
         # regression test for #1012
-        with Patcher(additional_skip_names=["skip_open"]):
-            contents = read_pathlib("skip_open.py")
-            self.assertTrue(contents.startswith("# Licensed under the Apache License"))
+        contents = read_pathlib("skipped_pathlib.py")
+        self.assertTrue(contents.startswith("# Licensed under the Apache License"))
+
+    def test_read_text_in_skipped_module(self):
+        # regression test for #1012
+        contents = read_text_pathlib("skipped_pathlib.py")
+        self.assertTrue(contents.startswith("# Licensed under the Apache License"))
+
+    def test_read_bytes_in_skipped_module(self):
+        # regression test for #1012
+        contents = read_bytes_pathlib("skipped_pathlib.py")
+        self.assertTrue(contents.startswith(b"# Licensed under the Apache License"))
 
 
 if __name__ == "__main__":

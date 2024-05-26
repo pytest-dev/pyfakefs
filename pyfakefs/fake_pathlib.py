@@ -45,7 +45,7 @@ from urllib.parse import quote_from_bytes as urlquote_from_bytes
 
 from pyfakefs import fake_scandir
 from pyfakefs.fake_filesystem import FakeFilesystem
-from pyfakefs.fake_open import FakeFileOpen, fake_open
+from pyfakefs.fake_open import fake_open
 from pyfakefs.fake_os import FakeOsModule, use_original_os
 from pyfakefs.helpers import IS_PYPY
 
@@ -650,17 +650,25 @@ class FakePath(pathlib.Path):
             OSError: if the target object is a directory, the path is
                 invalid or permission is denied.
         """
-        with FakeFileOpen(self.filesystem)(
-            self._path(), mode="rb"
-        ) as f:  # pytype: disable=attribute-error
+        with fake_open(
+            self.filesystem,
+            self.skip_names,
+            self._path(),
+            mode="rb",
+        ) as f:
             return f.read()
 
     def read_text(self, encoding=None, errors=None):
         """
         Open the fake file in text mode, read it, and close the file.
         """
-        with FakeFileOpen(self.filesystem)(  # pytype: disable=attribute-error
-            self._path(), mode="r", encoding=encoding, errors=errors
+        with fake_open(
+            self.filesystem,
+            self.skip_names,
+            self._path(),
+            mode="r",
+            encoding=encoding,
+            errors=errors,
         ) as f:
             return f.read()
 
@@ -674,9 +682,12 @@ class FakePath(pathlib.Path):
         """
         # type-check for the buffer interface before truncating the file
         view = memoryview(data)
-        with FakeFileOpen(self.filesystem)(
-            self._path(), mode="wb"
-        ) as f:  # pytype: disable=attribute-error
+        with fake_open(
+            self.filesystem,
+            self.skip_names,
+            self._path(),
+            mode="wb",
+        ) as f:
             return f.write(view)
 
     def write_text(self, data, encoding=None, errors=None, newline=None):
@@ -701,7 +712,9 @@ class FakePath(pathlib.Path):
             raise TypeError(
                 "write_text() got an unexpected " "keyword argument 'newline'"
             )
-        with FakeFileOpen(self.filesystem)(  # pytype: disable=attribute-error
+        with fake_open(
+            self.filesystem,
+            self.skip_names,
             self._path(),
             mode="w",
             encoding=encoding,
