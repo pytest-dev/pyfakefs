@@ -21,6 +21,14 @@ def read_pathlib(file_name):
     return (Path(__file__).parent / file_name).open("r").read()
 
 
+def read_text_pathlib(file_name):
+    return (Path(__file__).parent / file_name).read_text()
+
+
+def read_bytes_pathlib(file_name):
+    return (Path(__file__).parent / file_name).read_bytes()
+
+
 def read_open(file_name):
     with open(os.path.join(os.path.dirname(__file__), file_name)) as f:
         return f.read()
