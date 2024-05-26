@@ -1258,6 +1258,10 @@ class StandardStreamWrapper:
     def read(self, n: int = -1) -> bytes:
         return cast(bytes, self._stream_object.read())
 
+    def write(self, contents: bytes) -> int:
+        self._stream_object.write(cast(str, contents))
+        return len(contents)
+
     def close(self) -> None:
         """We do not support closing standard streams."""
 
@@ -1266,6 +1270,19 @@ class StandardStreamWrapper:
 
     def is_stream(self) -> bool:
         return True
+
+    def __enter__(self) -> "StandardStreamWrapper":
+        """To support usage of this standard stream with the 'with' statement."""
+        return self
+
+    def __exit__(
+        self,
+        exc_type: Optional[Type[BaseException]],
+        exc_val: Optional[BaseException],
+        exc_tb: Optional[TracebackType],
+    ) -> None:
+        """To support usage of this standard stream with the 'with' statement."""
+        self.close()
 
 
 class FakeDirWrapper:
@@ -1301,6 +1318,28 @@ class FakeDirWrapper:
         """Close the directory."""
         assert fd is not None
         self._filesystem.close_open_file(fd)
+
+    def read(self, numBytes: int = -1) -> bytes:
+        """Read from the directory."""
+        return self.file_object.read(numBytes)
+
+    def write(self, contents: bytes) -> int:
+        """Write to the directory."""
+        self.file_object.write(contents)
+        return len(contents)
+
+    def __enter__(self) -> "FakeDirWrapper":
+        """To support usage of this fake directory with the 'with' statement."""
+        return self
+
+    def __exit__(
+        self,
+        exc_type: Optional[Type[BaseException]],
+        exc_val: Optional[BaseException],
+        exc_tb: Optional[TracebackType],
+    ) -> None:
+        """To support usage of this fake directory with the 'with' statement."""
+        self.close()
 
 
 class FakePipeWrapper:
