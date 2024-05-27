@@ -49,7 +49,7 @@ from pyfakefs import fake_scandir
 from pyfakefs.fake_filesystem import FakeFilesystem
 from pyfakefs.fake_open import fake_open
 from pyfakefs.fake_os import FakeOsModule, use_original_os
-from pyfakefs.helpers import IS_PYPY
+from pyfakefs.helpers import IS_PYPY, is_called_from_skipped_module
 
 
 def init_module(filesystem):
@@ -96,6 +96,18 @@ def init_module(filesystem):
 def _wrap_strfunc(strfunc):
     @functools.wraps(strfunc)
     def _wrapped(pathobj, *args, **kwargs):
+        should_use_original = False
+        if pathobj.filesystem.patcher:
+            skip_names = pathobj.filesystem.patcher._skip_names
+            if is_called_from_skipped_module(skip_names=skip_names):
+                should_use_original = True
+
+        if should_use_original:
+            return getattr(pathobj._original_accessor, strfunc.__name__)(
+                str(pathobj),
+                *args,
+                **kwargs,
+            )
         return strfunc(pathobj.filesystem, str(pathobj), *args, **kwargs)
 
     return staticmethod(_wrapped)
@@ -104,6 +116,18 @@ def _wrap_strfunc(strfunc):
 def _wrap_binary_strfunc(strfunc):
     @functools.wraps(strfunc)
     def _wrapped(pathobj1, pathobj2, *args):
+        should_use_original = False
+        if pathobj1.filesystem.patcher:
+            skip_names = pathobj1.filesystem.patcher._skip_names
+            if is_called_from_skipped_module(skip_names=skip_names):
+                should_use_original = True
+
+        if should_use_original:
+            return getattr(pathobj1._original_accessor, strfunc.__name__)(
+                str(pathobj1),
+                str(pathobj2),
+                *args,
+            )
         return strfunc(pathobj1.filesystem, str(pathobj1), str(pathobj2), *args)
 
     return staticmethod(_wrapped)
@@ -112,6 +136,18 @@ def _wrap_binary_strfunc(strfunc):
 def _wrap_binary_strfunc_reverse(strfunc):
     @functools.wraps(strfunc)
     def _wrapped(pathobj1, pathobj2, *args):
+        should_use_original = False
+        if pathobj2.filesystem.patcher:
+            skip_names = pathobj2.filesystem.patcher._skip_names
+            if is_called_from_skipped_module(skip_names=skip_names):
+                should_use_original = True
+
+        if should_use_original:
+            return getattr(pathobj2._original_accessor, strfunc.__name__)(
+                str(pathobj2),
+                str(pathobj1),
+                *args,
+            )
         return strfunc(pathobj2.filesystem, str(pathobj2), str(pathobj1), *args)
 
     return staticmethod(_wrapped)
@@ -577,6 +613,7 @@ class FakePath(pathlib.Path):
 
         def _init(self, template=None):
             """Initializer called from base class."""
+            self._original_accessor = self._accessor
             # only needed until Python 3.10
             self._accessor = _fake_accessor
             # only needed until Python 3.8

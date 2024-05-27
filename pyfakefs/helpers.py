@@ -19,7 +19,9 @@ import os
 import platform
 import stat
 import sys
+import sysconfig
 import time
+import traceback
 from collections import namedtuple
 from copy import copy
 from stat import S_IFLNK
@@ -38,6 +40,13 @@ PERM_EXE = 0o100  # Execute permission bit.
 PERM_DEF = 0o777  # Default permission bits.
 PERM_DEF_FILE = 0o666  # Default permission bits (regular file)
 PERM_ALL = 0o7777  # All permission bits.
+
+STDLIB_PATH = os.path.realpath(sysconfig.get_path("stdlib"))
+PYFAKEFS_PATH = os.path.dirname(__file__)
+PYFAKEFS_TEST_PATHS = [
+    os.path.join(PYFAKEFS_PATH, "tests"),
+    os.path.join(PYFAKEFS_PATH, "pytest_tests"),
+]
 
 _OpenModes = namedtuple(
     "_OpenModes",
@@ -429,3 +438,42 @@ class TextBufferIO(io.TextIOWrapper):
 
     def putvalue(self, value: bytes) -> None:
         self._bytestream.write(value)
+
+
+def is_called_from_skipped_module(skip_names: list) -> bool:
+    stack = traceback.extract_stack()
+    from_open_code = (
+        sys.version_info >= (3, 12)
+        and stack[0].name == "open_code"
+        and stack[0].line == "return self._io_module.open_code(path)"
+    )
+
+    caller_filename = next(
+        (
+            frame.filename
+            for frame in stack[::-1]
+            if not frame.filename.startswith("<frozen importlib")
+            and not frame.filename.startswith(STDLIB_PATH)
+            and (
+                not frame.filename.startswith(PYFAKEFS_PATH)
+                or any(
+                    frame.filename.startswith(test_path)
+                    for test_path in PYFAKEFS_TEST_PATHS
+                )
+            )
+        ),
+        None,
+    )
+
+    if caller_filename:
+        caller_module_name = os.path.splitext(caller_filename)[0]
+        caller_module_name = caller_module_name.replace(os.sep, ".")
+
+        if from_open_code or any(
+            [
+                caller_module_name == sn or caller_module_name.endswith("." + sn)
+                for sn in skip_names
+            ]
+        ):
+            return True
+    return False
