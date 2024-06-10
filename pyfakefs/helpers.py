@@ -452,7 +452,7 @@ def is_called_from_skipped_module(skip_names: list) -> bool:
         (
             frame.filename
             for frame in stack[::-1]
-            if not frame.filename.startswith("<frozen importlib")
+            if not frame.filename.startswith("<frozen ")
             and not frame.filename.startswith(STDLIB_PATH)
             and (
                 not frame.filename.startswith(PYFAKEFS_PATH)

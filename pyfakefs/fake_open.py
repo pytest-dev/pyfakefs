@@ -18,7 +18,6 @@ import errno
 import io
 import os
 import sys
-import traceback
 from stat import (
     S_ISDIR,
 )
@@ -44,6 +43,7 @@ from pyfakefs.fake_file import (
 )
 from pyfakefs.helpers import (
     AnyString,
+    is_called_from_skipped_module,
     is_root,
     PERM_READ,
     PERM_WRITE,
@@ -86,41 +86,7 @@ def fake_open(
     """Redirect the call to FakeFileOpen.
     See FakeFileOpen.call() for description.
     """
-
-    # workaround for built-in open called from skipped modules (see #552)
-    # as open is not imported explicitly, we cannot patch it for
-    # specific modules; instead we check if the caller is a skipped
-    # module (should work in most cases)
-    stack = traceback.extract_stack(limit=3)
-
-    # handle the case that we try to call the original `open_code`
-    # and get here instead (since Python 3.12)
-    # TODO: use a more generic approach (see PR #1025)
-    if sys.version_info >= (3, 12):
-        from_open_code = (
-            stack[0].name == "open_code"
-            and stack[0].line == "return self._io_module.open_code(path)"
-        )
-    else:
-        from_open_code = False
-
-    module_name = os.path.splitext(stack[0].filename)[0]
-    module_name = module_name.replace(os.sep, ".")
-    if sys.version_info >= (3, 13) and module_name.endswith(
-        ("pathlib._abc", "pathlib._local")
-    ):
-        stack = traceback.extract_stack(limit=6)
-        frame = 2
-        # in Python 3.13, pathlib is implemented in 2 sub-modules that may call
-        # each other, so we have to look further in the stack
-        while frame >= 0 and module_name.endswith(("pathlib._abc", "pathlib._local")):
-            module_name = os.path.splitext(stack[frame].filename)[0]
-            module_name = module_name.replace(os.sep, ".")
-            frame -= 1
-
-    if from_open_code or any(
-        [module_name == sn or module_name.endswith("." + sn) for sn in skip_names]
-    ):
+    if is_called_from_skipped_module(skip_names=skip_names):
         return io_open(  # pytype: disable=wrong-arg-count
             file,
             mode,
