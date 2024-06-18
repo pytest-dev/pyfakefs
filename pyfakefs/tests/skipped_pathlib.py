@@ -29,6 +29,10 @@ def read_bytes_pathlib(file_name):
     return (Path(__file__).parent / file_name).read_bytes()
 
 
+def check_exists_pathlib():
+    return os.path.exists(__file__) and Path(__file__).exists()
+
+
 def read_open(file_name):
     with open(os.path.join(os.path.dirname(__file__), file_name)) as f:
         return f.read()
