@@ -5,4 +5,4 @@
 # Note that the usage of these modules is deprecated, and their support
 # will be removed in pyfakefs 6.0
 pathlib2>=2.3.2
-scandir>=1.8
+scandir>=1.8; python_version < '3.13'  # not (yet) available for Python 3.13

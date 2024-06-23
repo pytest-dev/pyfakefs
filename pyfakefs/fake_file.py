@@ -54,6 +54,7 @@ from pyfakefs.helpers import (
     AnyString,
     get_locale_encoding,
     _OpenModes,
+    is_root,
 )
 
 if TYPE_CHECKING:
@@ -587,7 +588,7 @@ class FakeDirectory(FakeFile):
         pathname_name = self._normalized_entryname(pathname_name)
         entry = self.get_entry(pathname_name)
         if self.filesystem.is_windows_fs:
-            if entry.st_mode & helpers.PERM_WRITE == 0:
+            if not is_root() and entry.st_mode & helpers.PERM_WRITE == 0:
                 self.filesystem.raise_os_error(errno.EACCES, pathname_name)
             if self.filesystem.has_open_file(entry):
                 raise_error = True

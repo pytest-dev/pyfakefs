@@ -2559,9 +2559,10 @@ class FakeFilesystem:
         # resolve the link path only if it is not a link itself
         if not self.islink(link_path):
             link_path = self.resolve_path(link_path)
+        permission = helpers.PERM_DEF_FILE if self.is_windows_fs else helpers.PERM_DEF
         return self.create_file_internally(
             link_path,
-            st_mode=S_IFLNK | helpers.PERM_DEF,
+            st_mode=S_IFLNK | permission,
             contents=link_target_path,
             create_missing_dirs=create_missing_dirs,
             apply_umask=self.is_macos,
@@ -3044,6 +3045,36 @@ class FakeFilesystem:
 
     def __str__(self) -> str:
         return str(self.root_dir)
+
+    if sys.version_info >= (3, 13):
+        # used for emulating Windows
+        _WIN_RESERVED_NAMES = frozenset(
+            {"CON", "PRN", "AUX", "NUL", "CONIN$", "CONOUT$"}
+            | {f"COM{c}" for c in "123456789\xb9\xb2\xb3"}
+            | {f"LPT{c}" for c in "123456789\xb9\xb2\xb3"}
+        )
+
+        def isreserved(self, path):
+            if not self.is_windows_fs:
+                return False
+
+            def is_reserved_name(name):
+                if sys.platform == "win32":
+                    from os.path import _isreservedname  # type: ignore[import-error]
+
+                    return _isreservedname(name)
+                return name in self._WIN_RESERVED_NAMES
+
+            path = os.fsdecode(self.splitroot(path)[2])
+            if self.alternative_path_separator is not None:
+                path = path.replace(
+                    self.alternative_path_separator, self.path_separator
+                )
+
+            return any(
+                is_reserved_name(name)
+                for name in reversed(path.split(self.path_separator))
+            )
 
     def _add_standard_streams(self) -> None:
         self.add_open_file(StandardStreamWrapper(sys.stdin))

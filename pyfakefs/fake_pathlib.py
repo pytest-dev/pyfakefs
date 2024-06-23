@@ -32,6 +32,7 @@ get the properties of the underlying fake filesystem.
 import errno
 import fnmatch
 import functools
+import glob
 import inspect
 import ntpath
 import os
@@ -39,6 +40,7 @@ import pathlib
 import posixpath
 import re
 import sys
+import warnings
 from pathlib import PurePath
 from typing import Callable, List
 from urllib.parse import quote_from_bytes as urlquote_from_bytes
@@ -70,23 +72,25 @@ def init_module(filesystem):
         fake_pure_nt_flavour.altsep = "/"
         FakePathlibModule.PureWindowsPath._flavour = fake_pure_nt_flavour
     else:
-        # in Python 3.12, the flavour is no longer an own class,
+        # in Python > 3.11, the flavour is no longer a separate class,
         # but points to the os-specific path module (posixpath/ntpath)
         fake_os = FakeOsModule(filesystem)
-        FakePathlibModule.PosixPath._flavour = fake_os.path
-        FakePathlibModule.WindowsPath._flavour = fake_os.path
+        parser_name = "_flavour" if sys.version_info < (3, 13) else "parser"
+
+        setattr(FakePathlibModule.PosixPath, parser_name, fake_os.path)
+        setattr(FakePathlibModule.WindowsPath, parser_name, fake_os.path)
 
         # Pure POSIX path separators must be filesystem independent.
         fake_pure_posix_os = FakeOsModule(filesystem)
         fake_pure_posix_os.path.sep = "/"
         fake_pure_posix_os.path.altsep = None
-        FakePathlibModule.PurePosixPath._flavour = fake_pure_posix_os.path
+        setattr(FakePathlibModule.PurePosixPath, parser_name, fake_pure_posix_os.path)
 
         # Pure Windows path separators must be filesystem independent.
         fake_pure_nt_os = FakeOsModule(filesystem)
         fake_pure_nt_os.path.sep = "\\"
         fake_pure_nt_os.path.altsep = "/"
-        FakePathlibModule.PureWindowsPath._flavour = fake_pure_nt_os.path
+        setattr(FakePathlibModule.PureWindowsPath, parser_name, fake_pure_nt_os.path)
 
 
 def _wrap_strfunc(strfunc):
@@ -578,6 +582,15 @@ class FakePath(pathlib.Path):
             # only needed until Python 3.8
             self._closed = False
 
+    if sys.version_info >= (3, 13):
+
+        def _glob_selector(self, parts, case_sensitive, recurse_symlinks):
+            # make sure we get the patched version of the globber
+            self._globber = glob._StringGlobber  # type: ignore[module-attr]
+            return super()._glob_selector(  # type: ignore[attribute-error]
+                parts, case_sensitive, recurse_symlinks
+            )
+
     def _path(self):
         """Returns the underlying path string as used by the fake
         filesystem.
@@ -805,13 +818,22 @@ class FakePath(pathlib.Path):
             return os.path.isabs(self._path())
 
         def is_reserved(self):
-            if not self.filesystem.is_windows_fs or not self._tail:
+            if sys.version_info >= (3, 13):
+                warnings.warn(
+                    "pathlib.PurePath.is_reserved() is deprecated and scheduled "
+                    "for removal in Python 3.15. Use os.path.isreserved() to detect "
+                    "reserved paths on Windows.",
+                    DeprecationWarning,
+                )
+            if not self.filesystem.is_windows_fs:
                 return False
-            if self._tail[0].startswith("\\\\"):
-                # UNC paths are never reserved.
-                return False
-            name = self._tail[-1].partition(".")[0].partition(":")[0].rstrip(" ")
-            return name.upper() in pathlib._WIN_RESERVED_NAMES
+            if sys.version_info < (3, 13):
+                if not self._tail or self._tail[0].startswith("\\\\"):
+                    # UNC paths are never reserved.
+                    return False
+                name = self._tail[-1].partition(".")[0].partition(":")[0].rstrip(" ")
+                return name.upper() in pathlib._WIN_RESERVED_NAMES
+            return self.filesystem.isreserved(self._path())
 
 
 class FakePathlibModule:
@@ -837,11 +859,15 @@ class FakePathlibModule:
         paths"""
 
         __slots__ = ()
+        if sys.version_info >= (3, 13):
+            parser = posixpath
 
     class PureWindowsPath(PurePath):
         """A subclass of PurePath, that represents Windows filesystem paths"""
 
         __slots__ = ()
+        if sys.version_info >= (3, 13):
+            parser = ntpath
 
     class WindowsPath(FakePath, PureWindowsPath):
         """A subclass of Path and PureWindowsPath that represents
@@ -933,8 +959,10 @@ class RealPath(pathlib.Path):
             if os.name == "nt"
             else pathlib._PosixFlavour()  # type:ignore
         )  # type:ignore
-    else:
+    elif sys.version_info < (3, 13):
         _flavour = ntpath if os.name == "nt" else posixpath
+    else:
+        parser = ntpath if os.name == "nt" else posixpath
 
     def __new__(cls, *args, **kwargs):
         """Creates the correct subclass based on OS."""

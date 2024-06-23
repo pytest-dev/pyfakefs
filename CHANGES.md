@@ -7,9 +7,11 @@ The released versions correspond to PyPI releases.
 
 ## Unreleased
 
-### Fixes
+### Enhancements
+* added preliminary support for Python 3.13 (tested with beta2) (see [#1017](../../issues/1017))
 
-* Use real open calls for remaining `pathlib` functions so that it works nice with skippedmodules (see #1012)
+### Fixes
+* use real open calls for remaining `pathlib` functions so that it works nice with skippedmodules (see [#1012](../../issues/1012))
 
 ## [Version 5.5.0](https://pypi.python.org/pypi/pyfakefs/5.5.0) (2024-05-12)
 Deprecates the usage of `pathlib2` and `scandir`.

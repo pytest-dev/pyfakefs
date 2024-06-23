@@ -583,8 +583,9 @@ class FakeFilesystemUnitTest(TestCase):
         new_file = self.filesystem.get_object(path)
         self.assertEqual(os.path.basename(path), new_file.name)
         if IS_WIN:
-            self.assertEqual(1, new_file.st_uid)
-            self.assertEqual(1, new_file.st_gid)
+            fake_id = 0 if is_root() else 1
+            self.assertEqual(fake_id, new_file.st_uid)
+            self.assertEqual(fake_id, new_file.st_gid)
         else:
             self.assertEqual(os.getuid(), new_file.st_uid)
             self.assertEqual(os.getgid(), new_file.st_gid)
@@ -955,8 +956,12 @@ class FakePathModuleTest(TestCase):
         self.filesystem.is_windows_fs = True
         self.assertTrue(self.path.isabs("C:!foo"))
         self.assertTrue(self.path.isabs(b"C:!foo"))
-        self.assertTrue(self.path.isabs("!"))
-        self.assertTrue(self.path.isabs(b"!"))
+        if sys.version_info < (3, 13):
+            self.assertTrue(self.path.isabs("!"))
+            self.assertTrue(self.path.isabs(b"!"))
+        else:
+            self.assertFalse(self.path.isabs("!"))
+            self.assertFalse(self.path.isabs(b"!"))
 
     def test_relpath(self):
         path_foo = "!path!to!foo"
@@ -1247,6 +1252,22 @@ class FakePathModuleTest(TestCase):
         self.assertEqual(
             ("", "!!", "foo!!bar"), self.filesystem.splitroot("!!foo!!bar")
         )
+
+    @unittest.skipIf(sys.version_info < (3, 13), "Introduced in Python 3.13")
+    @unittest.skipIf(TestCase.is_windows, "Posix specific behavior")
+    def test_is_reserved_posix(self):
+        self.assertFalse(self.filesystem.isreserved("!dev"))
+        self.assertFalse(self.filesystem.isreserved("!"))
+        self.assertFalse(self.filesystem.isreserved("COM1"))
+        self.assertFalse(self.filesystem.isreserved("nul.txt"))
+
+    @unittest.skipIf(sys.version_info < (3, 13), "Introduced in Python 3.13")
+    @unittest.skipIf(not TestCase.is_windows, "Windows specific behavior")
+    def test_is_reserved_windows(self):
+        self.assertFalse(self.filesystem.isreserved("!dev"))
+        self.assertFalse(self.filesystem.isreserved("!"))
+        self.assertTrue(self.filesystem.isreserved("COM1"))
+        self.assertTrue(self.filesystem.isreserved("nul.txt"))
 
 
 class PathManipulationTestBase(TestCase):
@@ -2123,7 +2144,7 @@ class RealFileSystemAccessTest(RealFsTestCase):
                 self.filesystem.add_real_directory(root_dir, target_path="/root/")
 
     def test_symlink_is_merged(self):
-        self.skip_if_symlink_not_supported(force_real_fs=True)
+        self.skip_if_symlink_not_supported()
         self.filesystem.create_dir(os.path.join("/", "root", "foo"))
         with self.create_real_paths() as root_dir:
             link_path = os.path.join(root_dir, "link.txt")
@@ -2388,7 +2409,7 @@ class RealFileSystemAccessTest(RealFsTestCase):
         )
 
     def test_add_existing_real_directory_symlink_target_path(self):
-        self.skip_if_symlink_not_supported(force_real_fs=True)
+        self.skip_if_symlink_not_supported()
         real_directory = self._setup_temp_directory()
         symlinks = [
             (
@@ -2413,7 +2434,7 @@ class RealFileSystemAccessTest(RealFsTestCase):
         self.assertTrue(self.filesystem.exists("/path/fixtures/symlink_file_relative"))
 
     def test_add_existing_real_directory_symlink_lazy_read(self):
-        self.skip_if_symlink_not_supported(force_real_fs=True)
+        self.skip_if_symlink_not_supported()
         real_directory = self._setup_temp_directory()
         symlinks = [
             (

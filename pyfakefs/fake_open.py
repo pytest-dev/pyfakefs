@@ -67,6 +67,19 @@ _OPEN_MODE_MAP = {
     "x+": (False, True, True, False, False, True),
 }
 
+real_call_line_no = None
+
+
+def _real_call_line_no():
+    global real_call_line_no
+    if real_call_line_no is None:
+        fake_io_source = os.path.join(os.path.dirname(__file__), "fake_io.py")
+        for i, line in enumerate(io.open(fake_io_source)):
+            if "return self._io_module.open_code(path)" in line:
+                real_call_line_no = i + 1
+                break
+    return real_call_line_no
+
 
 def fake_open(
     filesystem: "FakeFilesystem",
@@ -83,20 +96,62 @@ def fake_open(
     """Redirect the call to FakeFileOpen.
     See FakeFileOpen.call() for description.
     """
+    # since Python 3.13, we can run into a recursion in some instances here:
+    # traceback calls linecache.update_cache, which loads 'os' dynamically,
+    # which will be patched by the dynamic patcher and ends up here again;
+    # for these instances, we use a shortcut check here
+    if (
+        isinstance(file, str)
+        and file.endswith(("fake_open.py", "fake_io.py"))
+        and os.path.split(os.path.dirname(file))[1] == "pyfakefs"
+    ):
+        return io.open(  # pytype: disable=wrong-arg-count
+            file,
+            mode,
+            buffering,
+            encoding,
+            errors,
+            newline,
+            closefd,
+            opener,
+        )
+
     # workaround for built-in open called from skipped modules (see #552)
     # as open is not imported explicitly, we cannot patch it for
     # specific modules; instead we check if the caller is a skipped
     # module (should work in most cases)
     stack = traceback.extract_stack(limit=3)
+
     # handle the case that we try to call the original `open_code`
     # and get here instead (since Python 3.12)
-    from_open_code = (
-        sys.version_info >= (3, 12)
-        and stack[0].name == "open_code"
-        and stack[0].line == "return self._io_module.open_code(path)"
-    )
+    # TODO: use a more generic approach (see other PR #1025)
+    if sys.version_info >= (3, 13):
+        # TODO: check if stacktrace line is still not filled in final version
+        from_open_code = (
+            stack[0].name == "open_code" and stack[0].lineno == _real_call_line_no()
+        )
+    elif sys.version_info >= (3, 12):
+        from_open_code = (
+            stack[0].name == "open_code"
+            and stack[0].line == "return self._io_module.open_code(path)"
+        )
+    else:
+        from_open_code = False
+
     module_name = os.path.splitext(stack[0].filename)[0]
     module_name = module_name.replace(os.sep, ".")
+    if sys.version_info >= (3, 13) and module_name.endswith(
+        ("pathlib._abc", "pathlib._local")
+    ):
+        stack = traceback.extract_stack(limit=6)
+        frame = 2
+        # in Python 3.13, pathlib is implemented in 2 sub-modules that may call
+        # each other, so we have to look further in the stack
+        while frame >= 0 and module_name.endswith(("pathlib._abc", "pathlib._local")):
+            module_name = os.path.splitext(stack[frame].filename)[0]
+            module_name = module_name.replace(os.sep, ".")
+            frame -= 1
+
     if from_open_code or any(
         [module_name == sn or module_name.endswith("." + sn) for sn in skip_names]
     ):
@@ -201,7 +256,10 @@ class FakeFileOpen:
         # the pathlib opener is defined in a Path instance that may not be
         # patched under some circumstances; as it just calls standard open(),
         # we may ignore it, as it would not change the behavior
-        if opener is not None and opener.__module__ != "pathlib":
+        if opener is not None and opener.__module__ not in (
+            "pathlib",
+            "pathlib._local",
+        ):
             # opener shall return a file descriptor, which will be handled
             # here as if directly passed
             file_ = opener(file_, self._open_flags_from_open_modes(open_modes))

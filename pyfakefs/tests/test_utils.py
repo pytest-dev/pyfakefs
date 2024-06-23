@@ -269,32 +269,18 @@ class RealFsTestMixin:
                     "Skipping because FakeFS does not match real FS"
                 )
 
-    def symlink_can_be_tested(self, force_real_fs=False):
+    def symlink_can_be_tested(self):
         """Used to check if symlinks and hard links can be tested under
         Windows. All tests are skipped under Windows for Python versions
         not supporting links, and real tests are skipped if running without
         administrator rights.
         """
-        if not TestCase.is_windows or (not force_real_fs and not self.use_real_fs()):
-            return True
-        if TestCase.symlinks_can_be_tested is None:
-            if force_real_fs:
-                self.base_path = tempfile.mkdtemp()
-            link_path = self.make_path("link")
-            try:
-                self.os.symlink(self.base_path, link_path)
-                TestCase.symlinks_can_be_tested = True
-                self.os.remove(link_path)
-            except (OSError, NotImplementedError):
-                TestCase.symlinks_can_be_tested = False
-            if force_real_fs:
-                self.base_path = None
-        return TestCase.symlinks_can_be_tested
+        return not TestCase.is_windows or is_root()
 
-    def skip_if_symlink_not_supported(self, force_real_fs=False):
+    def skip_if_symlink_not_supported(self):
         """If called at test start, tests are skipped if symlinks are not
         supported."""
-        if not self.symlink_can_be_tested(force_real_fs):
+        if not self.symlink_can_be_tested():
             raise unittest.SkipTest("Symlinks under Windows need admin privileges")
 
     def make_path(self, *args):
