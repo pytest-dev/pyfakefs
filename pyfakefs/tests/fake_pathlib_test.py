@@ -19,6 +19,7 @@ Note that many of the tests are directly taken from examples in the
 python docs.
 """
 
+import contextlib
 import errno
 import os
 import pathlib
@@ -214,18 +215,28 @@ class FakePathlibPurePathTest(RealPathlibTestCase):
 
     def test_is_reserved_posix(self):
         self.check_posix_only()
-        self.assertFalse(self.path("/dev").is_reserved())
-        self.assertFalse(self.path("/").is_reserved())
-        self.assertFalse(self.path("COM1").is_reserved())
-        self.assertFalse(self.path("nul.txt").is_reserved())
+        with (
+            contextlib.nullcontext()
+            if sys.version_info < (3, 13)
+            else self.assertWarns(DeprecationWarning)
+        ):
+            self.assertFalse(self.path("/dev").is_reserved())
+            self.assertFalse(self.path("/").is_reserved())
+            self.assertFalse(self.path("COM1").is_reserved())
+            self.assertFalse(self.path("nul.txt").is_reserved())
 
     @unittest.skipIf(not is_windows, "Windows specific behavior")
     def test_is_reserved_windows(self):
         self.check_windows_only()
-        self.assertFalse(self.path("/dev").is_reserved())
-        self.assertFalse(self.path("/").is_reserved())
-        self.assertTrue(self.path("COM1").is_reserved())
-        self.assertTrue(self.path("nul.txt").is_reserved())
+        with (
+            contextlib.nullcontext()
+            if sys.version_info < (3, 13)
+            else self.assertWarns(DeprecationWarning)
+        ):
+            self.assertFalse(self.path("/dev").is_reserved())
+            self.assertFalse(self.path("/").is_reserved())
+            self.assertTrue(self.path("COM1").is_reserved())
+            self.assertTrue(self.path("nul.txt").is_reserved())
 
     def test_joinpath(self):
         self.assertEqual(self.path("/etc").joinpath("passwd"), self.path("/etc/passwd"))
@@ -404,9 +415,11 @@ class FakePathlibFileObjectPropertyTest(RealPathlibTestCase):
                 self.path(self.file_link_path).lchmod(0o444)
         else:
             self.path(self.file_link_path).lchmod(0o444)
-            self.assertEqual(file_stat.st_mode, stat.S_IFREG | 0o644)
+            mode = 0o666 if is_windows else 0o644
+            self.assertEqual(file_stat.st_mode, stat.S_IFREG | mode)
             # the exact mode depends on OS and Python version
-            self.assertEqual(link_stat.st_mode & 0o777700, stat.S_IFLNK | 0o700)
+            mode_mask = 0o600 if self.is_windows_fs else 0o700
+            self.assertEqual(link_stat.st_mode & 0o777700, stat.S_IFLNK | mode_mask)
 
     @unittest.skipIf(
         sys.version_info < (3, 10),
@@ -421,9 +434,11 @@ class FakePathlibFileObjectPropertyTest(RealPathlibTestCase):
                 self.path(self.file_link_path).chmod(0o444, follow_symlinks=False)
         else:
             self.path(self.file_link_path).chmod(0o444, follow_symlinks=False)
-            self.assertEqual(file_stat.st_mode, stat.S_IFREG | 0o644)
+            mode = 0o666 if is_windows else 0o644
+            self.assertEqual(file_stat.st_mode, stat.S_IFREG | mode)
             # the exact mode depends on OS and Python version
-            self.assertEqual(link_stat.st_mode & 0o777700, stat.S_IFLNK | 0o700)
+            mode_mask = 0o600 if self.is_windows_fs else 0o700
+            self.assertEqual(link_stat.st_mode & 0o777700, stat.S_IFLNK | mode_mask)
 
     def test_resolve(self):
         self.create_dir(self.make_path("antoine", "docs"))
@@ -456,10 +471,14 @@ class FakePathlibFileObjectPropertyTest(RealPathlibTestCase):
         file_path = self.os.path.join(dir_path, "some_file")
         self.create_file(file_path)
         self.os.chmod(dir_path, 0o000)
-        it = self.path(dir_path).iterdir()
         if not is_root():
-            self.assert_raises_os_error(errno.EACCES, list, it)
+            if sys.version_info >= (3, 13):
+                self.assert_raises_os_error(errno.EACCES, self.path(dir_path).iterdir)
+            else:
+                it = self.path(dir_path).iterdir()
+                self.assert_raises_os_error(errno.EACCES, list, it)
         else:
+            it = self.path(dir_path).iterdir()
             path = str(list(it)[0])
             self.assertTrue(path.endswith("some_file"))
 
@@ -727,7 +746,6 @@ class FakePathlibPathFileOperationTest(RealPathlibTestCase):
 
     @unittest.skipIf(sys.version_info < (3, 10), "hardlink_to new in Python 3.10")
     def test_hardlink_to(self):
-        self.skip_if_symlink_not_supported()
         file_name = self.make_path("foo", "bar.txt")
         self.create_file(file_name)
         self.assertEqual(1, self.os.stat(file_name).st_nlink)
@@ -1280,6 +1298,8 @@ class FakeFilesystemChmodTest(fake_filesystem_unittest.TestCase):
     @unittest.skipIf(sys.platform != "win32", "Windows specific test")
     def test_is_file_for_unreadable_dir_windows(self):
         self.fs.os = OSType.WINDOWS
+        if is_root():
+            self.skipTest("Test only valid for non-root user")
         path = pathlib.Path("/foo/bar")
         self.fs.create_file(path)
         # normal chmod does not really set the mode to 0

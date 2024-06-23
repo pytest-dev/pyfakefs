@@ -12,6 +12,7 @@
 
 """Helper classes use for fake file system implementation."""
 
+import ctypes
 import io
 import locale
 import os
@@ -44,8 +45,9 @@ _OpenModes = namedtuple(
 )
 
 if sys.platform == "win32":
-    USER_ID = 1
-    GROUP_ID = 1
+    fake_id = 0 if ctypes.windll.shell32.IsUserAnAdmin() else 1
+    USER_ID = fake_id
+    GROUP_ID = fake_id
 else:
     USER_ID = os.getuid()
     GROUP_ID = os.getgid()
@@ -87,8 +89,9 @@ def set_gid(gid: int) -> None:
 def reset_ids() -> None:
     """Set the global user ID and group ID back to default values."""
     if sys.platform == "win32":
-        set_uid(1)
-        set_gid(1)
+        reset_id = 0 if ctypes.windll.shell32.IsUserAnAdmin() else 1
+        set_uid(reset_id)
+        set_gid(reset_id)
     else:
         set_uid(os.getuid())
         set_gid(os.getgid())

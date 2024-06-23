@@ -898,6 +898,7 @@ class FakeOsModuleTest(FakeOsModuleTestBase):
 
     def test_remove_file_with_read_permission_raises_in_windows(self):
         self.check_windows_only()
+        self.skip_root()
         path = self.make_path("foo", "bar")
         self.create_file(path)
         self.os.chmod(path, 0o444)
@@ -2024,8 +2025,11 @@ class FakeOsModuleTest(FakeOsModuleTestBase):
         self.assertTrue(self.os.access(link_path, self.os.F_OK, follow_symlinks=False))
         self.assertTrue(self.os.access(link_path, self.os.R_OK, follow_symlinks=False))
         self.assertTrue(self.os.access(link_path, self.os.W_OK, follow_symlinks=False))
-        self.assertTrue(self.os.access(link_path, self.os.X_OK, follow_symlinks=False))
-        self.assertTrue(self.os.access(link_path, self.rwx, follow_symlinks=False))
+        if not self.is_windows_fs:
+            self.assertTrue(
+                self.os.access(link_path, self.os.X_OK, follow_symlinks=False)
+            )
+            self.assertTrue(self.os.access(link_path, self.rwx, follow_symlinks=False))
         self.assertTrue(self.os.access(link_path, self.rw, follow_symlinks=False))
 
     def test_access_non_existent_file(self):
@@ -2086,7 +2090,10 @@ class FakeOsModuleTest(FakeOsModuleTestBase):
         self.assertEqual(stat.S_IMODE(0o700), stat.S_IMODE(st.st_mode) & 0o700)
 
     def test_chmod_no_follow_symlink(self):
-        self.check_posix_only()
+        if sys.version_info < (3, 13):
+            self.check_posix_only()
+        else:
+            self.skip_if_symlink_not_supported()
         path = self.make_path("some_file")
         self.createTestFile(path)
         link_path = self.make_path("link_to_some_file")
@@ -2100,7 +2107,8 @@ class FakeOsModuleTest(FakeOsModuleTestBase):
             mode = 0o644 if self.is_macos else 0o666
             self.assert_mode_equal(mode, st.st_mode)
             st = self.os.stat(link_path, follow_symlinks=False)
-            self.assert_mode_equal(0o6543, st.st_mode)
+            mode = 0o444 if self.is_windows_fs else 0o6543
+            self.assert_mode_equal(mode, st.st_mode)
 
     def test_lchmod(self):
         """lchmod shall behave like chmod with follow_symlinks=True."""
@@ -5048,6 +5056,8 @@ class FakeOsModuleDirFdTest(FakeOsModuleTestBase):
                 os_mknod()
         self.add_supported_function(self.os.mknod)
         if self.os.mknod in self.os.supports_dir_fd:
+            if self.is_macos and sys.version_info >= (3, 13) and not is_root():
+                self.skipTest("Needs root rights under macos")
             os_mknod()
             newdir_path = self.os.path.join(self.dir_fd_path, "newdir")
             self.assertTrue(self.os.path.exists(newdir_path))
@@ -5668,7 +5678,7 @@ class FakeOsUnreadableDirTest(FakeOsModuleTestBase):
             with self.assertRaises(PermissionError):
                 self.os.listdir(dir_path)
         else:
-            self.assertEqual(["some_file"], self.os.listdir(self.dir_path))
+            self.assertEqual([], self.os.listdir(dir_path))
 
     def test_listdir_group_readable_dir_from_other_user(self):
         self.skip_real_fs()  # won't change user in real fs

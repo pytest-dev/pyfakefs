@@ -40,6 +40,7 @@ import _io  # type:ignore[import]
 import doctest
 import functools
 import genericpath
+import glob
 import inspect
 import io
 import linecache
@@ -589,6 +590,9 @@ class Patcher:
         self.modules_to_reload: List[ModuleType] = (
             [] if sys.platform == "win32" else [tempfile]
         )
+        if sys.version_info >= (3, 13):
+            # need to reload glob which holds references to os functions
+            self.modules_to_reload.append(glob)
         if modules_to_reload is not None:
             self.modules_to_reload.extend(modules_to_reload)
         self.patch_default_args = patch_default_args
@@ -685,6 +689,11 @@ class Patcher:
             "io": fake_io.FakeIoModule,
             "pathlib": fake_pathlib.FakePathlibModule,
         }
+        if sys.version_info >= (3, 13):
+            # for Python 3.13, we need both pathlib (path with __init__.py) and
+            # pathlib._local (has the actual implementation);
+            # depending on how pathlib is imported, either may be used
+            self._fake_module_classes["pathlib._local"] = fake_pathlib.FakePathlibModule
         if IS_PYPY or sys.version_info >= (3, 12):
             # in PyPy and later cpython versions, the module is referenced as _io
             self._fake_module_classes["_io"] = fake_io.FakeIoModule2
@@ -697,7 +706,13 @@ class Patcher:
         # be contained in - this allows for alternative modules like
         # `pathlib` and `pathlib2`
         self._class_modules["Path"] = ["pathlib"]
+        if sys.version_info >= (3, 13):
+            self._class_modules["Path"].append("pathlib._local")
         self._unfaked_module_classes["pathlib"] = fake_pathlib.RealPathlibModule
+        if sys.version_info >= (3, 13):
+            self._unfaked_module_classes["pathlib._local"] = (
+                fake_pathlib.RealPathlibModule
+            )
         if pathlib2:
             self._fake_module_classes["pathlib2"] = (
                 fake_legacy_modules.FakePathlib2Module

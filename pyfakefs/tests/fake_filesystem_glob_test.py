@@ -14,8 +14,10 @@
 
 """Test for glob using fake_filesystem."""
 
+import contextlib
 import glob
 import os
+import sys
 import unittest
 
 from pyfakefs import fake_filesystem_unittest
@@ -71,7 +73,12 @@ class FakeGlobUnitTest(fake_filesystem_unittest.TestCase):
         self.assertEqual(["/[Temp]"], glob.glob("/*emp*"))
 
     def test_glob1(self):
-        self.assertEqual(["[Temp]"], glob.glob1("/", "*Tem*"))
+        with (
+            contextlib.nullcontext()
+            if sys.version_info < (3, 13)
+            else self.assertWarns(DeprecationWarning)
+        ):
+            self.assertEqual(["[Temp]"], glob.glob1("/", "*Tem*"))
 
     def test_has_magic(self):
         self.assertTrue(glob.has_magic("["))
