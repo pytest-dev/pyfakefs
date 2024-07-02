@@ -18,7 +18,7 @@ repos:
     rev: 1.18.0
     hooks:
       - id: blacken-docs
-        additional_dependencies: [ black==22.12.0 ]
+        additional_dependencies: [ black==24.4.2 ]
   - repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v4.6.0
     hooks:
