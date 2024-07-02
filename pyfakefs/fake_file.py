@@ -60,6 +60,10 @@ from pyfakefs.helpers import (
 if TYPE_CHECKING:
     from pyfakefs.fake_filesystem import FakeFilesystem
 
+
+# Work around pyupgrade auto-rewriting `io.open()` to `open()`.
+io_open = io.open
+
 AnyFileWrapper = Union[
     "FakeFileWrapper",
     "FakeDirWrapper",
@@ -458,7 +462,7 @@ class FakeFileFromRealFile(FakeFile):
     def byte_contents(self) -> Optional[bytes]:
         if not self.contents_read:
             self.contents_read = True
-            with io.open(self.file_path, "rb") as f:
+            with io_open(self.file_path, "rb") as f:
                 self._byte_contents = f.read()
         # On MacOS and BSD, the above io.open() updates atime on the real file
         self.st_atime = os.stat(self.file_path).st_atime
