@@ -104,10 +104,8 @@ class DirEntry(os.PathLike):
                 self._statresult.st_nlink = 0
         return self._statresult
 
-    if sys.version_info >= (3, 6):
-
-        def __fspath__(self):
-            return self.path
+    def __fspath__(self):
+        return self.path
 
     if sys.version_info >= (3, 12):
 
@@ -155,16 +153,14 @@ class ScanDirIter:
         dir_entry._islink = self.filesystem.islink(dir_entry._abspath)
         return dir_entry
 
-    if sys.version_info >= (3, 6):
+    def __enter__(self):
+        return self
 
-        def __enter__(self):
-            return self
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        self.close()
 
-        def __exit__(self, exc_type, exc_val, exc_tb):
-            self.close()
-
-        def close(self):
-            pass
+    def close(self):
+        pass
 
 
 def scandir(filesystem, path=""):
@@ -249,8 +245,7 @@ def walk(filesystem, top, topdown=True, onerror=None, followlinks=False):
                 path = filesystem.joinpaths(top_dir, directory)
                 if not followlinks and filesystem.islink(path):
                     continue
-                for contents in do_walk(path):
-                    yield contents
+                yield from do_walk(path)
             if not topdown:
                 yield top_contents
 

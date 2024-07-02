@@ -411,7 +411,7 @@ class RealShutilModuleTest(FakeShutilModuleTest):
 
 class FakeCopyFileTest(RealFsTestCase):
     def tearDown(self):
-        super(FakeCopyFileTest, self).tearDown()
+        super().tearDown()
 
     def test_common_case(self):
         src_file = self.make_path("xyzzy")

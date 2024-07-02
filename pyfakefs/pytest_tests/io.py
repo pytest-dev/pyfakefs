@@ -10,5 +10,5 @@ class InputStream:
         self.name = name
 
     def read(self):
-        with open(self.name, "r") as f:
+        with open(self.name) as f:
             return f.readline()

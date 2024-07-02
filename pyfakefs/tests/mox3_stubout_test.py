@@ -54,7 +54,7 @@ class GroundhogDate(datetime.date):
 
 class StubOutForTestingTest(unittest.TestCase):
     def setUp(self):
-        super(StubOutForTestingTest, self).setUp()
+        super().setUp()
         self.stubber = mox3_stubout.StubOutForTesting()
 
     def test_stubout_method_with_set(self):

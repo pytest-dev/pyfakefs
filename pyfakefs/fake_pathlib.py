@@ -231,7 +231,7 @@ if sys.version_info < (3, 12):
             self.sep = filesystem.path_separator
             self.altsep = filesystem.alternative_path_separator
             self.has_drv = filesystem.is_windows_fs
-            super(_FakeFlavour, self).__init__()
+            super().__init__()
 
         @staticmethod
         def _split_extended_path(path, ext_prefix=ext_namespace_prefix):
@@ -442,7 +442,7 @@ if sys.version_info < (3, 12):
             if len(drive) == 2 and drive[1] == ":":
                 # It's a path on a local drive => 'file:///c:/a/b'
                 rest = path.as_posix()[2:].lstrip("/")
-                return "file:///%s/%s" % (
+                return "file:///{}/{}".format(
                     drive,
                     urlquote_from_bytes(rest.encode("utf-8")),
                 )
@@ -618,15 +618,8 @@ class FakePath(pathlib.Path):
             Raises:
                 OSError: if the path doesn't exist (strict=True)
             """
-            if sys.version_info >= (3, 6):
-                if strict is None:
-                    strict = False
-            else:
-                if strict is not None:
-                    raise TypeError(
-                        "resolve() got an unexpected keyword argument 'strict'"
-                    )
-                strict = True
+            if strict is None:
+                strict = False
             self._raise_on_closed()
             path = self._flavour.resolve(
                 self, strict=strict

@@ -9,8 +9,6 @@ To run these doctests, install pytest and run:
 Add `-s` option to enable print statements.
 """
 
-from __future__ import unicode_literals
-
 
 def make_file_factory(func_name, fake, result):
     """Return a simple function with parametrized doctest."""

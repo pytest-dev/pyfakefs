@@ -304,7 +304,7 @@ class RealPathlibPurePathTest(FakePathlibPurePathTest):
 
 class FakePathlibFileObjectPropertyTest(RealPathlibTestCase):
     def setUp(self):
-        super(FakePathlibFileObjectPropertyTest, self).setUp()
+        super().setUp()
         self.umask = self.os.umask(0o022)
         self.file_path = self.make_path("home", "jane", "test.py")
         self.create_file(self.file_path, contents=b"a" * 100)
