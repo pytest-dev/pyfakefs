@@ -2,6 +2,14 @@ default_language_version:
   python: "3.10"
 
 repos:
+  - repo: "https://github.com/asottile/pyupgrade"
+    rev: "v3.15.2"
+    hooks:
+      - id: "pyupgrade"
+        name: "Enforce Python 3.7+ idioms"
+        args:
+          - "--py37-plus"
+
   - repo: https://github.com/astral-sh/ruff-pre-commit
     rev: "v0.5.0"
     hooks:
