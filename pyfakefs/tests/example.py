@@ -67,7 +67,7 @@ def create_file(path):
 'It was created using open().\\n']
     """
     with open(path, "w", encoding="utf8") as f:
-        f.write("This is test file '{0}'.\n".format(path))
+        f.write(f"This is test file '{path}'.\n")
         f.write("It was created using open().\n")
 
 

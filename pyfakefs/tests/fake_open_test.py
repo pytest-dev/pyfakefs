@@ -33,7 +33,7 @@ from pyfakefs.tests.test_utils import RealFsTestCase
 
 class FakeFileOpenTestBase(RealFsTestCase):
     def setUp(self):
-        super(FakeFileOpenTestBase, self).setUp()
+        super().setUp()
         if self.use_real_fs():
             self.open = io.open
         else:
@@ -46,11 +46,11 @@ class FakeFileOpenTestBase(RealFsTestCase):
 
 class FakeFileOpenTest(FakeFileOpenTestBase):
     def setUp(self):
-        super(FakeFileOpenTest, self).setUp()
+        super().setUp()
         self.orig_time = time.time
 
     def tearDown(self):
-        super(FakeFileOpenTest, self).tearDown()
+        super().tearDown()
         time.time = self.orig_time
 
     def test_open_no_parent_dir(self):
@@ -1056,7 +1056,7 @@ class RealFileOpenWithOpenerTest(FakeFileOpenWithOpenerTest):
 @unittest.skipIf(sys.version_info < (3, 8), "open_code only present since Python 3.8")
 class FakeFilePatchedOpenCodeTest(FakeFileOpenTestBase):
     def setUp(self):
-        super(FakeFilePatchedOpenCodeTest, self).setUp()
+        super().setUp()
         if self.use_real_fs():
             self.open_code = io.open_code
         else:
@@ -1066,7 +1066,7 @@ class FakeFilePatchedOpenCodeTest(FakeFileOpenTestBase):
     def tearDown(self):
         if not self.use_real_fs():
             self.filesystem.patch_open_code = False
-        super(FakeFilePatchedOpenCodeTest, self).tearDown()
+        super().tearDown()
 
     @unittest.skipIf(IS_PYPY, "Different behavior in PyPy")
     def test_invalid_path(self):
@@ -1104,7 +1104,7 @@ class RealPatchedFileOpenCodeTest(FakeFilePatchedOpenCodeTest):
 @unittest.skipIf(sys.version_info < (3, 8), "open_code only present since Python 3.8")
 class FakeFileUnpatchedOpenCodeTest(FakeFileOpenTestBase):
     def setUp(self):
-        super(FakeFileUnpatchedOpenCodeTest, self).setUp()
+        super().setUp()
         if self.use_real_fs():
             self.open_code = io.open_code
         else:
@@ -1377,7 +1377,7 @@ class OpenFileWithEncodingTest(FakeFileOpenTestBase):
     an explicit text encoding."""
 
     def setUp(self):
-        super(OpenFileWithEncodingTest, self).setUp()
+        super().setUp()
         self.file_path = self.make_path("foo")
 
     def test_write_str_read_bytes(self):
@@ -1536,7 +1536,7 @@ class OpenRealFileWithEncodingTest(OpenFileWithEncodingTest):
 
 class FakeFileOpenLineEndingTest(FakeFileOpenTestBase):
     def setUp(self):
-        super(FakeFileOpenLineEndingTest, self).setUp()
+        super().setUp()
 
     def test_read_default_newline_mode(self):
         file_path = self.make_path("some_file")
@@ -1656,7 +1656,7 @@ class RealFileOpenLineEndingTest(FakeFileOpenLineEndingTest):
 
 class FakeFileOpenLineEndingWithEncodingTest(FakeFileOpenTestBase):
     def setUp(self):
-        super(FakeFileOpenLineEndingWithEncodingTest, self).setUp()
+        super().setUp()
 
     def test_read_standard_newline_mode(self):
         file_path = self.make_path("some_file")
@@ -1769,7 +1769,7 @@ class OpenWithRealFileDescriptorTest(FakeFileOpenTestBase):
 
 class OpenWithFlagsTestBase(FakeFileOpenTestBase):
     def setUp(self):
-        super(OpenWithFlagsTestBase, self).setUp()
+        super().setUp()
         self.file_path = self.make_path("some_file")
         self.file_contents = None
 
@@ -1795,7 +1795,7 @@ class OpenWithFlagsTestBase(FakeFileOpenTestBase):
 
 class OpenWithBinaryFlagsTest(OpenWithFlagsTestBase):
     def setUp(self):
-        super(OpenWithBinaryFlagsTest, self).setUp()
+        super().setUp()
         self.file_contents = b"real binary contents: \x1f\x8b"
         self.create_file(self.file_path, contents=self.file_contents)
 
@@ -1830,7 +1830,7 @@ class RealOpenWithBinaryFlagsTest(OpenWithBinaryFlagsTest):
 
 class OpenWithTextModeFlagsTest(OpenWithFlagsTestBase):
     def setUp(self):
-        super(OpenWithTextModeFlagsTest, self).setUp()
+        super().setUp()
         self.setUpFileSystem()
 
     def setUpFileSystem(self):

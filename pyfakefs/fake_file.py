@@ -75,7 +75,7 @@ class FakeLargeFileIoException(Exception):
     """
 
     def __init__(self, file_path: str) -> None:
-        super(FakeLargeFileIoException, self).__init__(
+        super().__init__(
             "Read and write operations not supported for "
             "fake large file: %s" % file_path
         )
@@ -395,7 +395,7 @@ class FakeFile:
         return super().__setattr__(key, value)
 
     def __str__(self) -> str:
-        return "%r(%o)" % (self.name, self.st_mode)
+        return f"{self.name!r}({self.st_mode:o})"
 
     def has_permission(self, permission_bits: int) -> bool:
         """Checks if the given permissions are set in the fake file.
@@ -416,7 +416,7 @@ class FakeFile:
 class FakeNullFile(FakeFile):
     def __init__(self, filesystem: "FakeFilesystem") -> None:
         devnull = "nul" if filesystem.is_windows_fs else "/dev/null"
-        super(FakeNullFile, self).__init__(devnull, filesystem=filesystem, contents="")
+        super().__init__(devnull, filesystem=filesystem, contents="")
 
     @property
     def byte_contents(self) -> bytes:
@@ -466,7 +466,7 @@ class FakeFileFromRealFile(FakeFile):
 
     def set_contents(self, contents, encoding=None):
         self.contents_read = True
-        super(FakeFileFromRealFile, self).set_contents(contents, encoding)
+        super().set_contents(contents, encoding)
 
     def is_large_file(self):
         """The contents are never faked."""
@@ -650,7 +650,7 @@ class FakeDirectory(FakeFile):
         return False
 
     def __str__(self) -> str:
-        description = super(FakeDirectory, self).__str__() + ":\n"
+        description = super().__str__() + ":\n"
         for item in self.entries:
             item_desc = self.entries[item].__str__()
             for line in item_desc.split("\n"):
@@ -688,7 +688,7 @@ class FakeDirectoryFromRealDirectory(FakeDirectory):
         """
         target_path = target_path or source_path
         real_stat = os.stat(source_path)
-        super(FakeDirectoryFromRealDirectory, self).__init__(
+        super().__init__(
             name=to_string(os.path.split(target_path)[1]),
             perm_bits=real_stat.st_mode,
             filesystem=filesystem,
@@ -730,7 +730,7 @@ class FakeDirectoryFromRealDirectory(FakeDirectory):
         # we cannot get the size until the contents are loaded
         if not self.contents_read:
             return 0
-        return super(FakeDirectoryFromRealDirectory, self).size
+        return super().size
 
     @size.setter
     def size(self, st_size: int) -> None:

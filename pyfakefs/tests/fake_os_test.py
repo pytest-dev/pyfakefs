@@ -1641,7 +1641,7 @@ class FakeOsModuleTest(FakeOsModuleTestBase):
         self.assertTrue(self.filesystem.exists("/%s" % directory))
         self.os.chdir(directory)
         self.os.mkdir(directory)
-        self.assertTrue(self.filesystem.exists("/%s/%s" % (directory, directory)))
+        self.assertTrue(self.filesystem.exists(f"/{directory}/{directory}"))
         self.os.chdir(directory)
         self.os.mkdir("../abccb")
         self.assertTrue(self.os.path.exists("/%s/abccb" % directory))
@@ -1662,7 +1662,7 @@ class FakeOsModuleTest(FakeOsModuleTestBase):
     def test_mkdir_raises_if_no_parent(self):
         """mkdir raises exception if parent directory does not exist."""
         parent = "xyzzy"
-        directory = "%s/foo" % (parent,)
+        directory = f"{parent}/foo"
         self.assertFalse(self.os.path.exists(parent))
         self.assert_raises_os_error(errno.ENOENT, self.os.mkdir, directory)
 

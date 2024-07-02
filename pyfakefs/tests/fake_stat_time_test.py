@@ -389,7 +389,7 @@ class FakeStatTestBase(RealFsTestCase):
 
 class TestFakeModeW(FakeStatTestBase):
     def setUp(self):
-        super(TestFakeModeW, self).setUp()
+        super().setUp()
         self.mode = "w"
 
     def test_open_close_new_file(self):
@@ -423,7 +423,7 @@ class TestRealModeW(TestFakeModeW):
 
 class TestFakeModeWPlus(FakeStatTestBase):
     def setUp(self):
-        super(TestFakeModeWPlus, self).setUp()
+        super().setUp()
         self.mode = "w+"
 
     def test_open_close_new_file(self):
@@ -476,7 +476,7 @@ class TestRealModeWPlus(TestFakeModeWPlus):
 
 class TestFakeModeA(FakeStatTestBase):
     def setUp(self):
-        super(TestFakeModeA, self).setUp()
+        super().setUp()
         self.mode = "a"
 
     def test_open_close_new_file(self):
@@ -510,7 +510,7 @@ class TestRealModeA(TestFakeModeA):
 
 class TestFakeModeAPlus(FakeStatTestBase):
     def setUp(self):
-        super(TestFakeModeAPlus, self).setUp()
+        super().setUp()
         self.mode = "a+"
 
     def test_open_close_new_file(self):
@@ -545,7 +545,7 @@ class TestRealModeAPlus(TestFakeModeAPlus):
 
 class TestFakeModeR(FakeStatTestBase):
     def setUp(self):
-        super(TestFakeModeR, self).setUp()
+        super().setUp()
         self.mode = "r"
 
     def test_open_close(self):
@@ -592,7 +592,7 @@ class TestRealModeR(TestFakeModeR):
 
 class TestFakeModeRPlus(FakeStatTestBase):
     def setUp(self):
-        super(TestFakeModeRPlus, self).setUp()
+        super().setUp()
         self.mode = "r+"
 
     def test_open_close(self):
