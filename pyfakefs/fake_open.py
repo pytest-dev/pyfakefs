@@ -54,6 +54,9 @@ if TYPE_CHECKING:
     from pyfakefs.fake_filesystem import FakeFilesystem
 
 
+# Work around pyupgrade auto-rewriting `io.open()` to `open()`.
+io_open = io.open
+
 _OPEN_MODE_MAP = {
     # mode name:(file must exist, can read, can write,
     #            truncate, append, must not exist)
@@ -74,7 +77,7 @@ def _real_call_line_no():
     global real_call_line_no
     if real_call_line_no is None:
         fake_io_source = os.path.join(os.path.dirname(__file__), "fake_io.py")
-        for i, line in enumerate(io.open(fake_io_source)):
+        for i, line in enumerate(io_open(fake_io_source)):
             if "return self._io_module.open_code(path)" in line:
                 real_call_line_no = i + 1
                 break
@@ -105,7 +108,7 @@ def fake_open(
         and file.endswith(("fake_open.py", "fake_io.py"))
         and os.path.split(os.path.dirname(file))[1] == "pyfakefs"
     ):
-        return io.open(  # pytype: disable=wrong-arg-count
+        return io_open(  # pytype: disable=wrong-arg-count
             file,
             mode,
             buffering,
@@ -155,7 +158,7 @@ def fake_open(
     if from_open_code or any(
         [module_name == sn or module_name.endswith("." + sn) for sn in skip_names]
     ):
-        return io.open(  # pytype: disable=wrong-arg-count
+        return io_open(  # pytype: disable=wrong-arg-count
             file,
             mode,
             buffering,

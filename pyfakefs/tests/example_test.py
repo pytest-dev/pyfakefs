@@ -36,6 +36,10 @@ from pyfakefs.legacy_packages import scandir
 from pyfakefs.tests import example  # The module under test
 
 
+# Work around pyupgrade auto-rewriting `io.open()` to `open()`.
+io_open = io.open
+
+
 def load_tests(loader, tests, ignore):
     """Load the pyfakefs/example.py doctest tests into unittest."""
     return fake_filesystem_unittest.load_doctests(loader, tests, ignore, example)
@@ -62,7 +66,7 @@ class TestExample(fake_filesystem_unittest.TestCase):  # pylint: disable=R0904
 
         # This is before setUpPyfakefs(), so still using the real file system
         self.filepath = os.path.realpath(__file__)
-        with io.open(self.filepath, "rb") as f:
+        with io_open(self.filepath, "rb") as f:
             self.real_contents = f.read()
 
         self.setUpPyfakefs()

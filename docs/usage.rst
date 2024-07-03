@@ -180,13 +180,13 @@ order, as shown here:
    @patchfs
    @mock.patch("foo.bar")
    def test_something(fake_fs, mocked_bar):
-       ...
+       assert foo()
 
 
    @mock.patch("foo.bar")
    @patchfs
    def test_something(mocked_bar, fake_fs):
-       ...
+       assert foo()
 
 .. note::
   Avoid writing the ``patchfs`` decorator *between* ``mock.patch`` operators,
@@ -257,7 +257,7 @@ In case of ``pytest``, you have two possibilities:
 
 
   def test_something(fs_no_root):
-      ...
+      assert foo()
 
 - You can also pass the arguments using ``@pytest.mark.parametrize``. Note that
   you have to provide `all Patcher arguments`_ before the needed ones, as
@@ -272,7 +272,7 @@ In case of ``pytest``, you have two possibilities:
 
   @pytest.mark.parametrize("fs", [[None, None, None, False]], indirect=True)
   def test_something(fs):
-      ...
+      assert foo()
 
 Unittest
 ........
@@ -290,7 +290,7 @@ instance:
           self.setUpPyfakefs(allow_root_user=False)
 
       def testSomething(self):
-          ...
+          assert foo()
 
 patchfs
 .......
@@ -304,7 +304,7 @@ the decorator:
 
   @patchfs(allow_root_user=False)
   def test_something(fake_fs):
-      ...
+      assert foo()
 
 
 List of custom arguments
@@ -412,6 +412,7 @@ the file ``example/sut.py``, the following code will work (imports are omitted):
 
   import example
 
+
   # example using unittest
   class ReloadModuleTest(fake_filesystem_unittest.TestCase):
       def setUp(self):
@@ -499,13 +500,14 @@ has now been been integrated into ``pyfakefs``):
   with Patcher(modules_to_patch={"django.core.files.locks": FakeLocks}):
       test_django_stuff()
 
+
   # test code using unittest
   class TestUsingDjango(fake_filesystem_unittest.TestCase):
       def setUp(self):
           self.setUpPyfakefs(modules_to_patch={"django.core.files.locks": FakeLocks})
 
       def test_django_stuff(self):
-          ...
+          assert foo()
 
 
   # test code using pytest
@@ -513,13 +515,13 @@ has now been been integrated into ``pyfakefs``):
       "fs", [[None, None, {"django.core.files.locks": FakeLocks}]], indirect=True
   )
   def test_django_stuff(fs):
-      ...
+      assert foo()
 
 
   # test code using patchfs decorator
   @patchfs(modules_to_patch={"django.core.files.locks": FakeLocks})
   def test_django_stuff(fake_fs):
-      ...
+      assert foo()
 
 additional_skip_names
 .....................
@@ -583,7 +585,7 @@ set ``patch_open_code`` to ``PatchMode.AUTO``:
 
   @patchfs(patch_open_code=PatchMode.AUTO)
   def test_something(fs):
-      ...
+      assert foo()
 
 .. _patch_default_args:
 

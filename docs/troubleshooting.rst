@@ -350,7 +350,7 @@ If you want to know if your problem is indeed with the dynamic patcher, you can 
 
 
   def test_something(fs_no_dyn_patch):
-      ...  # do the testing
+      assert foo()  # do the testing
 
 If in this case the following tests pass as expected, the dynamic patcher is indeed the problem.
 If your ``pyfakefs`` test also works with that setting, you may just use this. Otherwise,

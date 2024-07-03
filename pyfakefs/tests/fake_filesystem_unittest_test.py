@@ -52,6 +52,10 @@ if sys.version_info < (3, 12):
     from distutils.dir_util import copy_tree, remove_tree
 
 
+# Work around pyupgrade auto-rewriting `io.open()` to `open()`.
+io_open = io.open
+
+
 class TestPatcher(TestCase):
     def test_context_manager(self):
         with Patcher() as patcher:
@@ -115,7 +119,7 @@ class TestPyfakefsUnittest(TestPyfakefsUnittestBase):  # pylint: disable=R0904
     def test_io_open(self):
         """Fake io module is bound"""
         self.assertFalse(os.path.exists("/fake_file.txt"))
-        with io.open("/fake_file.txt", "w", encoding="utf8") as f:
+        with io_open("/fake_file.txt", "w", encoding="utf8") as f:
             f.write("This test file was created using the" " io.open() function.\n")
         self.assertTrue(self.fs.exists("/fake_file.txt"))
         with open("/fake_file.txt", encoding="utf8") as f:
