@@ -515,6 +515,20 @@ class FakeFilesystemUnitTest(TestCase):
         self.assertEqual(os.path.basename(path), new_dir.name)
         self.assertTrue(stat.S_IFDIR & new_dir.st_mode)
 
+    def test_create_dir_umask(self):
+        old_umask = self.filesystem.umask
+        self.filesystem.umask = 0o22
+        path = "foo/bar/baz"
+        self.filesystem.create_dir(path, perm_bits=0o777)
+        new_dir = self.filesystem.get_object(path)
+        self.assertEqual(stat.S_IFDIR | 0o755, new_dir.st_mode)
+
+        path = "foo/bar/boo"
+        self.filesystem.create_dir(path, perm_bits=0o777, apply_umask=False)
+        new_dir = self.filesystem.get_object(path)
+        self.assertEqual(stat.S_IFDIR | 0o777, new_dir.st_mode)
+        self.filesystem.umask = old_umask
+
     def test_create_directory_already_exists_error(self):
         path = "foo/bar/baz"
         self.filesystem.create_dir(path)
