@@ -1,14 +1,22 @@
 # pyfakefs Release Notes
 The released versions correspond to PyPI releases.
 
+## Policy for Python version support
+* support for new versions is usually added preliminarily during the Python release beta phase,
+  official support after the final release
+* support for EOL versions is removed as soon as the CI (GitHub actions) does no longer provide
+  these versions (usually several months after the official EOL)
+
 ## Planned changes for next major release (6.0.0)
-* remove support for patching legacy modules `scandir` and `pathlib2`
-* remove support for Python 3.7
+* support for patching legacy modules `scandir` and `pathlib2` will be removed
+* the default for `FakeFilesystem.shuffle_listdir_results` will change to `True` to reflect
+  the real filesystem behavior
 
 ## Unreleased
 
 ### Enhancements
 * added preliminary support for Python 3.13 (tested with beta2) (see [#1017](../../issues/1017))
+* added `apply_umask` argument to `FakeFilesystem.create_dir` to allow ignoring the umask (see [#1038](../../issues/1038))
 
 ### Fixes
 * use real open calls for remaining `pathlib` functions so that it works nice with skippedmodules (see [#1012](../../issues/1012))

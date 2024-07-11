@@ -2090,7 +2090,10 @@ class FakeFilesystem:
         return path_str.replace(os_sep, fake_sep)  # type: ignore[return-value]
 
     def create_dir(
-        self, directory_path: AnyPath, perm_bits: int = helpers.PERM_DEF
+        self,
+        directory_path: AnyPath,
+        perm_bits: int = helpers.PERM_DEF,
+        apply_umask: bool = True,
     ) -> FakeDirectory:
         """Create `directory_path` and all the parent directories, and return
         the created :py:class:`FakeDirectory<pyfakefs.fake_file.FakeDirectory>` object.
@@ -2100,6 +2103,8 @@ class FakeFilesystem:
         Args:
             directory_path: The full directory path to create.
             perm_bits: The permission bits as set by ``chmod``.
+            apply_umask: If `True` (default), the current umask is applied
+                to `perm_bits`.
 
         Returns:
             The newly created
@@ -2138,7 +2143,9 @@ class FakeFilesystem:
         # set the permission after creating the directories
         # to allow directory creation inside a read-only directory
         for new_dir in new_dirs:
-            new_dir.st_mode = S_IFDIR | (perm_bits & ~self.umask)
+            if apply_umask:
+                perm_bits &= ~self.umask
+            new_dir.st_mode = S_IFDIR | perm_bits
 
         return current_dir
 
@@ -2169,8 +2176,8 @@ class FakeFilesystem:
                 the file is considered to be in "large file mode" and trying
                 to read from or write to the file will result in an exception.
             create_missing_dirs: If `True`, auto create missing directories.
-            apply_umask: `True` if the current umask must be applied
-                on `st_mode`.
+            apply_umask: If `True` (default), the current umask is applied
+                to `st_mode`.
             encoding: If `contents` is of type `str`, the encoding used
                 for serialization.
             errors: The error mode used for encoding/decoding errors.
