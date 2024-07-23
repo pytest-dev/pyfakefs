@@ -77,6 +77,7 @@ from pyfakefs.fake_filesystem import (
     PatchMode,
     FakeFilesystem,
 )
+from pyfakefs.fake_os import use_original_os
 from pyfakefs.helpers import IS_PYPY
 from pyfakefs.mox3_stubout import StubOutForTesting
 
@@ -573,6 +574,8 @@ class Patcher:
         # save the original open function for use in pytest plugin
         self.original_open = open
         self.patch_open_code = patch_open_code
+        self.linecache_updatecache = None
+        self.linecache_checkcache = None
 
         if additional_skip_names is not None:
             skip_names = [
@@ -648,6 +651,18 @@ class Patcher:
         self._dyn_patcher: Optional[DynamicPatcher] = None
         self._patching = False
         self._paused = False
+
+    def checkcache(self, filename=None):
+        """Calls the original linecache.checkcache making sure no fake OS calls
+        are used."""
+        with use_original_os():
+            return self.linecache_checkcache(filename)
+
+    def updatecache(self, filename, module_globals=None):
+        """Calls the original linecache.updatecache making sure no fake OS calls
+        are used."""
+        with use_original_os():
+            return self.linecache_updatecache(filename, module_globals)
 
     @classmethod
     def clear_fs_cache(cls) -> None:
@@ -957,6 +972,14 @@ class Patcher:
             self._patching = True
             self._paused = False
 
+            if sys.version_info >= (3, 13):
+                # in linecache, 'os' is now imported locally, which involves the
+                # dynamic patcher, therefore we patch the affected functions
+                self.linecache_updatecache = linecache.updatecache
+                linecache.updatecache = self.updatecache
+                self.linecache_checkcache = linecache.checkcache
+                linecache.checkcache = self.checkcache
+
             self.patch_modules()
             self.patch_functions()
             self.patch_defaults()
@@ -1047,6 +1070,9 @@ class Patcher:
             if self.use_dynamic_patch and self._dyn_patcher:
                 self._dyn_patcher.cleanup()
                 sys.meta_path.pop(0)
+            if self.linecache_updatecache is not None:
+                linecache.updatecache = self.linecache_updatecache
+                linecache.checkcache = self.linecache_checkcache
 
     @property
     def is_patching(self):
