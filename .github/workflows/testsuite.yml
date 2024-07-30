@@ -76,10 +76,6 @@ jobs:
         export TEST_REAL_FS=1
         python -bb -m pyfakefs.tests.all_tests_without_extra_packages
       shell: bash
-    - name: Run setup.py test (uses pytest)
-      run: |
-        python setup.py test
-      shell: bash
     - name: Run unit tests without extra packages as root
       run: |
         if [[ '${{ matrix.os }}' != 'windows-latest' ]]; then
