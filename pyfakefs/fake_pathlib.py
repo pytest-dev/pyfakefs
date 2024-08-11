@@ -93,62 +93,47 @@ def init_module(filesystem):
         setattr(FakePathlibModule.PureWindowsPath, parser_name, fake_pure_nt_os.path)
 
 
-def _wrap_strfunc(strfunc):
-    @functools.wraps(strfunc)
+def _wrap_strfunc(fake_fct, original_fct):
+    @functools.wraps(fake_fct)
     def _wrapped(pathobj, *args, **kwargs):
-        should_use_original = False
-        if pathobj.filesystem.patcher:
-            skip_names = pathobj.filesystem.patcher._skip_names
-            if is_called_from_skipped_module(skip_names=skip_names):
-                should_use_original = True
-
-        if should_use_original:
-            return getattr(pathobj._original_accessor, strfunc.__name__)(
-                str(pathobj),
-                *args,
-                **kwargs,
-            )
-        return strfunc(pathobj.filesystem, str(pathobj), *args, **kwargs)
+        fs: FakeFilesystem = pathobj.filesystem
+        if fs.patcher:
+            if is_called_from_skipped_module(
+                skip_names=fs.patcher.skip_names,
+                case_sensitive=fs.is_case_sensitive,
+            ):
+                return original_fct(str(pathobj), *args, **kwargs)
+        return fake_fct(fs, str(pathobj), *args, **kwargs)
 
     return staticmethod(_wrapped)
 
 
-def _wrap_binary_strfunc(strfunc):
-    @functools.wraps(strfunc)
+def _wrap_binary_strfunc(fake_fct, original_fct):
+    @functools.wraps(fake_fct)
     def _wrapped(pathobj1, pathobj2, *args):
-        should_use_original = False
-        if pathobj1.filesystem.patcher:
-            skip_names = pathobj1.filesystem.patcher._skip_names
-            if is_called_from_skipped_module(skip_names=skip_names):
-                should_use_original = True
-
-        if should_use_original:
-            return getattr(pathobj1._original_accessor, strfunc.__name__)(
-                str(pathobj1),
-                str(pathobj2),
-                *args,
-            )
-        return strfunc(pathobj1.filesystem, str(pathobj1), str(pathobj2), *args)
+        fs: FakeFilesystem = pathobj1.filesystem
+        if fs.patcher:
+            if is_called_from_skipped_module(
+                skip_names=fs.patcher.skip_names,
+                case_sensitive=fs.is_case_sensitive,
+            ):
+                return original_fct(str(pathobj1), str(pathobj2), *args)
+        return fake_fct(fs, str(pathobj1), str(pathobj2), *args)
 
     return staticmethod(_wrapped)
 
 
-def _wrap_binary_strfunc_reverse(strfunc):
-    @functools.wraps(strfunc)
+def _wrap_binary_strfunc_reverse(fake_fct, original_fct):
+    @functools.wraps(fake_fct)
     def _wrapped(pathobj1, pathobj2, *args):
-        should_use_original = False
-        if pathobj2.filesystem.patcher:
-            skip_names = pathobj2.filesystem.patcher._skip_names
-            if is_called_from_skipped_module(skip_names=skip_names):
-                should_use_original = True
-
-        if should_use_original:
-            return getattr(pathobj2._original_accessor, strfunc.__name__)(
-                str(pathobj2),
-                str(pathobj1),
-                *args,
-            )
-        return strfunc(pathobj2.filesystem, str(pathobj2), str(pathobj1), *args)
+        fs: FakeFilesystem = pathobj2.filesystem
+        if fs.patcher:
+            if is_called_from_skipped_module(
+                skip_names=fs.patcher.skip_names,
+                case_sensitive=fs.is_case_sensitive,
+            ):
+                return original_fct(str(pathobj2), str(pathobj1), *args)
+        return fake_fct(fs, str(pathobj2), str(pathobj1), *args)
 
     return staticmethod(_wrapped)
 
@@ -164,20 +149,21 @@ class _FakeAccessor(accessor):  # type: ignore[valid-type, misc]
     methods.
     """
 
-    stat = _wrap_strfunc(FakeFilesystem.stat)
+    stat = _wrap_strfunc(FakeFilesystem.stat, os.stat)
 
     lstat = _wrap_strfunc(
-        lambda fs, path: FakeFilesystem.stat(fs, path, follow_symlinks=False)
+        lambda fs, path: FakeFilesystem.stat(fs, path, follow_symlinks=False), os.lstat
     )
 
-    listdir = _wrap_strfunc(FakeFilesystem.listdir)
-    scandir = _wrap_strfunc(fake_scandir.scandir)
+    listdir = _wrap_strfunc(FakeFilesystem.listdir, os.listdir)
+    scandir = _wrap_strfunc(fake_scandir.scandir, os.scandir)
 
     if hasattr(os, "lchmod"):
         lchmod = _wrap_strfunc(
             lambda fs, path, mode: FakeFilesystem.chmod(
                 fs, path, mode, follow_symlinks=False
-            )
+            ),
+            os.lchmod,
         )
     else:
 
@@ -200,47 +186,51 @@ class _FakeAccessor(accessor):  # type: ignore[valid-type, misc]
                 )
         return pathobj.filesystem.chmod(str(pathobj), *args, **kwargs)
 
-    mkdir = _wrap_strfunc(FakeFilesystem.makedir)
+    mkdir = _wrap_strfunc(FakeFilesystem.makedir, os.mkdir)
 
-    unlink = _wrap_strfunc(FakeFilesystem.remove)
+    unlink = _wrap_strfunc(FakeFilesystem.remove, os.unlink)
 
-    rmdir = _wrap_strfunc(FakeFilesystem.rmdir)
+    rmdir = _wrap_strfunc(FakeFilesystem.rmdir, os.rmdir)
 
-    rename = _wrap_binary_strfunc(FakeFilesystem.rename)
+    rename = _wrap_binary_strfunc(FakeFilesystem.rename, os.rename)
 
     replace = _wrap_binary_strfunc(
         lambda fs, old_path, new_path: FakeFilesystem.rename(
             fs, old_path, new_path, force_replace=True
-        )
+        ),
+        os.replace,
     )
 
     symlink = _wrap_binary_strfunc_reverse(
         lambda fs, fpath, target, target_is_dir: FakeFilesystem.create_symlink(
             fs, fpath, target, create_missing_dirs=False
-        )
+        ),
+        os.symlink,
     )
 
     if (3, 8) <= sys.version_info:
         link_to = _wrap_binary_strfunc(
             lambda fs, file_path, link_target: FakeFilesystem.link(
                 fs, file_path, link_target
-            )
+            ),
+            os.link,
         )
 
     if sys.version_info >= (3, 10):
         link = _wrap_binary_strfunc(
             lambda fs, file_path, link_target: FakeFilesystem.link(
                 fs, file_path, link_target
-            )
+            ),
+            os.link,
         )
 
         # this will use the fake filesystem because os is patched
         def getcwd(self):
             return os.getcwd()
 
-    readlink = _wrap_strfunc(FakeFilesystem.readlink)
+    readlink = _wrap_strfunc(FakeFilesystem.readlink, os.readlink)
 
-    utime = _wrap_strfunc(FakeFilesystem.utime)
+    utime = _wrap_strfunc(FakeFilesystem.utime, os.utime)
 
 
 _fake_accessor = _FakeAccessor()
@@ -613,7 +603,6 @@ class FakePath(pathlib.Path):
 
         def _init(self, template=None):
             """Initializer called from base class."""
-            self._original_accessor = self._accessor
             # only needed until Python 3.10
             self._accessor = _fake_accessor
             # only needed until Python 3.8

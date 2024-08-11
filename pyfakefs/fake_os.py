@@ -1421,9 +1421,13 @@ def handle_original_call(f: Callable) -> Callable:
 
         if not should_use_original and args:
             self = args[0]
+            fs: FakeFilesystem = self.filesystem
             if self.filesystem.patcher:
-                skip_names = self.filesystem.patcher._skip_names
-                if is_called_from_skipped_module(skip_names=skip_names):
+                skip_names = fs.patcher.skip_names
+                if is_called_from_skipped_module(
+                    skip_names=skip_names,
+                    case_sensitive=fs.is_case_sensitive,
+                ):
                     should_use_original = True
 
         if should_use_original:

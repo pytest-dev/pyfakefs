@@ -182,11 +182,14 @@ if sys.platform != "win32":
 
         def __getattribute__(self, name):
             """Forwards any unfaked calls to the standard fcntl module."""
-            filesystem = object.__getattribute__(self, "filesystem")
+            fs: FakeFilesystem = object.__getattribute__(self, "filesystem")
             fnctl_module = object.__getattribute__(self, "_fcntl_module")
-            if filesystem.patcher:
-                skip_names = filesystem.patcher._skip_names
-                if is_called_from_skipped_module(skip_names=skip_names):
+            if fs.patcher:
+                skip_names = fs.patcher.skip_names
+                if is_called_from_skipped_module(
+                    skip_names=skip_names,
+                    case_sensitive=fs.is_case_sensitive,
+                ):
                     # remove the `self` argument for FakeOsModule methods
                     return getattr(fnctl_module, name)
 

@@ -570,7 +570,7 @@ class Patcher:
             set_uid(1)
             set_gid(1)
 
-        self._skip_names = self.SKIPNAMES.copy()
+        self.skip_names = self.SKIPNAMES.copy()
         # save the original open function for use in pytest plugin
         self.original_open = open
         self.patch_open_code = patch_open_code
@@ -582,7 +582,7 @@ class Patcher:
                 cast(ModuleType, m).__name__ if inspect.ismodule(m) else cast(str, m)
                 for m in additional_skip_names
             ]
-            self._skip_names.update(skip_names)
+            self.skip_names.update(skip_names)
 
         self._fake_module_classes: Dict[str, Any] = {}
         self._unfaked_module_classes: Dict[str, Any] = {}
@@ -628,8 +628,8 @@ class Patcher:
             if patched_module_names != self.PATCHED_MODULE_NAMES:
                 self.__class__.PATCHED_MODULE_NAMES = patched_module_names
                 clear_cache = True
-            if self._skip_names != self.ADDITIONAL_SKIP_NAMES:
-                self.__class__.ADDITIONAL_SKIP_NAMES = self._skip_names
+            if self.skip_names != self.ADDITIONAL_SKIP_NAMES:
+                self.__class__.ADDITIONAL_SKIP_NAMES = self.skip_names
                 clear_cache = True
             if patch_default_args != self.PATCH_DEFAULT_ARGS:
                 self.__class__.PATCH_DEFAULT_ARGS = patch_default_args
@@ -875,7 +875,7 @@ class Patcher:
                         pass
                 continue
             skipped = module in self.SKIPMODULES or any(
-                [sn.startswith(module.__name__) for sn in self._skip_names]
+                [sn.startswith(module.__name__) for sn in self.skip_names]
             )
             module_items = module.__dict__.copy().items()
 
@@ -922,7 +922,7 @@ class Patcher:
         for name in self._fake_module_classes:
             self.fake_modules[name] = self._fake_module_classes[name](self.fs)
             if hasattr(self.fake_modules[name], "skip_names"):
-                self.fake_modules[name].skip_names = self._skip_names
+                self.fake_modules[name].skip_names = self.skip_names
         self.fake_modules[PATH_MODULE] = self.fake_modules["os"].path
         for name in self._unfaked_module_classes:
             self.unfaked_modules[name] = self._unfaked_module_classes[name]()

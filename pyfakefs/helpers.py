@@ -440,24 +440,38 @@ class TextBufferIO(io.TextIOWrapper):
         self._bytestream.write(value)
 
 
-def is_called_from_skipped_module(skip_names: list) -> bool:
+def is_called_from_skipped_module(skip_names: list, case_sensitive: bool) -> bool:
+    def starts_with(path, string):
+        if case_sensitive:
+            return path.startswith(string)
+        return path.lower().startswith(string.lower())
+
     stack = traceback.extract_stack()
-    from_open_code = (
+
+    # handle the case that we try to call the original `open_code`
+    # (since Python 3.12)
+    # The stack in this case is:
+    # -1: helpers.is_called_from_skipped_module: 'stack = traceback.extract_stack()'
+    # -2: fake_open.fake_open: 'if is_called_from_skipped_module('
+    # -3: fake_io.open: 'return fake_open('
+    # -4: fake_io.open_code : 'return self._io_module.open_code(path)'
+    if (
         sys.version_info >= (3, 12)
-        and stack[0].name == "open_code"
-        and stack[0].line == "return self._io_module.open_code(path)"
-    )
+        and stack[-4].name == "open_code"
+        and stack[-4].line == "return self._io_module.open_code(path)"
+    ):
+        return True
 
     caller_filename = next(
         (
             frame.filename
             for frame in stack[::-1]
             if not frame.filename.startswith("<frozen ")
-            and not frame.filename.startswith(STDLIB_PATH)
+            and not starts_with(frame.filename, STDLIB_PATH)
             and (
-                not frame.filename.startswith(PYFAKEFS_PATH)
+                not starts_with(frame.filename, PYFAKEFS_PATH)
                 or any(
-                    frame.filename.startswith(test_path)
+                    starts_with(frame.filename, test_path)
                     for test_path in PYFAKEFS_TEST_PATHS
                 )
             )
@@ -469,7 +483,7 @@ def is_called_from_skipped_module(skip_names: list) -> bool:
         caller_module_name = os.path.splitext(caller_filename)[0]
         caller_module_name = caller_module_name.replace(os.sep, ".")
 
-        if from_open_code or any(
+        if any(
             [
                 caller_module_name == sn or caller_module_name.endswith("." + sn)
                 for sn in skip_names

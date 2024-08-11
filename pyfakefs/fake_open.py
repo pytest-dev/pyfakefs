@@ -86,7 +86,10 @@ def fake_open(
     """Redirect the call to FakeFileOpen.
     See FakeFileOpen.call() for description.
     """
-    if is_called_from_skipped_module(skip_names=skip_names):
+    if is_called_from_skipped_module(
+        skip_names=skip_names,
+        case_sensitive=filesystem.is_case_sensitive,
+    ):
         return io_open(  # pytype: disable=wrong-arg-count
             file,
             mode,

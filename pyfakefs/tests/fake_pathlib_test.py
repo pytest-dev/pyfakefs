@@ -1357,6 +1357,9 @@ class SkipPathlibTest(fake_filesystem_unittest.TestCase):
         contents = read_bytes_pathlib("skipped_pathlib.py")
         self.assertTrue(contents.startswith(b"# Licensed under the Apache License"))
 
+    @unittest.skipIf(
+        IS_PYPY and sys.version_info < (3, 8), "Ignoring error in outdated version"
+    )
     def test_exists(self):
         self.assertTrue(check_exists_pathlib())
 

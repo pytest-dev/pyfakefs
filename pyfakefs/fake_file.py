@@ -603,8 +603,8 @@ class FakeDirectory(FakeFile):
                     st = traceback.extract_stack(limit=6)
                     if sys.version_info < (3, 10):
                         if (
-                            st[1].name == "TemporaryFile"
-                            and st[1].line == "_os.unlink(name)"
+                            st[0].name == "TemporaryFile"
+                            and st[0].line == "_os.unlink(name)"
                         ):
                             raise_error = False
                     else:

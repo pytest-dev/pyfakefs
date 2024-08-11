@@ -570,8 +570,11 @@ def handle_original_call(f: Callable) -> Callable:
             self = args[0]
             should_use_original = self.os.use_original
             if not should_use_original and self.filesystem.patcher:
-                skip_names = self.filesystem.patcher._skip_names
-                if is_called_from_skipped_module(skip_names=skip_names):
+                skip_names = self.filesystem.patcher.skip_names
+                if is_called_from_skipped_module(
+                    skip_names=skip_names,
+                    case_sensitive=self.filesystem.is_case_sensitive,
+                ):
                     should_use_original = True
 
             if should_use_original:
