@@ -185,9 +185,8 @@ if sys.platform != "win32":
             fs: FakeFilesystem = object.__getattribute__(self, "filesystem")
             fnctl_module = object.__getattribute__(self, "_fcntl_module")
             if fs.patcher:
-                skip_names = fs.patcher.skip_names
                 if is_called_from_skipped_module(
-                    skip_names=skip_names,
+                    skip_names=fs.patcher.skip_names,
                     case_sensitive=fs.is_case_sensitive,
                 ):
                     # remove the `self` argument for FakeOsModule methods

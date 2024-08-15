@@ -12,6 +12,12 @@ The released versions correspond to PyPI releases.
 * the default for `FakeFilesystem.shuffle_listdir_results` will change to `True` to reflect
   the real filesystem behavior
 
+## Unreleased
+
+### Enhancements
+
+- refactor the implementation of `additional_skip_names` parameter to make it work with more modules (see [#1023](../../issues/1023))
+
 ## [Version 5.6.0](https://pypi.python.org/pypi/pyfakefs/5.6.0) (2024-07-12)
 Adds preliminary Python 3.13 support.
 
