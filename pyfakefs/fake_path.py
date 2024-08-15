@@ -15,6 +15,8 @@
 """Faked ``os.path`` module replacement. See ``fake_filesystem`` for usage."""
 
 import errno
+import functools
+import inspect
 import os
 import sys
 from stat import (
@@ -23,6 +25,7 @@ from stat import (
 )
 from types import ModuleType
 from typing import (
+    Callable,
     List,
     Optional,
     Union,
@@ -36,6 +39,7 @@ from typing import (
 )
 
 from pyfakefs.helpers import (
+    is_called_from_skipped_module,
     make_string_path,
     to_string,
     matching_string,
@@ -553,3 +557,37 @@ if sys.platform == "win32":
         def __getattr__(self, name: str) -> Any:
             """Forwards any non-faked calls to the real nt module."""
             return getattr(self.nt_module, name)
+
+
+def handle_original_call(f: Callable) -> Callable:
+    """Decorator used for real pathlib Path methods to ensure that
+    real os functions instead of faked ones are used.
+    Applied to all non-private methods of `FakePathModule`."""
+
+    @functools.wraps(f)
+    def wrapped(*args, **kwargs):
+        if args:
+            self = args[0]
+            should_use_original = self.os.use_original
+            if not should_use_original and self.filesystem.patcher:
+                skip_names = self.filesystem.patcher.skip_names
+                if is_called_from_skipped_module(
+                    skip_names=skip_names,
+                    case_sensitive=self.filesystem.is_case_sensitive,
+                ):
+                    should_use_original = True
+
+            if should_use_original:
+                # remove the `self` argument for FakePathModule methods
+                if args and isinstance(args[0], FakePathModule):
+                    args = args[1:]
+                return getattr(os.path, f.__name__)(*args, **kwargs)
+
+        return f(*args, **kwargs)
+
+    return wrapped
+
+
+for name, fn in inspect.getmembers(FakePathModule, inspect.isfunction):
+    if not fn.__name__.startswith("_"):
+        setattr(FakePathModule, name, handle_original_call(fn))

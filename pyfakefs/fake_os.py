@@ -54,6 +54,7 @@ from pyfakefs.fake_path import FakePathModule
 from pyfakefs.fake_scandir import scandir, walk, ScanDirIter
 from pyfakefs.helpers import (
     FakeStatResult,
+    is_called_from_skipped_module,
     is_int_type,
     is_byte_string,
     make_string_path,
@@ -1409,27 +1410,40 @@ class FakeOsModule:
         return getattr(self.os_module, name)
 
 
-if sys.version_info > (3, 10):
+def handle_original_call(f: Callable) -> Callable:
+    """Decorator used for real pathlib Path methods to ensure that
+    real os functions instead of faked ones are used.
+    Applied to all non-private methods of `FakeOsModule`."""
 
-    def handle_original_call(f: Callable) -> Callable:
-        """Decorator used for real pathlib Path methods to ensure that
-        real os functions instead of faked ones are used.
-        Applied to all non-private methods of `FakeOsModule`."""
+    @functools.wraps(f)
+    def wrapped(*args, **kwargs):
+        should_use_original = FakeOsModule.use_original
 
-        @functools.wraps(f)
-        def wrapped(*args, **kwargs):
-            if FakeOsModule.use_original:
-                # remove the `self` argument for FakeOsModule methods
-                if args and isinstance(args[0], FakeOsModule):
-                    args = args[1:]
-                return getattr(os, f.__name__)(*args, **kwargs)
-            return f(*args, **kwargs)
+        if not should_use_original and args:
+            self = args[0]
+            fs: FakeFilesystem = self.filesystem
+            if self.filesystem.patcher:
+                skip_names = fs.patcher.skip_names
+                if is_called_from_skipped_module(
+                    skip_names=skip_names,
+                    case_sensitive=fs.is_case_sensitive,
+                ):
+                    should_use_original = True
 
-        return wrapped
+        if should_use_original:
+            # remove the `self` argument for FakeOsModule methods
+            if args and isinstance(args[0], FakeOsModule):
+                args = args[1:]
+            return getattr(os, f.__name__)(*args, **kwargs)
 
-    for name, fn in inspect.getmembers(FakeOsModule, inspect.isfunction):
-        if not fn.__name__.startswith("_"):
-            setattr(FakeOsModule, name, handle_original_call(fn))
+        return f(*args, **kwargs)
+
+    return wrapped
+
+
+for name, fn in inspect.getmembers(FakeOsModule, inspect.isfunction):
+    if not fn.__name__.startswith("_"):
+        setattr(FakeOsModule, name, handle_original_call(fn))
 
 
 @contextmanager

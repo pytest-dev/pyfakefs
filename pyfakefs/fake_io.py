@@ -33,7 +33,7 @@ from typing import (
 
 from pyfakefs.fake_file import AnyFileWrapper
 from pyfakefs.fake_open import fake_open
-from pyfakefs.helpers import IS_PYPY
+from pyfakefs.helpers import IS_PYPY, is_called_from_skipped_module
 
 if TYPE_CHECKING:
     from pyfakefs.fake_filesystem import FakeFilesystem
@@ -180,6 +180,16 @@ if sys.platform != "win32":
         ) -> Any:
             pass
 
-        def __getattr__(self, name):
+        def __getattribute__(self, name):
             """Forwards any unfaked calls to the standard fcntl module."""
-            return getattr(self._fcntl_module, name)
+            fs: FakeFilesystem = object.__getattribute__(self, "filesystem")
+            fnctl_module = object.__getattribute__(self, "_fcntl_module")
+            if fs.patcher:
+                if is_called_from_skipped_module(
+                    skip_names=fs.patcher.skip_names,
+                    case_sensitive=fs.is_case_sensitive,
+                ):
+                    # remove the `self` argument for FakeOsModule methods
+                    return getattr(fnctl_module, name)
+
+            return object.__getattribute__(self, name)

@@ -19,7 +19,9 @@ import os
 import platform
 import stat
 import sys
+import sysconfig
 import time
+import traceback
 from collections import namedtuple
 from copy import copy
 from stat import S_IFLNK
@@ -38,6 +40,13 @@ PERM_EXE = 0o100  # Execute permission bit.
 PERM_DEF = 0o777  # Default permission bits.
 PERM_DEF_FILE = 0o666  # Default permission bits (regular file)
 PERM_ALL = 0o7777  # All permission bits.
+
+STDLIB_PATH = os.path.realpath(sysconfig.get_path("stdlib"))
+PYFAKEFS_PATH = os.path.dirname(__file__)
+PYFAKEFS_TEST_PATHS = [
+    os.path.join(PYFAKEFS_PATH, "tests"),
+    os.path.join(PYFAKEFS_PATH, "pytest_tests"),
+]
 
 _OpenModes = namedtuple(
     "_OpenModes",
@@ -429,3 +438,56 @@ class TextBufferIO(io.TextIOWrapper):
 
     def putvalue(self, value: bytes) -> None:
         self._bytestream.write(value)
+
+
+def is_called_from_skipped_module(skip_names: list, case_sensitive: bool) -> bool:
+    def starts_with(path, string):
+        if case_sensitive:
+            return path.startswith(string)
+        return path.lower().startswith(string.lower())
+
+    stack = traceback.extract_stack()
+
+    # handle the case that we try to call the original `open_code`
+    # (since Python 3.12)
+    # The stack in this case is:
+    # -1: helpers.is_called_from_skipped_module: 'stack = traceback.extract_stack()'
+    # -2: fake_open.fake_open: 'if is_called_from_skipped_module('
+    # -3: fake_io.open: 'return fake_open('
+    # -4: fake_io.open_code : 'return self._io_module.open_code(path)'
+    if (
+        sys.version_info >= (3, 12)
+        and stack[-4].name == "open_code"
+        and stack[-4].line == "return self._io_module.open_code(path)"
+    ):
+        return True
+
+    caller_filename = next(
+        (
+            frame.filename
+            for frame in stack[::-1]
+            if not frame.filename.startswith("<frozen ")
+            and not starts_with(frame.filename, STDLIB_PATH)
+            and (
+                not starts_with(frame.filename, PYFAKEFS_PATH)
+                or any(
+                    starts_with(frame.filename, test_path)
+                    for test_path in PYFAKEFS_TEST_PATHS
+                )
+            )
+        ),
+        None,
+    )
+
+    if caller_filename:
+        caller_module_name = os.path.splitext(caller_filename)[0]
+        caller_module_name = caller_module_name.replace(os.sep, ".")
+
+        if any(
+            [
+                caller_module_name == sn or caller_module_name.endswith("." + sn)
+                for sn in skip_names
+            ]
+        ):
+            return True
+    return False
