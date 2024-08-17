@@ -2064,16 +2064,37 @@ class FakeOsModuleTest(FakeOsModuleTestBase):
         self.assertFalse(st.st_mode & stat.S_IFDIR)
 
     def test_chmod_uses_open_fd_as_path(self):
-        self.check_posix_only()
+        if sys.version_info < (3, 13):
+            self.check_posix_only()
         self.skip_real_fs()
         self.assert_raises_os_error(errno.EBADF, self.os.chmod, 5, 0o6543)
         path = self.make_path("some_file")
         self.createTestFile(path)
 
         with self.open(path, encoding="utf8") as f:
-            self.os.chmod(f.filedes, 0o6543)
+            st = self.os.stat(f.fileno())
+            # use a mode that will work under Windows
+            self.os.chmod(f.filedes, 0o444)
             st = self.os.stat(path)
-            self.assert_mode_equal(0o6543, st.st_mode)
+            self.assert_mode_equal(0o444, st.st_mode)
+            # fchmod should work the same way
+            self.os.fchmod(f.filedes, 0o666)
+            st = self.os.stat(path)
+            self.assert_mode_equal(0o666, st.st_mode)
+
+    @unittest.skipIf(
+        sys.version_info >= (3, 13), "also available under Windows since Python 3.13"
+    )
+    def test_chmod_uses_open_fd_as_path_not_available_under_windows(self):
+        self.check_windows_only()
+        self.skip_real_fs()
+        path = self.make_path("some_file")
+        self.createTestFile(path)
+        with self.open(path, encoding="utf8") as f:
+            with self.assertRaises(TypeError):
+                self.os.chmod(f.fileno(), 0o666)
+            with self.assertRaises(AttributeError):
+                self.os.fchmod(f.fileno(), 0o666)
 
     def test_chmod_follow_symlink(self):
         self.check_posix_only()

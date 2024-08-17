@@ -210,7 +210,7 @@ class FakeOsModule:
             return 0o002
         else:
             # under Unix, we return the real umask;
-            # as there is no pure getter for umask, so we have to first
+            # there is no pure getter for umask, so we have to first
             # set a mode to get the previous one and then re-set that
             mask = os.umask(0)
             os.umask(mask)
@@ -1054,6 +1054,23 @@ class FakeOsModule:
         if is_root():
             mode &= ~os.W_OK
         return (mode & ((stat_result.st_mode >> 6) & 7)) == mode
+
+    def fchmod(
+        self,
+        fd: int,
+        mode: int,
+    ) -> None:
+        """Change the permissions of an open file as encoded in integer mode.
+
+        Args:
+            fd: (int) File descriptor.
+            mode: (int) Permissions.
+        """
+        if self.filesystem.is_windows_fs and sys.version_info < (3, 13):
+            raise AttributeError(
+                "module 'os' has no attribute 'fchmod'. " "Did you mean: 'chmod'?"
+            )
+        self.filesystem.chmod(fd, mode)
 
     def chmod(
         self,
