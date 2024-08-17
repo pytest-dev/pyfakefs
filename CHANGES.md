@@ -15,8 +15,9 @@ The released versions correspond to PyPI releases.
 ## Unreleased
 
 ### Enhancements
-
-- refactor the implementation of `additional_skip_names` parameter to make it work with more modules (see [#1023](../../issues/1023))
+* the `additional_skip_names` parameter now works with more modules (see [#1023](../../issues/1023))
+* added support for `os.fchmod`, allow file descriptor argument for `os.chmod` only for POSIX
+  for Python < 3.13
 
 ## [Version 5.6.0](https://pypi.python.org/pypi/pyfakefs/5.6.0) (2024-07-12)
 Adds preliminary Python 3.13 support.

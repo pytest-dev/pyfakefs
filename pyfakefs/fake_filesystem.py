@@ -722,7 +722,7 @@ class FakeFilesystem:
 
     def chmod(
         self,
-        path: AnyStr,
+        path: Union[AnyStr, int],
         mode: int,
         follow_symlinks: bool = True,
         force_unix_mode: bool = False,
@@ -730,15 +730,16 @@ class FakeFilesystem:
         """Change the permissions of a file as encoded in integer mode.
 
         Args:
-            path: (str) Path to the file.
+            path: (str | int) Path to the file or file descriptor.
             mode: (int) Permissions.
             follow_symlinks: If `False` and `path` points to a symlink,
                 the link itself is affected instead of the linked object.
             force_unix_mode: if True and run under Windows, the mode is not
                 adapted for Windows to allow making dirs unreadable
         """
+        allow_fd = not self.is_windows_fs or sys.version_info >= (3, 13)
         file_object = self.resolve(
-            path, follow_symlinks, allow_fd=True, check_owner=True
+            path, follow_symlinks, allow_fd=allow_fd, check_owner=True
         )
         if self.is_windows_fs and not force_unix_mode:
             if mode & helpers.PERM_WRITE:
@@ -1723,7 +1724,7 @@ class FakeFilesystem:
 
     def resolve(
         self,
-        file_path: AnyStr,
+        file_path: Union[AnyStr, int],
         follow_symlinks: bool = True,
         allow_fd: bool = False,
         check_read_perm: bool = True,
@@ -1753,7 +1754,9 @@ class FakeFilesystem:
         """
         if isinstance(file_path, int):
             if allow_fd:
-                return self.get_open_file(file_path).get_object()
+                open_file = self.get_open_file(file_path).get_object()
+                assert isinstance(open_file, FakeFile)
+                return open_file
             raise TypeError("path should be string, bytes or " "os.PathLike, not int")
 
         if follow_symlinks:
