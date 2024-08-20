@@ -19,6 +19,9 @@ The released versions correspond to PyPI releases.
 * added support for `os.fchmod`, allow file descriptor argument for `os.chmod` only for POSIX
   for Python < 3.13
 
+### Fixes
+* removing files while iterating over `scandir` results is now possible (see [#1051](../../issues/1051))
+
 ## [Version 5.6.0](https://pypi.python.org/pypi/pyfakefs/5.6.0) (2024-07-12)
 Adds preliminary Python 3.13 support.
 
