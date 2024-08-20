@@ -5452,6 +5452,20 @@ class FakeScandirTest(FakeOsModuleTestBase):
         children = [dir_entry.name for dir_entry in self.os.scandir(fd)]
         assert sorted(children) == ["file1", "file2", "subdir"]
 
+    def test_file_removed_during_scandir(self):
+        # regression test for #1051
+        dir_path = self.make_path("wls")
+        file1_path = self.os.path.join(dir_path, "1.log")
+        self.create_file(file1_path)
+        file2_path = self.os.path.join(dir_path, "2.log")
+        self.create_file(file2_path)
+        with self.os.scandir(dir_path) as it:
+            for entry in it:
+                if entry.is_file():
+                    self.os.remove(entry.path)
+        assert not self.os.path.exists(file1_path)
+        assert not self.os.path.exists(file2_path)
+
     def check_stat(
         self, absolute_symlink_expected_size, relative_symlink_expected_size
     ):
