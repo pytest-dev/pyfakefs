@@ -1312,30 +1312,178 @@ class FakeFilesystemChmodTest(fake_filesystem_unittest.TestCase):
             path.is_file()
 
 
-class FakePathlibModulePurePathTest(unittest.TestCase):
-    def test_windows_pure_path_parsing(self):
-        """Verify faked pure Windows paths use filesystem-independent separators."""
-
+class FakePathlibModulePurePathTest(fake_filesystem_unittest.TestCase):
+    def test_windows_pure_path_parsing_backslash(self):
         path = r"C:\Windows\cmd.exe"
-        self.assertEqual(
-            fake_pathlib.FakePathlibModule.PureWindowsPath(path).stem,
-            pathlib.PureWindowsPath(path).stem,
-        )
+        pure_result = pathlib.PureWindowsPath(path).stem
+        self.assertEqual(pure_result, "cmd")
 
-        path = r"C:/Windows/cmd.exe"
+        self.setUpPyfakefs()
         self.assertEqual(
-            fake_pathlib.FakePathlibModule.PureWindowsPath(path).stem,
-            pathlib.PureWindowsPath(path).stem,
+            fake_pathlib.FakePathlibModule.PureWindowsPath(path).stem, pure_result
         )
+        self.assertEqual(pathlib.PureWindowsPath(path).stem, pure_result)
+
+    def test_windows_pure_path_parsing_forward_slash(self):
+        path = r"C:/Windows/cmd.exe"
+        pure_result = pathlib.PureWindowsPath(path).stem
+        self.assertEqual(pure_result, "cmd")
+
+        self.setUpPyfakefs()
+        self.assertEqual(
+            fake_pathlib.FakePathlibModule.PureWindowsPath(path).stem, pure_result
+        )
+        self.assertEqual(pathlib.PureWindowsPath(path).stem, pure_result)
 
     def test_posix_pure_path_parsing(self):
-        """Verify faked pure POSIX paths use filesystem-independent separators."""
-
         path = r"/bin/bash"
+        pure_result = pathlib.PurePosixPath(path).stem
+        self.assertEqual(pure_result, "bash")
+
+        self.setUpPyfakefs()
         self.assertEqual(
-            fake_pathlib.FakePathlibModule.PurePosixPath(path).stem,
-            pathlib.PurePosixPath(path).stem,
+            fake_pathlib.FakePathlibModule.PurePosixPath(path).stem, pure_result
         )
+        self.assertEqual(pathlib.PurePosixPath(path).stem, pure_result)
+
+    def test_windows_pure_path_str_backslash(self):
+        path = r"C:\Windows\cmd.exe"
+        pure_result = str(pathlib.PureWindowsPath(path))
+        self.assertEqual(pure_result, r"C:\Windows\cmd.exe")
+
+        self.setUpPyfakefs()
+        self.assertEqual(
+            str(fake_pathlib.FakePathlibModule.PureWindowsPath(path)), pure_result
+        )
+        self.assertEqual(str(pathlib.PureWindowsPath(path)), pure_result)
+
+    def test_windows_pure_path_str_forward_slash(self):
+        path = r"C:/Windows/cmd.exe"
+        pure_result = str(pathlib.PureWindowsPath(path))
+        self.assertEqual(pure_result, r"C:\Windows\cmd.exe")
+
+        self.setUpPyfakefs()
+        self.assertEqual(
+            str(fake_pathlib.FakePathlibModule.PureWindowsPath(path)), pure_result
+        )
+        self.assertEqual(str(pathlib.PureWindowsPath(path)), pure_result)
+        self.assertEqual(pathlib.PurePosixPath(path).stem, pure_result)
+
+    def test_posix_pure_path_str_backslash(self):
+        path = r"\bin\bash"
+        pure_result =  str(pathlib.PurePosixPath(path))
+        self.assertEqual(pure_result, r"\bin\bash")
+
+        self.setUpPyfakefs()
+        self.assertEqual(
+            str(fake_pathlib.FakePathlibModule.PurePosixPath(path)), pure_result
+        )
+        self.assertEqual(str(pathlib.PurePosixPath(path)), pure_result)
+
+    def test_posix_pure_path_str_forward_slash(self):
+        path = "/bin/bash"
+        pure_result = str(pathlib.PurePosixPath(path))
+        self.assertEqual(pure_result, "/bin/bash")
+
+        self.setUpPyfakefs()
+        self.assertEqual(
+            str(fake_pathlib.FakePathlibModule.PurePosixPath(path)), pure_result
+        )
+        self.assertEqual(str(pathlib.PurePosixPath(path)), pure_result)
+
+    def test_posix_pure_path_is_absolute_1(self):
+        path = r"/bin/bash"
+        pure_result = pathlib.PurePosixPath(path).is_absolute()
+        self.assertTrue(pure_result)
+
+        self.setUpPyfakefs()
+        self.assertEqual(
+            fake_pathlib.FakePathlibModule.PurePosixPath(path).is_absolute(),
+            pure_result,
+        )
+        self.assertEqual(pathlib.PurePosixPath(path).is_absolute(), pure_result)
+
+    def test_posix_pure_path_is_absolute_2(self):
+        path = "bin/bash"
+        pure_result = pathlib.PurePosixPath(path).is_absolute()
+        self.assertFalse(pure_result)
+
+        self.setUpPyfakefs()
+        self.assertEqual(
+            fake_pathlib.FakePathlibModule.PurePosixPath(path).is_absolute(),
+            pure_result,
+        )
+        self.assertEqual(pathlib.PurePosixPath(path).is_absolute(), pure_result)
+
+    def test_posix_pure_path_is_absolute_3(self):
+        path = "../bin/bash"
+        pure_result = pathlib.PurePosixPath(path).is_absolute()
+        self.assertFalse(pure_result)
+
+        self.setUpPyfakefs()
+        self.assertEqual(
+            fake_pathlib.FakePathlibModule.PurePosixPath(path).is_absolute(),
+            pure_result,
+        )
+        self.assertEqual(pathlib.PurePosixPath(path).is_absolute(), pure_result)
+
+    def test_windows_pure_path_is_absolute_1(self):
+        path = "C:/Windows/cmd.exe"
+        pure_result = pathlib.PureWindowsPath(path).is_absolute()
+        self.assertTrue(pure_result)
+
+        self.setUpPyfakefs()
+        self.assertEqual(
+            fake_pathlib.FakePathlibModule.PureWindowsPath(path).is_absolute(),
+            pure_result,
+        )
+        self.assertEqual(pathlib.PureWindowsPath(path).is_absolute(), pure_result)
+
+    def test_windows_pure_path_is_absolute_2(self):
+        path = r"./cmd.exe"
+        pure_result = pathlib.PureWindowsPath(path).is_absolute()
+        self.assertFalse(pure_result)
+
+        self.setUpPyfakefs()
+        self.assertEqual(
+            fake_pathlib.FakePathlibModule.PureWindowsPath(path).is_absolute(),
+            pure_result,
+        )
+        self.assertEqual(pathlib.PureWindowsPath(path).is_absolute(), pure_result)
+
+    def test_windows_pure_path_is_absolute_3(self):
+        path = "../cmd.exe"
+        pure_result = pathlib.PureWindowsPath(path).is_absolute()
+        self.assertFalse(pure_result)
+
+        self.setUpPyfakefs()
+        self.assertEqual(
+            fake_pathlib.FakePathlibModule.PureWindowsPath(path).is_absolute(),
+            pure_result,
+        )
+        self.assertEqual(pathlib.PureWindowsPath(path).is_absolute(), pure_result)
+
+
+class PureWindowsPath(FakePathlibModulePurePathTest, fake_filesystem_unittest.TestCase):
+    def setUpPyfakefs(self):
+        super().setUpPyfakefs()
+        self.fs.os = OSType.WINDOWS
+
+
+class FakePathlibModulePurePathTestMacos(
+    FakePathlibModulePurePathTest, fake_filesystem_unittest.TestCase
+):
+    def setUpPyfakefs(self):
+        super().setUpPyfakefs()
+        self.fs.os = OSType.MACOS
+
+
+class FakePathlibModulePurePathTestLinux(
+    FakePathlibModulePurePathTest, fake_filesystem_unittest.TestCase
+):
+    def setUpPyfakefs(self):
+        super().setUpPyfakefs()
+        self.fs.os = OSType.LINUX
 
 
 class SkipPathlibTest(fake_filesystem_unittest.TestCase):
