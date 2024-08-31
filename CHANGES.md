@@ -21,6 +21,8 @@ The released versions correspond to PyPI releases.
 
 ### Fixes
 * removing files while iterating over `scandir` results is now possible (see [#1051](../../issues/1051))
+* fake `pathlib.PosixPath` and `pathlib.WindowsPath` now behave more like in the real filesystem
+  (see [#1055](../../issues/1055))
 
 ## [Version 5.6.0](https://pypi.python.org/pypi/pyfakefs/5.6.0) (2024-07-12)
 Adds preliminary Python 3.13 support.

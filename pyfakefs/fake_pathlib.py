@@ -42,14 +42,15 @@ import re
 import sys
 import warnings
 from pathlib import PurePath
-from typing import Callable, List
+from typing import Callable, List, Optional
 from urllib.parse import quote_from_bytes as urlquote_from_bytes
 
 from pyfakefs import fake_scandir
 from pyfakefs.fake_filesystem import FakeFilesystem
 from pyfakefs.fake_open import fake_open
 from pyfakefs.fake_os import FakeOsModule, use_original_os
-from pyfakefs.helpers import IS_PYPY, is_called_from_skipped_module
+from pyfakefs.fake_path import FakePathModule
+from pyfakefs.helpers import IS_PYPY, is_called_from_skipped_module, FSType
 
 
 def init_module(filesystem):
@@ -67,30 +68,27 @@ def init_module(filesystem):
         FakePathlibModule.PurePosixPath._flavour = fake_pure_posix_flavour
 
         # Pure Windows path separators must be filesystem-independent.
-        fake_pure_nt_flavour = _FakePosixFlavour(filesystem)
+        fake_pure_nt_flavour = _FakeWindowsFlavour(filesystem)
         fake_pure_nt_flavour.sep = "\\"
         fake_pure_nt_flavour.altsep = "/"
         FakePathlibModule.PureWindowsPath._flavour = fake_pure_nt_flavour
     else:
         # in Python > 3.11, the flavour is no longer a separate class,
         # but points to the os-specific path module (posixpath/ntpath)
-        fake_os = FakeOsModule(filesystem)
+        fake_os_posix = FakeOsModule(filesystem)
+        if filesystem.is_windows_fs:
+            fake_os_posix.path = FakePosixPathModule(filesystem, fake_os_posix)
+        fake_os_windows = FakeOsModule(filesystem)
+        if not filesystem.is_windows_fs:
+            fake_os_windows.path = FakeWindowsPathModule(filesystem, fake_os_windows)
+
         parser_name = "_flavour" if sys.version_info < (3, 13) else "parser"
 
-        setattr(FakePathlibModule.PosixPath, parser_name, fake_os.path)
-        setattr(FakePathlibModule.WindowsPath, parser_name, fake_os.path)
+        # Pure POSIX path properties must be filesystem independent.
+        setattr(FakePathlibModule.PurePosixPath, parser_name, fake_os_posix.path)
 
-        # Pure POSIX path separators must be filesystem independent.
-        fake_pure_posix_os = FakeOsModule(filesystem)
-        fake_pure_posix_os.path.sep = "/"
-        fake_pure_posix_os.path.altsep = None
-        setattr(FakePathlibModule.PurePosixPath, parser_name, fake_pure_posix_os.path)
-
-        # Pure Windows path separators must be filesystem independent.
-        fake_pure_nt_os = FakeOsModule(filesystem)
-        fake_pure_nt_os.path.sep = "\\"
-        fake_pure_nt_os.path.altsep = "/"
-        setattr(FakePathlibModule.PureWindowsPath, parser_name, fake_pure_nt_os.path)
+        # Pure Windows path properties must be filesystem independent.
+        setattr(FakePathlibModule.PureWindowsPath, parser_name, fake_os_windows.path)
 
 
 def _wrap_strfunc(fake_fct, original_fct):
@@ -242,9 +240,6 @@ if sys.version_info < (3, 12):
         """Fake Flavour implementation used by PurePath and _Flavour"""
 
         filesystem = None
-        sep = "/"
-        altsep = None
-        has_drv = False
 
         ext_namespace_prefix = "\\\\?\\"
 
@@ -254,9 +249,6 @@ if sys.version_info < (3, 12):
 
         def __init__(self, filesystem):
             self.filesystem = filesystem
-            self.sep = filesystem.path_separator
-            self.altsep = filesystem.alternative_path_separator
-            self.has_drv = filesystem.is_windows_fs
             super().__init__()
 
         @staticmethod
@@ -320,9 +312,13 @@ if sys.version_info < (3, 12):
 
         def splitroot(self, path, sep=None):
             """Split path into drive, root and rest."""
+            is_windows = isinstance(self, _FakeWindowsFlavour)
             if sep is None:
-                sep = self.filesystem.path_separator
-            if self.filesystem.is_windows_fs:
+                if is_windows == self.filesystem.is_windows_fs:
+                    sep = self.filesystem.path_separator
+                else:
+                    sep = self.sep
+            if is_windows:
                 return self._splitroot_with_drive(path, sep)
             return self._splitroot_posix(path, sep)
 
@@ -443,6 +439,9 @@ if sys.version_info < (3, 12):
             | {"COM%d" % i for i in range(1, 10)}
             | {"LPT%d" % i for i in range(1, 10)}
         )
+        sep = "\\"
+        altsep = "/"
+        has_drv = True
         pathmod = ntpath
 
         def is_reserved(self, parts):
@@ -519,6 +518,9 @@ if sys.version_info < (3, 12):
         independent of FakeFilesystem properties.
         """
 
+        sep = "/"
+        altsep: Optional[str] = None
+        has_drv = False
         pathmod = posixpath
 
         def is_reserved(self, parts):
@@ -551,6 +553,36 @@ if sys.version_info < (3, 12):
 
         def compile_pattern(self, pattern):
             return re.compile(fnmatch.translate(pattern)).fullmatch
+else:  # Python >= 3.12
+
+    class FakePosixPathModule(FakePathModule):
+        def __init__(self, filesystem: "FakeFilesystem", os_module: "FakeOsModule"):
+            super().__init__(filesystem, os_module)
+            with self.filesystem.use_fs_type(FSType.POSIX):
+                self.reset(self.filesystem)
+
+    class FakeWindowsPathModule(FakePathModule):
+        def __init__(self, filesystem: "FakeFilesystem", os_module: "FakeOsModule"):
+            super().__init__(filesystem, os_module)
+            with self.filesystem.use_fs_type(FSType.WINDOWS):
+                self.reset(self.filesystem)
+
+    def with_fs_type(f: Callable, fs_type: FSType) -> Callable:
+        """Decorator used for fake_path methods to ensure that
+        the correct filesystem type is used."""
+
+        @functools.wraps(f)
+        def wrapped(self, *args, **kwargs):
+            with self.filesystem.use_fs_type(fs_type):
+                return f(self, *args, **kwargs)
+
+        return wrapped
+
+    # decorate all public functions to use the correct fs type
+    for fct_name in FakePathModule.dir():
+        fn = getattr(FakePathModule, fct_name)
+        setattr(FakeWindowsPathModule, fct_name, with_fs_type(fn, FSType.WINDOWS))
+        setattr(FakePosixPathModule, fct_name, with_fs_type(fn, FSType.POSIX))
 
 
 class FakePath(pathlib.Path):
@@ -878,15 +910,11 @@ class FakePathlibModule:
         paths"""
 
         __slots__ = ()
-        if sys.version_info >= (3, 13):
-            parser = posixpath
 
     class PureWindowsPath(PurePath):
         """A subclass of PurePath, that represents Windows filesystem paths"""
 
         __slots__ = ()
-        if sys.version_info >= (3, 13):
-            parser = ntpath
 
     class WindowsPath(FakePath, PureWindowsPath):
         """A subclass of Path and PureWindowsPath that represents
@@ -1010,9 +1038,9 @@ if sys.version_info > (3, 10):
 
         return wrapped
 
-    for name, fn in inspect.getmembers(RealPath, inspect.isfunction):
-        if not name.startswith("__"):
-            setattr(RealPath, name, with_original_os(fn))
+    for fct_name, fn in inspect.getmembers(RealPath, inspect.isfunction):
+        if not fct_name.startswith("__"):
+            setattr(RealPath, fct_name, with_original_os(fn))
 
 
 class RealPathlibPathModule:
