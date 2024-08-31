@@ -81,6 +81,8 @@ True
 True
 """
 
+import contextlib
+import dataclasses
 import errno
 import heapq
 import os
@@ -101,7 +103,6 @@ from stat import (
 )
 from typing import (
     List,
-    Optional,
     Callable,
     Union,
     Any,
@@ -111,6 +112,7 @@ from typing import (
     AnyStr,
     overload,
     NoReturn,
+    Optional,
 )
 
 from pyfakefs import fake_file, fake_path, fake_io, fake_os, helpers, fake_open
@@ -122,6 +124,9 @@ from pyfakefs.helpers import (
     matching_string,
     AnyPath,
     AnyString,
+    WINDOWS_PROPERTIES,
+    POSIX_PROPERTIES,
+    FSType,
 )
 
 if sys.platform.startswith("linux"):
@@ -179,10 +184,6 @@ class FakeFilesystem:
     """Provides the appearance of a real directory tree for unit testing.
 
     Attributes:
-        path_separator: The path separator, corresponds to `os.path.sep`.
-        alternative_path_separator: Corresponds to `os.path.altsep`.
-        is_windows_fs: `True` in a real or faked Windows file system.
-        is_macos: `True` under MacOS, or if we are faking it.
         is_case_sensitive: `True` if a case-sensitive file system is assumed.
         root: The root :py:class:`FakeDirectory<pyfakefs.fake_file.FakeDirectory>` entry
             of the file system.
@@ -217,12 +218,8 @@ class FakeFilesystem:
         >>> filesystem = FakeFilesystem(path_separator='/')
 
         """
-        self.path_separator: str = path_separator
-        self.alternative_path_separator: Optional[str] = os.path.altsep
         self.patcher = patcher
         self.create_temp_dir = create_temp_dir
-        if path_separator != os.sep:
-            self.alternative_path_separator = None
 
         # is_windows_fs can be used to test the behavior of pyfakefs under
         # Windows fs on non-Windows systems and vice verse;
@@ -235,7 +232,19 @@ class FakeFilesystem:
 
         # is_case_sensitive can be used to test pyfakefs for case-sensitive
         # file systems on non-case-sensitive systems and vice verse
-        self.is_case_sensitive: bool = not (self.is_windows_fs or self._is_macos)
+        self.is_case_sensitive: bool = not (self._is_windows_fs or self._is_macos)
+
+        # by default, we use the configured filesystem
+        self.fs_type = FSType.DEFAULT
+        base_properties = (
+            WINDOWS_PROPERTIES if self._is_windows_fs else POSIX_PROPERTIES
+        )
+        self.fs_properties = [
+            dataclasses.replace(base_properties),
+            POSIX_PROPERTIES,
+            WINDOWS_PROPERTIES,
+        ]
+        self.path_separator = path_separator
 
         self.root: FakeDirectory
         self._cwd = ""
@@ -262,29 +271,70 @@ class FakeFilesystem:
 
     @property
     def is_linux(self) -> bool:
+        """Returns `True` in a real or faked Linux file system."""
         return not self.is_windows_fs and not self.is_macos
 
     @property
     def is_windows_fs(self) -> bool:
-        return self._is_windows_fs
+        """Returns `True` in a real or faked Windows file system."""
+        return self.fs_type == FSType.WINDOWS or (
+            self.fs_type == FSType.DEFAULT and self._is_windows_fs
+        )
 
     @is_windows_fs.setter
     def is_windows_fs(self, value: bool) -> None:
         if self._is_windows_fs != value:
             self._is_windows_fs = value
+            if value:
+                self._is_macos = False
             self.reset()
             FakePathModule.reset(self)
 
     @property
     def is_macos(self) -> bool:
+        """Returns `True` in a real or faked macOS file system."""
         return self._is_macos
 
     @is_macos.setter
     def is_macos(self, value: bool) -> None:
         if self._is_macos != value:
             self._is_macos = value
+            if value:
+                self._is_windows_fs = False
             self.reset()
             FakePathModule.reset(self)
+
+    @property
+    def path_separator(self) -> str:
+        """Returns the path separator, corresponds to `os.path.sep`."""
+        return self.fs_properties[self.fs_type.value].sep
+
+    @path_separator.setter
+    def path_separator(self, value: str) -> None:
+        self.fs_properties[0].sep = value
+        if value != os.sep:
+            self.alternative_path_separator = None
+
+    @property
+    def alternative_path_separator(self) -> Optional[str]:
+        """Returns the alternative path separator, corresponds to `os.path.altsep`."""
+        return self.fs_properties[self.fs_type.value].altsep
+
+    @alternative_path_separator.setter
+    def alternative_path_separator(self, value: Optional[str]) -> None:
+        self.fs_properties[0].altsep = value
+
+    @property
+    def devnull(self) -> str:
+        return self.fs_properties[self.fs_type.value].devnull
+
+    @property
+    def pathsep(self) -> str:
+        return self.fs_properties[self.fs_type.value].pathsep
+
+    @property
+    def line_separator(self) -> str:
+        return self.fs_properties[self.fs_type.value].linesep
 
     @property
     def cwd(self) -> str:
@@ -334,8 +384,11 @@ class FakeFilesystem:
         self._is_windows_fs = value == OSType.WINDOWS
         self._is_macos = value == OSType.MACOS
         self.is_case_sensitive = value == OSType.LINUX
-        self.path_separator = "\\" if value == OSType.WINDOWS else "/"
-        self.alternative_path_separator = "/" if value == OSType.WINDOWS else None
+        self.fs_type = FSType.DEFAULT
+        base_properties = (
+            WINDOWS_PROPERTIES if self._is_windows_fs else POSIX_PROPERTIES
+        )
+        self.fs_properties[0] = base_properties
         self.reset()
         FakePathModule.reset(self)
 
@@ -357,6 +410,15 @@ class FakeFilesystem:
             from pyfakefs import fake_pathlib
 
             fake_pathlib.init_module(self)
+
+    @contextlib.contextmanager
+    def use_fs_type(self, fs_type: FSType):
+        old_fs_type = self.fs_type
+        try:
+            self.fs_type = fs_type
+            yield
+        finally:
+            self.fs_type = old_fs_type
 
     def _add_root_mount_point(self, total_size):
         mount_point = "C:" if self.is_windows_fs else self.path_separator
@@ -402,9 +464,6 @@ class FakeFilesystem:
         """Clear the cache of non-patched modules."""
         if self.patcher:
             self.patcher.clear_cache()
-
-    def line_separator(self) -> str:
-        return "\r\n" if self.is_windows_fs else "\n"
 
     def raise_os_error(
         self,
@@ -1144,8 +1203,9 @@ class FakeFilesystem:
         if isinstance(p, bytes):
             sep = self.path_separator.encode()
             altsep = None
-            if self.alternative_path_separator:
-                altsep = self.alternative_path_separator.encode()
+            alternative_path_separator = self.alternative_path_separator
+            if alternative_path_separator is not None:
+                altsep = alternative_path_separator.encode()
             colon = b":"
             unc_prefix = b"\\\\?\\UNC\\"
             empty = b""
@@ -1292,7 +1352,11 @@ class FakeFilesystem:
         if not path or path == self.get_path_separator(path):
             return []
         drive, path = self.splitdrive(path)
-        path_components = path.split(self.get_path_separator(path))
+        sep = self.get_path_separator(path)
+        # handle special case of Windows emulated under POSIX
+        if self.is_windows_fs and sys.platform != "win32":
+            path = path.replace(matching_string(sep, "\\"), sep)
+        path_components = path.split(sep)
         assert drive or path_components
         if not path_components[0]:
             if len(path_components) > 1 and not path_components[1]:
@@ -1438,7 +1502,7 @@ class FakeFilesystem:
             raise TypeError
         if not path:
             return False
-        if path == self.dev_null.name:
+        if path == self.devnull:
             return not self.is_windows_fs or sys.version_info >= (3, 8)
         try:
             if self.is_filepath_ending_with_separator(path):
@@ -1515,7 +1579,7 @@ class FakeFilesystem:
         path = self.replace_windows_root(path)
         if self._is_root_path(path):
             return path
-        if path == matching_string(path, self.dev_null.name):
+        if path == matching_string(path, self.devnull):
             return path
         path_components = self._path_components(path)
         resolved_components = self._resolve_components(path_components)
@@ -1661,7 +1725,7 @@ class FakeFilesystem:
         path = make_string_path(file_path)
         if path == matching_string(path, self.root.name):
             return self.root
-        if path == matching_string(path, self.dev_null.name):
+        if path == matching_string(path, self.devnull):
             return self.dev_null
 
         path = self._original_path(path)

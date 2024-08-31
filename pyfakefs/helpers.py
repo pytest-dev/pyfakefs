@@ -24,6 +24,8 @@ import time
 import traceback
 from collections import namedtuple
 from copy import copy
+from dataclasses import dataclass
+from enum import Enum
 from stat import S_IFLNK
 from typing import Union, Optional, Any, AnyStr, overload, cast
 
@@ -203,6 +205,42 @@ def matching_string(  # type: ignore[misc]
     if isinstance(matched, bytes) and isinstance(string, str):
         return string.encode(get_locale_encoding())
     return string  # pytype: disable=bad-return-type
+
+
+@dataclass
+class FSProperties:
+    sep: str
+    altsep: Optional[str]
+    pathsep: str
+    linesep: str
+    devnull: str
+
+
+# pure POSIX file system properties, for use with PosixPath
+POSIX_PROPERTIES = FSProperties(
+    sep="/",
+    altsep=None,
+    pathsep=":",
+    linesep="\n",
+    devnull="/dev/null",
+)
+
+# pure Windows file system properties, for use with WindowsPath
+WINDOWS_PROPERTIES = FSProperties(
+    sep="\\",
+    altsep="/",
+    pathsep=";",
+    linesep="\r\n",
+    devnull="NUL",
+)
+
+
+class FSType(Enum):
+    """Defines which file system properties to use."""
+
+    DEFAULT = 0  # use current OS file system + modifications in fake file system
+    POSIX = 1  # pure POSIX properties, for use in PosixPath
+    WINDOWS = 2  # pure Windows properties, for use in WindowsPath
 
 
 class FakeStatResult:

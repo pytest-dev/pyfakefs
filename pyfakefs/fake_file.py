@@ -419,8 +419,7 @@ class FakeFile:
 
 class FakeNullFile(FakeFile):
     def __init__(self, filesystem: "FakeFilesystem") -> None:
-        devnull = "nul" if filesystem.is_windows_fs else "/dev/null"
-        super().__init__(devnull, filesystem=filesystem, contents="")
+        super().__init__(filesystem.devnull, filesystem=filesystem, contents="")
 
     @property
     def byte_contents(self) -> bytes:

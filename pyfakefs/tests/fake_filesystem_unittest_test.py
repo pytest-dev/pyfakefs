@@ -850,7 +850,7 @@ class TestOtherFS(fake_filesystem_unittest.TestCase):
         self.assertEqual("/", os.altsep)
         self.assertEqual(";", os.pathsep)
         self.assertEqual("\r\n", os.linesep)
-        self.assertEqual("nul", os.devnull)
+        self.assertEqual("NUL", os.devnull)
 
     def test_linux(self):
         self.fs.os = OSType.LINUX

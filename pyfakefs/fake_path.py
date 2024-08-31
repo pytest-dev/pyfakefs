@@ -123,9 +123,9 @@ class FakePathModule:
     def reset(cls, filesystem: "FakeFilesystem") -> None:
         cls.sep = filesystem.path_separator
         cls.altsep = filesystem.alternative_path_separator
-        cls.linesep = filesystem.line_separator()
-        cls.devnull = "nul" if filesystem.is_windows_fs else "/dev/null"
-        cls.pathsep = ";" if filesystem.is_windows_fs else ":"
+        cls.linesep = filesystem.line_separator
+        cls.devnull = filesystem.devnull
+        cls.pathsep = filesystem.pathsep
 
     def exists(self, path: AnyStr) -> bool:
         """Determine whether the file object exists within the fake filesystem.
