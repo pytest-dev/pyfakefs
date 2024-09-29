@@ -822,11 +822,11 @@ class FakePathlibPathFileOperationTest(RealPathlibTestCase):
         self.create_file(self.make_path("foo", "setup.pyc"))
         path = self.path(self.make_path("foo"))
         self.assertEqual(
-            sorted(path.glob("*.py")),
             [
                 self.path(self.make_path("foo", "all_tests.py")),
                 self.path(self.make_path("foo", "setup.py")),
             ],
+            sorted(path.glob("*.py")),
         )
 
     @unittest.skipIf(not is_windows, "Windows specific test")
@@ -837,12 +837,12 @@ class FakePathlibPathFileOperationTest(RealPathlibTestCase):
         self.create_file(self.make_path("foo", "example.Py"))
         path = self.path(self.make_path("foo"))
         self.assertEqual(
-            sorted(path.glob("*.py")),
             [
                 self.path(self.make_path("foo", "all_tests.PY")),
                 self.path(self.make_path("foo", "example.Py")),
                 self.path(self.make_path("foo", "setup.py")),
             ],
+            sorted(path.glob("*.py")),
         )
 
     @unittest.skipIf(is_windows, "Posix specific test")
