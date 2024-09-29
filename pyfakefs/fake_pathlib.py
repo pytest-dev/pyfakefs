@@ -32,7 +32,6 @@ get the properties of the underlying fake filesystem.
 import errno
 import fnmatch
 import functools
-import glob
 import inspect
 import ntpath
 import os
@@ -639,15 +638,6 @@ class FakePath(pathlib.Path):
             self._accessor = _fake_accessor
             # only needed until Python 3.8
             self._closed = False
-
-    if sys.version_info >= (3, 13):
-
-        def _glob_selector(self, parts, case_sensitive, recurse_symlinks):
-            # make sure we get the patched version of the globber
-            self._globber = glob._StringGlobber  # type: ignore[module-attr]
-            return super()._glob_selector(  # type: ignore[attribute-error]
-                parts, case_sensitive, recurse_symlinks
-            )
 
     def _path(self):
         """Returns the underlying path string as used by the fake

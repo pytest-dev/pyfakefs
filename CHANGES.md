@@ -18,11 +18,12 @@ The released versions correspond to PyPI releases.
 * the `additional_skip_names` parameter now works with more modules (see [#1023](../../issues/1023))
 * added support for `os.fchmod`, allow file descriptor argument for `os.chmod` only for POSIX
   for Python < 3.13
+* avoid reloading `glob` in Python 3.13 (did affect test performance)
 
 ### Fixes
 * removing files while iterating over `scandir` results is now possible (see [#1051](../../issues/1051))
 * fake `pathlib.PosixPath` and `pathlib.WindowsPath` now behave more like in the real filesystem
-  (see [#1055](../../issues/1055))
+  (see [#1053](../../issues/1053))
 
 ## [Version 5.6.0](https://pypi.python.org/pypi/pyfakefs/5.6.0) (2024-07-12)
 Adds preliminary Python 3.13 support.

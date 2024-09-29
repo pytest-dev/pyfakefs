@@ -593,9 +593,6 @@ class Patcher:
         self.modules_to_reload: List[ModuleType] = (
             [] if sys.platform == "win32" else [tempfile]
         )
-        if sys.version_info >= (3, 13):
-            # need to reload glob which holds references to os functions
-            self.modules_to_reload.append(glob)
         if modules_to_reload is not None:
             self.modules_to_reload.extend(modules_to_reload)
         self.patch_default_args = patch_default_args
@@ -983,6 +980,7 @@ class Patcher:
             self.patch_modules()
             self.patch_functions()
             self.patch_defaults()
+            self._set_glob_os_functions()
 
             self._dyn_patcher = DynamicPatcher(self)
             sys.meta_path.insert(0, self._dyn_patcher)
@@ -992,6 +990,13 @@ class Patcher:
             if not self.use_dynamic_patch:
                 self._dyn_patcher.cleanup()
                 sys.meta_path.pop(0)
+
+    def _set_glob_os_functions(self):
+        # make sure the os functions cached in glob are patched
+        if sys.version_info >= (3, 13):
+            globber = glob._StringGlobber  # type: ignore[module-attr]
+            globber.lstat = staticmethod(os.lstat)
+            globber.scandir = staticmethod(os.scandir)
 
     def patch_functions(self) -> None:
         assert self._stubs is not None
@@ -1073,6 +1078,7 @@ class Patcher:
             if self.linecache_updatecache is not None:
                 linecache.updatecache = self.linecache_updatecache
                 linecache.checkcache = self.linecache_checkcache
+            self._set_glob_os_functions()
 
     @property
     def is_patching(self):
