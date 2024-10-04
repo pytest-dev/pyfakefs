@@ -303,6 +303,173 @@ class RealPathlibPurePathTest(FakePathlibPurePathTest):
         return True
 
 
+class FakePathlibPurePosixPathTest(RealPathlibTestCase):
+    def setUp(self):
+        super().setUp()
+        self.path = self.pathlib.PurePosixPath
+
+    def test_is_reserved(self):
+        with (
+            contextlib.nullcontext()
+            if sys.version_info < (3, 13)
+            else self.assertWarns(DeprecationWarning)
+        ):
+            self.assertFalse(self.path("/dev").is_reserved())
+            self.assertFalse(self.path("/").is_reserved())
+            self.assertFalse(self.path("COM1").is_reserved())
+            self.assertFalse(self.path("nul.txt").is_reserved())
+
+    def test_joinpath(self):
+        self.assertEqual(self.path("/etc").joinpath("passwd"), self.path("/etc/passwd"))
+        self.assertEqual(
+            self.path("/etc").joinpath(self.path("passwd")),
+            self.path("/etc/passwd"),
+        )
+        self.assertEqual(
+            self.path("/foo").joinpath("bar", "baz"), self.path("/foo/bar/baz")
+        )
+        self.assertEqual(
+            self.path("c:").joinpath("/Program Files"),
+            self.path("/Program Files"),
+        )
+
+    def test_match(self):
+        self.assertTrue(self.path("a/b.py").match("*.py"))
+        self.assertTrue(self.path("/a/b/c.py").match("b/*.py"))
+        self.assertFalse(self.path("/a/b/c.py").match("a/*.py"))
+        self.assertTrue(self.path("/a.py").match("/*.py"))
+        self.assertFalse(self.path("a/b.py").match("/*.py"))
+
+    def test_relative_to(self):
+        self.assertEqual(
+            self.path("/etc/passwd").relative_to("/"), self.path("etc/passwd")
+        )
+        self.assertEqual(
+            self.path("/etc/passwd").relative_to("/"), self.path("etc/passwd")
+        )
+        with self.assertRaises(ValueError):
+            self.path("passwd").relative_to("/usr")
+
+    @unittest.skipIf(sys.version_info < (3, 9), "is_relative_to new in Python 3.9")
+    def test_is_relative_to(self):
+        path = self.path("/etc/passwd")
+        self.assertTrue(path.is_relative_to("/etc"))
+        self.assertFalse(path.is_relative_to("/src"))
+
+    def test_with_name(self):
+        self.assertEqual(
+            self.path("c:/Downloads/pathlib.tar.gz").with_name("setup.py"),
+            self.path("c:/Downloads/setup.py"),
+        )
+        self.assertEqual(self.path("c:/").with_name("setup.py"), self.path("setup.py"))
+
+    def test_with_suffix(self):
+        self.assertEqual(
+            self.path("c:/Downloads/pathlib.tar.gz").with_suffix(".bz2"),
+            self.path("c:/Downloads/pathlib.tar.bz2"),
+        )
+        self.assertEqual(
+            self.path("README").with_suffix(".txt"), self.path("README.txt")
+        )
+
+    def test_to_string(self):
+        self.assertEqual(str(self.path("/usr/bin/ls")), "/usr/bin/ls")
+        self.assertEqual(str(self.path("usr") / "bin" / "ls"), "usr/bin/ls")
+
+
+class RealPathlibPurePosixPathTest(FakePathlibPurePosixPathTest):
+    def use_real_fs(self):
+        return True
+
+
+class FakePathlibPureWindowsPathTest(RealPathlibTestCase):
+    def setUp(self):
+        super().setUp()
+        self.path = self.pathlib.PureWindowsPath
+
+    def test_is_reserved(self):
+        with (
+            contextlib.nullcontext()
+            if sys.version_info < (3, 13)
+            else self.assertWarns(DeprecationWarning)
+        ):
+            self.assertFalse(self.path("/dev").is_reserved())
+            self.assertFalse(self.path("/").is_reserved())
+            self.assertTrue(self.path("COM1").is_reserved())
+            self.assertTrue(self.path("nul.txt").is_reserved())
+
+    def test_joinpath(self):
+        self.assertEqual(self.path("/etc").joinpath("passwd"), self.path("/etc/passwd"))
+        self.assertEqual(
+            self.path("/etc").joinpath(self.path("passwd")),
+            self.path("/etc/passwd"),
+        )
+        self.assertEqual(
+            self.path("/foo").joinpath("bar", "baz"), self.path("/foo/bar/baz")
+        )
+        self.assertEqual(
+            self.path("c:").joinpath("/Program Files"),
+            self.path("c:/Program Files"),
+        )
+
+    def test_match(self):
+        self.assertTrue(self.path("a/b.py").match("*.py"))
+        self.assertTrue(self.path("/a/b/c.py").match("b/*.py"))
+        self.assertFalse(self.path("/a/b/c.py").match("a/*.py"))
+        self.assertTrue(self.path("/a.py").match("/*.py"))
+        self.assertFalse(self.path("a/b.py").match("/*.py"))
+
+    def test_relative_to(self):
+        self.assertEqual(
+            self.path("/etc/passwd").relative_to("/"), self.path("etc/passwd")
+        )
+        self.assertEqual(
+            self.path("/etc/passwd").relative_to("/"), self.path("etc/passwd")
+        )
+        with self.assertRaises(ValueError):
+            self.path("passwd").relative_to("/usr")
+
+    @unittest.skipIf(sys.version_info < (3, 9), "is_relative_to new in Python 3.9")
+    def test_is_relative_to(self):
+        path = self.path("/etc/passwd")
+        self.assertTrue(path.is_relative_to("/etc"))
+        self.assertFalse(path.is_relative_to("/src"))
+
+    def test_with_name(self):
+        self.assertEqual(
+            self.path("c:/Downloads/pathlib.tar.gz").with_name("setup.py"),
+            self.path("c:/Downloads/setup.py"),
+        )
+        with self.assertRaises(ValueError):
+            self.path("c:/").with_name("setup.py")
+
+    def test_with_suffix(self):
+        self.assertEqual(
+            self.path("c:/Downloads/pathlib.tar.gz").with_suffix(".bz2"),
+            self.path("c:/Downloads/pathlib.tar.bz2"),
+        )
+        self.assertEqual(
+            self.path("README").with_suffix(".txt"), self.path("README.txt")
+        )
+
+    def test_to_string(self):
+        self.assertEqual(str(self.path("/usr/bin/ls")), "\\usr\\bin\\ls")
+        self.assertEqual(
+            str(self.path("c:/Windows/System32/ntoskrnl.exe")),
+            "c:\\Windows\\System32\\ntoskrnl.exe",
+        )
+        self.assertEqual(str(self.path("usr") / "bin" / "ls"), "usr\\bin\\ls")
+        self.assertEqual(
+            str(self.path("C:/") / "Windows" / "System32" / "ntoskrnl.exe"),
+            "C:\\Windows\\System32\\ntoskrnl.exe",
+        )
+
+
+class RealPathlibPureWindowsPathTest(FakePathlibPureWindowsPathTest):
+    def use_real_fs(self):
+        return True
+
+
 class FakePathlibFileObjectPropertyTest(RealPathlibTestCase):
     def setUp(self):
         super().setUp()
