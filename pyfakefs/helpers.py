@@ -478,11 +478,18 @@ class TextBufferIO(io.TextIOWrapper):
         self._bytestream.write(value)
 
 
-def is_called_from_skipped_module(skip_names: list, case_sensitive: bool) -> bool:
+def is_called_from_skipped_module(
+    skip_names: list, case_sensitive: bool, check_open_code: bool = False
+) -> bool:
     def starts_with(path, string):
         if case_sensitive:
             return path.startswith(string)
         return path.lower().startswith(string.lower())
+
+    # in most cases we don't have skip names and won't need the overhead
+    # of analyzing the traceback, except when checking for open_code
+    if not skip_names and not check_open_code:
+        return False
 
     stack = traceback.extract_stack()
 
@@ -494,11 +501,14 @@ def is_called_from_skipped_module(skip_names: list, case_sensitive: bool) -> boo
     # -3: fake_io.open: 'return fake_open('
     # -4: fake_io.open_code : 'return self._io_module.open_code(path)'
     if (
-        sys.version_info >= (3, 12)
+        check_open_code
         and stack[-4].name == "open_code"
         and stack[-4].line == "return self._io_module.open_code(path)"
     ):
         return True
+
+    if not skip_names:
+        return False
 
     caller_filename = next(
         (
