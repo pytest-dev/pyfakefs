@@ -89,6 +89,7 @@ def fake_open(
     if is_called_from_skipped_module(
         skip_names=skip_names,
         case_sensitive=filesystem.is_case_sensitive,
+        check_open_code=sys.version_info >= (3, 12),
     ):
         return io_open(  # pytype: disable=wrong-arg-count
             file,
