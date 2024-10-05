@@ -1387,6 +1387,14 @@ class FakeFilesystem:
                 # check if the path exists because it has been mapped in
                 # this is not foolproof, but handles most cases
                 try:
+                    if len(file_path) == 2:
+                        # avoid recursion, check directly in the entries
+                        return any(
+                            [
+                                entry.upper() == file_path.upper()
+                                for entry in self.root_dir.entries
+                            ]
+                        )
                     self.get_object_from_normpath(file_path)
                     return True
                 except OSError:
@@ -3127,6 +3135,9 @@ class FakeFilesystem:
             | {f"COM{c}" for c in "123456789\xb9\xb2\xb3"}
             | {f"LPT{c}" for c in "123456789\xb9\xb2\xb3"}
         )
+        _WIN_RESERVED_CHARS = frozenset(
+            {chr(i) for i in range(32)} | {'"', "*", ":", "<", ">", "?", "|", "/", "\\"}
+        )
 
         def isreserved(self, path):
             if not self.is_windows_fs:
@@ -3137,6 +3148,12 @@ class FakeFilesystem:
                     from os.path import _isreservedname  # type: ignore[import-error]
 
                     return _isreservedname(name)
+
+                if name[-1:] in (".", " "):
+                    return name not in (".", "..")
+                if self._WIN_RESERVED_CHARS.intersection(name):
+                    return True
+                name = name.partition(".")[0].rstrip(" ").upper()
                 return name in self._WIN_RESERVED_NAMES
 
             path = os.fsdecode(self.splitroot(path)[2])

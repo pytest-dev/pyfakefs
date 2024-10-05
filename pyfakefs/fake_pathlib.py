@@ -52,6 +52,13 @@ from pyfakefs.fake_path import FakePathModule
 from pyfakefs.helpers import IS_PYPY, is_called_from_skipped_module, FSType
 
 
+_WIN_RESERVED_NAMES = (
+    {"CON", "PRN", "AUX", "NUL"}
+    | {"COM%d" % i for i in range(1, 10)}
+    | {"LPT%d" % i for i in range(1, 10)}
+)
+
+
 def init_module(filesystem):
     """Initializes the fake module with the fake file system."""
     # pylint: disable=protected-access
@@ -433,11 +440,6 @@ if sys.version_info < (3, 12):
         implementations independent of FakeFilesystem properties.
         """
 
-        reserved_names = (
-            {"CON", "PRN", "AUX", "NUL"}
-            | {"COM%d" % i for i in range(1, 10)}
-            | {"LPT%d" % i for i in range(1, 10)}
-        )
         sep = "\\"
         altsep = "/"
         has_drv = True
@@ -455,7 +457,7 @@ if sys.version_info < (3, 12):
             if self.filesystem.is_windows_fs and parts[0].startswith("\\\\"):
                 # UNC paths are never reserved
                 return False
-            return parts[-1].partition(".")[0].upper() in self.reserved_names
+            return parts[-1].partition(".")[0].upper() in _WIN_RESERVED_NAMES
 
         def make_uri(self, path):
             """Return a file URI for the given path"""
@@ -848,33 +850,15 @@ class FakePath(pathlib.Path):
             fake_file.close()
             self.chmod(mode)
 
-    if sys.version_info >= (3, 12):
-        """These are reimplemented for now because the original implementation
-        checks the flavour against ntpath/posixpath.
-        """
 
-        def is_absolute(self):
-            if self.filesystem.is_windows_fs:
-                return self.drive and self.root
-            return os.path.isabs(self._path())
-
-        def is_reserved(self):
-            if sys.version_info >= (3, 13):
-                warnings.warn(
-                    "pathlib.PurePath.is_reserved() is deprecated and scheduled "
-                    "for removal in Python 3.15. Use os.path.isreserved() to detect "
-                    "reserved paths on Windows.",
-                    DeprecationWarning,
-                )
-            if not self.filesystem.is_windows_fs:
-                return False
-            if sys.version_info < (3, 13):
-                if not self._tail or self._tail[0].startswith("\\\\"):
-                    # UNC paths are never reserved.
-                    return False
-                name = self._tail[-1].partition(".")[0].partition(":")[0].rstrip(" ")
-                return name.upper() in pathlib._WIN_RESERVED_NAMES
-            return self.filesystem.isreserved(self._path())
+def _warn_is_reserved_deprecated():
+    if sys.version_info >= (3, 13):
+        warnings.warn(
+            "pathlib.PurePath.is_reserved() is deprecated and scheduled "
+            "for removal in Python 3.15. Use os.path.isreserved() to detect "
+            "reserved paths on Windows.",
+            DeprecationWarning,
+        )
 
 
 class FakePathlibModule:
@@ -900,11 +884,46 @@ class FakePathlibModule:
         paths"""
 
         __slots__ = ()
+        if sys.version_info >= (3, 12):
+
+            def is_reserved(self):
+                _warn_is_reserved_deprecated()
+                return False
+
+            def is_absolute(self):
+                with os.path.filesystem.use_fs_type(FSType.POSIX):  # type: ignore[module-attr]
+                    return os.path.isabs(self)
+
+            def joinpath(self, *pathsegments):
+                with os.path.filesystem.use_fs_type(FSType.POSIX):  # type: ignore[module-attr]
+                    return super().joinpath(*pathsegments)
 
     class PureWindowsPath(PurePath):
         """A subclass of PurePath, that represents Windows filesystem paths"""
 
         __slots__ = ()
+
+        if sys.version_info >= (3, 12):
+            """These are reimplemented because the PurePath implementation
+            checks the flavour against ntpath/posixpath.
+            """
+
+            def is_reserved(self):
+                _warn_is_reserved_deprecated()
+                if sys.version_info < (3, 13):
+                    if not self._tail or self._tail[0].startswith("\\\\"):
+                        # UNC paths are never reserved.
+                        return False
+                    name = (
+                        self._tail[-1].partition(".")[0].partition(":")[0].rstrip(" ")
+                    )
+                    return name.upper() in _WIN_RESERVED_NAMES
+                with os.path.filesystem.use_fs_type(FSType.WINDOWS):  # type: ignore[module-attr]
+                    return os.path.isreserved(self)
+
+            def is_absolute(self):
+                with os.path.filesystem.use_fs_type(FSType.WINDOWS):
+                    return bool(self.drive and self.root)
 
     class WindowsPath(FakePath, PureWindowsPath):
         """A subclass of Path and PureWindowsPath that represents
