@@ -32,7 +32,7 @@ jobs:
       fail-fast: false
       matrix:
         os: [ubuntu-latest, macOS-latest, windows-latest]
-        python-version: [3.7, 3.8, 3.9, "3.10", "3.11", "3.12", "3.13-dev"]
+        python-version: [3.7, 3.8, 3.9, "3.10", "3.11", "3.12", "3.13"]
         include:
           - python-version: "pypy-3.7"
             os: ubuntu-latest
@@ -50,6 +50,7 @@ jobs:
       uses: actions/setup-python@v5
       with:
         python-version: ${{ matrix.python-version }}
+        allow-prereleases: true
 
     - name: Get pip cache dir
       id: pip-cache
@@ -84,20 +85,16 @@ jobs:
         fi
       shell: bash
     - name: Install extra dependencies
-      if: ${{ matrix.python-version != 'pypy-3.10' && ( matrix.python-version != '3.13-dev' || matrix.os != 'windows-latest' ) }}
+      if: ${{ matrix.python-version != 'pypy-3.10' }}
       run: |
         pip install -r extra_requirements.txt
         pip install -r legacy_requirements.txt
-        if [[ '${{ matrix.python-version }}' != '3.13-dev' ]]; then
-          pip install zstandard cffi  # needed to test #910
-        fi
+        pip install zstandard cffi  # needed to test #910
       shell: bash
     - name: Run unit tests with extra packages as non-root user
-      if: ${{ matrix.python-version != 'pypy-3.10' && ( matrix.python-version != '3.13-dev' || matrix.os != 'windows-latest' ) }}
+      if: ${{ matrix.python-version != 'pypy-3.10' }}
       run: |
-        if [[ '${{ matrix.python-version }}' != '3.13-dev' ]]; then
-          export PYTHON_ZSTANDARD_IMPORT_POLICY=cffi  # needed to test #910
-        fi
+        export PYTHON_ZSTANDARD_IMPORT_POLICY=cffi  # needed to test #910
         python -m pyfakefs.tests.all_tests
       shell: bash
     - name: Run performance tests
