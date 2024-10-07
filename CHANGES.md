@@ -29,6 +29,8 @@ The released versions correspond to PyPI releases.
   (see [#1053](../../issues/1053))
 * `PurePosixPath` reported Windows reserved names as reserved in Python >= 3.12
   (see [#1067](../../issues/1067))
+* `PurePosixPath.joinpath()` incorrectly handled paths with drives under Windows in Python >= 3.12
+  (see [#1070](../../issues/1070))
 
 ## [Version 5.6.0](https://pypi.python.org/pypi/pyfakefs/5.6.0) (2024-07-12)
 Adds preliminary Python 3.13 support.
