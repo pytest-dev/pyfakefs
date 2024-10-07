@@ -1306,18 +1306,17 @@ class FakeFilesystem:
             return paths[0]
         if self.is_windows_fs:
             return self._join_paths_with_drive_support(*file_paths)
-        joined_path_segments = []
+        path = file_paths[0]
         sep = self.get_path_separator(file_paths[0])
-        for path_segment in file_paths:
-            if self._starts_with_root_path(path_segment):
+        for path_segment in file_paths[1:]:
+            if path_segment.startswith(sep) or not path:
                 # An absolute path
-                joined_path_segments = [path_segment]
+                path = path_segment
+            elif path.endswith(sep):
+                path += path_segment
             else:
-                if joined_path_segments and not joined_path_segments[-1].endswith(sep):
-                    joined_path_segments.append(sep)
-                if path_segment:
-                    joined_path_segments.append(path_segment)
-        return matching_string(file_paths[0], "").join(joined_path_segments)
+                path += sep + path_segment
+        return path
 
     @overload
     def _path_components(self, path: str) -> List[str]: ...
