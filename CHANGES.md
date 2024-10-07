@@ -14,6 +14,9 @@ The released versions correspond to PyPI releases.
 
 ## Unreleased
 
+### Changes
+* officially support Python 3.13
+
 ### Enhancements
 * the `additional_skip_names` parameter now works with more modules (see [#1023](../../issues/1023))
 * added support for `os.fchmod`, allow file descriptor argument for `os.chmod` only for POSIX
