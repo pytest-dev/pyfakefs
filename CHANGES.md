@@ -12,7 +12,8 @@ The released versions correspond to PyPI releases.
 * the default for `FakeFilesystem.shuffle_listdir_results` will change to `True` to reflect
   the real filesystem behavior
 
-## Unreleased
+## [Version 5.7.0](https://pypi.python.org/pypi/pyfakefs/5.7.0) (2024-08-10)
+Adds official Python 3.13 support, improves OS emulation behavior.
 
 ### Changes
 * officially support Python 3.13
