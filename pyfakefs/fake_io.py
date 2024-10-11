@@ -181,7 +181,7 @@ if sys.platform != "win32":
             pass
 
         def __getattribute__(self, name):
-            """Forwards any unfaked calls to the standard fcntl module."""
+            """Prevents patching of skipped modules."""
             fs: FakeFilesystem = object.__getattribute__(self, "filesystem")
             fnctl_module = object.__getattribute__(self, "_fcntl_module")
             if fs.patcher:
@@ -193,3 +193,7 @@ if sys.platform != "win32":
                     return getattr(fnctl_module, name)
 
             return object.__getattribute__(self, name)
+
+        def __getattr__(self, name):
+            """Forwards any unfaked calls to the standard fcntl module."""
+            return getattr(self._fcntl_module, name)
