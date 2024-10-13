@@ -95,6 +95,41 @@ OS_MODULE = "nt" if sys.platform == "win32" else "posix"
 PATH_MODULE = "ntpath" if sys.platform == "win32" else "posixpath"
 
 
+class TempfilePatcher:
+    """Handles tempfile patching for Posix systems."""
+
+    def __init__(self):
+        self.tempfile_cleanup = None
+
+    def start_patching(self):
+        if self.tempfile_cleanup is not None:
+            return
+        if sys.version_info >= (3, 12):
+
+            def cleanup(self_, windows=(os.name == "nt"), unlink=None):
+                self.tempfile_cleanup(self_, windows, unlink or os.unlink)
+
+            self.tempfile_cleanup = tempfile._TemporaryFileCloser.cleanup  # type: ignore[module-attr]
+            tempfile._TemporaryFileCloser.cleanup = cleanup  # type: ignore[module-attr]
+        elif sys.platform != "win32":
+
+            def close(self_, unlink=None):
+                self.tempfile_cleanup(self_, unlink or os.unlink)
+
+            self.tempfile_cleanup = tempfile._TemporaryFileCloser.close  # type: ignore[module-attr]
+            tempfile._TemporaryFileCloser.close = close  # type: ignore[module-attr]
+
+    def stop_patching(self):
+        if self.tempfile_cleanup is None:
+            return
+        if sys.version_info < (3, 12):
+            tempfile._TemporaryFileCloser.close = self.tempfile_cleanup  # type: ignore[module-attr]
+        else:
+            tempfile._TemporaryFileCloser.cleanup = self.tempfile_cleanup  # type: ignore[module-attr]
+        # reset the cached tempdir in tempfile
+        tempfile.tempdir = None
+
+
 def patchfs(
     _func: Optional[Callable] = None,
     *,
@@ -576,6 +611,7 @@ class Patcher:
         self.patch_open_code = patch_open_code
         self.linecache_updatecache = None
         self.linecache_checkcache = None
+        self.tempfile_patcher = TempfilePatcher()
 
         if additional_skip_names is not None:
             skip_names = [
@@ -590,9 +626,7 @@ class Patcher:
         self._init_fake_module_classes()
 
         # reload tempfile under posix to patch default argument
-        self.modules_to_reload: List[ModuleType] = (
-            [] if sys.platform == "win32" else [tempfile]
-        )
+        self.modules_to_reload: List[ModuleType] = []
         if modules_to_reload is not None:
             self.modules_to_reload.extend(modules_to_reload)
         self.patch_default_args = patch_default_args
@@ -977,6 +1011,8 @@ class Patcher:
                 self.linecache_checkcache = linecache.checkcache
                 linecache.checkcache = self.checkcache
 
+            self.tempfile_patcher.start_patching()
+
             self.patch_modules()
             self.patch_functions()
             self.patch_defaults()
@@ -1075,6 +1111,7 @@ class Patcher:
             if self.use_dynamic_patch and self._dyn_patcher:
                 self._dyn_patcher.cleanup()
                 sys.meta_path.pop(0)
+            self.tempfile_patcher.stop_patching()
             if self.linecache_updatecache is not None:
                 linecache.updatecache = self.linecache_updatecache
                 linecache.checkcache = self.linecache_checkcache
