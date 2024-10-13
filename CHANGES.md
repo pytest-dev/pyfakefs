@@ -12,7 +12,8 @@ The released versions correspond to PyPI releases.
 * the default for `FakeFilesystem.shuffle_listdir_results` will change to `True` to reflect
   the real filesystem behavior
 
-## Unreleased
+## [Version 5.7.1](https://pypi.python.org/pypi/pyfakefs/5.7.1) (2024-08-13)
+Fixes a regression in version 5.7.0 that broke patching fcntl.
 
 ### Fixes
 * fixes a regression that caused unfaked `fcntl` calls to fail (see [#1074](../../issues/1074))
