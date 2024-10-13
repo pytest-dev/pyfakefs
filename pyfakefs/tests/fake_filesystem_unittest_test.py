@@ -541,12 +541,7 @@ class NoRootUserTest(fake_filesystem_unittest.TestCase):
 
 class PauseResumeTest(fake_filesystem_unittest.TestCase):
     def setUp(self):
-        self.real_temp_file = None
         self.setUpPyfakefs()
-
-    def tearDown(self):
-        if self.real_temp_file is not None:
-            self.real_temp_file.close()
 
     def test_pause_resume(self):
         fake_temp_file = tempfile.NamedTemporaryFile()
@@ -555,11 +550,11 @@ class PauseResumeTest(fake_filesystem_unittest.TestCase):
         self.pause()
         self.assertTrue(self.fs.exists(fake_temp_file.name))
         self.assertFalse(os.path.exists(fake_temp_file.name))
-        self.real_temp_file = tempfile.NamedTemporaryFile()
-        self.assertFalse(self.fs.exists(self.real_temp_file.name))
-        self.assertTrue(os.path.exists(self.real_temp_file.name))
+        real_temp_file = tempfile.NamedTemporaryFile()
+        self.assertFalse(self.fs.exists(real_temp_file.name))
+        self.assertTrue(os.path.exists(real_temp_file.name))
         self.resume()
-        self.assertFalse(os.path.exists(self.real_temp_file.name))
+        self.assertFalse(os.path.exists(real_temp_file.name))
         self.assertTrue(os.path.exists(fake_temp_file.name))
 
     def test_pause_resume_fs(self):
@@ -572,15 +567,15 @@ class PauseResumeTest(fake_filesystem_unittest.TestCase):
         self.fs.pause()
         self.assertTrue(self.fs.exists(fake_temp_file.name))
         self.assertFalse(os.path.exists(fake_temp_file.name))
-        self.real_temp_file = tempfile.NamedTemporaryFile()
-        self.assertFalse(self.fs.exists(self.real_temp_file.name))
-        self.assertTrue(os.path.exists(self.real_temp_file.name))
+        real_temp_file = tempfile.NamedTemporaryFile()
+        self.assertFalse(self.fs.exists(real_temp_file.name))
+        self.assertTrue(os.path.exists(real_temp_file.name))
         # pause does nothing if already paused
         self.fs.pause()
-        self.assertFalse(self.fs.exists(self.real_temp_file.name))
-        self.assertTrue(os.path.exists(self.real_temp_file.name))
+        self.assertFalse(self.fs.exists(real_temp_file.name))
+        self.assertTrue(os.path.exists(real_temp_file.name))
         self.fs.resume()
-        self.assertFalse(os.path.exists(self.real_temp_file.name))
+        self.assertFalse(os.path.exists(real_temp_file.name))
         self.assertTrue(os.path.exists(fake_temp_file.name))
 
     def test_pause_resume_contextmanager(self):
@@ -590,10 +585,10 @@ class PauseResumeTest(fake_filesystem_unittest.TestCase):
         with Pause(self):
             self.assertTrue(self.fs.exists(fake_temp_file.name))
             self.assertFalse(os.path.exists(fake_temp_file.name))
-            self.real_temp_file = tempfile.NamedTemporaryFile()
-            self.assertFalse(self.fs.exists(self.real_temp_file.name))
-            self.assertTrue(os.path.exists(self.real_temp_file.name))
-        self.assertFalse(os.path.exists(self.real_temp_file.name))
+            real_temp_file = tempfile.NamedTemporaryFile()
+            self.assertFalse(self.fs.exists(real_temp_file.name))
+            self.assertTrue(os.path.exists(real_temp_file.name))
+        self.assertFalse(os.path.exists(real_temp_file.name))
         self.assertTrue(os.path.exists(fake_temp_file.name))
 
     def test_pause_resume_fs_contextmanager(self):
@@ -603,10 +598,10 @@ class PauseResumeTest(fake_filesystem_unittest.TestCase):
         with Pause(self.fs):
             self.assertTrue(self.fs.exists(fake_temp_file.name))
             self.assertFalse(os.path.exists(fake_temp_file.name))
-            self.real_temp_file = tempfile.NamedTemporaryFile()
-            self.assertFalse(self.fs.exists(self.real_temp_file.name))
-            self.assertTrue(os.path.exists(self.real_temp_file.name))
-        self.assertFalse(os.path.exists(self.real_temp_file.name))
+            real_temp_file = tempfile.NamedTemporaryFile()
+            self.assertFalse(self.fs.exists(real_temp_file.name))
+            self.assertTrue(os.path.exists(real_temp_file.name))
+        self.assertFalse(os.path.exists(real_temp_file.name))
         self.assertTrue(os.path.exists(fake_temp_file.name))
 
     def test_pause_resume_without_patcher(self):

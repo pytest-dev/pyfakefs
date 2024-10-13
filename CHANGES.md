@@ -14,6 +14,9 @@ The released versions correspond to PyPI releases.
 
 ## Unreleased
 
+### Performance
+* avoid reloading `tempfile` in Posix systems
+
 ### Infrastructure
 * use trusted publisher for release (see https://docs.pypi.org/trusted-publishers/)
 
@@ -33,7 +36,9 @@ Adds official Python 3.13 support, improves OS emulation behavior.
 * the `additional_skip_names` parameter now works with more modules (see [#1023](../../issues/1023))
 * added support for `os.fchmod`, allow file descriptor argument for `os.chmod` only for POSIX
   for Python < 3.13
-* avoid reloading `glob` in Python 3.13 (did affect test performance)
+
+### Performance
+* avoid reloading `glob` in Python 3.13
 
 ### Fixes
 * removing files while iterating over `scandir` results is now possible (see [#1051](../../issues/1051))
@@ -574,6 +579,8 @@ release.
     default to avoid a large performance impact. An additional parameter
     `patch_default_args` has been added that switches this behavior on
     (see [#567](../../issues/567)).
+
+### Performance
   * Added performance improvements in the test setup, including caching the
     unpatched modules
 
