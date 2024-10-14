@@ -3,7 +3,7 @@ default_language_version:
 
 repos:
   - repo: "https://github.com/asottile/pyupgrade"
-    rev: "v3.17.0"
+    rev: "v3.18.0"
     hooks:
       - id: "pyupgrade"
         name: "Enforce Python 3.7+ idioms"
