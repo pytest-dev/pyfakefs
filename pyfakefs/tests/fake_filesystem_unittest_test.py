@@ -951,5 +951,33 @@ class TestTempPathCreation(fake_filesystem_unittest.TestCase):
         self.check_write_tmp_after_reset(OSType.WINDOWS)
 
 
+@unittest.skipIf(sys.version_info < (3, 8), "Not available before Python 3.8")
+class FakeImportTest(fake_filesystem_unittest.TestCase):
+    """Checks that a fake module can be imported in AUTO patch mode."""
+
+    def setUp(self):
+        self.setUpPyfakefs(patch_open_code=PatchMode.AUTO)
+
+    def test_simple_fake_import(self):
+        fake_module_path = Path("/") / "site-packages" / "fake_module.py"
+        self.fs.create_file(fake_module_path, contents="number = 42")
+        sys.path.insert(0, str(fake_module_path.parent))
+        module = importlib.import_module("fake_module")
+        del sys.path[0]
+        assert module.__name__ == "fake_module"
+        assert module.number == 42
+
+    def test_fake_import_dotted_module(self):
+        fake_pkg_path = Path("/") / "site-packages"
+        self.fs.create_file(fake_pkg_path / "fakepkg" / "__init__.py")
+        fake_module_path = fake_pkg_path / "fakepkg" / "fake_module.py"
+        self.fs.create_file(fake_module_path, contents="number = 42")
+        sys.path.insert(0, str(fake_pkg_path))
+        module = importlib.import_module("fakepkg.fake_module")
+        del sys.path[0]
+        assert module.__name__ == "fakepkg.fake_module"
+        assert module.number == 42
+
+
 if __name__ == "__main__":
     unittest.main()

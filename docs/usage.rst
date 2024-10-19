@@ -587,6 +587,20 @@ set ``patch_open_code`` to ``PatchMode.AUTO``:
   def test_something(fs):
       assert foo()
 
+In this mode, it is also possible to import modules created in the fake filesystem
+using `importlib.import_module`. Make sure that the `sys.path` contains the parent path in this case:
+
+.. code:: python
+
+  @patchfs(patch_open_code=PatchMode.AUTO)
+  def test_fake_import(fs):
+      fake_module_path = Path("/") / "site-packages" / "fake_module.py"
+      self.fs.create_file(fake_module_path, contents="x = 5")
+      sys.path.insert(0, str(fake_module_path.parent))
+      module = importlib.import_module("fake_module")
+      assert module.x == 5
+
+
 .. _patch_default_args:
 
 patch_default_args
