@@ -49,7 +49,12 @@ import shutil
 import sys
 import tempfile
 import tokenize
+import unittest
+import warnings
+from importlib import reload
 from importlib.abc import Loader, MetaPathFinder
+from importlib.machinery import ModuleSpec
+from importlib.util import spec_from_file_location, module_from_spec
 from types import ModuleType, TracebackType, FunctionType
 from typing import (
     Any,
@@ -66,10 +71,13 @@ from typing import (
     ItemsView,
     Sequence,
 )
-import unittest
-import warnings
 from unittest import TestSuite
 
+from pyfakefs import fake_filesystem, fake_io, fake_os, fake_open, fake_path, fake_file
+from pyfakefs import fake_filesystem_shutil
+from pyfakefs import fake_legacy_modules
+from pyfakefs import fake_pathlib
+from pyfakefs import mox3_stubout
 from pyfakefs.fake_filesystem import (
     set_uid,
     set_gid,
@@ -79,17 +87,8 @@ from pyfakefs.fake_filesystem import (
 )
 from pyfakefs.fake_os import use_original_os
 from pyfakefs.helpers import IS_PYPY
-from pyfakefs.mox3_stubout import StubOutForTesting
-
-from importlib.machinery import ModuleSpec
-from importlib import reload
-
-from pyfakefs import fake_filesystem, fake_io, fake_os, fake_open, fake_path, fake_file
-from pyfakefs import fake_legacy_modules
-from pyfakefs import fake_filesystem_shutil
-from pyfakefs import fake_pathlib
-from pyfakefs import mox3_stubout
 from pyfakefs.legacy_packages import pathlib2, scandir
+from pyfakefs.mox3_stubout import StubOutForTesting
 
 OS_MODULE = "nt" if sys.platform == "win32" else "posix"
 PATH_MODULE = "ntpath" if sys.platform == "win32" else "posixpath"
@@ -1225,13 +1224,31 @@ class DynamicPatcher(MetaPathFinder, Loader):
                 del sys.modules[name]
 
     def needs_patch(self, name: str) -> bool:
-        """Check if the module with the given name shall be replaced."""
+        """Checks if the module with the given name shall be replaced."""
         if name not in self.modules:
             self._loaded_module_names.add(name)
             return False
         if name in sys.modules and type(sys.modules[name]) is self.modules[name]:
             return False
         return True
+
+    def fake_module_path(self, name: str) -> str:
+        """Checks if the module with the given name is a module existing in the fake
+        filesystem and returns its path in this case.
+        """
+        fs = self._patcher.fs
+        # we assume that the module name is the absolute module path
+        if fs is not None:
+            base_path = name.replace(".", fs.path_separator)
+            for path in sys.path:
+                module_path = fs.joinpaths(path, base_path)
+                py_module_path = module_path + ".py"
+                if fs.exists(py_module_path):
+                    return py_module_path
+                init_path = fs.joinpaths(module_path, "__init__.py")
+                if fs.exists(init_path):
+                    return init_path
+        return ""
 
     def find_spec(
         self,
@@ -1242,6 +1259,15 @@ class DynamicPatcher(MetaPathFinder, Loader):
         """Module finder."""
         if self.needs_patch(fullname):
             return ModuleSpec(fullname, self)
+        if self._patcher.patch_open_code != PatchMode.OFF:
+            # handle modules created in the fake filesystem
+            module_path = self.fake_module_path(fullname)
+            if module_path:
+                spec = spec_from_file_location(fullname, module_path)
+                if spec:
+                    module = module_from_spec(spec)
+                    sys.modules[fullname] = module
+                    return ModuleSpec(fullname, self)
         return None
 
     def load_module(self, fullname: str) -> ModuleType:
