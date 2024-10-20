@@ -978,6 +978,15 @@ class FakeImportTest(fake_filesystem_unittest.TestCase):
         assert module.__name__ == "fakepkg.fake_module"
         assert module.number == 42
 
+    def test_fake_relative_import(self):
+        fake_module_path = Path("site-packages") / "fake_module.py"
+        self.fs.create_file(fake_module_path, contents="number = 42")
+        sys.path.insert(0, str(fake_module_path.parent))
+        module = importlib.import_module("fake_module")
+        del sys.path[0]
+        assert module.__name__ == "fake_module"
+        assert module.number == 42
+
 
 if __name__ == "__main__":
     unittest.main()
