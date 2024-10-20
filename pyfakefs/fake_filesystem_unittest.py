@@ -1244,10 +1244,10 @@ class DynamicPatcher(MetaPathFinder, Loader):
                 module_path = fs.joinpaths(path, base_path)
                 py_module_path = module_path + ".py"
                 if fs.exists(py_module_path):
-                    return py_module_path
+                    return fs.absnormpath(py_module_path)
                 init_path = fs.joinpaths(module_path, "__init__.py")
                 if fs.exists(init_path):
-                    return init_path
+                    return fs.absnormpath(init_path)
         return ""
 
     def find_spec(
