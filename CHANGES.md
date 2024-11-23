@@ -17,6 +17,8 @@ The released versions correspond to PyPI releases.
 ### Enhancements
 * added some support for loading fake modules in `AUTO` patch mode
   using `importlib.import_module` (see [#1079](../../issues/1079))
+* added some support to avoid patching debugger related modules
+  (see [#1083](../../issues/1083))
 
 ### Performance
 * avoid reloading `tempfile` in Posix systems
