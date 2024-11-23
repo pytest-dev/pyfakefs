@@ -456,6 +456,36 @@ class AdditionalSkipNamesModuleTest(fake_filesystem_unittest.TestCase):
         pyfakefs.tests.import_as_example.return_this_file_path()
 
 
+class RuntimeSkipModuleTest(fake_filesystem_unittest.TestCase):
+    """Emulates skipping a module using RUNTIME_SKIPMODULES.
+    Not all functionality implemented for skip modules will work here."""
+
+    def setUp(self):
+        Patcher.RUNTIME_SKIPMODULES.update(
+            {"pyfakefs.tests.import_as_example": ["pyfakefs.tests.import_"]}
+        )
+        self.setUpPyfakefs()
+
+    def tearDown(self):
+        del self.patcher.RUNTIME_SKIPMODULES["pyfakefs.tests.import_as_example"]
+
+    def test_fake_path_does_not_exist1(self):
+        self.fs.create_file("foo")
+        self.assertFalse(pyfakefs.tests.import_as_example.check_if_exists1("foo"))
+
+    def test_fake_path_does_not_exist2(self):
+        self.fs.create_file("foo")
+        self.assertFalse(pyfakefs.tests.import_as_example.check_if_exists2("foo"))
+
+    def test_fake_path_does_not_exist3(self):
+        self.fs.create_file("foo")
+        self.assertFalse(pyfakefs.tests.import_as_example.check_if_exists3("foo"))
+
+    def test_fake_path_does_not_exist4(self):
+        self.fs.create_file("foo")
+        self.assertFalse(pyfakefs.tests.import_as_example.check_if_exists4("foo"))
+
+
 class FakeExampleModule:
     """Used to patch a function that uses system-specific functions that
     cannot be patched automatically."""

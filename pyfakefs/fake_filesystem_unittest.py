@@ -514,6 +514,13 @@ class Patcher:
         SKIPMODULES.add(posixpath)
         SKIPMODULES.add(fcntl)
 
+    # a list of modules detected at run-time
+    # each tool defines one or more module name prefixes for modules to be skipped
+    RUNTIME_SKIPMODULES = {
+        "pydevd": ["_pydevd_", "pydevd", "_pydev_"],  # Python debugger (PyCharm/VSCode)
+        "_jb_runner_tools": ["_jb_"],  # JetBrains tools
+    }
+
     # caches all modules that do not have file system modules or function
     # to speed up _find_modules
     CACHED_MODULES: Set[ModuleType] = set()
@@ -1045,10 +1052,26 @@ class Patcher:
                 self._stubs.smart_set(module, name, attr)
 
     def patch_modules(self) -> None:
+        skip_prefix_list = []
+        for rt_skip_module, prefixes in self.RUNTIME_SKIPMODULES.items():
+            if rt_skip_module in sys.modules:
+                skip_prefix_list.extend(prefixes)
+        skip_prefixes = tuple(skip_prefix_list)
+
         assert self._stubs is not None
         for name, modules in self.FS_MODULES.items():
             for module, attr in modules:
-                self._stubs.smart_set(module, name, self.fake_modules[attr])
+                try:
+                    if not skip_prefixes or not module.__name__.startswith(
+                        skip_prefixes
+                    ):
+                        self._stubs.smart_set(module, name, self.fake_modules[attr])
+                    elif attr in self.unfaked_modules:
+                        self._stubs.smart_set(module, name, self.unfaked_modules[attr])
+                except Exception:
+                    # handle the rare case that a module has no __name__
+                    pass
+
         for name, modules in self.SKIPPED_FS_MODULES.items():
             for module, attr in modules:
                 if attr in self.unfaked_modules:
