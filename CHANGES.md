@@ -12,9 +12,10 @@ The released versions correspond to PyPI releases.
 * the default for `FakeFilesystem.shuffle_listdir_results` will change to `True` to reflect
   the real filesystem behavior
 
-## Unreleased
+## [Version 5.7.2](https://pypi.python.org/pypi/pyfakefs/5.7.2) (2024-12-01)
+Fixes some problems with patching.
 
-### Enhancements
+### Fixes
 * added some support for loading fake modules in `AUTO` patch mode
   using `importlib.import_module` (see [#1079](../../issues/1079))
 * added some support to avoid patching debugger related modules
