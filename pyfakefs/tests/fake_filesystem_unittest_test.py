@@ -639,6 +639,13 @@ class PauseResumeTest(fake_filesystem_unittest.TestCase):
         with self.assertRaises(RuntimeError):
             fs.resume()
 
+    def test_that_tempfile_is_patched_after_resume(fs):
+        """Regression test for #1098"""
+        fs.pause()
+        fs.resume()
+        with tempfile.NamedTemporaryFile():
+            pass
+
 
 class PauseResumePatcherTest(fake_filesystem_unittest.TestCase):
     def test_pause_resume(self):

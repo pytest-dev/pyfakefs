@@ -125,6 +125,7 @@ class TempfilePatcher:
             tempfile._TemporaryFileCloser.close = self.tempfile_cleanup  # type: ignore[module-attr]
         else:
             tempfile._TemporaryFileCloser.cleanup = self.tempfile_cleanup  # type: ignore[module-attr]
+        self.tempfile_cleanup = None
         # reset the cached tempdir in tempfile
         tempfile.tempdir = None
 

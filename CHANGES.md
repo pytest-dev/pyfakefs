@@ -12,6 +12,12 @@ The released versions correspond to PyPI releases.
 * the default for `FakeFilesystem.shuffle_listdir_results` will change to `True` to reflect
   the real filesystem behavior
 
+## Unreleased
+
+### Fixes
+* fixed a regression in version 5.7.2 that `tempfile` was not patched after pause/resume
+  (POSIX only, see [#1098](../../issues/1098))
+
 ## [Version 5.7.2](https://pypi.python.org/pypi/pyfakefs/5.7.2) (2024-12-01)
 Fixes some problems with patching.
 
