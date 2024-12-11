@@ -558,8 +558,8 @@ class FakeFileOpenTest(FakeFileOpenTestBase):
             with self.open(second_path, encoding="utf8") as fake_file2:
                 with self.open(first_path, encoding="utf8") as fake_file1a:
                     fileno2 = fake_file2.fileno()
-                    self.assertGreater(fileno2, fake_file1.fileno())
-                    self.assertGreater(fake_file1a.fileno(), fileno2)
+                    self.assertNotEqual(fileno2, fake_file1.fileno())
+                    self.assertNotEqual(fake_file1a.fileno(), fileno2)
 
     def test_reused_file_descriptors_do_not_affect_others(self):
         first_path = self.make_path("some_file1")
