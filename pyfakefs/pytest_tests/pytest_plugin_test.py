@@ -77,3 +77,11 @@ def test_switch_to_linux(fs):
 def test_switch_to_macos(fs):
     fs.os = OSType.MACOS
     assert os.path.exists(tempfile.gettempdir())
+
+
+def test_updatecache_problem(fs):
+    # regression test for #1096
+    filename = r"C:\source_file"
+    fs.create_file(filename)
+    with open(filename):
+        assert True

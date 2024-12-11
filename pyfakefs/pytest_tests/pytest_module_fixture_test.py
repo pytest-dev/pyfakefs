@@ -27,5 +27,5 @@ def test_fs_uses_fs_module1():
 
 
 def test_fs_uses_fs_module2(fs):
-    # check that testing was not stopped by the first test
+    # check that patching was not stopped by the first test
     assert os.path.exists(os.path.join("foo", "bar"))
