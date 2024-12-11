@@ -16,7 +16,12 @@ The released versions correspond to PyPI releases.
 
 ### Fixes
 * fixed a regression in version 5.7.2 that `tempfile` was not patched after pause/resume
-  (POSIX only, see [#1098](../../issues/1098))
+  (POSIX only, see [#1098](../../issues/1098))4
+
+### Infrastructure
+* run pytest-specific tests for all supported Python versions
+* pytest is only supported for versions >= 6.2.5, earlier version do not work
+  due to a pytest issue - adapted tests and documentation
 
 ## [Version 5.7.2](https://pypi.python.org/pypi/pyfakefs/5.7.2) (2024-12-01)
 Fixes some problems with patching.

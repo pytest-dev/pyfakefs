@@ -58,7 +58,7 @@ provides some additional features:
 pyfakefs works with CPython 3.7 and above, on Linux, Windows and macOS, and
 with PyPy3.
 
-pyfakefs works with [pytest](http://doc.pytest.org) version 3.0.0 or above,
+pyfakefs works with [pytest](http://doc.pytest.org) version 6.2.5 or above,
 though a current version is recommended.
 
 pyfakefs will not work with Python libraries that use C libraries to access the

@@ -113,8 +113,12 @@ jobs:
       fail-fast: false
       matrix:
         os: [ubuntu-latest, macOS-latest, windows-latest]
-        python-version: ["3.9"]
-        pytest-version: [3.0.0, 3.5.1, 4.0.2, 4.5.0, 5.0.1, 5.4.3, 6.0.2, 6.2.5, 7.0.1, 7.4.4, 8.0.2, 8.1.2, 8.2.0]
+        python-version: [3.8, 3.9, "3.10", "3.11", "3.12", "3.13"]
+        pytest-version: [6.2.5, 7.0.1, 7.4.4, 8.0.2, 8.3.4]
+        exclude:
+          # some tests still fail for macOS/Python 3.13
+          - python-version: "3.13"
+            os: macOS-latest
     steps:
       - uses: actions/checkout@v4
       - name: Set up Python ${{ matrix.python-version }}
@@ -126,20 +130,15 @@ jobs:
           python -m pip install --upgrade pip
           python -m pip install -r requirements.txt
           python -m pip install -U pytest==${{ matrix.pytest-version }}
-          python -m pip install opentimelineio pandas parquet pyarrow
+          python -m pip install pandas parquet pyarrow
           python -m pip install -e .
-          if [[ '${{ matrix.pytest-version }}' == '4.0.2' ]]; then
-             python -m pip install -U attrs==19.1.0
-          fi
         shell: bash
       - name: Run pytest tests
         run: |
           echo "$(python -m pytest pyfakefs/pytest_tests/pytest_plugin_failing_helper.py)" > ./testresult.txt
-          python -m pytest pyfakefs/pytest_tests
-          if [[ '${{ matrix.pytest-version }}' > '3.0.0' ]]; then
-            cd pyfakefs/pytest_tests/ns_package
-            python -m pytest --log-cli-level=INFO test
-          fi
+          pytest pyfakefs/pytest_tests
+          cd pyfakefs/pytest_tests/ns_package
+          pytest --log-cli-level=INFO test
         shell: bash
 
   dependency-check:
