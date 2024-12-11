@@ -700,7 +700,10 @@ class Patcher:
         """Calls the original linecache.updatecache making sure no fake OS calls
         are used."""
         with use_original_os():
-            return self.linecache_updatecache(filename, module_globals)
+            # workaround for updatecache problem with pytest under Windows, see #1096
+            if not filename.endswith(r"pytest.exe\__main__.py"):
+                return self.linecache_updatecache(filename, module_globals)
+            return []
 
     @classmethod
     def clear_fs_cache(cls) -> None:
@@ -1010,7 +1013,7 @@ class Patcher:
             self._patching = True
             self._paused = False
 
-            if sys.version_info >= (3, 13):
+            if sys.version_info >= (3, 12):
                 # in linecache, 'os' is now imported locally, which involves the
                 # dynamic patcher, therefore we patch the affected functions
                 self.linecache_updatecache = linecache.updatecache

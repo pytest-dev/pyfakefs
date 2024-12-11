@@ -16,7 +16,9 @@ The released versions correspond to PyPI releases.
 
 ### Fixes
 * fixed a regression in version 5.7.2 that `tempfile` was not patched after pause/resume
-  (POSIX only, see [#1098](../../issues/1098))4
+  (POSIX only, see [#1098](../../issues/1098))
+* added workaround for a recursion occurring if using pytest under Windows and Python >= 3.12
+  (see [#1096](../../issues/1096))
 
 ### Infrastructure
 * run pytest-specific tests for all supported Python versions
