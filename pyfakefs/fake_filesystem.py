@@ -2902,7 +2902,8 @@ class FakeFilesystem:
             if not exist_ok or not isinstance(self.resolve(dir_name), FakeDirectory):
                 if self.is_windows_fs and e.errno == errno.ENOTDIR:
                     e.errno = errno.ENOENT
-                self.raise_os_error(e.errno, e.filename)
+                # mypy thinks that errno may be None
+                self.raise_os_error(cast(int, e.errno), e.filename)
 
     def _is_of_type(
         self,
