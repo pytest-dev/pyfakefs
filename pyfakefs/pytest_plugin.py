@@ -89,5 +89,18 @@ def pytest_runtest_logreport(report):
     if pause:
         Patcher.PATCHER.pause()
     yield
-    if pause:
+
+
+@pytest.hookimpl(hookwrapper=True, trylast=True)
+def pytest_runtest_call(item):
+    if Patcher.PATCHER is not None:
         Patcher.PATCHER.resume()
+    yield
+
+
+@pytest.hookimpl(hookwrapper=True, tryfirst=True)
+def pytest_runtest_teardown(item, nextitem):
+    """Make sure that patching is not active during reporting."""
+    if Patcher.PATCHER is not None:
+        Patcher.PATCHER.pause()
+    yield

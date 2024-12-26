@@ -115,10 +115,6 @@ jobs:
         os: [ubuntu-latest, macOS-latest, windows-latest]
         python-version: [3.8, 3.9, "3.10", "3.11", "3.12", "3.13"]
         pytest-version: [6.2.5, 7.0.1, 7.4.4, 8.0.2, 8.3.4]
-        exclude:
-          # some tests still fail for macOS/Python 3.13
-          - python-version: "3.13"
-            os: macOS-latest
     steps:
       - uses: actions/checkout@v4
       - name: Set up Python ${{ matrix.python-version }}
