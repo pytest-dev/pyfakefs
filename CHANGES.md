@@ -17,6 +17,7 @@ The released versions correspond to PyPI releases.
 ### Fixes
 * fixed a problem with module and session scoped fixtures in Python 3.13
   (see [#1101](../../issues/1101))
+* fixed handling of `cwd` if set to a `pathlib.Path` (see [#1108](../../issues/1108))
 
 ## [Version 5.7.3](https://pypi.python.org/pypi/pyfakefs/5.7.3) (2024-12-15)
 Fixes a regression in version 5.7.3.

@@ -17,6 +17,7 @@
 import contextlib
 import errno
 import os
+import pathlib
 import shutil
 import stat
 import sys
@@ -230,6 +231,10 @@ class NormalizePathTest(TestCase):
         path = "bar"
         self.filesystem.cwd = "/foo"
         self.assertEqual("/foo/bar", self.filesystem.absnormpath(path))
+
+    def test_cwd_from_pathlib_path(self):
+        self.filesystem.cwd = pathlib.Path("/foo/bar")
+        self.assertEqual("/foo/bar", self.filesystem.cwd)
 
     def test_absolute_path_remains_unchanged(self):
         path = "foo/bar"
