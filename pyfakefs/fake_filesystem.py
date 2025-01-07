@@ -346,7 +346,10 @@ class FakeFilesystem:
         """Set the current working directory of the fake filesystem.
         Make sure a new drive or share is auto-mounted under Windows.
         """
-        self._cwd = value
+        _cwd = make_string_path(value)
+        self._cwd = _cwd.replace(
+            matching_string(_cwd, os.sep), matching_string(_cwd, self.path_separator)
+        )
         self._auto_mount_drive_if_needed(value)
 
     @property
