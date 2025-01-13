@@ -4792,7 +4792,7 @@ class FakeOsModuleWalkTest(FakeOsModuleTestBase):
     def test_walk_calls_on_error_if_not_directory(self):
         """Calls onerror with correct errno when walking non-directory."""
         self.ResetErrno()
-        filename = self.make_path("foo" "bar")
+        filename = self.make_path("foobar")
         self.create_file(filename)
         self.assertEqual(True, self.os.path.exists(filename))
         # Calling `os.walk` on a file should trigger a call to the

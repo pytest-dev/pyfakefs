@@ -1260,7 +1260,7 @@ class FakePathModuleTest(TestCase):
         if private_path_function:
             self.assertTrue(
                 hasattr(self.path, private_path_function),
-                "Get a real os.path function " "not implemented in fake os.path",
+                "Get a real os.path function not implemented in fake os.path",
             )
         self.assertFalse(hasattr(self.path, "nonexistent"))
 
@@ -1771,7 +1771,7 @@ class DiskSpaceTest(TestCase):
             self.fs.create_file("!foo!bar", contents=b"a" * 100)
         except OSError:
             self.fail(
-                "File with contents fitting into disk space " "could not be written."
+                "File with contents fitting into disk space could not be written."
             )
 
         self.assertEqual(initial_usage.used + 100, self.fs.get_disk_usage().used)
@@ -1863,7 +1863,7 @@ class DiskSpaceTest(TestCase):
             self.fs.create_file("!mount_unlimited!foo", st_size=1000000)
         except OSError:
             self.fail(
-                "File with contents fitting into " "disk space could not be written."
+                "File with contents fitting into disk space could not be written."
             )
 
     def test_that_disk_usage_of_correct_mount_point_is_used(self):

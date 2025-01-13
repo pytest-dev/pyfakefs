@@ -530,7 +530,7 @@ class Patcher:
     FS_DEFARGS: List[Tuple[FunctionType, int, Callable[..., Any]]] = []
     SKIPPED_FS_MODULES: Dict[str, Set[Tuple[ModuleType, str]]] = {}
 
-    assert None in SKIPMODULES, "sys.modules contains 'None' values;" " must skip them."
+    assert None in SKIPMODULES, "sys.modules contains 'None' values; must skip them."
 
     IS_WINDOWS = sys.platform in ("win32", "cygwin")
 

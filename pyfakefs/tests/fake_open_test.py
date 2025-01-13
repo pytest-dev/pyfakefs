@@ -284,7 +284,7 @@ class FakeFileOpenTest(FakeFileOpenTestBase):
     def test_append_existing_file(self):
         file_path = self.make_path("appendfile")
         contents = [
-            "Contents of original file" "Appended contents",
+            "Contents of original fileAppended contents",
         ]
 
         self.create_file(file_path, contents=contents[0])
@@ -1445,7 +1445,7 @@ class OpenFileWithEncodingTest(FakeFileOpenTestBase):
 
     def test_create_file_with_append(self):
         contents = [
-            "Allons enfants de la Patrie," "Le jour de gloire est arrivé!",
+            "Allons enfants de la Patrie,Le jour de gloire est arrivé!",
             "Contre nous de la tyrannie,",
             "L’étendard sanglant est levé.",
         ]
@@ -1458,7 +1458,7 @@ class OpenFileWithEncodingTest(FakeFileOpenTestBase):
 
     def test_append_existing_file(self):
         contents = [
-            "Оригинальное содержание" "Дополнительное содержание",
+            "Оригинальное содержаниеДополнительное содержание",
         ]
         self.create_file(self.file_path, contents=contents[0], encoding="cyrillic")
         with self.open(self.file_path, "a", encoding="cyrillic") as fake_file:

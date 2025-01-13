@@ -127,7 +127,7 @@ class ScanDirIter:
         if isinstance(path, int):
             if self.filesystem.is_windows_fs:
                 raise NotImplementedError(
-                    "scandir does not support file descriptor " "path argument"
+                    "scandir does not support file descriptor path argument"
                 )
             self.abspath = self.filesystem.absnormpath(
                 self.filesystem.get_open_file(path).get_object().path

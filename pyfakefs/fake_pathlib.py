@@ -179,14 +179,14 @@ class _FakeAccessor(accessor):  # type: ignore[valid-type, misc]
         if "follow_symlinks" in kwargs:
             if sys.version_info < (3, 10):
                 raise TypeError(
-                    "chmod() got an unexpected keyword " "argument 'follow_symlinks'"
+                    "chmod() got an unexpected keyword argument 'follow_symlinks'"
                 )
 
             if not kwargs["follow_symlinks"] and (
                 os.chmod not in os.supports_follow_symlinks or IS_PYPY
             ):
                 raise NotImplementedError(
-                    "`follow_symlinks` for chmod() is not available " "on this system"
+                    "`follow_symlinks` for chmod() is not available on this system"
                 )
         return pathobj.filesystem.chmod(str(pathobj), *args, **kwargs)
 
@@ -432,7 +432,7 @@ if sys.version_info < (3, 12):
                     return pwd.getpwnam(username).pw_dir
                 except KeyError:
                     raise RuntimeError(
-                        "Can't determine home directory " "for %r" % username
+                        "Can't determine home directory for %r" % username
                     )
 
     class _FakeWindowsFlavour(_FakeFlavour):
@@ -502,7 +502,7 @@ if sys.version_info < (3, 12):
                     drv, root, parts = self.parse_parts((userhome,))
                     if parts[-1] != os.environ["USERNAME"]:
                         raise RuntimeError(
-                            "Can't determine home directory " "for %r" % username
+                            "Can't determine home directory for %r" % username
                         )
                     parts[-1] = username
                     if drv or root:
@@ -549,7 +549,7 @@ if sys.version_info < (3, 12):
                     return pwd.getpwnam(username).pw_dir
                 except KeyError:
                     raise RuntimeError(
-                        "Can't determine home directory " "for %r" % username
+                        "Can't determine home directory for %r" % username
                     )
 
         def compile_pattern(self, pattern):
@@ -765,9 +765,7 @@ class FakePath(pathlib.Path):
         if not isinstance(data, str):
             raise TypeError("data must be str, not %s" % data.__class__.__name__)
         if newline is not None and sys.version_info < (3, 10):
-            raise TypeError(
-                "write_text() got an unexpected " "keyword argument 'newline'"
-            )
+            raise TypeError("write_text() got an unexpected keyword argument 'newline'")
         with fake_open(
             self.filesystem,
             self.skip_names,
