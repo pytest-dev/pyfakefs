@@ -32,17 +32,18 @@ jobs:
       fail-fast: false
       matrix:
         os: [ubuntu-latest, macOS-latest, windows-latest]
-        python-version: [3.7, 3.8, 3.9, "3.10", "3.11", "3.12", "3.13"]
+        python-version: [3.8, 3.9, "3.10", "3.11", "3.12", "3.13"]
         include:
           - python-version: "pypy-3.7"
-            os: ubuntu-latest
+            os: ubuntu-22.04
           - python-version: "pypy-3.9"
             os: ubuntu-latest
           - python-version: "pypy-3.10"
             os: ubuntu-latest
-        exclude:
-          - python-version: 3.7
-            os: macOS-latest
+          - python-version: "3.7"
+            os: ubuntu-22.04
+          - python-version: "3.7"
+            os: windows-latest
 
     steps:
     - uses: actions/checkout@v4
