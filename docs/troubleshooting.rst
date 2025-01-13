@@ -374,9 +374,25 @@ be added to the patcher:
 
   @pytest.fixture
   def my_fs():
-      with Patcher():
-          patcher["modulename"] = handler_no_cleanup
-          yield
+      with Patcher() as patcher:
+          patcher.cleanup_handlers["modulename"] = handler_no_cleanup
+          yield patcher.fs
+
+
+A specific problem are modules that use filesystem functions and are imported by other modules locally
+(e.g. inside a function). These kinds of modules are not correctly reset and need to be reloaded manually.
+For this case, the cleanup handler `reload_cleanup_handler` in `pyfakefs.helpers` can be used:
+
+.. code:: python
+
+  from pyfakefs.helpers import reload_cleanup_handler
+
+
+  @pytest.fixture
+  def my_fs():
+      with Patcher() as patcher:
+          patcher.cleanup_handlers["modulename"] = reload_cleanup_handler
+          yield patcher.fs
 
 As this may not be trivial, we recommend to write an issue in ``pyfakefs`` with a reproducible example.
 We will analyze the problem, and if we find a solution we will either get this fixed in ``pyfakefs``

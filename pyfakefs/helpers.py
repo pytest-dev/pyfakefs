@@ -13,6 +13,7 @@
 """Helper classes use for fake file system implementation."""
 
 import ctypes
+import importlib
 import io
 import locale
 import os
@@ -539,3 +540,12 @@ def is_called_from_skipped_module(
         ):
             return True
     return False
+
+
+def reload_cleanup_handler(name):
+    """Cleanup handler that reloads the module with the given name.
+    Maybe needed in cases where a module is imported locally.
+    """
+    if name in sys.modules:
+        importlib.reload(sys.modules[name])
+    return True
