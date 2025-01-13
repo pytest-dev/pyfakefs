@@ -360,7 +360,7 @@ class FakePathModule:
         symbolic links encountered in the path.
         """
         if strict is not None and sys.version_info < (3, 10):
-            raise TypeError("realpath() got an unexpected " "keyword argument 'strict'")
+            raise TypeError("realpath() got an unexpected keyword argument 'strict'")
         if strict:
             # raises in strict mode if the file does not exist
             self.filesystem.resolve(filename)

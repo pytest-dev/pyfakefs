@@ -1831,7 +1831,7 @@ class FakeFilesystem:
                 open_file = self.get_open_file(file_path).get_object()
                 assert isinstance(open_file, FakeFile)
                 return open_file
-            raise TypeError("path should be string, bytes or " "os.PathLike, not int")
+            raise TypeError("path should be string, bytes or os.PathLike, not int")
 
         if follow_symlinks:
             return self.get_object_from_normpath(

@@ -366,7 +366,7 @@ class FakeStatResult:
     def st_file_attributes(self) -> int:
         if not self.is_windows:
             raise AttributeError(
-                "module 'os.stat_result' " "has no attribute 'st_file_attributes'"
+                "module 'os.stat_result' has no attribute 'st_file_attributes'"
             )
         mode = 0
         st_mode = self.st_mode
@@ -384,7 +384,7 @@ class FakeStatResult:
     def st_reparse_tag(self) -> int:
         if not self.is_windows or sys.version_info < (3, 8):
             raise AttributeError(
-                "module 'os.stat_result' " "has no attribute 'st_reparse_tag'"
+                "module 'os.stat_result' has no attribute 'st_reparse_tag'"
             )
         if self.st_mode & stat.S_IFLNK:
             return stat.IO_REPARSE_TAG_SYMLINK  # type: ignore[attr-defined]

@@ -971,8 +971,7 @@ class FakeOsModule:
                 raise NotImplementedError("dir_fd unavailable on this platform")
             if isinstance(path, int):
                 raise ValueError(
-                    "%s: Can't specify dir_fd without "
-                    "matching path_str" % fct.__name__
+                    "%s: Can't specify dir_fd without matching path_str" % fct.__name__
                 )
             if not self.path.isabs(path):
                 open_file = self.filesystem.get_open_file(dir_fd)
@@ -1068,7 +1067,7 @@ class FakeOsModule:
         """
         if self.filesystem.is_windows_fs and sys.version_info < (3, 13):
             raise AttributeError(
-                "module 'os' has no attribute 'fchmod'. " "Did you mean: 'chmod'?"
+                "module 'os' has no attribute 'fchmod'. Did you mean: 'chmod'?"
             )
         self.filesystem.chmod(fd, mode)
 
@@ -1094,7 +1093,7 @@ class FakeOsModule:
             self.chmod not in self.supports_follow_symlinks or IS_PYPY
         ):
             raise NotImplementedError(
-                "`follow_symlinks` for chmod() is not available " "on this system"
+                "`follow_symlinks` for chmod() is not available on this system"
             )
         path = self._path_with_dir_fd(path, self.chmod, dir_fd)
         self.filesystem.chmod(path, mode, follow_symlinks)

@@ -89,7 +89,7 @@ class TestExample(fake_filesystem_unittest.TestCase):  # pylint: disable=R0904
 
     def test_delete_file(self):
         """Test example.delete_file() which uses `os.remove()`."""
-        self.fs.create_file("/test/full.txt", contents="First line\n" "Second Line\n")
+        self.fs.create_file("/test/full.txt", contents="First line\nSecond Line\n")
         self.assertTrue(os.path.exists("/test/full.txt"))
         example.delete_file("/test/full.txt")
         self.assertFalse(os.path.exists("/test/full.txt"))

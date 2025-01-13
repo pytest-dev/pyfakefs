@@ -112,7 +112,7 @@ class TestPyfakefsUnittest(TestPyfakefsUnittestBase):  # pylint: disable=R0904
         with open("/fake_file.txt", encoding="utf8") as f:
             content = f.read()
         self.assertEqual(
-            "This test file was created using the " "open() function.\n",
+            "This test file was created using the open() function.\n",
             content,
         )
 
@@ -120,12 +120,12 @@ class TestPyfakefsUnittest(TestPyfakefsUnittestBase):  # pylint: disable=R0904
         """Fake io module is bound"""
         self.assertFalse(os.path.exists("/fake_file.txt"))
         with io_open("/fake_file.txt", "w", encoding="utf8") as f:
-            f.write("This test file was created using the" " io.open() function.\n")
+            f.write("This test file was created using the io.open() function.\n")
         self.assertTrue(self.fs.exists("/fake_file.txt"))
         with open("/fake_file.txt", encoding="utf8") as f:
             content = f.read()
         self.assertEqual(
-            "This test file was created using the " "io.open() function.\n",
+            "This test file was created using the io.open() function.\n",
             content,
         )
 
