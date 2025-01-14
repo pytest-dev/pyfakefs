@@ -12,7 +12,8 @@ The released versions correspond to PyPI releases.
 * the default for `FakeFilesystem.shuffle_listdir_results` will change to `True` to reflect
   the real filesystem behavior
 
-## Unreleased
+## [Version 5.7.4](https://pypi.python.org/pypi/pyfakefs/5.7.4) (2025-01-14)
+Minor bugfix release.
 
 ### Fixes
 * fixed a problem with module and session scoped fixtures in Python 3.13
