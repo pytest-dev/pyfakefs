@@ -993,6 +993,11 @@ class Patcher:
         # do not use the fd functions, as they may not be available in the target OS
         if hasattr(shutil, "_use_fd_functions"):
             shutil._use_fd_functions = False  # type: ignore[module-attr]
+        # in Python 3.14, _rmtree_impl is set at load time based on _use_fd_functions
+        # the safe version cannot be used at the moment as it used asserts of type
+        # 'assert func is os.rmtree', which do not work with the fake versions
+        if hasattr(shutil, "_rmtree_impl"):
+            shutil._rmtree_impl = shutil._rmtree_unsafe  # type: ignore[attr-defined]
 
         with warnings.catch_warnings():
             # ignore warnings, see #542 and #614

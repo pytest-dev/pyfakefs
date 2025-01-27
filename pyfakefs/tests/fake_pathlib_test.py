@@ -996,8 +996,8 @@ class FakePathlibPathFileOperationTest(RealPathlibTestCase):
             sorted(path.glob("*.py")),
         )
 
-    @unittest.skipIf(not is_windows, "Windows specific test")
     def test_glob_case_windows(self):
+        self.check_windows_only()
         self.create_file(self.make_path("foo", "setup.py"))
         self.create_file(self.make_path("foo", "all_tests.PY"))
         self.create_file(self.make_path("foo", "README.md"))
@@ -1012,9 +1012,10 @@ class FakePathlibPathFileOperationTest(RealPathlibTestCase):
             sorted(path.glob("*.py")),
         )
 
-    @unittest.skipIf(is_windows, "Posix specific test")
     def test_glob_case_posix(self):
         self.check_posix_only()
+        if sys.platform == "win32" and sys.version_info < (3, 12):
+            self.skipTest(reason="Ignoring inconsistent path delimiters")
         self.create_file(self.make_path("foo", "setup.py"))
         self.create_file(self.make_path("foo", "all_tests.PY"))
         self.create_file(self.make_path("foo", "README.md"))
