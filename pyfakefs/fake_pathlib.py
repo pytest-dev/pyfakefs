@@ -964,6 +964,19 @@ class FakePathlibModule:
 
             return grp.getgrgid(self.stat().st_gid).gr_name
 
+        if sys.version_info >= (3, 14):
+            # in Python 3.14, case-sensitivity is checked using an is-check
+            # (self.parser is posixpath) if not given, which we cannot fake
+            # therefore we already provide the case sensitivity under Posix
+            def glob(self, pattern, *, case_sensitive=None, recurse_symlinks=False):
+                if case_sensitive is None:
+                    case_sensitive = True
+                return super().glob(  # pytype: disable=wrong-keyword-args
+                    pattern,
+                    case_sensitive=case_sensitive,
+                    recurse_symlinks=recurse_symlinks,
+                )
+
     Path = FakePath
 
     def __getattr__(self, name):
