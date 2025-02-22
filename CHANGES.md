@@ -17,6 +17,10 @@ The released versions correspond to PyPI releases.
 ### Changes
 * added some preliminary support for Python 3.14
 
+### Fixes
+* fixed a problem with flushing if writing over the buffer end
+  (see [#1120](../../issues/1120))
+
 ## [Version 5.7.4](https://pypi.python.org/pypi/pyfakefs/5.7.4) (2025-01-14)
 Minor bugfix release.
 

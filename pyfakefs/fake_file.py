@@ -910,8 +910,8 @@ class FakeFileWrapper:
         self._check_open_file()
 
         if self.allow_update:
-            contents = self._io.getvalue()
             if self._append:
+                contents = self._io.getvalue()
                 self._sync_io()
                 old_contents = self.file_object.byte_contents
                 assert old_contents is not None
@@ -919,6 +919,7 @@ class FakeFileWrapper:
                 self._set_stream_contents(contents)
             else:
                 self._io.flush()
+                contents = self._io.getvalue()
             changed = self.file_object.set_contents(contents, self._encoding)
             self.update_flush_pos()
             if changed:

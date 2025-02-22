@@ -1366,6 +1366,22 @@ class BufferingModeTest(FakeFileOpenTestBase):
                 x = r.read()
                 self.assertEqual(b"a" * 50, x)
 
+    def test_writing_over_buffer_end(self):
+        # regression test for #1120
+        dir_path = self.make_path("foo")
+        self.create_dir(dir_path)
+        file_path = self.os.path.join(dir_path, "bar.txt")
+        line_end_size = len(self.os.linesep)
+        char_count = io.DEFAULT_BUFFER_SIZE // 256 - line_end_size
+        for line_count in (255, 256, 257, 511, 512, 513):
+            with self.open(file_path, "w") as f:
+                for i in range(line_count):
+                    f.write("x" * char_count + "\n")
+
+            with self.open(file_path) as f:
+                lines = f.readlines()
+                self.assertEqual(line_count, len(lines))
+
 
 class RealBufferingTest(BufferingModeTest):
     def use_real_fs(self):
