@@ -689,6 +689,8 @@ class Patcher:
         self._dyn_patcher: Optional[DynamicPatcher] = None
         self._patching = False
         self._paused = False
+        self.has_copy_file_range = False
+        self.has_copy_file = False
 
     def checkcache(self, filename=None):
         """Calls the original linecache.checkcache making sure no fake OS calls
@@ -990,6 +992,14 @@ class Patcher:
         if self.has_fcopy_file:
             shutil._HAS_FCOPYFILE = False  # type: ignore[attr-defined]
 
+        self.has_copy_file_range = (
+            sys.platform == "linux"
+            and hasattr(shutil, "_USE_CP_COPY_FILE_RANGE")
+            and shutil._USE_CP_COPY_FILE_RANGE
+        )
+        if self.has_copy_file_range:
+            shutil._USE_CP_COPY_FILE_RANGE = False  # type: ignore[attr-defined]
+
         # do not use the fd functions, as they may not be available in the target OS
         if hasattr(shutil, "_use_fd_functions"):
             shutil._use_fd_functions = False  # type: ignore[module-attr]
@@ -1047,7 +1057,8 @@ class Patcher:
         if sys.version_info >= (3, 13):
             globber = glob._StringGlobber  # type: ignore[module-attr]
             globber.lstat = staticmethod(os.lstat)
-            globber.scandir = staticmethod(os.scandir)
+            if sys.version_info < (3, 14):
+                globber.scandir = staticmethod(os.scandir)
 
     def patch_functions(self) -> None:
         assert self._stubs is not None
@@ -1124,6 +1135,8 @@ class Patcher:
         self.stop_patching()
         if self.has_fcopy_file:
             shutil._HAS_FCOPYFILE = True  # type: ignore[attr-defined]
+        if self.has_copy_file_range:
+            shutil._USE_CP_COPY_FILE_RANGE = True  # type: ignore[attr-defined]
 
         reset_ids()
         if self.is_doc_test:
