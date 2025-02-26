@@ -20,6 +20,8 @@ The released versions correspond to PyPI releases.
 ### Fixes
 * fixed a problem with flushing if writing over the buffer end
   (see [#1120](../../issues/1120))
+* fixed a regression that could break tests under Posix in Python 3.12
+  (see [#1126](../../issues/1126))
 
 ## [Version 5.7.4](https://pypi.python.org/pypi/pyfakefs/5.7.4) (2025-01-14)
 Minor bugfix release.
