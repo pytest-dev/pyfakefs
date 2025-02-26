@@ -130,6 +130,54 @@ class TempfilePatcher:
         tempfile.tempdir = None
 
 
+class LineCachePatcher:
+    """Handles linecache patching for newer Python versions."""
+
+    def __init__(self):
+        self.linecache_updatecache = None
+        self.linecache_checkcache = None
+
+    def start_patching(self):
+        if self.linecache_updatecache is not None:
+            return
+
+        def checkcache(filename=None):
+            """Calls the original linecache.checkcache making sure no fake OS calls
+            are used."""
+            with use_original_os():
+                return self.linecache_checkcache(filename)
+
+        def updatecache(filename, module_globals=None):
+            """Calls the original linecache.updatecache making sure no fake OS calls
+            are used."""
+
+            with use_original_os():
+                # workaround for updatecache problem with pytest under Windows, see #1096
+                if not filename.endswith(r"pytest.exe\__main__.py"):
+                    return self.linecache_updatecache(filename, module_globals)
+                return []
+
+        if (
+            sys.version_info >= (3, 13)
+            or sys.platform == "win32"
+            and sys.version_info >= (3, 12)
+        ):
+            # in linecache, 'os' is now imported locally, which involves the
+            # dynamic patcher, therefore we patch the affected functions
+            self.linecache_updatecache = linecache.updatecache
+            linecache.updatecache = updatecache
+            self.linecache_checkcache = linecache.checkcache
+            linecache.checkcache = checkcache
+
+    def stop_patching(self):
+        if self.linecache_updatecache is None:
+            return
+        linecache.updatecache = self.linecache_updatecache
+        linecache.checkcache = self.linecache_checkcache
+        self.linecache_updatecache = None
+        self.linecache_checkcache = None
+
+
 def patchfs(
     _func: Optional[Callable] = None,
     *,
@@ -616,9 +664,8 @@ class Patcher:
         # save the original open function for use in pytest plugin
         self.original_open = open
         self.patch_open_code = patch_open_code
-        self.linecache_updatecache = None
-        self.linecache_checkcache = None
         self.tempfile_patcher = TempfilePatcher()
+        self.linecache_patcher = LineCachePatcher()
 
         if additional_skip_names is not None:
             skip_names = [
@@ -691,21 +738,6 @@ class Patcher:
         self._paused = False
         self.has_copy_file_range = False
         self.has_copy_file = False
-
-    def checkcache(self, filename=None):
-        """Calls the original linecache.checkcache making sure no fake OS calls
-        are used."""
-        with use_original_os():
-            return self.linecache_checkcache(filename)
-
-    def updatecache(self, filename, module_globals=None):
-        """Calls the original linecache.updatecache making sure no fake OS calls
-        are used."""
-        with use_original_os():
-            # workaround for updatecache problem with pytest under Windows, see #1096
-            if not filename.endswith(r"pytest.exe\__main__.py"):
-                return self.linecache_updatecache(filename, module_globals)
-            return []
 
     @classmethod
     def clear_fs_cache(cls) -> None:
@@ -1028,14 +1060,7 @@ class Patcher:
             self._patching = True
             self._paused = False
 
-            if sys.version_info >= (3, 12):
-                # in linecache, 'os' is now imported locally, which involves the
-                # dynamic patcher, therefore we patch the affected functions
-                self.linecache_updatecache = linecache.updatecache
-                linecache.updatecache = self.updatecache
-                self.linecache_checkcache = linecache.checkcache
-                linecache.checkcache = self.checkcache
-
+            self.linecache_patcher.start_patching()
             self.tempfile_patcher.start_patching()
 
             self.patch_modules()
@@ -1156,9 +1181,7 @@ class Patcher:
                 self._dyn_patcher.cleanup()
                 sys.meta_path.pop(0)
             self.tempfile_patcher.stop_patching()
-            if self.linecache_updatecache is not None:
-                linecache.updatecache = self.linecache_updatecache
-                linecache.checkcache = self.linecache_checkcache
+            self.linecache_patcher.stop_patching()
             self._set_glob_os_functions()
 
     @property
