@@ -1021,8 +1021,8 @@ class FakeOsModule:
         mode: int,
         *,
         dir_fd: Optional[int] = None,
-        effective_ids: bool = False,
-        follow_symlinks: bool = True,
+        effective_ids: Optional[bool] = None,
+        follow_symlinks: Optional[bool] = None,
     ) -> bool:
         """Check if a file exists and has the specified permissions.
 
@@ -1039,9 +1039,16 @@ class FakeOsModule:
         Returns:
             bool, `True` if file is accessible, `False` otherwise.
         """
-        if effective_ids and self.filesystem.is_windows_fs:
+        if effective_ids is not None and self.filesystem.is_windows_fs:
             raise NotImplementedError(
                 "access: effective_ids unavailable on this platform"
+            )
+        if follow_symlinks is None:
+            # different behavior under Windows
+            follow_symlinks = not self.filesystem.is_windows_fs
+        elif self.filesystem.is_windows_fs:
+            raise NotImplementedError(
+                "access: follow_symlinks unavailable on this platform"
             )
         path = self._path_with_dir_fd(path, self.access, dir_fd)
         try:

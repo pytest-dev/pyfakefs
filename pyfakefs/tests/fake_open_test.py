@@ -28,7 +28,7 @@ from pyfakefs.helpers import is_root, IS_PYPY, get_locale_encoding
 from pyfakefs.fake_io import FakeIoModule
 from pyfakefs.fake_filesystem_unittest import PatchMode, Patcher
 from pyfakefs.tests.skipped_pathlib import read_open
-from pyfakefs.tests.test_utils import RealFsTestCase
+from pyfakefs.tests.test_utils import RealFsTestCase, skip_if_symlink_not_supported
 
 
 class FakeFileOpenTestBase(RealFsTestCase):
@@ -241,7 +241,7 @@ class FakeFileOpenTest(FakeFileOpenTestBase):
         self.assertEqual(contents, result)
 
     def test_exclusive_create_file_failure(self):
-        self.skip_if_symlink_not_supported()
+        skip_if_symlink_not_supported()
         file_path = self.make_path("bar")
         self.create_file(file_path)
         self.assert_raises_os_error(errno.EEXIST, self.open, file_path, "x")
@@ -476,7 +476,7 @@ class FakeFileOpenTest(FakeFileOpenTestBase):
             self.open(file_path, "w+", encoding="utf8").close()
 
     def test_follow_link_read(self):
-        self.skip_if_symlink_not_supported()
+        skip_if_symlink_not_supported()
         link_path = self.make_path("foo", "bar", "baz")
         target = self.make_path("tarJAY")
         target_contents = "real baz contents"
@@ -489,7 +489,7 @@ class FakeFileOpenTest(FakeFileOpenTestBase):
         self.assertEqual(target_contents, got_contents)
 
     def test_follow_link_write(self):
-        self.skip_if_symlink_not_supported()
+        skip_if_symlink_not_supported()
         link_path = self.make_path("foo", "bar", "TBD")
         target = self.make_path("tarJAY")
         target_contents = "real baz contents"
@@ -504,7 +504,7 @@ class FakeFileOpenTest(FakeFileOpenTestBase):
 
     def test_follow_intra_path_link_write(self):
         # Test a link in the middle of of a file path.
-        self.skip_if_symlink_not_supported()
+        skip_if_symlink_not_supported()
         link_path = self.os.path.join(
             self.base_path, "foo", "build", "local_machine", "output", "1"
         )
@@ -1920,7 +1920,7 @@ class ResolvePathTest(FakeFileOpenTestBase):
         self.assertTrue(self.os.path.exists(file_path))
 
     def test_link_within_same_directory(self):
-        self.skip_if_symlink_not_supported()
+        skip_if_symlink_not_supported()
         final_target = self.make_path("foo", "baz")
         link_path = self.make_path("foo", "bar")
         self.create_symlink(link_path, "baz")
@@ -1929,7 +1929,7 @@ class ResolvePathTest(FakeFileOpenTestBase):
         self.assertEqual(1, self.os.stat(final_target)[stat.ST_SIZE])
 
     def test_link_to_sub_directory(self):
-        self.skip_if_symlink_not_supported()
+        skip_if_symlink_not_supported()
         final_target = self.make_path("foo", "baz", "bip")
         dir_path = self.make_path("foo", "baz")
         self.create_dir(dir_path)
@@ -1944,7 +1944,7 @@ class ResolvePathTest(FakeFileOpenTestBase):
         self.assertTrue(self.os.stat(dir_path)[stat.ST_MODE] & stat.S_IFDIR)
 
     def test_link_to_parent_directory(self):
-        self.skip_if_symlink_not_supported()
+        skip_if_symlink_not_supported()
         final_target = self.make_path("baz", "bip")
         self.create_dir(self.make_path("foo"))
         self.create_dir(self.make_path("baz"))
@@ -1956,7 +1956,7 @@ class ResolvePathTest(FakeFileOpenTestBase):
         self.assertTrue(self.os.path.exists(link_path))
 
     def test_link_to_absolute_path(self):
-        self.skip_if_symlink_not_supported()
+        skip_if_symlink_not_supported()
         final_target = self.make_path("foo", "baz", "bip")
         self.create_dir(self.make_path("foo", "baz"))
         link_path = self.make_path("foo", "bar")
@@ -1965,7 +1965,7 @@ class ResolvePathTest(FakeFileOpenTestBase):
         self.assertTrue(self.os.path.exists(final_target))
 
     def test_relative_links_work_after_chdir(self):
-        self.skip_if_symlink_not_supported()
+        skip_if_symlink_not_supported()
         final_target = self.make_path("foo", "baz", "bip")
         self.create_dir(self.make_path("foo", "baz"))
         link_path = self.make_path("foo", "bar")
@@ -1984,7 +1984,7 @@ class ResolvePathTest(FakeFileOpenTestBase):
         self.assertTrue(self.os.path.exists(final_target))
 
     def test_absolute_links_work_after_chdir(self):
-        self.skip_if_symlink_not_supported()
+        skip_if_symlink_not_supported()
         final_target = self.make_path("foo", "baz", "bip")
         self.create_dir(self.make_path("foo", "baz"))
         link_path = self.make_path("foo", "bar")
@@ -2036,7 +2036,7 @@ class ResolvePathTest(FakeFileOpenTestBase):
     def test_read_link_to_link(self):
         # Write into the final link target and read back from a file which will
         # point to that.
-        self.skip_if_symlink_not_supported()
+        skip_if_symlink_not_supported()
         link_path = self.make_path("foo", "bar")
         self.create_symlink(link_path, "link")
         self.create_symlink(self.make_path("foo", "link"), "baz")
@@ -2045,7 +2045,7 @@ class ResolvePathTest(FakeFileOpenTestBase):
         self.assertEqual("x", fh.read())
 
     def test_write_link_to_link(self):
-        self.skip_if_symlink_not_supported()
+        skip_if_symlink_not_supported()
         final_target = self.make_path("foo", "baz")
         link_path = self.make_path("foo", "bar")
         self.create_symlink(link_path, "link")
@@ -2054,7 +2054,7 @@ class ResolvePathTest(FakeFileOpenTestBase):
         self.assertTrue(self.os.path.exists(final_target))
 
     def test_multiple_links(self):
-        self.skip_if_symlink_not_supported()
+        skip_if_symlink_not_supported()
         self.os.makedirs(self.make_path("a", "link1", "c", "link2"))
 
         self.create_symlink(self.make_path("a", "b"), "link1")
@@ -2081,7 +2081,7 @@ class ResolvePathTest(FakeFileOpenTestBase):
 
     def test_utime_link(self):
         """os.utime() and os.stat() via symbolic link (issue #49)"""
-        self.skip_if_symlink_not_supported()
+        skip_if_symlink_not_supported()
         self.create_dir(self.make_path("foo", "baz"))
         target_path = self.make_path("foo", "baz", "bip")
         self.write_to_file(target_path)

@@ -34,7 +34,12 @@ from pyfakefs.fake_filesystem import (
     OSType,
 )
 from pyfakefs.helpers import IS_WIN
-from pyfakefs.tests.test_utils import TestCase, RealFsTestCase, time_mock
+from pyfakefs.tests.test_utils import (
+    TestCase,
+    RealFsTestCase,
+    time_mock,
+    skip_if_symlink_not_supported,
+)
 
 
 class FakeDirectoryUnitTest(TestCase):
@@ -2039,7 +2044,7 @@ class MountPointTest(TestCase):
 
 class ConvenienceMethodTest(RealFsTestCase):
     def test_create_link_with_non_existent_parent(self):
-        self.skip_if_symlink_not_supported()
+        skip_if_symlink_not_supported()
         file1_path = self.make_path("test_file1")
         link_path = self.make_path("nonexistent", "test_file2")
 
@@ -2050,7 +2055,7 @@ class ConvenienceMethodTest(RealFsTestCase):
         self.assertTrue(self.filesystem.exists(link_path))
 
     def test_create_symlink_with_non_existent_parent(self):
-        self.skip_if_symlink_not_supported()
+        skip_if_symlink_not_supported()
         file1_path = self.make_path("test_file1")
         link_path = self.make_path("nonexistent", "test_file2")
 
@@ -2163,7 +2168,7 @@ class RealFileSystemAccessTest(RealFsTestCase):
                 self.filesystem.add_real_directory(root_dir, target_path="/root/")
 
     def test_symlink_is_merged(self):
-        self.skip_if_symlink_not_supported()
+        skip_if_symlink_not_supported()
         self.filesystem.create_dir(os.path.join("/", "root", "foo"))
         with self.create_real_paths() as root_dir:
             link_path = os.path.join(root_dir, "link.txt")
@@ -2428,7 +2433,7 @@ class RealFileSystemAccessTest(RealFsTestCase):
         )
 
     def test_add_existing_real_directory_symlink_target_path(self):
-        self.skip_if_symlink_not_supported()
+        skip_if_symlink_not_supported()
         real_directory = self._setup_temp_directory()
         symlinks = [
             (
@@ -2453,7 +2458,7 @@ class RealFileSystemAccessTest(RealFsTestCase):
         self.assertTrue(self.filesystem.exists("/path/fixtures/symlink_file_relative"))
 
     def test_add_existing_real_directory_symlink_lazy_read(self):
-        self.skip_if_symlink_not_supported()
+        skip_if_symlink_not_supported()
         real_directory = self._setup_temp_directory()
         symlinks = [
             (

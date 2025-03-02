@@ -29,7 +29,11 @@ from pyfakefs.fake_filesystem import (
     set_gid,
 )
 from pyfakefs.helpers import IN_DOCKER, IS_PYPY, get_uid, get_gid, reset_ids
-from pyfakefs.tests.test_utils import TestCase, RealFsTestCase
+from pyfakefs.tests.test_utils import (
+    TestCase,
+    RealFsTestCase,
+    skip_if_symlink_not_supported,
+)
 
 
 class FakeOsModuleTestBase(RealFsTestCase):
@@ -154,7 +158,7 @@ class FakeOsModuleTest(FakeOsModuleTestBase):
         self.assertEqual(["foo"], self.os.listdir(directory))
 
     def test_listdir_on_symlink(self):
-        self.skip_if_symlink_not_supported()
+        skip_if_symlink_not_supported()
         directory = self.make_path("xyzzy")
         files = ["foo", "bar", "baz"]
         for f in files:
@@ -368,7 +372,7 @@ class FakeOsModuleTest(FakeOsModuleTestBase):
     def test_stat_no_follow_symlinks_windows(self):
         """Test that stat with follow_symlinks=False behaves like lstat."""
         self.check_windows_only()
-        self.skip_if_symlink_not_supported()
+        skip_if_symlink_not_supported()
         directory = self.make_path("xyzzy")
         base_name = "plugh"
         file_contents = "frobozz"
@@ -402,7 +406,7 @@ class FakeOsModuleTest(FakeOsModuleTestBase):
 
     def test_lstat_size_windows(self):
         self.check_windows_only()
-        self.skip_if_symlink_not_supported()
+        skip_if_symlink_not_supported()
         directory = self.make_path("xyzzy")
         base_name = "plugh"
         file_contents = "frobozz"
@@ -474,7 +478,7 @@ class FakeOsModuleTest(FakeOsModuleTestBase):
     def test_lstat_symlink_with_trailing_sep_linux(self):
         # regression test for #366
         self.check_linux_only()
-        self.skip_if_symlink_not_supported()
+        skip_if_symlink_not_supported()
         link_path = self.make_path("foo")
         self.os.symlink(self.base_path, link_path)
         # used to raise
@@ -483,7 +487,7 @@ class FakeOsModuleTest(FakeOsModuleTestBase):
     def test_lstat_symlink_with_trailing_sep_macos(self):
         # regression test for #366
         self.check_macos_only()
-        self.skip_if_symlink_not_supported()
+        skip_if_symlink_not_supported()
         link_path = self.make_path("foo")
         self.os.symlink(self.base_path, link_path)
         # used to raise
@@ -491,7 +495,7 @@ class FakeOsModuleTest(FakeOsModuleTestBase):
 
     def test_readlink_ending_with_sep_windows(self):
         self.check_windows_only()
-        self.skip_if_symlink_not_supported()
+        skip_if_symlink_not_supported()
         link_path = self.make_path("foo")
         self.os.symlink(self.base_path, link_path)
         self.assert_equal_paths(
@@ -500,7 +504,7 @@ class FakeOsModuleTest(FakeOsModuleTestBase):
 
     def test_islink_with_trailing_sep_windows(self):
         self.check_windows_only()
-        self.skip_if_symlink_not_supported()
+        skip_if_symlink_not_supported()
         link_path = self.make_path("foo")
         self.os.symlink(self.base_path, link_path)
         self.assertTrue(self.os.path.islink(link_path + self.os.path.sep))
@@ -548,11 +552,11 @@ class FakeOsModuleTest(FakeOsModuleTestBase):
 
     def test_remove_link_ending_with_sep_windows(self):
         self.check_windows_only()
-        self.skip_if_symlink_not_supported()
+        skip_if_symlink_not_supported()
         self.check_remove_link_ending_with_sep(errno.EACCES)
 
     def test_lstat_uses_open_fd_as_path(self):
-        self.skip_if_symlink_not_supported()
+        skip_if_symlink_not_supported()
         if os.lstat not in os.supports_fd:
             self.skip_real_fs()
         self.assert_raises_os_error(errno.EBADF, self.os.lstat, 5)
@@ -615,7 +619,7 @@ class FakeOsModuleTest(FakeOsModuleTestBase):
 
     @unittest.skipIf(not hasattr(os, "O_NOFOLLOW"), "NOFOLLOW attribute not supported")
     def test_open_nofollow_symlink_raises(self):
-        self.skip_if_symlink_not_supported()
+        skip_if_symlink_not_supported()
         file_path = self.make_path("file.txt")
         self.create_file(file_path, contents="foo")
         link_path = self.make_path("link")
@@ -626,7 +630,7 @@ class FakeOsModuleTest(FakeOsModuleTestBase):
 
     @unittest.skipIf(not hasattr(os, "O_NOFOLLOW"), "NOFOLLOW attribute not supported")
     def test_open_nofollow_symlink_as_parent_works(self):
-        self.skip_if_symlink_not_supported()
+        skip_if_symlink_not_supported()
         dir_path = self.make_path("dir")
         self.create_dir(dir_path)
         link_path = self.make_path("link")
@@ -639,7 +643,7 @@ class FakeOsModuleTest(FakeOsModuleTestBase):
 
     def test_lexists_with_trailing_separator_linux_windows(self):
         self.check_linux_and_windows()
-        self.skip_if_symlink_not_supported()
+        skip_if_symlink_not_supported()
         file_path = self.make_path("foo")
         self.os.symlink(file_path, file_path)
         self.assertFalse(self.os.path.lexists(file_path + self.os.sep))
@@ -653,7 +657,7 @@ class FakeOsModuleTest(FakeOsModuleTestBase):
 
     def test_islink_with_trailing_separator_linux_windows(self):
         self.check_linux_and_windows()
-        self.skip_if_symlink_not_supported()
+        skip_if_symlink_not_supported()
         file_path = self.make_path("foo")
         self.os.symlink(file_path, file_path)
         self.assertFalse(self.os.path.islink(file_path + self.os.sep))
@@ -712,7 +716,7 @@ class FakeOsModuleTest(FakeOsModuleTestBase):
         self.check_remove_with_trailing_separator(errno.EINVAL)
 
     def test_readlink(self):
-        self.skip_if_symlink_not_supported()
+        skip_if_symlink_not_supported()
         link_path = self.make_path("foo", "bar", "baz")
         target = self.make_path("tarJAY")
         self.create_symlink(link_path, target)
@@ -725,7 +729,7 @@ class FakeOsModuleTest(FakeOsModuleTestBase):
 
     def test_readlink_raises_if_path_is_not_a_link_windows(self):
         self.check_windows_only()
-        self.skip_if_symlink_not_supported()
+        skip_if_symlink_not_supported()
         self.check_readlink_raises_if_path_is_not_a_link()
 
     def test_readlink_raises_if_path_is_not_a_link_posix(self):
@@ -741,7 +745,7 @@ class FakeOsModuleTest(FakeOsModuleTestBase):
 
     def test_readlink_raises_if_path_has_file_windows(self):
         self.check_windows_only()
-        self.skip_if_symlink_not_supported()
+        skip_if_symlink_not_supported()
         self.check_readlink_raises_if_path_has_file(errno.ENOENT)
 
     def test_readlink_raises_if_path_has_file_posix(self):
@@ -749,13 +753,13 @@ class FakeOsModuleTest(FakeOsModuleTestBase):
         self.check_readlink_raises_if_path_has_file(errno.ENOTDIR)
 
     def test_readlink_raises_if_path_does_not_exist(self):
-        self.skip_if_symlink_not_supported()
+        skip_if_symlink_not_supported()
         self.assert_raises_os_error(
             errno.ENOENT, self.os.readlink, "/this/path/does/not/exist"
         )
 
     def test_readlink_raises_if_path_is_none(self):
-        self.skip_if_symlink_not_supported()
+        skip_if_symlink_not_supported()
         with self.assertRaises(TypeError):
             self.os.readlink(None)
 
@@ -781,7 +785,7 @@ class FakeOsModuleTest(FakeOsModuleTestBase):
 
     def test_broken_symlink_with_trailing_separator_windows(self):
         self.check_windows_only()
-        self.skip_if_symlink_not_supported()
+        skip_if_symlink_not_supported()
         file_path = self.make_path("foo")
         link_path = self.make_path("link")
         self.os.symlink(file_path, link_path)
@@ -811,7 +815,7 @@ class FakeOsModuleTest(FakeOsModuleTestBase):
     def test_circular_readlink_with_trailing_separator_windows(self):
         # Regression test for #372
         self.check_windows_only()
-        self.skip_if_symlink_not_supported()
+        skip_if_symlink_not_supported()
         file_path = self.make_path("foo")
         self.os.symlink(file_path, file_path)
         self.assert_raises_os_error(
@@ -819,7 +823,7 @@ class FakeOsModuleTest(FakeOsModuleTestBase):
         )
 
     def test_readlink_with_links_in_path(self):
-        self.skip_if_symlink_not_supported()
+        skip_if_symlink_not_supported()
         self.create_symlink(
             self.make_path("meyer", "lemon", "pie"), self.make_path("yum")
         )
@@ -830,7 +834,7 @@ class FakeOsModuleTest(FakeOsModuleTestBase):
         )
 
     def test_readlink_with_chained_links_in_path(self):
-        self.skip_if_symlink_not_supported()
+        skip_if_symlink_not_supported()
         self.create_symlink(
             self.make_path("eastern", "european", "wolfhounds", "chase"),
             self.make_path("cats"),
@@ -988,7 +992,7 @@ class FakeOsModuleTest(FakeOsModuleTestBase):
         self.check_remove_dir_raises_error(errno.EACCES)
 
     def test_remove_symlink_to_dir(self):
-        self.skip_if_symlink_not_supported()
+        skip_if_symlink_not_supported()
         directory = self.make_path("zzy")
         link = self.make_path("link_to_dir")
         self.create_dir(directory)
@@ -1028,7 +1032,7 @@ class FakeOsModuleTest(FakeOsModuleTestBase):
 
     def test_rename_dir_to_symlink_windows(self):
         self.check_windows_only()
-        self.skip_if_symlink_not_supported()
+        skip_if_symlink_not_supported()
         link_path = self.make_path("link")
         dir_path = self.make_path("dir")
         link_target = self.os.path.join(dir_path, "link_target")
@@ -1072,7 +1076,7 @@ class FakeOsModuleTest(FakeOsModuleTestBase):
         )
 
     def check_rename_case_with_symlink(self, result):
-        self.skip_if_symlink_not_supported()
+        skip_if_symlink_not_supported()
         self.check_case_insensitive_fs()
         dir_path_lower = self.make_path("beta")
         self.create_dir(dir_path_lower)
@@ -1199,7 +1203,7 @@ class FakeOsModuleTest(FakeOsModuleTestBase):
 
     def test_rename_to_a_hardlink_of_same_file_should_do_nothing(self):
         self.skip_real_fs_failure(skip_posix=False)
-        self.skip_if_symlink_not_supported()
+        skip_if_symlink_not_supported()
         file_path = self.make_path("dir", "file")
         self.create_file(file_path)
         link_path = self.make_path("link")
@@ -1209,7 +1213,7 @@ class FakeOsModuleTest(FakeOsModuleTestBase):
         self.assertTrue(self.os.path.exists(link_path))
 
     def test_hardlink_works_with_symlink(self):
-        self.skip_if_symlink_not_supported()
+        skip_if_symlink_not_supported()
         base_path = self.make_path("foo")
         self.create_dir(base_path)
         symlink_path = self.os.path.join(base_path, "slink")
@@ -1523,7 +1527,7 @@ class FakeOsModuleTest(FakeOsModuleTestBase):
 
     def test_rmdir_via_symlink(self):
         self.check_windows_only()
-        self.skip_if_symlink_not_supported()
+        skip_if_symlink_not_supported()
         base_path = self.make_path("foo", "bar")
         dir_path = self.os.path.join(base_path, "alpha")
         self.create_dir(dir_path)
@@ -1677,7 +1681,7 @@ class FakeOsModuleTest(FakeOsModuleTestBase):
 
     def test_mkdir_removes_symlink_in_windows(self):
         self.check_windows_only()
-        self.skip_if_symlink_not_supported()
+        skip_if_symlink_not_supported()
         base_path = self.make_path("foo", "bar")
         link_path = self.os.path.join(base_path, "link_to_dir")
         dir_path = self.os.path.join(base_path, "dir")
@@ -1826,7 +1830,7 @@ class FakeOsModuleTest(FakeOsModuleTestBase):
         )
 
     def test_makedirs_raises_if_parent_is_looping_link(self):
-        self.skip_if_symlink_not_supported()
+        skip_if_symlink_not_supported()
         link_path = self.make_path("link")
         link_target = self.os.path.join(link_path, "link")
         self.os.symlink(link_target, link_path)
@@ -2001,7 +2005,7 @@ class FakeOsModuleTest(FakeOsModuleTestBase):
             self.assertFalse(self.os.access(path, self.rw))
 
     def test_access_symlink(self):
-        self.skip_if_symlink_not_supported()
+        skip_if_symlink_not_supported()
         self.skip_real_fs()
         path = self.make_path("some_file")
         self.createTestFile(path)
@@ -2021,16 +2025,25 @@ class FakeOsModuleTest(FakeOsModuleTestBase):
         self.assertFalse(self.os.access(link_path, self.os.X_OK))
         self.assertFalse(self.os.access(link_path, self.rwx))
 
-        # test link itself
-        self.assertTrue(self.os.access(link_path, self.os.F_OK, follow_symlinks=False))
-        self.assertTrue(self.os.access(link_path, self.os.R_OK, follow_symlinks=False))
-        self.assertTrue(self.os.access(link_path, self.os.W_OK, follow_symlinks=False))
+        # test link itself (default under Windows, follow_symlinks not supported)
+        follow_symlinks = None if self.is_windows_fs else False
+        self.assertTrue(
+            self.os.access(link_path, self.os.F_OK, follow_symlinks=follow_symlinks)
+        )
+        self.assertTrue(
+            self.os.access(link_path, self.os.R_OK, follow_symlinks=follow_symlinks)
+        )
+        self.assertTrue(
+            self.os.access(link_path, self.os.W_OK, follow_symlinks=follow_symlinks)
+        )
         if not self.is_windows_fs:
             self.assertTrue(
                 self.os.access(link_path, self.os.X_OK, follow_symlinks=False)
             )
             self.assertTrue(self.os.access(link_path, self.rwx, follow_symlinks=False))
-        self.assertTrue(self.os.access(link_path, self.rw, follow_symlinks=False))
+        self.assertTrue(
+            self.os.access(link_path, self.rw, follow_symlinks=follow_symlinks)
+        )
 
     def test_access_non_existent_file(self):
         # set up
@@ -2044,11 +2057,13 @@ class FakeOsModuleTest(FakeOsModuleTestBase):
         self.assertFalse(self.os.access(path, self.rwx))
         self.assertFalse(self.os.access(path, self.rw))
 
-    def test_effective_ids_not_supported_under_windows(self):
+    def test_arguments_not_supported_under_windows(self):
         self.check_windows_only()
         path = self.make_path("foo", "bar")
         with self.assertRaises(NotImplementedError):
             self.os.access(path, self.os.F_OK, effective_ids=True)
+        with self.assertRaises(NotImplementedError):
+            self.os.access(path, self.os.F_OK, follow_symlinks=False)
 
     def test_chmod(self):
         # set up
@@ -2114,7 +2129,7 @@ class FakeOsModuleTest(FakeOsModuleTestBase):
         if sys.version_info < (3, 13):
             self.check_posix_only()
         else:
-            self.skip_if_symlink_not_supported()
+            skip_if_symlink_not_supported()
         path = self.make_path("some_file")
         self.createTestFile(path)
         link_path = self.make_path("link_to_some_file")
@@ -2372,7 +2387,7 @@ class FakeOsModuleTest(FakeOsModuleTestBase):
         self.assert_raises_os_error(errno.ENOTDIR, self.os.mknod, filename2)
 
     def test_symlink(self):
-        self.skip_if_symlink_not_supported()
+        skip_if_symlink_not_supported()
         file_path = self.make_path("foo", "bar", "baz")
         self.create_dir(self.make_path("foo", "bar"))
         self.os.symlink("bogus", file_path)
@@ -2410,7 +2425,7 @@ class FakeOsModuleTest(FakeOsModuleTestBase):
 
     def test_symlink_with_path_ending_with_sep_in_windows(self):
         self.check_windows_only()
-        self.skip_if_symlink_not_supported()
+        skip_if_symlink_not_supported()
         dir_path = self.make_path("dir")
         self.create_dir(dir_path)
         self.assert_raises_os_error(
@@ -2432,7 +2447,7 @@ class FakeOsModuleTest(FakeOsModuleTestBase):
 
     def test_broken_symlink_with_trailing_sep_windows(self):
         self.check_windows_only()
-        self.skip_if_symlink_not_supported()
+        skip_if_symlink_not_supported()
         path0 = self.make_path("foo") + self.os.sep
         self.assert_raises_os_error(errno.EINVAL, self.os.symlink, path0, path0)
 
@@ -2454,7 +2469,7 @@ class FakeOsModuleTest(FakeOsModuleTestBase):
 
     def test_rename_symlink_with_trailing_sep_windows(self):
         self.check_windows_only()
-        self.skip_if_symlink_not_supported()
+        skip_if_symlink_not_supported()
         path = self.make_path("foo")
         self.os.symlink(self.base_path, path)
         self.assert_raises_os_error(
@@ -2463,7 +2478,7 @@ class FakeOsModuleTest(FakeOsModuleTestBase):
 
     def test_rename_symlink_to_other_case(self):
         # Regression test for #389
-        self.skip_if_symlink_not_supported()
+        skip_if_symlink_not_supported()
         link_path = self.make_path("foo")
         self.os.symlink(self.base_path, link_path)
         link_to_link_path = self.make_path("BAR")
@@ -2474,7 +2489,7 @@ class FakeOsModuleTest(FakeOsModuleTestBase):
 
     def create_broken_link_path_with_trailing_sep(self):
         # Regression tests for #396
-        self.skip_if_symlink_not_supported()
+        skip_if_symlink_not_supported()
         link_path = self.make_path("link")
         target_path = self.make_path("target")
         self.os.symlink(target_path, link_path)
@@ -2568,7 +2583,7 @@ class FakeOsModuleTest(FakeOsModuleTestBase):
 
     def test_rename_link_with_trailing_sep_to_self_windows(self):
         self.check_windows_only()
-        self.skip_if_symlink_not_supported()
+        skip_if_symlink_not_supported()
         path = self.make_path("foo")
         self.os.symlink(self.base_path, path)
         self.os.rename(path + self.os.sep, path)  # no error
@@ -2584,7 +2599,7 @@ class FakeOsModuleTest(FakeOsModuleTestBase):
 
     def check_open_broken_symlink_to_path_with_trailing_sep(self, error):
         # Regression tests for #397
-        self.skip_if_symlink_not_supported()
+        skip_if_symlink_not_supported()
         target_path = self.make_path("target") + self.os.sep
         link_path = self.make_path("link")
         self.os.symlink(target_path, link_path)
@@ -2605,7 +2620,7 @@ class FakeOsModuleTest(FakeOsModuleTestBase):
 
     def check_link_path_ending_with_sep(self, error):
         # Regression tests for #399
-        self.skip_if_symlink_not_supported()
+        skip_if_symlink_not_supported()
         file_path = self.make_path("foo")
         link_path = self.make_path("link")
         with self.open(file_path, "w", encoding="utf8"):
@@ -2631,7 +2646,7 @@ class FakeOsModuleTest(FakeOsModuleTestBase):
 
     def test_link_to_path_ending_with_sep_windows(self):
         self.check_windows_only()
-        self.skip_if_symlink_not_supported()
+        skip_if_symlink_not_supported()
         path0 = self.make_path("foo") + self.os.sep
         path1 = self.make_path("bar")
         with self.open(path1, "w", encoding="utf8"):
@@ -2676,7 +2691,7 @@ class FakeOsModuleTest(FakeOsModuleTestBase):
 
     def test_rmdir_link_with_trailing_sep_windows(self):
         self.check_windows_only()
-        self.skip_if_symlink_not_supported()
+        skip_if_symlink_not_supported()
         dir_path = self.make_path("foo")
         self.os.mkdir(dir_path)
         link_path = self.make_path("link")
@@ -2703,7 +2718,7 @@ class FakeOsModuleTest(FakeOsModuleTestBase):
 
     def test_readlink_circular_link_with_trailing_sep_windows(self):
         self.check_windows_only()
-        self.skip_if_symlink_not_supported()
+        skip_if_symlink_not_supported()
         path1 = self.make_path("foo")
         path0 = self.make_path("bar")
         self.os.symlink(path0, path1)
@@ -2713,13 +2728,13 @@ class FakeOsModuleTest(FakeOsModuleTestBase):
     # hard link related tests
     def test_link_bogus(self):
         # trying to create a link from a non-existent file should fail
-        self.skip_if_symlink_not_supported()
+        skip_if_symlink_not_supported()
         self.assert_raises_os_error(
             errno.ENOENT, self.os.link, "/nonexistent_source", "/link_dest"
         )
 
     def test_link_delete(self):
-        self.skip_if_symlink_not_supported()
+        skip_if_symlink_not_supported()
 
         file1_path = self.make_path("test_file1")
         file2_path = self.make_path("test_file2")
@@ -2736,7 +2751,7 @@ class FakeOsModuleTest(FakeOsModuleTestBase):
             self.assertEqual(f.read(), contents1)
 
     def test_link_update(self):
-        self.skip_if_symlink_not_supported()
+        skip_if_symlink_not_supported()
 
         file1_path = self.make_path("test_file1")
         file2_path = self.make_path("test_file2")
@@ -2756,7 +2771,7 @@ class FakeOsModuleTest(FakeOsModuleTestBase):
             self.assertEqual(f.read(), contents2)
 
     def test_link_non_existent_parent(self):
-        self.skip_if_symlink_not_supported()
+        skip_if_symlink_not_supported()
         file1_path = self.make_path("test_file1")
         breaking_link_path = self.make_path("nonexistent", "test_file2")
         contents1 = "abcdef"
@@ -2769,14 +2784,14 @@ class FakeOsModuleTest(FakeOsModuleTestBase):
         )
 
     def test_link_is_existing_file(self):
-        self.skip_if_symlink_not_supported()
+        skip_if_symlink_not_supported()
         file_path = self.make_path("foo", "bar")
         self.create_file(file_path)
         self.assert_raises_os_error(errno.EEXIST, self.os.link, file_path, file_path)
 
     def test_link_target_is_dir_windows(self):
         self.check_windows_only()
-        self.skip_if_symlink_not_supported()
+        skip_if_symlink_not_supported()
         dir_path = self.make_path("foo", "bar")
         link_path = self.os.path.join(dir_path, "link")
         self.create_dir(dir_path)
@@ -2791,7 +2806,7 @@ class FakeOsModuleTest(FakeOsModuleTestBase):
 
     def test_link_count1(self):
         """Test that hard link counts are updated correctly."""
-        self.skip_if_symlink_not_supported()
+        skip_if_symlink_not_supported()
         file1_path = self.make_path("test_file1")
         file2_path = self.make_path("test_file2")
         file3_path = self.make_path("test_file3")
@@ -2817,7 +2832,7 @@ class FakeOsModuleTest(FakeOsModuleTestBase):
 
     @unittest.skipIf(IS_PYPY, "follow_symlinks not supported in PyPi")
     def test_link_no_follow_symlink(self):
-        self.skip_if_symlink_not_supported()
+        skip_if_symlink_not_supported()
         target_path = self.make_path("target_path")
         self.create_file(target_path, contents="foo")
         symlink_path = self.make_path("symlink_to_file")
@@ -2828,7 +2843,7 @@ class FakeOsModuleTest(FakeOsModuleTestBase):
 
     @unittest.skipIf(not IS_PYPY, "follow_symlinks only not supported in PyPi")
     def test_link_follow_symlink_not_supported_inPypy(self):
-        self.skip_if_symlink_not_supported()
+        skip_if_symlink_not_supported()
         target_path = self.make_path("target_path")
         self.create_file(target_path, contents="foo")
         symlink_path = self.make_path("symlink_to_file")
@@ -3125,7 +3140,7 @@ class FakeOsModuleTestCaseInsensitiveFS(FakeOsModuleTestBase):
         self.assertEqual(["foo"], self.os.listdir(directory_upper))
 
     def test_listdir_on_symlink(self):
-        self.skip_if_symlink_not_supported()
+        skip_if_symlink_not_supported()
         directory = self.make_path("xyzzy")
         files = ["foo", "bar", "baz"]
         for f in files:
@@ -3230,7 +3245,7 @@ class FakeOsModuleTestCaseInsensitiveFS(FakeOsModuleTestBase):
         self.assertEqual(len(base_name), self.os.lstat(link_path.upper())[stat.ST_SIZE])
 
     def test_readlink(self):
-        self.skip_if_symlink_not_supported()
+        skip_if_symlink_not_supported()
         link_path = self.make_path("foo", "bar", "baz")
         target = self.make_path("tarJAY")
         self.create_symlink(link_path, target)
@@ -3243,7 +3258,7 @@ class FakeOsModuleTestCaseInsensitiveFS(FakeOsModuleTestBase):
 
     def test_readlink_raises_if_path_not_a_link_windows(self):
         self.check_windows_only()
-        self.skip_if_symlink_not_supported()
+        skip_if_symlink_not_supported()
         self.check_readlink_raises_if_path_not_a_link()
 
     def test_readlink_raises_if_path_not_a_link_posix(self):
@@ -3259,7 +3274,7 @@ class FakeOsModuleTestCaseInsensitiveFS(FakeOsModuleTestBase):
 
     def test_readlink_raises_if_path_has_file_windows(self):
         self.check_windows_only()
-        self.skip_if_symlink_not_supported()
+        skip_if_symlink_not_supported()
         self.check_readlink_raises_if_path_has_file(errno.ENOENT)
 
     def test_readlink_raises_if_path_has_file_posix(self):
@@ -3267,7 +3282,7 @@ class FakeOsModuleTestCaseInsensitiveFS(FakeOsModuleTestBase):
         self.check_readlink_raises_if_path_has_file(errno.ENOTDIR)
 
     def test_readlink_with_links_in_path(self):
-        self.skip_if_symlink_not_supported()
+        skip_if_symlink_not_supported()
         self.create_symlink(
             self.make_path("meyer", "lemon", "pie"), self.make_path("yum")
         )
@@ -3278,7 +3293,7 @@ class FakeOsModuleTestCaseInsensitiveFS(FakeOsModuleTestBase):
         )
 
     def test_readlink_with_chained_links_in_path(self):
-        self.skip_if_symlink_not_supported()
+        skip_if_symlink_not_supported()
         self.create_symlink(
             self.make_path("eastern", "european", "wolfhounds", "chase"),
             self.make_path("cats"),
@@ -3381,7 +3396,7 @@ class FakeOsModuleTestCaseInsensitiveFS(FakeOsModuleTestBase):
         self.check_remove_dir_raises_error(errno.EACCES)
 
     def test_remove_symlink_to_dir(self):
-        self.skip_if_symlink_not_supported()
+        skip_if_symlink_not_supported()
         directory = self.make_path("zzy")
         link = self.make_path("link_to_dir")
         self.create_dir(directory)
@@ -3403,7 +3418,7 @@ class FakeOsModuleTestCaseInsensitiveFS(FakeOsModuleTestBase):
 
     def test_rename_dir_to_symlink_windows(self):
         self.check_windows_only()
-        self.skip_if_symlink_not_supported()
+        skip_if_symlink_not_supported()
         link_path = self.make_path("link")
         dir_path = self.make_path("dir")
         link_target = self.os.path.join(dir_path, "link_target")
@@ -3461,7 +3476,7 @@ class FakeOsModuleTestCaseInsensitiveFS(FakeOsModuleTestBase):
 
     def test_rename_directory_to_linked_dir(self):
         # Regression test for #314
-        self.skip_if_symlink_not_supported()
+        skip_if_symlink_not_supported()
         link_path = self.make_path("link")
         self.os.symlink(self.base_path, link_path)
         link_subdir = self.os.path.join(link_path, "dir")
@@ -3503,7 +3518,7 @@ class FakeOsModuleTestCaseInsensitiveFS(FakeOsModuleTestBase):
 
     def test_rename_looping_symlink(self):
         # Regression test for #315
-        self.skip_if_symlink_not_supported()
+        skip_if_symlink_not_supported()
         path_lower = self.make_path("baz")
         path_upper = self.make_path("BAZ")
         self.os.symlink(path_lower, path_upper)
@@ -3557,7 +3572,7 @@ class FakeOsModuleTestCaseInsensitiveFS(FakeOsModuleTestBase):
 
     def test_rename_symlink_with_changed_case(self):
         # Regression test for #313
-        self.skip_if_symlink_not_supported()
+        skip_if_symlink_not_supported()
         link_path = self.make_path("link")
         self.os.symlink(self.base_path, link_path)
         link_path = self.os.path.join(link_path, "link")
@@ -3609,7 +3624,7 @@ class FakeOsModuleTestCaseInsensitiveFS(FakeOsModuleTestBase):
 
     def test_rename_to_a_hardlink_of_same_file_should_do_nothing(self):
         self.skip_real_fs_failure(skip_posix=False)
-        self.skip_if_symlink_not_supported()
+        skip_if_symlink_not_supported()
         file_path = self.make_path("dir", "file")
         self.create_file(file_path)
         link_path = self.make_path("link")
@@ -3639,7 +3654,7 @@ class FakeOsModuleTestCaseInsensitiveFS(FakeOsModuleTestBase):
 
     def test_rename_symlink_to_other_case_works_in_windows(self):
         self.check_windows_only()
-        self.skip_if_symlink_not_supported()
+        skip_if_symlink_not_supported()
         path0 = self.make_path("beta")
         self.os.symlink(self.base_path, path0)
         path0 = self.make_path("beta", "Beta")
@@ -3671,7 +3686,7 @@ class FakeOsModuleTestCaseInsensitiveFS(FakeOsModuleTestBase):
 
     def test_stat_with_mixed_case(self):
         # Regression test for #310
-        self.skip_if_symlink_not_supported()
+        skip_if_symlink_not_supported()
         base_path = self.make_path("foo")
         path = self.os.path.join(base_path, "bar")
         self.create_dir(path)
@@ -3682,7 +3697,7 @@ class FakeOsModuleTestCaseInsensitiveFS(FakeOsModuleTestBase):
         self.os.stat(path)
 
     def test_hardlink_works_with_symlink(self):
-        self.skip_if_symlink_not_supported()
+        skip_if_symlink_not_supported()
         base_path = self.make_path("foo")
         self.create_dir(base_path)
         symlink_path = self.os.path.join(base_path, "slink")
@@ -3802,7 +3817,7 @@ class FakeOsModuleTestCaseInsensitiveFS(FakeOsModuleTestBase):
 
     def test_rename_case_only_with_symlink_parent_windows(self):
         self.check_windows_only()
-        self.skip_if_symlink_not_supported()
+        skip_if_symlink_not_supported()
         self.check_rename_case_only_with_symlink_parent()
 
     def test_rename_case_only_with_symlink_parent_macos(self):
@@ -3858,7 +3873,7 @@ class FakeOsModuleTestCaseInsensitiveFS(FakeOsModuleTestBase):
 
     def test_rmdir_via_symlink(self):
         self.check_windows_only()
-        self.skip_if_symlink_not_supported()
+        skip_if_symlink_not_supported()
         base_path = self.make_path("foo", "bar")
         dir_path = self.os.path.join(base_path, "alpha")
         self.create_dir(dir_path)
@@ -3891,7 +3906,7 @@ class FakeOsModuleTestCaseInsensitiveFS(FakeOsModuleTestBase):
 
     def test_mkdir_removes_symlink_in_windows(self):
         self.check_windows_only()
-        self.skip_if_symlink_not_supported()
+        skip_if_symlink_not_supported()
         base_path = self.make_path("foo", "bar")
         link_path = self.os.path.join(base_path, "link_to_dir")
         dir_path = self.os.path.join(base_path, "dir")
@@ -3918,7 +3933,7 @@ class FakeOsModuleTestCaseInsensitiveFS(FakeOsModuleTestBase):
 
     def test_mkdir_raises_if_symlink_exists(self):
         # Regression test for #309
-        self.skip_if_symlink_not_supported()
+        skip_if_symlink_not_supported()
         path1 = self.make_path("baz")
         self.os.symlink(path1, path1)
         path2 = self.make_path("Baz")
@@ -4013,7 +4028,7 @@ class FakeOsModuleTestCaseInsensitiveFS(FakeOsModuleTestBase):
         self.assertFalse(st.st_mode & stat.S_IFDIR)
 
     def test_symlink(self):
-        self.skip_if_symlink_not_supported()
+        skip_if_symlink_not_supported()
         file_path = self.make_path("foo", "bar", "baz")
         self.create_dir(self.make_path("foo", "bar"))
         self.os.symlink("bogus", file_path.upper())
@@ -4025,7 +4040,7 @@ class FakeOsModuleTestCaseInsensitiveFS(FakeOsModuleTestBase):
 
     # hard link related tests
     def test_link_delete(self):
-        self.skip_if_symlink_not_supported()
+        skip_if_symlink_not_supported()
 
         file1_path = self.make_path("test_file1")
         file2_path = self.make_path("test_file2")
@@ -4042,7 +4057,7 @@ class FakeOsModuleTestCaseInsensitiveFS(FakeOsModuleTestBase):
             self.assertEqual(f.read(), contents1)
 
     def test_link_is_existing_file(self):
-        self.skip_if_symlink_not_supported()
+        skip_if_symlink_not_supported()
         file_path = self.make_path("foo", "bar")
         self.create_file(file_path)
         self.assert_raises_os_error(
@@ -4051,7 +4066,7 @@ class FakeOsModuleTestCaseInsensitiveFS(FakeOsModuleTestBase):
 
     def test_link_is_broken_symlink(self):
         # Regression test for #311
-        self.skip_if_symlink_not_supported()
+        skip_if_symlink_not_supported()
         self.check_case_insensitive_fs()
         file_path = self.make_path("baz")
         self.create_file(file_path)
@@ -4062,7 +4077,7 @@ class FakeOsModuleTestCaseInsensitiveFS(FakeOsModuleTestBase):
 
     def test_link_with_changed_case(self):
         # Regression test for #312
-        self.skip_if_symlink_not_supported()
+        skip_if_symlink_not_supported()
         self.check_case_insensitive_fs()
         link_path = self.make_path("link")
         self.os.symlink(self.base_path, link_path)
@@ -4440,7 +4455,7 @@ class FakeOsModuleLowLevelFileOpTest(FakeOsModuleTestBase):
 
     def test_open_exclusive_if_symlink_exists_works_in_windows(self):
         self.check_windows_only()
-        self.skip_if_symlink_not_supported()
+        skip_if_symlink_not_supported()
         link_path = self.make_path("link")
         link_target = self.make_path("link_target")
         self.os.symlink(link_target, link_path)
@@ -5385,7 +5400,7 @@ class FakeScandirTest(FakeOsModuleTestBase):
 
     def test_path_links_not_resolved(self):
         # regression test for #350
-        self.skip_if_symlink_not_supported()
+        skip_if_symlink_not_supported()
         dir_path = self.make_path("A", "B", "C")
         self.os.makedirs(self.os.path.join(dir_path, "D"))
         link_path = self.make_path("A", "C")

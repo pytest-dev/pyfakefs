@@ -39,7 +39,7 @@ from pyfakefs.tests.skipped_pathlib import (
     read_pathlib,
     read_text_pathlib,
 )
-from pyfakefs.tests.test_utils import RealFsTestMixin
+from pyfakefs.tests.test_utils import RealFsTestMixin, skip_if_symlink_not_supported
 
 is_windows = sys.platform == "win32"
 
@@ -478,7 +478,7 @@ class FakePathlibFileObjectPropertyTest(RealPathlibTestCase):
         self.create_file(self.file_path, contents=b"a" * 100)
         self.create_dir(self.make_path("home", "john"))
         try:
-            self.skip_if_symlink_not_supported()
+            skip_if_symlink_not_supported()
         except unittest.SkipTest:
             return
         self.create_symlink(self.make_path("john"), self.make_path("home", "john"))
@@ -496,7 +496,7 @@ class FakePathlibFileObjectPropertyTest(RealPathlibTestCase):
         self.os.umask(self.umask)
 
     def test_exists(self):
-        self.skip_if_symlink_not_supported()
+        skip_if_symlink_not_supported()
         self.assertTrue(self.path(self.file_path).exists())
         self.assertTrue(self.path(self.make_path("home", "jane")).exists())
         self.assertFalse(self.path(self.make_path("home", "jane", "test")).exists())
@@ -506,7 +506,7 @@ class FakePathlibFileObjectPropertyTest(RealPathlibTestCase):
         self.assertFalse(self.path(self.make_path("broken_file_link")).exists())
 
     def test_is_dir(self):
-        self.skip_if_symlink_not_supported()
+        skip_if_symlink_not_supported()
         self.assertFalse(self.path(self.file_path).is_dir())
         self.assertTrue(self.path(self.make_path("home/jane")).is_dir())
         self.assertTrue(self.path(self.make_path("john")).is_dir())
@@ -515,7 +515,7 @@ class FakePathlibFileObjectPropertyTest(RealPathlibTestCase):
         self.assertFalse(self.path(self.make_path("broken_file_link")).is_dir())
 
     def test_is_file(self):
-        self.skip_if_symlink_not_supported()
+        skip_if_symlink_not_supported()
         self.assertTrue(self.path(self.make_path("home/jane/test.py")).is_file())
         self.assertFalse(self.path(self.make_path("home/jane")).is_file())
         self.assertFalse(self.path(self.make_path("john")).is_file())
@@ -524,7 +524,7 @@ class FakePathlibFileObjectPropertyTest(RealPathlibTestCase):
         self.assertFalse(self.path(self.make_path("broken_file_link")).is_file())
 
     def test_is_symlink(self):
-        self.skip_if_symlink_not_supported()
+        skip_if_symlink_not_supported()
         self.assertFalse(self.path(self.make_path("home/jane/test.py")).is_symlink())
         self.assertFalse(self.path(self.make_path("home/jane")).is_symlink())
         self.assertTrue(self.path(self.make_path("john")).is_symlink())
@@ -533,7 +533,7 @@ class FakePathlibFileObjectPropertyTest(RealPathlibTestCase):
         self.assertTrue(self.path(self.make_path("broken_file_link")).is_symlink())
 
     def test_stat(self):
-        self.skip_if_symlink_not_supported()
+        skip_if_symlink_not_supported()
         file_stat = self.os.stat(self.file_path)
 
         stat_result = self.path(self.file_link_path).stat()
@@ -545,7 +545,7 @@ class FakePathlibFileObjectPropertyTest(RealPathlibTestCase):
         self.assertEqual(stat_result[stat.ST_MTIME], int(file_stat.st_mtime))
 
     def check_lstat(self, expected_size):
-        self.skip_if_symlink_not_supported()
+        skip_if_symlink_not_supported()
         link_stat = self.os.lstat(self.file_link_path)
 
         stat_result = self.path(self.file_link_path).lstat()
@@ -561,7 +561,7 @@ class FakePathlibFileObjectPropertyTest(RealPathlibTestCase):
 
     @unittest.skipIf(not is_windows, "Windows specific behavior")
     def test_lstat_windows(self):
-        self.skip_if_symlink_not_supported()
+        skip_if_symlink_not_supported()
         self.check_lstat(0)
 
     @unittest.skipIf(is_windows, "POSIX specific behavior")
@@ -575,7 +575,7 @@ class FakePathlibFileObjectPropertyTest(RealPathlibTestCase):
         self.assertEqual(link_stat.st_mode, stat.S_IFLNK | mode)
 
     def test_lchmod(self):
-        self.skip_if_symlink_not_supported()
+        skip_if_symlink_not_supported()
         file_stat = self.os.stat(self.file_path)
         link_stat = self.os.lstat(self.file_link_path)
         if not hasattr(self.real_os, "lchmod"):
@@ -594,7 +594,7 @@ class FakePathlibFileObjectPropertyTest(RealPathlibTestCase):
         "follow_symlinks argument new in Python 3.10",
     )
     def test_chmod_no_followsymlinks(self):
-        self.skip_if_symlink_not_supported()
+        skip_if_symlink_not_supported()
         file_stat = self.os.stat(self.file_path)
         link_stat = self.os.lstat(self.file_link_path)
         if self.os.chmod not in self.os.supports_follow_symlinks or IS_PYPY:
@@ -747,7 +747,7 @@ class FakePathlibPathFileOperationTest(RealPathlibTestCase):
     """Tests methods related to file and directory handling."""
 
     def test_exists(self):
-        self.skip_if_symlink_not_supported()
+        skip_if_symlink_not_supported()
         self.create_file(self.make_path("home", "jane", "test.py"))
         self.create_dir(self.make_path("home", "john"))
         self.create_symlink(self.make_path("john"), self.make_path("home", "john"))
@@ -889,7 +889,7 @@ class FakePathlibPathFileOperationTest(RealPathlibTestCase):
         )
 
     def test_symlink_to(self):
-        self.skip_if_symlink_not_supported()
+        skip_if_symlink_not_supported()
         file_name = self.make_path("foo", "bar.txt")
         self.create_file(file_name)
         link_name = self.make_path("link_to_bar")
@@ -901,7 +901,7 @@ class FakePathlibPathFileOperationTest(RealPathlibTestCase):
     @unittest.skipIf(sys.version_info < (3, 8), "link_to new in Python 3.8")
     @unittest.skipIf(sys.version_info >= (3, 12), "link_to removed in Python 3.12")
     def test_link_to(self):
-        self.skip_if_symlink_not_supported()
+        skip_if_symlink_not_supported()
         file_name = self.make_path("foo", "bar.txt")
         self.create_file(file_name)
         self.assertEqual(1, self.os.stat(file_name).st_nlink)
@@ -926,7 +926,7 @@ class FakePathlibPathFileOperationTest(RealPathlibTestCase):
 
     @unittest.skipIf(sys.version_info < (3, 9), "readlink new in Python 3.9")
     def test_readlink(self):
-        self.skip_if_symlink_not_supported()
+        skip_if_symlink_not_supported()
         link_path = self.make_path("foo", "bar", "baz")
         target = self.make_path("tarJAY")
         self.create_symlink(link_path, target)
@@ -1205,7 +1205,7 @@ class FakePathlibUsageInOsFunctionsTest(RealPathlibTestCase):
         self.os.chmod(self.path(path), 0o666)
 
     def test_link(self):
-        self.skip_if_symlink_not_supported()
+        skip_if_symlink_not_supported()
         file1_path = self.make_path("test_file1")
         file2_path = self.make_path("test_file2")
         self.create_file(file1_path)
@@ -1240,7 +1240,7 @@ class FakePathlibUsageInOsFunctionsTest(RealPathlibTestCase):
         "under Windows before Python 3.8",
     )
     def test_readlink(self):
-        self.skip_if_symlink_not_supported()
+        skip_if_symlink_not_supported()
         link_path = self.make_path("foo", "bar", "baz")
         target = self.make_path("tarJAY")
         self.create_symlink(link_path, target)
@@ -1252,7 +1252,7 @@ class FakePathlibUsageInOsFunctionsTest(RealPathlibTestCase):
         "under Windows before Python 3.8",
     )
     def test_readlink_bytes(self):
-        self.skip_if_symlink_not_supported()
+        skip_if_symlink_not_supported()
         link_path = self.make_path(b"foo", b"bar", b"baz")
         target = self.make_path(b"tarJAY")
         self.create_symlink(link_path, target)
@@ -1296,7 +1296,7 @@ class FakePathlibUsageInOsFunctionsTest(RealPathlibTestCase):
         self.assertEqual(1, len(dir_entries))
 
     def test_symlink(self):
-        self.skip_if_symlink_not_supported()
+        skip_if_symlink_not_supported()
         file_path = self.make_path("test_file1")
         link_path = self.make_path("link")
         self.create_file(file_path)
