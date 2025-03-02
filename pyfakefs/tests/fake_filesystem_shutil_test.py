@@ -27,7 +27,7 @@ from pathlib import Path
 
 from pyfakefs import fake_filesystem_unittest
 from pyfakefs.helpers import get_uid, set_uid, is_root, IS_PYPY
-from pyfakefs.tests.test_utils import RealFsTestMixin
+from pyfakefs.tests.test_utils import RealFsTestMixin, skip_if_symlink_not_supported
 
 is_windows = sys.platform == "win32"
 
@@ -244,7 +244,7 @@ class FakeShutilModuleTest(RealFsTestCase):
     @unittest.skipIf(IS_PYPY, "Functionality not supported in PyPy")
     def test_copystat_symlinks(self):
         """Regression test for #799"""
-        self.skip_if_symlink_not_supported()
+        skip_if_symlink_not_supported()
         f = self.make_path("xyzzy")
         self.create_file(f)
         sym1 = self.make_path("sym1")
@@ -434,7 +434,7 @@ class FakeCopyFileTest(RealFsTestCase):
             shutil.copyfile(src_file, dst_file)
 
     def test_raises_if_dest_is_a_symlink_to_src(self):
-        self.skip_if_symlink_not_supported()
+        skip_if_symlink_not_supported()
         src_file = self.make_path("foo")
         dst_file = self.make_path("bar")
         contents = "contents of file"

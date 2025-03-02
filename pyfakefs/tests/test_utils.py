@@ -67,7 +67,6 @@ class TestCase(unittest.TestCase):
     is_windows = sys.platform == "win32"
     is_cygwin = sys.platform == "cygwin"
     is_macos = sys.platform == "darwin"
-    symlinks_can_be_tested = None
 
     def assert_mode_equal(self, expected, actual):
         return self.assertEqual(stat.S_IMODE(expected), stat.S_IMODE(actual))
@@ -82,6 +81,13 @@ class TestCase(unittest.TestCase):
                 self.assertIn(exc.errno, subtype)
             else:
                 self.assertEqual(subtype, exc.errno)
+
+
+def skip_if_symlink_not_supported():
+    """If called at test start, tests are skipped if symlinks are not
+    supported."""
+    if TestCase.is_windows and not is_root():
+        raise unittest.SkipTest("Symlinks under Windows need admin privileges")
 
 
 class RealFsTestMixin:
@@ -268,20 +274,6 @@ class RealFsTestMixin:
                 raise unittest.SkipTest(
                     "Skipping because FakeFS does not match real FS"
                 )
-
-    def symlink_can_be_tested(self):
-        """Used to check if symlinks and hard links can be tested under
-        Windows. All tests are skipped under Windows for Python versions
-        not supporting links, and real tests are skipped if running without
-        administrator rights.
-        """
-        return not TestCase.is_windows or is_root()
-
-    def skip_if_symlink_not_supported(self):
-        """If called at test start, tests are skipped if symlinks are not
-        supported."""
-        if not self.symlink_can_be_tested():
-            raise unittest.SkipTest("Symlinks under Windows need admin privileges")
 
     def make_path(self, *args):
         """Create a path with the given component(s). A base path is prepended

@@ -23,7 +23,7 @@ import time
 import unittest
 
 from pyfakefs import fake_filesystem, fake_os, fake_open
-from pyfakefs.helpers import IS_PYPY
+from pyfakefs.tests.test_utils import skip_if_symlink_not_supported
 
 
 def sep(path):
@@ -81,6 +81,7 @@ class FakeFilesystemVsRealTest(TestCase):
             fh.close()
         # l for symlink, h for hard link
         if file_type in ("l", "h"):
+            contents = sep(contents)
             real_target, fake_target = (contents, contents)
             # If it begins with '/', make it relative to the base. You can't go
             # creating files in / for the real file system.
@@ -375,13 +376,16 @@ class FakeFilesystemVsRealTest(TestCase):
 
     def assertAllOsBehaviorsMatch(self, path):
         path = sep(path)
-        os_method_names = [] if self.is_windows else ["readlink"]
+        os_method_names = ["readlink"]
         os_method_names_no_args = ["getcwd"]
-        os_path_method_names = ["isabs", "isdir"]
-        if not self.is_windows:
-            os_path_method_names += ["islink", "lexists"]
-        if not self.is_windows or not IS_PYPY:
-            os_path_method_names += ["isfile", "exists"]
+        os_path_method_names = [
+            "isabs",
+            "isdir",
+            "islink",
+            "lexists",
+            "isfile",
+            "exists",
+        ]
 
         wrapped_methods = [
             ["access", self._access_real, self._access_fake],
@@ -557,34 +561,33 @@ class FakeFilesystemVsRealTest(TestCase):
         self._create_test_file("b", "aFile", b"some contents")
         self.assertAllOsBehaviorsMatch("aFile")
 
-    @unittest.skipIf(TestCase.is_windows, "no symlink in Windows")
     def test_sym_link_to_empty_file(self):
+        skip_if_symlink_not_supported()
         self._create_test_file("f", "aFile")
         self._create_test_file("l", "link_to_empty", "aFile")
         self.assertAllOsBehaviorsMatch("link_to_empty")
 
-    @unittest.skipIf(TestCase.is_windows, "no symlink in Windows")
     def test_hard_link_to_empty_file(self):
+        skip_if_symlink_not_supported()
         self._create_test_file("f", "aFile")
         self._create_test_file("h", "link_to_empty", "aFile")
         self.assertAllOsBehaviorsMatch("link_to_empty")
 
-    @unittest.skipIf(TestCase.is_windows, "no symlink in Windows")
     def test_sym_link_to_real_file(self):
+        skip_if_symlink_not_supported()
         self._create_test_file("f", "aFile", "some contents")
         self._create_test_file("l", "link_to_file", "aFile")
         self.assertAllOsBehaviorsMatch("link_to_file")
 
-    @unittest.skipIf(TestCase.is_windows, "no symlink in Windows")
     def test_hard_link_to_real_file(self):
+        skip_if_symlink_not_supported()
         self._create_test_file("f", "aFile", "some contents")
         self._create_test_file("h", "link_to_file", "aFile")
         self.assertAllOsBehaviorsMatch("link_to_file")
 
-    @unittest.skipIf(TestCase.is_windows, "no symlink in Windows")
     def test_broken_sym_link(self):
+        skip_if_symlink_not_supported()
         self._create_test_file("l", "broken_link", "broken")
-        self._create_test_file("l", "loop", "/a/loop")
         self.assertAllOsBehaviorsMatch("broken_link")
 
     def test_file_in_a_folder(self):
@@ -593,16 +596,16 @@ class FakeFilesystemVsRealTest(TestCase):
         self._create_test_file("f", "a/b/file", "contents")
         self.assertAllOsBehaviorsMatch("a/b/file")
 
-    @unittest.skipIf(TestCase.is_windows, "no symlink in Windows")
     def test_absolute_sym_link_to_folder(self):
+        skip_if_symlink_not_supported()
         self._create_test_file("d", "a")
         self._create_test_file("d", "a/b")
         self._create_test_file("f", "a/b/file", "contents")
         self._create_test_file("l", "a/link", "/a/b")
         self.assertAllOsBehaviorsMatch("a/link/file")
 
-    @unittest.skipIf(TestCase.is_windows, "no symlink in Windows")
     def test_link_to_folder_after_chdir(self):
+        skip_if_symlink_not_supported()
         self._create_test_file("d", "a")
         self._create_test_file("d", "a/b")
         self._create_test_file("f", "a/b/file", "contents")
@@ -613,33 +616,33 @@ class FakeFilesystemVsRealTest(TestCase):
         self.fake_os.chdir(fake_dir)
         self.assertAllOsBehaviorsMatch("file")
 
-    @unittest.skipIf(TestCase.is_windows, "no symlink in Windows")
     def test_relative_sym_link_to_folder(self):
+        skip_if_symlink_not_supported()
         self._create_test_file("d", "a")
         self._create_test_file("d", "a/b")
         self._create_test_file("f", "a/b/file", "contents")
         self._create_test_file("l", "a/link", "b")
         self.assertAllOsBehaviorsMatch("a/link/file")
 
-    @unittest.skipIf(TestCase.is_windows, "no symlink in Windows")
     def test_sym_link_to_parent(self):
+        skip_if_symlink_not_supported()
         # Soft links on HFS+ / OS X behave differently.
-        if os.uname()[0] != "Darwin":
+        if sys.platform != "darwin":
             self._create_test_file("d", "a")
             self._create_test_file("d", "a/b")
             self._create_test_file("l", "a/b/c", "..")
             self.assertAllOsBehaviorsMatch("a/b/c")
 
-    @unittest.skipIf(TestCase.is_windows, "no symlink in Windows")
     def test_path_through_sym_link_to_parent(self):
+        skip_if_symlink_not_supported()
         self._create_test_file("d", "a")
         self._create_test_file("f", "a/target", "contents")
         self._create_test_file("d", "a/b")
         self._create_test_file("l", "a/b/c", "..")
         self.assertAllOsBehaviorsMatch("a/b/c/target")
 
-    @unittest.skipIf(TestCase.is_windows, "no symlink in Windows")
     def test_sym_link_to_sibling_directory(self):
+        skip_if_symlink_not_supported()
         self._create_test_file("d", "a")
         self._create_test_file("d", "a/b")
         self._create_test_file("d", "a/sibling_of_b")
@@ -647,8 +650,8 @@ class FakeFilesystemVsRealTest(TestCase):
         self._create_test_file("l", "a/b/c", "../sibling_of_b")
         self.assertAllOsBehaviorsMatch("a/b/c/target")
 
-    @unittest.skipIf(TestCase.is_windows, "no symlink in Windows")
-    def test_sym_link_to_sibling_directory_non_existant_file(self):
+    def test_sym_link_to_sibling_directory_non_existent_file(self):
+        skip_if_symlink_not_supported()
         self._create_test_file("d", "a")
         self._create_test_file("d", "a/b")
         self._create_test_file("d", "a/sibling_of_b")
@@ -656,8 +659,8 @@ class FakeFilesystemVsRealTest(TestCase):
         self._create_test_file("l", "a/b/c", "../sibling_of_b")
         self.assertAllOsBehaviorsMatch("a/b/c/file_does_not_exist")
 
-    @unittest.skipIf(TestCase.is_windows, "no symlink in Windows")
     def test_broken_sym_link_to_sibling_directory(self):
+        skip_if_symlink_not_supported()
         self._create_test_file("d", "a")
         self._create_test_file("d", "a/b")
         self._create_test_file("d", "a/sibling_of_b")
