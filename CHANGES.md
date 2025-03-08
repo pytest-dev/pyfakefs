@@ -16,6 +16,8 @@ The released versions correspond to PyPI releases.
 
 ### Changes
 * added some preliminary support for Python 3.14
+* change behavior of `FakeFilesystem.get_object()` to ignore permissions as it has been
+  before version 5.4.0 (see [#1122](../../issues/1122))
 
 ### Fixes
 * fixed a problem with flushing if writing over the buffer end
@@ -23,6 +25,7 @@ The released versions correspond to PyPI releases.
 * fixed a regression that could break tests under Posix in Python 3.12
   (see [#1126](../../issues/1126))
 * fixed behavior for `os.access` for symlinks under Windows
+* fixes permission problem on querying file properties (see [#1122](../../issues/1122))
 
 ## [Version 5.7.4](https://pypi.python.org/pypi/pyfakefs/5.7.4) (2025-01-14)
 Minor bugfix release.

@@ -745,7 +745,7 @@ class FakeFilesystem:
             # make sure stat raises if a parent dir is not readable
             parent_dir = file_object.parent_dir
             if parent_dir:
-                self.get_object(parent_dir.path, check_read_perm=False)  # type: ignore[arg-type]
+                self._get_object(parent_dir.path, check_read_perm=False)  # type: ignore[arg-type]
 
         self.raise_for_filepath_ending_with_separator(
             entry_path, file_object, follow_symlinks
@@ -1775,15 +1775,22 @@ class FakeFilesystem:
             return True
         return target.has_permission(permission)
 
-    def get_object(self, file_path: AnyPath, check_read_perm: bool = True) -> FakeFile:
+    def _get_object(
+        self,
+        file_path: AnyPath,
+        check_read_perm: bool = True,
+        check_exe_perm: bool = True,
+    ) -> FakeFile:
         """Search for the specified filesystem object within the fake
-        filesystem.
+        filesystem. By default, consider read and execute permissions.
 
         Args:
             file_path: Specifies the target
                 :py:class:`FakeFile<pyfakefs.fake_file.FakeFile>` object to retrieve.
             check_read_perm: If True, raises OSError if a parent directory
                 does not have read permission
+            check_exe_perm: If True, raises OSError if a parent directory
+                does not have execute (e.g. search) permission
 
         Returns:
             The :py:class:`FakeFile<pyfakefs.fake_file.FakeFile>` object corresponding
@@ -1794,7 +1801,24 @@ class FakeFilesystem:
         """
         path = make_string_path(file_path)
         path = self.absnormpath(self._original_path(path))
-        return self.get_object_from_normpath(path, check_read_perm)
+        return self.get_object_from_normpath(path, check_read_perm, check_exe_perm)
+
+    def get_object(self, file_path: AnyPath) -> FakeFile:
+        """Search for the specified filesystem object within the fake
+        filesystem and return it. Ignore any read permissions.
+
+        Args:
+            file_path: Specifies the target
+                :py:class:`FakeFile<pyfakefs.fake_file.FakeFile>` object to retrieve.
+
+        Returns:
+            The :py:class:`FakeFile<pyfakefs.fake_file.FakeFile>` object corresponding
+            to `file_path`.
+
+        Raises:
+            OSError: if the object is not found.
+        """
+        return self._get_object(file_path, check_read_perm=False, check_exe_perm=False)
 
     def resolve(
         self,
@@ -2051,7 +2075,7 @@ class FakeFilesystem:
         old_object: FakeFile,
         ends_with_sep: bool,
     ) -> Optional[AnyStr]:
-        new_object = self.get_object(new_file_path)
+        new_object = self._get_object(new_file_path)
         if old_file_path == new_file_path:
             if not S_ISLNK(new_object.st_mode) and ends_with_sep:
                 error = errno.EINVAL if self.is_windows_fs else errno.ENOTDIR
@@ -2418,7 +2442,7 @@ class FakeFilesystem:
             )
         else:
             self._create_fake_from_real_dir(source_path_str, target_path_str, read_only)
-        return cast(FakeDirectory, self.get_object(target_path_str))
+        return cast(FakeDirectory, self._get_object(target_path_str))
 
     def _create_fake_from_real_dir(self, source_path_str, target_path_str, read_only):
         if not self.exists(target_path_str):
@@ -2456,11 +2480,11 @@ class FakeFilesystem:
                     self.add_real_symlink(src_entry_path, target_entry_path)
                 elif os.path.isfile(src_entry_path):
                     self.add_real_file(src_entry_path, read_only, target_entry_path)
-            return self.get_object(target_path_str)
+            return self._get_object(target_path_str)
 
         parent_path = os.path.split(target_path_str)[0]
         if self.exists(parent_path):
-            parent_dir = self.get_object(parent_path)
+            parent_dir = self._get_object(parent_path)
         else:
             parent_dir = self.create_dir(parent_path)
         new_dir = FakeDirectoryFromRealDirectory(
@@ -2913,7 +2937,6 @@ class FakeFilesystem:
         path: AnyPath,
         st_flag: int,
         follow_symlinks: bool = True,
-        check_read_perm: bool = True,
     ) -> bool:
         """Helper function to implement isdir(), islink(), etc.
 
@@ -2922,8 +2945,8 @@ class FakeFilesystem:
         Args:
             path: Path to file to stat and test
             st_flag: The stat.S_I* flag checked for the file's st_mode
-            check_read_perm: If True (default) False is returned for
-                existing but unreadable file paths.
+            follow_symlinks: If `False` and path points to a symlink,
+                the link itself is checked instead of the linked object.
 
         Returns:
             (boolean) `True` if the st_flag is set in path's st_mode.
@@ -2935,9 +2958,7 @@ class FakeFilesystem:
             raise TypeError
         file_path = make_string_path(path)
         try:
-            obj = self.resolve(
-                file_path, follow_symlinks, check_read_perm=check_read_perm
-            )
+            obj = self.resolve(file_path, follow_symlinks, check_read_perm=False)
             if obj:
                 self.raise_for_filepath_ending_with_separator(
                     file_path, obj, macos_handling=not follow_symlinks
@@ -2952,6 +2973,8 @@ class FakeFilesystem:
 
         Args:
             path: Path to filesystem object.
+            follow_symlinks: If `False` and path points to a symlink,
+                the link itself is checked instead of the linked object.
 
         Returns:
             `True` if path points to a directory (following symlinks).
@@ -2966,6 +2989,8 @@ class FakeFilesystem:
 
         Args:
             path: Path to filesystem object.
+            follow_symlinks: If `False` and path points to a symlink,
+                the link itself is checked instead of the linked object.
 
         Returns:
             `True` if path points to a regular file (following symlinks).
@@ -2973,7 +2998,7 @@ class FakeFilesystem:
         Raises:
             TypeError: if path is None.
         """
-        return self._is_of_type(path, S_IFREG, follow_symlinks, check_read_perm=False)
+        return self._is_of_type(path, S_IFREG, follow_symlinks)
 
     def islink(self, path: AnyPath) -> bool:
         """Determine if path identifies a symbolic link.
@@ -3121,6 +3146,8 @@ class FakeFilesystem:
         Raises:
             OSError: if the target is not a directory.
         """
+        if target_directory is None:
+            return []
         target_directory = self.resolve_path(target_directory, allow_fd=True)
         directory = self.confirmdir(target_directory, check_exe_perm=False)
         directory_contents = list(directory.entries.keys())
