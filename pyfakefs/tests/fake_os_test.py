@@ -1461,7 +1461,7 @@ class FakeOsModuleTest(FakeOsModuleTestBase):
         new_file = self.filesystem.get_object(new_file_path)
         self.assertNotEqual(new_file.st_mtime, old_file.st_mtime)
         self.os.rename(old_file_path, new_file_path)
-        new_file = self.filesystem.get_object(new_file_path, check_read_perm=False)
+        new_file = self.filesystem.get_object(new_file_path)
         self.assertEqual(new_file.st_mtime, old_file.st_mtime)
         self.assertEqual(new_file.st_mode, old_file.st_mode)
         self.assertEqual(new_file.st_uid, old_file.st_uid)
@@ -5439,6 +5439,11 @@ class FakeScandirTest(FakeOsModuleTestBase):
                 self.os.lstat(self.file_rel_link_path).st_ino,
                 self.dir_entries[5].inode(),
             )
+
+    def test_scandir_none(self):
+        result1 = [entry.path for entry in self.scandir(None)]
+        result2 = [entry.path for entry in self.scandir(".")]
+        self.assertEqual(result1, result2)
 
     def test_scandir_stat_nlink(self):
         # regression test for #350

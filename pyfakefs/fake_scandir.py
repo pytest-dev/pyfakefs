@@ -133,7 +133,10 @@ class ScanDirIter:
                 self.filesystem.get_open_file(path).get_object().path
             )
             self.path = ""
+            self.entry_iter = iter(tuple())
         else:
+            if path is None:
+                path = "."
             path = make_string_path(path)
             self.abspath = self.filesystem.absnormpath(path)
             self.path = to_string(path)

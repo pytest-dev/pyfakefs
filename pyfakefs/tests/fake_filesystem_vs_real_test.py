@@ -41,12 +41,10 @@ def _get_errno(raised_error):
             pass
 
 
-class TestCase(unittest.TestCase):
+class FakeFilesystemVsRealTest(unittest.TestCase):
     is_windows = sys.platform.startswith("win")
-    _FAKE_FS_BASE = "C:\\fakefs" if is_windows else "/fakefs"
+    fake_base = "C:\\fakefs" if is_windows else "/fakefs"
 
-
-class FakeFilesystemVsRealTest(TestCase):
     def _paths(self, path):
         """For a given path, return paths in the real and fake filesystems."""
         if not path:
@@ -106,7 +104,6 @@ class FakeFilesystemVsRealTest(TestCase):
         if os.path.isdir(self.real_base):
             shutil.rmtree(self.real_base)
         os.mkdir(self.real_base)
-        self.fake_base = self._FAKE_FS_BASE
 
         # Make sure we can write to the physical testing temp directory.
         self.assertTrue(os.access(self.real_base, os.W_OK))
@@ -167,7 +164,7 @@ class FakeFilesystemVsRealTest(TestCase):
                 to method.
             real: built-in system library or method from the built-in system
                 library which takes a path as an arg and returns some value.
-            fake: fake_filsystem object or method from a fake_filesystem class
+            fake: fake_filesystem object or method from a fake_filesystem class
                 which takes a path as an arg and returns some value.
             method_returns_path: True if the method returns a path, and thus we
                 must compensate for expected difference between real and fake.
@@ -302,7 +299,7 @@ class FakeFilesystemVsRealTest(TestCase):
     def diff_open_method_behavior(
         self, method_name, path, mode, data, method_returns_data=True
     ):
-        """Invoke an open method in both real and fkae contexts and compare.
+        """Invoke an open method in both real and fake contexts and compare.
 
         Args:
             method_name: Name of method being tested.
@@ -335,7 +332,7 @@ class FakeFilesystemVsRealTest(TestCase):
 
         For a given method name (from the os.path module) and a path, compare
         the behavior of the system provided module against the
-        fake_filesytem module.
+        fake_filesystem module.
         We expect results and/or Exceptions raised to be identical.
 
         Args:
@@ -374,24 +371,35 @@ class FakeFilesystemVsRealTest(TestCase):
         if diff:
             self.fail(diff)
 
-    def assertAllOsBehaviorsMatch(self, path):
+    def assertAllOsBehaviorsMatch(self, path, excludes=None):
+        excludes = excludes or []
         path = sep(path)
         os_method_names = ["readlink"]
         os_method_names_no_args = ["getcwd"]
-        os_path_method_names = [
+        os_path_method_names = {
             "isabs",
             "isdir",
             "islink",
             "lexists",
             "isfile",
             "exists",
-        ]
+        } - set(excludes)
 
         wrapped_methods = [
             ["access", self._access_real, self._access_fake],
-            ["stat.size", self._stat_size_real, self._stat_size_fake],
+            [
+                "stat.size",
+                lambda p: self._stat_result_real(p, "st_size", False),
+                lambda p: self._stat_result_fake(p, "st_size", False),
+            ],
+            [
+                "stat.mode",
+                lambda p: self._stat_result_real(p, "st_mode"),
+                lambda p: self._stat_result_fake(p, "st_mode"),
+            ],
             ["lstat.size", self._lstat_size_real, self._lstat_size_fake],
         ]
+        wrapped_methods = [m for m in wrapped_methods if m[0] not in excludes]
 
         differences = []
         for method_name in os_method_names:
@@ -492,19 +500,18 @@ class FakeFilesystemVsRealTest(TestCase):
     def _access_fake(self, path):
         return self.fake_os.access(path, os.R_OK)
 
-    def _stat_size_real(self, path):
+    def _stat_result_real(self, path, prop, support_dir=True):
         real_path, unused_fake_path = self._paths(path)
         # fake_filesystem.py does not implement stat().st_size for directories
-        if os.path.isdir(real_path):
+        if not support_dir and os.path.isdir(real_path):
             return None
-        return os.stat(real_path).st_size
+        return getattr(os.stat(real_path), prop)
 
-    def _stat_size_fake(self, path):
-        unused_real_path, fake_path = self._paths(path)
-        # fake_filesystem.py does not implement stat().st_size for directories
-        if self.fake_os.path.isdir(fake_path):
+    def _stat_result_fake(self, path, prop, support_dir=True):
+        _, fake_path = self._paths(path)
+        if not support_dir and self.fake_os.path.isdir(fake_path):
             return None
-        return self.fake_os.stat(fake_path).st_size
+        return getattr(self.fake_os.stat(fake_path), prop)
 
     def _lstat_size_real(self, path):
         real_path, unused_fake_path = self._paths(path)
@@ -544,9 +551,9 @@ class FakeFilesystemVsRealTest(TestCase):
         self.assertAllOsBehaviorsMatch("")
 
     def test_root_path(self):
-        self.assertAllOsBehaviorsMatch("/")
+        self.assertAllOsBehaviorsMatch("/", excludes=["stat.mode"])
 
-    def test_non_existant_file(self):
+    def test_non_existent_file(self):
         self.assertAllOsBehaviorsMatch("foo")
 
     def test_empty_file(self):
@@ -690,7 +697,7 @@ class FakeFilesystemVsRealTest(TestCase):
         self._create_test_file("f", "a/sibling_of_b/target", "contents")
         self.assertAllOsBehaviorsMatch("a/b/../broken/../target")
 
-    def test_getmtime_nonexistant_path(self):
+    def test_getmtime_nonexistent_path(self):
         self.assertOsPathMethodBehaviorMatches("getmtime", "no/such/path")
 
     def test_builtin_open_modes(self):
@@ -723,6 +730,27 @@ class FakeFilesystemVsRealTest(TestCase):
         self.assertFileHandleOpenBehaviorsMatch("read", "r", encoding="utf-8")
         self.assertFileHandleOpenBehaviorsMatch("write", "w", encoding="utf-8")
         self.assertFileHandleOpenBehaviorsMatch("append", "a", encoding="utf-8")
+
+    def test_directory_permissions(self):
+        self._create_test_file("d", "a")
+        self._create_test_file("f", "a/write")
+        self._create_test_file("d", "b")
+        self._create_test_file("f", "b/write")
+        self._create_test_file("d", "b/stat_dir")
+        for path, mode in [("b", 0o555), ("b/stat_dir", 0o111)]:
+            real_path, fake_path = self._paths(path)
+            os.chmod(real_path, mode)
+            self.fake_os.chmod(fake_path, mode)
+
+        try:
+            self.assertFileHandleOpenBehaviorsMatch("a/write", "w")
+            self.assertFileHandleOpenBehaviorsMatch("b/write", "w")
+            self.assertAllOsBehaviorsMatch("b/stat_dir")
+        finally:
+            for path in ["b", "b/stat_dir"]:
+                real_path, fake_path = self._paths(path)
+                os.chmod(real_path, 0o777)
+                self.fake_os.chmod(fake_path, 0o777)
 
 
 def main(_):

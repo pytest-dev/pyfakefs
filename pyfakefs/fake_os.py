@@ -453,8 +453,20 @@ class FakeOsModule:
         except OSError as exc:
             if self.filesystem.is_macos and exc.errno == errno.EBADF:
                 raise OSError(errno.ENOTDIR, "Not a directory: " + str(path))
+            elif (
+                self.filesystem.is_windows_fs
+                and exc.errno == errno.ENOENT
+                and path == ""
+            ):
+                raise OSError(errno.EINVAL, "Invalid argument:  + str(path)")
             raise
-        self.filesystem.confirmdir(path)
+        try:
+            self.filesystem.confirmdir(path)
+        except OSError as exc:
+            if exc.errno == errno.EACCES:
+                # no access rights to the parent directory - do nothing
+                return
+            raise
         directory = self.filesystem.resolve(path)
         # A full implementation would check permissions all the way
         # up the tree.
@@ -1058,7 +1070,9 @@ class FakeOsModule:
                 return False
             raise
         if is_root():
-            mode &= ~os.W_OK
+            if mode & os.X_OK:
+                return stat_result.st_mode & 0o111 != 0
+            return True
         return (mode & ((stat_result.st_mode >> 6) & 7)) == mode
 
     def fchmod(
