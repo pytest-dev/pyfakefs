@@ -27,6 +27,9 @@ The released versions correspond to PyPI releases.
 * fixed behavior for `os.access` for symlinks under Windows
 * fixes permission problem on querying file properties (see [#1122](../../issues/1122))
 
+### Documentation
+* use a theme for documentation supporting dark mode
+
 ## [Version 5.7.4](https://pypi.python.org/pypi/pyfakefs/5.7.4) (2025-01-14)
 Minor bugfix release.
 

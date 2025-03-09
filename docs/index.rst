@@ -13,8 +13,9 @@ Contents:
 
    intro
    usage
+   convenience
+   customize
    troubleshooting
-   autopatch
    modules
 
 Indices and tables
