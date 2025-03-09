@@ -92,7 +92,7 @@ def pytest_runtest_logreport(report):
 
 
 @pytest.hookimpl(hookwrapper=True, trylast=True)
-def pytest_runtest_call(item):
+def pytest_runtest_setup(item):
     if Patcher.PATCHER is not None:
         Patcher.PATCHER.resume()
     yield

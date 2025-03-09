@@ -25,7 +25,9 @@ The released versions correspond to PyPI releases.
 * fixed a regression that could break tests under Posix in Python 3.12
   (see [#1126](../../issues/1126))
 * fixed behavior for `os.access` for symlinks under Windows
-* fixes permission problem on querying file properties (see [#1122](../../issues/1122))
+* fixed permission problem on querying file properties (see [#1122](../../issues/1122))
+* fixed patching in pytest setup phase for module and session-scoped fs fixtures
+  (see [#1126](../../issues/1126))
 
 ### Documentation
 * use a theme for documentation supporting dark mode
