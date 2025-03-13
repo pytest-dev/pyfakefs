@@ -69,6 +69,16 @@ function correctly. Examples that have shown this problem include `GitPython`_
 and `plumbum`_. Calling ``find_library`` also uses ``subprocess`` and does not work in
 the fake filesystem.
 
+Modules using multi-threading
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+This includes for example the standard library module ``threading`` and the standard library
+class ``concurrent.futures.ThreadPoolExecutor``.
+Multi-threading is not specifically handled in ``pyfakefs`` and may lead to problems
+in some cases. Specifically, writing to the same file from different threads (using
+different file handles) may fail, while in the real filesystem this is possible in
+Posix systems. There may be similar problems that we have not encountered yet, so
+use ``pyfakefs`` in multi-threaded environments with care.
+
 `sqlite3`_ (built-in)
 ~~~~~~~~~~~~~~~~~~~~~~~~
 This is a database adapter written in C, which uses the database C API to access files.
@@ -132,7 +142,7 @@ the filesystem functions that ``pyfakefs`` patches, but in some cases it may
 access other files in the packages. An example is the ``pytz`` module, which is loading timezone information
 from configuration files. In these cases, you have to map the respective files
 or directories from the real into the fake filesystem as described in
-:ref:`real_fs_access`. For the timezone example, this could look like the following::
+:ref:`real_fs_access`. For the timezone example, this could look like the following:
 
 .. code:: python
 
@@ -171,6 +181,8 @@ Here's an example of how to add these using pytest:
             ]
         )
         return fs
+
+.. _os_temporary_directories:
 
 OS temporary directories
 ------------------------
@@ -256,7 +268,7 @@ passed before the ``mocker`` fixture to ensure this:
 
 Pathlib.Path objects created outside of tests
 ---------------------------------------------
-An pattern which is more often seen with the increased usage of ``pathlib`` is the
+A pattern which is seen more often with the increased usage of ``pathlib`` is the
 creation of global ``pathlib.Path`` objects (instead of string paths) that are imported
 into the tests. As these objects are created in the real filesystem,
 they do not have the same attributes as fake ``pathlib.Path`` objects,
