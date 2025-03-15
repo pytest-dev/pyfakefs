@@ -82,11 +82,14 @@ def fake_open(
     newline: Optional[str] = None,
     closefd: bool = True,
     opener: Optional[Callable] = None,
+    is_fake_open_code: bool = False,
 ) -> Union[AnyFileWrapper, IO[Any]]:
     """Redirect the call to FakeFileOpen.
     See FakeFileOpen.call() for description.
     """
-    if is_called_from_skipped_module(
+    # We don't need to check this if we are in an `open_code` call
+    # from a faked file (and this might cause recursions in `linecache`)
+    if not is_fake_open_code and is_called_from_skipped_module(
         skip_names=skip_names,
         case_sensitive=filesystem.is_case_sensitive,
         check_open_code=sys.version_info >= (3, 12),
