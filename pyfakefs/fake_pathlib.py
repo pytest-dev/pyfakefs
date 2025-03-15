@@ -21,7 +21,7 @@ Usage:
 
 * Stand-alone with FakeFilesystem:
   `filesystem = fake_filesystem.FakeFilesystem()`
-  `fake_pathlib_module = fake_filesystem.FakePathlibModule(filesystem)`
+  `fake_pathlib_module = fake_pathlib.FakePathlibModule(filesystem)`
   `path = fake_pathlib_module.Path('/foo/bar')`
 
 Note: as the implementation is based on FakeFilesystem, all faked classes
@@ -864,7 +864,7 @@ class FakePathlibModule:
 
     You need a fake_filesystem to use this:
     `filesystem = fake_filesystem.FakeFilesystem()`
-    `fake_pathlib_module = fake_filesystem.FakePathlibModule(filesystem)`
+    `fake_pathlib_module = fake_pathlib.FakePathlibModule(filesystem)`
     """
 
     def __init__(self, filesystem):
