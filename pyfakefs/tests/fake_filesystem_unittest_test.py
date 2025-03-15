@@ -848,6 +848,13 @@ class AutoPatchOpenCodeTestCase(fake_filesystem_unittest.TestCase):
             self.import_foo()
         assert stdout.getvalue() == "hello\n"
 
+    def test_dynamic_import(self):
+        # regression test for #1121
+        self.fs.create_file("/foo.py")
+        self.fs.create_file("/bar.py", contents="import foo")
+        sys.path.insert(0, "")
+        import foo  # noqa
+
 
 class TestOtherFS(fake_filesystem_unittest.TestCase):
     def setUp(self):

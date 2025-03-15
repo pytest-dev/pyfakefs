@@ -86,6 +86,7 @@ class FakeIoModule:
         newline: Optional[str] = None,
         closefd: bool = True,
         opener: Optional[Callable] = None,
+        is_fake_open_code: bool = False,
     ) -> Union[AnyFileWrapper, IO[Any]]:
         """Redirect the call to FakeFileOpen.
         See FakeFileOpen.call() for description.
@@ -101,6 +102,7 @@ class FakeIoModule:
             newline,
             closefd,
             opener,
+            is_fake_open_code,
         )
 
     if sys.version_info >= (3, 8):
@@ -118,7 +120,7 @@ class FakeIoModule:
                 and self.filesystem.exists(path)
                 or patch_mode == PatchMode.ON
             ):
-                return self.open(path, mode="rb")
+                return self.open(path, mode="rb", is_fake_open_code=True)
             # mostly this is used for compiled code -
             # don't patch these, as the files are probably in the real fs
             return self._io_module.open_code(path)
