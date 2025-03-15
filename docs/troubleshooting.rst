@@ -266,6 +266,30 @@ passed before the ``mocker`` fixture to ensure this:
       # works correctly
       mocker.patch("builtins.open", mocker.mock_open(read_data="content"))
 
+tmp_path fixture with pyfakefs
+------------------------------
+If you are using the ``tmp_path`` fixture, or a similar pytest fixture
+relying on the real filesystem, you may have the opposite problem: now the ``fs``
+fixture must be added *after* the ``tmp_path`` fixture. Otherwise, the path will be
+created in the fake filesystem, and pytest will later try to access it in the real
+filesystem.
+
+.. code:: python
+
+  def test_working(tmp_path, fs):
+      fs.create_file(tmp_path / "foo")
+
+
+  def test_not_working(fs, tmp_path):
+      # causes an error while pytest tries to access the temporary directory
+      pass
+
+Note though that ``tmp_path`` and similar fixtures may not make much sense in the
+first place if used with ``pyfakefs``. While the directory will be created and
+removed in the real filesystem, all files you create will live in the fake filesystem
+only. You could as well use hardcoded paths in your tests, as they will not interfere
+with paths created in other tests.
+
 Pathlib.Path objects created outside of tests
 ---------------------------------------------
 A pattern which is seen more often with the increased usage of ``pathlib`` is the
