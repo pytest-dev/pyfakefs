@@ -18,6 +18,9 @@ The released versions correspond to PyPI releases.
 * fixed handling of dynamic imports from code in the fake filesystem in Python > 3.11
   (see [#1121](../../issues/1121))
 
+### Infrastructure
+* adapt test for increased default buffer size in Python 3.14a6
+
 ## [Version 5.8.0](https://pypi.python.org/pypi/pyfakefs/5.8.0) (2025-03-11)
 Adds preliminary support for Python 3.14.
 
