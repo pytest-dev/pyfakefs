@@ -1227,26 +1227,26 @@ class BufferingModeTest(FakeFileOpenTestBase):
     def test_writing_large_text_with_line_buffer(self):
         file_path = self.make_path("buffertest.bin")
         with self.open(file_path, "w", encoding="utf8", buffering=1) as f:
-            f.write("test" * 4000)
+            f.write("test" * 33000)
             with self.open(file_path, "r", encoding="utf8") as r:
                 x = r.read()
                 # buffer larger than default - written
-                self.assertEqual(16000, len(x))
+                self.assertEqual(132000, len(x))
             f.write("test")
             with self.open(file_path, "r", encoding="utf8") as r:
                 x = r.read()
                 # buffer not filled - not written
-                self.assertEqual(16000, len(x))
+                self.assertEqual(132000, len(x))
             f.write("\ntest")
             with self.open(file_path, "r", encoding="utf8") as r:
                 x = r.read()
                 # new line - buffer written
-                self.assertEqual(16009, len(x))
+                self.assertEqual(132009, len(x))
             f.write("\ntest")
             with self.open(file_path, "r", encoding="utf8") as r:
                 x = r.read()
                 # another new line - buffer written
-                self.assertEqual(16014, len(x))
+                self.assertEqual(132014, len(x))
 
     def test_writing_text_with_default_buffer(self):
         file_path = self.make_path("buffertest.txt")
