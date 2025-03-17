@@ -239,17 +239,30 @@ is the convenience argument :ref:`allow_root_user`:
 If accessing files as another user and/or group, the respective group/other file
 permissions are considered.
 
+Interaction with other fixtures working on the filesystem
+---------------------------------------------------------
+Generally, if you are using a pytest fixture working on the filesystem,
+you should check if you really need it. Chances are that the fixture does
+something that could be more naturally achieved with ``pyfakefs`` using
+standard file system functions.
+If you really *do* need such fixtures, the order in which they are used with
+respect to the ``fs`` fixture does matter. If the fixture should work with
+the fake filesystem instead of the real filesystem, it should be placed
+*after* the ``fs`` fixture. If it shall be used with the real filesystem
+instead (a case that should almost never be needed), it shall be placed *before*
+the ``fs`` fixture.
+Following are some related examples.
+
 .. _usage_with_mock_open:
 
 Pyfakefs and mock_open
-----------------------
+~~~~~~~~~~~~~~~~~~~~~~
 If you patch ``open`` using ``mock_open`` before the initialization of
 ``pyfakefs``, it will not work properly, because the ``pyfakefs``
 initialization relies on ``open`` working correctly.
-Generally, you should not need ``mock_open`` if using ``pyfakefs``, because you
-always can create the files with the needed content using ``create_file``.
-This is true for patching any filesystem functions--avoid patching them
-while working with ``pyfakefs``.
+Generally, you should not need ``mock_open`` if using ``pyfakefs`` at all,
+because you can always create the files with the needed content using
+``create_file`` or the standard filesystem functions.
 If you still want to use ``mock_open``, make sure it is only used while
 patching is in progress. For example, if you are using ``pytest`` with the
 ``mocker`` fixture used to patch ``open``, make sure that the ``fs`` fixture is
@@ -266,29 +279,63 @@ passed before the ``mocker`` fixture to ensure this:
       # works correctly
       mocker.patch("builtins.open", mocker.mock_open(read_data="content"))
 
-tmp_path fixture with pyfakefs
-------------------------------
-If you are using the ``tmp_path`` fixture, or a similar pytest fixture
-relying on the real filesystem, you may have the opposite problem: now the ``fs``
-fixture must be added *after* the ``tmp_path`` fixture. Otherwise, the path will be
-created in the fake filesystem, and pytest will later try to access it in the real
-filesystem.
+The tmp_path fixture
+~~~~~~~~~~~~~~~~~~~~
+The ``tmp_path`` fixture is an example for a fixture that always works on the real
+filesystem. If you invoke it after the *fs* fixture, the path will be
+created in the fake filesystem, but pytest will later try to access it in the real
+filesystem. While invoking it before the *fs* fixture will technically work, it makes
+no real sense. The temporary directory will be created and removed in the real
+filesystem, but never actually used by the test that is working in the fake filesystem.
+
+A replacement for the tmp_path fixture
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+As an example for a useful fixture working on the filesystem, let's write a simple
+replacement for ``tmp_path`` that uses ``tempfile.TemporaryDirectory``.
+
+There are two ways to do this with respect to the ``fs`` fixture. The common
+way is to base your fixture on the ``fs`` fixture (imports are omitted):
 
 .. code:: python
 
-  def test_working(tmp_path, fs):
-      fs.create_file(tmp_path / "foo")
+  @pytest.fixture
+  def temp_path(fs):
+      tmp_dir = tempfile.TemporaryDirectory()
+      yield Path(tmp_dir.name)
 
 
-  def test_not_working(fs, tmp_path):
-      # causes an error while pytest tries to access the temporary directory
-      pass
+  def test_temp_path(temp_path):
+      assert temp_path.exists()
+      assert isinstance(temp_path, fake_pathlib.FakePath)
 
-Note though that ``tmp_path`` and similar fixtures may not make much sense in the
-first place if used with ``pyfakefs``. While the directory will be created and
-removed in the real filesystem, all files you create will live in the fake filesystem
-only. You could as well use hardcoded paths in your tests, as they will not interfere
-with paths created in other tests.
+This way, the fixture will always use the fake filesystem. Note that you can
+add the ``fs`` fixture to the test additionally, if you need to access any
+convenience function in the fake filesystem.
+
+The other possibility is to write the fixture independently of ``pyfakefs``,
+so it can be used both in tests with the real filesystem and with the fake
+filesystem:
+
+.. code:: python
+
+  @pytest.fixture
+  def temp_path():
+      tmp_dir = tempfile.TemporaryDirectory()
+      yield Path(tmp_dir.name)
+
+
+  def test_real_temp_path(temp_path):
+      assert temp_path.exists()
+      # we do not check for pathlib.Path, because FakePath is derived from it
+      assert isinstance(temp_path, (pathlib.PosixPath, pathlib.WindowsPath))
+
+
+  def test_fake_temp_path(fs, temp_path):
+      assert temp_path.exists()
+      assert isinstance(temp_path, fake_pathlib.FakePath)
+
+Note that in the last case, your fixture must be invoked *after* the ``fs``
+fixture, in order for it to work in the fake filesystem.
 
 Pathlib.Path objects created outside of tests
 ---------------------------------------------
