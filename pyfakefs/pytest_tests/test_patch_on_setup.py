@@ -56,6 +56,6 @@ def test_handler_and_check_in_fixture(handler_and_check):
     assert Path("/foo/bar").exists()
 
 
-@pytest.fixture(scope="session", autouse=True)
-def config(fs_session: FakeFilesystem):
-    fs_session.create_file("/foo/bar")
+@pytest.fixture(scope="module", autouse=True)
+def config(fs_module: FakeFilesystem):
+    fs_module.create_file("/foo/bar")
