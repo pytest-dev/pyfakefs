@@ -20,6 +20,9 @@ The released versions correspond to PyPI releases.
 
 ### Infrastructure
 * adapt test for increased default buffer size in Python 3.14a6
+* replace session-scoped with module-scoped fixture in test,
+  run pytest over all tests in docker containers
+  (see [#1151](../../issues/1151))
 
 ## [Version 5.8.0](https://pypi.python.org/pypi/pyfakefs/5.8.0) (2025-03-11)
 Adds preliminary support for Python 3.14.

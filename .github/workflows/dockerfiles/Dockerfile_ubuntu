@@ -42,8 +42,10 @@ WORKDIR work/pyfakefs
 RUN python3 -m venv ../venv
 RUN ../venv/bin/pip install -r requirements.txt
 RUN ../venv/bin/pip install -r extra_requirements.txt
+RUN ../venv/bin/pip install parquet pyarrow
+RUN ../venv/bin/pip install -e .
 
 USER pyfakefs
 ENV PYTHONPATH work/pyfakefs
 ENV TEST_REAL_FS=1
-CMD ["../venv/bin/python", "-m", "pyfakefs.tests.all_tests"]
+CMD ["../venv/bin/pytest", "pyfakefs/pytest_tests", "pyfakefs/tests"]
