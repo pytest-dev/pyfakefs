@@ -86,7 +86,7 @@ from pyfakefs.fake_filesystem import (
     FakeFilesystem,
 )
 from pyfakefs.fake_os import use_original_os
-from pyfakefs.helpers import IS_PYPY
+from pyfakefs.helpers import IS_PYPY, IS_WIN
 from pyfakefs.legacy_packages import pathlib2, scandir
 from pyfakefs.mox3_stubout import StubOutForTesting
 
@@ -153,7 +153,9 @@ class LineCachePatcher:
 
             with use_original_os():
                 # workaround for updatecache problem with pytest under Windows, see #1096
-                if not filename.endswith(r"pytest.exe\__main__.py"):
+                if not IS_WIN or not filename.lower().endswith(
+                    r"pytest.exe\__main__.py"
+                ):
                     return self.linecache_updatecache(filename, module_globals)
                 return []
 
