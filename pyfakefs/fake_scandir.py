@@ -50,42 +50,42 @@ class DirEntry(os.PathLike):
         return self._inode
 
     def is_dir(self, follow_symlinks=True):
-        """Return True if this entry is a directory entry.
+        """Return `True` if this entry is a directory entry.
 
         Args:
-            follow_symlinks: If True, also return True if this entry is a
+            follow_symlinks: If `True`, also return `True` if this entry is a
                 symlink pointing to a directory.
 
         Returns:
-            True if this entry is an existing directory entry, or if
-                follow_symlinks is set, and this entry points to an existing
+            `True` if this entry is an existing directory entry, or if
+                ``follow_symlinks`` is set, and this entry points to an existing
                 directory entry.
         """
         return self._isdir and (follow_symlinks or not self._islink)
 
     def is_file(self, follow_symlinks=True):
-        """Return True if this entry is a regular file entry.
+        """Return `True` if this entry is a regular file entry.
 
         Args:
-            follow_symlinks: If True, also return True if this entry is a
+            follow_symlinks: If `True`, also return `True` if this entry is a
                 symlink pointing to a regular file.
 
         Returns:
-            True if this entry is an existing file entry, or if
-                follow_symlinks is set, and this entry points to an existing
+            `True` if this entry is an existing file entry, or if
+                ``follow_symlinks`` is set, and this entry points to an existing
                 file entry.
         """
         return not self._isdir and (follow_symlinks or not self._islink)
 
     def is_symlink(self):
-        """Return True if this entry is a symbolic link (even if broken)."""
+        """Return `True` if this entry is a symbolic link (even if broken)."""
         return self._islink
 
     def stat(self, follow_symlinks=True):
-        """Return a stat_result object for this entry.
+        """Return a `stat_result` object for this entry.
 
         Args:
-            follow_symlinks: If False and the entry is a symlink, return the
+            follow_symlinks: If `False` and the entry is a symlink, return the
                 result for the symlink, otherwise for the object it points to.
         """
         if follow_symlinks:
@@ -110,7 +110,7 @@ class DirEntry(os.PathLike):
     if sys.version_info >= (3, 12):
 
         def is_junction(self) -> bool:
-            """Return True if this entry is a junction.
+            """Return `True` if this entry is a junction.
             Junctions are not a part of posix semantic."""
             if not self._filesystem.is_windows_fs:
                 return False

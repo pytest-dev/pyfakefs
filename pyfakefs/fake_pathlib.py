@@ -446,7 +446,7 @@ if sys.version_info < (3, 12):
         pathmod = ntpath
 
         def is_reserved(self, parts):
-            """Return True if the path is considered reserved under Windows."""
+            """Return `True` if the path is considered reserved under Windows."""
 
             # NOTE: the rules for reserved names seem somewhat complicated
             # (e.g. r"..\NUL" is reserved but not r"foo\NUL").
@@ -662,7 +662,7 @@ class FakePath(pathlib.Path):
             under Windows).
 
             Args:
-                strict: If False (default) no exception is raised if the path
+                strict: If `False` (default) no exception is raised if the path
                     does not exist.
 
             Raises:
@@ -831,11 +831,11 @@ class FakePath(pathlib.Path):
 
         Args:
             mode: the file mode for the file if it does not exist
-            exist_ok: if the file already exists and this is True, nothing
-                happens, otherwise FileExistError is raised
+            exist_ok: if the file already exists and this is `True`, nothing
+                happens, otherwise `FileExistError` is raised
 
         Raises:
-            FileExistsError: if the file exists and exits_ok is False.
+            FileExistsError: if the file exists and ``exits_ok`` is `False`.
         """
         self._raise_on_closed()
         if self.exists():
@@ -862,9 +862,10 @@ def _warn_is_reserved_deprecated():
 class FakePathlibModule:
     """Uses FakeFilesystem to provide a fake pathlib module replacement.
 
-    You need a fake_filesystem to use this:
-    `filesystem = fake_filesystem.FakeFilesystem()`
-    `fake_pathlib_module = fake_pathlib.FakePathlibModule(filesystem)`
+    You need a fake_filesystem to use this::
+
+        filesystem = fake_filesystem.FakeFilesystem()
+        fake_pathlib_module = fake_pathlib.FakePathlibModule(filesystem)
     """
 
     def __init__(self, filesystem):

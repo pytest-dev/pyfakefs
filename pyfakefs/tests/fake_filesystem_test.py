@@ -25,6 +25,11 @@ import tempfile
 import unittest
 from unittest.mock import patch
 
+try:
+    import pytest
+except ImportError:
+    pytest = None
+
 from pyfakefs import fake_filesystem, fake_os, fake_open
 from pyfakefs.fake_filesystem import (
     set_uid,
@@ -2606,6 +2611,17 @@ class RealFileSystemAccessTest(RealFsTestCase):
         fake_file = self.filesystem.resolve(real_file_path)
         self.check_fake_file_stat(fake_file, real_file_path)
         self.check_writable_file(fake_file, real_file_path)
+
+    @unittest.skipIf(pytest is None, "pytest is not installed")
+    @unittest.skipIf(sys.version_info < (3, 8), "importlib.metadata not available")
+    def test_add_package_metadata(self):
+        parent_path = pathlib.Path(pytest.__file__).parent.parent
+        pytest_dist_path = parent_path / f"pytest-{pytest.__version__}.dist-info"
+        assert pytest_dist_path.exists()  # real fs
+        assert not self.filesystem.exists(pytest_dist_path)
+        self.filesystem.add_package_metadata("pytest")
+        assert self.filesystem.exists(pytest_dist_path)
+        assert self.filesystem.exists(pytest_dist_path / "METADATA")
 
 
 class FileSideEffectTests(TestCase):

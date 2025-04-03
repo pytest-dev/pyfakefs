@@ -364,7 +364,7 @@ class TestCaseMixin:
         Invoke this at the beginning of the `setUp()` method in your unit test
         class.
         For the arguments, see the `TestCaseMixin` attribute description.
-        If any of the arguments is not None, it overwrites the settings for
+        If any of the arguments is not `None`, it overwrites the settings for
         the current test case. Settings the arguments here may be a more
         convenient way to adapt the setting than overwriting `__init__()`.
         """
@@ -632,18 +632,18 @@ class Patcher:
             modules_to_patch: A dictionary of fake modules mapped to the
                 fully qualified patched module names. Can be used to add
                 patching of modules not provided by `pyfakefs`.
-            allow_root_user: If True (default), if the test is run as root
+            allow_root_user: If `True` (default), if the test is run as root
                 user, the user in the fake file system is also considered a
                 root user, otherwise it is always considered a regular user.
-            use_known_patches: If True (the default), some patches for commonly
+            use_known_patches: If `True` (the default), some patches for commonly
                 used packages are applied which make them usable with pyfakefs.
-            patch_open_code: If True, `io.open_code` is patched. The default
+            patch_open_code: If `True`, `io.open_code` is patched. The default
                 is not to patch it, as it mostly is used to load compiled
                 modules that are not in the fake file system.
-            patch_default_args: If True, default arguments are checked for
+            patch_default_args: If `True`, default arguments are checked for
                 file system functions, which are patched. This check is
                 expansive, so it is off by default.
-            use_cache: If True (default), patched and non-patched modules are
+            use_cache: If `True` (default), patched and non-patched modules are
                 cached between tests for performance reasons. As this is a new
                 feature, this argument allows to turn it off in case it
                 causes any problems.

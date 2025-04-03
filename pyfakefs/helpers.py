@@ -10,7 +10,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""Helper classes use for fake file system implementation."""
+"""Helper classes used for the fake file system implementation and may be useful
+for ``pyfakefs`` users."""
 
 import ctypes
 import importlib
@@ -110,23 +111,23 @@ def reset_ids() -> None:
 
 
 def is_root() -> bool:
-    """Return True if the current user is the root user."""
+    """Return `True` if the current user is the root user."""
     return USER_ID == 0
 
 
 def is_int_type(val: Any) -> bool:
-    """Return True if `val` is of integer type."""
+    """Return `True` if `val` is of integer type."""
     return isinstance(val, int)
 
 
 def is_byte_string(val: Any) -> bool:
-    """Return True if `val` is a bytes-like object, False for a unicode
+    """Return `True` if ``val`` is a bytes-like object, `False` for a Unicode
     string."""
     return not hasattr(val, "encode")
 
 
 def is_unicode_string(val: Any) -> bool:
-    """Return True if `val` is a unicode string, False for a bytes-like
+    """Return `True` if ``val`` is a Unicode string, `False` for a bytes-like
     object."""
     return hasattr(val, "encode")
 
@@ -172,7 +173,7 @@ def join_strings(s1: AnyStr, s2: AnyStr) -> AnyStr:
 
 def real_encoding(encoding: Optional[str]) -> Optional[str]:
     """Since Python 3.10, the new function ``io.text_encoding`` returns
-    "locale" as the encoding if None is defined. This will be handled
+    "locale" as the encoding if none is defined. This will be handled
     as no encoding in pyfakefs."""
     if sys.version_info >= (3, 10):
         return encoding if encoding != "locale" else None

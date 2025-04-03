@@ -113,8 +113,8 @@ def fake_open(
 class FakeFileOpen:
     """Faked `file()` and `open()` function replacements.
 
-    Returns FakeFile objects in a FakeFilesystem in place of the `file()`
-    or `open()` function.
+    Returns :py:class:`FakeDirectory<pyfakefs.fake_file.FakeFile>` objects in a
+        fake filesystem; replaces the `open()` function.
     """
 
     __name__ = "FakeFileOpen"

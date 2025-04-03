@@ -114,7 +114,7 @@ You can do the same using ``pytest`` by using a fixture for test setup:
 
 .. note::
   If you are not using the fixture directly in the test, you can use
-  ``@pytest.mark.usefixtures`` instead of passing the fixture as an argument.
+  `@pytest.mark.usefixtures`_ instead of passing the fixture as an argument.
   This avoids warnings about unused arguments from linters.
 
 When using ``pytest`` another option is to load the contents of the real file
@@ -138,6 +138,27 @@ the ``fs`` fixture.
     def test_using_file_contents(content, fs):
         fs.create_file("fake/path.txt")
         assert content != ""
+
+.. _map-metadata:
+
+Map package metadata files into fake filesystem
+...............................................
+A more specialized function for adding real files to the fake filesystem is
+:py:meth:`add_package_metadata() <pyfakefs.fake_filesystem.FakeFilesystem.add_package_metadata>`.
+It adds the metadata distribution files for a given package to the fake filesystem,
+so that it can be accessed by modules like `importlib.metadata`_. This is needed
+for example if using `flask.testing`_ with ``pyfakefs``.
+
+.. code:: python
+
+    import pytest
+
+
+    @pytest.fixture(autouse=True)
+    def add_werkzeug_metadata(fs):
+        # flask.testing accesses Werkzeug metadata, map it
+        fs.add_package_metadata("Werkzeug")
+        yield
 
 
 Handling mount points
@@ -312,3 +333,8 @@ possibility to use the ``force_unix_mode`` argument to ``FakeFilesystem.chmod``:
         fs.chmod("/foo", 0o000, force_unix_mode=True)
         with pytest.raises(PermissionError):
             path.is_file()
+
+
+.. _`importlib.metadata`: https://docs.python.org/3/library/importlib.metadata.html
+.. _`@pytest.mark.usefixtures`: https://docs.pytest.org/en/stable/reference/reference.html#pytest-mark-usefixtures
+.. _`flask.testing`: https://flask-testing.readthedocs.io/en/latest/

@@ -182,6 +182,10 @@ Here's an example of how to add these using pytest:
         )
         return fs
 
+Another example of code accessing the real filesystem is the usage of `importlib.metadata`_,
+which accesses the metadata associated with a Python package on disk. To handle this
+specific problem, another convenience method can be used - see :ref:`map-metadata`.
+
 .. _os_temporary_directories:
 
 OS temporary directories
@@ -491,3 +495,4 @@ We will analyze the problem, and if we find a solution we will either get this f
 .. _`pandas`: https://pypi.org/project/pandas/
 .. _`xlrd`: https://pypi.org/project/xlrd/
 .. _`openpyxl`: https://pypi.org/project/openpyxl/
+.. _`importlib.metadata`: https://docs.python.org/3/library/importlib.metadata.html

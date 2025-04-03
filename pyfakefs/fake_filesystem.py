@@ -92,6 +92,7 @@ import tempfile
 from collections import namedtuple, OrderedDict
 from doctest import TestResults
 from enum import Enum
+
 from stat import (
     S_IFREG,
     S_IFDIR,
@@ -190,8 +191,9 @@ class FakeFilesystem:
         umask: The umask used for newly created files, see `os.umask`.
         patcher: Holds the Patcher object if created from it. Allows access
             to the patcher object if using the pytest fs fixture.
-        patch_open_code: Defines how `io.open_code` will be patched;
-            patching can be on, off, or in automatic mode.
+        patch_open_code: Defines how
+            `io.open_code <https://docs.python.org/3/library/io.html#io.open_code>`__
+            will be patched; patching can be on, off, or in automatic mode.
         shuffle_listdir_results: If `True`, `os.listdir` will not sort the
             results to match the real file system behavior.
     """
@@ -206,10 +208,10 @@ class FakeFilesystem:
         """
         Args:
             path_separator:  optional substitute for os.path.sep
-            total_size: if not None, the total size in bytes of the
+            total_size: if not `None`, the total size in bytes of the
                 root filesystem.
             patcher: the Patcher instance if created from the Patcher
-            create_temp_dir: If True, a temp directory is created on initialization.
+            create_temp_dir: If `True`, a temp directory is created on initialization.
                 Under Posix, if the temp directory is not `/tmp`, a link to the temp
                 path is additionally created at `/tmp`.
 
@@ -500,7 +502,7 @@ class FakeFilesystem:
         return matching_string(path, self.alternative_path_separator)
 
     def starts_with_sep(self, path: AnyStr) -> bool:
-        """Return True if path starts with a path separator."""
+        """Return `True` if path starts with a path separator."""
         sep = self.get_path_separator(path)
         altsep = self._alternative_path_separator(path)
         return path.startswith(sep) or altsep is not None and path.startswith(altsep)
@@ -528,7 +530,7 @@ class FakeFilesystem:
 
         Raises:
             OSError: if trying to mount an existing mount point again,
-                and `can_exist` is False.
+                and ``can_exist`` is `False`.
         """
         path = self.normpath(self.normcase(path))
         for mount_point in self.mount_points:
@@ -717,15 +719,15 @@ class FakeFilesystem:
             mount_point["used_size"] += usage_change
 
     def stat(self, entry_path: AnyStr, follow_symlinks: bool = True):
-        """Return the os.stat-like tuple for the FakeFile object of entry_path.
+        """Return the os.stat-like tuple for the FakeFile object of ``entry_path``.
 
         Args:
             entry_path:  Path to filesystem object to retrieve.
-            follow_symlinks: If False and entry_path points to a symlink,
+            follow_symlinks: If `False` and ``entry_path`` points to a symlink,
                 the link itself is inspected instead of the linked object.
 
         Returns:
-            The FakeStatResult object corresponding to entry_path.
+            The `FakeStatResult` object corresponding to ``entry_path``.
 
         Raises:
             OSError: if the filesystem object doesn't exist.
@@ -796,7 +798,7 @@ class FakeFilesystem:
             mode: (int) Permissions.
             follow_symlinks: If `False` and `path` points to a symlink,
                 the link itself is affected instead of the linked object.
-            force_unix_mode: if True and run under Windows, the mode is not
+            force_unix_mode: if `True` and run under Windows, the mode is not
                 adapted for Windows to allow making dirs unreadable
         """
         allow_fd = not self.is_windows_fs or sys.version_info >= (3, 13)
@@ -828,18 +830,18 @@ class FakeFilesystem:
             path: (str) Path to the file.
             times: 2-tuple of int or float numbers, of the form (atime, mtime)
                 which is used to set the access and modified times in seconds.
-                If None, both times are set to the current time.
+                If `None`, both times are set to the current time.
             ns: 2-tuple of int numbers, of the form (atime, mtime)  which is
                 used to set the access and modified times in nanoseconds.
                 If `None`, both times are set to the current time.
-            follow_symlinks: If `False` and entry_path points to a symlink,
+            follow_symlinks: If `False` and ``path`` points to a symlink,
                 the link itself is queried instead of the linked object.
 
             Raises:
                 TypeError: If anything other than the expected types is
-                    specified in the passed `times` or `ns` tuple,
+                    specified in the passed ``times`` or ``ns`` tuple,
                     or if the tuple length is not equal to 2.
-                ValueError: If both times and ns are specified.
+                ValueError: If both ``times`` and ``ns`` are specified.
         """
         self._handle_utime_arg_errors(ns, times)
 
@@ -922,7 +924,7 @@ class FakeFilesystem:
         """Remove file object with given descriptor from the list
         of open files.
 
-        Sets the entry in open_files to None.
+        Sets the entry in `open_files` to `None`.
 
         Args:
             file_des: Descriptor of file object to be removed from
@@ -970,7 +972,7 @@ class FakeFilesystem:
         self.raise_os_error(errno.EBADF, str(file_des))
 
     def has_open_file(self, file_object: FakeFile) -> bool:
-        """Return True if the given file object is in the list of open files.
+        """Return `True` if the given file object is in the list of open files.
 
         Args:
             file_object: The FakeFile object to be checked.
@@ -1371,7 +1373,7 @@ class FakeFilesystem:
         return path_components
 
     def starts_with_drive_letter(self, file_path: AnyStr) -> bool:
-        """Return True if file_path starts with a drive letter.
+        """Return `True` if file_path starts with a drive letter.
 
         Args:
             file_path: the full path to be examined.
@@ -1457,7 +1459,7 @@ class FakeFilesystem:
         return False
 
     def ends_with_path_separator(self, path: Union[int, AnyPath]) -> bool:
-        """Return True if ``file_path`` ends with a valid path separator."""
+        """Return `True` if ``file_path`` ends with a valid path separator."""
         if isinstance(path, int):
             return False
         file_path = make_string_path(path)
@@ -1497,13 +1499,13 @@ class FakeFilesystem:
 
         Args:
             file_path:  The path to examine.
-            check_link: If True, links are not followed
+            check_link: If `True`, links are not followed
 
         Returns:
-            (bool) True if the corresponding object exists.
+            (bool) `True` if the corresponding object exists.
 
         Raises:
-            TypeError: if file_path is None.
+            TypeError: if file_path is `None`.
         """
         if check_link and self.islink(file_path):
             return True
@@ -1718,11 +1720,11 @@ class FakeFilesystem:
         Args:
             file_path: Specifies target FakeFile object to retrieve, with a
                 path that has already been normalized/resolved.
-            check_read_perm: If True, raises OSError if a parent directory
+            check_read_perm: If `True`, raises `OSError` if a parent directory
                 does not have read permission
-            check_exe_perm: If True, raises OSError if a parent directory
+            check_exe_perm: If `True`, raises `OSError` if a parent directory
                 does not have execute (e.g. search) permission
-            check_owner: If True, and check_read_perm is also True,
+            check_owner: If `True`, and ``check_read_perm`` is also `True`,
                 only checks read permission if the current user id is
                 different from the file object user id
 
@@ -1787,9 +1789,9 @@ class FakeFilesystem:
         Args:
             file_path: Specifies the target
                 :py:class:`FakeFile<pyfakefs.fake_file.FakeFile>` object to retrieve.
-            check_read_perm: If True, raises OSError if a parent directory
+            check_read_perm: If `True`, raises `OSError` if a parent directory
                 does not have read permission
-            check_exe_perm: If True, raises OSError if a parent directory
+            check_exe_perm: If `True`, raises `OSError` if a parent directory
                 does not have execute (e.g. search) permission
 
         Returns:
@@ -1836,16 +1838,16 @@ class FakeFilesystem:
             follow_symlinks: If `False`, the link itself is resolved,
                 otherwise the object linked to.
             allow_fd: If `True`, `file_path` may be an open file descriptor
-            check_read_perm: If True, raises OSError if a parent directory
+            check_read_perm: If `True`, raises `OSError` if a parent directory
                 does not have read permission
-            check_read_perm: If True, raises OSError if a parent directory
+            check_read_perm: If `True`, raises `OSError` if a parent directory
                 does not have execute permission
-            check_owner: If True, and check_read_perm is also True,
+            check_owner: If `True`, and ``check_read_perm`` is also `True`,
                 only checks read permission if the current user id is
                 different from the file object user id
 
         Returns:
-          The FakeFile object corresponding to `file_path`.
+          The FakeFile object corresponding to ``file_path``.
 
         Raises:
             OSError: if the object is not found.
@@ -2279,7 +2281,7 @@ class FakeFilesystem:
             create_missing_dirs: If `True`, auto create missing directories.
             apply_umask: If `True` (default), the current umask is applied
                 to `st_mode`.
-            encoding: If `contents` is of type `str`, the encoding used
+            encoding: If ``contents`` is of type `str`, the encoding used
                 for serialization.
             errors: The error mode used for encoding/decoding errors.
             side_effect: function handle that is executed when the file is written,
@@ -2525,6 +2527,30 @@ class FakeFilesystem:
             else:
                 self.add_real_file(path, read_only)
 
+    def add_package_metadata(self, package_name: str) -> None:
+        """Convenience function to add all metadata distribution files of the package
+        with the given name to the fake filesystem. These are the files that are
+        usually located under `<package_name>-<version>.dist-info` beside the actual
+        package. The files are accessed by the functions in `importlib.metadata`.
+
+        Args:
+            package_name: Name of the package whose metadata shall be copied
+
+        Raises:
+            PackageNotFoundError: if the package with the given name is not found
+        """
+        if sys.version_info < (3, 8):
+            raise NotImplementedError("Not available in Python 3.7")
+
+        from importlib.metadata import distribution, PackageNotFoundError
+
+        dist_files = distribution(package_name).files
+        if dist_files is None:
+            raise PackageNotFoundError(package_name)
+
+        for metadata_file in dist_files:
+            self.add_real_file(metadata_file.locate())
+
     def create_file_internally(
         self,
         file_path: AnyPath,
@@ -2549,13 +2575,13 @@ class FakeFilesystem:
             st_size: file size; only valid if contents not given. If given,
                 the file is considered to be in "large file mode" and trying
                 to read from or write to the file will result in an exception.
-            create_missing_dirs: if True, auto create missing directories.
-            apply_umask: whether or not the current umask must be applied
+            create_missing_dirs: if `True`, auto create missing directories.
+            apply_umask: whether the current umask must be applied
                 on st_mode.
-            encoding: if contents is a unicode string, the encoding used for
+            encoding: if contents is a Unicode string, the encoding used for
                 serialization.
             errors: the error mode used for encoding/decoding errors
-            read_from_real_fs: if True, the contents are read from the real
+            read_from_real_fs: if `True`, the contents are read from the real
                 file system on demand.
             side_effect: function handle that is executed when file is written,
                 must accept the file object as an argument.
@@ -2756,15 +2782,15 @@ class FakeFilesystem:
         Args:
             old_path: An existing link to the target file.
             new_path: The destination path to create a new link at.
-            follow_symlinks: If False and old_path is a symlink, link the
+            follow_symlinks: If `False` and ``old_path`` is a symlink, link the
                 symlink instead of the object it points to.
 
         Returns:
-            The FakeFile object referred to by old_path.
+            The FakeFile object referred to by ``old_path``.
 
         Raises:
             OSError:  if something already exists at new_path.
-            OSError:  if old_path is a directory.
+            OSError:  if ``old_path`` is a directory.
             OSError:  if the parent directory doesn't exist.
         """
         return self.create_link(
@@ -2789,7 +2815,7 @@ class FakeFilesystem:
             the string representing the path to which the symbolic link points.
 
         Raises:
-            TypeError: if path is None
+            TypeError: if path is `None`
             OSError: (with errno=ENOENT) if path is not a valid path, or
                 (with errno=EINVAL) if path is valid, but is not a symlink,
                 or if the path ends with a path separator (Posix only)
@@ -2886,7 +2912,7 @@ class FakeFilesystem:
             mode: (int) Mode to create directory (and any necessary parent
                 directories) with. This argument defaults to 0o777.
                 The umask is applied to this mode.
-          exist_ok: (boolean) If exist_ok is False (the default), an OSError is
+          exist_ok: (boolean) If exist_ok is `False` (the default), an `OSError` is
                 raised if the target directory already exists.
 
         Raises:
@@ -2952,7 +2978,7 @@ class FakeFilesystem:
             (boolean) `True` if the st_flag is set in path's st_mode.
 
         Raises:
-          TypeError: if path is None
+          TypeError: if path is `None`
         """
         if path is None:
             raise TypeError
@@ -2980,7 +3006,7 @@ class FakeFilesystem:
             `True` if path points to a directory (following symlinks).
 
         Raises:
-            TypeError: if path is None.
+            TypeError: if path is `None`.
         """
         return self._is_of_type(path, S_IFDIR, follow_symlinks)
 
@@ -2996,7 +3022,7 @@ class FakeFilesystem:
             `True` if path points to a regular file (following symlinks).
 
         Raises:
-            TypeError: if path is None.
+            TypeError: if path is `None`.
         """
         return self._is_of_type(path, S_IFREG, follow_symlinks)
 
@@ -3010,14 +3036,14 @@ class FakeFilesystem:
             `True` if path points to a symlink (S_IFLNK set in st_mode)
 
         Raises:
-            TypeError: if path is None.
+            TypeError: if path is `None`.
         """
         return self._is_of_type(path, S_IFLNK, follow_symlinks=False)
 
     if sys.version_info >= (3, 12):
 
         def isjunction(self, path: AnyPath) -> bool:
-            """Returns False. Junctions are never faked."""
+            """Returns `False`. Junctions are never faked."""
             return False
 
     def confirmdir(
@@ -3033,11 +3059,11 @@ class FakeFilesystem:
         Args:
             target_directory: Path to the target directory within the fake
                 filesystem.
-            check_read_perm: If True, raises OSError if the directory
+            check_read_perm: If `True`, raises `OSError` if the directory
                 does not have read permission
-            check_exe_perm: If True, raises OSError if the directory
+            check_exe_perm: If `True`, raises `OSError` if the directory
                 does not have execute (e.g. search) permission
-            check_owner: If True, only checks read permission if the current
+            check_owner: If `True`, only checks read permission if the current
                 user id is different from the file object user id
 
         Returns:

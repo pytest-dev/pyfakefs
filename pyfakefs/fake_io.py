@@ -52,9 +52,10 @@ class PatchMode(Enum):
 class FakeIoModule:
     """Uses FakeFilesystem to provide a fake io module replacement.
 
-    You need a fake_filesystem to use this:
-    filesystem = fake_filesystem.FakeFilesystem()
-    my_io_module = fake_io.FakeIoModule(filesystem)
+    You need a fake_filesystem to use this::
+
+        filesystem = fake_filesystem.FakeFilesystem()
+        my_io_module = fake_io.FakeIoModule(filesystem)
     """
 
     @staticmethod
