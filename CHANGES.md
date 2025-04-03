@@ -14,6 +14,10 @@ The released versions correspond to PyPI releases.
 
 ## Unreleased
 
+### Enhancements
+* added convenience function `add_package_metadata` to add the metadata of a given
+  package to the fake filesystem (see [#1155](../../issues/1155))
+
 ### Fixes
 * fixed handling of dynamic imports from code in the fake filesystem in Python > 3.11
   (see [#1121](../../issues/1121))

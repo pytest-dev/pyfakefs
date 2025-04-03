@@ -236,7 +236,7 @@ class FakeFile:
         self.stat_result.st_mtime = val
 
     def set_large_file_size(self, st_size: int) -> None:
-        """Sets the self.st_size attribute and replaces self.content with None.
+        """Sets the self.st_size attribute and replaces self.content with `None`.
 
         Provided specifically to simulate very large files without regards
         to their content (which wouldn't fit in memory).
@@ -247,8 +247,8 @@ class FakeFile:
           st_size: (int) The desired file size
 
         Raises:
-          OSError: if the st_size is not a non-negative integer,
-                   or if st_size exceeds the available file system space
+          OSError: if ``st_size`` is not a non-negative integer,
+                   or if ``st_size`` exceeds the available file system space
         """
         self._check_positive_int(st_size)
         if self.st_size:
@@ -286,11 +286,11 @@ class FakeFile:
             contents: string, new content of file.
 
         Returns:
-            True if the contents have been changed.
+            `True` if the contents have been changed.
 
         Raises:
-              OSError: if the st_size is not a non-negative integer,
-                   or if st_size exceeds the available file system space
+              OSError: if the `st_size` is not a non-negative integer,
+                   or if `st_size` exceeds the available file system space
         """
         byte_contents = self._encode_contents(contents)
         changed = self._byte_contents != byte_contents
@@ -312,11 +312,11 @@ class FakeFile:
         Args:
           contents: (str, bytes) new content of file.
           encoding: (str) the encoding to be used for writing the contents
-                    if they are a unicode string.
+                    if they are a Unicode string.
                     If not given, the locale preferred encoding is used.
 
         Returns:
-            True if the contents have been changed.
+            `True` if the contents have been changed.
 
         Raises:
           OSError: if `st_size` is not a non-negative integer,
@@ -408,7 +408,7 @@ class FakeFile:
             permission_bits: The permission bits as set for the user.
 
         Returns:
-            True if the permissions are set in the correct class (user/group/other).
+            `True` if the permissions are set in the correct class (user/group/other).
         """
         if helpers.get_uid() == self.stat_result.st_uid:
             return self.st_mode & permission_bits == permission_bits
@@ -579,7 +579,7 @@ class FakeDirectory(FakeFile):
 
         Args:
             pathname_name: Basename of the child object to remove.
-            recursive: If True (default), the entries in contained directories
+            recursive: If `True` (default), the entries in contained directories
                 are deleted first. Used to propagate removal errors
                 (e.g. permission problems) from contained entries.
 
