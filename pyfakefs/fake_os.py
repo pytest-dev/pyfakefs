@@ -259,13 +259,13 @@ class FakeOsModule:
             and self.filesystem.exists(path)
             and not self.filesystem.isdir(path)
         ):
-            raise OSError(errno.ENOTDIR, "path is not a directory", path)
+            self.filesystem.raise_os_error(errno.ENOTDIR, path)
 
         has_follow_flag = (
             hasattr(os, "O_NOFOLLOW") and flags & os.O_NOFOLLOW == os.O_NOFOLLOW
         )
         if has_follow_flag and self.filesystem.islink(path):
-            raise OSError(errno.ELOOP, "path is a symlink", path)
+            self.filesystem.raise_os_error(errno.ELOOP, path)
 
         has_tmpfile_flag = (
             hasattr(os, "O_TMPFILE") and flags & os.O_TMPFILE == os.O_TMPFILE
@@ -392,7 +392,7 @@ class FakeOsModule:
         if isinstance(file_handle, FakeFileWrapper):
             file_handle.seek(pos, whence)
         else:
-            raise OSError(errno.EBADF, "Bad file descriptor for fseek")
+            self.filesystem.raise_os_error(errno.EBADF)
 
     def pipe(self) -> Tuple[int, int]:
         read_fd, write_fd = os.pipe()
@@ -453,13 +453,13 @@ class FakeOsModule:
             path = self.filesystem.resolve_path(path, allow_fd=True)
         except OSError as exc:
             if self.filesystem.is_macos and exc.errno == errno.EBADF:
-                raise OSError(errno.ENOTDIR, "Not a directory: " + str(path))
+                self.filesystem.raise_os_error(errno.ENOTDIR, str(path))
             elif (
                 self.filesystem.is_windows_fs
                 and exc.errno == errno.ENOENT
                 and path == ""
             ):
-                raise OSError(errno.EINVAL, "Invalid argument:  + str(path)")
+                self.filesystem.raise_os_error(errno.EINVAL, str(path))
             raise
         try:
             self.filesystem.confirmdir(path)
@@ -528,7 +528,7 @@ class FakeOsModule:
             attribute = attribute.decode(sys.getfilesystemencoding())
         file_obj = self.filesystem.resolve(path, follow_symlinks, allow_fd=True)
         if attribute not in file_obj.xattr:
-            raise OSError(errno.ENODATA, "No data available", path)
+            self.filesystem.raise_os_error(errno.ENODATA, path)
         return file_obj.xattr.get(attribute)
 
     def listxattr(
@@ -1026,7 +1026,7 @@ class FakeOsModule:
         if isinstance(file_object, FakeFileWrapper):
             file_object.size = length
         else:
-            raise OSError(errno.EBADF, "Invalid file descriptor")
+            self.filesystem.raise_os_error(errno.EBADF)
 
     def access(
         self,

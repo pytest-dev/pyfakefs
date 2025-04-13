@@ -531,7 +531,7 @@ class FakeDirectory(FakeFile):
             and not self.filesystem.is_windows_fs
             and not self.has_permission(helpers.PERM_WRITE)
         ):
-            raise OSError(errno.EACCES, "Permission Denied", self.path)
+            self.filesystem.raise_os_error(errno.EACCES, self.path)
 
         path_object_name: str = to_string(path_object.name)
         if path_object_name in self.entries:
@@ -845,7 +845,7 @@ class FakeFileWrapper:
         """Return the file descriptor of the file object."""
         if self.filedes is not None:
             return self.filedes
-        raise OSError(errno.EBADF, "Invalid file descriptor")
+        self._filesystem.raise_os_error(errno.EBADF)
 
     def close(self) -> None:
         """Close the file."""
@@ -1258,7 +1258,7 @@ class StandardStreamWrapper:
         """Return the file descriptor of the wrapped standard stream."""
         if self.filedes is not None:
             return self.filedes
-        raise OSError(errno.EBADF, "Invalid file descriptor")
+        raise OSError(errno.EBADF, os.strerror(errno.EBADF))
 
     def read(self, n: int = -1) -> bytes:
         return cast(bytes, self._stream_object.read())
@@ -1313,7 +1313,7 @@ class FakeDirWrapper:
         """Return the file descriptor of the file object."""
         if self.filedes is not None:
             return self.filedes
-        raise OSError(errno.EBADF, "Invalid file descriptor")
+        raise OSError(errno.EBADF, os.strerror(errno.EBADF))
 
     def close(self) -> None:
         """Close the directory."""
@@ -1388,7 +1388,7 @@ class FakePipeWrapper:
         """Return the fake file descriptor of the pipe object."""
         if self.filedes is not None:
             return self.filedes
-        raise OSError(errno.EBADF, "Invalid file descriptor")
+        raise OSError(errno.EBADF, os.strerror(errno.EBADF))
 
     def read(self, numBytes: int = -1) -> bytes:
         """Read from the real pipe."""

@@ -34,29 +34,29 @@ Features
   the real filesystem will work on the fake filesystem if running under
   ``pyfakefs``.
 
-- ``pyfakefs`` provides direct support for `pytest` (via the `fs` fixture)
-  and `unittest` (via a `TestCase` base class), but can also be used with
+- ``pyfakefs`` provides direct support for `pytest` (see :ref:`pytest_plugin`)
+  and `unittest` (see :ref:`unittest_usage`), but can also be used with
   other test frameworks.
 
 - Each ``pyfakefs`` test starts with an empty (except for the :ref:`os_temporary_directories`) file system,
   but it is possible to map files and directories from the real file system into the fake
-  filesystem if needed.
+  filesystem if needed (see :ref:`real_fs_access`).
 
 - No files in the real file system are changed during the tests, even in the
   case of writing to mapped real files.
 
 - ``pyfakefs`` keeps track of the filesystem size if configured. The file system
-  size can be configured arbitrarily. It is also possible to create files with a defined
-  size without setting contents.
+  size can be configured arbitrarily (see :ref:`set-fs-size`). It is also possible to create files
+  with a defined size without setting contents.
 
 - It is possible to pause and resume using the fake filesystem, if the
-  real file system has to be used in a test step.
+  real file system has to be used in a test step (see :ref:`pause_resume`).
 
 - ``pyfakefs`` defaults to the OS it is running on, but can also be configured
-  to test code running under another OS (Linux, macOS or Windows).
+  to test code running under another OS (Linux, macOS or Windows, see :ref:`simulate_os`).
 
 - ``pyfakefs`` can be configured to behave as if running as a root or as a
-  non-root user, independently from the actual user.
+  non-root user, independently from the actual user (see :ref:`allow_root_user`).
 
 .. _limitations:
 
