@@ -5,6 +5,7 @@ Test Scenarios
 --------------
 There are several approaches for implementing tests using ``pyfakefs``.
 
+.. _pytest_plugin:
 
 Patch using the pytest plugin
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -53,6 +54,8 @@ respectively.
   will just serve as a reference to the active fake filesystem. That means that changes
   done in the fake filesystem inside a test will remain there until the respective scope
   ends (see also :ref:`nested_patcher_invocation`).
+
+.. _unittest_usage:
 
 Patch using fake_filesystem_unittest
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

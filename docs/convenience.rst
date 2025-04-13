@@ -214,6 +214,8 @@ and you may fail to create new files if the fake file system is full.
 To get the file system size, you may use :py:meth:`get_disk_usage()<pyfakefs.fake_filesystem.FakeFilesystem.get_disk_usage>`, which is
 modeled after ``shutil.disk_usage()``.
 
+.. _pause_resume:
+
 Suspending patching
 ~~~~~~~~~~~~~~~~~~~
 Sometimes, you may want to access the real filesystem inside the test with
@@ -261,6 +263,8 @@ Here is the same code using a context manager:
             assert os.path.exists(real_temp_file.name)
         assert not os.path.exists(real_temp_file.name)
         assert os.path.exists(fake_temp_file.name)
+
+.. _simulate_os:
 
 Simulating other file systems
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

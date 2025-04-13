@@ -488,7 +488,7 @@ class FakeFilesystem:
             filename: The name of the affected file, if any.
             winerror: Windows only - the specific Windows error code.
         """
-        message = os.strerror(err_no) + " in the fake filesystem"
+        message = os.strerror(err_no)
         if winerror is not None and sys.platform == "win32" and self.is_windows_fs:
             raise OSError(err_no, message, filename, winerror)
         raise OSError(err_no, message, filename)
@@ -1885,7 +1885,7 @@ class FakeFilesystem:
         """
         path_str = make_string_path(path)
         if not path_str:
-            raise OSError(errno.ENOENT, path_str)
+            self.raise_os_error(errno.ENOENT, path_str)
         if path_str == matching_string(path_str, self.root.name):
             # The root directory will never be a link
             return self.root
@@ -1915,7 +1915,7 @@ class FakeFilesystem:
             )
         except KeyError:
             pass
-        raise OSError(errno.ENOENT, path_str)
+        self.raise_os_error(errno.ENOENT, path_str)
 
     def add_object(self, file_path: AnyStr, file_object: AnyFile) -> None:
         """Add a fake file or directory into the filesystem at file_path.

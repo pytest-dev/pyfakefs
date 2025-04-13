@@ -14,6 +14,10 @@ The released versions correspond to PyPI releases.
 
 ## Unreleased
 
+### Changes
+* the message from an `OSError` raised in the fake filesystem has no longer the postfix
+  _"in the fake filesystem"_ (see [#1159](../../discussions/1159))
+
 ### Enhancements
 * added convenience function `add_package_metadata` to add the metadata of a given
   package to the fake filesystem (see [#1155](../../issues/1155))

@@ -212,6 +212,26 @@ class FakeShutilModuleTest(RealFsTestCase):
         self.assertTrue(os.path.exists(dst_file))
         self.assertEqual(os.stat(src_file).st_mode, os.stat(dst_file).st_mode)
 
+    def test_permission_error_message(self):
+        self.check_posix_only()
+        dst_dir = Path(self.make_path("home1"))
+        src_dir2 = os.path.join(dst_dir, "dir1")
+        os.makedirs(src_dir2)
+        dst_dir.chmod(0o555)
+        src_dir = Path(self.make_path("drive1"))
+        os.makedirs(src_dir)
+        src_file = src_dir / "new.txt"
+        src_file.touch()
+
+        msg = f"[Errno 13] Permission denied: '{dst_dir}'"
+        with self.assertRaises(PermissionError, msg=msg):
+            shutil.copy2(src_file, dst_dir)
+
+        dst_dir2 = dst_dir / "dir2"
+        msg = f"[Errno 13] Permission denied: '{dst_dir2}'"
+        with self.assertRaises(PermissionError, msg=msg):
+            shutil.move(src_dir2, dst_dir2)
+
     def test_copy_directory(self):
         src_file = self.make_path("xyzzy")
         parent_directory = self.make_path("parent")
