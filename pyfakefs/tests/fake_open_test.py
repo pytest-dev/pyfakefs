@@ -263,8 +263,10 @@ class FakeFileOpenTest(FakeFileOpenTestBase):
         self.os.mkdir(file_dir)
         contents = b"Binary contents"
         with self.open(file_path, "xb") as fake_file:
+            self.assertEqual("xb", fake_file.mode)
             fake_file.write(contents)
         with self.open(file_path, "rb") as fake_file:
+            self.assertEqual("rb", fake_file.mode)
             self.assertEqual(contents, fake_file.read())
 
     def test_overwrite_existing_file(self):
@@ -302,11 +304,27 @@ class FakeFileOpenTest(FakeFileOpenTestBase):
         self.assertTrue(self.os.path.exists(file_path))
         with self.open(file_path, "r", encoding="utf8") as fake_file:
             self.assertEqual("old contents", fake_file.read())
+            self.assertEqual("r", fake_file.mode)
         # actual tests
         with self.open(file_path, "w+", encoding="utf8") as fake_file:
             fake_file.write("new contents")
             fake_file.seek(0)
             self.assertTrue("new contents", fake_file.read())
+            self.assertEqual("w+", fake_file.mode)
+
+    def test_open_with_wplus_binary(self):
+        file_path = self.make_path("wplus_file_b")
+        self.create_file(file_path, contents=b"old contents")
+        self.assertTrue(self.os.path.exists(file_path))
+        with self.open(file_path, "rb") as fake_file:
+            self.assertEqual(b"old contents", fake_file.read())
+            self.assertEqual("rb", fake_file.mode)
+        # actual tests
+        with self.open(file_path, "wb+") as fake_file:
+            fake_file.write(b"new contents")
+            fake_file.seek(0)
+            self.assertTrue(b"new contents", fake_file.read())
+            self.assertEqual("rb+", fake_file.mode)
 
     def test_open_with_wplus_truncation(self):
         # set up
@@ -319,6 +337,7 @@ class FakeFileOpenTest(FakeFileOpenTestBase):
         with self.open(file_path, "w+", encoding="utf8") as fake_file:
             fake_file.seek(0)
             self.assertEqual("", fake_file.read())
+            self.assertEqual("w+", fake_file.mode)
 
     def test_open_with_append_flag(self):
         contents = [
@@ -335,6 +354,7 @@ class FakeFileOpenTest(FakeFileOpenTestBase):
                 fake_file.read(0)
             with self.assertRaises(io.UnsupportedOperation):
                 fake_file.readline()
+            self.assertEqual("a", fake_file.mode)
             expected_len = len("".join(contents))
             expected_len += len(contents) * (len(self.os.linesep) - 1)
             self.assertEqual(expected_len, fake_file.tell())
@@ -343,6 +363,22 @@ class FakeFileOpenTest(FakeFileOpenTestBase):
             fake_file.writelines(additional_contents)
         with self.open(file_path, encoding="utf8") as fake_file:
             self.assertEqual(contents + additional_contents, fake_file.readlines())
+
+    def test_open_with_append_flag_binary(self):
+        contents = b"Just some boring stuff... "
+        additional_contents = b"some excitement added"
+        file_path = self.make_path("append-binary")
+        self.create_file(file_path, contents=contents)
+        with self.open(file_path, "ab") as fake_file:
+            with self.assertRaises(io.UnsupportedOperation):
+                fake_file.read(0)
+            self.assertEqual("ab", fake_file.mode)
+            self.assertEqual(len(contents), fake_file.tell())
+            fake_file.seek(0)
+            self.assertEqual(0, fake_file.tell())
+            fake_file.write(additional_contents)
+        with self.open(file_path, "rb") as fake_file:
+            self.assertEqual(contents + additional_contents, fake_file.read())
 
     def check_append_with_aplus(self):
         file_path = self.make_path("aplus_file")
@@ -357,6 +393,7 @@ class FakeFileOpenTest(FakeFileOpenTestBase):
                 self.filesystem, delete_on_close=True
             )
         with self.open(file_path, "a+", encoding="utf8") as fake_file:
+            self.assertEqual("a+", fake_file.mode)
             self.assertEqual(12, fake_file.tell())
             fake_file.write("new contents")
             self.assertEqual(24, fake_file.tell())
@@ -391,6 +428,12 @@ class FakeFileOpenTest(FakeFileOpenTestBase):
         with self.open(file_path, "a+", encoding="utf8") as fake_file:
             self.assertEqual("", fake_file.read())
 
+    def test_read_empty_file_with_aplus_binary(self):
+        file_path = self.make_path("aplus_file")
+        with self.open(file_path, "ab+") as fake_file:
+            self.assertEqual(b"", fake_file.read())
+            self.assertEqual("ab+", fake_file.mode)
+
     def test_read_with_rplus(self):
         # set up
         file_path = self.make_path("rplus_file")
@@ -401,10 +444,26 @@ class FakeFileOpenTest(FakeFileOpenTestBase):
         # actual tests
         with self.open(file_path, "r+", encoding="utf8") as fake_file:
             self.assertEqual("old contents here", fake_file.read())
+            self.assertEqual("r+", fake_file.mode)
             fake_file.seek(0)
             fake_file.write("new contents")
             fake_file.seek(0)
             self.assertEqual("new contents here", fake_file.read())
+
+    def test_read_with_rplus_binary(self):
+        file_path = self.make_path("rplus_binary")
+        self.create_file(file_path, contents=b"old contents here")
+        self.assertTrue(self.os.path.exists(file_path))
+        with self.open(file_path, "rb") as fake_file:
+            self.assertEqual(b"old contents here", fake_file.read())
+
+        with self.open(file_path, "rb+") as fake_file:
+            self.assertEqual(b"old contents here", fake_file.read())
+            self.assertEqual("rb+", fake_file.mode)
+            fake_file.seek(0)
+            fake_file.write(b"new contents")
+            fake_file.seek(0)
+            self.assertEqual(b"new contents here", fake_file.read())
 
     def create_with_permission(self, file_path, perm_bits):
         self.create_file(file_path)
@@ -900,6 +959,7 @@ class FakeFileOpenTest(FakeFileOpenTestBase):
         file_obj = self.filesystem.get_object(filename)
         with self.open(fd, "wb", closefd=False) as fp:
             fp.write(b"test")
+            self.assertEqual("wb", fp.mode)
         self.assertTrue(self.filesystem.has_open_file(file_obj))
         self.os.close(fd)
         self.assertFalse(self.filesystem.has_open_file(file_obj))
@@ -1028,6 +1088,7 @@ class FakeFileOpenWithOpenerTest(FakeFileOpenTestBase):
 
         file_path = self.make_path("bar")
         with self.open(file_path, "x", encoding="utf8", opener=self.opener) as f:
+            self.assertEqual("x", f.mode)
             assert f.write("bar") == 3
             with self.assertRaises(OSError):
                 f.read()
@@ -1042,6 +1103,7 @@ class FakeFileOpenWithOpenerTest(FakeFileOpenTestBase):
 
         file_path = self.make_path("bar")
         with self.open(file_path, "x+", encoding="utf8", opener=self.opener) as f:
+            self.assertEqual("x+", f.mode)
             assert f.write("bar") == 3
             assert f.read() == ""
         with self.open(file_path, encoding="utf8") as f:
