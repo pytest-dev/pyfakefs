@@ -751,9 +751,8 @@ class FakeFileWrapper:
         self,
         file_object: FakeFile,
         file_path: AnyStr,
-        update: bool,
-        read: bool,
-        append: bool,
+        open_modes: _OpenModes,
+        allow_update: bool,
         delete_on_close: bool,
         filesystem: "FakeFilesystem",
         newline: Optional[str],
@@ -768,9 +767,8 @@ class FakeFileWrapper:
     ):
         self.file_object = file_object
         self.file_path = file_path  # type: ignore[var-annotated]
-        self._append = append
-        self._read = read
-        self.allow_update = update
+        self.open_modes = open_modes
+        self.allow_update = allow_update
         self._closefd = closefd
         self._file_epoch = file_object.epoch
         self.raw_io = raw_io
@@ -801,8 +799,8 @@ class FakeFileWrapper:
         self._flush_pos = 0
         if contents:
             self._flush_pos = len(contents)
-            if update:
-                if not append:
+            if self.allow_update:
+                if not self.open_modes.append:
                     self._io.seek(0)
                 else:
                     self._io.seek(self._flush_pos)
@@ -890,6 +888,21 @@ class FakeFileWrapper:
         """Simulate the `closed` attribute on file."""
         return not self._is_open()
 
+    @property
+    def mode(self) -> str:
+        if self.open_modes.append:
+            m = "ab" if self._binary else "a"
+            return m + "+" if self.open_modes.can_read else m
+        if self.open_modes.truncate:
+            if self._binary:
+                return "rb+" if self.open_modes.can_read else "wb"
+            return "w+" if self.open_modes.can_read else "w"
+        if self.open_modes.must_not_exist:
+            m = "xb" if self._binary else "x"
+            return m + "+" if self.open_modes.can_read else m
+        m = "rb" if self._binary else "r"
+        return m + "+" if self.open_modes.can_write else m
+
     def _try_flush(self, old_pos: int) -> None:
         """Try to flush and reset the position if it fails."""
         flush_pos = self._flush_pos
@@ -910,7 +923,7 @@ class FakeFileWrapper:
         self._check_open_file()
 
         if self.allow_update:
-            if self._append:
+            if self.open_modes.append:
                 contents = self._io.getvalue()
                 self._sync_io()
                 old_contents = self.file_object.byte_contents
@@ -951,14 +964,14 @@ class FakeFileWrapper:
                         open_file is not self
                         and isinstance(open_file, FakeFileWrapper)
                         and self.file_object == open_file.file_object
-                        and not open_file._append
+                        and not open_file.open_modes.append
                     ):
                         open_file._sync_io()
 
     def seek(self, offset: int, whence: int = 0) -> None:
         """Move read/write pointer in 'file'."""
         self._check_open_file()
-        if not self._append:
+        if not self.open_modes.append:
             self._io.seek(offset, whence)
         else:
             self._read_seek = offset
@@ -976,7 +989,7 @@ class FakeFileWrapper:
         if not self.is_stream:
             self.flush()
 
-        if not self._append:
+        if not self.open_modes.append:
             return self._io.tell()
         if self._read_whence:
             write_seek = self._io.tell()
@@ -1001,7 +1014,7 @@ class FakeFileWrapper:
         self._io.seek(0)
         self._io.truncate()
         self._io.putvalue(contents)
-        if not self._append:
+        if not self.open_modes.append:
             self._io.seek(whence)
 
     def _read_wrappers(self, name: str) -> Callable:
@@ -1117,7 +1130,7 @@ class FakeFileWrapper:
                 self._try_flush(old_pos)
                 if not flush_all:
                     ret_value = io_attr(*args, **kwargs)
-            if self._append:
+            if self.open_modes.append:
                 self._read_seek = self._io.tell()
                 self._read_whence = 0
             return ret_value
@@ -1132,7 +1145,7 @@ class FakeFileWrapper:
                         open_file is not self
                         and isinstance(open_file, FakeFileWrapper)
                         and self.file_object == open_file.file_object
-                        and cast(FakeFileWrapper, open_file)._append
+                        and cast(FakeFileWrapper, open_file).open_modes.append
                     ):
                         open_file._read_seek += size
 
@@ -1146,7 +1159,7 @@ class FakeFileWrapper:
 
         def truncate_wrapper(*args, **kwargs):
             """Wrap truncate call to call flush after truncate."""
-            if self._append:
+            if self.open_modes.append:
                 self._io.seek(self._read_seek, self._read_whence)
             size = io_attr(*args, **kwargs)
             self.flush()
@@ -1179,7 +1192,7 @@ class FakeFileWrapper:
 
         if reading or writing:
             self._check_open_file()
-        if not self._read and reading:
+        if not self.open_modes.can_read and reading:
             return self._read_error()
         if not self.opened_as_fd and not self.allow_update and writing:
             return self._write_error()
@@ -1192,7 +1205,7 @@ class FakeFileWrapper:
                 self.file_object.st_atime = helpers.now()
         if truncate:
             return self._truncate_wrapper()
-        if self._append:
+        if self.open_modes.append:
             if reading:
                 return self._read_wrappers(name)
             elif not writing:
@@ -1234,12 +1247,12 @@ class FakeFileWrapper:
             raise ValueError("I/O operation on closed file")
 
     def __iter__(self) -> Union[Iterator[str], Iterator[bytes]]:
-        if not self._read:
+        if not self.open_modes.can_read:
             self._raise("File is not open for reading")
         return self._io.__iter__()
 
     def __next__(self):
-        if not self._read:
+        if not self.open_modes.can_read:
             self._raise("File is not open for reading")
         return next(self._io)
 

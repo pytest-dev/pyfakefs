@@ -160,7 +160,7 @@ class FakeFileOpen:
                 flushed if buffer size is exceeded. The default (-1) uses a
                 system specific default buffer size. Text line mode (e.g.
                 buffering=1 in text mode) is not supported.
-            encoding: The encoding used to encode unicode strings / decode
+            encoding: The encoding used to encode Unicode strings / decode
                 bytes.
             errors: (str) Defines how encoding errors are handled.
             newline: Controls universal newlines, passed to stream object.
@@ -270,9 +270,8 @@ class FakeFileOpen:
         fakefile = FakeFileWrapper(
             file_object,
             file_path,
-            update=open_modes.can_write and can_write,
-            read=open_modes.can_read,
-            append=open_modes.append,
+            open_modes=open_modes,
+            allow_update=open_modes.can_write and can_write,
             delete_on_close=self._delete_on_close,
             filesystem=self.filesystem,
             newline=newline,
