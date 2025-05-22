@@ -42,6 +42,7 @@ import sys
 import warnings
 from pathlib import PurePath
 from typing import Callable, List, Optional
+from unittest import mock
 from urllib.parse import quote_from_bytes as urlquote_from_bytes
 
 from pyfakefs import fake_scandir
@@ -554,6 +555,7 @@ if sys.version_info < (3, 12):
 
         def compile_pattern(self, pattern):
             return re.compile(fnmatch.translate(pattern)).fullmatch
+
 else:  # Python >= 3.12
 
     class FakePosixPathModule(FakePathModule):
@@ -862,24 +864,48 @@ def _warn_is_reserved_deprecated():
 class FakePathlibModule:
     """Uses FakeFilesystem to provide a fake pathlib module replacement.
 
-    You need a fake_filesystem to use this::
+    Automatically created if using `fake_filesystem_unittest.TestCase`,
+    `fs` fixture, or the `patchfs` decorator.
+
+    For creating it separately, a `fake_filesystem` instance is needed::
 
         filesystem = fake_filesystem.FakeFilesystem()
         fake_pathlib_module = fake_pathlib.FakePathlibModule(filesystem)
     """
 
-    def __init__(self, filesystem):
+    def __init__(self, filesystem, from_patcher=False):
         """
         Initializes the module with the given filesystem.
 
         Args:
             filesystem: FakeFilesystem used to provide file system information
+            from_patcher: If `False` (the default), `pathlib.os` will be manually
+                patched using `FakeOsModule`. This allows to instantiate the class
+                manually for a test.
+                Will be set to `True` if instantiated from `Patcher`.
         """
         init_module(filesystem)
         self._pathlib_module = pathlib
+        self._os = None
+        self._os_patcher = None
+        if not from_patcher:
+            self.patch_os_module()
+
+    def patch_os_module(self):
+        if sys.version_info >= (3, 11) and not isinstance(os, FakeOsModule):
+            self._os = FakeOsModule(FakePath.filesystem)
+            pathlib_os = (
+                "pathlib._local.os" if sys.version_info[:2] == (3, 13) else "pathlib.os"
+            )
+            self._os_patcher = mock.patch(pathlib_os, self._os)
+            self._os_patcher.start()
+
+    def __del__(self):
+        if self._os_patcher is not None:
+            self._os_patcher.stop()
 
     class PurePosixPath(PurePath):
-        """A subclass of PurePath, that represents non-Windows filesystem
+        """A subclass of PurePath that represents non-Windows filesystem
         paths"""
 
         __slots__ = ()
@@ -898,7 +924,7 @@ class FakePathlibModule:
                     return super().joinpath(*pathsegments)
 
     class PureWindowsPath(PurePath):
-        """A subclass of PurePath, that represents Windows filesystem paths"""
+        """A subclass of PurePath that represents Windows filesystem paths"""
 
         __slots__ = ()
 
@@ -990,9 +1016,9 @@ class FakePathlibPathModule:
 
     fake_pathlib = None
 
-    def __init__(self, filesystem=None):
+    def __init__(self, filesystem=None, from_patcher=False):
         if self.fake_pathlib is None:
-            self.__class__.fake_pathlib = FakePathlibModule(filesystem)
+            self.__class__.fake_pathlib = FakePathlibModule(filesystem, from_patcher)
 
     @property
     def skip_names(self):
