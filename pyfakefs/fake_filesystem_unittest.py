@@ -775,17 +775,26 @@ class Patcher:
         # it by adding an attribute in fixtures/module_with_attributes.py
         # and a test in fake_filesystem_unittest_test.py, class
         # TestAttributesWithFakeModuleNames.
+
+        # we instantiate the fake pathlib library with `from_patcher` set
+        # to avoid faking pathlib.os (already faked by the patcher)
+        def fake_pathlib_module(fs: FakeFilesystem):
+            return fake_pathlib.FakePathlibModule(fs, from_patcher=True)
+
+        def fake_path_module(fs: FakeFilesystem):
+            return fake_pathlib.FakePathlibPathModule(fs, from_patcher=True)
+
         self._fake_module_classes = {
             "os": fake_os.FakeOsModule,
             "shutil": fake_filesystem_shutil.FakeShutilModule,
             "io": fake_io.FakeIoModule,
-            "pathlib": fake_pathlib.FakePathlibModule,
+            "pathlib": fake_pathlib_module,
         }
         if sys.version_info >= (3, 13):
             # for Python 3.13, we need both pathlib (path with __init__.py) and
             # pathlib._local (has the actual implementation);
             # depending on how pathlib is imported, either may be used
-            self._fake_module_classes["pathlib._local"] = fake_pathlib.FakePathlibModule
+            self._fake_module_classes["pathlib._local"] = fake_pathlib_module
         if IS_PYPY or sys.version_info >= (3, 12):
             # in PyPy and later cpython versions, the module is referenced as _io
             self._fake_module_classes["_io"] = fake_io.FakeIoModule2
@@ -813,7 +822,7 @@ class Patcher:
             self._unfaked_module_classes["pathlib2"] = fake_pathlib.RealPathlibModule
         if scandir:
             self._fake_module_classes["scandir"] = fake_legacy_modules.FakeScanDirModule
-        self._fake_module_classes["Path"] = fake_pathlib.FakePathlibPathModule
+        self._fake_module_classes["Path"] = fake_path_module
         self._unfaked_module_classes["Path"] = fake_pathlib.RealPathlibPathModule
 
     def _init_fake_module_functions(self) -> None:

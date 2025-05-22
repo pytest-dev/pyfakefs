@@ -27,7 +27,9 @@ The released versions correspond to PyPI releases.
   (see [#1121](../../issues/1121))
 * fixed workaround for recursion with pytest under Windows to ignore capitalization
   of pytest executable (see [#1096](../../issues/1096))
-* added missing `mode` property to fake file wrapper (see [#1162](../../issues/1096))
+* added missing `mode` property to fake file wrapper (see [#1162](../../issues/1162))
+* fixed instantiation of a standalone `FakePathlibModule` for Python >= 3.11
+  (see [#1169](../../issues/1169))
 
 ### Infrastructure
 * adapt test for increased default buffer size in Python 3.14a6

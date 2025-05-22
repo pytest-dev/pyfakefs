@@ -31,7 +31,8 @@ from unittest import mock
 from unittest.mock import patch
 
 from pyfakefs import fake_pathlib, fake_filesystem, fake_filesystem_unittest, fake_os
-from pyfakefs.fake_filesystem import OSType
+from pyfakefs.fake_filesystem import OSType, FakeFilesystem
+from pyfakefs.fake_pathlib import FakePathlibModule
 from pyfakefs.helpers import IS_PYPY, is_root
 from pyfakefs.tests.skipped_pathlib import (
     check_exists_pathlib,
@@ -1644,6 +1645,14 @@ class SkipPathlibTest(fake_filesystem_unittest.TestCase):
     )
     def test_exists(self):
         self.assertTrue(check_exists_pathlib())
+
+
+class InstantiatedPathlibTest(unittest.TestCase):
+    def test_instantiated_pathlib(self):
+        fake_fs = FakeFilesystem()
+        fake_pathlib_module = FakePathlibModule(fake_fs)
+        top_level_dirs = list(fake_pathlib_module.Path("/").iterdir())
+        self.assertEqual(0, len(top_level_dirs))
 
 
 if __name__ == "__main__":
