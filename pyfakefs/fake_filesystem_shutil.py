@@ -22,11 +22,26 @@ work fine with the fake file system if `os`/`os.path` are patched.
     shutil module.
 
 :Usage:
+
+* With Patcher:
   The fake implementation is automatically involved if using
   `fake_filesystem_unittest.TestCase`, pytest fs fixture,
   or directly `Patcher`.
+
+* Stand-alone with FakeFilesystem:
+  To patch it independently of these, you also need to patch `os`, e.g:
+
+    filesystem = fake_filesystem.FakeFilesystem()
+    fake_os = fake_os.FakeOsModule(filesystem)
+    fake_shutil = fake_filesystem_shutil.FakeShutilModule(filesystem)
+
+    with patch("os", fake_os):
+        with patch("shutil.os", shutil_mock):
+            shutil.rmtree("path/in/fakefs")
+
 """
 
+import contextlib
 import os
 import shutil
 import sys
@@ -35,7 +50,27 @@ import sys
 class FakeShutilModule:
     """Uses a FakeFilesystem to provide a fake replacement
     for shutil module.
+
+    Automatically created if using `fake_filesystem_unittest.TestCase`,
+    the `fs` fixture, the `patchfs` decorator, or directly the `Patcher`.
+
+    To patch it separately, you also need to patch `os`::
+
+        filesystem = fake_filesystem.FakeFilesystem()
+        fake_os = fake_os.FakeOsModule(filesystem)
+        fake_shutil = fake_filesystem_shutil.FakeShutilModule(filesystem)
+
+        with patch("os", fake_os):
+            with patch("shutil.os", shutil_mock):
+                shutil.rmtree("path/in/fakefs")
     """
+
+    use_copy_file_range = (
+        hasattr(shutil, "_USE_CP_COPY_FILE_RANGE") and shutil._USE_CP_COPY_FILE_RANGE  # type: ignore[attr-defined]
+    )
+    has_fcopy_file = hasattr(shutil, "_HAS_FCOPYFILE") and shutil._HAS_FCOPYFILE  # type: ignore[attr-defined]
+    use_sendfile = hasattr(shutil, "_USE_CP_SENDFILE") and shutil._USE_CP_SENDFILE  # type: ignore[attr-defined]
+    use_fd_functions = shutil._use_fd_functions  # type: ignore[attr-defined]
 
     @staticmethod
     def dir():
@@ -51,7 +86,46 @@ class FakeShutilModule:
           filesystem:  FakeFilesystem used to provide file system information
         """
         self.filesystem = filesystem
-        self._shutil_module = shutil
+        self.shutil_module = shutil
+        self._in_get_attribute = False
+
+    def start_patching_global_vars(self):
+        if self.__class__.has_fcopy_file:
+            self.shutil_module._HAS_FCOPYFILE = False
+        if self.__class__.use_copy_file_range:
+            self.shutil_module._USE_CP_COPY_FILE_RANGE = False
+        if self.__class__.use_sendfile:
+            self.shutil_module._USE_CP_SENDFILE = False
+        if self.use_fd_functions:
+            if sys.version_info >= (3, 14):
+                self.shutil_module._rmtree_impl = (
+                    self.shutil_module._rmtree_unsafe  # type: ignore[attr-defined]
+                )
+            else:
+                self.shutil_module._use_fd_functions = False
+
+    def stop_patching_global_vars(self):
+        if self.__class__.has_fcopy_file:
+            self.shutil_module._HAS_FCOPYFILE = True
+        if self.__class__.use_copy_file_range:
+            self.shutil_module._USE_CP_COPY_FILE_RANGE = True
+        if self.__class__.use_sendfile:
+            self.shutil_module._USE_CP_SENDFILE = True
+        if self.__class__.use_fd_functions:
+            if sys.version_info >= (3, 14):
+                self.__class__.shutil_module._rmtree_impl = (
+                    self.shutil_module._rmtree_safe_fd  # type: ignore[attr-defined]
+                )
+            else:
+                self.shutil_module._use_fd_functions = True
+
+    @contextlib.contextmanager
+    def patch_global_vars(self):
+        self.start_patching_global_vars()
+        try:
+            yield
+        finally:
+            self.start_patching_global_vars()
 
     def disk_usage(self, path):
         """Return the total, used and free disk space in bytes as named tuple
@@ -61,6 +135,32 @@ class FakeShutilModule:
           path: defines the filesystem device which is queried
         """
         return self.filesystem.get_disk_usage(path)
+
+    if sys.version_info < (3, 11):
+
+        def rmtree(self, path, ignore_errors=False, onerror=None):
+            with self.patch_global_vars():
+                self.shutil_module.rmtree(path, ignore_errors, onerror)
+
+    elif sys.version_info < (3, 12):
+
+        def rmtree(self, path, ignore_errors=False, onerror=None, *, dir_fd=None):
+            with self.patch_global_vars():
+                self.shutil_module.rmtree(path, ignore_errors, onerror, dir_fd=dir_fd)
+
+    else:
+
+        def rmtree(
+            self, path, ignore_errors=False, onerror=None, *, onexc=None, dir_fd=None
+        ):
+            with self.patch_global_vars():
+                self.shutil_module.rmtree(
+                    path, ignore_errors, onerror, onexc=onexc, dir_fd=dir_fd
+                )
+
+    def copyfile(self, src, dst, *, follow_symlinks=True):
+        with self.patch_global_vars():
+            self.shutil_module.copyfile(src, dst, follow_symlinks=follow_symlinks)
 
     if sys.version_info >= (3, 12) and sys.platform == "win32":
 
@@ -89,7 +189,7 @@ class FakeShutilModule:
             """Make sure the default argument is patched."""
             if copy_function == shutil.copy2:
                 copy_function = self.copy2
-            return self._shutil_module.copytree(
+            return self.shutil_module.copytree(
                 src,
                 dst,
                 symlinks,
@@ -103,8 +203,8 @@ class FakeShutilModule:
             """Make sure the default argument is patched."""
             if copy_function == shutil.copy2:
                 copy_function = self.copy2
-            return self._shutil_module.move(src, dst, copy_function)
+            return self.shutil_module.move(src, dst, copy_function)
 
     def __getattr__(self, name):
         """Forwards any non-faked calls to the standard shutil module."""
-        return getattr(self._shutil_module, name)
+        return getattr(self.shutil_module, name)

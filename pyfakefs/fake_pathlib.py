@@ -15,8 +15,9 @@ New in pyfakefs 3.0.
 
 Usage:
 
-* With fake_filesystem_unittest:
-  If using fake_filesystem_unittest.TestCase, pathlib gets replaced
+* With Patcher:
+  If using `fake_filesystem_unittest.TestCase`, pytest fs fixture,
+  or directly `Patcher`, pathlib gets replaced
   by fake_pathlib together with other file system related modules.
 
 * Stand-alone with FakeFilesystem:
@@ -865,7 +866,7 @@ class FakePathlibModule:
     """Uses FakeFilesystem to provide a fake pathlib module replacement.
 
     Automatically created if using `fake_filesystem_unittest.TestCase`,
-    `fs` fixture, or the `patchfs` decorator.
+    the `fs` fixture, the `patchfs` decorator, or directly the `Patcher`.
 
     For creating it separately, a `fake_filesystem` instance is needed::
 

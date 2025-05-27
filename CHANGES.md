@@ -17,6 +17,8 @@ The released versions correspond to PyPI releases.
 ### Changes
 * the message from an `OSError` raised in the fake filesystem has no longer the postfix
   _"in the fake filesystem"_ (see [#1159](../../discussions/1159))
+* changed implementation of `FakeShutilModule` to be able to be used without the patcher
+  (see [#1171](../../discussions/1171))
 
 ### Enhancements
 * added convenience function `add_package_metadata` to add the metadata of a given
