@@ -45,7 +45,6 @@ import inspect
 import io
 import linecache
 import os
-import shutil
 import sys
 import tempfile
 import tokenize
@@ -690,6 +689,20 @@ class Patcher:
         self.use_dynamic_patch = use_dynamic_patch
         self.cleanup_handlers: Dict[str, Callable[[str], bool]] = {}
 
+        # Attributes set by _refresh()
+        self._stubs: Optional[StubOutForTesting] = None
+        self.fs: Optional[FakeFilesystem] = None
+        self.fake_modules: Dict[str, Any] = {}
+        self.unfaked_modules: Dict[str, Any] = {}
+
+        # _isStale is set by tearDown(), reset by _refresh()
+        self._isStale = True
+        self._dyn_patcher: Optional[DynamicPatcher] = None
+        self._patching = False
+        self._paused = False
+        self.has_copy_file_range = False
+        self.has_copy_file = False
+
         if use_known_patches:
             from pyfakefs.patched_packages import (
                 get_modules_to_patch,
@@ -726,20 +739,6 @@ class Patcher:
             self.clear_cache()
         self._fake_module_functions: Dict[str, Dict] = {}
         self._init_fake_module_functions()
-
-        # Attributes set by _refresh()
-        self._stubs: Optional[StubOutForTesting] = None
-        self.fs: Optional[FakeFilesystem] = None
-        self.fake_modules: Dict[str, Any] = {}
-        self.unfaked_modules: Dict[str, Any] = {}
-
-        # _isStale is set by tearDown(), reset by _refresh()
-        self._isStale = True
-        self._dyn_patcher: Optional[DynamicPatcher] = None
-        self._patching = False
-        self._paused = False
-        self.has_copy_file_range = False
-        self.has_copy_file = False
 
     @classmethod
     def clear_fs_cache(cls) -> None:
@@ -1027,30 +1026,6 @@ class Patcher:
             self.__class__.REF_COUNT += 1
             if self.__class__.REF_COUNT > 1:
                 return
-        self.has_fcopy_file = (
-            sys.platform == "darwin"
-            and hasattr(shutil, "_HAS_FCOPYFILE")
-            and shutil._HAS_FCOPYFILE
-        )
-        if self.has_fcopy_file:
-            shutil._HAS_FCOPYFILE = False  # type: ignore[attr-defined]
-
-        self.has_copy_file_range = (
-            sys.platform == "linux"
-            and hasattr(shutil, "_USE_CP_COPY_FILE_RANGE")
-            and shutil._USE_CP_COPY_FILE_RANGE
-        )
-        if self.has_copy_file_range:
-            shutil._USE_CP_COPY_FILE_RANGE = False  # type: ignore[attr-defined]
-
-        # do not use the fd functions, as they may not be available in the target OS
-        if hasattr(shutil, "_use_fd_functions"):
-            shutil._use_fd_functions = False  # type: ignore[module-attr]
-        # in Python 3.14, _rmtree_impl is set at load time based on _use_fd_functions
-        # the safe version cannot be used at the moment as it used asserts of type
-        # 'assert func is os.rmtree', which do not work with the fake versions
-        if hasattr(shutil, "_rmtree_impl"):
-            shutil._rmtree_impl = shutil._rmtree_unsafe  # type: ignore[attr-defined]
 
         with warnings.catch_warnings():
             # ignore warnings, see #542 and #614
@@ -1169,10 +1144,6 @@ class Patcher:
             if self.__class__.REF_COUNT > 0:
                 return
         self.stop_patching()
-        if self.has_fcopy_file:
-            shutil._HAS_FCOPYFILE = True  # type: ignore[attr-defined]
-        if self.has_copy_file_range:
-            shutil._USE_CP_COPY_FILE_RANGE = True  # type: ignore[attr-defined]
 
         reset_ids()
         if self.is_doc_test:
