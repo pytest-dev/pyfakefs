@@ -36,6 +36,7 @@ The released versions correspond to PyPI releases.
 * replace session-scoped with module-scoped fixture in test,
   run pytest over all tests in docker containers
   (see [#1151](../../issues/1151))
+* remove `setup.py` and `setup.cfg` in favor of `pyproject.toml`
 
 ## [Version 5.8.0](https://pypi.python.org/pypi/pyfakefs/5.8.0) (2025-03-11)
 Adds preliminary support for Python 3.14.
