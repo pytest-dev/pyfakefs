@@ -361,9 +361,21 @@ class FakePathModule:
         """
         if strict is not None and sys.version_info < (3, 10):
             raise TypeError("realpath() got an unexpected keyword argument 'strict'")
-        if strict:
-            # raises in strict mode if the file does not exist
+        has_allow_missing = hasattr(os.path, "ALLOW_MISSING")
+        if has_allow_missing and strict == os.path.ALLOW_MISSING:  # type: ignore[attr-defined]
+            # ignores non-existing file, but not other errors
+            ignored_error: Any = FileNotFoundError
+        elif strict:
+            # raises on any errors
+            ignored_error = ()
+        else:
+            # ignores any OSError while resolving the filename
+            ignored_error = OSError
+        try:
             self.filesystem.resolve(filename)
+        except ignored_error:
+            pass
+
         if self.filesystem.is_windows_fs:
             return self.abspath(filename)
         filename = make_string_path(filename)

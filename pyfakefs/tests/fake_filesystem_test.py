@@ -1036,6 +1036,23 @@ class FakePathModuleTest(TestCase):
             f"{root_dir}foo!bar", self.os.path.realpath("bar", strict=True)
         )
 
+    @unittest.skipIf(
+        not hasattr(os.path, "ALLOW_MISSING"),
+        "ALLOW_MISSING has been added in different patch versions",
+    )
+    def test_realpath_allow_missing(self):
+        f = self.filesystem.create_file("!foo!bar")
+        root_dir = self.filesystem.root_dir_name
+        self.filesystem.cwd = f"{root_dir}foo"
+        self.assertEqual(
+            "!foo!baz",
+            self.os.path.realpath("baz", strict=os.path.ALLOW_MISSING),  # type: ignore[attr-defined]
+        )
+        if not is_root():
+            self.os.chmod(f.path, 0)
+            with self.raises_os_error(errno.EACCES):
+                self.os.path.realpath(f.path, strict=os.path.ALLOW_MISSING)  # type: ignore[attr-defined]
+
     def test_samefile(self):
         file_path1 = "!foo!bar!baz"
         file_path2 = "!foo!bar!boo"

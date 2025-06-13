@@ -30,6 +30,8 @@ The released versions correspond to PyPI releases.
 * added missing `mode` property to fake file wrapper (see [#1162](../../issues/1162))
 * fixed instantiation of a standalone `FakePathlibModule` for Python >= 3.11
   (see [#1169](../../issues/1169))
+* added support for new value "ALLOW_MISSING" of `strict` argument in `os.path.realpath`
+  (introduced in latest patch version of Python >= 3.10, see [#1180](../../issues/1180))
 
 ### Infrastructure
 * adapt test for increased default buffer size in Python 3.14a6
