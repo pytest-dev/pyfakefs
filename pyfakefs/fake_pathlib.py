@@ -15,15 +15,9 @@ New in pyfakefs 3.0.
 
 Usage:
 
-* With Patcher:
-  If using `fake_filesystem_unittest.TestCase`, pytest fs fixture,
-  or directly `Patcher`, pathlib gets replaced
-  by fake_pathlib together with other file system related modules.
-
-* Stand-alone with FakeFilesystem:
-  `filesystem = fake_filesystem.FakeFilesystem()`
-  `fake_pathlib_module = fake_pathlib.FakePathlibModule(filesystem)`
-  `path = fake_pathlib_module.Path('/foo/bar')`
+If using `fake_filesystem_unittest.TestCase`, pytest fs fixture,
+or directly `Patcher`, pathlib gets replaced
+by fake_pathlib together with other file system related modules.
 
 Note: as the implementation is based on FakeFilesystem, all faked classes
 (including PurePosixPath, PosixPath, PureWindowsPath and WindowsPath)
@@ -867,11 +861,6 @@ class FakePathlibModule:
 
     Automatically created if using `fake_filesystem_unittest.TestCase`,
     the `fs` fixture, the `patchfs` decorator, or directly the `Patcher`.
-
-    For creating it separately, a `fake_filesystem` instance is needed::
-
-        filesystem = fake_filesystem.FakeFilesystem()
-        fake_pathlib_module = fake_pathlib.FakePathlibModule(filesystem)
     """
 
     def __init__(self, filesystem, from_patcher=False):

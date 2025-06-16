@@ -1045,7 +1045,7 @@ class FakePathModuleTest(TestCase):
         root_dir = self.filesystem.root_dir_name
         self.filesystem.cwd = f"{root_dir}foo"
         self.assertEqual(
-            "!foo!baz",
+            f"{root_dir}foo!baz",
             self.os.path.realpath("baz", strict=os.path.ALLOW_MISSING),  # type: ignore[attr-defined]
         )
         if not is_root():
