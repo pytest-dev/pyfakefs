@@ -11,8 +11,10 @@ The released versions correspond to PyPI releases.
 * support for patching legacy modules `scandir` and `pathlib2` will be removed
 * the default for `FakeFilesystem.shuffle_listdir_results` will change to `True` to reflect
   the real filesystem behavior
+* remove support for Python versions before 3.10 (if needed, patches may be backported to the 5.x branch)
 
-## Unreleased
+## [Version 5.9.0](https://pypi.python.org/pypi/pyfakefs/5.8.0) (2025-06-21)
+Adds support for an API change in latest Python patch releases.
 
 ### Changes
 * the message from an `OSError` raised in the fake filesystem has no longer the postfix
