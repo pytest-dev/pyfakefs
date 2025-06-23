@@ -359,9 +359,11 @@ class FakePathModule:
         """Return the canonical path of the specified filename, eliminating any
         symbolic links encountered in the path.
         """
-        if strict is not None and sys.version_info < (3, 10):
-            raise TypeError("realpath() got an unexpected keyword argument 'strict'")
         has_allow_missing = hasattr(os.path, "ALLOW_MISSING")
+        # the strict argument was backported to Python 3.9.23
+        # together with support for os.path.ALLOW_MISSING
+        if strict is not None and sys.version_info < (3, 10) and not has_allow_missing:
+            raise TypeError("realpath() got an unexpected keyword argument 'strict'")
         if has_allow_missing and strict == os.path.ALLOW_MISSING:  # type: ignore[attr-defined]
             # ignores non-existing file, but not other errors
             ignored_error: Any = FileNotFoundError

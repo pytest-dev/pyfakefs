@@ -13,6 +13,11 @@ The released versions correspond to PyPI releases.
   the real filesystem behavior
 * remove support for Python versions before 3.10 (if needed, patches may be backported to the 5.x branch)
 
+## Unreleased
+
+### Fixes
+* fixed handling of added `strict` argument in Python 3.9.23
+
 ## [Version 5.9.0](https://pypi.python.org/pypi/pyfakefs/5.8.0) (2025-06-21)
 Adds support for an API change in latest Python patch releases.
 
