@@ -79,9 +79,11 @@ xdist = [
 ]
 
 [tool.setuptools]
-packages = ["pyfakefs"]
+include-package-data = true
+
 [tool.setuptools.package-data]
-pyfakefs = ["py.typed"]
+where = ["pyfakefs"]
+pyfakefs = ["py.typed", "**/*.parquet", "**/*.xlsx"]
 
 [tool.setuptools.dynamic]
 version = { attr = "pyfakefs.__version__" }
