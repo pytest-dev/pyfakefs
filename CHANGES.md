@@ -17,6 +17,7 @@ The released versions correspond to PyPI releases.
 
 ### Fixes
 * fixed handling of added `strict` argument in Python 3.9.23
+* make sure test files are packaged (see [#1186](../../issues/1186))
 
 ## [Version 5.9.0](https://pypi.python.org/pypi/pyfakefs/5.8.0) (2025-06-21)
 Adds support for an API change in latest Python patch releases.
@@ -25,7 +26,7 @@ Adds support for an API change in latest Python patch releases.
 * the message from an `OSError` raised in the fake filesystem has no longer the postfix
   _"in the fake filesystem"_ (see [#1159](../../discussions/1159))
 * changed implementation of `FakeShutilModule` to prepare it for usage without the patcher
-  (see [#1171](../../discussions/1171))
+  (see [#1171](../../issues/1171))
 
 ### Enhancements
 * added convenience function `add_package_metadata` to add the metadata of a given
