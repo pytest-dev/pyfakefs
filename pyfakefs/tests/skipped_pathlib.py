@@ -18,7 +18,7 @@ from pathlib import Path
 
 
 def read_pathlib(file_name):
-    return (Path(__file__).parent / file_name).open("r").read()
+    return (Path(__file__).parent / file_name).open("r", encoding="utf8").read()
 
 
 def read_text_pathlib(file_name):
