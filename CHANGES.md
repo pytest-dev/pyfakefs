@@ -13,6 +13,11 @@ The released versions correspond to PyPI releases.
   the real filesystem behavior
 * remove support for Python versions before 3.10 (if needed, patches may be backported to the 5.x branch)
 
+## Unreleased
+
+### Infrastructure
+* fixed some warnings in tests (see [#1190](../../issues/1190))
+
 ## [Version 5.9.1](https://pypi.python.org/pypi/pyfakefs/5.9.1) (2025-06-23)
 Fixes regression in packaging in version 5.9.0.
 
