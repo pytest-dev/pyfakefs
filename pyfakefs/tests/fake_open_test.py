@@ -1436,11 +1436,11 @@ class BufferingModeTest(FakeFileOpenTestBase):
         line_end_size = len(self.os.linesep)
         char_count = io.DEFAULT_BUFFER_SIZE // 256 - line_end_size
         for line_count in (255, 256, 257, 511, 512, 513):
-            with self.open(file_path, "w") as f:
+            with self.open(file_path, "w", encoding="utf8") as f:
                 for i in range(line_count):
                     f.write("x" * char_count + "\n")
 
-            with self.open(file_path) as f:
+            with self.open(file_path, encoding="utf8") as f:
                 lines = f.readlines()
                 self.assertEqual(line_count, len(lines))
 

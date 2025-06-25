@@ -471,7 +471,9 @@ class TextBufferIO(io.TextIOWrapper):
         errors: str = "strict",
     ):
         self._bytestream = io.BytesIO(contents or b"")
-        super().__init__(self._bytestream, encoding, errors, newline)
+        super().__init__(
+            self._bytestream, encoding=encoding, errors=errors, newline=newline
+        )
 
     def getvalue(self) -> bytes:
         return self._bytestream.getvalue()

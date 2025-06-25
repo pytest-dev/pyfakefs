@@ -939,7 +939,8 @@ class Patcher:
         modules.
         """
         module_names = list(self._fake_module_classes.keys()) + [PATH_MODULE]
-        for name, module in list(sys.modules.items()):
+        items = sys.modules.copy().items()
+        for name, module in items:
             try:
                 if (
                     self.use_cache

@@ -22,7 +22,7 @@ def read_pathlib(file_name):
 
 
 def read_text_pathlib(file_name):
-    return (Path(__file__).parent / file_name).read_text()
+    return (Path(__file__).parent / file_name).read_text(encoding="utf8")
 
 
 def read_bytes_pathlib(file_name):
@@ -34,5 +34,5 @@ def check_exists_pathlib():
 
 
 def read_open(file_name):
-    with open(os.path.join(os.path.dirname(__file__), file_name)) as f:
+    with open(os.path.join(os.path.dirname(__file__), file_name), encoding="utf8") as f:
         return f.read()
