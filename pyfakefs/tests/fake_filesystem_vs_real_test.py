@@ -743,8 +743,8 @@ class FakeFilesystemVsRealTest(unittest.TestCase):
             self.fake_os.chmod(fake_path, mode)
 
         try:
-            self.assertFileHandleOpenBehaviorsMatch("a/write", "w")
-            self.assertFileHandleOpenBehaviorsMatch("b/write", "w")
+            self.assertFileHandleOpenBehaviorsMatch("a/write", "w", encoding="utf8")
+            self.assertFileHandleOpenBehaviorsMatch("b/write", "w", encoding="utf8")
             self.assertAllOsBehaviorsMatch("b/stat_dir")
         finally:
             for path in ["b", "b/stat_dir"]:

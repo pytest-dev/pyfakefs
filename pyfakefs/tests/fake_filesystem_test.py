@@ -2334,7 +2334,7 @@ class RealFileSystemAccessTest(RealFsTestCase):
     def _setup_temp_directory():
         real_directory = tempfile.mkdtemp()
         os.mkdir(os.path.join(real_directory, "fixtures"))
-        with open(os.path.join(real_directory, "all_tests.py"), "w"):
+        with open(os.path.join(real_directory, "all_tests.py"), "w", encoding="utf8"):
             pass
         return real_directory
 
