@@ -71,6 +71,13 @@ class RealPathlibTestCase(fake_filesystem_unittest.TestCase, RealFsTestMixin):
     def use_real_fs(self):
         return False
 
+    def deprecation_warning_since_313(self):
+        return (
+            contextlib.nullcontext()
+            if sys.version_info < (3, 13)
+            else self.assertWarns(DeprecationWarning)
+        )
+
 
 class FakePathlibInitializationTest(RealPathlibTestCase):
     def test_initialization_type(self):
@@ -217,11 +224,7 @@ class FakePathlibPurePathTest(RealPathlibTestCase):
 
     def test_is_reserved_posix(self):
         self.check_posix_only()
-        with (
-            contextlib.nullcontext()
-            if sys.version_info < (3, 13)
-            else self.assertWarns(DeprecationWarning)
-        ):
+        with self.deprecation_warning_since_313():
             self.assertFalse(self.path("/dev").is_reserved())
             self.assertFalse(self.path("/").is_reserved())
             self.assertFalse(self.path("COM1").is_reserved())
@@ -230,11 +233,7 @@ class FakePathlibPurePathTest(RealPathlibTestCase):
     @unittest.skipIf(not is_windows, "Windows specific behavior")
     def test_is_reserved_windows(self):
         self.check_windows_only()
-        with (
-            contextlib.nullcontext()
-            if sys.version_info < (3, 13)
-            else self.assertWarns(DeprecationWarning)
-        ):
+        with self.deprecation_warning_since_313():
             self.assertFalse(self.path("/dev").is_reserved())
             self.assertFalse(self.path("/").is_reserved())
             self.assertTrue(self.path("COM1").is_reserved())
@@ -310,11 +309,7 @@ class FakePathlibPurePosixPathTest(RealPathlibTestCase):
         self.path = self.pathlib.PurePosixPath
 
     def test_is_reserved(self):
-        with (
-            contextlib.nullcontext()
-            if sys.version_info < (3, 13)
-            else self.assertWarns(DeprecationWarning)
-        ):
+        with self.deprecation_warning_since_313():
             self.assertFalse(self.path("/dev").is_reserved())
             self.assertFalse(self.path("/").is_reserved())
             self.assertFalse(self.path("COM1").is_reserved())
@@ -389,11 +384,7 @@ class FakePathlibPureWindowsPathTest(RealPathlibTestCase):
         self.path = self.pathlib.PureWindowsPath
 
     def test_is_reserved(self):
-        with (
-            contextlib.nullcontext()
-            if sys.version_info < (3, 13)
-            else self.assertWarns(DeprecationWarning)
-        ):
+        with self.deprecation_warning_since_313():
             self.assertFalse(self.path("/dev").is_reserved())
             self.assertFalse(self.path("/").is_reserved())
             self.assertTrue(self.path("COM1").is_reserved())
