@@ -73,11 +73,12 @@ class FakeGlobUnitTest(fake_filesystem_unittest.TestCase):
         self.assertEqual(["/[Temp]"], glob.glob("/*emp*"))
 
     def test_glob1(self):
-        with (
+        warning_context = (
             contextlib.nullcontext()
             if sys.version_info < (3, 13)
             else self.assertWarns(DeprecationWarning)
-        ):
+        )
+        with warning_context:
             self.assertEqual(["[Temp]"], glob.glob1("/", "*Tem*"))
 
     def test_has_magic(self):
