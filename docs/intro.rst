@@ -87,17 +87,48 @@ Limitations
 
 - ``pyfakefs`` may not work correctly if file system functions are patched by
   other means (e.g. using `unittest.mock.patch`) - see
-  :ref:`usage_with_mock_open` for more information
+  :ref:`usage_with_mock_open` for more information.
 
 - ``pyfakefs`` will not work correctly with
   `behave <https://github.com/behave/behave>`__ due to the way it loads
   the steps, if any filesystem modules are imported globally in the steps or
   environment files; as a workaround, you may load them locally inside the
-  test steps (see `this issue <https://github.com/pytest-dev/pyfakefs/issues/703>`__)
+  test steps (see `this issue <https://github.com/pytest-dev/pyfakefs/issues/703>`__).
 
 - ``pyfakefs`` is not guaranteed to work correctly in multi-threading environments.
   Specifically, it does not ensure concurrent write access to a file from different
   threads, which is possible under Posix.
+
+
+.. |br| raw:: html
+
+   <br />
+
+Alternatives
+------------
+Given the above limitations, it is not always possible to use `pyfakefs` to emulate the
+filesystem. There are other possibilities to test the filesystem that you may consider
+instead, for example:
+
+- Use temporary files in the temp directory of your OS. |br|
+  *Pros*: Is is relatively easy to setup new tests, and the temp files are not affecting the
+  functionality of the actual file system. Under POSIX systems, they are also cleaned up
+  periodically. |br|
+  *Cons*: It is slower because the actual disk is used, cleaning up after tests can be
+  a problem, and the filesystem lives in a fixed location, which cannot always be used
+  in the tested code.
+
+- Use a RAM disk. |br|
+  *Pros*: It is memory-based and therefore fast, and can be set up to a clean state before
+  each test. |br|
+  *Cons*: The filesystem lives in a fixed location, which cannot always be used in the tested code.
+
+- Use a filesystem abstraction like `PyFilesystem <https://github.com/PyFilesystem/pyfilesystem2/>`__. |br|
+  *Pros*: You can replace the real filesystem by a memory based filesystem in your tests,
+  which has the same advantages as using ``pyfakefs``. |br|
+  *Cons*: Your production code must use this abstraction, so this is more a consideration
+  for new projects.
+
 
 History
 -------
