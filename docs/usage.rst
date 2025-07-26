@@ -43,6 +43,9 @@ you can define a longer name in your ``conftest.py`` and use that in your tests:
         """
         yield fs
 
+.. note:: Filesystem patching is paused in the pytest logreport phases to ensure that
+  logs are correctly written to the real filesystem.
+
 Class-, module- and session-scoped fixtures
 ...........................................
 For convenience, class-, module- and session-scoped fixtures with the same
@@ -54,6 +57,9 @@ respectively.
   will just serve as a reference to the active fake filesystem. That means that changes
   done in the fake filesystem inside a test will remain there until the respective scope
   ends (see also :ref:`nested_patcher_invocation`).
+
+.. note:: To avoid unwanted side-effects, the patching is paused between the tests,
+  even if the fixture is still active.
 
 .. _unittest_usage:
 

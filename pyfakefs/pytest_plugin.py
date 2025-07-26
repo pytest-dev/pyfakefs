@@ -9,11 +9,13 @@ def my_fakefs_test(fs):
     assert os.path.exists('/var/data/xx1.txt')
 """
 
+import contextlib
+
 import py
 import pytest
 from _pytest import capture
 
-from pyfakefs.fake_filesystem_unittest import Patcher
+from pyfakefs.fake_filesystem_unittest import Patcher, Pause
 
 try:
     from _pytest import pathlib
@@ -85,22 +87,18 @@ def pytest_sessionfinish(session, exitstatus):
 @pytest.hookimpl(hookwrapper=True, tryfirst=True)
 def pytest_runtest_logreport(report):
     """Make sure that patching is not active during reporting."""
-    pause = Patcher.PATCHER is not None and report.when == "call"
-    if pause:
+    pause = Patcher.PATCHER is not None and Patcher.PATCHER.is_patching
+    context_mgr = Pause(Patcher.PATCHER) if pause else contextlib.nullcontext()
+    with context_mgr:
+        yield
+    if pause and report.when == "teardown":
+        # if we get here, we are not in a function scope fixture
+        # in this case, we still want to pause patching between the tests
         Patcher.PATCHER.pause()
-    yield
 
 
-@pytest.hookimpl(hookwrapper=True, trylast=True)
+@pytest.hookimpl(tryfirst=True)
 def pytest_runtest_setup(item):
+    # resume patcher if not in a function scope
     if Patcher.PATCHER is not None:
         Patcher.PATCHER.resume()
-    yield
-
-
-@pytest.hookimpl(hookwrapper=True, tryfirst=True)
-def pytest_runtest_teardown(item, nextitem):
-    """Make sure that patching is not active during reporting."""
-    if Patcher.PATCHER is not None:
-        Patcher.PATCHER.pause()
-    yield
