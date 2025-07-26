@@ -789,7 +789,7 @@ class Patcher:
             "io": fake_io.FakeIoModule,
             "pathlib": fake_pathlib_module,
         }
-        if sys.version_info >= (3, 13):
+        if sys.version_info[:2] == (3, 13):
             # for Python 3.13, we need both pathlib (path with __init__.py) and
             # pathlib._local (has the actual implementation);
             # depending on how pathlib is imported, either may be used
@@ -806,10 +806,10 @@ class Patcher:
         # be contained in - this allows for alternative modules like
         # `pathlib` and `pathlib2`
         self._class_modules["Path"] = ["pathlib"]
-        if sys.version_info >= (3, 13):
+        if sys.version_info[:2] == (3, 13):
             self._class_modules["Path"].append("pathlib._local")
         self._unfaked_module_classes["pathlib"] = fake_pathlib.RealPathlibModule
-        if sys.version_info >= (3, 13):
+        if sys.version_info[:2] == (3, 13):
             self._unfaked_module_classes["pathlib._local"] = (
                 fake_pathlib.RealPathlibModule
             )

@@ -15,6 +15,9 @@ The released versions correspond to PyPI releases.
 
 ## Unreleased
 
+### Fixes
+* fixed an interaction problem of `fs` with other pytest fixtures (see [#1200](../../issues/1200))
+
 ### Infrastructure
 * fixed some warnings in tests (see [#1190](../../issues/1190))
 
