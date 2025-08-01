@@ -71,6 +71,25 @@ class TestPatcher(TestCase):
             contents = f.read()
         self.assertEqual("test", contents)
 
+    def test_nested_invocation(self):
+        with Patcher() as patcher:
+            patcher.fs.create_file("/foo/bar", contents="test")
+            self.assertTrue(patcher.fs.exists("/foo/bar"))
+            with Patcher() as patcher1:
+                self.assertTrue(patcher1.fs.exists("/foo/bar"))
+                patcher1.fs.create_file("/foo/baz", contents="test")
+                self.assertTrue(patcher1.fs.exists("/foo/baz"))
+            self.assertTrue(patcher.fs.exists("/foo/baz"))
+
+    def test_nested_invocation_with_args(self):
+        with Patcher() as patcher:
+            patcher.fs.create_file("/foo/bar", contents="test")
+            with self.assertWarnsRegex(
+                UserWarning, "Nested fake filesystem invocation using custom arguments"
+            ):
+                with Patcher(allow_root_user=False):
+                    pass
+
 
 class TestPatchfsArgumentOrder(TestCase):
     @patchfs
