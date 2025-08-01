@@ -655,6 +655,21 @@ class Patcher:
             if self.DOC_REF_COUNT > 0:
                 return
         elif self.REF_COUNT > 0:
+            if (
+                additional_skip_names
+                or modules_to_reload
+                or modules_to_patch
+                or not allow_root_user
+                or not use_known_patches
+                or patch_open_code != PatchMode.OFF
+                or patch_default_args
+                or not use_cache
+                or not use_dynamic_patch
+            ):
+                warnings.warn(
+                    "Nested fake filesystem invocation using custom arguments - "
+                    "using the existing fake filesystem, discarding custom arguments!"
+                )
             return
         if not allow_root_user:
             # set non-root IDs even if the real user is root

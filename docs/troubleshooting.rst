@@ -381,7 +381,8 @@ Nested file system fixtures and Patcher invocations
 ``pyfakefs`` does not support nested faked file systems. Instead, it uses reference counting
 on the single fake filesystem instance. That means, if you are trying to create a fake filesystem
 inside a fake filesystem, only the reference count will increase, and any arguments you may pass
-to the patcher or fixture are ignored. Likewise, if you leave a nested fake filesystem,
+to the patcher or fixture are ignored. In this case (e.g. if passing custom arguments to a nested
+invocation), a warning is issued py ``pyfakefs``. Likewise, if you leave a nested fake filesystem,
 only the reference count is decreased and nothing is reverted.
 
 There are some situations where that may happen, probably without you noticing:

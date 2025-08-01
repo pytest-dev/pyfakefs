@@ -13,6 +13,12 @@ The released versions correspond to PyPI releases.
   the real filesystem behavior
 * remove support for Python versions before 3.10 (if needed, patches may be backported to the 5.x branch)
 
+## Unreleased
+
+## Changes
+* a warning is now issued if trying to create a nested fake filesystem with custom arguments
+  (custom arguments are ignored in this case, as the existing fake filesystem is used)
+
 ## [Version 5.9.2](https://pypi.python.org/pypi/pyfakefs/5.9.2) (2025-07-30)
 Fixes interaction with pytest.
 
