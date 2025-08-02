@@ -15,15 +15,16 @@ providing the `fs` fixture that enables the fake filesystem.
 Installation
 ------------
 ``pyfakefs`` is available on `PyPI <https://pypi.python.org/pypi/pyfakefs/>`__.
-The latest released version can be installed from PyPI:
-
-.. code:: bash
+The latest released version can be installed from PyPI::
 
    pip install pyfakefs
 
-The latest development version (main branch) can be installed from the GitHub sources:
+It is also available for `conda <https://docs.conda.io/>`_ at
+`conda-forge <https://anaconda.org/conda-forge/pyfakefs>`__::
 
-.. code:: bash
+   conda install pyfakefs
+
+The latest development version (main branch) can be installed from the GitHub sources::
 
    pip install git+https://github.com/pytest-dev/pyfakefs
 
@@ -139,14 +140,10 @@ Google in September 2006. Since then, it has been enhanced to extend its
 functionality and usefulness. At last count, ``pyfakefs`` was used in over
 20,000 Python tests at Google.
 
-Google released ``pyfakefs`` to the public in 2011 as Google Code project
-`pyfakefs <http://code.google.com/p/pyfakefs/>`__:
+Google released ``pyfakefs`` to the public in 2011 as a Google Code project.
 
-* Fork `jmcgeheeiv-pyfakefs <http://code.google.com/p/jmcgeheeiv-pyfakefs/>`__
-  added direct support for unittest and doctest as described in
-  :ref:`auto_patch`
-* Fork `shiffdane-jmcgeheeiv-pyfakefs <http://code.google.com/p/shiffdane-jmcgeheeiv-pyfakefs/>`__
-  added further corrections
+* the fork `jmcgeheeiv-pyfakefs` added direct support for unittest and doctest
+* the fork `shiffdane-jmcgeheeiv-pyfakefs` added further corrections
 
 After the `shutdown of Google
 Code <http://google-opensource.blogspot.com/2015/03/farewell-to-google-code.html>`__
@@ -156,3 +153,45 @@ GitHub <https://github.com/pytest-dev/pyfakefs>`__ where an enthusiastic
 community actively maintains and extends pyfakefs. In 2022, the repository has
 been transferred to `pytest-dev <https://github.com/pytest-dev>`__ to ensure
 continuous maintenance.
+
+
+Running pyfakefs unit tests
+---------------------------
+
+Continuous Integration
+......................
+
+``pyfakefs`` is currently automatically tested on Linux, macOS and Windows, with
+Python 3.7 to 3.13, and with PyPy3 on Linux, using
+`GitHub Actions <https://github.com/pytest-dev/pyfakefs/actions>`__.
+
+On the command line
+...................
+
+``pyfakefs`` unit tests can be run using ``pytest`` (all tests) or ``unittest``
+(all tests except ``pytest``-specific ones)::
+
+    $ cd pyfakefs/
+    $ export PYTHONPATH=$PWD
+
+    $ python -m pytest pyfakefs
+    $ python -m pyfakefs.tests.all_tests
+
+Similar scripts are called by ``tox`` and Github Actions. ``tox`` can be used to
+run tests locally against supported python versions::
+
+    $ tox
+
+
+In a docker container
+.....................
+
+The ``Dockerfile`` at the repository root will run the tests on the latest
+Ubuntu version.  Build the container::
+
+    cd pyfakefs/
+    docker build -t pyfakefs .
+
+Run the unit tests in the container::
+
+    docker run -t pyfakefs
