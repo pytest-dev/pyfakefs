@@ -19,6 +19,10 @@ The released versions correspond to PyPI releases.
 * a warning is now issued if trying to create a nested fake filesystem with custom arguments
   (custom arguments are ignored in this case, as the existing fake filesystem is used)
 
+## Fixes
+* fixed `fake_filesystem.add_package_metadata` that had never worked correctly
+  (see [#1205](../../issues/1205))
+
 ## [Version 5.9.2](https://pypi.python.org/pypi/pyfakefs/5.9.2) (2025-07-30)
 Fixes interaction with pytest.
 

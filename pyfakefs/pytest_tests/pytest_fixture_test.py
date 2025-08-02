@@ -9,6 +9,8 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+import pathlib
+import sys
 
 # Example for a test using a custom pytest fixture with an argument to Patcher
 
@@ -54,3 +56,17 @@ def check_that_example_file_is_in_fake_fs():
         assert file.read() == "stuff here"
     assert example.EXAMPLE_FILE.read_text() == "stuff here"
     assert example.EXAMPLE_FILE.is_file()
+
+
+pytest_parent_path = pathlib.Path(pytest.__file__).parent.parent
+
+
+@pytest.mark.skipif(
+    sys.version_info < (3, 8), reason="importlib.metadata not available"
+)
+def test_add_package_metadata(fs):
+    pytest_dist_path = pytest_parent_path / f"pytest-{pytest.__version__}.dist-info"
+    assert not fs.exists(pytest_dist_path)
+    fs.add_package_metadata("pytest")
+    assert fs.exists(pytest_dist_path)
+    assert fs.exists(pytest_dist_path / "METADATA")

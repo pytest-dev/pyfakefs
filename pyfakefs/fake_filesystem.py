@@ -2544,12 +2544,19 @@ class FakeFilesystem:
 
         from importlib.metadata import distribution, PackageNotFoundError
 
-        dist_files = distribution(package_name).files
-        if dist_files is None:
-            raise PackageNotFoundError(package_name)
-
-        for metadata_file in dist_files:
-            self.add_real_file(metadata_file.locate())
+        # we have to pause patching to get the distribution
+        # from the real filesystem if we are in patch mode
+        if self.patcher:
+            self.pause()
+        try:
+            dist_files = distribution(package_name).files
+            if dist_files is None:
+                raise PackageNotFoundError(package_name)
+            for metadata_file in dist_files:
+                self.add_real_file(metadata_file.locate())
+        finally:
+            if self.patcher:
+                self.resume()
 
     def create_file_internally(
         self,
