@@ -23,6 +23,9 @@ The released versions correspond to PyPI releases.
 * fixed `fake_filesystem.add_package_metadata` that had never worked correctly
   (see [#1205](../../issues/1205))
 
+### Infrastructure
+* updated the package build-system minimum version to setuptools v61.2 and higher
+
 ## [Version 5.9.2](https://pypi.python.org/pypi/pyfakefs/5.9.2) (2025-07-30)
 Fixes interaction with pytest.
 
