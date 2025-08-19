@@ -1,12 +1,13 @@
 [build-system]
-requires = ["setuptools>=45"]
+# change this to be "setuptools>=77.0.3" after 3.8 is out of support
+requires = ["setuptools>=61.2"]
 build-backend = "setuptools.build_meta"
 
 [project]
 name = "pyfakefs"
 description = "Implements a fake file system that mocks the Python file system modules."
 readme = "README.md"
-# change this to be PEP-639-conform after 3.8 is out of support
+# change this to be "Apache-2.0" after 3.8 is out of support
 license = {file = "COPYING"}
 
 authors = [
