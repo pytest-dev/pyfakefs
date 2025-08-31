@@ -13,6 +13,11 @@ The released versions correspond to PyPI releases.
   the real filesystem behavior
 * remove support for Python versions before 3.10 (if needed, patches may be backported to the 5.x branch)
 
+### Unreleased
+
+## Fixes
+* fixes patching of Debian-specific `tempfile` in Python 3.13 (see [#1214](../../issues/1214))
+
 ## [Version 5.9.3](https://pypi.python.org/pypi/pyfakefs/5.9.3) (2025-08-28)
 Fixes a utility method.
 

@@ -18,7 +18,6 @@ if using `Patcher` (via `fake_filesystem_unittest`).
 
 import os
 import stat
-import sys
 import tempfile
 import unittest
 
@@ -89,10 +88,6 @@ class FakeTempfileModuleTest(fake_filesystem_unittest.TestCase):
         self.assertTrue(self.fs.exists(dirname))
         self.assertEqual(self.fs.get_object(dirname).st_mode, stat.S_IFDIR | 0o700)
 
-    @unittest.skipIf(
-        sys.version_info[:3] == (3, 13, 5),
-        "Not working on Debian with this version, see #1214",
-    )
     def test_temporary_directory(self):
         with tempfile.TemporaryDirectory() as tmpdir:
             self.assertTrue(tmpdir)
