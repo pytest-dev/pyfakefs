@@ -98,6 +98,7 @@ class TempfilePatcher:
 
     def __init__(self):
         self.tempfile_cleanup = None
+        self.tempfile_rmtree = None
 
     def start_patching(self):
         if self.tempfile_cleanup is not None:
@@ -109,6 +110,16 @@ class TempfilePatcher:
 
             self.tempfile_cleanup = tempfile._TemporaryFileCloser.cleanup  # type: ignore[module-attr]
             tempfile._TemporaryFileCloser.cleanup = cleanup  # type: ignore[module-attr]
+
+            if sys.version_info >= (3, 13) and hasattr(tempfile, "_rmtree"):
+                # Debian patches tempfile by importing or copying shutil.rmtree as _rmtree
+                # we patch this to use the original (patched) version
+                def _rmtree(*args, **kwargs):
+                    return tempfile._shutil.rmtree(*args, **kwargs)
+
+                self.tempfile_rmtree = tempfile._rmtree  # type: ignore[module-attr]
+                tempfile._rmtree = _rmtree  # type: ignore[module-attr]
+
         elif sys.platform != "win32":
 
             def close(self_, unlink=None):
@@ -125,6 +136,9 @@ class TempfilePatcher:
         else:
             tempfile._TemporaryFileCloser.cleanup = self.tempfile_cleanup  # type: ignore[module-attr]
         self.tempfile_cleanup = None
+        if self.tempfile_rmtree is not None:
+            tempfile._rmtree = self.tempfile_rmtree  # type: ignore[module-attr]
+            self.tempfile_rmtree = None
         # reset the cached tempdir in tempfile
         tempfile.tempdir = None
 
@@ -1063,12 +1077,13 @@ class Patcher:
             self._paused = False
 
             self.linecache_patcher.start_patching()
-            self.tempfile_patcher.start_patching()
 
             self.patch_modules()
             self.patch_functions()
             self.patch_defaults()
+
             self._set_glob_os_functions()
+            self.tempfile_patcher.start_patching()
 
             self._dyn_patcher = DynamicPatcher(self)
             sys.meta_path.insert(0, self._dyn_patcher)
