@@ -1406,6 +1406,16 @@ class FakeOsModule:
             raise NameError("name 'getgid' is not defined")
         return get_gid()
 
+    if sys.version_info >= (3, 14):
+
+        def readinto(self, fd, buffer):
+            """Read from a file descriptor fd into a mutable buffer object buffer."""
+            wrapper = self.filesystem.get_open_file(fd)
+            contents = wrapper.read(len(buffer))
+            count = len(contents)
+            buffer[:count] = contents
+            return count
+
     def fake_functions(self, original_functions) -> Set:
         functions = set()
         for fn in original_functions:

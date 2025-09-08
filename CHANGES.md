@@ -13,24 +13,27 @@ The released versions correspond to PyPI releases.
   the real filesystem behavior
 * remove support for Python versions before 3.10 (if needed, patches may be backported to the 5.x branch)
 
-### Unreleased
+## Unreleased
 
 ## Changes
 * the `errno` codes set in `OSError` have changed for some specific error conditions
   in Windows 11/Windows Server 2025; pyfakefs now matches this behavior
   instead of the previous behavior under Windows 10
 
-## Fixes
+### Enhancements
+* added support for `os.readinto` in Python 3.14
+
+### Fixes
 * fixes patching of Debian-specific `tempfile` in Python 3.13 (see [#1214](../../issues/1214))
 
 ## [Version 5.9.3](https://pypi.python.org/pypi/pyfakefs/5.9.3) (2025-08-28)
 Fixes a utility method.
 
-## Changes
+### Changes
 * a warning is now issued if trying to create a nested fake filesystem with custom arguments
   (custom arguments are ignored in this case, as the existing fake filesystem is used)
 
-## Fixes
+### Fixes
 * fixed `fake_filesystem.add_package_metadata` that had never worked correctly
   (see [#1205](../../issues/1205))
 
