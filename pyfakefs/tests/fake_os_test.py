@@ -3076,6 +3076,25 @@ class FakeOsModuleTest(FakeOsModuleTestBase):
         self.assertEqual(fd1 + 1, fd3)
         self.assertEqual(fd1 + 3, fd4)
 
+    @unittest.skipIf(sys.version_info < (3, 14), "Introduced in Python 3.14")
+    def test_readinto(self):
+        file_path = self.make_path("foo", "bar.txt")
+        contents = b"Testing readinto"
+        self.create_file(file_path, contents=contents)
+        fd = self.os.open(file_path, os.O_RDONLY)
+        try:
+            buffer = bytearray(b"")
+            self.assertEqual(0, self.os.readinto(fd, buffer))
+            buffer = bytearray(b" " * 20)
+            self.assertEqual(len(contents), self.os.readinto(fd, buffer))
+            self.assertEqual(b"Testing readinto    ", buffer)
+            self.assertEqual(0, self.os.readinto(fd, buffer))
+            self.os.lseek(fd, 5, os.SEEK_SET)
+            self.assertEqual(len(contents) - 5, self.os.readinto(fd, buffer))
+            self.assertEqual(b"ng readintodinto    ", buffer)
+        finally:
+            self.os.close(fd)
+
 
 class RealOsModuleTest(FakeOsModuleTest):
     def use_real_fs(self):
