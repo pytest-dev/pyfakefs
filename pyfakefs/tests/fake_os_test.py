@@ -521,20 +521,12 @@ class FakeOsModuleTest(FakeOsModuleTestBase):
         self.os.symlink(self.base_path, link_path)
         self.assertFalse(self.os.path.islink(link_path + self.os.sep))
 
-    def check_getsize_raises_with_trailing_separator(self, error_nr):
+    def test_getsize_raises_with_trailing_separator(self):
         file_path = self.make_path("bar")
         self.create_file(file_path)
         self.assert_raises_os_error(
-            error_nr, self.os.path.getsize, file_path + self.os.sep
+            errno.ENOTDIR, self.os.path.getsize, file_path + self.os.sep
         )
-
-    def test_getsize_raises_with_trailing_separator_posix(self):
-        self.check_posix_only()
-        self.check_getsize_raises_with_trailing_separator(errno.ENOTDIR)
-
-    def test_getsize_raises_with_trailing_separator_windows(self):
-        self.check_windows_only()
-        self.check_getsize_raises_with_trailing_separator(errno.EINVAL)
 
     def check_remove_link_ending_with_sep(self, error_nr):
         # regression test for #360
@@ -687,33 +679,21 @@ class FakeOsModuleTest(FakeOsModuleTestBase):
         self.create_file(file_path, perm=0)
         self.assertTrue(self.os.path.isfile(file_path))
 
-    def check_stat_with_trailing_separator(self, error_nr):
+    def test_stat_with_trailing_separator(self):
         # regression test for #376
         file_path = self.make_path("foo")
         self.create_file(file_path)
-        self.assert_raises_os_error(error_nr, self.os.stat, file_path + self.os.sep)
+        self.assert_raises_os_error(
+            errno.ENOTDIR, self.os.stat, file_path + self.os.sep
+        )
 
-    def test_stat_with_trailing_separator_posix(self):
-        self.check_posix_only()
-        self.check_stat_with_trailing_separator(errno.ENOTDIR)
-
-    def test_stat_with_trailing_separator_windows(self):
-        self.check_windows_only()
-        self.check_stat_with_trailing_separator(errno.EINVAL)
-
-    def check_remove_with_trailing_separator(self, error_nr):
+    def test_remove_with_trailing_separator(self):
         # regression test for #377
         file_path = self.make_path("foo")
         self.create_file(file_path)
-        self.assert_raises_os_error(error_nr, self.os.remove, file_path + self.os.sep)
-
-    def test_remove_with_trailing_separator_posix(self):
-        self.check_posix_only()
-        self.check_remove_with_trailing_separator(errno.ENOTDIR)
-
-    def test_remove_with_trailing_separator_windows(self):
-        self.check_windows_only()
-        self.check_remove_with_trailing_separator(errno.EINVAL)
+        self.assert_raises_os_error(
+            errno.ENOTDIR, self.os.remove, file_path + self.os.sep
+        )
 
     def test_readlink(self):
         skip_if_symlink_not_supported()
@@ -790,7 +770,7 @@ class FakeOsModuleTest(FakeOsModuleTestBase):
         link_path = self.make_path("link")
         self.os.symlink(file_path, link_path)
         self.assert_raises_os_error(
-            errno.EINVAL,
+            errno.ENOTDIR,
             self.os.symlink,
             link_path + self.os.sep,
             link_path + self.os.sep,
@@ -819,7 +799,7 @@ class FakeOsModuleTest(FakeOsModuleTestBase):
         file_path = self.make_path("foo")
         self.os.symlink(file_path, file_path)
         self.assert_raises_os_error(
-            errno.EINVAL, self.os.readlink, file_path + self.os.sep
+            errno.ENOTDIR, self.os.readlink, file_path + self.os.sep
         )
 
     def test_readlink_with_links_in_path(self):
@@ -1125,7 +1105,7 @@ class FakeOsModuleTest(FakeOsModuleTestBase):
         file_path = self.make_path("foo", "baz")
         self.create_file(file_path)
         self.assert_raises_os_error(
-            errno.EACCES,
+            errno.EINVAL,
             self.os.rename,
             file_path,
             self.os.path.join(file_path, "new"),
@@ -2449,7 +2429,7 @@ class FakeOsModuleTest(FakeOsModuleTestBase):
         self.check_windows_only()
         skip_if_symlink_not_supported()
         path0 = self.make_path("foo") + self.os.sep
-        self.assert_raises_os_error(errno.EINVAL, self.os.symlink, path0, path0)
+        self.assert_raises_os_error(errno.ENOTDIR, self.os.symlink, path0, path0)
 
     def test_rename_symlink_with_trailing_sep_linux(self):
         # Regression test for #391
@@ -2509,7 +2489,7 @@ class FakeOsModuleTest(FakeOsModuleTestBase):
     def test_lstat_broken_link_with_trailing_sep_windows(self):
         self.check_windows_only()
         link_path = self.create_broken_link_path_with_trailing_sep()
-        self.assert_raises_os_error(errno.EINVAL, self.os.lstat, link_path)
+        self.assert_raises_os_error(errno.ENOTDIR, self.os.lstat, link_path)
 
     def test_mkdir_broken_link_with_trailing_sep_linux_windows(self):
         self.check_linux_and_windows()
@@ -2540,7 +2520,7 @@ class FakeOsModuleTest(FakeOsModuleTestBase):
     def test_remove_broken_link_with_trailing_sep_windows(self):
         self.check_windows_only()
         link_path = self.create_broken_link_path_with_trailing_sep()
-        self.assert_raises_os_error(errno.EINVAL, self.os.remove, link_path)
+        self.assert_raises_os_error(errno.ENOTDIR, self.os.remove, link_path)
 
     def test_rename_broken_link_with_trailing_sep_linux(self):
         self.check_linux_only()
@@ -2560,7 +2540,7 @@ class FakeOsModuleTest(FakeOsModuleTestBase):
         self.check_windows_only()
         link_path = self.create_broken_link_path_with_trailing_sep()
         self.assert_raises_os_error(
-            errno.EINVAL, self.os.rename, link_path, self.make_path("target")
+            errno.ENOTDIR, self.os.rename, link_path, self.make_path("target")
         )
 
     def test_readlink_broken_link_with_trailing_sep_posix(self):
@@ -2571,7 +2551,7 @@ class FakeOsModuleTest(FakeOsModuleTestBase):
     def test_readlink_broken_link_with_trailing_sep_windows(self):
         self.check_windows_only()
         link_path = self.create_broken_link_path_with_trailing_sep()
-        self.assert_raises_os_error(errno.EINVAL, self.os.readlink, link_path)
+        self.assert_raises_os_error(errno.ENOTDIR, self.os.readlink, link_path)
 
     def test_islink_broken_link_with_trailing_sep(self):
         link_path = self.create_broken_link_path_with_trailing_sep()
@@ -2618,23 +2598,15 @@ class FakeOsModuleTest(FakeOsModuleTestBase):
         self.check_windows_only()
         self.check_open_broken_symlink_to_path_with_trailing_sep(errno.EINVAL)
 
-    def check_link_path_ending_with_sep(self, error):
+    def test_link_path_ending_with_sep(self):
         # Regression tests for #399
         skip_if_symlink_not_supported()
         file_path = self.make_path("foo")
         link_path = self.make_path("link")
         with self.open(file_path, "w", encoding="utf8"):
             self.assert_raises_os_error(
-                error, self.os.link, file_path + self.os.sep, link_path
+                errno.ENOTDIR, self.os.link, file_path + self.os.sep, link_path
             )
-
-    def test_link_path_ending_with_sep_posix(self):
-        self.check_posix_only()
-        self.check_link_path_ending_with_sep(errno.ENOTDIR)
-
-    def test_link_path_ending_with_sep_windows(self):
-        self.check_windows_only()
-        self.check_link_path_ending_with_sep(errno.EINVAL)
 
     def test_link_to_path_ending_with_sep_posix(self):
         # regression test for #407
@@ -2653,21 +2625,13 @@ class FakeOsModuleTest(FakeOsModuleTestBase):
             self.os.link(path1, path0)
             self.assertTrue(self.os.path.exists(path1))
 
-    def check_rename_to_path_ending_with_sep(self, error):
+    def test_rename_to_path_ending_with_sep(self):
         # Regression tests for #400
         file_path = self.make_path("foo")
         with self.open(file_path, "w", encoding="utf8"):
             self.assert_raises_os_error(
-                error, self.os.rename, file_path + self.os.sep, file_path
+                errno.ENOTDIR, self.os.rename, file_path + self.os.sep, file_path
             )
-
-    def test_rename_to_path_ending_with_sep_posix(self):
-        self.check_posix_only()
-        self.check_rename_to_path_ending_with_sep(errno.ENOTDIR)
-
-    def test_rename_to_path_ending_with_sep_windows(self):
-        self.check_windows_only()
-        self.check_rename_to_path_ending_with_sep(errno.EINVAL)
 
     def test_rmdir_link_with_trailing_sep_linux(self):
         self.check_linux_only()
@@ -2723,7 +2687,9 @@ class FakeOsModuleTest(FakeOsModuleTestBase):
         path0 = self.make_path("bar")
         self.os.symlink(path0, path1)
         self.os.symlink(path1, path0)
-        self.assert_raises_os_error(errno.EINVAL, self.os.readlink, path0 + self.os.sep)
+        self.assert_raises_os_error(
+            errno.ENOTDIR, self.os.readlink, path0 + self.os.sep
+        )
 
     # hard link related tests
     def test_link_bogus(self):
@@ -3510,7 +3476,7 @@ class FakeOsModuleTestCaseInsensitiveFS(FakeOsModuleTestBase):
         file_path = self.make_path("foo", "baz")
         self.create_file(file_path)
         self.assert_raises_os_error(
-            errno.EACCES,
+            errno.EINVAL,
             self.os.rename,
             file_path,
             self.os.path.join(file_path.upper(), "new"),

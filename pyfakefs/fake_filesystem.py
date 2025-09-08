@@ -770,7 +770,7 @@ class FakeFilesystem:
                     if self.is_macos and exc.errno != errno.ENOENT:
                         return
                     if self.is_windows_fs:
-                        self.raise_os_error(errno.EINVAL, entry_path)
+                        self.raise_os_error(errno.ENOTDIR, entry_path)
                     raise
                 if not follow_symlinks or self.is_windows_fs or self.is_macos:
                     file_object = link_object
@@ -781,8 +781,7 @@ class FakeFilesystem:
             else:
                 is_error = not S_ISDIR(file_object.st_mode)
             if is_error:
-                error_nr = errno.EINVAL if self.is_windows_fs else errno.ENOTDIR
-                self.raise_os_error(error_nr, entry_path)
+                self.raise_os_error(errno.ENOTDIR, entry_path)
 
     def chmod(
         self,
@@ -2004,7 +2003,7 @@ class FakeFilesystem:
             self.raise_os_error(errno.EXDEV, old_path)
         if not S_ISDIR(new_dir_object.st_mode):
             self.raise_os_error(
-                errno.EACCES if self.is_windows_fs else errno.ENOTDIR, new_path
+                errno.EINVAL if self.is_windows_fs else errno.ENOTDIR, new_path
             )
         if new_dir_object.has_parent_object(old_object):
             self.raise_os_error(errno.EINVAL, new_path)
@@ -2038,13 +2037,7 @@ class FakeFilesystem:
         # note that the check for trailing sep has to be done earlier
         if self.islink(path):
             if not self.exists(path):
-                error = (
-                    errno.ENOENT
-                    if self.is_macos
-                    else errno.EINVAL
-                    if self.is_windows_fs
-                    else errno.ENOTDIR
-                )
+                error = errno.ENOENT if self.is_macos else errno.ENOTDIR
                 self.raise_os_error(error, path)
 
     def _handle_posix_dir_link_errors(
@@ -2080,7 +2073,7 @@ class FakeFilesystem:
         new_object = self._get_object(new_file_path)
         if old_file_path == new_file_path:
             if not S_ISLNK(new_object.st_mode) and ends_with_sep:
-                error = errno.EINVAL if self.is_windows_fs else errno.ENOTDIR
+                error = errno.ENOTDIR if self.is_windows_fs else errno.ENOTDIR
                 self.raise_os_error(error, old_file_path)
             return None  # Nothing to do here
 
@@ -2683,7 +2676,7 @@ class FakeFilesystem:
                     self.raise_os_error(errno.ENOENT, link_path)
             else:
                 if self.is_windows_fs:
-                    self.raise_os_error(errno.EINVAL, link_target_path)
+                    self.raise_os_error(errno.ENOTDIR, link_target_path)
                 if not self.exists(
                     self._path_without_trailing_separators(link_path),
                     check_link=True,
@@ -2754,8 +2747,7 @@ class FakeFilesystem:
                 self.raise_os_error(errno.ENOENT, new_parent_directory)
 
         if self.ends_with_path_separator(old_path_str):
-            error = errno.EINVAL if self.is_windows_fs else errno.ENOTDIR
-            self.raise_os_error(error, old_path_str)
+            self.raise_os_error(errno.ENOTDIR, old_path_str)
 
         if not self.is_windows_fs and self.ends_with_path_separator(new_path):
             self.raise_os_error(errno.ENOENT, old_path_str)
@@ -2839,7 +2831,7 @@ class FakeFilesystem:
                 self.raise_os_error(errno.EINVAL, link_path)
             if not self.exists(link_obj.path):  # type: ignore
                 if self.is_windows_fs:
-                    error = errno.EINVAL
+                    error = errno.ENOTDIR
                 elif self._is_circular_link(link_obj):
                     if self.is_macos:
                         return link_obj.path  # type: ignore[return-value]
