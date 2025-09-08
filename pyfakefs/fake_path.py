@@ -163,8 +163,7 @@ class FakePathModule:
             self.filesystem.ends_with_path_separator(path)
             and S_IFMT(file_obj.st_mode) != S_IFDIR
         ):
-            error_nr = errno.EINVAL if self.filesystem.is_windows_fs else errno.ENOTDIR
-            self.filesystem.raise_os_error(error_nr, path)
+            self.filesystem.raise_os_error(errno.ENOTDIR, path)
         return file_obj.st_size
 
     def isabs(self, path: AnyStr) -> bool:

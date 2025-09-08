@@ -15,6 +15,11 @@ The released versions correspond to PyPI releases.
 
 ### Unreleased
 
+## Changes
+* the `errno` codes set in `OSError` have changed for some specific error conditions
+  in Windows 11/Windows Server 2025; pyfakefs now matches this behavior
+  instead of the previous behavior under Windows 10
+
 ## Fixes
 * fixes patching of Debian-specific `tempfile` in Python 3.13 (see [#1214](../../issues/1214))
 
