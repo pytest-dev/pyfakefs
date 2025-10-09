@@ -1376,6 +1376,107 @@ class FakePathlibUsageInOsFunctionsTest(RealPathlibTestCase):
         with self.assertRaises(NotImplementedError):
             self.path(path).group()
 
+    @unittest.skipIf(sys.version_info < (3, 14), "copy() is new in Python 3.14")
+    def test_copy_new_file(self):
+        source_path = self.path(self.make_path("some_file"))
+        target_path = self.make_path("some_other_file")
+        self.create_file(source_path, contents="test")
+        target = source_path.copy(target_path)
+        self.assertEqual(target_path, str(target))
+        self.assertTrue(target.exists())
+        self.assertEqual("test", target.read_text())
+
+    @unittest.skipIf(sys.version_info < (3, 14), "copy() is new in Python 3.14")
+    def test_copy_to_existing_file(self):
+        source_path = self.path(self.make_path("some_file"))
+        target_path = self.make_path("some_other_file")
+        self.create_file(source_path, contents="foo")
+        self.create_file(target_path, contents="bar")
+        target = source_path.copy(target_path)
+        self.assertEqual(target_path, str(target))
+        self.assertTrue(source_path.exists())
+        self.assertTrue(target.exists())
+        self.assertEqual("foo", target.read_text())
+
+    @unittest.skipIf(sys.version_info < (3, 14), "copy() is new in Python 3.14")
+    def test_copy_directory(self):
+        source_path = self.path(self.make_path("some_dir"))
+        self.create_file(source_path / "foo", contents="foo")
+        self.create_file(source_path / "bar", contents="bar")
+        self.create_dir(source_path / "dir")
+        target_path = self.make_path("new_dir")
+        target = source_path.copy(target_path)
+        self.assertEqual(target_path, str(target))
+        self.assertTrue(source_path.exists())
+        self.assertTrue(target.exists())
+        self.assertTrue((target / "foo").exists())
+        self.assertEqual("foo", (target / "foo").read_text())
+        self.assertEqual("bar", (target / "bar").read_text())
+
+    @unittest.skipIf(sys.version_info < (3, 14), "copy_into() is new in Python 3.14")
+    def test_copy_into(self):
+        source_dir = self.path(self.make_path("some_dir"))
+        source_path = source_dir / "foo"
+        self.create_file(source_path, contents="foo")
+        target_path = self.path(self.make_path("new_dir"))
+        self.create_dir(target_path)
+        target = source_path.copy_into(target_path)
+        self.assertTrue(source_path.exists())
+        self.assertTrue(target.exists())
+        self.assertEqual(str(target_path / "foo"), str(target))
+        self.assertEqual("foo", target.read_text())
+
+    @unittest.skipIf(sys.version_info < (3, 14), "move() is new in Python 3.14")
+    def test_move_file(self):
+        source_path = self.path(self.make_path("some_file"))
+        target_path = self.make_path("some_other_file")
+        self.create_file(source_path, contents="test")
+        target = source_path.move(target_path)
+        self.assertEqual(target_path, str(target))
+        self.assertFalse(source_path.exists())
+        self.assertTrue(target.exists())
+        self.assertEqual("test", target.read_text())
+
+    @unittest.skipIf(sys.version_info < (3, 14), "move() is new in Python 3.14")
+    def test_move_to_existing_file(self):
+        source_path = self.path(self.make_path("some_file"))
+        target_path = self.make_path("some_other_file")
+        self.create_file(source_path, contents="foo")
+        self.create_file(target_path, contents="bar")
+        target = source_path.move(target_path)
+        self.assertEqual(target_path, str(target))
+        self.assertFalse(source_path.exists())
+        self.assertTrue(target.exists())
+        self.assertEqual("foo", target.read_text())
+
+    @unittest.skipIf(sys.version_info < (3, 14), "move() is new in Python 3.14")
+    def test_move_directory(self):
+        source_path = self.path(self.make_path("some_dir"))
+        self.create_file(source_path / "foo", contents="foo")
+        self.create_file(source_path / "bar", contents="bar")
+        self.create_dir(source_path / "dir")
+        target_path = self.make_path("new_dir")
+        target = source_path.move(target_path)
+        self.assertEqual(target_path, str(target))
+        self.assertFalse(source_path.exists())
+        self.assertTrue(target.exists())
+        self.assertTrue((target / "foo").exists())
+        self.assertEqual("foo", (target / "foo").read_text())
+        self.assertEqual("bar", (target / "bar").read_text())
+
+    @unittest.skipIf(sys.version_info < (3, 14), "move_into() is new in Python 3.14")
+    def test_move_into(self):
+        source_dir = self.path(self.make_path("some_dir"))
+        source_path = source_dir / "foo"
+        self.create_file(source_path, contents="foo")
+        target_path = self.path(self.make_path("new_dir"))
+        self.create_dir(target_path)
+        target = source_path.move_into(target_path)
+        self.assertFalse(source_path.exists())
+        self.assertTrue(target.exists())
+        self.assertEqual(str(target_path / "foo"), str(target))
+        self.assertEqual("foo", target.read_text())
+
     def test_walk(self):
         """Regression test for #915 - walk results shall be strings."""
         base_dir = self.make_path("foo")

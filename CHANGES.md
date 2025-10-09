@@ -22,6 +22,7 @@ The released versions correspond to PyPI releases.
 
 ### Enhancements
 * added support for `os.readinto` in Python 3.14
+* added support for `pathlib.copy` and `pathlib.copy_into` in Python 3.14
 
 ### Fixes
 * fixes patching of Debian-specific `tempfile` in Python 3.13 (see [#1214](../../issues/1214))

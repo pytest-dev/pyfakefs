@@ -845,6 +845,35 @@ class FakePath(pathlib.Path):
             fake_file.close()
             self.chmod(mode)
 
+    if sys.version_info >= (3, 14):
+
+        def _copy_from_file(self, source, preserve_metadata=False):
+            if sys.platform == "win32":
+                # do not use the optimized version that uses OS functions in Windows
+                if hasattr(self, "_copy_from_file_fallback"):
+                    return self._copy_from_file_fallback(source, preserve_metadata)
+                else:
+                    return super()._copy_from_file(source, preserve_metadata)  # type: ignore[attr-defined]
+            else:
+                # make pathlib think that no system calls are available so that it
+                # will fall back to pure Python calls
+                pathlib_os = pathlib.pathlib_module._os  # type: ignore[attr-defined]
+                old_fcopyfile = pathlib_os._fcopyfile
+                pathlib_os._fcopyfile = None
+                old_copy_file_range = pathlib_os._copy_file_range  # type: ignore[attr-defined]
+                pathlib_os._copy_file_range = None
+                old_ficlone = pathlib_os._ficlone  # type: ignore[attr-defined]
+                pathlib_os._ficlone = None
+                old_sendfile = pathlib_os._sendfile  # type: ignore[attr-defined]
+                pathlib_os._sendfile = None
+                try:
+                    return super()._copy_from_file(source, preserve_metadata)  # type: ignore[attr-defined]
+                finally:
+                    pathlib_os._fcopyfile = old_fcopyfile
+                    pathlib_os._copy_file_range = old_copy_file_range
+                    pathlib_os._ficlone = old_ficlone
+                    pathlib_os._sendfile = old_sendfile
+
 
 def _warn_is_reserved_deprecated():
     if sys.version_info >= (3, 13):
@@ -875,7 +904,7 @@ class FakePathlibModule:
                 Will be set to `True` if instantiated from `Patcher`.
         """
         init_module(filesystem)
-        self._pathlib_module = pathlib
+        self.pathlib_module = pathlib
         self._os = None
         self._os_patcher = None
         if not from_patcher:
@@ -998,7 +1027,7 @@ class FakePathlibModule:
 
     def __getattr__(self, name):
         """Forwards any unfaked calls to the standard pathlib module."""
-        return getattr(self._pathlib_module, name)
+        return getattr(self.pathlib_module, name)
 
 
 class FakePathlibPathModule:
