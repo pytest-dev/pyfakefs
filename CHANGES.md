@@ -19,6 +19,7 @@ The released versions correspond to PyPI releases.
 * the `errno` codes set in `OSError` have changed for some specific error conditions
   in Windows 11/Windows Server 2025; pyfakefs now matches this behavior
   instead of the previous behavior under Windows 10
+* added official support for Python 3.14
 
 ### Enhancements
 * added support for `os.readinto` in Python 3.14
