@@ -16,11 +16,8 @@ with pyfakefs.
 """
 
 import os
-import sys
-import unittest
 
 from pyfakefs import fake_filesystem_unittest
-from pyfakefs.helpers import IS_PYPY
 
 try:
     import pandas as pd
@@ -38,9 +35,6 @@ except ImportError:
     openpyxl = None
 
 
-@unittest.skipIf(
-    IS_PYPY and sys.version_info < (3, 8), "Has a problem with older PyPy versions"
-)
 class TestPatchedPackages(fake_filesystem_unittest.TestCase):
     def setUp(self):
         self.setUpPyfakefs()

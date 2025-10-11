@@ -1115,7 +1115,6 @@ class RealFileOpenWithOpenerTest(FakeFileOpenWithOpenerTest):
         return True
 
 
-@unittest.skipIf(sys.version_info < (3, 8), "open_code only present since Python 3.8")
 class FakeFilePatchedOpenCodeTest(FakeFileOpenTestBase):
     def setUp(self):
         super().setUp()
@@ -1163,7 +1162,6 @@ class RealPatchedFileOpenCodeTest(FakeFilePatchedOpenCodeTest):
         return True
 
 
-@unittest.skipIf(sys.version_info < (3, 8), "open_code only present since Python 3.8")
 class FakeFileUnpatchedOpenCodeTest(FakeFileOpenTestBase):
     def setUp(self):
         super().setUp()

@@ -6,7 +6,7 @@ system that mocks the Python file system modules.
 Using pyfakefs, your tests operate on a fake file system in memory without touching the real disk.
 The software under test requires no modification to work with pyfakefs.
 
-``pyfakefs`` works with CPython 3.7 and above, on Linux, Windows and macOS,
+``pyfakefs`` works with CPython 3.10 and above, on Linux, Windows and macOS,
 and with PyPy3.
 
 ``pyfakefs`` works with `pytest <doc.pytest.org>`__ version 6.2.5 or above by
@@ -162,7 +162,7 @@ Continuous Integration
 ......................
 
 ``pyfakefs`` is currently automatically tested on Linux, macOS and Windows, with
-Python 3.7 to 3.14, and with PyPy3 on Linux, using
+Python 3.10 to 3.14, and with PyPy3 on Linux, using
 `GitHub Actions <https://github.com/pytest-dev/pyfakefs/actions>`__.
 
 On the command line

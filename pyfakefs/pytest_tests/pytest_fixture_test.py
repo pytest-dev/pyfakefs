@@ -10,7 +10,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 import pathlib
-import sys
 
 # Example for a test using a custom pytest fixture with an argument to Patcher
 
@@ -61,9 +60,6 @@ def check_that_example_file_is_in_fake_fs():
 pytest_parent_path = pathlib.Path(pytest.__file__).parent.parent
 
 
-@pytest.mark.skipif(
-    sys.version_info < (3, 8), reason="importlib.metadata not available"
-)
 def test_add_package_metadata(fs):
     pytest_dist_path = pytest_parent_path / f"pytest-{pytest.__version__}.dist-info"
     assert not fs.exists(pytest_dist_path)

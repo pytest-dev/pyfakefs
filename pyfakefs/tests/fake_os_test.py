@@ -4601,10 +4601,7 @@ class FakeOsModuleLowLevelFileOpTest(FakeOsModuleTestBase):
         self.check_windows_only()
         # make sure os.devnull is correctly set after changing the filesystem
         self.setup_fake_fs()
-        if sys.version_info < (3, 8):
-            self.assertFalse(self.os.path.exists(self.os.devnull))
-        else:
-            self.assertTrue(self.os.path.exists(self.os.devnull))
+        self.assertTrue(self.os.path.exists(self.os.devnull))
 
     def test_write_devnull(self):
         fd = self.os.open(self.os.devnull, os.O_RDWR)
