@@ -66,7 +66,6 @@ from unittest import TestSuite
 
 from pyfakefs import fake_filesystem, fake_io, fake_os, fake_open, fake_path, fake_file
 from pyfakefs import fake_filesystem_shutil
-from pyfakefs import fake_legacy_modules
 from pyfakefs import fake_pathlib
 from pyfakefs import mox3_stubout
 from pyfakefs.fake_filesystem import (
@@ -78,7 +77,6 @@ from pyfakefs.fake_filesystem import (
 )
 from pyfakefs.fake_os import use_original_os
 from pyfakefs.helpers import IS_PYPY, IS_WIN
-from pyfakefs.legacy_packages import pathlib2, scandir
 from pyfakefs.mox3_stubout import StubOutForTesting
 
 OS_MODULE = "nt" if sys.platform == "win32" else "posix"
@@ -827,14 +825,6 @@ class Patcher:
             self._unfaked_module_classes["pathlib._local"] = (
                 fake_pathlib.RealPathlibModule
             )
-        if pathlib2:
-            self._fake_module_classes["pathlib2"] = (
-                fake_legacy_modules.FakePathlib2Module
-            )
-            self._class_modules["Path"].append("pathlib2")
-            self._unfaked_module_classes["pathlib2"] = fake_pathlib.RealPathlibModule
-        if scandir:
-            self._fake_module_classes["scandir"] = fake_legacy_modules.FakeScanDirModule
         self._fake_module_classes["Path"] = fake_path_module
         self._unfaked_module_classes["Path"] = fake_pathlib.RealPathlibPathModule
 

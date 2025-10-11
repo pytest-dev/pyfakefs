@@ -32,7 +32,6 @@ import sys
 import unittest
 
 from pyfakefs import fake_filesystem_unittest
-from pyfakefs.legacy_packages import scandir
 from pyfakefs.tests import example  # The module under test
 
 
@@ -146,23 +145,6 @@ class TestExample(fake_filesystem_unittest.TestCase):  # pylint: disable=R0904
         self.assertTrue(entries[0].is_dir())
         self.assertTrue(entries[1].is_symlink())
         self.assertTrue(entries[2].is_file())
-
-    @unittest.skipIf(scandir is None, "Testing only if scandir module is installed")
-    def test_scandir_scandir(self):
-        """Test example.scandir() which uses `scandir.scandir()`.
-
-        The scandir module has been replaced with the fake_scandir module so
-        the fake filesystem path entries are returned instead of
-        `scandir.DirEntry` objects.
-        """
-        self.fs.create_file("/test/text.txt")
-        self.fs.create_dir("/test/dir")
-
-        entries = sorted(example.scan_dir("/test"), key=lambda e: e.name)
-        self.assertEqual(2, len(entries))
-        self.assertEqual("text.txt", entries[1].name)
-        self.assertTrue(entries[0].is_dir())
-        self.assertTrue(entries[1].is_file())
 
     def test_real_file_access(self):
         """Test `example.file_contents()` for a real file after adding it using

@@ -9,15 +9,15 @@ The released versions correspond to PyPI releases.
   (as with the change to version 6), patches for previous versions are provided if requested
 
 ## Planned breaking changes for next major release (6.0.0)
-* support for patching legacy modules `scandir` and `pathlib2` will be removed
 * the default for `FakeFilesystem.shuffle_listdir_results` will change to `True` to reflect
   the real filesystem behavior
 
-## Unreleased
+## Version 6.0.0 (unreleased)
 
-### Changes
+### Breaking Changes
 * removed support for Python versions < 3.10; patch releases based pyfakefs 5.10
   supporting older versions may be made on demand
+* removed support for patching legacy modules `scandir` and `pathlib2`
 
 ## [Version 5.10.0](https://pypi.python.org/pypi/pyfakefs/5.10.0) (2025-10-11)
 Adds official support for Python 3.14. Last minor version before the 6.0 release.
