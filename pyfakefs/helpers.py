@@ -29,7 +29,7 @@ from copy import copy
 from dataclasses import dataclass
 from enum import Enum
 from stat import S_IFLNK
-from typing import Union, Optional, Any, AnyStr, overload, cast
+from typing import Union, Any, AnyStr, overload, cast
 
 AnyString = Union[str, bytes]
 AnyPath = Union[AnyStr, os.PathLike]
@@ -150,7 +150,7 @@ def make_string_path(dir_name: AnyPath) -> AnyStr:  # type: ignore[type-var]
     return cast(AnyStr, os.fspath(dir_name))  # pytype: disable=invalid-annotation
 
 
-def to_string(path: Union[AnyStr, Union[str, bytes]]) -> str:
+def to_string(path: AnyStr | str | bytes) -> str:
     """Return the string representation of a byte string using the preferred
     encoding, or the string itself if path is a str."""
     if isinstance(path, bytes):
@@ -158,7 +158,7 @@ def to_string(path: Union[AnyStr, Union[str, bytes]]) -> str:
     return path
 
 
-def to_bytes(path: Union[AnyStr, Union[str, bytes]]) -> bytes:
+def to_bytes(path: AnyStr | str | bytes) -> bytes:
     """Return the bytes representation of a string using the preferred
     encoding, or the byte string itself if path is a byte string."""
     if isinstance(path, str):
@@ -171,13 +171,11 @@ def join_strings(s1: AnyStr, s2: AnyStr) -> AnyStr:
     return s1 + s2
 
 
-def real_encoding(encoding: Optional[str]) -> Optional[str]:
+def real_encoding(encoding: str | None) -> str | None:
     """Since Python 3.10, the new function ``io.text_encoding`` returns
     "locale" as the encoding if none is defined. This will be handled
     as no encoding in pyfakefs."""
-    if sys.version_info >= (3, 10):
-        return encoding if encoding != "locale" else None
-    return encoding
+    return encoding if encoding != "locale" else None
 
 
 def now():
@@ -197,8 +195,8 @@ def matching_string(matched: AnyStr, string: None) -> None: ...
 
 
 def matching_string(  # type: ignore[misc]
-    matched: AnyStr, string: Optional[AnyStr]
-) -> Optional[AnyString]:
+    matched: AnyStr, string: AnyStr | None
+) -> AnyString | None:
     """Return the string as byte or unicode depending
     on the type of matched, assuming string is an ASCII string.
     """
@@ -212,7 +210,7 @@ def matching_string(  # type: ignore[misc]
 @dataclass
 class FSProperties:
     sep: str
-    altsep: Optional[str]
+    altsep: str | None
     pathsep: str
     linesep: str
     devnull: str
@@ -256,10 +254,10 @@ class FakeStatResult:
         is_windows: bool,
         user_id: int,
         group_id: int,
-        initial_time: Optional[float] = None,
+        initial_time: float | None = None,
     ):
         self.st_mode: int = 0
-        self.st_ino: Optional[int] = None
+        self.st_ino: int | None = None
         self.st_dev: int = 0
         self.st_nlink: int = 0
         self.st_uid: int = user_id
@@ -309,32 +307,32 @@ class FakeStatResult:
         self._st_ctime_ns = stat_result.st_ctime_ns
 
     @property
-    def st_ctime(self) -> Union[int, float]:
+    def st_ctime(self) -> int | float:
         """Return the creation time in seconds."""
         return self._st_ctime_ns / 1e9
 
     @st_ctime.setter
-    def st_ctime(self, val: Union[int, float]) -> None:
+    def st_ctime(self, val: int | float) -> None:
         """Set the creation time in seconds."""
         self._st_ctime_ns = int(val * 1e9)
 
     @property
-    def st_atime(self) -> Union[int, float]:
+    def st_atime(self) -> int | float:
         """Return the access time in seconds."""
         return self._st_atime_ns / 1e9
 
     @st_atime.setter
-    def st_atime(self, val: Union[int, float]) -> None:
+    def st_atime(self, val: int | float) -> None:
         """Set the access time in seconds."""
         self._st_atime_ns = int(val * 1e9)
 
     @property
-    def st_mtime(self) -> Union[int, float]:
+    def st_mtime(self) -> int | float:
         """Return the modification time in seconds."""
         return self._st_mtime_ns / 1e9
 
     @st_mtime.setter
-    def st_mtime(self, val: Union[int, float]) -> None:
+    def st_mtime(self, val: int | float) -> None:
         """Set the modification time in seconds."""
         self._st_mtime_ns = int(val * 1e9)
 
@@ -384,7 +382,7 @@ class FakeStatResult:
 
     @property
     def st_reparse_tag(self) -> int:
-        if not self.is_windows or sys.version_info < (3, 8):
+        if not self.is_windows:
             raise AttributeError(
                 "module 'os.stat_result' has no attribute 'st_reparse_tag'"
             )
@@ -392,7 +390,7 @@ class FakeStatResult:
             return stat.IO_REPARSE_TAG_SYMLINK  # type: ignore[attr-defined]
         return 0
 
-    def __getitem__(self, item: int) -> Optional[int]:
+    def __getitem__(self, item: int) -> int | None:
         """Implement item access to mimic `os.stat_result` behavior."""
         import stat
 
@@ -453,7 +451,7 @@ class FakeStatResult:
 class BinaryBufferIO(io.BytesIO):
     """Stream class that handles byte contents for files."""
 
-    def __init__(self, contents: Optional[bytes]):
+    def __init__(self, contents: bytes | None):
         super().__init__(contents or b"")
 
     def putvalue(self, value: bytes) -> None:
@@ -465,9 +463,9 @@ class TextBufferIO(io.TextIOWrapper):
 
     def __init__(
         self,
-        contents: Optional[bytes] = None,
-        newline: Optional[str] = None,
-        encoding: Optional[str] = None,
+        contents: bytes | None = None,
+        newline: str | None = None,
+        encoding: str | None = None,
         errors: str = "strict",
     ):
         self._bytestream = io.BytesIO(contents or b"")

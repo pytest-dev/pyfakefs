@@ -6,9 +6,9 @@ repos:
     rev: "v3.20.0"
     hooks:
       - id: "pyupgrade"
-        name: "Enforce Python 3.7+ idioms"
+        name: "Enforce Python 3.10+ idioms"
         args:
-          - "--py37-plus"
+          - "--py310-plus"
 
   - repo: https://github.com/astral-sh/ruff-pre-commit
     rev: "v0.13.3"

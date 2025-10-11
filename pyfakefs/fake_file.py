@@ -25,20 +25,17 @@ from stat import (
 )
 from types import TracebackType
 from typing import (
-    List,
     Optional,
-    Callable,
     Union,
     Any,
-    Dict,
     cast,
     AnyStr,
     NoReturn,
-    Iterator,
     TextIO,
-    Type,
     TYPE_CHECKING,
 )
+
+from collections.abc import Callable, Iterator
 
 from pyfakefs import helpers
 from pyfakefs.helpers import (
@@ -135,12 +132,12 @@ class FakeFile:
         self,
         name: AnyStr,
         st_mode: int = S_IFREG | helpers.PERM_DEF_FILE,
-        contents: Optional[AnyStr] = None,
+        contents: AnyStr | None = None,
         filesystem: Optional["FakeFilesystem"] = None,
-        encoding: Optional[str] = None,
-        errors: Optional[str] = None,
-        side_effect: Optional[Callable[["FakeFile"], None]] = None,
-        open_modes: Optional[_OpenModes] = None,
+        encoding: str | None = None,
+        errors: str | None = None,
+        side_effect: Callable[["FakeFile"], None] | None = None,
+        open_modes: _OpenModes | None = None,
     ):
         """
         Args:
@@ -165,7 +162,7 @@ class FakeFile:
         if filesystem is None:
             raise ValueError("filesystem shall not be None")
         self.filesystem: "FakeFilesystem" = filesystem
-        self._side_effect: Optional[Callable] = side_effect
+        self._side_effect: Callable | None = side_effect
         self.name: AnyStr = name  # type: ignore[assignment]
         self.stat_result = FakeStatResult(
             filesystem.is_windows_fs,
@@ -177,26 +174,26 @@ class FakeFile:
             st_mode |= S_IFREG
         self.stat_result.st_mode = st_mode
         self.st_size: int = 0
-        self.encoding: Optional[str] = real_encoding(encoding)
+        self.encoding: str | None = real_encoding(encoding)
         self.errors: str = errors or "strict"
-        self._byte_contents: Optional[bytes] = self._encode_contents(contents)
+        self._byte_contents: bytes | None = self._encode_contents(contents)
         self.stat_result.st_size = (
             len(self._byte_contents) if self._byte_contents is not None else 0
         )
         self.epoch: int = 0
-        self.parent_dir: Optional[FakeDirectory] = None
+        self.parent_dir: FakeDirectory | None = None
         # Linux specific: extended file system attributes
-        self.xattr: Dict = {}
+        self.xattr: dict = {}
         self.opened_as: AnyString = ""
         self.open_modes = open_modes
 
     @property
-    def byte_contents(self) -> Optional[bytes]:
+    def byte_contents(self) -> bytes | None:
         """Return the contents as raw byte array."""
         return self._byte_contents
 
     @property
-    def contents(self) -> Optional[str]:
+    def contents(self) -> str | None:
         """Return the contents as string with the original encoding."""
         if isinstance(self.byte_contents, bytes):
             return self.byte_contents.decode(
@@ -269,7 +266,7 @@ class FakeFile:
         """
         return self._byte_contents is None
 
-    def _encode_contents(self, contents: Union[str, bytes, None]) -> Optional[bytes]:
+    def _encode_contents(self, contents: str | bytes | None) -> bytes | None:
         if is_unicode_string(contents):
             contents = bytes(
                 cast(str, contents),
@@ -305,7 +302,7 @@ class FakeFile:
         self.epoch += 1
         return changed
 
-    def set_contents(self, contents: AnyStr, encoding: Optional[str] = None) -> bool:
+    def set_contents(self, contents: AnyStr, encoding: str | None = None) -> bool:
         """Sets the file contents and size and increases the modification time.
         Also executes the side_effects if available.
 
@@ -362,8 +359,8 @@ class FakeFile:
     @property
     def path(self) -> AnyStr:  # type: ignore[type-var]
         """Return the full path of the current object."""
-        names: List[AnyStr] = []  # pytype: disable=invalid-annotation
-        obj: Optional[FakeFile] = self
+        names: list[AnyStr] = []  # pytype: disable=invalid-annotation
+        obj: FakeFile | None = self
         while obj:
             names.insert(0, matching_string(self.name, obj.name))  # type: ignore
             obj = obj.parent_dir
@@ -439,7 +436,7 @@ class FakeFileFromRealFile(FakeFile):
         self,
         file_path: str,
         filesystem: "FakeFilesystem",
-        side_effect: Optional[Callable] = None,
+        side_effect: Callable | None = None,
     ) -> None:
         """
         Args:
@@ -458,7 +455,7 @@ class FakeFileFromRealFile(FakeFile):
         self.contents_read = False
 
     @property
-    def byte_contents(self) -> Optional[bytes]:
+    def byte_contents(self) -> bytes | None:
         if not self.contents_read:
             self.contents_read = True
             with io_open(self.file_path, "rb") as f:
@@ -496,18 +493,18 @@ class FakeDirectory(FakeFile):
         # directories have the link count of contained entries,
         # including '.' and '..'
         self.st_nlink += 1
-        self._entries: Dict[str, AnyFile] = {}
+        self._entries: dict[str, AnyFile] = {}
 
-    def set_contents(self, contents: AnyStr, encoding: Optional[str] = None) -> bool:
+    def set_contents(self, contents: AnyStr, encoding: str | None = None) -> bool:
         raise self.filesystem.raise_os_error(errno.EISDIR, self.path)
 
     @property
-    def entries(self) -> Dict[str, FakeFile]:
+    def entries(self) -> dict[str, FakeFile]:
         """Return the list of contained directory entries."""
         return self._entries
 
     @property
-    def ordered_dirs(self) -> List[str]:
+    def ordered_dirs(self) -> list[str]:
         """Return the list of contained directory entry names ordered by
         creation order.
         """
@@ -600,16 +597,8 @@ class FakeDirectory(FakeFile):
                     # tempfile uses unlink based on the real OS while deleting
                     # a temporary file, so we ignore that error in this specific case
                     st = traceback.extract_stack(limit=6)
-                    if sys.version_info < (3, 10):
-                        if (
-                            st[0].name == "TemporaryFile"
-                            and st[0].line == "_os.unlink(name)"
-                        ):
-                            raise_error = False
-                    else:
-                        # TemporaryFile implementation has changed in Python 3.10
-                        if st[0].name == "opener" and st[0].line == "_os.unlink(name)":
-                            raise_error = False
+                    if st[0].name == "opener" and st[0].line == "_os.unlink(name)":
+                        raise_error = False
                 if raise_error:
                     self.filesystem.raise_os_error(errno.EACCES, pathname_name)
         else:
@@ -645,7 +634,7 @@ class FakeDirectory(FakeFile):
     def has_parent_object(self, dir_object: "FakeDirectory") -> bool:
         """Return `True` if dir_object is a direct or indirect parent
         directory, or if both are the same object."""
-        obj: Optional[FakeDirectory] = self
+        obj: FakeDirectory | None = self
         while obj:
             if obj == dir_object:
                 return True
@@ -673,7 +662,7 @@ class FakeDirectoryFromRealDirectory(FakeDirectory):
         source_path: AnyPath,
         filesystem: "FakeFilesystem",
         read_only: bool,
-        target_path: Optional[AnyPath] = None,
+        target_path: AnyPath | None = None,
     ):
         """
         Args:
@@ -707,7 +696,7 @@ class FakeDirectoryFromRealDirectory(FakeDirectory):
         self.contents_read = False
 
     @property
-    def entries(self) -> Dict[str, FakeFile]:
+    def entries(self) -> dict[str, FakeFile]:
         """Return the list of contained directory entries, loading them
         if not already loaded."""
         if not self.contents_read:
@@ -755,11 +744,11 @@ class FakeFileWrapper:
         allow_update: bool,
         delete_on_close: bool,
         filesystem: "FakeFilesystem",
-        newline: Optional[str],
+        newline: str | None,
         binary: bool,
         closefd: bool,
-        encoding: Optional[str],
-        errors: Optional[str],
+        encoding: str | None,
+        errors: str | None,
         buffering: int,
         raw_io: bool,
         opened_as_fd: bool,
@@ -787,7 +776,7 @@ class FakeFileWrapper:
         contents = file_object.byte_contents
         self._encoding = encoding or get_locale_encoding()
         errors = errors or "strict"
-        self._io: Union[BinaryBufferIO, TextBufferIO] = (
+        self._io: BinaryBufferIO | TextBufferIO = (
             BinaryBufferIO(contents)
             if binary
             else TextBufferIO(
@@ -813,7 +802,7 @@ class FakeFileWrapper:
         # override, don't modify FakeFile.name, as FakeFilesystem expects
         # it to be the file name only, no directories.
         self.name = file_object.opened_as
-        self.filedes: Optional[int] = None
+        self.filedes: int | None = None
 
     def __enter__(self) -> "FakeFileWrapper":
         """To support usage of this fake file with the 'with' statement."""
@@ -821,9 +810,9 @@ class FakeFileWrapper:
 
     def __exit__(
         self,
-        exc_type: Optional[Type[BaseException]],
-        exc_val: Optional[BaseException],
-        exc_tb: Optional[TracebackType],
+        exc_type: type[BaseException] | None,
+        exc_val: BaseException | None,
+        exc_tb: TracebackType | None,
     ) -> None:
         """To support usage of this fake file with the 'with' statement."""
         self.close()
@@ -849,7 +838,7 @@ class FakeFileWrapper:
         """Close the file."""
         self.close_fd(self.filedes)
 
-    def close_fd(self, fd: Optional[int]) -> None:
+    def close_fd(self, fd: int | None) -> None:
         """Close the file for the given file descriptor."""
 
         # ignore closing a closed file
@@ -1246,7 +1235,7 @@ class FakeFileWrapper:
         if not self.is_stream and not self._is_open():
             raise ValueError("I/O operation on closed file")
 
-    def __iter__(self) -> Union[Iterator[str], Iterator[bytes]]:
+    def __iter__(self) -> Iterator[str] | Iterator[bytes]:
         if not self.open_modes.can_read:
             self._raise("File is not open for reading")
         return self._io.__iter__()
@@ -1262,7 +1251,7 @@ class StandardStreamWrapper:
 
     def __init__(self, stream_object: TextIO):
         self._stream_object = stream_object
-        self.filedes: Optional[int] = None
+        self.filedes: int | None = None
 
     def get_object(self) -> TextIO:
         return self._stream_object
@@ -1283,7 +1272,7 @@ class StandardStreamWrapper:
     def close(self) -> None:
         """We do not support closing standard streams."""
 
-    def close_fd(self, fd: Optional[int]) -> None:
+    def close_fd(self, fd: int | None) -> None:
         """We do not support closing standard streams."""
 
     def is_stream(self) -> bool:
@@ -1295,9 +1284,9 @@ class StandardStreamWrapper:
 
     def __exit__(
         self,
-        exc_type: Optional[Type[BaseException]],
-        exc_val: Optional[BaseException],
-        exc_tb: Optional[TracebackType],
+        exc_type: type[BaseException] | None,
+        exc_val: BaseException | None,
+        exc_tb: TracebackType | None,
     ) -> None:
         """To support usage of this standard stream with the 'with' statement."""
         self.close()
@@ -1315,7 +1304,7 @@ class FakeDirWrapper:
         self.file_object = file_object
         self.file_path = file_path
         self._filesystem = filesystem
-        self.filedes: Optional[int] = None
+        self.filedes: int | None = None
 
     def get_object(self) -> FakeDirectory:
         """Return the FakeFile object that is wrapped by the current
@@ -1332,7 +1321,7 @@ class FakeDirWrapper:
         """Close the directory."""
         self.close_fd(self.filedes)
 
-    def close_fd(self, fd: Optional[int]) -> None:
+    def close_fd(self, fd: int | None) -> None:
         """Close the directory."""
         assert fd is not None
         self._filesystem.close_open_file(fd)
@@ -1352,9 +1341,9 @@ class FakeDirWrapper:
 
     def __exit__(
         self,
-        exc_type: Optional[Type[BaseException]],
-        exc_val: Optional[BaseException],
-        exc_tb: Optional[TracebackType],
+        exc_type: type[BaseException] | None,
+        exc_val: BaseException | None,
+        exc_tb: TracebackType | None,
     ) -> None:
         """To support usage of this fake directory with the 'with' statement."""
         self.close()
@@ -1376,7 +1365,7 @@ class FakePipeWrapper:
         self.fd = fd  # the real file descriptor
         self.can_write = can_write
         self.file_object = None
-        self.filedes: Optional[int] = None
+        self.filedes: int | None = None
         self.real_file = None
         if mode:
             self.real_file = open(fd, mode)
@@ -1387,9 +1376,9 @@ class FakePipeWrapper:
 
     def __exit__(
         self,
-        exc_type: Optional[Type[BaseException]],
-        exc_val: Optional[BaseException],
-        exc_tb: Optional[TracebackType],
+        exc_type: type[BaseException] | None,
+        exc_val: BaseException | None,
+        exc_tb: TracebackType | None,
     ) -> None:
         """To support usage of this fake pipe with the 'with' statement."""
         self.close()
@@ -1422,7 +1411,7 @@ class FakePipeWrapper:
         """Close the pipe descriptor."""
         self.close_fd(self.filedes)
 
-    def close_fd(self, fd: Optional[int]) -> None:
+    def close_fd(self, fd: int | None) -> None:
         """Close the pipe descriptor with the given file descriptor."""
         assert fd is not None
         open_files = self._filesystem.open_files[fd]

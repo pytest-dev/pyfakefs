@@ -273,7 +273,6 @@ class FakePathlibPurePathTest(RealPathlibTestCase):
         with self.assertRaises(ValueError):
             self.path("passwd").relative_to("/usr")
 
-    @unittest.skipIf(sys.version_info < (3, 9), "is_relative_to new in Python 3.9")
     def test_is_relative_to(self):
         path = self.path("/etc/passwd")
         self.assertTrue(path.is_relative_to("/etc"))
@@ -346,7 +345,6 @@ class FakePathlibPurePosixPathTest(RealPathlibTestCase):
         with self.assertRaises(ValueError):
             self.path("passwd").relative_to("/usr")
 
-    @unittest.skipIf(sys.version_info < (3, 9), "is_relative_to new in Python 3.9")
     def test_is_relative_to(self):
         path = self.path("/etc/passwd")
         self.assertTrue(path.is_relative_to("/etc"))
@@ -421,7 +419,6 @@ class FakePathlibPureWindowsPathTest(RealPathlibTestCase):
         with self.assertRaises(ValueError):
             self.path("passwd").relative_to("/usr")
 
-    @unittest.skipIf(sys.version_info < (3, 9), "is_relative_to new in Python 3.9")
     def test_is_relative_to(self):
         path = self.path("/etc/passwd")
         self.assertTrue(path.is_relative_to("/etc"))
@@ -581,10 +578,6 @@ class FakePathlibFileObjectPropertyTest(RealPathlibTestCase):
             mode_mask = 0o600 if self.is_windows_fs else 0o700
             self.assertEqual(link_stat.st_mode & 0o777700, stat.S_IFLNK | mode_mask)
 
-    @unittest.skipIf(
-        sys.version_info < (3, 10),
-        "follow_symlinks argument new in Python 3.10",
-    )
     def test_chmod_no_followsymlinks(self):
         skip_if_symlink_not_supported()
         file_stat = self.os.stat(self.file_path)
@@ -699,9 +692,7 @@ class FakePathlibFileObjectPropertyTest(RealPathlibTestCase):
             self.path.cwd(), self.path(self.os.path.realpath(dir_path))
         )
 
-    @unittest.skipIf(
-        sys.platform != "win32" or sys.version_info < (3, 8), "Windows specific test"
-    )
+    @unittest.skipIf(sys.platform != "win32", "Windows specific test")
     @patch.dict(os.environ, {"USERPROFILE": r"C:\Users\John"})
     def test_expanduser_windows(self):
         self.assertEqual(
@@ -714,9 +705,7 @@ class FakePathlibFileObjectPropertyTest(RealPathlibTestCase):
     def test_expanduser_posix(self):
         self.assertEqual(self.path("~").expanduser(), self.path("/home/john"))
 
-    @unittest.skipIf(
-        sys.platform != "win32" or sys.version_info < (3, 8), "Windows specific test"
-    )
+    @unittest.skipIf(sys.platform != "win32", "Windows specific test")
     @patch.dict(os.environ, {"USERPROFILE": r"C:\Users\John"})
     def test_home_windows(self):
         self.assertEqual(
@@ -793,7 +782,6 @@ class FakePathlibPathFileOperationTest(RealPathlibTestCase):
         self.assertTrue(self.os.path.exists(path_name))
         self.check_contents(path_name, "ανοησίες".encode("greek"))
 
-    @unittest.skipIf(sys.version_info < (3, 10), "newline argument new in Python 3.10")
     def test_write_with_newline_arg(self):
         path = self.path(self.make_path("some_file"))
         path.write_text("1\r\n2\n3\r4", newline="", encoding="utf8")
@@ -890,7 +878,6 @@ class FakePathlibPathFileOperationTest(RealPathlibTestCase):
         self.assertTrue(self.os.path.exists(link_name))
         self.assertTrue(path.is_symlink())
 
-    @unittest.skipIf(sys.version_info < (3, 8), "link_to new in Python 3.8")
     @unittest.skipIf(sys.version_info >= (3, 12), "link_to removed in Python 3.12")
     def test_link_to(self):
         skip_if_symlink_not_supported()
@@ -904,7 +891,6 @@ class FakePathlibPathFileOperationTest(RealPathlibTestCase):
         self.assertFalse(path.is_symlink())
         self.assertEqual(2, self.os.stat(file_name).st_nlink)
 
-    @unittest.skipIf(sys.version_info < (3, 10), "hardlink_to new in Python 3.10")
     def test_hardlink_to(self):
         file_name = self.make_path("foo", "bar.txt")
         self.create_file(file_name)
@@ -916,7 +902,6 @@ class FakePathlibPathFileOperationTest(RealPathlibTestCase):
         self.assertFalse(path.is_symlink())
         self.assertEqual(2, self.os.stat(file_name).st_nlink)
 
-    @unittest.skipIf(sys.version_info < (3, 9), "readlink new in Python 3.9")
     def test_readlink(self):
         skip_if_symlink_not_supported()
         link_path = self.make_path("foo", "bar", "baz")
@@ -1226,11 +1211,6 @@ class FakePathlibUsageInOsFunctionsTest(RealPathlibTestCase):
         self.os.makedirs(self.path(path))
         self.assertTrue(self.os.path.exists(path))
 
-    @unittest.skipIf(
-        is_windows and sys.version_info < (3, 8),
-        "os.readlink does not to support path-like objects "
-        "under Windows before Python 3.8",
-    )
     def test_readlink(self):
         skip_if_symlink_not_supported()
         link_path = self.make_path("foo", "bar", "baz")
@@ -1238,11 +1218,6 @@ class FakePathlibUsageInOsFunctionsTest(RealPathlibTestCase):
         self.create_symlink(link_path, target)
         self.assert_equal_paths(self.os.readlink(self.path(link_path)), target)
 
-    @unittest.skipIf(
-        is_windows and sys.version_info < (3, 8),
-        "os.readlink does not to support path-like objects "
-        "under Windows before Python 3.8",
-    )
     def test_readlink_bytes(self):
         skip_if_symlink_not_supported()
         link_path = self.make_path(b"foo", b"bar", b"baz")
@@ -1303,7 +1278,6 @@ class FakePathlibUsageInOsFunctionsTest(RealPathlibTestCase):
         self.create_file(path, contents="1234567")
         self.assertEqual(self.os.stat(path), self.path(path).stat())
 
-    @unittest.skipIf(sys.version_info < (3, 10), "New in Python 3.10")
     def test_stat_follow_symlinks(self):
         self.check_posix_only()
         directory = self.make_path("foo")
@@ -1732,9 +1706,6 @@ class SkipPathlibTest(fake_filesystem_unittest.TestCase):
         contents = read_bytes_pathlib("skipped_pathlib.py")
         self.assertTrue(contents.startswith(b"# Licensed under the Apache License"))
 
-    @unittest.skipIf(
-        IS_PYPY and sys.version_info < (3, 8), "Ignoring error in outdated version"
-    )
     def test_exists(self):
         self.assertTrue(check_exists_pathlib())
 

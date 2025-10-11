@@ -25,18 +25,14 @@ from stat import (
 )
 from types import ModuleType
 from typing import (
-    Callable,
-    List,
-    Optional,
-    Union,
     Any,
-    Dict,
-    Tuple,
     AnyStr,
     overload,
     ClassVar,
     TYPE_CHECKING,
 )
+
+from collections.abc import Callable
 
 from pyfakefs.helpers import (
     is_called_from_skipped_module,
@@ -71,12 +67,12 @@ class FakePathModule:
 
     devnull: ClassVar[str] = ""
     sep: ClassVar[str] = ""
-    altsep: ClassVar[Optional[str]] = None
+    altsep: ClassVar[str | None] = None
     linesep: ClassVar[str] = ""
     pathsep: ClassVar[str] = ""
 
     @staticmethod
-    def dir() -> List[str]:
+    def dir() -> list[str]:
         """Return the list of patched function names. Used for patching
         functions imported from the module.
         """
@@ -310,11 +306,11 @@ class FakePathModule:
         """Return the completed path with a separator of the parts."""
         return self.filesystem.joinpaths(*p)
 
-    def split(self, path: AnyStr) -> Tuple[AnyStr, AnyStr]:
+    def split(self, path: AnyStr) -> tuple[AnyStr, AnyStr]:
         """Split the path into the directory and the filename of the path."""
         return self.filesystem.splitpath(path)
 
-    def splitdrive(self, path: AnyStr) -> Tuple[AnyStr, AnyStr]:
+    def splitdrive(self, path: AnyStr) -> tuple[AnyStr, AnyStr]:
         """Split the path into the drive part and the rest of the path, if
         supported."""
         return self.filesystem.splitdrive(path)
@@ -331,7 +327,7 @@ class FakePathModule:
             path = path.lower()
         return path
 
-    def relpath(self, path: AnyStr, start: Optional[AnyStr] = None) -> AnyStr:
+    def relpath(self, path: AnyStr, start: AnyStr | None = None) -> AnyStr:
         """We mostly rely on the native implementation and adapt the
         path separator."""
         if not path:
@@ -354,15 +350,11 @@ class FakePathModule:
         path = self._os_path.relpath(path, start)
         return path.replace(system_sep, sep)
 
-    def realpath(self, filename: AnyStr, strict: Optional[bool] = None) -> AnyStr:
+    def realpath(self, filename: AnyStr, strict: bool | None = None) -> AnyStr:
         """Return the canonical path of the specified filename, eliminating any
         symbolic links encountered in the path.
         """
         has_allow_missing = hasattr(os.path, "ALLOW_MISSING")
-        # the strict argument was backported to Python 3.9.23
-        # together with support for os.path.ALLOW_MISSING
-        if strict is not None and sys.version_info < (3, 10) and not has_allow_missing:
-            raise TypeError("realpath() got an unexpected keyword argument 'strict'")
         if has_allow_missing and strict == os.path.ALLOW_MISSING:  # type: ignore[attr-defined]
             # ignores non-existing file, but not other errors
             ignored_error: Any = FileNotFoundError
@@ -401,17 +393,17 @@ class FakePathModule:
 
     @overload
     def _join_real_path(
-        self, path: str, rest: str, seen: Dict[str, Optional[str]]
-    ) -> Tuple[str, bool]: ...
+        self, path: str, rest: str, seen: dict[str, str | None]
+    ) -> tuple[str, bool]: ...
 
     @overload
     def _join_real_path(
-        self, path: bytes, rest: bytes, seen: Dict[bytes, Optional[bytes]]
-    ) -> Tuple[bytes, bool]: ...
+        self, path: bytes, rest: bytes, seen: dict[bytes, bytes | None]
+    ) -> tuple[bytes, bool]: ...
 
     def _join_real_path(
-        self, path: AnyStr, rest: AnyStr, seen: Dict[AnyStr, Optional[AnyStr]]
-    ) -> Tuple[AnyStr, bool]:
+        self, path: AnyStr, rest: AnyStr, seen: dict[AnyStr, AnyStr | None]
+    ) -> tuple[AnyStr, bool]:
         """Join two paths, normalizing and eliminating any symbolic links
         encountered in the second path.
         Taken from Python source and adapted.
@@ -495,7 +487,7 @@ class FakePathModule:
         normed_path = self.filesystem.absnormpath(path_str)
         sep = self.filesystem.path_separator
         if self.filesystem.is_windows_fs:
-            path_seps: Union[Tuple[str, Optional[str]], Tuple[str]]
+            path_seps: tuple[str, str | None] | tuple[str]
             if self.filesystem.alternative_path_separator is not None:
                 path_seps = (sep, self.filesystem.alternative_path_separator)
             else:

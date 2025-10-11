@@ -28,17 +28,13 @@ from stat import (
     S_IFSOCK,
 )
 from typing import (
-    List,
-    Optional,
-    Callable,
-    Union,
     Any,
-    Tuple,
     cast,
     AnyStr,
     TYPE_CHECKING,
-    Set,
 )
+
+from collections.abc import Callable
 
 from pyfakefs.fake_file import (
     FakeDirectory,
@@ -93,7 +89,7 @@ class FakeOsModule:
     use_original = False
 
     @staticmethod
-    def dir() -> List[str]:
+    def dir() -> list[str]:
         """Return the list of patched function names. Used for patching
         functions imported from the module.
         """
@@ -158,10 +154,10 @@ class FakeOsModule:
         self.filesystem = filesystem
         self.os_module: Any = os
         self.path = FakePathModule(self.filesystem, self)
-        self._supports_follow_symlinks: Optional[Set] = None
-        self._supports_dir_fd: Optional[Set] = None
-        self._supports_effective_ids: Optional[Set] = None
-        self._supports_fd: Optional[Set] = None
+        self._supports_follow_symlinks: set | None = None
+        self._supports_dir_fd: set | None = None
+        self._supports_effective_ids: set | None = None
+        self._supports_fd: set | None = None
 
     @property
     def devnull(self) -> str:
@@ -172,7 +168,7 @@ class FakeOsModule:
         return self.path.sep
 
     @property
-    def altsep(self) -> Optional[str]:
+    def altsep(self) -> str | None:
         return self.path.altsep
 
     @property
@@ -221,9 +217,9 @@ class FakeOsModule:
         self,
         path: AnyStr,
         flags: int,
-        mode: Optional[int] = None,
+        mode: int | None = None,
         *,
-        dir_fd: Optional[int] = None,
+        dir_fd: int | None = None,
     ) -> int:
         """Return the file descriptor for a FakeFile.
 
@@ -394,7 +390,7 @@ class FakeOsModule:
         else:
             self.filesystem.raise_os_error(errno.EBADF)
 
-    def pipe(self) -> Tuple[int, int]:
+    def pipe(self) -> tuple[int, int]:
         read_fd, write_fd = os.pipe()
         read_wrapper = FakePipeWrapper(self.filesystem, read_fd, False)
         file_des = self.filesystem.add_open_file(read_wrapper)
@@ -483,7 +479,7 @@ class FakeOsModule:
         """Return current working directory as bytes."""
         return to_bytes(self.filesystem.cwd)
 
-    def listdir(self, path: AnyStr) -> List[AnyStr]:
+    def listdir(self, path: AnyStr) -> list[AnyStr]:
         """Return a list of file names in target_directory.
 
         Args:
@@ -504,7 +500,7 @@ class FakeOsModule:
 
     def getxattr(
         self, path: AnyStr, attribute: AnyString, *, follow_symlinks: bool = True
-    ) -> Optional[bytes]:
+    ) -> bytes | None:
         """Return the value of the given extended filesystem attribute for
         `path`.
 
@@ -532,8 +528,8 @@ class FakeOsModule:
         return file_obj.xattr.get(attribute)
 
     def listxattr(
-        self, path: Optional[AnyStr] = None, *, follow_symlinks: bool = True
-    ) -> List[str]:
+        self, path: AnyStr | None = None, *, follow_symlinks: bool = True
+    ) -> list[str]:
         """Return a list of the extended filesystem attributes on `path`.
 
         Args:
@@ -640,7 +636,7 @@ class FakeOsModule:
         self,
         top: AnyStr,
         topdown: bool = True,
-        onerror: Optional[bool] = None,
+        onerror: bool | None = None,
         followlinks: bool = False,
     ):
         """Perform an os.walk operation over the fake filesystem.
@@ -661,7 +657,7 @@ class FakeOsModule:
         """
         return walk(self.filesystem, top, topdown, onerror, followlinks)
 
-    def readlink(self, path: AnyStr, dir_fd: Optional[int] = None) -> str:
+    def readlink(self, path: AnyStr, dir_fd: int | None = None) -> str:
         """Read the target of a symlink.
 
         Args:
@@ -684,7 +680,7 @@ class FakeOsModule:
         self,
         path: AnyStr,
         *,
-        dir_fd: Optional[int] = None,
+        dir_fd: int | None = None,
         follow_symlinks: bool = True,
     ) -> FakeStatResult:
         """Return the os.stat-like tuple for the FakeFile object of entry_path.
@@ -706,7 +702,7 @@ class FakeOsModule:
         path = self._path_with_dir_fd(path, self.stat, dir_fd)
         return self.filesystem.stat(path, follow_symlinks)
 
-    def lstat(self, path: AnyStr, *, dir_fd: Optional[int] = None) -> FakeStatResult:
+    def lstat(self, path: AnyStr, *, dir_fd: int | None = None) -> FakeStatResult:
         """Return the os.stat-like tuple for entry_path,
         not following symlinks.
 
@@ -725,7 +721,7 @@ class FakeOsModule:
         path = self._path_with_dir_fd(path, self.lstat, dir_fd, check_supported=False)
         return self.filesystem.stat(path, follow_symlinks=False)
 
-    def remove(self, path: AnyStr, dir_fd: Optional[int] = None) -> None:
+    def remove(self, path: AnyStr, dir_fd: int | None = None) -> None:
         """Remove the FakeFile object at the specified file path.
 
         Args:
@@ -741,7 +737,7 @@ class FakeOsModule:
         path = self._path_with_dir_fd(path, self.remove, dir_fd, check_supported=False)
         self.filesystem.remove(path)
 
-    def unlink(self, path: AnyStr, *, dir_fd: Optional[int] = None) -> None:
+    def unlink(self, path: AnyStr, *, dir_fd: int | None = None) -> None:
         """Remove the FakeFile object at the specified file path.
 
         Args:
@@ -762,8 +758,8 @@ class FakeOsModule:
         src: AnyStr,
         dst: AnyStr,
         *,
-        src_dir_fd: Optional[int] = None,
-        dst_dir_fd: Optional[int] = None,
+        src_dir_fd: int | None = None,
+        dst_dir_fd: int | None = None,
     ) -> None:
         """Rename a FakeFile object at old_file_path to new_file_path,
         preserving all properties.
@@ -824,8 +820,8 @@ class FakeOsModule:
         src: AnyStr,
         dst: AnyStr,
         *,
-        src_dir_fd: Optional[int] = None,
-        dst_dir_fd: Optional[int] = None,
+        src_dir_fd: int | None = None,
+        dst_dir_fd: int | None = None,
     ) -> None:
         """Renames a FakeFile object at old_file_path to new_file_path,
         preserving all properties.
@@ -857,7 +853,7 @@ class FakeOsModule:
         )
         self.filesystem.rename(src, dst, force_replace=True)
 
-    def rmdir(self, path: AnyStr, *, dir_fd: Optional[int] = None) -> None:
+    def rmdir(self, path: AnyStr, *, dir_fd: int | None = None) -> None:
         """Remove a leaf Fake directory.
 
         Args:
@@ -900,7 +896,7 @@ class FakeOsModule:
             head, tail = self.path.split(head)
 
     def mkdir(
-        self, path: AnyStr, mode: int = PERM_DEF, *, dir_fd: Optional[int] = None
+        self, path: AnyStr, mode: int = PERM_DEF, *, dir_fd: int | None = None
     ) -> None:
         """Create a leaf Fake directory.
 
@@ -925,7 +921,7 @@ class FakeOsModule:
             raise
 
     def makedirs(
-        self, name: AnyStr, mode: int = PERM_DEF, exist_ok: Optional[bool] = None
+        self, name: AnyStr, mode: int = PERM_DEF, exist_ok: bool | None = None
     ) -> None:
         """Create a leaf Fake directory + create any non-existent parent dirs.
 
@@ -969,7 +965,7 @@ class FakeOsModule:
         self,
         path: AnyStr,
         fct: Callable,
-        dir_fd: Optional[int],
+        dir_fd: int | None,
         check_supported: bool = True,
     ) -> AnyStr:
         """Return the path considering dir_fd. Raise on invalid parameters."""
@@ -1033,9 +1029,9 @@ class FakeOsModule:
         path: AnyStr,
         mode: int,
         *,
-        dir_fd: Optional[int] = None,
-        effective_ids: Optional[bool] = None,
-        follow_symlinks: Optional[bool] = None,
+        dir_fd: int | None = None,
+        effective_ids: bool | None = None,
+        follow_symlinks: bool | None = None,
     ) -> bool:
         """Check if a file exists and has the specified permissions.
 
@@ -1098,7 +1094,7 @@ class FakeOsModule:
         path: AnyStr,
         mode: int,
         *,
-        dir_fd: Optional[int] = None,
+        dir_fd: int | None = None,
         follow_symlinks: bool = True,
     ) -> None:
         """Change the permissions of a file as encoded in integer mode.
@@ -1135,9 +1131,9 @@ class FakeOsModule:
     def utime(
         self,
         path: AnyStr,
-        times: Optional[Tuple[Union[int, float], Union[int, float]]] = None,
-        ns: Optional[Tuple[int, int]] = None,
-        dir_fd: Optional[int] = None,
+        times: tuple[int | float, int | float] | None = None,
+        ns: tuple[int, int] | None = None,
+        dir_fd: int | None = None,
         follow_symlinks: bool = True,
     ) -> None:
         """Change the access and modified times of a file.
@@ -1170,7 +1166,7 @@ class FakeOsModule:
         uid: int,
         gid: int,
         *,
-        dir_fd: Optional[int] = None,
+        dir_fd: int | None = None,
         follow_symlinks: bool = True,
     ) -> None:
         """Set ownership of a faked file.
@@ -1203,10 +1199,10 @@ class FakeOsModule:
     def mknod(
         self,
         path: AnyStr,
-        mode: Optional[int] = None,
+        mode: int | None = None,
         device: int = 0,
         *,
-        dir_fd: Optional[int] = None,
+        dir_fd: int | None = None,
     ) -> None:
         """Create a filesystem node named 'filename'.
 
@@ -1257,7 +1253,7 @@ class FakeOsModule:
         dst: AnyStr,
         target_is_directory: bool = False,
         *,
-        dir_fd: Optional[int] = None,
+        dir_fd: int | None = None,
     ) -> None:
         """Creates the specified symlink, pointed at the specified link target.
 
@@ -1279,9 +1275,9 @@ class FakeOsModule:
         src: AnyStr,
         dst: AnyStr,
         *,
-        src_dir_fd: Optional[int] = None,
-        dst_dir_fd: Optional[int] = None,
-        follow_symlinks: Optional[bool] = None,
+        src_dir_fd: int | None = None,
+        dst_dir_fd: int | None = None,
+        follow_symlinks: bool | None = None,
     ) -> None:
         """Create a hard link at dst, pointing at src.
 
@@ -1416,7 +1412,7 @@ class FakeOsModule:
             buffer[:count] = contents
             return count
 
-    def fake_functions(self, original_functions) -> Set:
+    def fake_functions(self, original_functions) -> set:
         functions = set()
         for fn in original_functions:
             if hasattr(self, fn.__name__):
@@ -1426,7 +1422,7 @@ class FakeOsModule:
         return functions
 
     @property
-    def supports_follow_symlinks(self) -> Set[Callable]:
+    def supports_follow_symlinks(self) -> set[Callable]:
         if self._supports_follow_symlinks is None:
             self._supports_follow_symlinks = self.fake_functions(
                 self.os_module.supports_follow_symlinks
@@ -1434,19 +1430,19 @@ class FakeOsModule:
         return self._supports_follow_symlinks
 
     @property
-    def supports_dir_fd(self) -> Set[Callable]:
+    def supports_dir_fd(self) -> set[Callable]:
         if self._supports_dir_fd is None:
             self._supports_dir_fd = self.fake_functions(self.os_module.supports_dir_fd)
         return self._supports_dir_fd
 
     @property
-    def supports_fd(self) -> Set[Callable]:
+    def supports_fd(self) -> set[Callable]:
         if self._supports_fd is None:
             self._supports_fd = self.fake_functions(self.os_module.supports_fd)
         return self._supports_fd
 
     @property
-    def supports_effective_ids(self) -> Set[Callable]:
+    def supports_effective_ids(self) -> set[Callable]:
         if self._supports_effective_ids is None:
             self._supports_effective_ids = self.fake_functions(
                 self.os_module.supports_effective_ids

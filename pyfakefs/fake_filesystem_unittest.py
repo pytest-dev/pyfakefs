@@ -57,19 +57,11 @@ from importlib.util import spec_from_file_location, module_from_spec
 from types import ModuleType, TracebackType, FunctionType
 from typing import (
     Any,
-    Callable,
-    Dict,
-    List,
-    Set,
-    Tuple,
     Optional,
-    Union,
-    Type,
-    Iterator,
     cast,
-    ItemsView,
-    Sequence,
 )
+
+from collections.abc import Callable, Iterator, ItemsView, Sequence
 from unittest import TestSuite
 
 from pyfakefs import fake_filesystem, fake_io, fake_os, fake_open, fake_path, fake_file
@@ -194,11 +186,11 @@ class LineCachePatcher:
 
 
 def patchfs(
-    _func: Optional[Callable] = None,
+    _func: Callable | None = None,
     *,
-    additional_skip_names: Optional[List[Union[str, ModuleType]]] = None,
-    modules_to_reload: Optional[List[ModuleType]] = None,
-    modules_to_patch: Optional[Dict[str, ModuleType]] = None,
+    additional_skip_names: list[str | ModuleType] | None = None,
+    modules_to_reload: list[ModuleType] | None = None,
+    modules_to_patch: dict[str, ModuleType] | None = None,
     allow_root_user: bool = True,
     use_known_patches: bool = True,
     patch_open_code: PatchMode = PatchMode.OFF,
@@ -261,9 +253,9 @@ def load_doctests(
     tests: TestSuite,
     ignore: Any,
     module: ModuleType,
-    additional_skip_names: Optional[List[Union[str, ModuleType]]] = None,
-    modules_to_reload: Optional[List[ModuleType]] = None,
-    modules_to_patch: Optional[Dict[str, ModuleType]] = None,
+    additional_skip_names: list[str | ModuleType] | None = None,
+    modules_to_reload: list[ModuleType] | None = None,
+    modules_to_patch: dict[str, ModuleType] | None = None,
     allow_root_user: bool = True,
     use_known_patches: bool = True,
     patch_open_code: PatchMode = PatchMode.OFF,
@@ -344,9 +336,9 @@ class TestCaseMixin:
                     methodName=methodName, modules_to_reload=[sut])
     """
 
-    additional_skip_names: Optional[List[Union[str, ModuleType]]] = None
-    modules_to_reload: Optional[List[ModuleType]] = None
-    modules_to_patch: Optional[Dict[str, ModuleType]] = None
+    additional_skip_names: list[str | ModuleType] | None = None
+    modules_to_reload: list[ModuleType] | None = None
+    modules_to_patch: dict[str, ModuleType] | None = None
 
     @property
     def patcher(self):
@@ -360,9 +352,9 @@ class TestCaseMixin:
 
     def setUpPyfakefs(
         self,
-        additional_skip_names: Optional[List[Union[str, ModuleType]]] = None,
-        modules_to_reload: Optional[List[ModuleType]] = None,
-        modules_to_patch: Optional[Dict[str, ModuleType]] = None,
+        additional_skip_names: list[str | ModuleType] | None = None,
+        modules_to_reload: list[ModuleType] | None = None,
+        modules_to_patch: dict[str, ModuleType] | None = None,
         allow_root_user: bool = True,
         use_known_patches: bool = True,
         patch_open_code: PatchMode = PatchMode.OFF,
@@ -409,9 +401,9 @@ class TestCaseMixin:
     @classmethod
     def setUpClassPyfakefs(
         cls,
-        additional_skip_names: Optional[List[Union[str, ModuleType]]] = None,
-        modules_to_reload: Optional[List[ModuleType]] = None,
-        modules_to_patch: Optional[Dict[str, ModuleType]] = None,
+        additional_skip_names: list[str | ModuleType] | None = None,
+        modules_to_reload: list[ModuleType] | None = None,
+        modules_to_patch: dict[str, ModuleType] | None = None,
         allow_root_user: bool = True,
         use_known_patches: bool = True,
         patch_open_code: PatchMode = PatchMode.OFF,
@@ -426,16 +418,9 @@ class TestCaseMixin:
         Note that using both :py:func:`setUpClassPyfakefs` and
         :py:func:`setUpPyfakefs` in the same class will not work correctly.
 
-        .. note:: This method is only available from Python 3.8 onwards.
         .. note:: If using `pytest` as testrunner, you need at least pytest 6.2
             for this method to work.
         """
-        if sys.version_info < (3, 8):
-            raise NotImplementedError(
-                "setUpClassPyfakefs is only available in "
-                "Python versions starting from 3.8"
-            )
-
         # if the class has already a patcher setup, we use this one
         if Patcher.PATCHER is not None:
             return
@@ -499,9 +484,9 @@ class TestCase(unittest.TestCase, TestCaseMixin):
     def __init__(
         self,
         methodName: str = "runTest",
-        additional_skip_names: Optional[List[Union[str, ModuleType]]] = None,
-        modules_to_reload: Optional[List[ModuleType]] = None,
-        modules_to_patch: Optional[Dict[str, ModuleType]] = None,
+        additional_skip_names: list[str | ModuleType] | None = None,
+        modules_to_reload: list[ModuleType] | None = None,
+        modules_to_patch: dict[str, ModuleType] | None = None,
     ):
         """Creates the test class instance and the patcher used to stub out
         file system related modules.
@@ -587,21 +572,21 @@ class Patcher:
 
     # caches all modules that do not have file system modules or function
     # to speed up _find_modules
-    CACHED_MODULES: Set[ModuleType] = set()
-    FS_MODULES: Dict[str, Set[Tuple[ModuleType, str]]] = {}
-    FS_FUNCTIONS: Dict[Tuple[str, str, str], Set[ModuleType]] = {}
-    FS_DEFARGS: List[Tuple[FunctionType, int, Callable[..., Any]]] = []
-    SKIPPED_FS_MODULES: Dict[str, Set[Tuple[ModuleType, str]]] = {}
+    CACHED_MODULES: set[ModuleType] = set()
+    FS_MODULES: dict[str, set[tuple[ModuleType, str]]] = {}
+    FS_FUNCTIONS: dict[tuple[str, str, str], set[ModuleType]] = {}
+    FS_DEFARGS: list[tuple[FunctionType, int, Callable[..., Any]]] = []
+    SKIPPED_FS_MODULES: dict[str, set[tuple[ModuleType, str]]] = {}
 
     assert None in SKIPMODULES, "sys.modules contains 'None' values; must skip them."
 
     IS_WINDOWS = sys.platform in ("win32", "cygwin")
 
-    SKIPNAMES: Set[str] = set()
+    SKIPNAMES: set[str] = set()
 
     # hold values from last call - if changed, the cache has to be invalidated
-    PATCHED_MODULE_NAMES: Set[str] = set()
-    ADDITIONAL_SKIP_NAMES: Set[str] = set()
+    PATCHED_MODULE_NAMES: set[str] = set()
+    ADDITIONAL_SKIP_NAMES: set[str] = set()
     PATCH_DEFAULT_ARGS = False
     PATCHER: Optional["Patcher"] = None
     DOC_PATCHER: Optional["Patcher"] = None
@@ -619,9 +604,9 @@ class Patcher:
 
     def __init__(
         self,
-        additional_skip_names: Optional[List[Union[str, ModuleType]]] = None,
-        modules_to_reload: Optional[List[ModuleType]] = None,
-        modules_to_patch: Optional[Dict[str, ModuleType]] = None,
+        additional_skip_names: list[str | ModuleType] | None = None,
+        modules_to_reload: list[ModuleType] | None = None,
+        modules_to_patch: dict[str, ModuleType] | None = None,
         allow_root_user: bool = True,
         use_known_patches: bool = True,
         patch_open_code: PatchMode = PatchMode.OFF,
@@ -704,29 +689,29 @@ class Patcher:
             ]
             self.skip_names.update(skip_names)
 
-        self._fake_module_classes: Dict[str, Any] = {}
-        self._unfaked_module_classes: Dict[str, Any] = {}
-        self._class_modules: Dict[str, List[str]] = {}
+        self._fake_module_classes: dict[str, Any] = {}
+        self._unfaked_module_classes: dict[str, Any] = {}
+        self._class_modules: dict[str, list[str]] = {}
         self._init_fake_module_classes()
 
         # reload tempfile under posix to patch default argument
-        self.modules_to_reload: List[ModuleType] = []
+        self.modules_to_reload: list[ModuleType] = []
         if modules_to_reload is not None:
             self.modules_to_reload.extend(modules_to_reload)
         self.patch_default_args = patch_default_args
         self.use_cache = use_cache
         self.use_dynamic_patch = use_dynamic_patch
-        self.cleanup_handlers: Dict[str, Callable[[str], bool]] = {}
+        self.cleanup_handlers: dict[str, Callable[[str], bool]] = {}
 
         # Attributes set by _refresh()
-        self._stubs: Optional[StubOutForTesting] = None
-        self.fs: Optional[FakeFilesystem] = None
-        self.fake_modules: Dict[str, Any] = {}
-        self.unfaked_modules: Dict[str, Any] = {}
+        self._stubs: StubOutForTesting | None = None
+        self.fs: FakeFilesystem | None = None
+        self.fake_modules: dict[str, Any] = {}
+        self.unfaked_modules: dict[str, Any] = {}
 
         # _isStale is set by tearDown(), reset by _refresh()
         self._isStale = True
-        self._dyn_patcher: Optional[DynamicPatcher] = None
+        self._dyn_patcher: DynamicPatcher | None = None
         self._patching = False
         self._paused = False
         self.has_copy_file_range = False
@@ -766,7 +751,7 @@ class Patcher:
 
         if clear_cache:
             self.clear_cache()
-        self._fake_module_functions: Dict[str, Dict] = {}
+        self._fake_module_functions: dict[str, dict] = {}
         self._init_fake_module_functions()
 
     @classmethod
@@ -893,14 +878,14 @@ class Patcher:
 
     def __exit__(
         self,
-        exc_type: Optional[Type[BaseException]],
-        exc_val: Optional[BaseException],
-        exc_tb: Optional[TracebackType],
+        exc_type: type[BaseException] | None,
+        exc_val: BaseException | None,
+        exc_tb: TracebackType | None,
     ) -> None:
         self.tearDown()
 
     def _is_fs_module(
-        self, mod: ModuleType, name: str, module_names: List[str]
+        self, mod: ModuleType, name: str, module_names: list[str]
     ) -> bool:
         try:
             return (
@@ -929,7 +914,7 @@ class Patcher:
 
     def _def_values(
         self, item: FunctionType
-    ) -> Iterator[Tuple[FunctionType, int, Any]]:
+    ) -> Iterator[tuple[FunctionType, int, Any]]:
         """Find default arguments that are file-system functions to be
         patched in top-level functions and members of top-level classes."""
         # check for module-level functions
@@ -1155,7 +1140,7 @@ class Patcher:
                     new_defaults.append(d)
             fct.__defaults__ = tuple(new_defaults)
 
-    def replace_globs(self, globs_: Dict[str, Any]) -> Dict[str, Any]:
+    def replace_globs(self, globs_: dict[str, Any]) -> dict[str, Any]:
         globs = globs_.copy()
         if self._isStale:
             self._refresh()
@@ -1204,7 +1189,7 @@ class Patcher:
     def unset_defaults(self) -> None:
         for fct, idx, ft in self.FS_DEFARGS:
             new_defaults = []
-            for i, d in enumerate(cast(Tuple, fct.__defaults__)):
+            for i, d in enumerate(cast(tuple, fct.__defaults__)):
                 if i == idx:
                     new_defaults.append(ft)
                 else:
@@ -1236,7 +1221,7 @@ class Pause:
     going out of its scope.
     """
 
-    def __init__(self, caller: Union[Patcher, TestCaseMixin, FakeFilesystem]):
+    def __init__(self, caller: Patcher | TestCaseMixin | FakeFilesystem):
         """Initializes the context manager with the fake filesystem.
 
         Args:
@@ -1274,7 +1259,7 @@ class DynamicPatcher(MetaPathFinder, Loader):
         self._patcher = patcher
         self.sysmodules = {}
         self.modules = self._patcher.fake_modules
-        self._loaded_module_names: Set[str] = set()
+        self._loaded_module_names: set[str] = set()
         self.cleanup_handlers = patcher.cleanup_handlers
 
         # remove all modules that have to be patched from `sys.modules`,
@@ -1334,9 +1319,9 @@ class DynamicPatcher(MetaPathFinder, Loader):
     def find_spec(
         self,
         fullname: str,
-        path: Optional[Sequence[Union[bytes, str]]],
-        target: Optional[ModuleType] = None,
-    ) -> Optional[ModuleSpec]:
+        path: Sequence[bytes | str] | None,
+        target: ModuleType | None = None,
+    ) -> ModuleSpec | None:
         """Module finder."""
         if self.needs_patch(fullname):
             return ModuleSpec(fullname, self)

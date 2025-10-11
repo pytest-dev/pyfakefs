@@ -32,18 +32,10 @@ jobs:
       fail-fast: false
       matrix:
         os: [ubuntu-latest, macOS-latest, windows-latest]
-        python-version: [3.8, 3.9, "3.10", "3.11", "3.12", "3.13", "3.14"]
+        python-version: ["3.10", "3.11", "3.12", "3.13", "3.14"]
         include:
-          - python-version: "pypy-3.7"
-            os: ubuntu-22.04
-          - python-version: "pypy-3.9"
-            os: ubuntu-latest
           - python-version: "pypy-3.10"
             os: ubuntu-latest
-          - python-version: "3.7"
-            os: ubuntu-22.04
-          - python-version: "3.7"
-            os: windows-latest
 
     steps:
     - uses: actions/checkout@v5
@@ -112,7 +104,7 @@ jobs:
       fail-fast: false
       matrix:
         os: [ubuntu-latest, macOS-latest, windows-latest]
-        python-version: [3.8, 3.9, "3.10", "3.11", "3.12", "3.13"]
+        python-version: ["3.10", "3.11", "3.12", "3.13"]
         pytest-version: [6.2.5, 7.0.1, 7.4.4, 8.0.2, 8.4.2]
         include:
           - python-version: "3.14"
@@ -122,16 +114,6 @@ jobs:
             pytest-version: 8.4.2
             os: macOS-latest
           - python-version: "3.14"
-            pytest-version: 8.4.2
-            os: windows-latest
-        exclude:
-          - python-version: "3.8"
-            pytest-version: 8.4.2
-            os: ubuntu-latest
-          - python-version: "3.8"
-            pytest-version: 8.4.2
-            os: macOS-latest
-          - python-version: "3.8"
             pytest-version: 8.4.2
             os: windows-latest
     steps:
@@ -166,7 +148,7 @@ jobs:
     strategy:
       matrix:
         os: [ubuntu-latest, windows-latest]
-        python-version:  ["3.10"]
+        python-version:  ["3.13"]
     steps:
       - uses: actions/checkout@v5
       - name: Set up Python ${{ matrix.python-version }}
