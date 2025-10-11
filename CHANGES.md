@@ -12,12 +12,17 @@ The released versions correspond to PyPI releases.
 * support for patching legacy modules `scandir` and `pathlib2` will be removed
 * the default for `FakeFilesystem.shuffle_listdir_results` will change to `True` to reflect
   the real filesystem behavior
-* remove support for Python versions before 3.10 (if needed, patches may be backported to the 5.10.x branch)
+
+## Unreleased
+
+### Changes
+* removed support for Python versions < 3.10; patch releases based pyfakefs 5.10
+  supporting older versions may be made on demand
 
 ## [Version 5.10.0](https://pypi.python.org/pypi/pyfakefs/5.10.0) (2025-10-11)
 Adds official support for Python 3.14. Last minor version before the 6.0 release.
 
-## Changes
+### Changes
 * the `errno` codes set in `OSError` have changed for some specific error conditions
   in Windows 11/Windows Server 2025; pyfakefs now matches this behavior
   instead of the previous behavior under Windows 10

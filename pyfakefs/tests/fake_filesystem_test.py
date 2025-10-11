@@ -1022,7 +1022,6 @@ class FakePathModuleTest(TestCase):
         self.os.chdir("!first!president")
         self.assertEqual("!george!washington!bridge", self.os.path.realpath("bridge"))
 
-    @unittest.skipIf(sys.version_info < (3, 10), "'strict' new in Python 3.10")
     def test_realpath_strict(self):
         self.filesystem.create_file("!foo!bar")
         root_dir = self.filesystem.root_dir_name
@@ -1115,9 +1114,7 @@ class FakePathModuleTest(TestCase):
         components = [b"foo", b"bar", b"baz"]
         self.assertEqual(b"foo!bar!baz", self.path.join(*components))
 
-    @unittest.skipIf(
-        sys.platform != "win32" or sys.version_info < (3, 8), "Windows specific test"
-    )
+    @unittest.skipIf(sys.platform != "win32", "Windows specific test")
     @patch.dict(os.environ, {"USERPROFILE": r"C:\Users\John"})
     def test_expand_user_windows(self):
         self.assertEqual(self.path.expanduser("~"), "C:!Users!John")
@@ -1279,11 +1276,6 @@ class FakePathModuleTest(TestCase):
         """Forwards any non-faked calls to os.path."""
         self.assertTrue(hasattr(self.path, "sep"), "Get a faked os.path function")
         private_path_function = None
-        if sys.version_info < (3, 6):
-            if self.is_windows:
-                private_path_function = "_get_bothseps"
-            else:
-                private_path_function = "_join_real_path"
         if private_path_function:
             self.assertTrue(
                 hasattr(self.path, private_path_function),

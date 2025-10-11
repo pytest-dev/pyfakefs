@@ -22,17 +22,14 @@ from stat import (
     S_ISDIR,
 )
 from typing import (
-    Optional,
-    Union,
     Any,
-    Tuple,
     cast,
     AnyStr,
     TYPE_CHECKING,
-    Callable,
     IO,
-    List,
 )
+
+from collections.abc import Callable
 
 from pyfakefs import helpers
 from pyfakefs.fake_file import (
@@ -73,17 +70,17 @@ _OPEN_MODE_MAP = {
 
 def fake_open(
     filesystem: "FakeFilesystem",
-    skip_names: List[str],
-    file: Union[AnyStr, int],
+    skip_names: list[str],
+    file: AnyStr | int,
     mode: str = "r",
     buffering: int = -1,
-    encoding: Optional[str] = None,
-    errors: Optional[str] = None,
-    newline: Optional[str] = None,
+    encoding: str | None = None,
+    errors: str | None = None,
+    newline: str | None = None,
     closefd: bool = True,
-    opener: Optional[Callable] = None,
+    opener: Callable | None = None,
     is_fake_open_code: bool = False,
-) -> Union[AnyFileWrapper, IO[Any]]:
+) -> AnyFileWrapper | IO[Any]:
     """Redirect the call to FakeFileOpen.
     See FakeFileOpen.call() for description.
     """
@@ -140,15 +137,15 @@ class FakeFileOpen:
 
     def call(
         self,
-        file_: Union[AnyStr, int],
+        file_: AnyStr | int,
         mode: str = "r",
         buffering: int = -1,
-        encoding: Optional[str] = None,
-        errors: Optional[str] = None,
-        newline: Optional[str] = None,
+        encoding: str | None = None,
+        errors: str | None = None,
+        newline: str | None = None,
         closefd: bool = True,
         opener: Any = None,
-        open_modes: Optional[_OpenModes] = None,
+        open_modes: _OpenModes | None = None,
     ) -> AnyFileWrapper:
         """Return a file-like object with the contents of the target
         file object.
@@ -315,7 +312,7 @@ class FakeFileOpen:
 
     def _init_file_object(
         self,
-        file_object: Optional[FakeFile],
+        file_object: FakeFile | None,
         file_path: AnyStr,
         open_modes: _OpenModes,
         real_path: AnyString,
@@ -363,10 +360,8 @@ class FakeFileOpen:
         return file_object
 
     def _handle_file_arg(
-        self, file_: Union[AnyStr, int]
-    ) -> Tuple[
-        Optional[FakeFile], Optional[AnyStr], Optional[int], Optional[AnyStr], bool
-    ]:
+        self, file_: AnyStr | int
+    ) -> tuple[FakeFile | None, AnyStr | None, int | None, AnyStr | None, bool]:
         file_object = None
         if isinstance(file_, int):
             # opening a file descriptor
@@ -408,9 +403,9 @@ class FakeFileOpen:
     def _handle_file_mode(
         self,
         mode: str,
-        newline: Optional[str],
-        open_modes: Optional[_OpenModes],
-    ) -> Tuple[Optional[str], _OpenModes]:
+        newline: str | None,
+        open_modes: _OpenModes | None,
+    ) -> tuple[str | None, _OpenModes]:
         orig_modes = mode  # Save original modes for error messages.
         # Normalize modes. Handle 't' and 'U'.
         if ("b" in mode and "t" in mode) or (

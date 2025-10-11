@@ -21,15 +21,13 @@ import io
 import sys
 from enum import Enum
 from typing import (
-    List,
-    Optional,
-    Callable,
-    Union,
     Any,
     AnyStr,
     IO,
     TYPE_CHECKING,
 )
+
+from collections.abc import Callable
 
 from pyfakefs.fake_file import AnyFileWrapper
 from pyfakefs.fake_open import fake_open
@@ -59,14 +57,11 @@ class FakeIoModule:
     """
 
     @staticmethod
-    def dir() -> List[str]:
+    def dir() -> list[str]:
         """Return the list of patched function names. Used for patching
         functions imported from the module.
         """
-        _dir = ["open"]
-        if sys.version_info >= (3, 8):
-            _dir.append("open_code")
-        return _dir
+        return ["open", "open_code"]
 
     def __init__(self, filesystem: "FakeFilesystem"):
         """
@@ -74,21 +69,21 @@ class FakeIoModule:
             filesystem: FakeFilesystem used to provide file system information.
         """
         self.filesystem = filesystem
-        self.skip_names: List[str] = []
+        self.skip_names: list[str] = []
         self._io_module = io
 
     def open(
         self,
-        file: Union[AnyStr, int],
+        file: AnyStr | int,
         mode: str = "r",
         buffering: int = -1,
-        encoding: Optional[str] = None,
-        errors: Optional[str] = None,
-        newline: Optional[str] = None,
+        encoding: str | None = None,
+        errors: str | None = None,
+        newline: str | None = None,
         closefd: bool = True,
-        opener: Optional[Callable] = None,
+        opener: Callable | None = None,
         is_fake_open_code: bool = False,
-    ) -> Union[AnyFileWrapper, IO[Any]]:
+    ) -> AnyFileWrapper | IO[Any]:
         """Redirect the call to FakeFileOpen.
         See FakeFileOpen.call() for description.
         """
@@ -106,25 +101,23 @@ class FakeIoModule:
             is_fake_open_code,
         )
 
-    if sys.version_info >= (3, 8):
-
-        def open_code(self, path):
-            """Redirect the call to open. Note that the behavior of the real
-            function may be overridden by an earlier call to the
-            PyFile_SetOpenCodeHook(). This behavior is not reproduced here.
-            """
-            if not isinstance(path, str) and not IS_PYPY:
-                raise TypeError("open_code() argument 'path' must be str, not int")
-            patch_mode = self.filesystem.patch_open_code
-            if (
-                patch_mode == PatchMode.AUTO
-                and self.filesystem.exists(path)
-                or patch_mode == PatchMode.ON
-            ):
-                return self.open(path, mode="rb", is_fake_open_code=True)
-            # mostly this is used for compiled code -
-            # don't patch these, as the files are probably in the real fs
-            return self._io_module.open_code(path)
+    def open_code(self, path):
+        """Redirect the call to open. Note that the behavior of the real
+        function may be overridden by an earlier call to the
+        PyFile_SetOpenCodeHook(). This behavior is not reproduced here.
+        """
+        if not isinstance(path, str) and not IS_PYPY:
+            raise TypeError("open_code() argument 'path' must be str, not int")
+        patch_mode = self.filesystem.patch_open_code
+        if (
+            patch_mode == PatchMode.AUTO
+            and self.filesystem.exists(path)
+            or patch_mode == PatchMode.ON
+        ):
+            return self.open(path, mode="rb", is_fake_open_code=True)
+        # mostly this is used for compiled code -
+        # don't patch these, as the files are probably in the real fs
+        return self._io_module.open_code(path)
 
     def __getattr__(self, name):
         """Forwards any unfaked calls to the standard io module."""
@@ -152,7 +145,7 @@ if sys.platform != "win32":
         """
 
         @staticmethod
-        def dir() -> List[str]:
+        def dir() -> list[str]:
             """Return the list of patched function names. Used for patching
             functions imported from the module.
             """
@@ -167,12 +160,12 @@ if sys.platform != "win32":
             self.filesystem = filesystem
             self._fcntl_module = fcntl
 
-        def fcntl(self, fd: int, cmd: int, arg: int = 0) -> Union[int, bytes]:
+        def fcntl(self, fd: int, cmd: int, arg: int = 0) -> int | bytes:
             return 0 if isinstance(arg, int) else arg
 
         def ioctl(
             self, fd: int, request: int, arg: int = 0, mutate_flag: bool = True
-        ) -> Union[int, bytes]:
+        ) -> int | bytes:
             return 0 if isinstance(arg, int) else arg
 
         def flock(self, fd: int, operation: int) -> None:

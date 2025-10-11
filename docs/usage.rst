@@ -123,9 +123,6 @@ method ``setUpClassPyfakefs`` instead:
             self.fs.create_file(file_path)
             self.assertTrue(os.path.exists(file_path))
 
-.. note:: This feature cannot be used with a Python version before Python 3.8 due to
-  a missing feature in ``unittest``.
-
 .. caution:: If this is used, any changes made in the fake filesystem inside a test
   will remain there for all following tests in the test class, if they are not reverted
   in the test itself.

@@ -848,7 +848,6 @@ def load_configs(configs):
     return retval
 
 
-@unittest.skipIf(sys.version_info < (3, 8), "open_code new in Python 3.8")
 class AutoPatchOpenCodeTestCase(fake_filesystem_unittest.TestCase):
     """Test patching open_code in auto mode, see issue #554."""
 
@@ -981,7 +980,6 @@ class TestAbsolutePathOnWindows(fake_filesystem_unittest.TestCase):
         self.assertTrue(pathlib.Path(".").absolute().is_absolute())
 
 
-@unittest.skipIf(sys.version_info < (3, 8), "Not available before Python 3.8")
 class TestClassSetup(fake_filesystem_unittest.TestCase):
     @classmethod
     def setUpClass(cls):
@@ -1026,7 +1024,6 @@ class TestTempPathCreation(fake_filesystem_unittest.TestCase):
         self.check_write_tmp_after_reset(OSType.WINDOWS)
 
 
-@unittest.skipIf(sys.version_info < (3, 8), "Not available before Python 3.8")
 class FakeImportTest(fake_filesystem_unittest.TestCase):
     """Checks that a fake module can be imported in AUTO patch mode."""
 
