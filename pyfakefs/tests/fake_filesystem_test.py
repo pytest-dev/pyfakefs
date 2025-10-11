@@ -2623,7 +2623,6 @@ class RealFileSystemAccessTest(RealFsTestCase):
 
     @unittest.skipIf(pytest is None, "pytest is not installed")
     @unittest.skipIf(sys.version_info < (3, 8), "importlib.metadata not available")
-    @unittest.skipIf("pathlib2" in sys.modules, "pathlib2 may break this test")
     def test_add_package_metadata(self):
         parent_path = pathlib.Path(pytest.__file__).parent.parent
         pytest_dist_path = parent_path / f"pytest-{pytest.__version__}.dist-info"

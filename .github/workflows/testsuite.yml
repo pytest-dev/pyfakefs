@@ -18,7 +18,7 @@ jobs:
       with:
         python-version: "3.10"
     - name: install pytype
-      run: pip install setuptools pytype pytest scandir pathlib2 pandas xlrd django pyarrow
+      run: pip install setuptools pytype pytest pandas xlrd django pyarrow
     - name: Run pytype
       run: |
         pytype pyfakefs --keep-going --exclude pyfakefs/tests/* --exclude pyfakefs/pytest_tests/*
@@ -57,7 +57,7 @@ jobs:
       uses: actions/cache@v4
       with:
         path: ${{ steps.pip-cache.outputs.dir }}
-        key: ${{ matrix.os }}-${{ matrix.python-version }}-pip-${{ hashFiles('**/requirements.txt') }}-${{ hashFiles('**/extra_requirements.txt') }}-${{ hashFiles('**/legacy_requirements.txt') }}
+        key: ${{ matrix.os }}-${{ matrix.python-version }}-pip-${{ hashFiles('**/requirements.txt') }}-${{ hashFiles('**/extra_requirements.txt') }}
         restore-keys: |
           ${{ matrix.os }}-${{ matrix.python-version }}-pip-
 
@@ -68,19 +68,18 @@ jobs:
     - name: Run unit tests without extra packages as non-root user
       run: |
         export TEST_REAL_FS=1
-        python -bb -m pyfakefs.tests.all_tests_without_extra_packages
+        python -bb -m pyfakefs.tests.all_tests
       shell: bash
     - name: Run unit tests without extra packages as root
       run: |
         if [[ '${{ matrix.os }}' != 'windows-latest' ]]; then
           # provide the same path as non-root to get the correct virtualenv
-          sudo env "PATH=$PATH" python -m pyfakefs.tests.all_tests_without_extra_packages
+          sudo env "PATH=$PATH" python -m pyfakefs.tests.all_tests
         fi
       shell: bash
     - name: Install extra dependencies
       run: |
         pip install -r extra_requirements.txt
-        pip install -r legacy_requirements.txt
         pip install zstandard cffi  # needed to test #910
       shell: bash
     - name: Run unit tests with extra packages as non-root user
@@ -159,7 +158,6 @@ jobs:
         run: |
           pip install -r requirements.txt
           pip install -r extra_requirements.txt
-          pip install -r legacy_requirements.txt
           pip install pytest-find-dependencies
       - name: Check dependencies
         run: python -m pytest --find-dependencies pyfakefs/tests
