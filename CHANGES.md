@@ -3,17 +3,19 @@ The released versions correspond to PyPI releases.
 
 ## Policy for Python version support
 * support for new versions is usually added preliminarily during the Python release beta phase,
-  official support after the final release
+  official support shortly after the final release
 * support for EOL versions is removed as soon as the CI (GitHub actions) does no longer provide
-  these versions (usually several months after the official EOL)
+  these versions (usually several months after the official EOL); if the support is removed earlier
+  (as with the change to version 6), patches for previous versions are provided if requested
 
-## Planned changes for next major release (6.0.0)
+## Planned breaking changes for next major release (6.0.0)
 * support for patching legacy modules `scandir` and `pathlib2` will be removed
 * the default for `FakeFilesystem.shuffle_listdir_results` will change to `True` to reflect
   the real filesystem behavior
-* remove support for Python versions before 3.10 (if needed, patches may be backported to the 5.x branch)
+* remove support for Python versions before 3.10 (if needed, patches may be backported to the 5.10.x branch)
 
-## Unreleased
+## [Version 5.10.0](https://pypi.python.org/pypi/pyfakefs/5.10.0) (2025-10-11)
+Adds official support for Python 3.14. Last minor version before the 6.0 release.
 
 ## Changes
 * the `errno` codes set in `OSError` have changed for some specific error conditions
