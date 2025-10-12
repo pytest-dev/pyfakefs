@@ -190,8 +190,12 @@ class FakeFilesystem:
         patch_open_code: Defines how
             `io.open_code <https://docs.python.org/3/library/io.html#io.open_code>`__
             will be patched; patching can be on, off, or in automatic mode.
-        shuffle_listdir_results: If `True`, `os.listdir` will not sort the
-            results to match the real file system behavior.
+        shuffle_listdir_results: Set to `True` by default, meaning that the result order
+            is randomized to match the real file system behavior.
+            Setting it to `False` will cause `os.listdir` to sort the results. This is
+            discouraged and mainly there to retain upwards compatibility - relying on
+            the result order in tests is not recommended.
+            This attribute may be removed in a future version.
     """
 
     def __init__(
@@ -265,7 +269,7 @@ class FakeFilesystem:
 
         # set from outside if needed
         self.patch_open_code = PatchMode.OFF
-        self.shuffle_listdir_results = False
+        self.shuffle_listdir_results = True
 
     @property
     def is_linux(self) -> bool:
@@ -3158,8 +3162,10 @@ class FakeFilesystem:
 
         Returns:
             A list of file names within the target directory in arbitrary
-            order. If `shuffle_listdir_results` is set, the order is not the
-            same in subsequent calls to avoid tests relying on any ordering.
+            order. Per default, the order is not the same in subsequent calls.
+            This can be changed by setting `shuffle_listdir_results` to `False`
+            for testing convenience, though is not recommended to avoid accidentally
+            relying on any ordering in the production code.
 
         Raises:
             OSError: if the target is not a directory.
