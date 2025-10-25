@@ -32,7 +32,7 @@ import functools
 import os
 import shutil
 import sys
-from threading import Lock
+from threading import RLock
 from collections.abc import Callable
 
 
@@ -44,7 +44,7 @@ class FakeShutilModule:
     the `fs` fixture, the `patchfs` decorator, or directly the `Patcher`.
     """
 
-    module_lock = Lock()
+    module_lock = RLock()
 
     use_copy_file_range = (
         hasattr(shutil, "_USE_CP_COPY_FILE_RANGE") and shutil._USE_CP_COPY_FILE_RANGE  # type: ignore[attr-defined]
@@ -71,9 +71,12 @@ class FakeShutilModule:
         """
         self.filesystem = filesystem
         self.shutil_module = shutil
-        self._in_get_attribute = False
+        self._patch_level = 0
 
     def _start_patching_global_vars(self):
+        self._patch_level += 1
+        if self._patch_level > 1:
+            return  # nested call - already patched
         if self.has_fcopy_file:
             self.shutil_module._HAS_FCOPYFILE = False
         if self.use_copy_file_range:
@@ -89,6 +92,9 @@ class FakeShutilModule:
                 self.shutil_module._use_fd_functions = False
 
     def _stop_patching_global_vars(self):
+        self._patch_level -= 1
+        if self._patch_level > 0:
+            return  # nested call - remains patched
         if self.has_fcopy_file:
             self.shutil_module._HAS_FCOPYFILE = True
         if self.use_copy_file_range:
