@@ -212,6 +212,18 @@ class FakeShutilModuleTest(RealFsTestCase):
         self.assertTrue(os.path.exists(dst_file))
         self.assertEqual(os.stat(src_file).st_mode, os.stat(dst_file).st_mode)
 
+    def test_copytree_with_copy_function(self):
+        # regression test for #1235 (deadlock)
+        source_dir = Path(self.make_path("source_dir"))
+        target_dir = Path(self.make_path("target_dir"))
+        test_contents = "Test contents"
+        source_file = source_dir / "test.txt"
+        target_file = target_dir / "test.txt"
+        self.create_file(source_file, contents=test_contents)
+
+        shutil.copytree(source_dir, target_dir, copy_function=shutil.copy2)
+        assert target_file.read_text() == test_contents
+
     def test_permission_error_message(self):
         self.check_posix_only()
         dst_dir = Path(self.make_path("home1"))
