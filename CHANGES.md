@@ -14,6 +14,10 @@ The released versions correspond to PyPI releases.
   the real filesystem behavior
 * remove support for Python versions before 3.10 (if needed, patches may be backported to the 5.10.x branch)
 
+### Fixes
+* fixed a deadlock in `shutil.copytree` if copying using an `shutil` function as
+  `copy_function` argument (see [#1235](../../issues/1235))
+
 ## [Version 5.10.0](https://pypi.python.org/pypi/pyfakefs/5.10.0) (2025-10-11)
 Adds official support for Python 3.14. Last minor version before the 6.0 release.
 
