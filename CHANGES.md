@@ -17,6 +17,9 @@ The released versions correspond to PyPI releases.
 * changed the default for `FakeFilesystem.shuffle_listdir_results` to `True` to reflect
   the real filesystem behavior
 
+## [Version 5.10.1](https://pypi.python.org/pypi/pyfakefs/5.10.1) (2025-10-27)
+Fixes a regression introduced in version 5.9.0.
+
 ### Fixes
 * fixed a deadlock in `shutil.copytree` if copying using an `shutil` function as
   `copy_function` argument (see [#1235](../../issues/1235))
