@@ -973,6 +973,13 @@ class FakePathlibPathFileOperationTest(RealPathlibTestCase):
             sorted(path.glob("*.py")),
         )
 
+    def test_glob_dir(self):
+        # regression test for #1239
+        root_dir = self.path(self.make_path("root"))
+        test_file = self.make_path(root_dir, "foo", "bar.txt")
+        self.create_file(test_file)
+        self.assertEqual([root_dir / "foo"], list(root_dir.glob("foo")))
+
     def test_glob_case_windows(self):
         self.check_windows_only()
         self.create_file(self.make_path("foo", "setup.py"))
