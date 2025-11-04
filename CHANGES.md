@@ -14,6 +14,9 @@ The released versions correspond to PyPI releases.
   the real filesystem behavior
 * remove support for Python versions before 3.10 (if needed, patches may be backported to the 5.10.x branch)
 
+### Fixes
+* fixed `pathlib.glob()` for Python 3.14 (see [#1239](../../issues/1239))
+
 ## [Version 5.10.1](https://pypi.python.org/pypi/pyfakefs/5.10.1) (2025-10-27)
 Fixes a regression introduced in version 5.9.0.
 

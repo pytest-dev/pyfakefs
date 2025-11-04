@@ -1101,6 +1101,8 @@ class Patcher:
             globber.lstat = staticmethod(os.lstat)
             if sys.version_info < (3, 14):
                 globber.scandir = staticmethod(os.scandir)
+        if sys.version_info >= (3, 14):
+            globber.lexists = staticmethod(os.path.lexists)
 
     def patch_functions(self) -> None:
         assert self._stubs is not None
