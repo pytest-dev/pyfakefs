@@ -17,6 +17,9 @@ The released versions correspond to PyPI releases.
 * changed the default for `FakeFilesystem.shuffle_listdir_results` to `True` to reflect
   the real filesystem behavior
 
+## [Version 5.10.2](https://pypi.python.org/pypi/pyfakefs/5.10.2) (2025-11-04)
+Fixes a problem with `pathlib.glob` in Python 3.14.
+
 ### Fixes
 * fixed `pathlib.glob()` for Python 3.14 (see [#1239](../../issues/1239))
 
