@@ -1722,6 +1722,7 @@ class SkipPathlibTest(fake_filesystem_unittest.TestCase):
 
 
 class InstantiatedPathlibTest(unittest.TestCase):
+    @unittest.skipIf(IS_PYPY, "Not implemented for PyPy")
     def test_instantiated_pathlib(self):
         fake_fs = FakeFilesystem()
         fake_pathlib_module = FakePathlibModule(fake_fs)
