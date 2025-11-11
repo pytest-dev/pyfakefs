@@ -17,6 +17,10 @@ The released versions correspond to PyPI releases.
 * changed the default for `FakeFilesystem.shuffle_listdir_results` to `True` to reflect
   the real filesystem behavior
 
+### Fixes
+* fixes a problem with `Path` type hints using the pipe symbol in wrapped functions
+  inside an `fs` dependent fixture (see [#1242](../../issues/1242))
+
 ## [Version 5.10.2](https://pypi.python.org/pypi/pyfakefs/5.10.2) (2025-11-04)
 Fixes a problem with `pathlib.glob` in Python 3.14.
 
