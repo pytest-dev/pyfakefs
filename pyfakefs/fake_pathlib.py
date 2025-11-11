@@ -38,6 +38,7 @@ import warnings
 from pathlib import PurePath
 
 from collections.abc import Callable
+from typing import Any, Union
 from unittest import mock
 from urllib.parse import quote_from_bytes as urlquote_from_bytes
 
@@ -1025,6 +1026,12 @@ class FakePathlibPathModule:
     def __init__(self, filesystem=None, from_patcher=False):
         if self.fake_pathlib is None:
             self.__class__.fake_pathlib = FakePathlibModule(filesystem, from_patcher)
+
+    def __or__(self, other: Any) -> Any:
+        # workaround for #1242 - pytest chokes on Path | ... type hint in wrapped function
+        return Union[self, other]
+
+    __ror__ = __or__
 
     @property
     def skip_names(self):
