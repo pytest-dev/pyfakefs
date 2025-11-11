@@ -45,6 +45,7 @@ from pyfakefs.fake_filesystem_unittest import (
     patchfs,
     PatchMode,
 )
+from pyfakefs.helpers import IS_PYPY
 from pyfakefs.tests.fixtures import module_with_attributes
 
 if sys.version_info < (3, 12):
@@ -822,6 +823,8 @@ class PathlibTest(TestCase):
 
 
 class TestDeprecationSuppression(fake_filesystem_unittest.TestCase):
+    @unittest.skipIf(IS_PYPY and sys.version_info >= (3, 11),
+                     "PyPy 3.11 causes a deprecation warning itself")
     def test_no_deprecation_warning(self):
         """Ensures that deprecation warnings are suppressed during module
         lookup, see #542.
