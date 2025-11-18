@@ -19,14 +19,21 @@ from pyfakefs.fake_filesystem_unittest import Patcher, Pause
 
 try:
     from _pytest import pathlib
+
+    Patcher.SKIPMODULES.add(pathlib)
 except ImportError:
-    pathlib = None  # type:ignore[assignment]
+    pass
+
+try:
+    from coverage import python  # type:ignore[import]
+
+    Patcher.SKIPMODULES.add(python)
+except ImportError:
+    pass
 
 Patcher.SKIPMODULES.add(py)
 Patcher.SKIPMODULES.add(pytest)
 Patcher.SKIPMODULES.add(capture)
-if pathlib is not None:
-    Patcher.SKIPMODULES.add(pathlib)
 
 
 @pytest.fixture

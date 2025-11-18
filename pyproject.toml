@@ -73,6 +73,7 @@ xdist = [
 
 [tool.setuptools]
 include-package-data = true
+py-modules = ["pyfakefs"]
 
 [tool.setuptools.package-data]
 where = ["pyfakefs"]

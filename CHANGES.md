@@ -20,6 +20,8 @@ The released versions correspond to PyPI releases.
 ### Fixes
 * fixes a problem with `Path` type hints using the pipe symbol in wrapped functions
   inside an `fs` dependent fixture (see [#1242](../../issues/1242))
+* fixes problem with new `coverage` in Python 3.14 using the fake filesystem
+  (see [#1245](../../issues/1245))
 
 ## [Version 5.10.2](https://pypi.python.org/pypi/pyfakefs/5.10.2) (2025-11-04)
 Fixes a problem with `pathlib.glob` in Python 3.14.

@@ -1012,7 +1012,12 @@ class Patcher:
         for name in self._fake_module_classes:
             self.fake_modules[name] = self._fake_module_classes[name](self.fs)
             if hasattr(self.fake_modules[name], "skip_names"):
-                self.fake_modules[name].skip_names = self.skip_names
+                self.fake_modules[name].skip_names = self.skip_names | {
+                    # also skip non-build-in skipped modules
+                    m.__name__
+                    for m in self.SKIPMODULES
+                    if m and "." in m.__name__
+                }
         self.fake_modules[PATH_MODULE] = self.fake_modules["os"].path
         for name in self._unfaked_module_classes:
             self.unfaked_modules[name] = self._unfaked_module_classes[name]()
