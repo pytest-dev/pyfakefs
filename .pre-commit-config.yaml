@@ -11,7 +11,7 @@ repos:
           - "--py310-plus"
 
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: "v0.14.8"
+    rev: "v0.14.9"
     hooks:
       - id: ruff
         args: ["--fix"]
@@ -44,7 +44,7 @@ repos:
         language: python
         files: \.py$
   - repo: https://github.com/pre-commit/mirrors-mypy
-    rev: v1.19.0
+    rev: v1.19.1
     hooks:
       - id: mypy
         exclude: (docs|pyfakefs/tests)
