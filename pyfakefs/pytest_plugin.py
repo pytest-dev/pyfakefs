@@ -11,7 +11,6 @@ def my_fakefs_test(fs):
 
 import contextlib
 
-import py
 import pytest
 from _pytest import capture
 
@@ -31,7 +30,13 @@ try:
 except ImportError:
     pass
 
-Patcher.SKIPMODULES.add(py)
+try:
+    import py
+
+    Patcher.SKIPMODULES.add(py)
+except ImportError:
+    pass
+
 Patcher.SKIPMODULES.add(pytest)
 Patcher.SKIPMODULES.add(capture)
 
