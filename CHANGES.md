@@ -17,6 +17,9 @@ The released versions correspond to PyPI releases.
 * changed the default for `FakeFilesystem.shuffle_listdir_results` to `True` to reflect
   the real filesystem behavior
 
+### Changes
+* added some support for Python 3.15a3
+
 ### Fixes
 * fixes a problem with `Path` type hints using the pipe symbol in wrapped functions
   inside an `fs` dependent fixture (see [#1242](../../issues/1242))

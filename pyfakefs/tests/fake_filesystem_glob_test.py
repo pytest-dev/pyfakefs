@@ -72,6 +72,7 @@ class FakeGlobUnitTest(fake_filesystem_unittest.TestCase):
     def test_magic_dir(self):
         self.assertEqual(["/[Temp]"], glob.glob("/*emp*"))
 
+    @unittest.skipIf(sys.version_info >= (3, 15), "glob1 removed in Python 3.15.")
     def test_glob1(self):
         warning_context = (
             contextlib.nullcontext()

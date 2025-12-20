@@ -222,6 +222,7 @@ class RealPathlibInitializationWithDriveTest(FakePathlibInitializationWithDriveT
 class FakePathlibPurePathTest(RealPathlibTestCase):
     """Tests functionality present in PurePath class."""
 
+    @unittest.skipIf(sys.version_info >= (3, 15), "is_reserved removed in Python 3.15")
     def test_is_reserved_posix(self):
         self.check_posix_only()
         with self.deprecation_warning_since_313():
@@ -230,6 +231,7 @@ class FakePathlibPurePathTest(RealPathlibTestCase):
             self.assertFalse(self.path("COM1").is_reserved())
             self.assertFalse(self.path("nul.txt").is_reserved())
 
+    @unittest.skipIf(sys.version_info >= (3, 15), "is_reserved removed in Python 3.15")
     @unittest.skipIf(not is_windows, "Windows specific behavior")
     def test_is_reserved_windows(self):
         self.check_windows_only()
@@ -307,6 +309,7 @@ class FakePathlibPurePosixPathTest(RealPathlibTestCase):
         super().setUp()
         self.path = self.pathlib.PurePosixPath
 
+    @unittest.skipIf(sys.version_info >= (3, 15), "is_reserved removed in Python 3.15")
     def test_is_reserved(self):
         with self.deprecation_warning_since_313():
             self.assertFalse(self.path("/dev").is_reserved())
@@ -381,6 +384,7 @@ class FakePathlibPureWindowsPathTest(RealPathlibTestCase):
         super().setUp()
         self.path = self.pathlib.PureWindowsPath
 
+    @unittest.skipIf(sys.version_info >= (3, 15), "is_reserved removed in Python 3.15")
     def test_is_reserved(self):
         with self.deprecation_warning_since_313():
             self.assertFalse(self.path("/dev").is_reserved())

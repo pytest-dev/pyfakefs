@@ -884,6 +884,12 @@ class FakeFileWrapper:
             return m + "+" if self.open_modes.can_read else m
         if self.open_modes.truncate:
             if self._binary:
+                if (
+                    sys.version_info >= (3, 15)
+                    and self.open_modes.can_write
+                    and self.open_modes.can_read
+                ):
+                    return "wb+"
                 return "rb+" if self.open_modes.can_read else "wb"
             return "w+" if self.open_modes.can_read else "w"
         if self.open_modes.must_not_exist:
