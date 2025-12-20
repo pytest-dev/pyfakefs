@@ -23,6 +23,9 @@ The released versions correspond to PyPI releases.
 * fixes problem with new `coverage` in Python 3.14 using the fake filesystem
   (see [#1245](../../issues/1245))
 
+### Infrastructure
+* added CI tests for Python 3.15
+
 ## [Version 5.10.2](https://pypi.python.org/pypi/pyfakefs/5.10.2) (2025-11-04)
 Fixes a problem with `pathlib.glob` in Python 3.14.
 
