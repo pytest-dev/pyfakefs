@@ -32,6 +32,7 @@ except ImportError:
 
 try:
     import py
+
     Patcher.SKIPMODULES.add(py)
 except ImportError:
     pass
