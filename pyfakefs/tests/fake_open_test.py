@@ -324,7 +324,8 @@ class FakeFileOpenTest(FakeFileOpenTestBase):
             fake_file.write(b"new contents")
             fake_file.seek(0)
             self.assertTrue(b"new contents", fake_file.read())
-            self.assertEqual("rb+", fake_file.mode)
+            expected_mode = "rb+" if sys.version_info < (3, 15) else "wb+"
+            self.assertEqual(expected_mode, fake_file.mode)
 
     def test_open_with_wplus_truncation(self):
         # set up

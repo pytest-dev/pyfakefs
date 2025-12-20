@@ -917,10 +917,11 @@ class FakePathlibModule:
 
         __slots__ = ()
         if sys.version_info >= (3, 12):
+            if sys.version_info < (3, 15):
 
-            def is_reserved(self):
-                _warn_is_reserved_deprecated()
-                return False
+                def is_reserved(self):
+                    _warn_is_reserved_deprecated()
+                    return False
 
             def is_absolute(self):
                 with os.path.filesystem.use_fs_type(FSType.POSIX):  # type: ignore[module-attr]
