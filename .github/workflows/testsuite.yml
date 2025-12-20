@@ -32,7 +32,7 @@ jobs:
       fail-fast: false
       matrix:
         os: [ubuntu-latest, macOS-latest, windows-latest]
-        python-version: ["3.10", "3.11", "3.12", "3.13", "3.14"]
+        python-version: ["3.10", "3.11", "3.12", "3.13", "3.14", "3.15"]
         include:
           - python-version: "pypy-3.10"
             os: ubuntu-latest
@@ -104,7 +104,7 @@ jobs:
       matrix:
         os: [ubuntu-latest, macOS-latest, windows-latest]
         python-version: ["3.10", "3.11", "3.12", "3.13"]
-        pytest-version: [6.2.5, 7.0.1, 7.4.4, 8.0.2, 8.4.2]
+        pytest-version: [6.2.5, 7.0.1, 7.4.4, 8.0.2, 8.4.2, 9.0.2]
         include:
           - python-version: "3.14"
             pytest-version: 8.4.2
@@ -126,13 +126,8 @@ jobs:
           python -m pip install --upgrade pip
           python -m pip install -r requirements.txt
           python -m pip install -U pytest==${{ matrix.pytest-version }}
-          python -m pip install pandas parquet
+          python -m pip install pandas parquet pyarrow
           python -m pip install -e .
-        shell: bash
-      - name: Install pyarrow (not yet supported by 3.14)
-        if: ${{ matrix.python-version != '3.14' }}
-        run: |
-          python -m pip install pyarrow
         shell: bash
       - name: Run pytest tests
         run: |
