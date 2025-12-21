@@ -2,7 +2,8 @@
 The released versions correspond to PyPI releases.
 `pyfakefs` versions follow [Semantic Versioning](https://semver.org/).
 
-## Unreleased
+## [Version 6.1.0](https://pypi.python.org/pypi/pyfakefs/6.1.0) (2026-02-06)
+Changes back-link references to weak references.
 
 ### Changes
 * added more support for PyPy 3
