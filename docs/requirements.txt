@@ -1,2 +1,2 @@
 furo==2025.12.19
-myst-parser
+myst-parser==4.0.1
