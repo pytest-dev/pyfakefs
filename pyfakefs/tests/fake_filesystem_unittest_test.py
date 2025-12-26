@@ -823,8 +823,10 @@ class PathlibTest(TestCase):
 
 
 class TestDeprecationSuppression(fake_filesystem_unittest.TestCase):
-    @unittest.skipIf(IS_PYPY and sys.version_info >= (3, 11),
-                     "PyPy 3.11 causes a deprecation warning itself")
+    @unittest.skipIf(
+        IS_PYPY and sys.version_info >= (3, 11),
+        "PyPy 3.11 causes a deprecation warning itself",
+    )
     def test_no_deprecation_warning(self):
         """Ensures that deprecation warnings are suppressed during module
         lookup, see #542.
