@@ -899,7 +899,11 @@ class FakePathlibModule:
             self.patch_os_module()
 
     def patch_os_module(self):
-        if sys.version_info >= (3, 11) and not IS_PYPY and not isinstance(os, FakeOsModule):
+        if (
+            sys.version_info >= (3, 11)
+            and not IS_PYPY
+            and not isinstance(os, FakeOsModule)
+        ):
             self._os = FakeOsModule(FakePath.filesystem)
             pathlib_os = (
                 "pathlib._local.os" if sys.version_info[:2] == (3, 13) else "pathlib.os"
