@@ -32,12 +32,7 @@ jobs:
       fail-fast: false
       matrix:
         os: [ubuntu-latest, macOS-latest, windows-latest]
-        python-version: ["3.10", "3.11", "3.12", "3.13", "3.14", "3.15"]
-        include:
-          - python-version: "pypy-3.10"
-            os: ubuntu-latest
-          - python-version: "pypy-3.11"
-            os: ubuntu-latest
+        python-version: ["3.10", "3.11", "3.12", "3.13", "3.14", "3.15", "pypy-3.10", "pypy-3.11"]
 
     steps:
     - uses: actions/checkout@v6
@@ -80,11 +75,13 @@ jobs:
         fi
       shell: bash
     - name: Install extra dependencies
+      if: matrix.os != 'windows-latest' || matrix.python-version != 'pypy-3.11'
       run: |
         pip install -r extra_requirements.txt
         pip install zstandard cffi  # needed to test #910
       shell: bash
     - name: Run unit tests with extra packages as non-root user
+      if: matrix.os != 'windows-latest' || matrix.python-version != 'pypy-3.11'
       run: |
         export PYTHON_ZSTANDARD_IMPORT_POLICY=cffi  # needed to test #910
         python -m pyfakefs.tests.all_tests

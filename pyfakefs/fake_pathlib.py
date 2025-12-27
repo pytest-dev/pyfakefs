@@ -181,7 +181,8 @@ class _FakeAccessor(accessor):  # type: ignore[valid-type, misc]
                 )
 
             if not kwargs["follow_symlinks"] and (
-                os.chmod not in os.supports_follow_symlinks or IS_PYPY
+                os.chmod not in os.supports_follow_symlinks
+                or (IS_PYPY and not pathobj.filesystem.is_macos)
             ):
                 raise NotImplementedError(
                     "`follow_symlinks` for chmod() is not available on this system"
