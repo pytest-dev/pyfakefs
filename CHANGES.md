@@ -4,8 +4,11 @@ The released versions correspond to PyPI releases.
 
 ## Unreleased
 
+### Changes
+* added more support for PyPy 3
+
 ### Infrastructure
-* added PyPy 3.11 to CI
+* added PyPy 3.11 to CI, added PyPy builds for all OSes
 
 ## [Version 6.0.0](https://pypi.python.org/pypi/pyfakefs/6.0.0) (2025-12-21)
 Removes some deprecated functionality, removes support for Python < 3.10.

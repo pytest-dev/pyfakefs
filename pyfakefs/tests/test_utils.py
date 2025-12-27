@@ -125,7 +125,9 @@ class RealFsTestMixin:
 
     @property
     def is_windows_fs(self):
-        return TestCase.is_windows
+        if self.use_real_fs():
+            return TestCase.is_windows
+        return self.filesystem.is_windows_fs
 
     def set_windows_fs(self, value):
         if self.filesystem is not None:
@@ -136,7 +138,9 @@ class RealFsTestMixin:
 
     @property
     def is_macos(self):
-        return TestCase.is_macos
+        if self.use_real_fs():
+            return TestCase.is_macos
+        return self.filesystem.is_macos
 
     @property
     def is_pypy(self):
@@ -179,11 +183,11 @@ class RealFsTestMixin:
 
     def check_macos_only(self):
         """If called at test start, the real FS test is executed only under
-        MacOS, and the fake filesystem test emulates a MacOS system.
+        macOS, and the fake filesystem test emulates a macOS system.
         """
         if self.use_real_fs():
             if not TestCase.is_macos:
-                raise unittest.SkipTest("Testing MacOS specific functionality")
+                raise unittest.SkipTest("Testing macOS specific functionality")
         else:
             self.set_windows_fs(False)
             self.filesystem._is_macos = True
@@ -191,17 +195,17 @@ class RealFsTestMixin:
     def check_linux_and_windows(self):
         """If called at test start, the real FS test is executed only under
         Linux and Windows, and the fake filesystem test emulates a Linux
-        system under MacOS.
+        system under macOS.
         """
         if self.use_real_fs():
             if TestCase.is_macos:
-                raise unittest.SkipTest("Testing non-MacOs functionality")
+                raise unittest.SkipTest("Testing non-macOS functionality")
         else:
             self.filesystem._is_macos = False
 
     def check_case_insensitive_fs(self):
         """If called at test start, the real FS test is executed only in a
-        case-insensitive FS (e.g. Windows or MacOS), and the fake filesystem
+        case-insensitive FS (e.g. Windows or macOS), and the fake filesystem
         test emulates a case-insensitive FS under the running OS.
         """
         if self.use_real_fs():
@@ -225,7 +229,7 @@ class RealFsTestMixin:
 
     def check_posix_only(self):
         """If called at test start, the real FS test is executed only under
-        Linux and MacOS, and the fake filesystem test emulates a Linux
+        Linux and macOS, and the fake filesystem test emulates a Linux
         system under Windows.
         """
         if self.use_real_fs():
@@ -412,7 +416,7 @@ class RealFsTestMixin:
             expression(*args, **kwargs)
             self.fail("No exception was raised, OSError expected")
         except OSError as exc:
-            if isinstance(subtype, list):
+            if isinstance(subtype, (list, tuple)):
                 self.assertIn(exc.errno, subtype)
             else:
                 self.assertEqual(subtype, exc.errno)
@@ -444,15 +448,3 @@ class RealFsTestCase(TestCase, RealFsTestMixin):
 
     def tearDown(self):
         RealFsTestMixin.tearDown(self)
-
-    @property
-    def is_windows_fs(self):
-        if self.use_real_fs():
-            return self.is_windows
-        return self.filesystem.is_windows_fs
-
-    @property
-    def is_macos(self):
-        if self.use_real_fs():
-            return TestCase.is_macos
-        return self.filesystem.is_macos

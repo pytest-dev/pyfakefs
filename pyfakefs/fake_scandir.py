@@ -17,7 +17,7 @@ FakeFilesystem.
 import os
 import sys
 
-from pyfakefs.helpers import to_string, make_string_path
+from pyfakefs.helpers import to_string, make_string_path, IS_PYPY
 
 
 class DirEntry(os.PathLike):
@@ -89,7 +89,7 @@ class DirEntry(os.PathLike):
             if self._statresult_symlink is None:
                 file_object = self._filesystem.resolve(self._abspath)
                 self._statresult_symlink = file_object.stat_result.copy()
-                if self._filesystem.is_windows_fs:
+                if self._filesystem.is_windows_fs and not IS_PYPY:
                     self._statresult_symlink.st_nlink = 0
             return self._statresult_symlink
 

@@ -28,7 +28,7 @@ from pyfakefs.fake_filesystem import (
     set_uid,
     set_gid,
 )
-from pyfakefs.helpers import IN_DOCKER, IS_PYPY, get_uid, get_gid, reset_ids
+from pyfakefs.helpers import IN_DOCKER, IS_PYPY, get_uid, get_gid, reset_ids, IS_WIN
 from pyfakefs.tests.test_utils import (
     TestCase,
     RealFsTestCase,
@@ -1105,7 +1105,7 @@ class FakeOsModuleTest(FakeOsModuleTestBase):
         file_path = self.make_path("foo", "baz")
         self.create_file(file_path)
         self.assert_raises_os_error(
-            errno.EINVAL,
+            (errno.EINVAL, errno.ENOENT),
             self.os.rename,
             file_path,
             self.os.path.join(file_path, "new"),
@@ -1244,7 +1244,7 @@ class FakeOsModuleTest(FakeOsModuleTestBase):
         self.create_dir(self.os.path.join(new_path, "sub"))
 
         # not testing specific subtype:
-        # raises errno.ENOTEMPTY under Ubuntu 16.04, MacOS and pyfakefs
+        # raises errno.ENOTEMPTY under Ubuntu 16.04, macOS and pyfakefs
         # but raises errno.EEXIST at least under Ubunto 14.04
         with self.assertRaises(OSError):
             self.os.rename(old_path, new_path)
@@ -1488,7 +1488,9 @@ class FakeOsModuleTest(FakeOsModuleTestBase):
         file_path = self.os.path.join(directory, "plugh")
         self.create_file(file_path)
         self.assertTrue(self.os.path.exists(file_path))
-        self.assert_raises_os_error(errno.ENOTDIR, self.os.rmdir, file_path)
+        self.assert_raises_os_error(
+            (errno.ENOTDIR, errno.EINVAL), self.os.rmdir, file_path
+        )
         self.assert_raises_os_error(error_nr, self.os.rmdir, ".")
 
     def test_rmdir_raises_if_not_directory_posix(self):
@@ -2114,7 +2116,9 @@ class FakeOsModuleTest(FakeOsModuleTestBase):
         self.createTestFile(path)
         link_path = self.make_path("link_to_some_file")
         self.create_symlink(link_path, path)
-        if self.os.chmod not in self.os.supports_follow_symlinks or IS_PYPY:
+        if self.os.chmod not in self.os.supports_follow_symlinks or (
+            IS_PYPY and not self.is_macos
+        ):
             with self.assertRaises(NotImplementedError):
                 self.os.chmod(link_path, 0o6543, follow_symlinks=False)
         else:
@@ -2288,7 +2292,7 @@ class FakeOsModuleTest(FakeOsModuleTestBase):
         self.assertEqual(test_directories, dirs)
         self.assertEqual(test_files, files)
 
-    # os.mknod does not work under MacOS due to permission issues
+    # os.mknod does not work under macOS due to permission issues
     # so we test it under Linux only
     def test_mk_nod_can_create_a_file(self):
         self.check_linux_only()
@@ -2808,6 +2812,7 @@ class FakeOsModuleTest(FakeOsModuleTestBase):
         self.assertTrue(self.os.path.islink(link_path))
 
     @unittest.skipIf(not IS_PYPY, "follow_symlinks only not supported in PyPi")
+    @unittest.skipIf(IS_WIN, "supported in PyPy 3.11 under Windows")
     def test_link_follow_symlink_not_supported_inPypy(self):
         skip_if_symlink_not_supported()
         target_path = self.make_path("target_path")
@@ -2868,7 +2873,7 @@ class FakeOsModuleTest(FakeOsModuleTestBase):
 
     def test_mknod_umask_applied(self):
         """mkdir creates a device with umask applied."""
-        # skipping MacOs due to mknod permission issues
+        # skipping macOS due to mknod permission issues
         self.check_linux_only()
         self.os.umask(0o22)
         node1 = self.make_path("nod1")
@@ -3415,7 +3420,7 @@ class FakeOsModuleTestCaseInsensitiveFS(FakeOsModuleTestBase):
         # Regression test for #317
         self.check_posix_only()
         dest_dir_path = self.make_path("Dest")
-        # seems to behave differently under different MacOS versions
+        # seems to behave differently under different macOS versions
         self.skip_real_fs()
         new_dest_dir_path = self.make_path("dest")
         self.os.mkdir(dest_dir_path)
@@ -4715,15 +4720,15 @@ class FakeOsModuleWalkTest(FakeOsModuleTestBase):
             self.assertEqual(expected_entry[1], sorted(entry[1]))
             self.assertEqual(expected_entry[2], sorted(entry[2]))
 
-    def ResetErrno(self):
+    def reset_errno(self):
         """Reset the last seen errno."""
         self.last_errno = False
 
-    def StoreErrno(self, os_error):
+    def store_errno(self, os_error):
         """Store the last errno we saw."""
         self.last_errno = os_error.errno
 
-    def GetErrno(self):
+    def get_errno(self):
         """Return the last errno we saw."""
         return self.last_errno
 
@@ -4776,28 +4781,28 @@ class FakeOsModuleWalkTest(FakeOsModuleTestBase):
     def test_walk_calls_on_error_if_non_existent(self):
         """Calls onerror with correct errno when walking
         non-existent directory."""
-        self.ResetErrno()
+        self.reset_errno()
         directory = self.make_path("foo", "bar")
         self.assertEqual(False, self.os.path.exists(directory))
         # Calling os.walk on a non-existent directory should trigger
         # a call to the onerror method.
         # We do not actually care what, if anything, is returned.
-        for _ in self.os.walk(directory, onerror=self.StoreErrno):
+        for _ in self.os.walk(directory, onerror=self.store_errno):
             pass
-        self.assertTrue(self.GetErrno() in (errno.ENOTDIR, errno.ENOENT))
+        self.assertTrue(self.get_errno() in (errno.ENOTDIR, errno.ENOENT))
 
     def test_walk_calls_on_error_if_not_directory(self):
         """Calls onerror with correct errno when walking non-directory."""
-        self.ResetErrno()
+        self.reset_errno()
         filename = self.make_path("foobar")
         self.create_file(filename)
         self.assertEqual(True, self.os.path.exists(filename))
         # Calling `os.walk` on a file should trigger a call to the
         # `onerror` method.
         # We do not actually care what, if anything, is returned.
-        for _ in self.os.walk(filename, onerror=self.StoreErrno):
+        for _ in self.os.walk(filename, onerror=self.store_errno):
             pass
-        self.assertTrue(self.GetErrno() in (errno.ENOTDIR, errno.EACCES))
+        self.assertTrue(self.get_errno() in (errno.ENOTDIR, errno.EACCES))
 
     def test_walk_skips_removed_directories(self):
         """Caller can modify list of directories to visit while walking."""
@@ -5074,7 +5079,11 @@ class FakeOsModuleDirFdTest(FakeOsModuleTestBase):
                 os_mknod()
         self.add_supported_function(self.os.mknod)
         if self.os.mknod in self.os.supports_dir_fd:
-            if self.is_macos and sys.version_info >= (3, 13) and not is_root():
+            if (
+                self.is_macos
+                and (sys.version_info >= (3, 13) or IS_PYPY)
+                and not is_root()
+            ):
                 self.skipTest("Needs root rights under macos")
             os_mknod()
             newdir_path = self.os.path.join(self.dir_fd_path, "newdir")
@@ -5435,7 +5444,7 @@ class FakeScandirTest(FakeOsModuleTestBase):
         for item in dir_iter:
             if item.path == self.file_path:
                 scandir_stat_nlink = item.stat().st_nlink
-                if self.is_windows_fs:
+                if self.is_windows_fs and not IS_PYPY:
                     self.assertEqual(0, scandir_stat_nlink)
                 else:
                     self.assertEqual(1, scandir_stat_nlink)

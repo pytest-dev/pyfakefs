@@ -571,7 +571,7 @@ class FakePathlibFileObjectPropertyTest(RealPathlibTestCase):
         skip_if_symlink_not_supported()
         file_stat = self.os.stat(self.file_path)
         link_stat = self.os.lstat(self.file_link_path)
-        if not hasattr(self.real_os, "lchmod"):
+        if not hasattr(self.real_os, "lchmod") and not (IS_PYPY and self.is_macos):
             with self.assertRaises(NotImplementedError):
                 self.path(self.file_link_path).lchmod(0o444)
         else:
@@ -586,7 +586,9 @@ class FakePathlibFileObjectPropertyTest(RealPathlibTestCase):
         skip_if_symlink_not_supported()
         file_stat = self.os.stat(self.file_path)
         link_stat = self.os.lstat(self.file_link_path)
-        if self.os.chmod not in self.os.supports_follow_symlinks or IS_PYPY:
+        if self.os.chmod not in self.os.supports_follow_symlinks or (
+            IS_PYPY and not self.is_macos
+        ):
             with self.assertRaises(NotImplementedError):
                 self.path(self.file_link_path).chmod(0o444, follow_symlinks=False)
         else:
