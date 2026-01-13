@@ -994,6 +994,14 @@ class FakeFileWrapper:
             self._io.seek(write_seek)
         return self._read_seek
 
+    def readable(self) -> bool:
+        """Returns the readable state of the file."""
+        return self.open_modes.can_read
+
+    def writable(self) -> bool:
+        """Returns the writable state of the file."""
+        return self.open_modes.can_write
+
     def _sync_io(self) -> None:
         """Update the stream with changes to the file object contents."""
         if self._file_epoch == self.file_object.epoch:
@@ -1187,7 +1195,7 @@ class FakeFileWrapper:
 
         if reading or writing:
             self._check_open_file()
-        if not self.open_modes.can_read and reading:
+        if not self.readable() and reading:
             return self._read_error()
         if not self.opened_as_fd and not self.allow_update and writing:
             return self._write_error()
@@ -1242,12 +1250,12 @@ class FakeFileWrapper:
             raise ValueError("I/O operation on closed file")
 
     def __iter__(self) -> Iterator[str] | Iterator[bytes]:
-        if not self.open_modes.can_read:
+        if not self.readable():
             self._raise("File is not open for reading")
         return self._io.__iter__()
 
     def __next__(self):
-        if not self.open_modes.can_read:
+        if not self.readable():
             self._raise("File is not open for reading")
         return next(self._io)
 

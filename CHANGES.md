@@ -10,6 +10,10 @@ The released versions correspond to PyPI releases.
 ### Infrastructure
 * added PyPy 3.11 to CI, added PyPy builds for all OSes
 
+### Fixes
+* fixed a problem with `readable` raising an error on a file object.
+  (see [#1265](https://github.com/pytest-dev/pyfakefs/issues/1265))
+
 ## [Version 6.0.0](https://pypi.python.org/pypi/pyfakefs/6.0.0) (2025-12-21)
 Removes some deprecated functionality, removes support for Python < 3.10.
 
