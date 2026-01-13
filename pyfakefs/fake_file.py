@@ -993,7 +993,7 @@ class FakeFileWrapper:
             self._read_whence = 0
             self._io.seek(write_seek)
         return self._read_seek
-    
+
     def readable(self) -> bool:
         """Returns the readable state of the file."""
         return self.open_modes.can_read
