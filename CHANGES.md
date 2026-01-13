@@ -6,6 +6,8 @@ The released versions correspond to PyPI releases.
 
 ### Changes
 * added more support for PyPy 3
+* fixed a problem with `readable` raising an error on a file object.
+  (see [#1265](https://github.com/pytest-dev/pyfakefs/issues/1265))
 
 ### Infrastructure
 * added PyPy 3.11 to CI, added PyPy builds for all OSes

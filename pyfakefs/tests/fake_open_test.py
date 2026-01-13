@@ -1008,6 +1008,29 @@ class FakeFileOpenTest(FakeFileOpenTestBase):
             text = f.read()
             assert text == "12"
 
+    def test_readable_writable(self):
+        # regression test for #1265
+        file_path = self.make_path("foo")
+        self.create_file(file_path, contents="test")
+        with self.open(file_path, "r") as f:
+            self.assertTrue(f.readable())
+            self.assertFalse(f.writable())
+        with self.open(file_path, "w") as f:
+            self.assertFalse(f.readable())
+            self.assertTrue(f.writable())
+        with self.open(file_path, "a") as f:
+            self.assertFalse(f.readable())
+            self.assertTrue(f.writable())
+        with self.open(file_path, "r+") as f:
+            self.assertTrue(f.readable())
+            self.assertTrue(f.writable())
+        with self.open(file_path, "w+") as f:
+            self.assertTrue(f.readable())
+            self.assertTrue(f.writable())
+        with self.open(file_path, "a+") as f:
+            self.assertTrue(f.readable())
+            self.assertTrue(f.writable())
+
 
 class RealFileOpenTest(FakeFileOpenTest):
     def use_real_fs(self):
