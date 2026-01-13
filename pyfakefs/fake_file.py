@@ -999,7 +999,7 @@ class FakeFileWrapper:
         return self.open_modes.can_read
 
     def writable(self) -> bool:
-        """Returns the readable state of the file."""
+        """Returns the writable state of the file."""
         return self.open_modes.can_write
 
     def _sync_io(self) -> None:
