@@ -58,21 +58,22 @@ dev = [
     "pytest>=6.2.5",
     "pre-commit>=4.1.4",
 ]
-doc = [
-    "sphinx>=7.0.0",
-    "furo>=2024.8.6"
-]
 extra = [
-    "pandas==2.2.3",
-    "xlrd==2.0.1",
+    "pandas==2.3.3",
+    "xlrd==2.0.2",
     "openpyxl==3.1.5",
 ]
-xdist = [
-    "pytest-xdist",
+
+[project.optional-dependencies]
+doc = [
+    "sphinx>=7.0.0",
+    "furo>=2025.12.19",
+    "myst-parser>=5.0.0"
 ]
 
 [tool.setuptools]
 include-package-data = true
+packages = ["pyfakefs"]
 
 [tool.setuptools.package-data]
 where = ["pyfakefs"]
@@ -80,3 +81,18 @@ pyfakefs = ["py.typed", "**/*.parquet", "**/*.xlsx"]
 
 [tool.setuptools.dynamic]
 version = { attr = "pyfakefs.__version__" }
+
+[tool.tox]
+requires = ["tox>=4.22"]
+env_list = ["3.10", "3.11", "3.12", "3.13", "3.14", "pypy3.10"]
+
+[tool.tox.env_run_base]
+description = "Run test under {base_python}"
+dependency_groups = [
+  "dev", "extra"
+]
+pass_env = ["HOME", "USERPROFILE"]
+commands = [
+    ["python", "-m", "pyfakefs.tests.all_tests"],
+    ["python", "-m", "pytest", "pyfakefs/pytest_tests/pytest_plugin_test.py"]
+]

@@ -1,6 +1,0 @@
-# these are used to test pandas-specific patches to allow
-# pyfakefs to work with pandas
-# we use the latest version to see any problems with new versions
-pandas==2.3.3
-xlrd==2.0.2
-openpyxl==3.1.5

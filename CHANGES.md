@@ -9,6 +9,7 @@ The released versions correspond to PyPI releases.
 
 ### Infrastructure
 * added PyPy 3.11 to CI, added PyPy builds for all OSes
+* use only `pyproject.toml` for dependencies, moved `tox` configuration into `pyproject.toml`
 
 ### Fixes
 * fixed a problem with `readable` raising an error on a file object.
