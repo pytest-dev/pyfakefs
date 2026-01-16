@@ -13,11 +13,10 @@
 # limitations under the License.
 
 FROM fedora:latest
-MAINTAINER jmcgeheeiv@users.noreply.github.com
 
-ENV LANG en_US.UTF-8
-ENV LANGUAGE en_US:en
-ENV LC_ALL en_US.UTF-8
+ENV LANG=en_US.UTF-8
+ENV LANGUAGE=en_US:en
+ENV LC_ALL=en_US.UTF-8
 ARG github_repo=pytest-dev/pyfakefs
 ARG github_branch=main
 
@@ -31,11 +30,10 @@ RUN mkdir -p work \
 RUN WORK_DIR=`ls -d work/*`; mv $WORK_DIR work/pyfakefs
 RUN chown -R pyfakefs:pyfakefs work/pyfakefs
 WORKDIR work/pyfakefs
-RUN pip3 install -r requirements.txt
-RUN pip3 install -r extra_requirements.txt
+RUN pip3 install --group dev --group extra
 RUN pip3 install -e .
 
 USER pyfakefs
-ENV PYTHONPATH work/pyfakefs
+ENV PYTHONPATH=work/pyfakefs
 ENV TEST_REAL_FS=1
 CMD ["pytest", "pyfakefs/pytest_tests", "pyfakefs/tests"]

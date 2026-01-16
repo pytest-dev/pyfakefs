@@ -23,15 +23,14 @@
 #     docker run   -t pyfakefs
 
 FROM ubuntu
-MAINTAINER jmcgeheeiv@users.noreply.github.com
 
 # The Ubuntu base container does not specify a locale.
 # pyfakefs tests require at least the Latin1 character set.
 RUN apt-get update && apt-get install -y locales
 RUN locale-gen en_US.UTF-8
-ENV LANG en_US.UTF-8
-ENV LANGUAGE en_US:en
-ENV LC_ALL en_US.UTF-8
+ENV LANG=en_US.UTF-8
+ENV LANGUAGE=en_US:en
+ENV LC_ALL=en_US.UTF-8
 
 RUN apt-get update && apt-get install -y \
     python3-pip \
@@ -45,9 +44,8 @@ RUN wget https://github.com/pytest-dev/pyfakefs/archive/main.zip \
     && unzip main.zip \
     && chown -R pyfakefs:pyfakefs /pyfakefs-main
 WORKDIR /pyfakefs-main
-RUN pip3 install -r requirements.txt
-RUN pip3 install -r extra_requirements.txt
+RUN pip3 install --group dev --group extra
 
 USER pyfakefs
-ENV PYTHONPATH /pyfakefs-main
+ENV PYTHONPATH=/pyfakefs-main
 CMD ["python3", "-m", "pyfakefs.tests.all_tests"]

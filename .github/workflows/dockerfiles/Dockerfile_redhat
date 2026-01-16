@@ -13,7 +13,6 @@
 # limitations under the License.
 
 FROM registry.access.redhat.com/ubi9/ubi
-LABEL maintainer="John McGehee"
 
 ARG github_repo=pytest-dev/pyfakefs
 ARG github_branch=main
@@ -22,9 +21,9 @@ RUN yum update --disablerepo=* --enablerepo=ubi-9-appstream-rpms --enablerepo=ub
 RUN yum install -y python3.12 python3.12-pip unzip wget
 RUN python3.12 --version
 
-ENV LANG en_US.UTF-8
-ENV LANGUAGE en_US:en
-ENV LC_COLLATE C.UTF-8
+ENV LANG=en_US.UTF-8
+ENV LANGUAGE=en_US:en
+ENV LC_COLLATE=C.UTF-8
 
 RUN useradd pyfakefs
 
@@ -34,11 +33,11 @@ RUN mkdir -p work \
 RUN WORK_DIR=`ls -d work/*`; mv $WORK_DIR work/pyfakefs
 RUN chown -R pyfakefs:pyfakefs work/pyfakefs
 WORKDIR work/pyfakefs
-RUN pip3.12 install -r requirements.txt
-RUN pip3.12 install -r extra_requirements.txt
+RUN python3.12 -m pip install --upgrade pip
+RUN pip3.12 install --group dev --group extra
 RUN pip3.12 install -e .
 
 USER pyfakefs
-ENV PYTHONPATH work/pyfakefs
+ENV PYTHONPATH=work/pyfakefs
 ENV TEST_REAL_FS=1
 CMD ["python3.12", "-m", "pytest", "pyfakefs/pytest_tests", "pyfakefs/tests"]

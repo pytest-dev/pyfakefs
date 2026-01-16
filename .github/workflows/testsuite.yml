@@ -54,14 +54,14 @@ jobs:
       uses: actions/cache@v5
       with:
         path: ${{ steps.pip-cache.outputs.dir }}
-        key: ${{ matrix.os }}-${{ matrix.python-version }}-pip-${{ hashFiles('**/requirements.txt') }}-${{ hashFiles('**/extra_requirements.txt') }}
+        key: ${{ matrix.os }}-${{ matrix.python-version }}-pip-${{ hashFiles('**/pyproject.toml') }}
         restore-keys: |
           ${{ matrix.os }}-${{ matrix.python-version }}-pip-
 
     - name: Install dependencies
       run: |
         pip install setuptools wheel
-        pip install -r requirements.txt
+        pip install --group dev
     - name: Run unit tests without extra packages as non-root user
       run: |
         export TEST_REAL_FS=1
@@ -77,7 +77,7 @@ jobs:
     - name: Install extra dependencies
       if: matrix.os != 'windows-latest' || matrix.python-version != 'pypy-3.11'
       run: |
-        pip install -r extra_requirements.txt
+        pip install --group extra
         pip install zstandard cffi  # needed to test #910
       shell: bash
     - name: Run unit tests with extra packages as non-root user
@@ -123,7 +123,7 @@ jobs:
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          python -m pip install -r requirements.txt
+          python -m pip install --group dev
           python -m pip install -U pytest==${{ matrix.pytest-version }}
           python -m pip install pandas parquet pyarrow
           python -m pip install -e .
@@ -150,8 +150,7 @@ jobs:
           python-version: ${{ matrix.python-version }}
       - name: Install dependencies
         run: |
-          pip install -r requirements.txt
-          pip install -r extra_requirements.txt
+          pip install .[dev,extra]
           pip install pytest-find-dependencies
       - name: Check dependencies
         run: python -m pytest --find-dependencies pyfakefs/tests
