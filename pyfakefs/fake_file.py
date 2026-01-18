@@ -14,18 +14,20 @@
 
 """Fake implementations for different file objects."""
 
+from __future__ import annotations
+
 import errno
 import io
 import os
 import sys
 import traceback
+import weakref
 from stat import (
     S_IFREG,
     S_IFDIR,
 )
 from types import TracebackType
 from typing import (
-    Optional,
     Union,
     Any,
     cast,
@@ -133,10 +135,10 @@ class FakeFile:
         name: AnyStr,
         st_mode: int = S_IFREG | helpers.PERM_DEF_FILE,
         contents: AnyStr | None = None,
-        filesystem: Optional["FakeFilesystem"] = None,
+        filesystem: FakeFilesystem | None = None,
         encoding: str | None = None,
         errors: str | None = None,
-        side_effect: Callable[["FakeFile"], None] | None = None,
+        side_effect: Callable[[FakeFile], None] | None = None,
         open_modes: _OpenModes | None = None,
     ):
         """
@@ -161,7 +163,9 @@ class FakeFile:
         # to be backwards compatible regarding argument order, we raise on None
         if filesystem is None:
             raise ValueError("filesystem shall not be None")
-        self.filesystem: "FakeFilesystem" = filesystem
+        self._filesystem: weakref.ReferenceType[FakeFilesystem] = weakref.ref(
+            filesystem
+        )
         self._side_effect: Callable | None = side_effect
         self.name: AnyStr = name  # type: ignore[assignment]
         self.stat_result = FakeStatResult(
@@ -181,11 +185,33 @@ class FakeFile:
             len(self._byte_contents) if self._byte_contents is not None else 0
         )
         self.epoch: int = 0
-        self.parent_dir: FakeDirectory | None = None
+        self.parent_dir: weakref.ReferenceType | None = None
         # Linux specific: extended file system attributes
         self.xattr: dict = {}
         self.opened_as: AnyString = ""
         self.open_modes = open_modes
+
+    def __getstate__(self):
+        """Handle weakref to allow pickling of the filesystem and parent dir"""
+        s = self.__dict__.copy()
+        s["_filesystem"] = s["_filesystem"]()
+        parent = s["parent_dir"]
+        s["parent_dir"] = parent() if parent is not None else None
+        return s
+
+    def __setstate__(self, state):
+        self.__dict__ = state.copy()
+        self.__dict__["_filesystem"] = weakref.ref(self.__dict__["_filesystem"])
+        parent = self.__dict__["parent_dir"]
+        self.__dict__["parent_dir"] = (
+            weakref.ref(parent) if parent is not None else None
+        )
+
+    @property
+    def filesystem(self) -> FakeFilesystem:
+        fs = self._filesystem()
+        assert fs is not None
+        return fs
 
     @property
     def byte_contents(self) -> bytes | None:
@@ -250,13 +276,13 @@ class FakeFile:
         self._check_positive_int(st_size)
         if self.st_size:
             self.size = 0
-        if self.filesystem:
+        if self._filesystem():
             self.filesystem.change_disk_usage(st_size, self.name, self.st_dev)
         self.st_size = st_size
         self._byte_contents = None
 
     def _check_positive_int(self, size: int) -> None:
-        # the size should be an positive integer value
+        # the size should be a positive integer value
         if not is_int_type(size) or size < 0:
             self.filesystem.raise_os_error(errno.ENOSPC, self.name)
 
@@ -363,7 +389,7 @@ class FakeFile:
         obj: FakeFile | None = self
         while obj:
             names.insert(0, matching_string(self.name, obj.name))  # type: ignore
-            obj = obj.parent_dir
+            obj = obj.parent_dir() if obj.parent_dir else None
         sep = self.filesystem.get_path_separator(names[0])
         if names[0] == sep:
             names.pop(0)
@@ -415,7 +441,7 @@ class FakeFile:
 
 
 class FakeNullFile(FakeFile):
-    def __init__(self, filesystem: "FakeFilesystem") -> None:
+    def __init__(self, filesystem: FakeFilesystem) -> None:
         super().__init__(filesystem.devnull, filesystem=filesystem, contents="")
 
     @property
@@ -435,7 +461,7 @@ class FakeFileFromRealFile(FakeFile):
     def __init__(
         self,
         file_path: str,
-        filesystem: "FakeFilesystem",
+        filesystem: FakeFilesystem,
         side_effect: Callable | None = None,
     ) -> None:
         """
@@ -480,7 +506,7 @@ class FakeDirectory(FakeFile):
         self,
         name: str,
         perm_bits: int = helpers.PERM_DEF,
-        filesystem: Optional["FakeFilesystem"] = None,
+        filesystem: FakeFilesystem | None = None,
     ):
         """
         Args:
@@ -535,7 +561,7 @@ class FakeDirectory(FakeFile):
             self.filesystem.raise_os_error(errno.EEXIST, self.path)
 
         self._entries[path_object_name] = path_object
-        path_object.parent_dir = self
+        path_object.parent_dir = weakref.ref(self)
         if path_object.st_ino is None:
             self.filesystem.last_ino += 1
             path_object.st_ino = self.filesystem.last_ino
@@ -631,14 +657,14 @@ class FakeDirectory(FakeFile):
         """Setting the size is an error for a directory."""
         raise self.filesystem.raise_os_error(errno.EISDIR, self.path)
 
-    def has_parent_object(self, dir_object: "FakeDirectory") -> bool:
+    def has_parent_object(self, dir_object: FakeDirectory) -> bool:
         """Return `True` if dir_object is a direct or indirect parent
         directory, or if both are the same object."""
         obj: FakeDirectory | None = self
         while obj:
             if obj == dir_object:
                 return True
-            obj = obj.parent_dir
+            obj = obj.parent_dir() if obj.parent_dir else None
         return False
 
     def __str__(self) -> str:
@@ -660,7 +686,7 @@ class FakeDirectoryFromRealDirectory(FakeDirectory):
     def __init__(
         self,
         source_path: AnyPath,
-        filesystem: "FakeFilesystem",
+        filesystem: FakeFilesystem,
         read_only: bool,
         target_path: AnyPath | None = None,
     ):
@@ -743,7 +769,7 @@ class FakeFileWrapper:
         open_modes: _OpenModes,
         allow_update: bool,
         delete_on_close: bool,
-        filesystem: "FakeFilesystem",
+        filesystem: FakeFilesystem,
         newline: str | None,
         binary: bool,
         closefd: bool,
@@ -797,14 +823,20 @@ class FakeFileWrapper:
 
         if delete_on_close:
             assert filesystem, "delete_on_close=True requires filesystem"
-        self._filesystem = filesystem
+        self._filesystem = weakref.ref(filesystem)
         self.delete_on_close = delete_on_close
         # override, don't modify FakeFile.name, as FakeFilesystem expects
         # it to be the file name only, no directories.
         self.name = file_object.opened_as
         self.filedes: int | None = None
 
-    def __enter__(self) -> "FakeFileWrapper":
+    @property
+    def filesystem(self) -> FakeFilesystem:
+        fs = self._filesystem()
+        assert fs is not None
+        return fs
+
+    def __enter__(self) -> FakeFileWrapper:
         """To support usage of this fake file with the 'with' statement."""
         return self
 
@@ -819,7 +851,7 @@ class FakeFileWrapper:
 
     def _raise(self, message: str) -> NoReturn:
         if self.raw_io:
-            self._filesystem.raise_os_error(errno.EBADF, self.file_path)
+            self.filesystem.raise_os_error(errno.EBADF, self.file_path)
         raise io.UnsupportedOperation(message)
 
     def get_object(self) -> FakeFile:
@@ -832,7 +864,7 @@ class FakeFileWrapper:
         """Return the file descriptor of the file object."""
         if self.filedes is not None:
             return self.filedes
-        self._filesystem.raise_os_error(errno.EBADF)
+        self.filesystem.raise_os_error(errno.EBADF)
 
     def close(self) -> None:
         """Close the file."""
@@ -854,21 +886,21 @@ class FakeFileWrapper:
                     # if we get here, we have an open file descriptor
                     # without write permission, which has to be closed
                     assert self.filedes
-                    self._filesystem.close_open_file(self.filedes)
+                    self.filesystem.close_open_file(self.filedes)
                 raise
 
-            if self._filesystem.is_windows_fs and self._changed:
+            if self.filesystem.is_windows_fs and self._changed:
                 self.file_object.st_mtime = helpers.now()
 
         assert fd is not None
         if self._closefd:
-            self._filesystem.close_open_file(fd)
+            self.filesystem.close_open_file(fd)
         else:
-            open_files = self._filesystem.open_files[fd]
+            open_files = self.filesystem.open_files[fd]
             assert open_files is not None
             open_files.remove(self)
         if self.delete_on_close:
-            self._filesystem.remove_object(
+            self.filesystem.remove_object(
                 self.get_object().path  # type: ignore[arg-type]
             )
 
@@ -931,7 +963,7 @@ class FakeFileWrapper:
             changed = self.file_object.set_contents(contents, self._encoding)
             self.update_flush_pos()
             if changed:
-                if self._filesystem.is_windows_fs:
+                if self.filesystem.is_windows_fs:
                     self._changed = True
                 else:
                     current_time = helpers.now()
@@ -946,13 +978,13 @@ class FakeFileWrapper:
                 content_length = len(self.file_object.byte_contents)
             # an error is only raised if there is something to flush
             if content_length != buf_length:
-                self._filesystem.raise_os_error(errno.EBADF)
+                self.filesystem.raise_os_error(errno.EBADF)
 
     def update_flush_pos(self) -> None:
         self._flush_pos = self._io.tell()
 
     def _flush_related_files(self) -> None:
-        for open_files in self._filesystem.open_files[3:]:
+        for open_files in self.filesystem.open_files[3:]:
             if open_files is not None:
                 for open_file in open_files:
                     if (
@@ -1141,7 +1173,7 @@ class FakeFileWrapper:
         return write_wrapper
 
     def _adapt_size_for_related_files(self, size: int) -> None:
-        for open_files in self._filesystem.open_files[3:]:
+        for open_files in self.filesystem.open_files[3:]:
             if open_files is not None:
                 for open_file in open_files:
                     if (
@@ -1204,7 +1236,7 @@ class FakeFileWrapper:
             self._sync_io()
             if not self.is_stream:
                 self.flush()
-            if not self._filesystem.is_windows_fs:
+            if not self.filesystem.is_windows_fs:
                 self.file_object.st_atime = helpers.now()
         if truncate:
             return self._truncate_wrapper()
@@ -1222,7 +1254,7 @@ class FakeFileWrapper:
         def read_error(*args, **kwargs):
             """Throw an error unless the argument is zero."""
             if args and args[0] == 0:
-                if self._filesystem.is_windows_fs and self.raw_io:
+                if self.filesystem.is_windows_fs and self.raw_io:
                     return b"" if self._binary else ""
             self._raise("File is not open for reading.")
 
@@ -1232,15 +1264,15 @@ class FakeFileWrapper:
         def write_error(*args, **kwargs):
             """Throw an error."""
             if self.raw_io:
-                if self._filesystem.is_windows_fs and args and len(args[0]) == 0:
+                if self.filesystem.is_windows_fs and args and len(args[0]) == 0:
                     return 0
             self._raise("File is not open for writing.")
 
         return write_error
 
     def _is_open(self) -> bool:
-        if self.filedes is not None and self.filedes < len(self._filesystem.open_files):
-            open_files = self._filesystem.open_files[self.filedes]
+        if self.filedes is not None and self.filedes < len(self.filesystem.open_files):
+            open_files = self.filesystem.open_files[self.filedes]
             if open_files is not None and self in open_files:
                 return True
         return False
@@ -1292,7 +1324,7 @@ class StandardStreamWrapper:
     def is_stream(self) -> bool:
         return True
 
-    def __enter__(self) -> "StandardStreamWrapper":
+    def __enter__(self) -> StandardStreamWrapper:
         """To support usage of this standard stream with the 'with' statement."""
         return self
 
@@ -1313,11 +1345,11 @@ class FakeDirWrapper:
         self,
         file_object: FakeDirectory,
         file_path: AnyString,
-        filesystem: "FakeFilesystem",
+        filesystem: FakeFilesystem,
     ):
         self.file_object = file_object
         self.file_path = file_path
-        self._filesystem = filesystem
+        self._filesystem = weakref.ref(filesystem)
         self.filedes: int | None = None
 
     def get_object(self) -> FakeDirectory:
@@ -1337,8 +1369,9 @@ class FakeDirWrapper:
 
     def close_fd(self, fd: int | None) -> None:
         """Close the directory."""
-        assert fd is not None
-        self._filesystem.close_open_file(fd)
+        fs = self._filesystem()
+        assert fs is not None and fd is not None
+        fs.close_open_file(fd)
 
     def read(self, numBytes: int = -1) -> bytes:
         """Read from the directory."""
@@ -1349,7 +1382,7 @@ class FakeDirWrapper:
         self.file_object.write(contents)
         return len(contents)
 
-    def __enter__(self) -> "FakeDirWrapper":
+    def __enter__(self) -> FakeDirWrapper:
         """To support usage of this fake directory with the 'with' statement."""
         return self
 
@@ -1370,12 +1403,12 @@ class FakePipeWrapper:
 
     def __init__(
         self,
-        filesystem: "FakeFilesystem",
+        filesystem: FakeFilesystem,
         fd: int,
         can_write: bool,
         mode: str = "",
     ):
-        self._filesystem = filesystem
+        self._filesystem = weakref.ref(filesystem)
         self.fd = fd  # the real file descriptor
         self.can_write = can_write
         self.file_object = None
@@ -1384,7 +1417,7 @@ class FakePipeWrapper:
         if mode:
             self.real_file = open(fd, mode)
 
-    def __enter__(self) -> "FakePipeWrapper":
+    def __enter__(self) -> FakePipeWrapper:
         """To support usage of this fake pipe with the 'with' statement."""
         return self
 
@@ -1427,8 +1460,9 @@ class FakePipeWrapper:
 
     def close_fd(self, fd: int | None) -> None:
         """Close the pipe descriptor with the given file descriptor."""
-        assert fd is not None
-        open_files = self._filesystem.open_files[fd]
+        fs = self._filesystem()
+        assert fs is not None and fd is not None
+        open_files = fs.open_files[fd]
         assert open_files is not None
         open_files.remove(self)
         if self.real_file:

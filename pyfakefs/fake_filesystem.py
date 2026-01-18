@@ -81,6 +81,8 @@ True
 True
 """
 
+from __future__ import annotations
+
 import contextlib
 import dataclasses
 import errno
@@ -89,6 +91,7 @@ import os
 import random
 import sys
 import tempfile
+import weakref
 from collections import namedtuple, OrderedDict
 from doctest import TestResults
 from enum import Enum
@@ -108,6 +111,7 @@ from typing import (
     AnyStr,
     overload,
     NoReturn,
+    TYPE_CHECKING,
 )
 
 from collections.abc import Callable
@@ -125,6 +129,9 @@ from pyfakefs.helpers import (
     POSIX_PROPERTIES,
     FSType,
 )
+
+if TYPE_CHECKING:
+    from pyfakefs.fake_filesystem_unittest import Patcher
 
 if sys.platform.startswith("linux"):
     # on newer Linux system, the default maximum recursion depth is 40
@@ -202,7 +209,7 @@ class FakeFilesystem:
         self,
         path_separator: str = os.path.sep,
         total_size: int | None = None,
-        patcher: Any = None,
+        patcher: Patcher | None = None,
         create_temp_dir: bool = False,
     ) -> None:
         """
@@ -220,7 +227,9 @@ class FakeFilesystem:
         >>> filesystem = FakeFilesystem(path_separator='/')
 
         """
-        self.patcher = patcher
+        self._patcher: weakref.ReferenceType[Patcher] | None = (
+            weakref.ref(patcher) if patcher else None
+        )
         self.create_temp_dir = create_temp_dir
 
         # is_windows_fs can be used to test the behavior of pyfakefs under
@@ -270,6 +279,29 @@ class FakeFilesystem:
         # set from outside if needed
         self.patch_open_code = PatchMode.OFF
         self.shuffle_listdir_results = True
+
+    def __getstate__(self):
+        """Handle weakref to allow pickling of the patcher"""
+        s = self.__dict__.copy()
+        p = s["_patcher"]
+        s["_patcher"] = p() if p is not None else None
+        return s
+
+    def __setstate__(self, state):
+        self.__dict__ = state.copy()
+        p = self.__dict__["_patcher"]
+        self.__dict__["_patcher"] = weakref.ref(p) if p is not None else None
+
+    @property
+    def has_patcher(self) -> bool:
+        return self._patcher is not None
+
+    @property
+    def patcher(self) -> Patcher:
+        assert self._patcher is not None
+        p = self._patcher()
+        assert p is not None
+        return p
 
     @property
     def is_linux(self) -> bool:
@@ -443,7 +475,7 @@ class FakeFilesystem:
         Raises:
             RuntimeError: if the file system was not created by a `Patcher`.
         """
-        if self.patcher is None:
+        if not self.has_patcher:
             raise RuntimeError(
                 "pause() can only be called from a fake file "
                 "system object created by a Patcher object"
@@ -458,7 +490,7 @@ class FakeFilesystem:
         Raises:
             RuntimeError: if the file system has not been created by `Patcher`.
         """
-        if self.patcher is None:
+        if not self.has_patcher:
             raise RuntimeError(
                 "resume() can only be called from a fake file "
                 "system object created by a Patcher object"
@@ -467,7 +499,7 @@ class FakeFilesystem:
 
     def clear_cache(self) -> None:
         """Clear the cache of non-patched modules."""
-        if self.patcher:
+        if self.has_patcher:
             self.patcher.clear_cache()
 
     def raise_os_error(
@@ -745,7 +777,7 @@ class FakeFilesystem:
             file_object = self.resolve(entry_path)
         if not is_root():
             # make sure stat raises if a parent dir is not readable
-            parent_dir = file_object.parent_dir
+            parent_dir = file_object.parent_dir() if file_object.parent_dir else None
             if parent_dir:
                 self._get_object(parent_dir.path, check_read_perm=False)  # type: ignore[arg-type]
 
@@ -2536,7 +2568,7 @@ class FakeFilesystem:
 
         # we have to pause patching to get the distribution
         # from the real filesystem if we are in patch mode
-        if self.patcher:
+        if self.has_patcher:
             self.pause()
         try:
             dist_files = distribution(package_name).files
@@ -2545,7 +2577,7 @@ class FakeFilesystem:
             for metadata_file in dist_files:
                 self.add_real_file(metadata_file.locate())
         finally:
-            if self.patcher:
+            if self.has_patcher:
                 self.resume()
 
     def create_file_internally(

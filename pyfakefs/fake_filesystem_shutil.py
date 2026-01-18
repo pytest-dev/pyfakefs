@@ -28,12 +28,19 @@ The fake implementation is automatically involved if using
 or directly `Patcher`.
 """
 
+from __future__ import annotations
+
 import functools
 import os
 import shutil
 import sys
+import weakref
 from threading import RLock
 from collections.abc import Callable
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from pyfakefs.fake_filesystem import FakeFilesystem
 
 
 class FakeShutilModule:
@@ -69,9 +76,17 @@ class FakeShutilModule:
         Args:
           filesystem:  FakeFilesystem used to provide file system information
         """
-        self.filesystem = filesystem
+        self._filesystem: weakref.ReferenceType[FakeFilesystem] = weakref.ref(
+            filesystem
+        )
         self.shutil_module = shutil
         self._patch_level = 0
+
+    @property
+    def filesystem(self) -> FakeFilesystem:
+        fs = self._filesystem()
+        assert fs is not None
+        return fs
 
     def _start_patching_global_vars(self):
         self._patch_level += 1

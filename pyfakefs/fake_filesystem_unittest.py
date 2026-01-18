@@ -50,6 +50,7 @@ import tempfile
 import tokenize
 import unittest
 import warnings
+import weakref
 from importlib import reload
 from importlib.abc import Loader, MetaPathFinder
 from importlib.machinery import ModuleSpec
@@ -1253,9 +1254,9 @@ class DynamicPatcher(MetaPathFinder, Loader):
     """
 
     def __init__(self, patcher: Patcher) -> None:
-        self._patcher = patcher
+        self._patcher = weakref.ref(patcher)
         self.sysmodules = {}
-        self.modules = self._patcher.fake_modules
+        self.modules = self.patcher.fake_modules
         self._loaded_module_names: set[str] = set()
         self.cleanup_handlers = patcher.cleanup_handlers
 
@@ -1272,11 +1273,11 @@ class DynamicPatcher(MetaPathFinder, Loader):
     def cleanup(self) -> None:
         for module_name in self.sysmodules:
             sys.modules[module_name] = self.sysmodules[module_name]
-        for module in self._patcher.modules_to_reload:
+        for module in self.patcher.modules_to_reload:
             if module.__name__ in sys.modules:
                 reload(module)
         reloaded_module_names = [
-            module.__name__ for module in self._patcher.modules_to_reload
+            module.__name__ for module in self.patcher.modules_to_reload
         ]
         # Delete all modules loaded during the test, ensuring that
         # they are reloaded after the test.
@@ -1299,7 +1300,7 @@ class DynamicPatcher(MetaPathFinder, Loader):
         """Checks if the module with the given name is a module existing in the fake
         filesystem and returns its path in this case.
         """
-        fs = self._patcher.fs
+        fs = self.patcher.fs
         # we assume that the module name is the absolute module path
         if fs is not None:
             base_path = name.replace(".", fs.path_separator)
@@ -1313,6 +1314,12 @@ class DynamicPatcher(MetaPathFinder, Loader):
                     return fs.absnormpath(init_path)
         return ""
 
+    @property
+    def patcher(self):
+        p = self._patcher()
+        assert p is not None
+        return p
+
     def find_spec(
         self,
         fullname: str,
@@ -1322,7 +1329,7 @@ class DynamicPatcher(MetaPathFinder, Loader):
         """Module finder."""
         if self.needs_patch(fullname):
             return ModuleSpec(fullname, self)
-        if self._patcher.patch_open_code != PatchMode.OFF:
+        if self.patcher.patch_open_code != PatchMode.OFF:
             # handle modules created in the fake filesystem
             module_path = self.fake_module_path(fullname)
             if module_path:
