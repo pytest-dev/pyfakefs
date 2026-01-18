@@ -35,6 +35,7 @@ import posixpath
 import re
 import sys
 import warnings
+import weakref
 from pathlib import PurePath
 
 from collections.abc import Callable
@@ -60,7 +61,7 @@ _WIN_RESERVED_NAMES = (
 def init_module(filesystem):
     """Initializes the fake module with the fake file system."""
     # pylint: disable=protected-access
-    FakePath.filesystem = filesystem
+    FakePath.filesystem = weakref.ref(filesystem)
     if sys.version_info < (3, 12):
         FakePathlibModule.WindowsPath._flavour = _FakeWindowsFlavour(filesystem)
         FakePathlibModule.PosixPath._flavour = _FakePosixFlavour(filesystem)
@@ -98,8 +99,8 @@ def init_module(filesystem):
 def _wrap_strfunc(fake_fct, original_fct):
     @functools.wraps(fake_fct)
     def _wrapped(pathobj, *args, **kwargs):
-        fs: FakeFilesystem = pathobj.filesystem
-        if fs.patcher:
+        fs: FakeFilesystem = pathobj.filesystem()
+        if fs.has_patcher:
             if is_called_from_skipped_module(
                 skip_names=fs.patcher.skip_names,
                 case_sensitive=fs.is_case_sensitive,
@@ -113,8 +114,8 @@ def _wrap_strfunc(fake_fct, original_fct):
 def _wrap_binary_strfunc(fake_fct, original_fct):
     @functools.wraps(fake_fct)
     def _wrapped(pathobj1, pathobj2, *args):
-        fs: FakeFilesystem = pathobj1.filesystem
-        if fs.patcher:
+        fs: FakeFilesystem = pathobj1.filesystem()
+        if fs.has_patcher:
             if is_called_from_skipped_module(
                 skip_names=fs.patcher.skip_names,
                 case_sensitive=fs.is_case_sensitive,
@@ -128,8 +129,8 @@ def _wrap_binary_strfunc(fake_fct, original_fct):
 def _wrap_binary_strfunc_reverse(fake_fct, original_fct):
     @functools.wraps(fake_fct)
     def _wrapped(pathobj1, pathobj2, *args):
-        fs: FakeFilesystem = pathobj2.filesystem
-        if fs.patcher:
+        fs: FakeFilesystem = pathobj2.filesystem()
+        if fs.has_patcher:
             if is_called_from_skipped_module(
                 skip_names=fs.patcher.skip_names,
                 case_sensitive=fs.is_case_sensitive,
@@ -182,12 +183,12 @@ class _FakeAccessor(accessor):  # type: ignore[valid-type, misc]
 
             if not kwargs["follow_symlinks"] and (
                 os.chmod not in os.supports_follow_symlinks
-                or (IS_PYPY and not pathobj.filesystem.is_macos)
+                or (IS_PYPY and not pathobj.filesystem().is_macos)
             ):
                 raise NotImplementedError(
                     "`follow_symlinks` for chmod() is not available on this system"
                 )
-        return pathobj.filesystem.chmod(str(pathobj), *args, **kwargs)
+        return pathobj.filesystem().chmod(str(pathobj), *args, **kwargs)
 
     mkdir = _wrap_strfunc(FakeFilesystem.makedir, os.mkdir)
 
@@ -242,7 +243,7 @@ if sys.version_info < (3, 12):
     class _FakeFlavour(flavour):  # type: ignore[valid-type, misc]
         """Fake Flavour implementation used by PurePath and _Flavour"""
 
-        filesystem = None
+        # filesystem = None
 
         ext_namespace_prefix = "\\\\?\\"
 
@@ -251,8 +252,14 @@ if sys.version_info < (3, 12):
         }
 
         def __init__(self, filesystem):
-            self.filesystem = filesystem
+            self._filesystem = weakref.ref(filesystem)
             super().__init__()
+
+        @property
+        def filesystem(self) -> FakeFilesystem:
+            fs = self._filesystem()
+            assert fs is not None
+            return fs
 
         @staticmethod
         def _split_extended_path(path, ext_prefix=ext_namespace_prefix):
@@ -555,13 +562,13 @@ if sys.version_info < (3, 12):
 else:  # Python >= 3.12
 
     class FakePosixPathModule(FakePathModule):
-        def __init__(self, filesystem: "FakeFilesystem", os_module: "FakeOsModule"):
+        def __init__(self, filesystem: FakeFilesystem, os_module: "FakeOsModule"):
             super().__init__(filesystem, os_module)
             with self.filesystem.use_fs_type(FSType.POSIX):
                 self.reset(self.filesystem)
 
     class FakeWindowsPathModule(FakePathModule):
-        def __init__(self, filesystem: "FakeFilesystem", os_module: "FakeOsModule"):
+        def __init__(self, filesystem: FakeFilesystem, os_module: "FakeOsModule"):
             super().__init__(filesystem, os_module)
             with self.filesystem.use_fs_type(FSType.WINDOWS):
                 self.reset(self.filesystem)
@@ -592,15 +599,21 @@ class FakePath(pathlib.Path):
     """
 
     # the underlying fake filesystem
-    filesystem = None
+    _filesystem: weakref.ReferenceType[FakeFilesystem]
     skip_names: list[str] = []
+
+    @classmethod
+    def filesystem(cls) -> FakeFilesystem:
+        fs = cls._filesystem()
+        assert fs is not None
+        return fs
 
     def __new__(cls, *args, **kwargs):
         """Creates the correct subclass based on OS."""
         if cls is FakePathlibModule.Path:
             cls = (
                 FakePathlibModule.WindowsPath
-                if cls.filesystem.is_windows_fs
+                if cls.filesystem().is_windows_fs  # pytype: disable=attribute-error
                 else FakePathlibModule.PosixPath
             )
         if sys.version_info < (3, 12):
@@ -648,7 +661,7 @@ class FakePath(pathlib.Path):
         """Return a new path pointing to the current working directory
         (as returned by os.getcwd()).
         """
-        return cls(cls.filesystem.cwd)
+        return cls(cls.filesystem().cwd)
 
     if sys.version_info < (3, 12):  # in 3.12, we can use the pathlib implementation
 
@@ -672,7 +685,7 @@ class FakePath(pathlib.Path):
             if path is None:
                 self.stat()
                 path = str(self.absolute())
-            path = self.filesystem.absnormpath(path)
+            path = self.filesystem().absnormpath(path)
             return FakePath(path)
 
     def open(self, mode="r", buffering=-1, encoding=None, errors=None, newline=None):
@@ -683,7 +696,7 @@ class FakePath(pathlib.Path):
                 or permission is denied.
         """
         return fake_open(
-            self.filesystem,
+            self.filesystem(),
             self.skip_names,
             self._path(),
             mode,
@@ -701,7 +714,7 @@ class FakePath(pathlib.Path):
                 invalid or permission is denied.
         """
         with fake_open(
-            self.filesystem,
+            self.filesystem(),
             self.skip_names,
             self._path(),
             mode="rb",
@@ -713,7 +726,7 @@ class FakePath(pathlib.Path):
         Open the fake file in text mode, read it, and close the file.
         """
         with fake_open(
-            self.filesystem,
+            self.filesystem(),
             self.skip_names,
             self._path(),
             mode="r",
@@ -733,7 +746,7 @@ class FakePath(pathlib.Path):
         # type-check for the buffer interface before truncating the file
         view = memoryview(data)
         with fake_open(
-            self.filesystem,
+            self.filesystem(),
             self.skip_names,
             self._path(),
             mode="wb",
@@ -758,7 +771,7 @@ class FakePath(pathlib.Path):
         if not isinstance(data, str):
             raise TypeError("data must be str, not %s" % data.__class__.__name__)
         with fake_open(
-            self.filesystem,
+            self.filesystem(),
             self.skip_names,
             self._path(),
             mode="w",
@@ -774,15 +787,15 @@ class FakePath(pathlib.Path):
         returned by os.path.expanduser('~')).
         """
         home = os.path.expanduser("~")
-        if cls.filesystem.is_windows_fs != (os.name == "nt"):
+        if cls.filesystem().is_windows_fs != (os.name == "nt"):
             username = os.path.split(home)[1]
-            if cls.filesystem.is_windows_fs:
+            if cls.filesystem().is_windows_fs:
                 home = os.path.join("C:", "Users", username)
             else:
                 home = os.path.join("home", username)
-            if not cls.filesystem.exists(home):
-                cls.filesystem.create_dir(home)
-        return cls(home.replace(os.sep, cls.filesystem.path_separator))
+            if not cls.filesystem().exists(home):
+                cls.filesystem().create_dir(home)
+        return cls(home.replace(os.sep, cls.filesystem().path_separator))
 
     def samefile(self, other_path):
         """Return whether other_path is the same or not as this file
@@ -799,7 +812,7 @@ class FakePath(pathlib.Path):
         try:
             other_st = other_path.stat()
         except AttributeError:
-            other_st = self.filesystem.stat(other_path)
+            other_st = self.filesystem().stat(other_path)
         return st.st_ino == other_st.st_ino and st.st_dev == other_st.st_dev
 
     def expanduser(self):
@@ -808,7 +821,7 @@ class FakePath(pathlib.Path):
         """
         return FakePath(
             os.path.expanduser(self._path()).replace(
-                os.path.sep, self.filesystem.path_separator
+                os.path.sep, self.filesystem().path_separator
             )
         )
 
@@ -826,9 +839,9 @@ class FakePath(pathlib.Path):
         """
         if self.exists():
             if exist_ok:
-                self.filesystem.utime(self._path(), times=None)
+                self.filesystem().utime(self._path(), times=None)
             else:
-                self.filesystem.raise_os_error(errno.EEXIST, self._path())
+                self.filesystem().raise_os_error(errno.EEXIST, self._path())
         else:
             fake_file = self.open("w", encoding="utf8")
             fake_file.close()
@@ -905,7 +918,7 @@ class FakePathlibModule:
             and not IS_PYPY
             and not isinstance(os, FakeOsModule)
         ):
-            self._os = FakeOsModule(FakePath.filesystem)
+            self._os = FakeOsModule(FakePath.filesystem())
             pathlib_os = (
                 "pathlib._local.os" if sys.version_info[:2] == (3, 13) else "pathlib.os"
             )

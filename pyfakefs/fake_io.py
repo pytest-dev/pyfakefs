@@ -16,9 +16,12 @@
 fake ``io`` module replacement.
 """
 
+from __future__ import annotations
+
 import _io  # pytype: disable=import-error
 import io
 import sys
+import weakref
 from enum import Enum
 from typing import (
     Any,
@@ -63,14 +66,22 @@ class FakeIoModule:
         """
         return ["open", "open_code"]
 
-    def __init__(self, filesystem: "FakeFilesystem"):
+    def __init__(self, filesystem: FakeFilesystem):
         """
         Args:
             filesystem: FakeFilesystem used to provide file system information.
         """
-        self.filesystem = filesystem
+        self._filesystem: weakref.ReferenceType[FakeFilesystem] = weakref.ref(
+            filesystem
+        )
         self.skip_names: list[str] = []
         self._io_module = io
+
+    @property
+    def filesystem(self) -> FakeFilesystem:
+        fs = self._filesystem()
+        assert fs is not None
+        return fs
 
     def open(
         self,
@@ -87,8 +98,10 @@ class FakeIoModule:
         """Redirect the call to FakeFileOpen.
         See FakeFileOpen.call() for description.
         """
+        fs = self.filesystem
+        assert fs is not None
         return fake_open(
-            self.filesystem,
+            fs,
             self.skip_names,
             file,
             mode,
@@ -127,7 +140,7 @@ class FakeIoModule:
 class FakeIoModule2(FakeIoModule):
     """Similar to ``FakeIoModule``, but fakes `_io` instead of `io`."""
 
-    def __init__(self, filesystem: "FakeFilesystem"):
+    def __init__(self, filesystem: FakeFilesystem):
         """
         Args:
             filesystem: FakeFilesystem used to provide file system information.
@@ -151,13 +164,15 @@ if sys.platform != "win32":
             """
             return ["fcntl", "ioctl", "flock", "lockf"]
 
-        def __init__(self, filesystem: "FakeFilesystem"):
+        def __init__(self, filesystem: FakeFilesystem):
             """
             Args:
                 filesystem: FakeFilesystem used to provide file system
                     information (currently not used).
             """
-            self.filesystem = filesystem
+            self.filesystem: weakref.ReferenceType[FakeFilesystem] = weakref.ref(
+                filesystem
+            )
             self._fcntl_module = fcntl
 
         def fcntl(self, fd: int, cmd: int, arg: int = 0) -> int | bytes:
@@ -178,9 +193,9 @@ if sys.platform != "win32":
 
         def __getattribute__(self, name):
             """Prevents patching of skipped modules."""
-            fs: FakeFilesystem = object.__getattribute__(self, "filesystem")
-            fnctl_module = object.__getattribute__(self, "_fcntl_module")
-            if fs.patcher:
+            fs: FakeFilesystem = object.__getattribute__(self, "filesystem")()
+            if fs.has_patcher:
+                fnctl_module = object.__getattribute__(self, "_fcntl_module")
                 if is_called_from_skipped_module(
                     skip_names=fs.patcher.skip_names,
                     case_sensitive=fs.is_case_sensitive,

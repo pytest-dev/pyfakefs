@@ -209,8 +209,8 @@ class FakeDirectoryUnitTest(TestCase):
 
 class SetLargeFileSizeTest(TestCase):
     def setUp(self):
-        filesystem = fake_filesystem.FakeFilesystem()
-        self.fake_file = fake_filesystem.FakeFile("foobar", filesystem=filesystem)
+        self.filesystem = fake_filesystem.FakeFilesystem()
+        self.fake_file = fake_filesystem.FakeFile("foobar", filesystem=self.filesystem)
 
     def test_should_throw_if_size_is_not_integer(self):
         with self.raises_os_error(errno.ENOSPC):

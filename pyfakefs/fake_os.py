@@ -16,12 +16,15 @@
 fake :py:mod:`os` module replacement.
 """
 
+from __future__ import annotations
+
 import errno
 import functools
 import inspect
 import os
 import sys
 import uuid
+import weakref
 from contextlib import contextmanager
 from stat import (
     S_IFREG,
@@ -145,19 +148,27 @@ class FakeOsModule:
             ]
         return _dir
 
-    def __init__(self, filesystem: "FakeFilesystem"):
+    def __init__(self, filesystem: FakeFilesystem):
         """Also exposes self.path (to fake os.path).
 
         Args:
             filesystem: FakeFilesystem used to provide file system information
         """
-        self.filesystem = filesystem
+        self._filesystem: weakref.ReferenceType[FakeFilesystem] = weakref.ref(
+            filesystem
+        )
         self.os_module: Any = os
-        self.path = FakePathModule(self.filesystem, self)
+        self.path = FakePathModule(filesystem, self)
         self._supports_follow_symlinks: set | None = None
         self._supports_dir_fd: set | None = None
         self._supports_effective_ids: set | None = None
         self._supports_fd: set | None = None
+
+    @property
+    def filesystem(self) -> FakeFilesystem:
+        fs = self._filesystem()
+        assert fs is not None
+        return fs
 
     @property
     def devnull(self) -> str:
@@ -1471,7 +1482,7 @@ def handle_original_call(f: Callable) -> Callable:
         if not should_use_original and args:
             self = args[0]
             fs: FakeFilesystem = self.filesystem
-            if self.filesystem.patcher:
+            if fs.has_patcher:
                 skip_names = fs.patcher.skip_names
                 if is_called_from_skipped_module(
                     skip_names=skip_names,

@@ -481,7 +481,7 @@ class TextBufferIO(io.TextIOWrapper):
 
 
 def is_called_from_skipped_module(
-    skip_names: list, case_sensitive: bool, check_open_code: bool = False
+    skip_names: list | set, case_sensitive: bool, check_open_code: bool = False
 ) -> bool:
     def starts_with(path, string):
         if case_sensitive:

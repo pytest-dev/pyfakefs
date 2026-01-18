@@ -14,10 +14,17 @@
 FakeFilesystem.
 """
 
+from __future__ import annotations
+
 import os
 import sys
+import weakref
+from typing import TYPE_CHECKING
 
 from pyfakefs.helpers import to_string, make_string_path, IS_PYPY
+
+if TYPE_CHECKING:
+    from pyfakefs.fake_filesystem import FakeFilesystem
 
 
 class DirEntry(os.PathLike):
@@ -30,7 +37,7 @@ class DirEntry(os.PathLike):
         Args:
             filesystem: the fake filesystem used for implementation.
         """
-        self._filesystem = filesystem
+        self._filesystem = weakref.ref(filesystem)
         self.name = ""
         self.path = ""
         self._abspath = ""
@@ -39,6 +46,12 @@ class DirEntry(os.PathLike):
         self._isdir = False
         self._statresult = None
         self._statresult_symlink = None
+
+    @property
+    def filesystem(self) -> FakeFilesystem:
+        fs = self._filesystem()
+        assert fs is not None
+        return fs
 
     def inode(self):
         """Return the inode number of the entry."""
@@ -87,17 +100,17 @@ class DirEntry(os.PathLike):
         """
         if follow_symlinks:
             if self._statresult_symlink is None:
-                file_object = self._filesystem.resolve(self._abspath)
+                file_object = self.filesystem.resolve(self._abspath)
                 self._statresult_symlink = file_object.stat_result.copy()
-                if self._filesystem.is_windows_fs and not IS_PYPY:
+                if self.filesystem.is_windows_fs and not IS_PYPY:
                     self._statresult_symlink.st_nlink = 0
             return self._statresult_symlink
 
         if self._statresult is None:
-            file_object = self._filesystem.lresolve(self._abspath)
+            file_object = self.filesystem.lresolve(self._abspath)
             self._inode = file_object.st_ino
             self._statresult = file_object.stat_result.copy()
-            if self._filesystem.is_windows_fs:
+            if self.filesystem.is_windows_fs:
                 self._statresult.st_nlink = 0
         return self._statresult
 
@@ -109,9 +122,9 @@ class DirEntry(os.PathLike):
         def is_junction(self) -> bool:
             """Return `True` if this entry is a junction.
             Junctions are not a part of posix semantic."""
-            if not self._filesystem.is_windows_fs:
+            if not self.filesystem.is_windows_fs:
                 return False
-            file_object = self._filesystem.resolve(self._abspath)
+            file_object = self.filesystem.resolve(self._abspath)
             return file_object.is_junction
 
 
@@ -120,14 +133,16 @@ class ScanDirIter:
     function."""
 
     def __init__(self, filesystem, path):
-        self.filesystem = filesystem
+        self._filesystem = weakref.ref(filesystem)
         if isinstance(path, int):
             if self.filesystem.is_windows_fs:
                 raise NotImplementedError(
                     "scandir does not support file descriptor path argument"
                 )
             self.abspath = self.filesystem.absnormpath(
-                self.filesystem.get_open_file(path).get_object().path
+                self.filesystem.get_open_file(path)
+                .get_object()
+                .path  # pytype:disable=attribute-error
             )
             self.path = ""
             self.entry_iter = iter(tuple())
@@ -139,6 +154,12 @@ class ScanDirIter:
             self.path = to_string(path)
         entries = self.filesystem.confirmdir(self.abspath, check_exe_perm=False).entries
         self.entry_iter = iter(tuple(entries))
+
+    @property
+    def filesystem(self) -> FakeFilesystem:
+        fs = self._filesystem()
+        assert fs is not None
+        return fs
 
     def __iter__(self):
         return self

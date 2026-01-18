@@ -14,10 +14,14 @@
 
 """A fake open() function replacement. See ``fake_filesystem`` for usage."""
 
+from __future__ import annotations
+
 import errno
 import io
 import os
 import sys
+import weakref
+from collections.abc import Callable
 from stat import (
     S_ISDIR,
 )
@@ -28,8 +32,6 @@ from typing import (
     TYPE_CHECKING,
     IO,
 )
-
-from collections.abc import Callable
 
 from pyfakefs import helpers
 from pyfakefs.fake_file import (
@@ -69,7 +71,7 @@ _OPEN_MODE_MAP = {
 
 
 def fake_open(
-    filesystem: "FakeFilesystem",
+    filesystem: FakeFilesystem,
     skip_names: list[str],
     file: AnyStr | int,
     mode: str = "r",
@@ -118,7 +120,7 @@ class FakeFileOpen:
 
     def __init__(
         self,
-        filesystem: "FakeFilesystem",
+        filesystem: FakeFilesystem,
         delete_on_close: bool = False,
         raw_io: bool = False,
     ):
@@ -127,9 +129,17 @@ class FakeFileOpen:
           filesystem:  FakeFilesystem used to provide file system information
           delete_on_close:  optional boolean, deletes file on close()
         """
-        self.filesystem = filesystem
+        self._filesystem: weakref.ReferenceType[FakeFilesystem] = weakref.ref(
+            filesystem
+        )
         self._delete_on_close = delete_on_close
         self.raw_io = raw_io
+
+    @property
+    def filesystem(self) -> FakeFilesystem:
+        fs = self._filesystem()
+        assert fs is not None
+        return fs
 
     def __call__(self, *args: Any, **kwargs: Any) -> AnyFileWrapper:
         """Redirects calls to file() or open() to appropriate method."""

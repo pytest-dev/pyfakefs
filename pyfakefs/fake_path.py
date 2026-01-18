@@ -14,11 +14,14 @@
 
 """Faked ``os.path`` module replacement. See ``fake_filesystem`` for usage."""
 
+from __future__ import annotations
+
 import errno
 import functools
 import inspect
 import os
 import sys
+import weakref
 from stat import (
     S_IFDIR,
     S_IFMT,
@@ -104,19 +107,27 @@ class FakePathModule:
             dir_list += ["isjunction", "splitroot"]
         return dir_list
 
-    def __init__(self, filesystem: "FakeFilesystem", os_module: "FakeOsModule"):
+    def __init__(self, filesystem: FakeFilesystem, os_module: FakeOsModule):
         """Init.
 
         Args:
             filesystem: FakeFilesystem used to provide file system information
         """
-        self.filesystem = filesystem
+        self._filesystem: weakref.ReferenceType[FakeFilesystem] = weakref.ref(
+            filesystem
+        )
         self._os_path = self._OS_PATH_COPY
         self._os_path.os = self.os = os_module  # type: ignore[attr-defined]
         self.reset(filesystem)
 
+    @property
+    def filesystem(self) -> FakeFilesystem:
+        fs = self._filesystem()
+        assert fs is not None
+        return fs
+
     @classmethod
-    def reset(cls, filesystem: "FakeFilesystem") -> None:
+    def reset(cls, filesystem: FakeFilesystem) -> None:
         cls.sep = filesystem.path_separator
         cls.altsep = filesystem.alternative_path_separator
         cls.linesep = filesystem.line_separator
@@ -521,7 +532,7 @@ if sys.platform == "win32":
             else:
                 return ["_isdir"]
 
-        def __init__(self, filesystem: "FakeFilesystem"):
+        def __init__(self, filesystem: FakeFilesystem):
             """Init.
 
             Args:
@@ -529,8 +540,16 @@ if sys.platform == "win32":
             """
             import nt  # type:ignore[import]
 
-            self.filesystem = filesystem
+            self._filesystem: weakref.ReferenceType[FakeFilesystem] = weakref.ref(
+                filesystem
+            )
             self.nt_module: Any = nt
+
+        @property
+        def filesystem(self) -> FakeFilesystem:
+            fs = self._filesystem()
+            assert fs is not None
+            return fs
 
         def getcwd(self) -> str:
             """Return current working directory."""
@@ -574,7 +593,7 @@ def handle_original_call(f: Callable) -> Callable:
         if args:
             self = args[0]
             should_use_original = self.os.use_original
-            if not should_use_original and self.filesystem.patcher:
+            if not should_use_original and self.filesystem.has_patcher:
                 skip_names = self.filesystem.patcher.skip_names
                 if is_called_from_skipped_module(
                     skip_names=skip_names,
