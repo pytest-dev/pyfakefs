@@ -5204,7 +5204,7 @@ class StatPropagationTest(TestCase):
         self.filesystem.create_file(file_path, st_size=size)
         fh = self.open(file_path, "r", encoding="utf8")
         fh.close()
-        self.assertEqual(size, self.open(file_path, "r", encoding="utf8").size())
+        self.assertEqual(size, self.open(file_path, "r", encoding="utf8").size)
 
     def test_file_size_after_write(self):
         file_path = "test_file"
@@ -5215,11 +5215,9 @@ class StatPropagationTest(TestCase):
         expected_size = original_size + len(added_content)
         fh = self.open(file_path, "a", encoding="utf8")
         fh.write(added_content)
-        self.assertEqual(original_size, fh.size())
+        self.assertEqual(original_size, fh.size)
         fh.close()
-        self.assertEqual(
-            expected_size, self.open(file_path, "r", encoding="utf8").size()
-        )
+        self.assertEqual(expected_size, self.open(file_path, "r", encoding="utf8").size)
 
     def test_large_file_size_after_write(self):
         file_path = "test_file"
