@@ -1213,6 +1213,7 @@ class FakeFileWrapper:
 
         return truncate_wrapper
 
+    @property
     def size(self) -> int:
         """Return the content size in bytes of the wrapped file."""
         return self.file_object.st_size

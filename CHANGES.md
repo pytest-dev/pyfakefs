@@ -14,6 +14,8 @@ The released versions correspond to PyPI releases.
 * use only `pyproject.toml` for dependencies, moved `tox` configuration into `pyproject.toml`
 
 ### Fixes
+* fixed a problem accessing `size` from a `FakeFileWrapper` object
+  (see [#1276](https://github.com/pytest-dev/pyfakefs/issues/1276))
 * fixed a problem with `readable` raising an error on a file object.
   (see [#1265](https://github.com/pytest-dev/pyfakefs/issues/1265))
 * avoid memory accumulation in consecutive tests by using weak references
