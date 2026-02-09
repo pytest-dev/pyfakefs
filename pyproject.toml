@@ -73,7 +73,15 @@ doc = [
 
 [tool.setuptools]
 include-package-data = true
-packages = ["pyfakefs"]
+packages = [
+    "pyfakefs",
+    "pyfakefs.tests",
+    "pyfakefs.tests.fixtures",
+    "pyfakefs.pytest_tests",
+    "pyfakefs.pytest_tests.hook_test",
+    "pyfakefs.pytest_tests.ns_package.test",
+    "pyfakefs.pytest_tests.ns_package.test.ns_package.test",
+]
 
 [tool.setuptools.package-data]
 where = ["pyfakefs"]
