@@ -3,7 +3,8 @@ The released versions correspond to PyPI releases.
 `pyfakefs` versions follow [Semantic Versioning](https://semver.org/).
 
 
-## Unreleased
+## [Version 6.1.1](https://pypi.python.org/pypi/pyfakefs/6.1.1) (2026-02-09)
+Fixes a packaging issue in latest version.
 
 ### Fixes
 * fixed packaging issue: tests had not been added to sdist
