@@ -20,7 +20,6 @@ import errno
 import io
 import os
 import sys
-import weakref
 from collections.abc import Callable
 from stat import (
     S_ISDIR,
@@ -129,17 +128,9 @@ class FakeFileOpen:
           filesystem:  FakeFilesystem used to provide file system information
           delete_on_close:  optional boolean, deletes file on close()
         """
-        self._filesystem: weakref.ReferenceType[FakeFilesystem] = weakref.ref(
-            filesystem
-        )
+        self.filesystem = filesystem
         self._delete_on_close = delete_on_close
         self.raw_io = raw_io
-
-    @property
-    def filesystem(self) -> FakeFilesystem:
-        fs = self._filesystem()
-        assert fs is not None
-        return fs
 
     def __call__(self, *args: Any, **kwargs: Any) -> AnyFileWrapper:
         """Redirects calls to file() or open() to appropriate method."""

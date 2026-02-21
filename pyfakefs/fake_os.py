@@ -24,7 +24,6 @@ import inspect
 import os
 import sys
 import uuid
-import weakref
 from contextlib import contextmanager
 from stat import (
     S_IFREG,
@@ -154,21 +153,13 @@ class FakeOsModule:
         Args:
             filesystem: FakeFilesystem used to provide file system information
         """
-        self._filesystem: weakref.ReferenceType[FakeFilesystem] = weakref.ref(
-            filesystem
-        )
+        self.filesystem = filesystem
         self.os_module: Any = os
         self.path = FakePathModule(filesystem, self)
         self._supports_follow_symlinks: set | None = None
         self._supports_dir_fd: set | None = None
         self._supports_effective_ids: set | None = None
         self._supports_fd: set | None = None
-
-    @property
-    def filesystem(self) -> FakeFilesystem:
-        fs = self._filesystem()
-        assert fs is not None
-        return fs
 
     @property
     def devnull(self) -> str:
