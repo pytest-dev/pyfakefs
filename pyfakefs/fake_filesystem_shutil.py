@@ -34,7 +34,6 @@ import functools
 import os
 import shutil
 import sys
-import weakref
 from threading import RLock
 from collections.abc import Callable
 from typing import TYPE_CHECKING
@@ -70,23 +69,15 @@ class FakeShutilModule:
         """
         return ("disk_usage",)
 
-    def __init__(self, filesystem):
+    def __init__(self, filesystem: FakeFilesystem):
         """Construct fake shutil module using the fake filesystem.
 
         Args:
           filesystem:  FakeFilesystem used to provide file system information
         """
-        self._filesystem: weakref.ReferenceType[FakeFilesystem] = weakref.ref(
-            filesystem
-        )
+        self.filesystem = filesystem
         self.shutil_module = shutil
         self._patch_level = 0
-
-    @property
-    def filesystem(self) -> FakeFilesystem:
-        fs = self._filesystem()
-        assert fs is not None
-        return fs
 
     def _start_patching_global_vars(self):
         self._patch_level += 1
