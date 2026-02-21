@@ -21,7 +21,6 @@ import functools
 import inspect
 import os
 import sys
-import weakref
 from stat import (
     S_IFDIR,
     S_IFMT,
@@ -113,18 +112,10 @@ class FakePathModule:
         Args:
             filesystem: FakeFilesystem used to provide file system information
         """
-        self._filesystem: weakref.ReferenceType[FakeFilesystem] = weakref.ref(
-            filesystem
-        )
+        self.filesystem = filesystem
         self._os_path = self._OS_PATH_COPY
         self._os_path.os = self.os = os_module  # type: ignore[attr-defined]
         self.reset(filesystem)
-
-    @property
-    def filesystem(self) -> FakeFilesystem:
-        fs = self._filesystem()
-        assert fs is not None
-        return fs
 
     @classmethod
     def reset(cls, filesystem: FakeFilesystem) -> None:
@@ -540,16 +531,8 @@ if sys.platform == "win32":
             """
             import nt  # type:ignore[import]
 
-            self._filesystem: weakref.ReferenceType[FakeFilesystem] = weakref.ref(
-                filesystem
-            )
+            self.filesystem = filesystem
             self.nt_module: Any = nt
-
-        @property
-        def filesystem(self) -> FakeFilesystem:
-            fs = self._filesystem()
-            assert fs is not None
-            return fs
 
         def getcwd(self) -> str:
             """Return current working directory."""

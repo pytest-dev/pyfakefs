@@ -108,10 +108,10 @@ class FakeFilesystemVsRealTest(unittest.TestCase):
         # Make sure we can write to the physical testing temp directory.
         self.assertTrue(os.access(self.real_base, os.W_OK))
 
-        self.fake_filesystem = fake_filesystem.FakeFilesystem()
-        self.fake_filesystem.create_dir(self.fake_base)
-        self.fake_os = fake_os.FakeOsModule(self.fake_filesystem)
-        self.fake_open = fake_open.FakeFileOpen(self.fake_filesystem)
+        fake_fs = fake_filesystem.FakeFilesystem()
+        fake_fs.create_dir(self.fake_base)
+        self.fake_os = fake_os.FakeOsModule(fake_fs)
+        self.fake_open = fake_open.FakeFileOpen(fake_fs)
         self._created_files = []
 
         os.chdir(self.real_base)
