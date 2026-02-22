@@ -2,7 +2,8 @@
 The released versions correspond to PyPI releases.
 `pyfakefs` versions follow [Semantic Versioning](https://semver.org/).
 
-## Unreleased
+## [Version 6.1.2](https://pypi.python.org/pypi/pyfakefs/6.1.2) (2026-02-22)
+Fixes a regression caused by the introduced weakrefs.
 
 ### Fixes
 * do not use weakrefs for filesystem objects in fake modules
