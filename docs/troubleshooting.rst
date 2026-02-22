@@ -486,6 +486,21 @@ As this may not be trivial, we recommend to write an issue in ``pyfakefs`` with 
 We will analyze the problem, and if we find a solution we will either get this fixed in ``pyfakefs``
 (if it is related to a commonly used module), or help you to resolve it.
 
+Contiguous tests use large amounts of memory
+--------------------------------------------
+If you are creating very large fake files in your tests, these files will live in memory.
+If running several such tests contiguously, it is not guaranteed that the memory for these files is
+freed, even if the filesystem is created anew. Some references to them may only be removed by the
+garbage collector from time to time.
+Under conditions with restricted memory (like in docker containers) this may cause out of memory
+errors or, more likely, a freeze of the system.
+If you encounter such a problem, there are several possibilities how to handle this:
+
+* rewrite your tests to avoid the need for such large files
+* if you only use the files to fill the filesystem and don't need to access their contents, use
+  the `st_size` option of `create_file`, which does not allocate the memory
+* if you really need the large files, call `gc.collect`_ between tests to ensure that the
+  garbage collector cleans up the memory
 
 .. _`multiprocessing`: https://docs.python.org/3/library/multiprocessing.html
 .. _`subprocess`: https://docs.python.org/3/library/subprocess.html
@@ -497,3 +512,4 @@ We will analyze the problem, and if we find a solution we will either get this f
 .. _`xlrd`: https://pypi.org/project/xlrd/
 .. _`openpyxl`: https://pypi.org/project/openpyxl/
 .. _`importlib.metadata`: https://docs.python.org/3/library/importlib.metadata.html
+.. _`gc.collect`: https://docs.python.org/3/library/gc.html#gc.collect
