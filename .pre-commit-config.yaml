@@ -11,7 +11,7 @@ repos:
           - "--py310-plus"
 
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: "v0.15.1"
+    rev: "v0.15.2"
     hooks:
       - id: ruff
         args: ["--fix"]
@@ -36,7 +36,7 @@ repos:
       - id: debug-statements
         language_version: python3
   - repo: https://github.com/PyCQA/autoflake
-    rev: v2.3.1
+    rev: v2.3.3
     hooks:
       - id: autoflake
         name: autoflake
