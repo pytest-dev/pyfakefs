@@ -7,6 +7,8 @@ The released versions correspond to PyPI releases.
 ### Fixes
 * do not use weakrefs for filesystem objects in fake modules
   (see [#1284](https://github.com/pytest-dev/pyfakefs/issues/1284))
+* handle expanduser() and home() correctly in cross OS usage
+  (see [#1289](https://github.com/pytest-dev/pyfakefs/issues/1289))
 
 ## [Version 6.1.1](https://pypi.python.org/pypi/pyfakefs/6.1.1) (2026-02-09)
 Fixes a packaging issue in latest version.
