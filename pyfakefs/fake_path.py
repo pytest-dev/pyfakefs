@@ -475,7 +475,8 @@ class FakePathModule:
             if self.filesystem.is_windows_fs:
                 home = self._os_path.join("C:", "Users", username)
             else:
-                home = self._os_path.join("home", username)
+                sep = matching_string(path, self.sep)
+                home = sep + self._os_path.join("home", username)
             _, _, rest = path.partition(matching_string(path, self.sep))
             path = self._os_path.join(home, *rest)
         else:
