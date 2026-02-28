@@ -1119,10 +1119,22 @@ class FakePathModuleTest(TestCase):
     def test_expand_user_windows(self):
         self.assertEqual(self.path.expanduser("~"), "C:!Users!John")
 
+    @unittest.skipIf(sys.platform != "win32", "Windows specific test")
+    @patch.dict(os.environ, {"USERPROFILE": r"C:\Users\John"})
+    def test_expand_user_windows_posixfs(self):
+        self.filesystem.is_windows_fs = False
+        self.assertEqual(self.path.expanduser("~"), "!home!John")
+
     @unittest.skipIf(sys.platform == "win32", "Posix specific test")
     @patch.dict(os.environ, {"HOME": "/home/john"})
     def test_expand_user(self):
         self.assertEqual(self.path.expanduser("~"), "!home!john")
+
+    @unittest.skipIf(sys.platform == "win32", "Posix specific test")
+    @patch.dict(os.environ, {"HOME": "/home/john"})
+    def test_expand_user_posix_windowsfs(self):
+        self.filesystem.is_windows_fs = True
+        self.assertEqual(self.path.expanduser("~"), "C:!Users!john")
 
     @patch.dict(os.environ, {}, clear=True)
     def test_expand_user_no_home_environment(self):

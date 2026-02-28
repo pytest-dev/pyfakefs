@@ -774,14 +774,10 @@ class FakePath(pathlib.Path):
         returned by os.path.expanduser('~')).
         """
         home = os.path.expanduser("~")
-        if cls.filesystem.is_windows_fs != (os.name == "nt"):
-            username = os.path.split(home)[1]
-            if cls.filesystem.is_windows_fs:
-                home = os.path.join("C:", "Users", username)
-            else:
-                home = os.path.join("home", username)
-            if not cls.filesystem.exists(home):
-                cls.filesystem.create_dir(home)
+        if (
+            cls.filesystem.is_windows_fs != (os.name == "nt")
+        ) and not cls.filesystem.exists(home):
+            cls.filesystem.create_dir(home)
         return cls(home.replace(os.sep, cls.filesystem.path_separator))
 
     def samefile(self, other_path):

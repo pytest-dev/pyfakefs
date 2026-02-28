@@ -706,10 +706,25 @@ class FakePathlibFileObjectPropertyTest(RealPathlibTestCase):
             self.path("C:/Users/John"),
         )
 
+    @unittest.skipIf(sys.platform != "win32", "Windows specific test")
+    @patch.dict(os.environ, {"USERPROFILE": r"C:\Users\John"})
+    def test_expanduser_windows_posixfs(self):
+        self.set_windows_fs(False)
+        self.assertEqual(
+            self.path("~").expanduser(),
+            self.path("/home/John"),
+        )
+
     @unittest.skipIf(sys.platform == "win32", "Posix specific test")
     @patch.dict(os.environ, {"HOME": "/home/john"})
     def test_expanduser_posix(self):
         self.assertEqual(self.path("~").expanduser(), self.path("/home/john"))
+
+    @unittest.skipIf(sys.platform == "win32", "Posix specific test")
+    @patch.dict(os.environ, {"HOME": "/home/john"})
+    def test_expanduser_posix_windowsfs(self):
+        self.set_windows_fs(True)
+        self.assertEqual(self.path("~").expanduser(), self.path("C:/Users/john"))
 
     @unittest.skipIf(sys.platform != "win32", "Windows specific test")
     @patch.dict(os.environ, {"USERPROFILE": r"C:\Users\John"})
@@ -719,10 +734,25 @@ class FakePathlibFileObjectPropertyTest(RealPathlibTestCase):
             self.path.home(),
         )
 
+    @unittest.skipIf(sys.platform != "win32", "Windows specific test")
+    @patch.dict(os.environ, {"USERPROFILE": r"C:\Users\John"})
+    def test_home_windows_posixfs(self):
+        self.set_windows_fs(False)
+        self.assertEqual(
+            self.path(self.path("/home/John")),
+            self.path.home(),
+        )
+
     @unittest.skipIf(sys.platform == "win32", "Posix specific test")
     @patch.dict(os.environ, {"HOME": "/home/john"})
     def test_home_posix(self):
         self.assertEqual(self.path("/home/john"), self.path.home())
+
+    @unittest.skipIf(sys.platform == "win32", "Posix specific test")
+    @patch.dict(os.environ, {"HOME": "/home/john"})
+    def test_home_posix_windowsfs(self):
+        self.set_windows_fs(True)
+        self.assertEqual(self.path("C:/Users//john"), self.path.home())
 
 
 class RealPathlibFileObjectPropertyTest(FakePathlibFileObjectPropertyTest):
