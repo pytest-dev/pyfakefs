@@ -768,22 +768,6 @@ class FakePath(pathlib.Path):
         ) as f:
             return f.write(data)
 
-    @classmethod
-    def home(cls):
-        """Return a new path pointing to the user's home directory (as
-        returned by os.path.expanduser('~')).
-        """
-        home = os.path.expanduser("~")
-        if cls.filesystem.is_windows_fs != (os.name == "nt"):
-            username = os.path.split(home)[1]
-            if cls.filesystem.is_windows_fs:
-                home = os.path.join("C:", "Users", username)
-            else:
-                home = os.path.join("home", username)
-            if not cls.filesystem.exists(home):
-                cls.filesystem.create_dir(home)
-        return cls(home.replace(os.sep, cls.filesystem.path_separator))
-
     def samefile(self, other_path):
         """Return whether other_path is the same or not as this file
         (as returned by os.path.samefile()).
@@ -802,15 +786,42 @@ class FakePath(pathlib.Path):
             other_st = self.filesystem.stat(other_path)
         return st.st_ino == other_st.st_ino and st.st_dev == other_st.st_dev
 
+    @classmethod
+    def _expand_user(cls, path):
+        if cls.filesystem.is_windows_fs != (os.name == "nt") and path[:1] == "~":
+            home = os.path.expanduser("~")
+            username = os.path.split(home)[1]
+            if cls.filesystem.is_windows_fs:
+                home = cls.filesystem.path_separator.join(["C:", "Users", username])
+            else:
+                home = cls.filesystem.path_separator + os.path.join("home", username)
+            _, _, rest = path.partition(cls.filesystem.path_separator)
+            path = os.path.join(home, *rest)
+        else:
+            path = os.path.expanduser(path)
+        return path
+
     def expanduser(self):
         """Return a new path with expanded ~ and ~user constructs
         (as returned by os.path.expanduser)
         """
         return FakePath(
-            os.path.expanduser(self._path()).replace(
+            self._expand_user(self._path()).replace(
                 os.path.sep, self.filesystem.path_separator
             )
         )
+
+    @classmethod
+    def home(cls):
+        """Return a new path pointing to the user's home directory (as
+        returned by os.path.expanduser('~')).
+        """
+        home = cls._expand_user("~")
+        if (
+            cls.filesystem.is_windows_fs != (os.name == "nt")
+        ) and not cls.filesystem.exists(home):
+            cls.filesystem.create_dir(home)
+        return cls(home.replace(os.sep, cls.filesystem.path_separator))
 
     def touch(self, mode=0o666, exist_ok=True):
         """Create a fake file for the path with the given access mode,
