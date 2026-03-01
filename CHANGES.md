@@ -2,13 +2,19 @@
 The released versions correspond to PyPI releases.
 `pyfakefs` versions follow [Semantic Versioning](https://semver.org/).
 
-## Unreleased
+## [Version 6.1.3](https://pypi.python.org/pypi/pyfakefs/6.1.3) (2026-03-01)
+Minor bugfix release.
+
+### Fixes
+* handle expanduser() and home() correctly in cross OS usage
+  (see [#1289](https://github.com/pytest-dev/pyfakefs/issues/1289))
+
+## [Version 6.1.2](https://pypi.python.org/pypi/pyfakefs/6.1.2) (2026-02-22)
+Fixes a regression caused by the introduced weakrefs.
 
 ### Fixes
 * do not use weakrefs for filesystem objects in fake modules
   (see [#1284](https://github.com/pytest-dev/pyfakefs/issues/1284))
-* handle expanduser() and home() correctly in cross OS usage
-  (see [#1289](https://github.com/pytest-dev/pyfakefs/issues/1289))
 
 ## [Version 6.1.1](https://pypi.python.org/pypi/pyfakefs/6.1.1) (2026-02-09)
 Fixes a packaging issue in latest version.
