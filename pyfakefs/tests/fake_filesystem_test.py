@@ -1121,9 +1121,24 @@ class FakePathModuleTest(TestCase):
 
     @unittest.skipIf(sys.platform != "win32", "Windows specific test")
     @patch.dict(os.environ, {"USERPROFILE": r"C:\Users\John"})
+    def test_expand_user_windows_path(self):
+        self.assertEqual(
+            self.path.expanduser("~!stuff!test.txt"), "C:!Users!John!stuff!test.txt"
+        )
+
+    @unittest.skipIf(sys.platform != "win32", "Windows specific test")
+    @patch.dict(os.environ, {"USERPROFILE": r"C:\Users\John"})
     def test_expand_user_windows_posixfs(self):
         self.filesystem.is_windows_fs = False
         self.assertEqual(self.path.expanduser("~"), "!home!John")
+
+    @unittest.skipIf(sys.platform != "win32", "Windows specific test")
+    @patch.dict(os.environ, {"USERPROFILE": r"C:\Users\John"})
+    def test_expand_user_windows_posixfs_path(self):
+        self.filesystem.is_windows_fs = False
+        self.assertEqual(
+            self.path.expanduser("~!stuff!test.txt"), "!home!John!stuff!test.txt"
+        )
 
     @unittest.skipIf(sys.platform == "win32", "Posix specific test")
     @patch.dict(os.environ, {"HOME": "/home/john"})
@@ -1132,9 +1147,24 @@ class FakePathModuleTest(TestCase):
 
     @unittest.skipIf(sys.platform == "win32", "Posix specific test")
     @patch.dict(os.environ, {"HOME": "/home/john"})
+    def test_expand_user_path(self):
+        self.assertEqual(
+            self.path.expanduser("~!stuff!test.txt"), "!home!john!stuff!test.txt"
+        )
+
+    @unittest.skipIf(sys.platform == "win32", "Posix specific test")
+    @patch.dict(os.environ, {"HOME": "/home/john"})
     def test_expand_user_posix_windowsfs(self):
         self.filesystem.is_windows_fs = True
         self.assertEqual(self.path.expanduser("~"), "C:!Users!john")
+
+    @unittest.skipIf(sys.platform == "win32", "Posix specific test")
+    @patch.dict(os.environ, {"HOME": "/home/john"})
+    def test_expand_user_posix_windowsfs_path(self):
+        self.filesystem.is_windows_fs = True
+        self.assertEqual(
+            self.path.expanduser("~!stuff!test.txt"), "C:!Users!john!stuff!test.txt"
+        )
 
     @patch.dict(os.environ, {}, clear=True)
     def test_expand_user_no_home_environment(self):

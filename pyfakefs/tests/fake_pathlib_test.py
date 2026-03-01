@@ -708,12 +708,30 @@ class FakePathlibFileObjectPropertyTest(RealPathlibTestCase):
 
     @unittest.skipIf(sys.platform != "win32", "Windows specific test")
     @patch.dict(os.environ, {"USERPROFILE": r"C:\Users\John"})
+    def test_expanduser_windows_path(self):
+        self.assertEqual(
+            self.path("~/stuff/test.txt").expanduser(),
+            self.path("C:/Users/John/stuff/test.txt"),
+        )
+
+    @unittest.skipIf(sys.platform != "win32", "Windows specific test")
+    @patch.dict(os.environ, {"USERPROFILE": r"C:\Users\John"})
     def test_expanduser_windows_posixfs(self):
         self.skip_real_fs()
         self.set_windows_fs(False)
         self.assertEqual(
             self.path("~").expanduser(),
             self.path("\\home\\John"),
+        )
+
+    @unittest.skipIf(sys.platform != "win32", "Windows specific test")
+    @patch.dict(os.environ, {"USERPROFILE": r"C:\Users\John"})
+    def test_expanduser_windows_posixfs_path(self):
+        self.skip_real_fs()
+        self.set_windows_fs(False)
+        self.assertEqual(
+            self.path("~/stuff/test.txt").expanduser(),
+            self.path("\\home\\John\\stuff\\test.txt"),
         )
 
     @unittest.skipIf(sys.platform == "win32", "Posix specific test")
@@ -723,10 +741,28 @@ class FakePathlibFileObjectPropertyTest(RealPathlibTestCase):
 
     @unittest.skipIf(sys.platform == "win32", "Posix specific test")
     @patch.dict(os.environ, {"HOME": "/home/john"})
+    def test_expanduser_posix_path(self):
+        self.assertEqual(
+            self.path("~/stuff/test.txt").expanduser(),
+            self.path("/home/john/stuff/test.txt"),
+        )
+
+    @unittest.skipIf(sys.platform == "win32", "Posix specific test")
+    @patch.dict(os.environ, {"HOME": "/home/john"})
     def test_expanduser_posix_windowsfs(self):
         self.skip_real_fs()
         self.set_windows_fs(True)
         self.assertEqual(self.path("~").expanduser(), self.path("C:/Users/john"))
+
+    @unittest.skipIf(sys.platform == "win32", "Posix specific test")
+    @patch.dict(os.environ, {"HOME": "/home/john"})
+    def test_expanduser_posix_windowsfs_path(self):
+        self.skip_real_fs()
+        self.set_windows_fs(True)
+        self.assertEqual(
+            self.path("~/stuff/test.txt").expanduser(),
+            self.path("C:/Users/john/stuff/test.txt"),
+        )
 
     @unittest.skipIf(sys.platform != "win32", "Windows specific test")
     @patch.dict(os.environ, {"USERPROFILE": r"C:\Users\John"})
