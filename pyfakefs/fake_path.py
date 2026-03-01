@@ -466,6 +466,7 @@ class FakePathModule:
         """Return the argument with an initial component of ~ or ~user
         replaced by that user's home directory.
         """
+        path = make_string_path(path)
         if (
             self.filesystem.is_windows_fs != (os.name == "nt")
             and matching_string(path, "~") == path[:1]
@@ -478,9 +479,14 @@ class FakePathModule:
                 sep = matching_string(path, self.sep)
                 home = sep + self._os_path.join("home", username)
             _, _, rest = path.partition(matching_string(path, self.sep))
-            path = self._os_path.join(home, *rest)
+            path = self._os_path.join(home, rest) if rest else home
         else:
-            path = self._os_path.expanduser(path)
+            path = self._os_path.expanduser(
+                path.replace(
+                    matching_string(path, self.sep),
+                    matching_string(path, self._os_path.sep),
+                )
+            )
         return path.replace(
             matching_string(path, self._os_path.sep),
             matching_string(path, self.sep),

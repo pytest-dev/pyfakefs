@@ -786,8 +786,28 @@ class FakePath(pathlib.Path):
             other_st = self.filesystem.stat(other_path)
         return st.st_ino == other_st.st_ino and st.st_dev == other_st.st_dev
 
+    if sys.version_info < (3, 12):
+
+        @classmethod
+        def _normalize_path_sep(cls, path):
+            # In older Python, str() uses _flavour.sep, so we replace that
+            try:
+                return path.replace(
+                    cls._flavour.sep,  # pytype: disable=attribute-error
+                    cls.filesystem.path_separator,
+                )
+            except AttributeError:
+                return path
+    else:
+
+        @classmethod
+        def _normalize_path_sep(cls, path):
+            # In newer Python, we replace os.path.sep to normalize
+            return path.replace(os.path.sep, cls.filesystem.path_separator)
+
     @classmethod
     def _expand_user(cls, path):
+        path = cls._normalize_path_sep(path)
         if cls.filesystem.is_windows_fs != (os.name == "nt") and path[:1] == "~":
             home = os.path.expanduser("~")
             username = os.path.split(home)[1]
@@ -796,9 +816,11 @@ class FakePath(pathlib.Path):
             else:
                 home = cls.filesystem.path_separator + os.path.join("home", username)
             _, _, rest = path.partition(cls.filesystem.path_separator)
-            path = os.path.join(home, *rest)
+            path = os.path.join(home, rest) if rest else home
         else:
-            path = os.path.expanduser(path)
+            path = os.path.expanduser(
+                path.replace(cls.filesystem.path_separator, os.path.sep)
+            )
         return path
 
     def expanduser(self):
