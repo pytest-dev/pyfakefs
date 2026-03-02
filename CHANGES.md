@@ -7,6 +7,8 @@ The released versions correspond to PyPI releases.
 ### Fixes
 * expanduser now correctly handles paths besides home and different separators
   (see [#1289](https://github.com/pytest-dev/pyfakefs/issues/1289))
+* avoid faking filesystem in VSCode unittest runner
+  (see [#1285](https://github.com/pytest-dev/pyfakefs/issues/1285))
 
 ## [Version 6.1.3](https://pypi.python.org/pypi/pyfakefs/6.1.3) (2026-03-01)
 Minor bugfix release.
