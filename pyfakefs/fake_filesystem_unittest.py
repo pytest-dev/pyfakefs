@@ -568,6 +568,13 @@ class Patcher:
         "pydevd": ["_pydevd_", "pydevd", "_pydev_"],  # Python debugger (PyCharm/VSCode)
         "_jb_runner_tools": ["_jb_"],  # JetBrains tools
     }
+    VSCODE_SKIPMODULES = {}
+    if "VSCODE_CWD" in os.environ:
+        # VSCode unit test runner
+        # we add this only if actually running in VSCode, as it has to be checked
+        # in each open call and may impact the performance
+        VSCODE_SKIPMODULES = {"pvsc_utils": ["pvsc_utils", "unittestadapter"]}
+        RUNTIME_SKIPMODULES.update(VSCODE_SKIPMODULES)
 
     # caches all modules that do not have file system modules or function
     # to speed up _find_modules
@@ -674,7 +681,7 @@ class Patcher:
             set_uid(1)
             set_gid(1)
 
-        self.skip_names = self.SKIPNAMES.copy()
+        self.skip_names = self.SKIPNAMES.copy() | set(self.VSCODE_SKIPMODULES)
         # save the original open function for use in pytest plugin
         self.original_open = open
         self.patch_open_code = patch_open_code
