@@ -370,9 +370,32 @@ regardless of the path they point to:
 Generally, mixing objects in the real filesystem and the fake filesystem
 is problematic and better avoided.
 
-.. note:: This problem only happens in Python versions up to 3.10. In Python 3.11,
-  `pathlib` has been restructured so that a pathlib path no longer contains a reference
-  to the original filesystem accessor, and it can safely be used in the fake filesystem.
+In the test code, you should use path strings as global variables instead:
+
+.. code:: python
+
+  import pathlib
+
+
+  # use os.path functions:
+  FILE_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "file.csv")
+  # or cast the Path object to str:
+  FILE_PATH = str(pathlib.Path(__file__).parent / "file.csv")
+
+
+  def test_path_equality(fs):
+      fake_file_path = pathlib.Path(FILE_PATH)
+      ...
+
+
+In the production code, this may or may not be a problem, depending on the usage of the
+global `Path` objects. If the problem occurs with the production code, you may either
+do the same there, or, if this is not wanted or not possible, reload the relevant modules
+inside the test (for example by using the :ref:`modules_to_reload` option). This will
+replace the global `Path` objects with fake `Path` objects.
+
+.. note:: This problem disappeared in Python 3.11, but unfortunately reappeared in Python 3.13,
+  due to several internal restructurings of `pathlib`.
 
 .. _nested_patcher_invocation:
 
