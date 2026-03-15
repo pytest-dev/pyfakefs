@@ -2,6 +2,12 @@
 The released versions correspond to PyPI releases.
 `pyfakefs` versions follow [Semantic Versioning](https://semver.org/).
 
+## Unreleased
+
+### Fixes
+* `os.path.realpath` did not resolve symlinks under Windows
+  (see [#1296](https://github.com/pytest-dev/pyfakefs/issues/1296))
+
 ## [Version 6.1.4](https://pypi.python.org/pypi/pyfakefs/6.1.4) (2026-03-04)
 Fixes incompatibility with VCCode unittest runner.
 

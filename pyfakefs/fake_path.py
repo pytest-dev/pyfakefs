@@ -371,12 +371,9 @@ class FakePathModule:
         except ignored_error:
             pass
 
-        if self.filesystem.is_windows_fs:
-            return self.abspath(filename)
         filename = make_string_path(filename)
-        path, ok = self._join_real_path(filename[:0], filename, {})
-        path = self.abspath(path)
-        return path
+        path, _ = self._join_real_path(filename[:0], filename, {})
+        return self.abspath(path)
 
     def samefile(self, path1: AnyStr, path2: AnyStr) -> bool:
         """Return whether path1 and path2 point to the same file.
@@ -415,8 +412,9 @@ class FakePathModule:
 
         sep = self.filesystem.get_path_separator(path)
         if self.isabs(rest):
-            rest = rest[1:]
-            path = sep
+            root = matching_string(path, self.filesystem.root_dir_name)
+            path = root
+            rest = rest[len(root) :]
 
         while rest:
             name, _, rest = rest.partition(sep)
