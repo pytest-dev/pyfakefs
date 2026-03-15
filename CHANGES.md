@@ -2,7 +2,8 @@
 The released versions correspond to PyPI releases.
 `pyfakefs` versions follow [Semantic Versioning](https://semver.org/).
 
-## Unreleased
+## [Version 6.1.5](https://pypi.python.org/pypi/pyfakefs/6.1.5) (2026-03-15)
+Minor bugfix release.
 
 ### Fixes
 * `os.path.realpath` did not resolve symlinks under Windows
