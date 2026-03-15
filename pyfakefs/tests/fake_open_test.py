@@ -2054,15 +2054,13 @@ class ResolvePathTest(FakeFileOpenTestBase):
         self.create_dir(self.make_path("foo", "baz"))
         link_path = self.make_path("foo", "bar")
         self.create_symlink(link_path, self.os.path.join(".", "baz", "bip"))
-        if not self.is_windows:
-            self.assert_equal_paths(final_target, self.os.path.realpath(link_path))
+        self.assert_equal_paths(final_target, self.os.path.realpath(link_path))
 
         self.assertTrue(self.os.path.islink(link_path))
         self.os.chdir(self.make_path("foo"))
         self.assert_equal_paths(self.make_path("foo"), self.os.getcwd())
         self.assertTrue(self.os.path.islink("bar"))
-        if not self.is_windows:
-            self.assert_equal_paths(final_target, self.os.path.realpath("bar"))
+        self.assert_equal_paths(final_target, self.os.path.realpath("bar"))
 
         self.write_to_file(link_path)
         self.assertTrue(self.os.path.exists(final_target))
@@ -2073,15 +2071,13 @@ class ResolvePathTest(FakeFileOpenTestBase):
         self.create_dir(self.make_path("foo", "baz"))
         link_path = self.make_path("foo", "bar")
         self.create_symlink(link_path, final_target)
-        if not self.is_windows:
-            self.assert_equal_paths(final_target, self.os.path.realpath(link_path))
+        self.assert_equal_paths(final_target, self.os.path.realpath(link_path))
 
         self.assertTrue(self.os.path.islink(link_path))
         self.os.chdir(self.make_path("foo"))
         self.assert_equal_paths(self.make_path("foo"), self.os.getcwd())
         self.assertTrue(self.os.path.islink("bar"))
-        if not self.is_windows:
-            self.assert_equal_paths(final_target, self.os.path.realpath("bar"))
+        self.assert_equal_paths(final_target, self.os.path.realpath("bar"))
 
         self.write_to_file(link_path)
         self.assertTrue(self.os.path.exists(final_target))
@@ -2143,15 +2139,14 @@ class ResolvePathTest(FakeFileOpenTestBase):
 
         self.create_symlink(self.make_path("a", "b"), "link1")
 
-        if not self.is_windows:
-            self.assert_equal_paths(
-                self.make_path("a", "link1"),
-                self.os.path.realpath(self.make_path("a", "b")),
-            )
-            self.assert_equal_paths(
-                self.make_path("a", "link1", "c"),
-                self.os.path.realpath(self.make_path("a", "b", "c")),
-            )
+        self.assert_equal_paths(
+            self.make_path("a", "link1"),
+            self.os.path.realpath(self.make_path("a", "b")),
+        )
+        self.assert_equal_paths(
+            self.make_path("a", "link1", "c"),
+            self.os.path.realpath(self.make_path("a", "b", "c")),
+        )
 
         link_path = self.make_path("a", "link1", "c", "d")
         self.create_symlink(link_path, "link2")
