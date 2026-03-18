@@ -1035,6 +1035,44 @@ class FakePathModuleTest(TestCase):
             f"{root_dir}foo!bar", self.os.path.realpath("bar", strict=True)
         )
 
+    def test_realpath_from_abs_path(self):
+        self.filesystem.create_file("!foo!bar")
+        root_dir = self.filesystem.root_dir_name
+        self.filesystem.cwd = f"{root_dir}foo"
+        self.assertEqual(f"{root_dir}baz", self.os.path.realpath("!baz", strict=False))
+        with self.raises_os_error(errno.ENOENT):
+            self.os.path.realpath("!baz", strict=True)
+        self.assertEqual(
+            f"{root_dir}foo!bar", self.os.path.realpath("!foo!bar", strict=True)
+        )
+
+    def test_realpath_from_path_starting_with_sep_in_windows(self):
+        self.filesystem.is_windows_fs = True
+        self.filesystem.cwd = "D:!foo"
+        self.filesystem.create_file("!foo!bar")
+        self.assertEqual("D:!baz", self.os.path.realpath("!baz", strict=False))
+        with self.raises_os_error(errno.ENOENT):
+            self.os.path.realpath("!baz", strict=True)
+        self.assertEqual("D:!foo!bar", self.os.path.realpath("!foo!bar", strict=True))
+
+    def test_realpath_from_bytes_path_starting_with_sep_in_windows(self):
+        self.filesystem.is_windows_fs = True
+        self.filesystem.cwd = "D:!foo"
+        self.filesystem.create_file("!foo!bar")
+        self.assertEqual(b"D:!baz", self.os.path.realpath(b"!baz", strict=False))
+        with self.raises_os_error(errno.ENOENT):
+            self.os.path.realpath(b"!baz", strict=True)
+        self.assertEqual(b"D:!foo!bar", self.os.path.realpath(b"!foo!bar", strict=True))
+
+    def test_realpath_from_path_with_drive(self):
+        self.filesystem.is_windows_fs = True
+        self.filesystem.cwd = "D:!foo"
+        self.filesystem.create_file("C:!foo!bar")
+        self.assertEqual("C:!baz", self.os.path.realpath("C:!baz", strict=False))
+        with self.raises_os_error(errno.ENOENT):
+            self.os.path.realpath("C:!baz", strict=True)
+        self.assertEqual("C:!foo!bar", self.os.path.realpath("C:!foo!bar", strict=True))
+
     @unittest.skipIf(
         not hasattr(os.path, "ALLOW_MISSING"),
         "ALLOW_MISSING has been added in different patch versions",
