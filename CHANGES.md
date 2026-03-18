@@ -2,8 +2,8 @@
 The released versions correspond to PyPI releases.
 `pyfakefs` versions follow [Semantic Versioning](https://semver.org/).
 
-## [Version 6.1.5](https://pypi.python.org/pypi/pyfakefs/6.1.5) (2026-03-15)
-Minor bugfix release.
+## [Version 6.1.6](https://pypi.python.org/pypi/pyfakefs/6.1.6) (2026-03-18)
+Follow-up bugfix release for 6.1.5.
 
 ### Fixes
 * `os.path.realpath` did not correctly handle some absolute paths under Windows
