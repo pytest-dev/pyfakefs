@@ -411,10 +411,16 @@ class FakePathModule:
         pardir = matching_string(path, "..")
 
         sep = self.filesystem.get_path_separator(path)
-        if self.isabs(rest):
-            root = matching_string(path, self.filesystem.root_dir_name)
-            path = root
-            rest = rest[len(root) :]
+        if self.filesystem.starts_with_root_path(rest):
+            if self.filesystem.is_windows_fs:
+                drive, rest = self.filesystem.splitdrive(rest)
+                if not drive:
+                    cwd = matching_string(path, self.filesystem.cwd)
+                    drive, _ = self.filesystem.splitdrive(cwd)
+                path = drive + sep
+            else:
+                path = sep
+            rest = rest[1:]
 
         while rest:
             name, _, rest = rest.partition(sep)

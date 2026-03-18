@@ -5,6 +5,13 @@ The released versions correspond to PyPI releases.
 ## Unreleased
 
 ### Fixes
+* `os.path.realpath` did not correctly handle some absolute paths under Windows
+  (previous fix was incomplete, see [#1296](https://github.com/pytest-dev/pyfakefs/issues/1296))
+
+## [Version 6.1.5](https://pypi.python.org/pypi/pyfakefs/6.1.5) (2026-03-15)
+Minor bugfix release.
+
+### Fixes
 * `os.path.realpath` did not resolve symlinks under Windows
   (see [#1296](https://github.com/pytest-dev/pyfakefs/issues/1296))
 
