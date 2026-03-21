@@ -2,6 +2,13 @@
 The released versions correspond to PyPI releases.
 `pyfakefs` versions follow [Semantic Versioning](https://semver.org/).
 
+## Unreleased
+
+### Fixes
+* route some pseudo-devices to the system instead of patching them; this ensures
+  that `os.urandom` and related functions work correctly with PyPy
+  (see [#1300](https://github.com/pytest-dev/pyfakefs/issues/1300))
+
 ## [Version 6.1.6](https://pypi.python.org/pypi/pyfakefs/6.1.6) (2026-03-18)
 Follow-up bugfix release for 6.1.5.
 
@@ -20,7 +27,7 @@ Minor bugfix release.
 Fixes incompatibility with VCCode unittest runner.
 
 ### Fixes
-* expanduser now correctly handles paths besides home and different separators
+* `expanduser` now correctly handles paths besides home and different separators
   (see [#1289](https://github.com/pytest-dev/pyfakefs/issues/1289))
 * avoid faking filesystem in VSCode unittest runner
   (see [#1285](https://github.com/pytest-dev/pyfakefs/issues/1285))
@@ -29,7 +36,7 @@ Fixes incompatibility with VCCode unittest runner.
 Minor bugfix release.
 
 ### Fixes
-* handle expanduser() and home() correctly in cross OS usage
+* handle `expanduser()` and `home()` correctly in cross OS usage
   (see [#1289](https://github.com/pytest-dev/pyfakefs/issues/1289))
 
 ## [Version 6.1.2](https://pypi.python.org/pypi/pyfakefs/6.1.2) (2026-02-22)

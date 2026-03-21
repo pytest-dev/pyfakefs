@@ -525,6 +525,19 @@ If you encounter such a problem, there are several possibilities how to handle t
 * if you really need the large files, call `gc.collect`_ between tests to ensure that the
   garbage collector cleans up the memory
 
+Directly accessing device files in tests
+----------------------------------------
+Under Posix, (almost) everything is a file, and not all files are handled by pyfakefs.
+Specifically, files in the `/dev` directory represent devices. Accessing them directly
+using Python file system functions is not possible while patching with ``pyfakefs``, except
+for some pseudo-devices. The null device (`/dev/null`, or `NUL` under Windows) is patched
+to work as expected, and the pseudo-devices `/dev/random`, `/dev/urandom`, `/dev/zero` and
+`/dev/full` are just directly routed the system without patching them, as they have no
+side-effect on the real system.
+While this is rarely needed, some Python functions like `os.random` may rely on these,
+and in the case of the PyPy implementation, directly access them using Python functions.
+
+
 .. _`multiprocessing`: https://docs.python.org/3/library/multiprocessing.html
 .. _`subprocess`: https://docs.python.org/3/library/subprocess.html
 .. _`sqlite3`: https://docs.python.org/3/library/sqlite3.html
