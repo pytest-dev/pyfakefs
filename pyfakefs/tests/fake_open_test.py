@@ -995,6 +995,18 @@ class FakeFileOpenTest(FakeFileOpenTestBase):
             with self.open(self.os.devnull, encoding="utf8") as f:
                 self.assertEqual("", f.read())
 
+    @unittest.skipIf(os.name == "nt", "only exist on posix")
+    def test_pseudo_devices(self):
+        self.check_posix_only()
+        with self.open("/dev/random", "rb") as f:
+            self.assertEqual(1, len(f.read(1)))
+        with self.open("/dev/zero", "rb") as f:
+            self.assertEqual(b"\0\0\0\0", f.read(4))
+        if sys.platform == "linux":
+            with self.raises_os_error(errno.ENOSPC):
+                with self.open("/dev/full", "wb") as f:
+                    f.write(b"\0")
+
     def test_utf16_text(self):
         # regression test for #574
         file_path = self.make_path("foo")

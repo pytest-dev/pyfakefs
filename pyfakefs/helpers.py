@@ -207,6 +207,24 @@ def matching_string(  # type: ignore[misc]
     return string  # pytype: disable=bad-return-type
 
 
+def is_unfaked_path(val: Any) -> bool:
+    """Return ``True`` if `val` is a path that should not be faked.
+    Currently only ``True`` for some pseudo-devices under Posix,
+    which will have no side effect if reading/writing them.
+    """
+    if IS_WIN:
+        return False
+    try:
+        return matching_string("", val) in (
+            "/dev/random",
+            "/dev/urandom",
+            "/dev/zero",
+            "/dev/full",
+        )
+    except AttributeError:
+        return False
+
+
 @dataclass
 class FSProperties:
     sep: str
