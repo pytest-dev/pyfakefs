@@ -995,7 +995,7 @@ class FakeFileWrapper:
                     ):
                         open_file._sync_io()
 
-    def seek(self, offset: int, whence: int = 0) -> None:
+    def seek(self, offset: int, whence: int = 0) -> int:
         """Move read/write pointer in 'file'."""
         self._check_open_file()
         if not self.open_modes.append:
@@ -1005,6 +1005,7 @@ class FakeFileWrapper:
             self._read_whence = whence
         if not self.is_stream:
             self.flush()
+        return self.tell()
 
     def tell(self) -> int:
         """Return the file's current position.

@@ -8,6 +8,8 @@ The released versions correspond to PyPI releases.
 * route some pseudo-devices to the system instead of patching them; this ensures
   that `os.urandom` and related functions work correctly with PyPy
   (see [#1300](https://github.com/pytest-dev/pyfakefs/issues/1300))
+* fake file `seek` method did not return the location in the file
+  (see [#1304](https://github.com/pytest-dev/pyfakefs/issues/1304))
 
 ## [Version 6.1.6](https://pypi.python.org/pypi/pyfakefs/6.1.6) (2026-03-18)
 Follow-up bugfix release for 6.1.5.
