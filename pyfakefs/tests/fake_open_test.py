@@ -903,6 +903,14 @@ class FakeFileOpenTest(FakeFileOpenTestBase):
             f0.seek(3)
             self.assertEqual(4, self.os.path.getsize(file_path))
 
+    def test_seek_returns_location(self):
+        # Regression test for #1304
+        file_path = self.make_path("foo")
+        with self.open(file_path, "w", encoding="utf8") as f0:
+            f0.write("test")
+            result = f0.seek(3)
+            self.assertEqual(3, result)
+
     def test_truncate_flushes(self):
         # Regression test for #291
         file_path = self.make_path("foo")
