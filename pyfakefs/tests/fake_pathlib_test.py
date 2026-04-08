@@ -265,6 +265,36 @@ class FakePathlibPurePathTest(RealPathlibTestCase):
         self.assertTrue(self.path("/a.py").match("/*.py"))
         self.assertFalse(self.path("a/b.py").match("/*.py"))
 
+    @unittest.skipIf(sys.version_info < (3, 13), "full_match new in Python 3.13")
+    def test_full_match(self):
+        self.assertFalse(self.path("a/b.py").full_match("*.py"))
+        self.assertTrue(self.path("/a/b.py").full_match("/a/*.py"))
+        self.assertTrue(self.path("/a/b/c.py").full_match("/a/**"))
+
+    def test_match_with_differing_case_posix(self):
+        self.check_posix_only()
+        self.assertFalse(self.path("a/b.py").match("*.Py"))
+        self.assertFalse(self.path("/a/b/c.py").match("B/*.py"))
+        self.assertFalse(self.path("/a.py").match("/*.PY"))
+
+    def test_match_with_differing_case_windows(self):
+        self.check_windows_only()
+        self.assertTrue(self.path("a/b.py").match("*.Py"))
+        self.assertTrue(self.path("/a/b/c.py").match("B/*.py"))
+        self.assertTrue(self.path("/a.py").match("/*.PY"))
+
+    @unittest.skipIf(sys.version_info < (3, 13), "full_match new in Python 3.13")
+    def test_full_match_with_differing_case_posix(self):
+        self.check_posix_only()
+        self.assertFalse(self.path("/a/b.py").full_match("/a/*.PY"))
+        self.assertFalse(self.path("/a/b/c.py").full_match("/A/**"))
+
+    @unittest.skipIf(sys.version_info < (3, 13), "full_match new in Python 3.13")
+    def test_full_match_with_differing_case_windows(self):
+        self.check_windows_only()
+        self.assertTrue(self.path("/a/b.py").full_match("/a/*.PY"))
+        self.assertTrue(self.path("/a/b/c.py").full_match("/A/**"))
+
     def test_relative_to(self):
         self.assertEqual(
             self.path("/etc/passwd").relative_to("/"), self.path("etc/passwd")
@@ -297,6 +327,20 @@ class FakePathlibPurePathTest(RealPathlibTestCase):
         self.assertEqual(
             self.path("README").with_suffix(".txt"), self.path("README.txt")
         )
+
+    def test_path_comparison_posix(self):
+        self.check_posix_only()
+        path1 = self.path("Test")
+        path2 = self.path("test")
+        assert path1 != path2
+        assert hash(path1) != hash(path2)
+
+    def test_path_comparison_windows(self):
+        self.check_windows_only()
+        path1 = self.path("Test")
+        path2 = self.path("test")
+        assert path1 == path2
+        assert hash(path1) == hash(path2)
 
 
 class RealPathlibPurePathTest(FakePathlibPurePathTest):
