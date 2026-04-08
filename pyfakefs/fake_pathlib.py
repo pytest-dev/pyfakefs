@@ -798,6 +798,7 @@ class FakePath(pathlib.Path):
                 )
             except AttributeError:
                 return path
+
     else:
 
         @classmethod
@@ -1037,10 +1038,18 @@ class FakePathlibModule:
 
             return grp.getgrgid(self.stat().st_gid).gr_name
 
+        if sys.version_info >= (3, 13):
+
+            def __init__(self, *args):
+                super().__init__(*args)
+                # case-sensitivity for filling the _str_normcase_cached variable
+                # is filled depending on a class check (self.parser is posixpath),
+                # which we cannot fake, thus we set it at initialization time
+                self._str_normcase_cached = str(self)
+
         if sys.version_info >= (3, 14):
-            # in Python 3.14, case-sensitivity is checked using an is-check
-            # (self.parser is posixpath) if not given, which we cannot fake
-            # therefore we already provide the case sensitivity under Posix
+            # a similar check is used in the implementations of glob, match and full_match, to check for
+            # case sensitivity if not given, so we provide it under Posix as True
             def glob(self, pattern, *, case_sensitive=None, recurse_symlinks=False):
                 if case_sensitive is None:
                     case_sensitive = True
@@ -1049,6 +1058,20 @@ class FakePathlibModule:
                     case_sensitive=case_sensitive,
                     recurse_symlinks=recurse_symlinks,
                 )
+
+            def match(self, path_pattern, *, case_sensitive=None):
+                if case_sensitive is None:
+                    case_sensitive = True
+                return super().match(
+                    path_pattern, case_sensitive=case_sensitive
+                )  # pytype: disable=wrong-keyword-args
+
+            def full_match(self, pattern, *, case_sensitive=None):
+                if case_sensitive is None:
+                    case_sensitive = True
+                return super().full_match(  # pytype: disable=attribute-error
+                    pattern, case_sensitive=case_sensitive
+                )  # pytype: disable=wrong-keyword-args
 
     Path = FakePath
 
