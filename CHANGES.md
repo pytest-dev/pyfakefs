@@ -4,6 +4,12 @@ The released versions correspond to PyPI releases.
 
 ## Unreleased
 
+### Changes
+* fake file wrappers now derive from `io.TextIOBase` or `io.BufferedIOBase`,
+  so that `isinstance`-checks for these classes succeed
+  (see [#1307](https://github.com/pytest-dev/pyfakefs/issues/1307)
+  and [#484](https://github.com/pytest-dev/pyfakefs/issues/484))
+
 ### Fixes
 * route some pseudo-devices to the system instead of patching them; this ensures
   that `os.urandom` and related functions work correctly with PyPy

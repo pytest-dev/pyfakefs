@@ -1051,6 +1051,18 @@ class FakeFileOpenTest(FakeFileOpenTestBase):
             self.assertTrue(f.readable())
             self.assertTrue(f.writable())
 
+    def test_file_class(self):
+        file_path = self.make_path("foo")
+        with self.open(file_path, "w") as f:
+            assert isinstance(f, io.TextIOBase)
+            f.write("test")
+        with self.open(file_path) as f:
+            assert isinstance(f, io.TextIOBase)
+            assert f.read() == "test"
+        with self.open(file_path, "rb") as f:
+            assert isinstance(f, io.BufferedIOBase)
+            assert f.read() == b"test"
+
 
 class RealFileOpenTest(FakeFileOpenTest):
     def use_real_fs(self):

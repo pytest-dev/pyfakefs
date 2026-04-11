@@ -1286,12 +1286,38 @@ class FakeFileWrapper:
     def __iter__(self) -> Iterator[str] | Iterator[bytes]:
         if not self.readable():
             self._raise("File is not open for reading")
-        return self._io.__iter__()
+        return self._io.__iter__()  # type: ignore[return-value]
 
     def __next__(self):
         if not self.readable():
             self._raise("File is not open for reading")
         return next(self._io)
+
+
+class FakeTextFileWrapper(FakeFileWrapper, io.TextIOBase):  # type: ignore[misc]
+    """Represents a text file wrapper.
+    Derives from io.TextIOBase so it can be used as a file object
+    if the type is checked by a library user, while it delegates all calls
+    to `FakeFileWrapper`.
+    """
+
+    def __getattribute__(self, name):  # type: ignore[override]
+        if hasattr(FakeFileWrapper, name) or name in self.__dict__:
+            return FakeFileWrapper.__getattribute__(self, name)
+        return self.__getattr__(name)
+
+
+class FakeBinaryFileWrapper(FakeFileWrapper, io.BufferedIOBase):  # type: ignore[misc]
+    """Represents a buffered binary file wrapper.
+    Derives from io.BufferedIOBase so it can be used as a file object
+    if the type is checked by a library user, while it delegates all calls
+    to `FakeFileWrapper`.
+    """
+
+    def __getattribute__(self, name):  # type: ignore[override]
+        if hasattr(FakeFileWrapper, name) or name in self.__dict__:
+            return FakeFileWrapper.__getattribute__(self, name)
+        return self.__getattr__(name)
 
 
 class StandardStreamWrapper:

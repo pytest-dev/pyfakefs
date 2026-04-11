@@ -32,13 +32,15 @@ from typing import (
     IO,
 )
 
-from pyfakefs import helpers
 from pyfakefs.fake_file import (
+    FakeBinaryFileWrapper,
+    FakeTextFileWrapper,
     FakePipeWrapper,
     FakeFileWrapper,
     FakeFile,
     AnyFileWrapper,
 )
+from pyfakefs import helpers
 from pyfakefs.helpers import (
     AnyString,
     is_called_from_skipped_module,
@@ -270,7 +272,8 @@ class FakeFileOpen:
             if not self.filesystem.is_windows_fs:
                 file_object.st_ctime = current_time
 
-        fakefile = FakeFileWrapper(
+        wrapper_class = FakeBinaryFileWrapper if binary else FakeTextFileWrapper
+        fakefile = wrapper_class(
             file_object,
             file_path,
             open_modes=open_modes,
