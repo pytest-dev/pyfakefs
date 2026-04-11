@@ -20,6 +20,9 @@ The released versions correspond to PyPI releases.
   in `hash()`, `Path.match` and `Path.full_match`
   (see [#1308](https://github.com/pytest-dev/pyfakefs/issues/1308))
 
+### Infrastructure
+* use newest `pytest` for testing in CI
+
 ## [Version 6.1.6](https://pypi.python.org/pypi/pyfakefs/6.1.6) (2026-03-18)
 Follow-up bugfix release for 6.1.5.
 
