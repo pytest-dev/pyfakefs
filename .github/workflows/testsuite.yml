@@ -103,16 +103,16 @@ jobs:
       matrix:
         os: [ubuntu-latest, macOS-latest, windows-latest]
         python-version: ["3.10", "3.11", "3.12", "3.13"]
-        pytest-version: [6.2.5, 7.0.1, 7.4.4, 8.0.2, 8.4.2, 9.0.2]
+        pytest-version: [6.2.5, 7.0.1, 7.4.4, 8.0.2, 8.4.2, 9.0.3]
         include:
           - python-version: "3.14"
-            pytest-version: 8.4.2
+            pytest-version: 9.0.3
             os: ubuntu-latest
           - python-version: "3.14"
-            pytest-version: 8.4.2
+            pytest-version: 9.0.3
             os: macOS-latest
           - python-version: "3.14"
-            pytest-version: 8.4.2
+            pytest-version: 9.0.3
             os: windows-latest
     steps:
       - uses: actions/checkout@v6
