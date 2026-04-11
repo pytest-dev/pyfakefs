@@ -72,9 +72,10 @@ Limitations
   See :ref:`customizing_patcher` for more information and ways to work around
   this.
 
-- ``pyfakefs`` does not retain the MRO for file objects, so you cannot rely on
-  checks using `isinstance` for these objects (for example, to differentiate
-  between binary and textual file objects).
+- ``pyfakefs`` does not retain the MRO for file objects, so you can mostly not rely on
+  checks using `isinstance` for these objects (note though that binary and textual file
+  objects are derived from `io.BufferedIOBase` and `io.TextIOBase`, respectively,
+  and can thus be differentiated via `isinstance` checks).
 
 - ``pyfakefs`` is only tested with CPython and the newest PyPy versions, other
   Python implementations will probably not work
