@@ -2,7 +2,8 @@
 The released versions correspond to PyPI releases.
 `pyfakefs` versions follow [Semantic Versioning](https://semver.org/).
 
-## Unreleased
+## [Version 6.2.0](https://pypi.python.org/pypi/pyfakefs/6.2.0) (2026-04-12)
+Changes the MRO for file wrappers.
 
 ### Changes
 * fake file wrappers now derive from `io.TextIOBase` or `io.BufferedIOBase`,
