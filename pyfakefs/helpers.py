@@ -511,7 +511,7 @@ def is_called_from_skipped_module(
     if not skip_names and not check_open_code:
         return False
 
-    stack = traceback.extract_stack()
+    stack = traceback.extract_stack(limit=6)
 
     # handle the case that we try to call the original `open_code`
     # (since Python 3.12)
