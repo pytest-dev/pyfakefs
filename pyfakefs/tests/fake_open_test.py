@@ -1063,6 +1063,19 @@ class FakeFileOpenTest(FakeFileOpenTestBase):
             assert isinstance(f, io.BufferedIOBase)
             assert f.read() == b"test"
 
+    def test_stacklimit(self):
+        """Regression test for #1313 - handle reduced stack limit"""
+        old_tracebacklimit = (
+            sys.tracebacklimit if hasattr(sys, "tracebacklimit") else None
+        )
+        sys.tracebacklimit = 2
+        try:
+            file_path = self.make_path("foo")
+            with self.open(file_path, "w") as f:
+                f.write("test")
+        finally:
+            sys.tracebacklimit = old_tracebacklimit
+
 
 class RealFileOpenTest(FakeFileOpenTest):
     def use_real_fs(self):

@@ -2,6 +2,12 @@
 The released versions correspond to PyPI releases.
 `pyfakefs` versions follow [Semantic Versioning](https://semver.org/).
 
+## Unreleased
+
+### Fixes
+* fixed a crash if the stack limit was set to a low value
+  (see [#1313](https://github.com/pytest-dev/pyfakefs/issues/1313))
+
 ## [Version 6.2.0](https://pypi.python.org/pypi/pyfakefs/6.2.0) (2026-04-12)
 Changes the MRO for file wrappers.
 
