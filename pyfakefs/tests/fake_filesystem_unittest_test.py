@@ -1113,10 +1113,7 @@ class UseOriginalThreadSafetyTest(TestCase):
 
         async def many(root, n):
             await asyncio.gather(
-                *[
-                    _dispatch(pathlib.Path(f"{root}/w{i}/a/b/c/file"))
-                    for i in range(n)
-                ]
+                *[_dispatch(pathlib.Path(f"{root}/w{i}/a/b/c/file")) for i in range(n)]
             )
 
         with Patcher() as p:
