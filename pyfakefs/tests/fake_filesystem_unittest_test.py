@@ -18,6 +18,7 @@
 Test the :py:class`pyfakefs.fake_filesystem_unittest.TestCase` base class.
 """
 
+import asyncio
 import glob
 import importlib.util
 import io
@@ -28,6 +29,7 @@ import runpy
 import shutil
 import sys
 import tempfile
+import threading
 import unittest
 import warnings
 from contextlib import redirect_stdout
@@ -45,6 +47,7 @@ from pyfakefs.fake_filesystem_unittest import (
     patchfs,
     PatchMode,
 )
+from pyfakefs.fake_os import use_original_os
 from pyfakefs.helpers import IS_PYPY
 from pyfakefs.tests.fixtures import module_with_attributes
 
@@ -1063,6 +1066,86 @@ class FakeImportTest(fake_filesystem_unittest.TestCase):
         del sys.path[0]
         assert module.__name__ == "fake_module"
         assert module.number == 42
+
+
+class UseOriginalThreadSafetyTest(TestCase):
+    """Regression test: the ``use_original`` flag on :class:`FakeOsModule`
+    used to be a process-global class attribute flipped by the
+    :func:`use_original_os` context manager. When one thread entered the
+    context manager while another thread was in the middle of a faked
+    filesystem operation, the faked call could observe ``use_original=True``
+    from the first thread and dispatch to the real ``os`` module, failing
+    against a path that only exists in the fake filesystem.
+
+    The flag is now stored in :class:`threading.local` so that concurrent
+    ``use_original_os()`` calls do not leak state across threads.
+    """
+
+    def test_use_original_os_is_thread_local(self):
+        """Concurrent ``use_original_os()`` in a sibling thread must not
+        cause faked filesystem operations in a worker thread to dispatch
+        to the real OS.
+
+        This mirrors the behaviour of pyfakefs-internal call sites such as
+        ``linecache`` during traceback formatting, which enter
+        ``use_original_os()`` on arbitrary threads while user code runs
+        faked filesystem calls via ``asyncio.to_thread``.
+        """
+        stop_flag = threading.Event()
+
+        def hammer_use_original():
+            """Enter and exit ``use_original_os()`` in a tight loop to
+            race against the worker threads below."""
+            while not stop_flag.is_set():
+                with use_original_os():
+                    pass
+
+        def _write(p):
+            # Each worker mkdirs and writes inside its own pre-isolated
+            # subtree so that no two workers mutate the same fake-directory
+            # dict.
+            p.parent.mkdir(parents=True, exist_ok=True)
+            with p.open("w") as cf:
+                cf.write("x")
+
+        async def _dispatch(p):
+            await asyncio.to_thread(_write, p)
+
+        async def many(root, n):
+            await asyncio.gather(
+                *[_dispatch(pathlib.Path(f"{root}/w{i}/a/b/c/file")) for i in range(n)]
+            )
+
+        with Patcher() as p:
+            # Start the hammer threads inside the Patcher context so they do
+            # not contend with Patcher's cold module-walk during init.
+            hammers = [
+                threading.Thread(target=hammer_use_original, daemon=True)
+                for _ in range(4)
+            ]
+            for h in hammers:
+                h.start()
+            try:
+                # Run several rounds so the cumulative failure probability
+                # approaches 1; each round uses a distinct root so any
+                # real-OS fallback reliably fails against a non-existent
+                # directory.
+                for round_idx in range(3):
+                    root = f"/fake-env-{round_idx}"
+                    # Pre-create each worker's top-level w{i} directory so the
+                    # workers only mutate dicts inside their own subtree.
+                    for i in range(64):
+                        p.fs.create_dir(f"{root}/w{i}")
+                    asyncio.run(many(root, 64))
+                    for i in range(64):
+                        self.assertTrue(
+                            p.fs.exists(f"{root}/w{i}/a/b/c/file"),
+                            f"expected fake file {root}/w{i}/a/b/c/file to exist",
+                        )
+            finally:
+                stop_flag.set()
+                for h in hammers:
+                    h.join(timeout=1)
 
 
 if __name__ == "__main__":
