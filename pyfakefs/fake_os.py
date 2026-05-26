@@ -87,6 +87,7 @@ def _set_use_original(value: bool) -> None:
     """Set the current thread use_original flag value."""
     _use_original_local.value = value
 
+
 class FakeOsModule:
     """Uses FakeFilesystem to provide a fake os module replacement.
 
