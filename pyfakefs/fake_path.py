@@ -599,6 +599,7 @@ def handle_original_call(f: Callable) -> Callable:
         if args:
             self = args[0]
             from pyfakefs.fake_os import FakeOsModule  # noqa: F401
+
             should_use_original = getattr(FakeOsModule._use_original, "value", False)
             if not should_use_original and self.filesystem.has_patcher:
                 skip_names = self.filesystem.patcher.skip_names
