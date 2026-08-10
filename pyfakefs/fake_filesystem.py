@@ -798,9 +798,7 @@ class FakeFilesystem:
             if S_ISLNK(file_object.st_mode):
                 try:
                     link_object = self.resolve(entry_path)
-                except OSError as exc:
-                    if self.is_macos and exc.errno != errno.ENOENT:
-                        return
+                except OSError:
                     if self.is_windows_fs:
                         self.raise_os_error(errno.ENOTDIR, entry_path)
                     raise
@@ -1544,7 +1542,7 @@ class FakeFilesystem:
             TypeError: if file_path is `None`.
         """
         if check_link and self.islink(file_path):
-            return True
+            return not self.is_macos or not self.ends_with_path_separator(file_path)
         path = to_string(self.make_string_path(file_path))
         if path is None:
             raise TypeError
@@ -2719,8 +2717,7 @@ class FakeFilesystem:
                 if self.is_macos:
                     # to avoid EEXIST exception, remove the link
                     # if it already exists
-                    if self.exists(link_path, check_link=True):
-                        self.remove_object(link_path)
+                    self.raise_os_error(errno.ENOENT, link_target_path)
                 else:
                     self.raise_os_error(errno.EEXIST, link_target_path)
 
@@ -2867,8 +2864,6 @@ class FakeFilesystem:
                 if self.is_windows_fs:
                     error = errno.ENOTDIR
                 elif self._is_circular_link(link_obj):
-                    if self.is_macos:
-                        return link_obj.path  # type: ignore[return-value]
                     error = errno.ELOOP
                 else:
                     error = errno.ENOENT
