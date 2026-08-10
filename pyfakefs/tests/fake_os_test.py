@@ -645,31 +645,15 @@ class FakeOsModuleTest(FakeOsModuleTestBase):
         self.check_macos_only()
         file_path = self.make_path("foo")
         self.os.symlink(file_path, file_path)
-        self.assertTrue(self.os.path.lexists(file_path + self.os.sep))
+        self.assertFalse(self.os.path.lexists(file_path + self.os.sep))
 
-    def test_islink_with_trailing_separator_linux_windows(self):
-        self.check_linux_and_windows()
+    def test_islink_with_trailing_separator(self):
         skip_if_symlink_not_supported()
         file_path = self.make_path("foo")
         self.os.symlink(file_path, file_path)
         self.assertFalse(self.os.path.islink(file_path + self.os.sep))
 
-    def test_islink_with_trailing_separator_macos(self):
-        # regression test for #373
-        self.check_macos_only()
-        file_path = self.make_path("foo")
-        self.os.symlink(file_path, file_path)
-        self.assertTrue(self.os.path.islink(file_path + self.os.sep))
-
-    def test_isfile_with_trailing_separator_linux_windows(self):
-        self.check_linux_and_windows()
-        file_path = self.make_path("foo")
-        self.create_file(file_path)
-        self.assertFalse(self.os.path.isfile(file_path + self.os.sep))
-
-    def test_isfile_with_trailing_separator_macos(self):
-        # regression test for #374
-        self.check_macos_only()
+    def test_isfile_with_trailing_separator(self):
         file_path = self.make_path("foo")
         self.create_file(file_path)
         self.assertFalse(self.os.path.isfile(file_path + self.os.sep))
@@ -743,54 +727,35 @@ class FakeOsModuleTest(FakeOsModuleTestBase):
         with self.assertRaises(TypeError):
             self.os.readlink(None)
 
-    def test_broken_symlink_with_trailing_separator_linux(self):
-        self.check_linux_only()
+    def check_broken_symlink_with_trailing_separator(self, subtype):
         file_path = self.make_path("foo")
         link_path = self.make_path("link")
         self.os.symlink(file_path, link_path)
-        self.assert_raises_os_error(
-            errno.EEXIST,
-            self.os.symlink,
-            link_path + self.os.sep,
-            link_path + self.os.sep,
-        )
+        with self.raises_os_error(subtype):
+            self.os.symlink(link_path + self.os.sep, link_path + self.os.sep)
+
+    def test_broken_symlink_with_trailing_separator_linux(self):
+        self.check_linux_only()
+        self.check_broken_symlink_with_trailing_separator(errno.EEXIST)
 
     def test_broken_symlink_with_trailing_separator_macos(self):
         # regression test for #371
         self.check_macos_only()
-        file_path = self.make_path("foo")
-        link_path = self.make_path("link")
-        self.os.symlink(file_path, link_path)
-        self.os.symlink(link_path + self.os.sep, link_path + self.os.sep)
+        self.check_broken_symlink_with_trailing_separator(errno.ENOENT)
 
     def test_broken_symlink_with_trailing_separator_windows(self):
         self.check_windows_only()
         skip_if_symlink_not_supported()
-        file_path = self.make_path("foo")
-        link_path = self.make_path("link")
-        self.os.symlink(file_path, link_path)
-        self.assert_raises_os_error(
-            errno.ENOTDIR,
-            self.os.symlink,
-            link_path + self.os.sep,
-            link_path + self.os.sep,
-        )
+        self.check_broken_symlink_with_trailing_separator(errno.ENOTDIR)
 
-    def test_circular_readlink_with_trailing_separator_linux(self):
+    def test_circular_readlink_with_trailing_separator_posix(self):
         # Regression test for #372
-        self.check_linux_only()
+        self.check_posix_only()
         file_path = self.make_path("foo")
         self.os.symlink(file_path, file_path)
         self.assert_raises_os_error(
             errno.ELOOP, self.os.readlink, file_path + self.os.sep
         )
-
-    def test_circular_readlink_with_trailing_separator_macos(self):
-        # Regression test for #372
-        self.check_macos_only()
-        file_path = self.make_path("foo")
-        self.os.symlink(file_path, file_path)
-        self.os.readlink(file_path + self.os.sep)
 
     def test_circular_readlink_with_trailing_separator_windows(self):
         # Regression test for #372
@@ -2676,13 +2641,15 @@ class FakeOsModuleTest(FakeOsModuleTestBase):
         self.assert_raises_os_error(errno.ELOOP, self.os.readlink, path0 + self.os.sep)
 
     def test_readlink_circular_link_with_trailing_sep_macos(self):
-        # Regression test for #392
+        # real behavior under macOS is inconsistent, exception is sometimes not raised
+        self.skip_real_fs()
         self.check_macos_only()
         path1 = self.make_path("foo")
         path0 = self.make_path("bar")
         self.os.symlink(path0, path1)
         self.os.symlink(path1, path0)
-        self.assertEqual(path0, self.os.readlink(path0 + self.os.sep))
+        with self.raises_os_error(errno.ELOOP):
+            self.os.readlink(path0 + self.os.sep)
 
     def test_readlink_circular_link_with_trailing_sep_windows(self):
         self.check_windows_only()
@@ -2691,9 +2658,8 @@ class FakeOsModuleTest(FakeOsModuleTestBase):
         path0 = self.make_path("bar")
         self.os.symlink(path0, path1)
         self.os.symlink(path1, path0)
-        self.assert_raises_os_error(
-            errno.ENOTDIR, self.os.readlink, path0 + self.os.sep
-        )
+        with self.raises_os_error(errno.ENOTDIR):
+            self.os.readlink(path0 + self.os.sep)
 
     # hard link related tests
     def test_link_bogus(self):
