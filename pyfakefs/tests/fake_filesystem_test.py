@@ -38,7 +38,7 @@ from pyfakefs.fake_filesystem import (
     reset_ids,
     OSType,
 )
-from pyfakefs.helpers import IS_WIN
+from pyfakefs.helpers import IS_WIN, IS_PYPY
 from pyfakefs.tests.test_utils import (
     TestCase,
     RealFsTestCase,
@@ -2283,9 +2283,12 @@ class RealFileSystemAccessTest(RealFsTestCase):
         real_stat = os.stat(real_file_path)
         self.assertIsNone(fake_file._byte_contents)
         self.assertEqual(fake_file.st_size, real_stat.st_size)
-        self.assertAlmostEqual(fake_file.st_ctime, real_stat.st_ctime, places=5)
-        self.assertAlmostEqual(fake_file.st_atime, real_stat.st_atime, places=5)
-        self.assertAlmostEqual(fake_file.st_mtime, real_stat.st_mtime, places=5)
+        # these tests do not work in a specific pypy versions due to a pypy bug
+        # the bug is fixed in main, this check can be removed after the next release
+        if not IS_PYPY or not IS_WIN or sys.version_info < (3, 11, 15):
+            self.assertAlmostEqual(fake_file.st_ctime, real_stat.st_ctime, places=5)
+            self.assertAlmostEqual(fake_file.st_atime, real_stat.st_atime, places=5)
+            self.assertAlmostEqual(fake_file.st_mtime, real_stat.st_mtime, places=5)
         self.assertEqual(fake_file.st_uid, real_stat.st_uid)
         self.assertEqual(fake_file.st_gid, real_stat.st_gid)
 
