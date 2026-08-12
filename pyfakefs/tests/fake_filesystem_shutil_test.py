@@ -23,10 +23,11 @@ import shutil
 import sys
 import tempfile
 import unittest
+from os import stat_result
 from pathlib import Path
 
 from pyfakefs import fake_filesystem_unittest
-from pyfakefs.helpers import get_uid, set_uid, is_root, IS_PYPY
+from pyfakefs.helpers import get_uid, set_uid, is_root, IS_PYPY, IS_WIN
 from pyfakefs.tests.test_utils import RealFsTestMixin, skip_if_symlink_not_supported
 
 is_windows = sys.platform == "win32"
@@ -270,8 +271,7 @@ class FakeShutilModuleTest(RealFsTestCase):
         src_stat = os.stat(src_file)
         dst_stat = os.stat(dst_file)
         self.assertEqual(src_stat.st_mode, dst_stat.st_mode)
-        self.assertAlmostEqual(src_stat.st_atime, dst_stat.st_atime, places=0)
-        self.assertAlmostEqual(src_stat.st_mtime, dst_stat.st_mtime, places=2)
+        self.check_stat_times(dst_stat, src_stat)
 
     @unittest.skipIf(IS_PYPY, "Functionality not supported in PyPy")
     def test_copystat_symlinks(self):
@@ -297,8 +297,7 @@ class FakeShutilModuleTest(RealFsTestCase):
         src_stat = os.stat(src_file)
         dst_stat = os.stat(dst_file)
         self.assertEqual(src_stat.st_mode, dst_stat.st_mode)
-        self.assertAlmostEqual(src_stat.st_atime, dst_stat.st_atime, places=0)
-        self.assertAlmostEqual(src_stat.st_mtime, dst_stat.st_mtime, places=2)
+        self.check_stat_times(dst_stat, src_stat)
 
     def test_copy2_directory(self):
         src_file = self.make_path("xyzzy")
@@ -315,8 +314,14 @@ class FakeShutilModuleTest(RealFsTestCase):
         src_stat = os.stat(src_file)
         dst_stat = os.stat(dst_file)
         self.assertEqual(src_stat.st_mode, dst_stat.st_mode)
-        self.assertAlmostEqual(src_stat.st_atime, dst_stat.st_atime, places=0)
-        self.assertAlmostEqual(src_stat.st_mtime, dst_stat.st_mtime, places=2)
+        self.check_stat_times(dst_stat, src_stat)
+
+    def check_stat_times(self, dst_stat: stat_result, src_stat: stat_result):
+        # these tests do not work in a specific pypy versions due to a pypy bug
+        # the bug is fixed in main, this check can be removed after the next release
+        if not IS_PYPY or not IS_WIN or sys.version_info < (3, 11, 15):
+            self.assertAlmostEqual(src_stat.st_atime, dst_stat.st_atime, places=0)
+            self.assertAlmostEqual(src_stat.st_mtime, dst_stat.st_mtime, places=2)
 
     def test_copytree(self):
         src_directory = self.make_path("xyzzy")
