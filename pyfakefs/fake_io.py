@@ -21,15 +21,14 @@ from __future__ import annotations
 import _io  # pytype: disable=import-error
 import io
 import sys
+from collections.abc import Callable
 from enum import Enum
 from typing import (
-    Any,
-    AnyStr,
     IO,
     TYPE_CHECKING,
+    Any,
+    AnyStr,
 )
-
-from collections.abc import Callable
 
 from pyfakefs.fake_file import AnyFileWrapper
 from pyfakefs.fake_open import fake_open

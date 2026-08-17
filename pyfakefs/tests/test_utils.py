@@ -27,7 +27,7 @@ from contextlib import contextmanager
 from unittest import mock
 
 from pyfakefs import fake_filesystem, fake_open, fake_os
-from pyfakefs.helpers import is_byte_string, to_string, is_root
+from pyfakefs.helpers import is_byte_string, is_root, to_string
 
 
 class DummyTime:

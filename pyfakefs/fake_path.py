@@ -21,27 +21,26 @@ import functools
 import inspect
 import os
 import sys
+from collections.abc import Callable
 from stat import (
     S_IFDIR,
     S_IFMT,
 )
 from types import ModuleType
 from typing import (
+    TYPE_CHECKING,
     Any,
     AnyStr,
-    overload,
     ClassVar,
-    TYPE_CHECKING,
+    overload,
 )
-
-from collections.abc import Callable
 
 from pyfakefs.helpers import (
     is_called_from_skipped_module,
     make_string_path,
-    to_string,
     matching_string,
     to_bytes,
+    to_string,
 )
 
 if TYPE_CHECKING:

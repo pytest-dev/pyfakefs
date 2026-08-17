@@ -19,11 +19,9 @@ import os as my_os
 import pathlib
 import sys
 from builtins import open as bltn_open
-from io import open as io_open
-from os import path
-from os import stat
+from os import path, stat
 from os import stat as my_stat
-from os.path import exists, isfile, isdir, islink
+from os.path import exists, isdir, isfile, islink
 from os.path import exists as my_exists
 from pathlib import Path
 
@@ -101,7 +99,7 @@ def file_contents1(filepath):
 
 
 def file_contents2(filepath):
-    with io_open(filepath, encoding="utf8") as f:
+    with open(filepath, encoding="utf8") as f:
         return f.read()
 
 

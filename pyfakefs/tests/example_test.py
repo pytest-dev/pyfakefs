@@ -34,7 +34,6 @@ import unittest
 from pyfakefs import fake_filesystem_unittest
 from pyfakefs.tests import example  # The module under test
 
-
 # Work around pyupgrade auto-rewriting `io.open()` to `open()`.
 io_open = io.open
 

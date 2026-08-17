@@ -19,7 +19,6 @@ import unittest
 
 from pyfakefs.tests import (
     dynamic_patch_test,
-    fake_stat_time_test,
     example_test,
     fake_filesystem_glob_test,
     fake_filesystem_shutil_test,
@@ -29,9 +28,10 @@ from pyfakefs.tests import (
     fake_open_test,
     fake_os_test,
     fake_pathlib_test,
+    fake_stat_time_test,
     fake_tempfile_test,
-    patched_packages_test,
     mox3_stubout_test,
+    patched_packages_test,
 )
 
 
