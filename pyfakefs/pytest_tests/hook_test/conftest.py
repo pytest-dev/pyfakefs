@@ -13,7 +13,6 @@ from pathlib import Path
 
 import pytest
 
-
 # Used for testing paused patching during reporting.
 
 
