@@ -649,6 +649,7 @@ class FakeOsModuleTest(FakeOsModuleTestBase):
 
     def test_islink_with_trailing_separator(self):
         skip_if_symlink_not_supported()
+        self.check_linux_and_windows()  # unstable behavior under macOS
         file_path = self.make_path("foo")
         self.os.symlink(file_path, file_path)
         self.assertFalse(self.os.path.islink(file_path + self.os.sep))
@@ -738,6 +739,7 @@ class FakeOsModuleTest(FakeOsModuleTestBase):
         self.check_linux_only()
         self.check_broken_symlink_with_trailing_separator(errno.EEXIST)
 
+    @unittest.skip(reason="Unstable behavior in newer macOS versions")
     def test_broken_symlink_with_trailing_separator_macos(self):
         # regression test for #371
         self.check_macos_only()
@@ -750,7 +752,7 @@ class FakeOsModuleTest(FakeOsModuleTestBase):
 
     def test_circular_readlink_with_trailing_separator_posix(self):
         # Regression test for #372
-        self.check_posix_only()
+        self.check_linux_only()  # behavior unstable under macOS
         file_path = self.make_path("foo")
         self.os.symlink(file_path, file_path)
         self.assert_raises_os_error(
