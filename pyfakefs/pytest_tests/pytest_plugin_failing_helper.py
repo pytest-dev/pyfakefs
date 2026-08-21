@@ -3,4 +3,4 @@
 
 
 def test_fs(fs):
-    assert 1 == 2
+    assert 1 == 2  # noqa:PLR0133

@@ -29,10 +29,10 @@ from copy import copy
 from dataclasses import dataclass
 from enum import Enum
 from stat import S_IFLNK
-from typing import Union, Any, AnyStr, overload, cast
+from typing import Any, AnyStr, Union, cast, overload
 
-AnyString = Union[str, bytes]
-AnyPath = Union[AnyStr, os.PathLike]
+AnyString = str | bytes
+AnyPath = Union[AnyStr, os.PathLike]  # noqa: UP007
 
 IS_PYPY = platform.python_implementation() == "PyPy"
 IS_WIN = sys.platform == "win32"
@@ -286,7 +286,7 @@ class FakeStatResult:
         self._st_mtime_ns: int = self._st_atime_ns
         self._st_ctime_ns: int = self._st_atime_ns
 
-    def __eq__(self, other: Any) -> bool:
+    def __eq__(self, other: object) -> bool:
         return (
             isinstance(other, FakeStatResult)
             and self._st_atime_ns == other._st_atime_ns
@@ -301,7 +301,7 @@ class FakeStatResult:
             and self.st_mode == other.st_mode
         )
 
-    def __ne__(self, other: Any) -> bool:
+    def __ne__(self, other: object) -> bool:
         return not self == other
 
     def copy(self) -> "FakeStatResult":
@@ -330,7 +330,7 @@ class FakeStatResult:
         return self._st_ctime_ns / 1e9
 
     @st_ctime.setter
-    def st_ctime(self, val: int | float) -> None:
+    def st_ctime(self, val: float) -> None:
         """Set the creation time in seconds."""
         self._st_ctime_ns = int(val * 1e9)
 
@@ -340,7 +340,7 @@ class FakeStatResult:
         return self._st_atime_ns / 1e9
 
     @st_atime.setter
-    def st_atime(self, val: int | float) -> None:
+    def st_atime(self, val: float) -> None:
         """Set the access time in seconds."""
         self._st_atime_ns = int(val * 1e9)
 
@@ -350,7 +350,7 @@ class FakeStatResult:
         return self._st_mtime_ns / 1e9
 
     @st_mtime.setter
-    def st_mtime(self, val: int | float) -> None:
+    def st_mtime(self, val: float) -> None:
         """Set the modification time in seconds."""
         self._st_mtime_ns = int(val * 1e9)
 
@@ -552,10 +552,8 @@ def is_called_from_skipped_module(
         caller_module_name = caller_module_name.replace(os.sep, ".")
 
         if any(
-            [
-                caller_module_name == sn or caller_module_name.endswith("." + sn)
-                for sn in skip_names
-            ]
+            caller_module_name == sn or caller_module_name.endswith("." + sn)
+            for sn in skip_names
         ):
             return True
     return False

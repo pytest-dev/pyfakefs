@@ -15,7 +15,7 @@ import os
 
 import pytest
 
-import pyfakefs.pytest_tests.example as example
+from pyfakefs.pytest_tests import example
 
 
 @pytest.mark.xfail

@@ -30,8 +30,8 @@ from collections import namedtuple
 from unittest import mock
 from unittest.mock import patch
 
-from pyfakefs import fake_pathlib, fake_filesystem, fake_filesystem_unittest, fake_os
-from pyfakefs.fake_filesystem import OSType, FakeFilesystem
+from pyfakefs import fake_filesystem, fake_filesystem_unittest, fake_os, fake_pathlib
+from pyfakefs.fake_filesystem import FakeFilesystem, OSType
 from pyfakefs.fake_pathlib import FakePathlibModule
 from pyfakefs.helpers import IS_PYPY, is_root
 from pyfakefs.tests.skipped_pathlib import (
@@ -682,7 +682,7 @@ class FakePathlibFileObjectPropertyTest(RealPathlibTestCase):
                 self.assert_raises_os_error(errno.EACCES, list, it)
         else:
             it = self.path(dir_path).iterdir()
-            path = str(list(it)[0])
+            path = str(next(iter(it)))
             self.assertTrue(path.endswith("some_file"))
 
     def test_iterdir_and_glob_without_exe_permission(self):
@@ -701,9 +701,9 @@ class FakePathlibFileObjectPropertyTest(RealPathlibTestCase):
             self.os.link(another_file, directory / "link.txt")
         # We can enumerate the directory using iterdir and glob:
         assert len(list(directory.iterdir())) == 1
-        assert list(directory.iterdir())[0] == file_path
+        assert next(iter(directory.iterdir())) == file_path
         assert len(list(directory.glob("*.txt"))) == 1
-        assert list(directory.glob("*.txt"))[0] == file_path
+        assert next(iter(directory.glob("*.txt"))) == file_path
 
         # We cannot read files inside the directory,
         # even if we have read access to the file
@@ -1463,10 +1463,12 @@ class FakePathlibUsageInOsFunctionsTest(RealPathlibTestCase):
         path = self.make_path("some_file")
         self.create_file(path)
         self.os.chown(path, 42, 5)
-        with mock.patch("pwd.getpwuid", fake_getpwuid):
-            with mock.patch("grp.getgrgid", fake_getgrgid):
-                self.assertEqual("NewUser", self.path(path).owner())
-                self.assertEqual("NewGroup", self.path(path).group())
+        with (
+            mock.patch("pwd.getpwuid", fake_getpwuid),
+            mock.patch("grp.getgrgid", fake_getgrgid),
+        ):
+            self.assertEqual("NewUser", self.path(path).owner())
+            self.assertEqual("NewGroup", self.path(path).group())
 
     def test_owner_and_group_windows(self):
         self.check_windows_only()
@@ -1585,7 +1587,7 @@ class FakePathlibUsageInOsFunctionsTest(RealPathlibTestCase):
         self.create_dir(base_path)
         self.create_file(base_path / "1.txt")
         self.create_file(base_path / "bar" / "2.txt")
-        result = list(step for step in self.os.walk(base_path))
+        result = [step for step in self.os.walk(base_path)]
         assert len(result) == 2
         assert result[0] == (base_dir, ["bar"], ["1.txt"])
         assert result[1] == (self.os.path.join(base_dir, "bar"), [], ["2.txt"])

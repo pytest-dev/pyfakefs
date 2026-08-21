@@ -411,9 +411,11 @@ class TestFakeModeW(FakeStatTestBase):
         self.check_open_write_flush_close_w_mode()
 
     def test_read_raises(self):
-        with self.open(self.file_path, "w", encoding="utf8") as f:
-            with self.assertRaises(OSError):
-                f.read()
+        with (
+            self.open(self.file_path, "w", encoding="utf8") as f,
+            self.assertRaises(OSError),
+        ):
+            f.read()
 
 
 class TestRealModeW(TestFakeModeW):
@@ -498,9 +500,11 @@ class TestFakeModeA(FakeStatTestBase):
         self.check_open_write_flush_close_non_w_mode()
 
     def test_read_raises(self):
-        with self.open(self.file_path, "a", encoding="utf8") as f:
-            with self.assertRaises(OSError):
-                f.read()
+        with (
+            self.open(self.file_path, "a", encoding="utf8") as f,
+            self.assertRaises(OSError),
+        ):
+            f.read()
 
 
 class TestRealModeA(TestFakeModeA):
@@ -580,9 +584,8 @@ class TestFakeModeR(FakeStatTestBase):
         self.assertEqual(flushed.st_mtime, closed.st_mtime)
 
     def test_open_not_existing_raises(self):
-        with self.assertRaises(OSError):
-            with self.open(self.file_path, "r"):
-                pass
+        with self.assertRaises(OSError), self.open(self.file_path, "r"):
+            pass
 
 
 class TestRealModeR(TestFakeModeR):
@@ -611,9 +614,8 @@ class TestFakeModeRPlus(FakeStatTestBase):
         self.check_open_write_flush_close_non_w_mode()
 
     def test_open_not_existing_raises(self):
-        with self.assertRaises(OSError):
-            with self.open(self.file_path, "r+"):
-                pass
+        with self.assertRaises(OSError), self.open(self.file_path, "r+"):
+            pass
 
 
 class TestRealModeRPlus(TestFakeModeRPlus):

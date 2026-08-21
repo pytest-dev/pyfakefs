@@ -31,23 +31,20 @@ class FakeTempfileModuleTest(fake_filesystem_unittest.TestCase):
         self.setUpPyfakefs()
 
     def test_named_temporary_file(self):
-        obj = tempfile.NamedTemporaryFile()
-        self.assertTrue(self.fs.get_object(obj.name))
-        obj.close()
+        with tempfile.NamedTemporaryFile() as f:
+            self.assertTrue(self.fs.get_object(f.name))
         with self.assertRaises(OSError):
-            self.fs.get_object(obj.name)
+            self.fs.get_object(f.name)
 
     def test_named_temporary_file_no_delete(self):
-        obj = tempfile.NamedTemporaryFile(delete=False)
-        obj.write(b"foo")
-        obj.close()
-        file_obj = self.fs.get_object(obj.name)
+        with tempfile.NamedTemporaryFile(delete=False) as f:
+            f.write(b"foo")
+        file_obj = self.fs.get_object(f.name)
         contents = file_obj.contents
         self.assertEqual("foo", contents)
-        obj = tempfile.NamedTemporaryFile(mode="w", encoding="utf8", delete=False)
-        obj.write("foo")
-        obj.close()
-        file_obj = self.fs.get_object(obj.name)
+        with tempfile.NamedTemporaryFile(mode="w", encoding="utf8", delete=False) as f:
+            f.write("foo")
+        file_obj = self.fs.get_object(f.name)
         self.assertEqual("foo", file_obj.contents)
 
     def test_mkstemp(self):
@@ -101,8 +98,11 @@ class FakeTempfileModuleTest(fake_filesystem_unittest.TestCase):
             self.assertEqual(b"test", f.read())
 
     def test_temporay_file_with_dir(self):
-        with self.assertRaises(FileNotFoundError):
-            tempfile.TemporaryFile(dir="/parent")
+        with (
+            self.assertRaises(FileNotFoundError),
+            tempfile.TemporaryFile(dir="/parent"),
+        ):
+            pass
         os.mkdir("/parent")
         with tempfile.TemporaryFile() as f:
             f.write(b"test")

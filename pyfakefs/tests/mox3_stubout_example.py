@@ -29,4 +29,4 @@ def fabs(x):
 
 
 def tomorrow():
-    return datetime.date.today() + datetime.timedelta(days=1)
+    return datetime.date.today() + datetime.timedelta(days=1)  # noqa: DTZ011

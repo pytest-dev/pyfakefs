@@ -34,9 +34,9 @@ import functools
 import os
 import shutil
 import sys
-from threading import RLock
 from collections.abc import Callable
-from typing import TYPE_CHECKING
+from threading import RLock
+from typing import TYPE_CHECKING, ClassVar
 
 if TYPE_CHECKING:
     from pyfakefs.fake_filesystem import FakeFilesystem
@@ -58,7 +58,7 @@ class FakeShutilModule:
     has_fcopy_file = hasattr(shutil, "_HAS_FCOPYFILE") and shutil._HAS_FCOPYFILE  # type: ignore[attr-defined]
     use_sendfile = hasattr(shutil, "_USE_CP_SENDFILE") and shutil._USE_CP_SENDFILE  # type: ignore[attr-defined]
     use_fd_functions = shutil._use_fd_functions  # type: ignore[attr-defined]
-    functions_to_patch = ["copy", "copyfile", "rmtree"]
+    functions_to_patch: ClassVar[list[str]] = ["copy", "copyfile", "rmtree"]
     if sys.version_info < (3, 12) or sys.platform != "win32":
         functions_to_patch.extend(["copy2", "copytree", "move"])
 

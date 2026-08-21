@@ -24,48 +24,47 @@ import inspect
 import os
 import sys
 import uuid
+from collections.abc import Callable
 from contextlib import contextmanager
 from stat import (
     S_IFREG,
     S_IFSOCK,
 )
 from typing import (
-    Any,
-    cast,
-    AnyStr,
     TYPE_CHECKING,
+    Any,
+    AnyStr,
+    cast,
 )
 
-from collections.abc import Callable
-
 from pyfakefs.fake_file import (
+    AnyFileWrapper,
     FakeDirectory,
     FakeDirWrapper,
-    StandardStreamWrapper,
+    FakeFile,
     FakeFileWrapper,
     FakePipeWrapper,
-    FakeFile,
-    AnyFileWrapper,
+    StandardStreamWrapper,
 )
 from pyfakefs.fake_open import FakeFileOpen, _OpenModes
 from pyfakefs.fake_path import FakePathModule
-from pyfakefs.fake_scandir import scandir, walk, ScanDirIter
+from pyfakefs.fake_scandir import ScanDirIter, scandir, walk
 from pyfakefs.helpers import (
+    IS_PYPY,
+    PERM_DEF,
+    PERM_EXE,
+    AnyString,
     FakeStatResult,
+    get_gid,
+    get_uid,
+    is_byte_string,
     is_called_from_skipped_module,
     is_int_type,
-    is_byte_string,
-    make_string_path,
-    IS_PYPY,
-    to_string,
-    matching_string,
-    AnyString,
-    to_bytes,
-    PERM_EXE,
-    PERM_DEF,
     is_root,
-    get_uid,
-    get_gid,
+    make_string_path,
+    matching_string,
+    to_bytes,
+    to_string,
 )
 
 if TYPE_CHECKING:
@@ -975,14 +974,14 @@ class FakeOsModule:
             path = make_string_path(path)
         except TypeError:
             # the error is handled later
-            path = path
+            pass
         if dir_fd is not None:
             # check if fd is supported for the built-in real function
             if check_supported and (fct not in self.supports_dir_fd):
                 raise NotImplementedError("dir_fd unavailable on this platform")
             if isinstance(path, int):
                 raise ValueError(
-                    "%s: Can't specify dir_fd without matching path_str" % fct.__name__
+                    f"{fct.__name__}: Can't specify dir_fd without matching path_str"
                 )
             if not self.path.isabs(path):
                 open_file = self.filesystem.get_open_file(dir_fd)
@@ -1325,9 +1324,10 @@ class FakeOsModule:
         if 0 <= fd < NR_STD_STREAMS:
             self.filesystem.raise_os_error(errno.EINVAL)
         file_object = cast(FakeFileWrapper, self.filesystem.get_open_file(fd))
-        if self.filesystem.is_windows_fs:
-            if not hasattr(file_object, "allow_update") or not file_object.allow_update:
-                self.filesystem.raise_os_error(errno.EBADF, file_object.file_path)
+        if self.filesystem.is_windows_fs and (
+            not hasattr(file_object, "allow_update") or not file_object.allow_update
+        ):
+            self.filesystem.raise_os_error(errno.EBADF, file_object.file_path)
 
     def fdatasync(self, fd: int) -> None:
         """Perform fdatasync for a fake file (in other words, do nothing).
@@ -1372,9 +1372,11 @@ class FakeOsModule:
             self.filesystem.raise_os_error(errno.EINVAL)
         source = cast(FakeFileWrapper, self.filesystem.get_open_file(fd_in))
         dest = cast(FakeFileWrapper, self.filesystem.get_open_file(fd_out))
-        if self.filesystem.is_macos:
-            if dest.get_object().stat_result.st_mode & 0o777000 != S_IFSOCK:
-                raise OSError("Socket operation on non-socket")
+        if (
+            self.filesystem.is_macos
+            and dest.get_object().stat_result.st_mode & 0o777000 != S_IFSOCK
+        ):
+            raise OSError("Socket operation on non-socket")
         if offset is None:
             if self.filesystem.is_macos:
                 raise TypeError("None is not a valid offset")

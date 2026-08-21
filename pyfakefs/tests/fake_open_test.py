@@ -24,9 +24,9 @@ import time
 import unittest
 
 from pyfakefs import fake_filesystem, helpers
-from pyfakefs.helpers import is_root, IS_PYPY, get_locale_encoding
+from pyfakefs.fake_filesystem_unittest import Patcher, PatchMode
 from pyfakefs.fake_io import FakeIoModule
-from pyfakefs.fake_filesystem_unittest import PatchMode, Patcher
+from pyfakefs.helpers import IS_PYPY, get_locale_encoding, is_root
 from pyfakefs.tests.skipped_pathlib import read_open
 from pyfakefs.tests.test_utils import RealFsTestCase, skip_if_symlink_not_supported
 
@@ -602,24 +602,28 @@ class FakeFileOpenTest(FakeFileOpenTestBase):
         third_path = self.make_path("some_file3")
         self.create_file(third_path, contents="contents here3")
 
-        with self.open(first_path, encoding="utf8") as fake_file1:
-            with self.open(second_path, encoding="utf8") as fake_file2:
-                with self.open(third_path, encoding="utf8") as fake_file3:
-                    fileno2 = fake_file2.fileno()
-                    self.assertGreater(fileno2, fake_file1.fileno())
-                    self.assertGreater(fake_file3.fileno(), fileno2)
+        with (
+            self.open(first_path, encoding="utf8") as fake_file1,
+            self.open(second_path, encoding="utf8") as fake_file2,
+            self.open(third_path, encoding="utf8") as fake_file3,
+        ):
+            fileno2 = fake_file2.fileno()
+            self.assertGreater(fileno2, fake_file1.fileno())
+            self.assertGreater(fake_file3.fileno(), fileno2)
 
     def test_file_descriptors_for_the_same_file_are_different(self):
         first_path = self.make_path("some_file1")
         self.create_file(first_path, contents="contents here1")
         second_path = self.make_path("some_file2")
         self.create_file(second_path, contents="contents here2")
-        with self.open(first_path, encoding="utf8") as fake_file1:
-            with self.open(second_path, encoding="utf8") as fake_file2:
-                with self.open(first_path, encoding="utf8") as fake_file1a:
-                    fileno2 = fake_file2.fileno()
-                    self.assertNotEqual(fileno2, fake_file1.fileno())
-                    self.assertNotEqual(fake_file1a.fileno(), fileno2)
+        with (
+            self.open(first_path, encoding="utf8") as fake_file1,
+            self.open(second_path, encoding="utf8") as fake_file2,
+            self.open(first_path, encoding="utf8") as fake_file1a,
+        ):
+            fileno2 = fake_file2.fileno()
+            self.assertNotEqual(fileno2, fake_file1.fileno())
+            self.assertNotEqual(fake_file1a.fileno(), fileno2)
 
     def test_reused_file_descriptors_do_not_affect_others(self):
         first_path = self.make_path("some_file1")
@@ -629,21 +633,25 @@ class FakeFileOpenTest(FakeFileOpenTestBase):
         third_path = self.make_path("some_file3")
         self.create_file(third_path, contents="contents here3")
 
-        with self.open(first_path, "r", encoding="utf8") as fake_file1:
-            with self.open(second_path, "r", encoding="utf8") as fake_file2:
-                fake_file3 = self.open(third_path, "r", encoding="utf8")
-                fake_file1a = self.open(first_path, "r", encoding="utf8")
-                fileno1 = fake_file1.fileno()
-                fileno2 = fake_file2.fileno()
-                fileno3 = fake_file3.fileno()
-                fileno4 = fake_file1a.fileno()
+        with (
+            self.open(first_path, "r", encoding="utf8") as fake_file1,
+            self.open(second_path, "r", encoding="utf8") as fake_file2,
+        ):
+            fake_file3 = self.open(third_path, "r", encoding="utf8")
+            fake_file1a = self.open(first_path, "r", encoding="utf8")
+            fileno1 = fake_file1.fileno()
+            fileno2 = fake_file2.fileno()
+            fileno3 = fake_file3.fileno()
+            fileno4 = fake_file1a.fileno()
 
-        with self.open(second_path, "r", encoding="utf8") as fake_file2:
-            with self.open(first_path, "r", encoding="utf8") as fake_file1b:
-                self.assertEqual(fileno1, fake_file2.fileno())
-                self.assertEqual(fileno2, fake_file1b.fileno())
-                self.assertEqual(fileno3, fake_file3.fileno())
-                self.assertEqual(fileno4, fake_file1a.fileno())
+        with (
+            self.open(second_path, "r", encoding="utf8") as fake_file2,
+            self.open(first_path, "r", encoding="utf8") as fake_file1b,
+        ):
+            self.assertEqual(fileno1, fake_file2.fileno())
+            self.assertEqual(fileno2, fake_file1b.fileno())
+            self.assertEqual(fileno3, fake_file3.fileno())
+            self.assertEqual(fileno4, fake_file1a.fileno())
         fake_file3.close()
         fake_file1a.close()
 
@@ -651,55 +659,59 @@ class FakeFileOpenTest(FakeFileOpenTestBase):
         file_path = self.make_path("some_file")
         self.create_file(file_path)
 
-        with self.open(file_path, "a", encoding="utf8") as writer:
-            with self.open(file_path, "r", encoding="utf8") as reader:
-                writes = [
-                    "hello",
-                    "world\n",
-                    "somewhere\nover",
-                    "the\n",
-                    "rainbow",
-                ]
-                reads = []
-                # when writes are flushes, they are piped to the reader
-                for write in writes:
-                    writer.write(write)
-                    writer.flush()
-                    reads.append(reader.read())
-                    reader.flush()
-                self.assertEqual(writes, reads)
-                writes = ["nothing", "to\nsee", "here"]
-                reads = []
-                # when writes are not flushed, the reader doesn't read
-                # anything new
-                for write in writes:
-                    writer.write(write)
-                    reads.append(reader.read())
-                self.assertEqual(["" for _ in writes], reads)
+        with (
+            self.open(file_path, "a", encoding="utf8") as writer,
+            self.open(file_path, "r", encoding="utf8") as reader,
+        ):
+            writes = [
+                "hello",
+                "world\n",
+                "somewhere\nover",
+                "the\n",
+                "rainbow",
+            ]
+            reads = []
+            # when writes are flushes, they are piped to the reader
+            for write in writes:
+                writer.write(write)
+                writer.flush()
+                reads.append(reader.read())
+                reader.flush()
+            self.assertEqual(writes, reads)
+            writes = ["nothing", "to\nsee", "here"]
+            reads = []
+            # when writes are not flushed, the reader doesn't read
+            # anything new
+            for write in writes:
+                writer.write(write)
+                reads.append(reader.read())
+            self.assertEqual(["" for _ in writes], reads)
 
     def test_intertwined_read_write_python3_str(self):
         file_path = self.make_path("some_file")
         self.create_file(file_path)
 
-        with self.open(file_path, "a", encoding="utf-8") as writer:
-            with self.open(file_path, "r", encoding="utf-8") as reader:
-                writes = ["привет", "мир\n", "где-то\nза", "радугой"]
-                reads = []
-                # when writes are flushes, they are piped to the reader
-                for write in writes:
-                    writer.write(write)
-                    writer.flush()
-                    reads.append(reader.read())
-                    reader.flush()
-                self.assertEqual(writes, reads)
-                writes = ["ничего", "не\nвидно"]
-                reads = []
-                # when writes are not flushed, the reader doesn't
-                # read anything new
-                for write in writes:
-                    writer.write(write)
-                    reads.append(reader.read())
-                self.assertEqual(["" for _ in writes], reads)
+        with (
+            self.open(file_path, "a", encoding="utf-8") as writer,
+            self.open(file_path, "r", encoding="utf-8") as reader,
+        ):
+            writes = ["привет", "мир\n", "где-то\nза", "радугой"]
+            reads = []
+            # when writes are flushes, they are piped to the reader
+            for write in writes:
+                writer.write(write)
+                writer.flush()
+                reads.append(reader.read())
+                reader.flush()
+            self.assertEqual(writes, reads)
+            writes = ["ничего", "не\nвидно"]
+            reads = []
+            # when writes are not flushed, the reader doesn't
+            # read anything new
+            for write in writes:
+                writer.write(write)
+                reads.append(reader.read())
+            self.assertEqual(["" for _ in writes], reads)
 
     def test_open_io_errors(self):
         file_path = self.make_path("some_file")
@@ -783,12 +795,14 @@ class FakeFileOpenTest(FakeFileOpenTestBase):
     def test_update_other_instances_of_same_file_on_flush(self):
         # Regression test for #302
         file_path = self.make_path("baz")
-        with self.open(file_path, "w", encoding="utf8") as f0:
-            with self.open(file_path, "w", encoding="utf8") as f1:
-                f0.write("test")
-                f0.truncate()
-                f1.flush()
-                self.assertEqual(4, self.os.path.getsize(file_path))
+        with (
+            self.open(file_path, "w", encoding="utf8") as f0,
+            self.open(file_path, "w", encoding="utf8") as f1,
+        ):
+            f0.write("test")
+            f0.truncate()
+            f1.flush()
+            self.assertEqual(4, self.os.path.getsize(file_path))
 
     def test_getsize_after_truncate(self):
         # Regression test for #412
@@ -976,11 +990,13 @@ class FakeFileOpenTest(FakeFileOpenTestBase):
     def test_truncate_flushes_zeros(self):
         # Regression test for #301
         file_path = self.make_path("baz")
-        with self.open(file_path, "w", encoding="utf8") as f0:
-            with self.open(file_path, encoding="utf8") as f1:
-                f0.seek(1)
-                f0.truncate()
-                self.assertEqual("\0", f1.read())
+        with (
+            self.open(file_path, "w", encoding="utf8") as f0,
+            self.open(file_path, encoding="utf8") as f1,
+        ):
+            f0.seek(1)
+            f0.truncate()
+            self.assertEqual("\0", f1.read())
 
     def test_byte_filename(self):
         file_path = self.make_path(b"test")
@@ -1011,9 +1027,8 @@ class FakeFileOpenTest(FakeFileOpenTestBase):
         with self.open("/dev/zero", "rb") as f:
             self.assertEqual(b"\0\0\0\0", f.read(4))
         if sys.platform == "linux":
-            with self.raises_os_error(errno.ENOSPC):
-                with self.open("/dev/full", "wb") as f:
-                    f.write(b"\0")
+            with self.raises_os_error(errno.ENOSPC), self.open("/dev/full", "wb") as f:
+                f.write(b"\0")
 
     def test_utf16_text(self):
         # regression test for #574
@@ -1535,9 +1550,11 @@ class OpenFileWithEncodingTest(FakeFileOpenTestBase):
 
     def test_write_str_error_modes(self):
         str_contents = "علي بابا"
-        with self.open(self.file_path, "w", encoding="cyrillic") as f:
-            with self.assertRaises(UnicodeEncodeError):
-                f.write(str_contents)
+        with (
+            self.open(self.file_path, "w", encoding="cyrillic") as f,
+            self.assertRaises(UnicodeEncodeError),
+        ):
+            f.write(str_contents)
 
         with self.open(
             self.file_path, "w", encoding="ascii", errors="xmlcharrefreplace"
@@ -1567,9 +1584,11 @@ class OpenFileWithEncodingTest(FakeFileOpenTestBase):
             f.write(str_contents)
 
         # default strict encoding
-        with self.open(self.file_path, encoding="ascii") as f:
-            with self.assertRaises(UnicodeDecodeError):
-                f.read()
+        with (
+            self.open(self.file_path, encoding="ascii") as f,
+            self.assertRaises(UnicodeDecodeError),
+        ):
+            f.read()
         with self.open(self.file_path, encoding="ascii", errors="replace") as f:
             contents = f.read()
         self.assertNotEqual(str_contents, contents)
@@ -1954,12 +1973,12 @@ class OpenWithBinaryFlagsTest(OpenWithFlagsTestBase):
             with self.write_and_reopen_file(f, mode="rb") as f1:
                 self.assertEqual(self.file_contents, f1.read())
                 # Attempt to reopen the file in text mode
-                with self.open_file("wb") as f2:
-                    with self.write_and_reopen_file(
-                        f2, mode="r", encoding="ascii"
-                    ) as f3:
-                        with self.assertRaises(UnicodeDecodeError):
-                            f3.read()
+                with (
+                    self.open_file("wb") as f2,
+                    self.write_and_reopen_file(f2, mode="r", encoding="ascii") as f3,
+                    self.assertRaises(UnicodeDecodeError),
+                ):
+                    f3.read()
 
     def test_write_and_read_binary(self):
         with self.open_file_and_seek("w+b") as f:

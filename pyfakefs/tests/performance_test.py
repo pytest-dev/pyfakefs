@@ -29,9 +29,7 @@ if os.environ.get("TEST_PERFORMANCE"):
         def tearDownClass(cls) -> None:
             cls.elapsed_time = time.time() - cls.start_time
             print(
-                "Elapsed time per test for cached setup: {:.3f} ms".format(
-                    cls.elapsed_time * 10
-                )
+                f"Elapsed time per test for cached setup: {cls.elapsed_time * 10:.3f} ms"
             )
 
         def setUp(self) -> None:
@@ -46,9 +44,7 @@ if os.environ.get("TEST_PERFORMANCE"):
         def tearDownClass(cls) -> None:
             cls.elapsed_time = time.time() - cls.start_time
             print(
-                "Elapsed time per test for uncached setup: {:.3f} ms".format(
-                    cls.elapsed_time * 10
-                )
+                f"Elapsed time per test for uncached setup: {cls.elapsed_time * 10:.3f} ms"
             )
 
         def setUp(self) -> None:

@@ -12,12 +12,10 @@
 import pathlib
 
 # Example for a test using a custom pytest fixture with an argument to Patcher
-
 import pytest
 
-import pyfakefs.pytest_tests.example as example
 from pyfakefs.fake_filesystem_unittest import Patcher
-from pyfakefs.pytest_tests import unhashable
+from pyfakefs.pytest_tests import example, unhashable
 
 
 @pytest.mark.xfail

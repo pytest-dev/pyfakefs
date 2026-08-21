@@ -92,42 +92,40 @@ import random
 import sys
 import tempfile
 import weakref
-from collections import namedtuple, OrderedDict
+from collections import OrderedDict, namedtuple
+from collections.abc import Callable
 from doctest import TestResults
 from enum import Enum
-
 from stat import (
-    S_IFREG,
     S_IFDIR,
-    S_ISLNK,
-    S_IFMT,
-    S_ISDIR,
     S_IFLNK,
+    S_IFMT,
+    S_IFREG,
+    S_ISDIR,
+    S_ISLNK,
     S_ISREG,
 )
 from typing import (
-    Any,
-    cast,
-    AnyStr,
-    overload,
-    NoReturn,
     TYPE_CHECKING,
+    Any,
+    AnyStr,
+    NoReturn,
+    cast,
+    overload,
 )
 
-from collections.abc import Callable
-
-from pyfakefs import fake_file, fake_path, fake_io, fake_os, helpers, fake_open
-from pyfakefs.fake_file import AnyFileWrapper, AnyFile
+from pyfakefs import fake_file, fake_io, fake_open, fake_os, fake_path, helpers
+from pyfakefs.fake_file import AnyFile, AnyFileWrapper
 from pyfakefs.helpers import (
-    is_int_type,
-    make_string_path,
-    to_string,
-    matching_string,
+    POSIX_PROPERTIES,
+    WINDOWS_PROPERTIES,
     AnyPath,
     AnyString,
-    WINDOWS_PROPERTIES,
-    POSIX_PROPERTIES,
     FSType,
+    is_int_type,
+    make_string_path,
+    matching_string,
+    to_string,
 )
 
 if TYPE_CHECKING:
@@ -745,9 +743,11 @@ class FakeFilesystem:
         mount_point = self._mount_point_for_device(st_dev)
         if mount_point:
             total_size = mount_point["total_size"]
-            if total_size is not None:
-                if total_size - mount_point["used_size"] < usage_change:
-                    self.raise_os_error(errno.ENOSPC, file_path)
+            if (
+                total_size is not None
+                and total_size - mount_point["used_size"] < usage_change
+            ):
+                self.raise_os_error(errno.ENOSPC, file_path)
             mount_point["used_size"] += usage_change
 
     def stat(self, entry_path: AnyStr, follow_symlinks: bool = True):
@@ -1208,25 +1208,24 @@ class FakeFilesystem:
             not supported or no drive is present.
         """
         path_str = make_string_path(path)
-        if self.is_windows_fs:
-            if len(path_str) >= 2:
-                norm_str = self.normcase(path_str)
-                sep = self.get_path_separator(path_str)
-                # UNC path_str handling
-                if (norm_str[0:2] == sep * 2) and (norm_str[2:3] != sep):
-                    # UNC path_str handling - splits off the mount point
-                    # instead of the drive
-                    sep_index = norm_str.find(sep, 2)
-                    if sep_index == -1:
-                        return path_str[:0], path_str
-                    sep_index2 = norm_str.find(sep, sep_index + 1)
-                    if sep_index2 == sep_index + 1:
-                        return path_str[:0], path_str
-                    if sep_index2 == -1:
-                        sep_index2 = len(path_str)
-                    return path_str[:sep_index2], path_str[sep_index2:]
-                if path_str[1:2] == matching_string(path_str, ":"):
-                    return path_str[:2], path_str[2:]
+        if self.is_windows_fs and len(path_str) >= 2:
+            norm_str = self.normcase(path_str)
+            sep = self.get_path_separator(path_str)
+            # UNC path_str handling
+            if (norm_str[0:2] == sep * 2) and (norm_str[2:3] != sep):
+                # UNC path_str handling - splits off the mount point
+                # instead of the drive
+                sep_index = norm_str.find(sep, 2)
+                if sep_index == -1:
+                    return path_str[:0], path_str
+                sep_index2 = norm_str.find(sep, sep_index + 1)
+                if sep_index2 == sep_index + 1:
+                    return path_str[:0], path_str
+                if sep_index2 == -1:
+                    sep_index2 = len(path_str)
+                return path_str[:sep_index2], path_str[sep_index2:]
+            if path_str[1:2] == matching_string(path_str, ":"):
+                return path_str[:2], path_str[2:]
         return path_str[:0], path_str
 
     def splitroot(self, path: AnyStr):
@@ -1423,10 +1422,8 @@ class FakeFilesystem:
                     if len(file_path) == 2:
                         # avoid recursion, check directly in the entries
                         return any(
-                            [
-                                entry.upper() == file_path.upper()
-                                for entry in self.root_dir.entries
-                            ]
+                            entry.upper() == file_path.upper()
+                            for entry in self.root_dir.entries
                         )
                     self.get_object_from_normpath(file_path)
                     return True
@@ -1779,9 +1776,8 @@ class FakeFilesystem:
         target = self.root
         try:
             for component in path_components:
-                if S_ISLNK(target.st_mode):
-                    if target.contents:
-                        target = cast(FakeDirectory, self.resolve(target.contents))
+                if S_ISLNK(target.st_mode) and target.contents:
+                    target = cast(FakeDirectory, self.resolve(target.contents))
                 if not S_ISDIR(target.st_mode):
                     if not self.is_windows_fs:
                         self.raise_os_error(errno.ENOTDIR, path)
@@ -2070,10 +2066,9 @@ class FakeFilesystem:
 
     def _handle_broken_link_with_trailing_sep(self, path: AnyStr) -> None:
         # note that the check for trailing sep has to be done earlier
-        if self.islink(path):
-            if not self.exists(path):
-                error = errno.ENOENT if self.is_macos else errno.ENOTDIR
-                self.raise_os_error(error, path)
+        if self.islink(path) and not self.exists(path):
+            error = errno.ENOENT if self.is_macos else errno.ENOTDIR
+            self.raise_os_error(error, path)
 
     def _handle_posix_dir_link_errors(
         self, new_file_path: AnyStr, old_file_path: AnyStr, ends_with_sep: bool
@@ -2108,8 +2103,7 @@ class FakeFilesystem:
         new_object = self._get_object(new_file_path)
         if old_file_path == new_file_path:
             if not S_ISLNK(new_object.st_mode) and ends_with_sep:
-                error = errno.ENOTDIR if self.is_windows_fs else errno.ENOTDIR
-                self.raise_os_error(error, old_file_path)
+                self.raise_os_error(errno.ENOTDIR, old_file_path)
             return None  # Nothing to do here
 
         if old_object == new_object:
@@ -2145,13 +2139,12 @@ class FakeFilesystem:
             else:
                 self.raise_os_error(errno.EEXIST, new_file_path)
         if not S_ISLNK(new_object.st_mode):
-            if new_object.entries:
-                if (
-                    not S_ISLNK(old_object.st_mode)
-                    or not ends_with_sep
-                    or not self.is_macos
-                ):
-                    self.raise_os_error(errno.ENOTEMPTY, new_file_path)
+            if new_object.entries and (
+                not S_ISLNK(old_object.st_mode)
+                or not ends_with_sep
+                or not self.is_macos
+            ):
+                self.raise_os_error(errno.ENOTEMPTY, new_file_path)
             if S_ISREG(old_object.st_mode):
                 self.raise_os_error(errno.EISDIR, new_file_path)
 
@@ -2567,7 +2560,7 @@ class FakeFilesystem:
         Raises:
             PackageNotFoundError: if the package with the given name is not found
         """
-        from importlib.metadata import distribution, PackageNotFoundError
+        from importlib.metadata import PackageNotFoundError, distribution
 
         # we have to pause patching to get the distribution
         # from the real filesystem if we are in patch mode
@@ -2898,7 +2891,7 @@ class FakeFilesystem:
             base_dir = self.normpath(parent_dir)
             ellipsis = matching_string(parent_dir, self.path_separator + "..")
             if parent_dir.endswith(ellipsis) and not self.is_windows_fs:
-                base_dir, dummy_dotdot, _ = parent_dir.partition(ellipsis)
+                base_dir, _, _ = parent_dir.partition(ellipsis)
             if self.is_windows_fs and not rest and not self.exists(base_dir):
                 # under Windows, the parent dir may be a drive or UNC path
                 # which has to be mounted
@@ -3291,6 +3284,7 @@ class FakeFilesystem:
 
 def _run_doctest() -> TestResults:
     import doctest
+
     import pyfakefs
 
     return doctest.testmod(pyfakefs.fake_filesystem)

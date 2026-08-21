@@ -28,9 +28,9 @@ class FakeGlobUnitTest(fake_filesystem_unittest.TestCase):
         self.setUpPyfakefs()
         directory = "./xyzzy"
         self.fs.create_dir(directory)
-        self.fs.create_dir("%s/subdir" % directory)
-        self.fs.create_dir("%s/subdir2" % directory)
-        self.fs.create_file("%s/subfile" % directory)
+        self.fs.create_dir(f"{directory}/subdir")
+        self.fs.create_dir(f"{directory}/subdir2")
+        self.fs.create_file(f"{directory}/subfile")
         self.fs.create_file("[Temp]")
 
     def test_glob_empty(self):

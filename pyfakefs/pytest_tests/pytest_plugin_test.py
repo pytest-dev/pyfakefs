@@ -3,9 +3,9 @@
 import os
 import tempfile
 
+import pyfakefs.pytest_tests.io
 from pyfakefs.fake_filesystem import OSType
 from pyfakefs.fake_filesystem_unittest import Pause
-import pyfakefs.pytest_tests.io
 
 
 def test_fs_fixture(fs):
@@ -27,32 +27,36 @@ def test_both_fixtures(fs, fake_filesystem):
 
 
 def test_pause_resume(fs):
-    fake_temp_file = tempfile.NamedTemporaryFile()
-    assert fs.exists(fake_temp_file.name)
-    assert os.path.exists(fake_temp_file.name)
-    fs.pause()
-    assert fs.exists(fake_temp_file.name)
-    assert not os.path.exists(fake_temp_file.name)
-    real_temp_file = tempfile.NamedTemporaryFile()
-    assert not fs.exists(real_temp_file.name)
-    assert os.path.exists(real_temp_file.name)
-    fs.resume()
-    assert not os.path.exists(real_temp_file.name)
-    assert os.path.exists(fake_temp_file.name)
+    with tempfile.NamedTemporaryFile() as fake_temp_file:
+        assert fs.exists(fake_temp_file.name)
+        assert os.path.exists(fake_temp_file.name)
+        fs.pause()
+        assert fs.exists(fake_temp_file.name)
+        assert not os.path.exists(fake_temp_file.name)
+        with tempfile.NamedTemporaryFile() as real_temp_file:
+            assert not fs.exists(real_temp_file.name)
+            assert os.path.exists(real_temp_file.name)
+            fs.resume()
+            assert not os.path.exists(real_temp_file.name)
+            assert os.path.exists(fake_temp_file.name)
+            fs.pause()
+        fs.resume()
 
 
 def test_pause_resume_contextmanager(fs):
-    fake_temp_file = tempfile.NamedTemporaryFile()
-    assert fs.exists(fake_temp_file.name)
-    assert os.path.exists(fake_temp_file.name)
-    with Pause(fs):
+    with tempfile.NamedTemporaryFile() as fake_temp_file:
         assert fs.exists(fake_temp_file.name)
-        assert not os.path.exists(fake_temp_file.name)
-        real_temp_file = tempfile.NamedTemporaryFile()
-        assert not fs.exists(real_temp_file.name)
-        assert os.path.exists(real_temp_file.name)
-    assert not os.path.exists(real_temp_file.name)
-    assert os.path.exists(fake_temp_file.name)
+        assert os.path.exists(fake_temp_file.name)
+        with Pause(fs):
+            assert fs.exists(fake_temp_file.name)
+            assert not os.path.exists(fake_temp_file.name)
+            real_temp_file = tempfile.NamedTemporaryFile()  # noqa:SIM115
+            assert not fs.exists(real_temp_file.name)
+            assert os.path.exists(real_temp_file.name)
+        assert not os.path.exists(real_temp_file.name)
+        assert os.path.exists(fake_temp_file.name)
+        with Pause(fs):
+            real_temp_file.close()
 
 
 def test_use_own_io_module(fs):
