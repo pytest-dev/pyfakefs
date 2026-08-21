@@ -22,7 +22,7 @@ try:
     import pandas as pd
 
     try:
-        import pandas.io.parsers as parsers
+        from pandas.io import parsers
     except ImportError:
         parsers = None
 except ImportError:
@@ -231,5 +231,5 @@ if django is not None:
                 django.conf.settings.ROOT_URLCONF
             ).urls.urlpatterns
             return get_all_view_modules(all_urlpatterns)
-        except Exception:
+        except ImportError:
             return set()

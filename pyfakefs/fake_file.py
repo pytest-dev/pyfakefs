@@ -22,38 +22,37 @@ import os
 import sys
 import traceback
 import weakref
+from collections.abc import Callable, Iterator
 from stat import (
-    S_IFREG,
     S_IFDIR,
+    S_IFREG,
 )
 from types import TracebackType
 from typing import (
-    Union,
+    TYPE_CHECKING,
     Any,
-    cast,
     AnyStr,
     NoReturn,
     TextIO,
-    TYPE_CHECKING,
+    Union,
+    cast,
 )
-
-from collections.abc import Callable, Iterator
 
 from pyfakefs import helpers
 from pyfakefs.helpers import (
-    FakeStatResult,
-    BinaryBufferIO,
-    TextBufferIO,
-    is_int_type,
-    is_unicode_string,
-    to_string,
-    matching_string,
-    real_encoding,
     AnyPath,
     AnyString,
-    get_locale_encoding,
+    BinaryBufferIO,
+    FakeStatResult,
+    TextBufferIO,
     _OpenModes,
+    get_locale_encoding,
+    is_int_type,
     is_root,
+    is_unicode_string,
+    matching_string,
+    real_encoding,
+    to_string,
 )
 
 if TYPE_CHECKING:
@@ -79,8 +78,7 @@ class FakeLargeFileIoException(Exception):
 
     def __init__(self, file_path: str) -> None:
         super().__init__(
-            "Read and write operations not supported for "
-            "fake large file: %s" % file_path
+            f"Read and write operations not supported for fake large file: {file_path}"
         )
 
 
@@ -635,7 +633,7 @@ class FakeDirectory(FakeFile):
 
         if recursive and isinstance(entry, FakeDirectory):
             while entry.entries:
-                entry.remove_entry(list(entry.entries)[0])
+                entry.remove_entry(next(iter(entry.entries)))
         elif entry.st_nlink == 1:
             self.filesystem.change_disk_usage(-entry.size, pathname_name, entry.st_dev)
 
@@ -836,7 +834,7 @@ class FakeFileWrapper:
         assert fs is not None
         return fs
 
-    def __enter__(self) -> FakeFileWrapper:
+    def __enter__(self) -> FakeFileWrapper:  # noqa:PYI034
         """To support usage of this fake file with the 'with' statement."""
         return self
 
@@ -1255,9 +1253,8 @@ class FakeFileWrapper:
     def _read_error(self) -> Callable:
         def read_error(*args, **kwargs):
             """Throw an error unless the argument is zero."""
-            if args and args[0] == 0:
-                if self.filesystem.is_windows_fs and self.raw_io:
-                    return b"" if self._binary else ""
+            if args and args[0] == 0 and self.filesystem.is_windows_fs and self.raw_io:
+                return b"" if self._binary else ""
             self._raise("File is not open for reading.")
 
         return read_error
@@ -1265,9 +1262,13 @@ class FakeFileWrapper:
     def _write_error(self) -> Callable:
         def write_error(*args, **kwargs):
             """Throw an error."""
-            if self.raw_io:
-                if self.filesystem.is_windows_fs and args and len(args[0]) == 0:
-                    return 0
+            if (
+                self.raw_io
+                and self.filesystem.is_windows_fs
+                and args
+                and len(args[0]) == 0
+            ):
+                return 0
             self._raise("File is not open for writing.")
 
         return write_error
@@ -1352,7 +1353,7 @@ class StandardStreamWrapper:
     def is_stream(self) -> bool:
         return True
 
-    def __enter__(self) -> StandardStreamWrapper:
+    def __enter__(self) -> StandardStreamWrapper:  # noqa:PYI034
         """To support usage of this standard stream with the 'with' statement."""
         return self
 
@@ -1410,7 +1411,7 @@ class FakeDirWrapper:
         self.file_object.write(contents)
         return len(contents)
 
-    def __enter__(self) -> FakeDirWrapper:
+    def __enter__(self) -> FakeDirWrapper:  # noqa:PYI034
         """To support usage of this fake directory with the 'with' statement."""
         return self
 
@@ -1443,9 +1444,9 @@ class FakePipeWrapper:
         self.filedes: int | None = None
         self.real_file = None
         if mode:
-            self.real_file = open(fd, mode)
+            self.real_file = open(fd, mode)  # noqa: SIM115
 
-    def __enter__(self) -> FakePipeWrapper:
+    def __enter__(self) -> FakePipeWrapper:  # noqa:PYI034
         """To support usage of this fake pipe with the 'with' statement."""
         return self
 

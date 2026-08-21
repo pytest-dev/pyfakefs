@@ -21,17 +21,17 @@ import stat
 import sys
 import unittest
 
-from pyfakefs import fake_filesystem, fake_os, fake_open, fake_file
+from pyfakefs import fake_file, fake_filesystem, fake_open, fake_os
 from pyfakefs.fake_filesystem import (
     FakeFileOpen,
     is_root,
-    set_uid,
     set_gid,
+    set_uid,
 )
-from pyfakefs.helpers import IN_DOCKER, IS_PYPY, get_uid, get_gid, reset_ids, IS_WIN
+from pyfakefs.helpers import IN_DOCKER, IS_PYPY, IS_WIN, get_gid, get_uid, reset_ids
 from pyfakefs.tests.test_utils import (
-    TestCase,
     RealFsTestCase,
+    TestCase,
     skip_if_symlink_not_supported,
 )
 
@@ -315,7 +315,7 @@ class FakeOsModuleTest(FakeOsModuleTestBase):
         file_path = self.make_path("foo")
         self.create_file(file_path, contents=b"")
         with self.assertRaises(AttributeError):
-            self.os.stat(file_path).st_blocks
+            _ = self.os.stat(file_path).st_blocks
 
     def test_stat_with_unc_path(self):
         self.skip_real_fs()
@@ -1318,12 +1318,14 @@ class FakeOsModuleTest(FakeOsModuleTestBase):
 
     def check_append_mode_tell_after_truncate(self, tell_result):
         file_path = self.make_path("baz")
-        with self.open(file_path, "w", encoding="utf8") as f0:
-            with self.open(file_path, "a", encoding="utf8") as f1:
-                f1.write("abcde")
-                f0.seek(2)
-                f0.truncate()
-                self.assertEqual(tell_result, f1.tell())
+        with (
+            self.open(file_path, "w", encoding="utf8") as f0,
+            self.open(file_path, "a", encoding="utf8") as f1,
+        ):
+            f1.write("abcde")
+            f0.seek(2)
+            f0.truncate()
+            self.assertEqual(tell_result, f1.tell())
         with self.open(file_path, mode="rb") as f:
             self.assertEqual(b"\0\0abcde", f.read())
 
@@ -1547,10 +1549,10 @@ class FakeOsModuleTest(FakeOsModuleTestBase):
         self.create_dir(directory)
         self.assertTrue(self.os.path.exists(directory))
         self.assert_raises_os_error(errno.EBUSY, self.os.removedirs, directory)
-        head, unused_tail = self.os.path.split(directory)
+        head, _ = self.os.path.split(directory)
         while self.os.path.splitdrive(head)[1] != self.os.path.sep:
             self.assertFalse(self.os.path.exists(directory))
-            head, unused_tail = self.os.path.split(head)
+            head, _ = self.os.path.split(head)
 
     def test_removedirs_with_trailing_slash(self):
         """removedirs works on directory names with trailing slashes."""
@@ -1589,13 +1591,13 @@ class FakeOsModuleTest(FakeOsModuleTestBase):
         directory = "xyzzy"
         self.assertFalse(self.filesystem.exists(directory))
         self.os.mkdir(directory)
-        self.assertTrue(self.filesystem.exists("/%s" % directory))
+        self.assertTrue(self.filesystem.exists(f"/{directory}"))
         self.os.chdir(directory)
         self.os.mkdir(directory)
         self.assertTrue(self.filesystem.exists(f"/{directory}/{directory}"))
         self.os.chdir(directory)
         self.os.mkdir("../abccb")
-        self.assertTrue(self.os.path.exists("/%s/abccb" % directory))
+        self.assertTrue(self.os.path.exists(f"/{directory}/abccb"))
 
     def test_mkdir_with_trailing_slash(self):
         """mkdir can create a directory named with a trailing slash."""
@@ -2226,9 +2228,11 @@ class FakeOsModuleTest(FakeOsModuleTestBase):
         self.os.chown(ro_dir, 0, 0)
 
         # adding a new entry to the readonly subdirectory should fail
-        with self.assertRaises(PermissionError):
-            with self.open(f"{ro_dir}/file.txt", "w", encoding="utf8"):
-                pass
+        with (
+            self.assertRaises(PermissionError),
+            self.open(f"{ro_dir}/file.txt", "w", encoding="utf8"),
+        ):
+            pass
         file_path = self.make_path("file.txt")
         self.create_file(file_path)
         with self.assertRaises(PermissionError):
@@ -3127,9 +3131,11 @@ class FakeOsModuleTestCaseInsensitiveFS(FakeOsModuleTestBase):
         # even if we have read access to the file
         with self.assertRaises(PermissionError):
             self.os.stat(file_path)
-        with self.assertRaises(PermissionError):
-            with self.open(file_path, encoding="utf8") as f:
-                f.read()
+        with (
+            self.assertRaises(PermissionError),
+            self.open(file_path, encoding="utf8") as f,
+        ):
+            f.read()
 
     def test_listdir_impossible_without_read_permission(self):
         # regression test for #960
@@ -4675,9 +4681,9 @@ class FakeOsModuleWalkTest(FakeOsModuleTestBase):
     def assertWalkResults(self, expected, top, topdown=True, followlinks=False):
         # as the result of walk is unsorted, we have to check against
         # sorted results
-        result = list(
+        result = [
             step for step in self.os.walk(top, topdown=topdown, followlinks=followlinks)
-        )
+        ]
         result = sorted(result, key=lambda lst: lst[0])
         expected = sorted(expected, key=lambda lst: lst[0])
         self.assertEqual(len(expected), len(result))

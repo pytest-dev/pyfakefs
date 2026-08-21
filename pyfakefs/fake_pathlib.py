@@ -35,10 +35,9 @@ import posixpath
 import re
 import sys
 import warnings
-from pathlib import PurePath
-
 from collections.abc import Callable
-from typing import Any, Union
+from pathlib import PurePath
+from typing import Any, ClassVar, Union
 from unittest import mock
 from urllib.parse import quote_from_bytes as urlquote_from_bytes
 
@@ -47,13 +46,12 @@ from pyfakefs.fake_filesystem import FakeFilesystem
 from pyfakefs.fake_open import fake_open
 from pyfakefs.fake_os import FakeOsModule, use_original_os
 from pyfakefs.fake_path import FakePathModule
-from pyfakefs.helpers import IS_PYPY, is_called_from_skipped_module, FSType
-
+from pyfakefs.helpers import IS_PYPY, FSType, is_called_from_skipped_module
 
 _WIN_RESERVED_NAMES = (
     {"CON", "PRN", "AUX", "NUL"}
-    | {"COM%d" % i for i in range(1, 10)}
-    | {"LPT%d" % i for i in range(1, 10)}
+    | {f"COM{i}" for i in range(1, 10)}
+    | {f"LPT{i}" for i in range(1, 10)}
 )
 
 
@@ -99,12 +97,11 @@ def _wrap_strfunc(fake_fct, original_fct):
     @functools.wraps(fake_fct)
     def _wrapped(pathobj, *args, **kwargs):
         fs: FakeFilesystem = pathobj.filesystem
-        if fs.has_patcher:
-            if is_called_from_skipped_module(
-                skip_names=fs.patcher.skip_names,
-                case_sensitive=fs.is_case_sensitive,
-            ):
-                return original_fct(str(pathobj), *args, **kwargs)
+        if fs.has_patcher and is_called_from_skipped_module(
+            skip_names=fs.patcher.skip_names,
+            case_sensitive=fs.is_case_sensitive,
+        ):
+            return original_fct(str(pathobj), *args, **kwargs)
         return fake_fct(fs, str(pathobj), *args, **kwargs)
 
     return staticmethod(_wrapped)
@@ -114,12 +111,11 @@ def _wrap_binary_strfunc(fake_fct, original_fct):
     @functools.wraps(fake_fct)
     def _wrapped(pathobj1, pathobj2, *args):
         fs: FakeFilesystem = pathobj1.filesystem
-        if fs.has_patcher:
-            if is_called_from_skipped_module(
-                skip_names=fs.patcher.skip_names,
-                case_sensitive=fs.is_case_sensitive,
-            ):
-                return original_fct(str(pathobj1), str(pathobj2), *args)
+        if fs.has_patcher and is_called_from_skipped_module(
+            skip_names=fs.patcher.skip_names,
+            case_sensitive=fs.is_case_sensitive,
+        ):
+            return original_fct(str(pathobj1), str(pathobj2), *args)
         return fake_fct(fs, str(pathobj1), str(pathobj2), *args)
 
     return staticmethod(_wrapped)
@@ -129,12 +125,11 @@ def _wrap_binary_strfunc_reverse(fake_fct, original_fct):
     @functools.wraps(fake_fct)
     def _wrapped(pathobj1, pathobj2, *args):
         fs: FakeFilesystem = pathobj2.filesystem
-        if fs.has_patcher:
-            if is_called_from_skipped_module(
-                skip_names=fs.patcher.skip_names,
-                case_sensitive=fs.is_case_sensitive,
-            ):
-                return original_fct(str(pathobj2), str(pathobj1), *args)
+        if fs.has_patcher and is_called_from_skipped_module(
+            skip_names=fs.patcher.skip_names,
+            case_sensitive=fs.is_case_sensitive,
+        ):
+            return original_fct(str(pathobj2), str(pathobj1), *args)
         return fake_fct(fs, str(pathobj2), str(pathobj1), *args)
 
     return staticmethod(_wrapped)
@@ -174,19 +169,17 @@ class _FakeAccessor(accessor):  # type: ignore[valid-type, misc]
             raise NotImplementedError("lchmod() not available on this system")
 
     def chmod(self, pathobj, *args, **kwargs):
-        if "follow_symlinks" in kwargs:
-            if sys.version_info < (3, 10):
-                raise TypeError(
-                    "chmod() got an unexpected keyword argument 'follow_symlinks'"
-                )
-
-            if not kwargs["follow_symlinks"] and (
+        if (
+            "follow_symlinks" in kwargs
+            and not kwargs["follow_symlinks"]
+            and (
                 os.chmod not in os.supports_follow_symlinks
                 or (IS_PYPY and not pathobj.filesystem.is_macos)
-            ):
-                raise NotImplementedError(
-                    "`follow_symlinks` for chmod() is not available on this system"
-                )
+            )
+        ):
+            raise NotImplementedError(
+                "`follow_symlinks` for chmod() is not available on this system"
+            )
         return pathobj.filesystem.chmod(str(pathobj), *args, **kwargs)
 
     mkdir = _wrap_strfunc(FakeFilesystem.makedir, os.mkdir)
@@ -362,7 +355,7 @@ if sys.version_info < (3, 12):
                             continue
                         # The symlink is not resolved, so we must have
                         # a symlink loop.
-                        raise RuntimeError("Symlink loop from %r" % newpath)
+                        raise RuntimeError(f"Symlink loop from {newpath}")
                     # Resolve the symbolic link
                     try:
                         target = self.filesystem.readlink(newpath)
@@ -428,9 +421,7 @@ if sys.version_info < (3, 12):
                 try:
                     return pwd.getpwnam(username).pw_dir
                 except KeyError:
-                    raise RuntimeError(
-                        "Can't determine home directory for %r" % username
-                    )
+                    raise RuntimeError(f"Can't determine home directory for {username}")
 
     class _FakeWindowsFlavour(_FakeFlavour):
         """Flavour used by PureWindowsPath with some Windows specific
@@ -490,22 +481,19 @@ if sys.version_info < (3, 12):
             else:
                 raise RuntimeError("Can't determine home directory")
 
-            if username:
-                # Try to guess user home directory.  By default all users
-                # directories are located in the same place and are named by
-                # corresponding usernames.  If current user home directory points
-                # to nonstandard place, this guess is likely wrong.
-                if os.environ["USERNAME"] != username:
-                    drv, root, parts = self.parse_parts((userhome,))
-                    if parts[-1] != os.environ["USERNAME"]:
-                        raise RuntimeError(
-                            "Can't determine home directory for %r" % username
-                        )
-                    parts[-1] = username
-                    if drv or root:
-                        userhome = drv + root + self.join(parts[1:])
-                    else:
-                        userhome = self.join(parts)
+            # Try to guess user home directory.  By default all users
+            # directories are located in the same place and are named by
+            # corresponding usernames.  If current user home directory points
+            # to nonstandard place, this guess is likely wrong.
+            if username and (os.environ["USERNAME"] != username):
+                drv, root, parts = self.parse_parts((userhome,))
+                if parts[-1] != os.environ["USERNAME"]:
+                    raise RuntimeError(f"Can't determine home directory for {username}")
+                parts[-1] = username
+                if drv or root:
+                    userhome = drv + root + self.join(parts[1:])
+                else:
+                    userhome = self.join(parts)
             return userhome
 
         def compile_pattern(self, pattern):
@@ -545,9 +533,7 @@ if sys.version_info < (3, 12):
                 try:
                     return pwd.getpwnam(username).pw_dir
                 except KeyError:
-                    raise RuntimeError(
-                        "Can't determine home directory for %r" % username
-                    )
+                    raise RuntimeError(f"Can't determine home directory for {username}")
 
         def compile_pattern(self, pattern):
             return re.compile(fnmatch.translate(pattern)).fullmatch
@@ -593,20 +579,21 @@ class FakePath(pathlib.Path):
 
     # the underlying fake filesystem
     filesystem = None
-    skip_names: list[str] = []
+    skip_names: ClassVar[list[str]] = []
 
     def __new__(cls, *args, **kwargs):
         """Creates the correct subclass based on OS."""
         if cls is FakePathlibModule.Path:
-            cls = (
+            klass = (
                 FakePathlibModule.WindowsPath
                 if cls.filesystem.is_windows_fs
                 else FakePathlibModule.PosixPath
             )
-        if sys.version_info < (3, 12):
-            return cls._from_parts(args)  # pytype: disable=attribute-error
         else:
-            return object.__new__(cls)
+            klass = cls
+        if sys.version_info < (3, 12):
+            return klass._from_parts(args)  # pytype: disable=attribute-error
+        return object.__new__(klass)
 
     if sys.version_info[:2] == (3, 10):
         # Overwritten class methods to call _init to set the fake accessor,
@@ -756,7 +743,7 @@ class FakePath(pathlib.Path):
                 invalid or permission is denied.
         """
         if not isinstance(data, str):
-            raise TypeError("data must be str, not %s" % data.__class__.__name__)
+            raise TypeError(f"data must be str, not {data.__class__.__name__}")
         with fake_open(
             self.filesystem,
             self.skip_names,
@@ -1091,7 +1078,7 @@ class FakePathlibPathModule:
 
     def __or__(self, other: Any) -> Any:
         # workaround for #1242 - pytest chokes on Path | ... type hint in wrapped function
-        return Union[self, other]
+        return Union[self, other]  # noqa: UP007
 
     __ror__ = __or__
 
@@ -1136,33 +1123,34 @@ class RealPath(pathlib.Path):
     def __new__(cls, *args, **kwargs):
         """Creates the correct subclass based on OS."""
         if cls is RealPathlibModule.Path:
-            cls = (
+            klass = (
                 RealPathlibModule.WindowsPath  # pytype: disable=attribute-error
                 if os.name == "nt"
                 else RealPathlibModule.PosixPath  # pytype: disable=attribute-error
             )
-        if sys.version_info < (3, 12):
-            return cls._from_parts(args)  # pytype: disable=attribute-error
         else:
-            return object.__new__(cls)
+            klass = cls
+        if sys.version_info < (3, 12):
+            return klass._from_parts(args)  # pytype: disable=attribute-error
+        else:
+            return object.__new__(klass)
 
 
-if sys.version_info > (3, 10):
+def with_original_os(f: Callable) -> Callable:
+    """Decorator used for real pathlib Path methods to ensure that
+    real os functions instead of faked ones are used."""
 
-    def with_original_os(f: Callable) -> Callable:
-        """Decorator used for real pathlib Path methods to ensure that
-        real os functions instead of faked ones are used."""
+    @functools.wraps(f)
+    def wrapped(*args, **kwargs):
+        with use_original_os():
+            return f(*args, **kwargs)
 
-        @functools.wraps(f)
-        def wrapped(*args, **kwargs):
-            with use_original_os():
-                return f(*args, **kwargs)
+    return wrapped
 
-        return wrapped
 
-    for fct_name, fn in inspect.getmembers(RealPath, inspect.isfunction):
-        if not fct_name.startswith("__"):
-            setattr(RealPath, fct_name, with_original_os(fn))
+for fct_name, fn in inspect.getmembers(RealPath, inspect.isfunction):
+    if not fct_name.startswith("__"):
+        setattr(RealPath, fct_name, with_original_os(fn))
 
 
 class RealPathlibPathModule:

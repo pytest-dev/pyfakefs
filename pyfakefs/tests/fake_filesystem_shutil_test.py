@@ -27,7 +27,7 @@ from os import stat_result
 from pathlib import Path
 
 from pyfakefs import fake_filesystem_unittest
-from pyfakefs.helpers import get_uid, set_uid, is_root, IS_PYPY, IS_WIN
+from pyfakefs.helpers import IS_PYPY, IS_WIN, get_uid, is_root, set_uid
 from pyfakefs.tests.test_utils import RealFsTestMixin, skip_if_symlink_not_supported
 
 is_windows = sys.platform == "win32"
@@ -150,9 +150,8 @@ class FakeShutilModuleTest(RealFsTestCase):
         self.create_file(os.path.join(dir_path, "bar"))
         file_path = os.path.join(dir_path, "baz")
         self.create_file(file_path)
-        with open(file_path, encoding="utf8"):
-            with self.assertRaises(OSError):
-                shutil.rmtree(dir_path)
+        with open(file_path, encoding="utf8"), self.assertRaises(OSError):
+            shutil.rmtree(dir_path)
         self.assertTrue(os.path.exists(dir_path))
 
     def test_rmtree_non_existing_dir(self):
@@ -327,7 +326,7 @@ class FakeShutilModuleTest(RealFsTestCase):
         src_directory = self.make_path("xyzzy")
         dst_directory = self.make_path("xyzzy_copy")
         self.create_dir(src_directory)
-        self.create_dir("%s/subdir" % src_directory)
+        self.create_dir(f"{src_directory}/subdir")
         self.create_file(os.path.join(src_directory, "subfile"))
         self.assertTrue(os.path.exists(src_directory))
         self.assertFalse(os.path.exists(dst_directory))
