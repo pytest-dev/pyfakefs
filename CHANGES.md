@@ -1729,6 +1729,3 @@ There are no release notes for releases 2.6 and below. The following versions ar
 
 * [1.1](https://pypi.python.org/pypi/pyfakefs/1.1), [1.2](https://pypi.python.org/pypi/pyfakefs/1.2), [2.0](https://pypi.python.org/pypi/pyfakefs/2.0), [2.1](https://pypi.python.org/pypi/pyfakefs/2.1), [2.2](https://pypi.python.org/pypi/pyfakefs/2.2), [2.3](https://pypi.python.org/pypi/pyfakefs/2.3)
   and [2.4](https://pypi.python.org/pypi/pyfakefs/2.4)
-
-
-[def]: https://github.com/pytest-dev/pyfakefs/issues/1331
