@@ -15,6 +15,9 @@ The released versions correspond to PyPI releases.
 
 * fixed a crash if the stack limit was set to a low value
   (see [#1313](https://github.com/pytest-dev/pyfakefs/issues/1313))
+* fixed `os.ftruncate` to inspect the `FakeFileWrapper` returned by
+  `get_open_file(fd)`
+  (see [#1331](https://github.com/pytest-dev/pyfakefs/issues/1331))
 
 ## [Version 6.2.0](https://pypi.python.org/pypi/pyfakefs/6.2.0) (2026-04-12)
 

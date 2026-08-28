@@ -1019,11 +1019,10 @@ class FakeOsModule:
         Raises:
             OSError: if the file descriptor is invalid
         """
-        file_object = self.filesystem.get_open_file(fd).get_object()
-        if isinstance(file_object, FakeFileWrapper):
-            file_object.size = length
-        else:
+        file_handle = self.filesystem.get_open_file(fd)
+        if not isinstance(file_handle, FakeFileWrapper):
             self.filesystem.raise_os_error(errno.EBADF)
+        file_handle.get_object().size = length
 
     def access(
         self,
