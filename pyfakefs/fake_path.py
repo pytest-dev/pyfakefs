@@ -45,7 +45,6 @@ from pyfakefs.helpers import (
 
 if TYPE_CHECKING:
     from pyfakefs.fake_filesystem import FakeFilesystem
-    from pyfakefs.fake_os import FakeOsModule
 
 
 def _copy_module(old: ModuleType) -> ModuleType:
@@ -598,7 +597,9 @@ def handle_original_call(f: Callable) -> Callable:
     def wrapped(*args, **kwargs):
         if args:
             self = args[0]
-            should_use_original = self.os.use_original
+            from pyfakefs.fake_os import FakeOsModule  # noqa: F401
+
+            should_use_original = getattr(FakeOsModule._use_original, "value", False)
             if not should_use_original and self.filesystem.has_patcher:
                 skip_names = self.filesystem.patcher.skip_names
                 if is_called_from_skipped_module(
