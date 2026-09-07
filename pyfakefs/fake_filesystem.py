@@ -784,6 +784,16 @@ class FakeFilesystem:
         self.raise_for_filepath_ending_with_separator(
             entry_path, file_object, follow_symlinks
         )
+        if (
+            not follow_symlinks
+            and not self.is_windows_fs
+            and S_ISLNK(file_object.st_mode)
+            and self.ends_with_path_separator(entry_path)
+        ):
+            # under Posix, a trailing separator resolves the link
+            file_object = self.resolve(
+                entry_path, check_read_perm=False, check_exe_perm=False
+            )
 
         return file_object.stat_result.copy()
 
