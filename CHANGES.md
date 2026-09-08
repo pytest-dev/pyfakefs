@@ -18,6 +18,8 @@ The released versions correspond to PyPI releases.
 * fixed `os.ftruncate` to inspect the `FakeFileWrapper` returned by
   `get_open_file(fd)`
   (see [#1331](https://github.com/pytest-dev/pyfakefs/issues/1331))
+* fixed `os.lstat` to return the stat result of the linked directory instead
+  of the symlink if the path ends with a separator (Posix only)
 
 ## [Version 6.2.0](https://pypi.python.org/pypi/pyfakefs/6.2.0) (2026-04-12)
 

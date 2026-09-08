@@ -493,6 +493,24 @@ class FakeOsModuleTest(FakeOsModuleTestBase):
         # used to raise
         self.assertTrue(self.os.lstat(link_path + self.os.sep).st_mode)
 
+    def test_lstat_symlink_to_dir_with_trailing_sep_posix(self):
+        # under Posix, a trailing separator resolves the link,
+        # so lstat returns the stat result of the linked directory
+        self.check_posix_only()
+        skip_if_symlink_not_supported()
+        dir_path = self.make_path("dir")
+        self.create_dir(dir_path)
+        link_path = self.make_path("link")
+        self.os.symlink(dir_path, link_path)
+        self.assertTrue(stat.S_ISLNK(self.os.lstat(link_path).st_mode))
+        dir_stat = self.os.stat(dir_path)
+        for stat_result in (
+            self.os.lstat(link_path + self.os.sep),
+            self.os.stat(link_path + self.os.sep, follow_symlinks=False),
+        ):
+            self.assertTrue(stat.S_ISDIR(stat_result.st_mode))
+            self.assertEqual(dir_stat.st_ino, stat_result.st_ino)
+
     def test_readlink_ending_with_sep_windows(self):
         self.check_windows_only()
         skip_if_symlink_not_supported()
