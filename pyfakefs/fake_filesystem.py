@@ -1870,7 +1870,7 @@ class FakeFilesystem:
             allow_fd: If `True`, `file_path` may be an open file descriptor
             check_read_perm: If `True`, raises `OSError` if a parent directory
                 does not have read permission
-            check_read_perm: If `True`, raises `OSError` if a parent directory
+            check_exe_perm: If `True`, raises `OSError` if a parent directory
                 does not have execute permission
             check_owner: If `True`, and ``check_read_perm`` is also `True`,
                 only checks read permission if the current user id is
@@ -2782,10 +2782,20 @@ class FakeFilesystem:
         except OSError:
             self.raise_os_error(errno.ENOENT, old_path_str)
 
+        # Guaranteed to resolve because we either created it or errored earlier
+        new_dir_object = self.resolve(
+            new_parent_directory, follow_symlinks=follow_symlinks, check_read_perm=False
+        )
+
         if old_file.st_mode & S_IFDIR:
             self.raise_os_error(
                 errno.EACCES if self.is_windows_fs else errno.EPERM,
                 old_path_str,
+            )
+
+        if old_file.st_dev != new_dir_object.st_dev:
+            self.raise_os_error(
+                errno.EXDEV, f"{old_path_str} -> {new_parent_directory}/{new_basename}"
             )
 
         # abuse the name field to control the filename of the

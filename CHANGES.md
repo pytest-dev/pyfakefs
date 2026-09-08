@@ -18,6 +18,8 @@ The released versions correspond to PyPI releases.
 * fixed `os.ftruncate` to inspect the `FakeFileWrapper` returned by
   `get_open_file(fd)`
   (see [#1331](https://github.com/pytest-dev/pyfakefs/issues/1331))
+* fixed cross-device hard links incorrectly succeeding
+  (see [#1337](https://github.com/pytest-dev/pyfakefs/issues/1337))
 
 ## [Version 6.2.0](https://pypi.python.org/pypi/pyfakefs/6.2.0) (2026-04-12)
 
