@@ -664,6 +664,16 @@ class FakeFilesystemUnitTest(TestCase):
         self.assertTrue(self.filesystem.exists(path))
         self.assertTrue(self.filesystem.exists(target_path))
 
+    def test_create_cross_device_link(self):
+        self.filesystem.add_mount_point("/mnt/dir1")
+        source = "/mnt/dir1/myfile.txt"
+        dest = "/mnt/dir2/myotherfile.txt"
+        self.filesystem.create_file(source)
+
+        # different error messages on different OSes, but all include the word "link"
+        with self.assertRaisesRegex(OSError, "link"):
+            self.filesystem.create_link(source, dest)
+
     def test_resolve_object(self):
         target_path = "dir/target"
         target_contents = "0123456789ABCDEF"
