@@ -670,7 +670,8 @@ class FakeFilesystemUnitTest(TestCase):
         dest = "/mnt/dir2/myotherfile.txt"
         self.filesystem.create_file(source)
 
-        with self.assertRaisesRegex(OSError, "Invalid cross-device link"):
+        # different error messages on different OSes, but all include the word "link"
+        with self.assertRaisesRegex(OSError, "link"):
             self.filesystem.create_link(source, dest)
 
     def test_resolve_object(self):
