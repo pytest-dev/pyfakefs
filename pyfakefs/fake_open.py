@@ -49,6 +49,7 @@ from pyfakefs.helpers import (
     is_called_from_skipped_module,
     is_root,
     is_unfaked_path,
+    matching_string,
 )
 
 if TYPE_CHECKING:
@@ -397,7 +398,7 @@ class FakeFileOpen:
 
         # open a file by path
         file_path = cast(AnyStr, file_)  # pytype: disable=invalid-annotation
-        if file_path == self.filesystem.dev_null.name:
+        if file_path == matching_string(file_path, self.filesystem.dev_null.name):
             file_object = self.filesystem.dev_null
             real_path = file_path
         else:

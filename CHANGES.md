@@ -13,9 +13,10 @@ The released versions correspond to PyPI releases.
 
 ### Fixes
 
+* fixed resolving Windows drive-relative paths
+  (see [#1324](https://github.com/pytest-dev/pyfakefs/issues/1324))
 * fixed `os.path.sameopenfile` using real file descriptors instead of fake ones
   (see [#1346](https://github.com/pytest-dev/pyfakefs/issues/1346))
-
 * fixed a crash if the stack limit was set to a low value
   (see [#1313](https://github.com/pytest-dev/pyfakefs/issues/1313))
 * fixed `os.ftruncate` to inspect the `FakeFileWrapper` returned by

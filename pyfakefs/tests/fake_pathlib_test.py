@@ -657,6 +657,33 @@ class FakePathlibFileObjectPropertyTest(RealPathlibTestCase):
             self.path(self.os.path.realpath(self.make_path("antoine", "setup.py"))),
         )
 
+    def test_resolve_relative_windows_path_with_valid_drive(self):
+        self.check_windows_only()
+        root = self.make_path("root")
+        root_path = self.path(root)
+        self.create_file(root_path / "test_data" / "dummy1.xml")
+        self.os.chdir(root)
+
+        drive = self.path.cwd().drive
+        path = self.path(rf"{drive.lower()}test\test_data\dummy1.xml")
+        self.assertFalse(path.is_absolute())
+        resolved = path.resolve(strict=False)
+        self.assert_equal_paths(
+            rf"{root}{self.os.sep}test\test_data\dummy1.xml", str(resolved)
+        )
+
+    def test_resolve_relative_windows_path_with_invalid_drive(self):
+        self.check_windows_only()
+        root = self.make_path("root")
+        root_path = self.path(root)
+        self.create_file(root_path / "test_data" / "dummy1.xml")
+        self.os.chdir(root)
+
+        path = self.path(r"x:test\test_data\dummy1.xml")
+        self.assertFalse(path.is_absolute())
+        resolved = path.resolve(strict=False)
+        self.assertEqual(r"x:test\test_data\dummy1.xml", str(resolved))
+
     def test_stat_file_in_unreadable_dir(self):
         self.check_posix_only()
         dir_path = self.make_path("some_dir")
