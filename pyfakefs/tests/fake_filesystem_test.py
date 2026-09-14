@@ -32,7 +32,6 @@ except ImportError:
 
 from pyfakefs import fake_filesystem, fake_open, fake_os
 from pyfakefs.fake_filesystem import (
-    OSType,
     is_root,
     reset_ids,
     set_gid,
@@ -920,236 +919,291 @@ class OsPathInjectionRegressionTest(TestCase):
             self.assertEqual(expected_entry[2], sorted(entry[2]))
 
 
-class FakePathModuleTest(TestCase):
+class FakePathModuleTest(RealFsTestCase):
     def setUp(self):
-        self.filesystem = fake_filesystem.FakeFilesystem(path_separator="!")
-        self.os = fake_os.FakeOsModule(self.filesystem)
+        super().setUp()
         self.path = self.os.path
 
-    def check_abspath(self, is_windows):
+    def check_abspath(self):
         # the implementation differs in Windows and Posix, so test both
-        self.filesystem.is_windows_fs = is_windows
         filename = "foo"
-        abspath = self.filesystem.root_dir_name + filename
-        self.filesystem.create_file(abspath)
+        root_path = self.path.abspath(self.os.sep)
+        abspath = self.path.join(root_path, filename)
+        self.os.chdir(root_path)
         self.assertEqual(abspath, self.path.abspath(abspath))
         self.assertEqual(abspath, self.path.abspath(filename))
-        self.assertEqual(abspath, self.path.abspath(f"..!{filename}"))
+        self.assertEqual(abspath, self.path.abspath(f"../{filename}"))
 
     def test_abspath_windows(self):
-        self.check_abspath(is_windows=True)
+        self.check_windows_only()
+        self.check_abspath()
 
     def test_abspath_posix(self):
         """abspath should return a consistent representation of a file."""
-        self.check_abspath(is_windows=False)
+        self.check_posix_only()
+        self.check_abspath()
 
-    def check_abspath_bytes(self, is_windows):
+    def check_abspath_bytes(self):
         """abspath should return a consistent representation of a file."""
-        self.filesystem.is_windows_fs = is_windows
-        filename = b"foo"
-        abspath = self.filesystem.root_dir_name.encode() + filename
-        self.filesystem.create_file(abspath)
-        self.assertEqual(abspath, self.path.abspath(abspath))
-        self.assertEqual(abspath, self.path.abspath(filename))
-        self.assertEqual(abspath, self.path.abspath(b"..!" + filename))
+        abspath = self.make_path("foo").encode()
+        self.create_file(abspath)
+        self.os.chdir(self.path.split(abspath)[0])
+        self.assert_equal_paths(abspath, self.path.abspath(abspath))
+        self.assert_equal_paths(abspath, self.path.abspath(b"foo"))
+        self.os.chdir(self.path.abspath("/"))
+        cwd = self.os.getcwd().encode()
+        self.assert_equal_paths(
+            self.path.join(cwd, b"foo"),
+            self.path.abspath(b".." + self.os.sep.encode() + b"foo"),
+        )
 
     def test_abspath_bytes_windows(self):
-        self.check_abspath_bytes(is_windows=True)
+        self.check_windows_only()
+        self.check_abspath_bytes()
 
     def test_abspath_bytes_posix(self):
-        self.check_abspath_bytes(is_windows=False)
+        self.check_posix_only()
+        self.check_abspath_bytes()
 
     def test_abspath_deals_with_relative_non_root_path(self):
         """abspath should correctly handle relative paths from a
-        non-! directory.
+        non-root directory.
 
         This test is distinct from the basic functionality test because
-        fake_filesystem has historically been based in !.
+        fake_filesystem has historically been based in root /.
         """
-        filename = "!foo!bar!baz"
-        file_components = filename.split(self.path.sep)
-        root_name = self.filesystem.root_dir_name
-        basedir = f"{root_name}{file_components[0]}"
-        self.filesystem.create_file(filename)
+        file_components = ["foo", "bar", "baz"]
+        filename = self.make_path(file_components)
+        basedir = self.path.join(self.base_path, file_components[0])
+        self.create_file(filename)
         self.os.chdir(basedir)
-        self.assertEqual(basedir, self.path.abspath(self.path.curdir))
-        self.assertEqual(root_name, self.path.abspath(".."))
-        self.assertEqual(
+        self.assert_equal_paths(basedir, self.path.abspath(self.path.curdir))
+        self.assert_equal_paths(self.base_path, self.path.abspath(".."))
+        self.assert_equal_paths(
             self.path.join(basedir, file_components[1]),
             self.path.abspath(file_components[1]),
         )
 
     def test_abs_path_with_drive_component(self):
-        self.filesystem.is_windows_fs = True
-        self.filesystem.cwd = "C:!foo"
-        self.assertEqual("C:!foo!bar", self.path.abspath("bar"))
-        self.assertEqual("C:!foo!bar", self.path.abspath("C:bar"))
-        self.assertEqual("C:!foo!bar", self.path.abspath("!foo!bar"))
+        self.check_windows_only()
+        file_path = self.make_path("foo")
+        self.os.makedirs(file_path)
+        self.os.chdir(file_path)
+        expected = self.make_path("foo", "bar")
+        self.assertEqual(expected, self.path.abspath("bar"))
+        self.assertEqual(expected, self.path.abspath("C:bar"))
+        self.assertEqual(expected, self.path.abspath(expected[2:]))
+        self.os.chdir("C:/")
+        self.assertEqual("C:" + self.os.sep, self.path.abspath("C:"))
 
-    def test_isabs_with_drive_component(self):
-        self.filesystem.is_windows_fs = False
-        self.assertFalse(self.path.isabs("C:!foo"))
-        self.assertFalse(self.path.isabs(b"C:!foo"))
-        self.assertTrue(self.path.isabs("!"))
-        self.assertTrue(self.path.isabs(b"!"))
-        self.filesystem.is_windows_fs = True
-        self.assertTrue(self.path.isabs("C:!foo"))
-        self.assertTrue(self.path.isabs(b"C:!foo"))
+    def test_isabs_with_drive_component_posix(self):
+        self.check_posix_only()
+        self.assertFalse(self.path.isabs("C:/foo"))
+        self.assertFalse(self.path.isabs(b"C:/foo"))
+        self.assertTrue(self.path.isabs("/"))
+        self.assertTrue(self.path.isabs(b"/"))
+
+    def test_isabs_with_drive_component_windows(self):
+        self.check_windows_only()
+        self.assertTrue(self.path.isabs("C:/foo"))
+        self.assertTrue(self.path.isabs(b"C:/foo"))
         if sys.version_info < (3, 13):
-            self.assertTrue(self.path.isabs("!"))
-            self.assertTrue(self.path.isabs(b"!"))
+            self.assertTrue(self.path.isabs("/"))
+            self.assertTrue(self.path.isabs(b"/"))
         else:
-            self.assertFalse(self.path.isabs("!"))
-            self.assertFalse(self.path.isabs(b"!"))
+            self.assertFalse(self.path.isabs("/"))
+            self.assertFalse(self.path.isabs(b"/"))
 
     def test_relpath(self):
-        path_foo = "!path!to!foo"
-        path_bar = "!path!to!bar"
-        path_other = "!some!where!else"
-        with self.assertRaises(ValueError):
+        path_foo = self.path.sep + self.path.join("path", "to", "foo")
+        path_bar = self.path.sep + self.path.join("path", "to", "bar")
+        path_other = self.path.sep + self.path.join("some", "where", "else")
+        error = (
+            TypeError
+            if self.is_windows_fs or sys.version_info >= (3, 13)
+            else ValueError
+        )
+        with self.assertRaises(error):
             self.path.relpath(None)
         with self.assertRaises(ValueError):
             self.path.relpath("")
-        self.assertEqual("path!to!foo", self.path.relpath(path_foo))
-        self.assertEqual("..!foo", self.path.relpath(path_foo, path_bar))
+        self.os.chdir("/")
         self.assertEqual(
-            f"..!..!..{path_other}", self.path.relpath(path_other, path_bar)
+            self.path.join("path", "to", "foo"), self.path.relpath(path_foo)
+        )
+        self.assertEqual(
+            self.path.join("..", "foo"), self.path.relpath(path_foo, path_bar)
+        )
+        self.assertEqual(
+            f"{self.path.join('..', '..', '..')}{path_other}",
+            self.path.relpath(path_other, path_bar),
         )
         self.assertEqual(".", self.path.relpath(path_bar, path_bar))
 
     def test_realpath_vs_abspath(self):
-        self.filesystem.is_windows_fs = False
-        self.filesystem.create_file("!george!washington!bridge")
-        self.filesystem.create_symlink("!first!president", "!george!washington")
+        skip_if_symlink_not_supported()
+        file_path = self.make_path("george", "washington", "bridge")
+        self.create_file(file_path)
+        link_path = self.make_path("first", "president")
+        self.create_symlink(link_path, self.path.split(file_path)[0])
         self.assertEqual(
-            "!first!president!bridge",
-            self.os.path.abspath("!first!president!bridge"),
+            file_path,
+            self.os.path.abspath(file_path),
         )
-        self.assertEqual(
-            "!george!washington!bridge",
-            self.os.path.realpath("!first!president!bridge"),
+        self.assert_equal_paths(
+            file_path,
+            self.os.path.realpath(self.path.join(link_path, "bridge")),
         )
-        self.os.chdir("!first!president")
-        self.assertEqual("!george!washington!bridge", self.os.path.realpath("bridge"))
+        self.os.chdir(link_path)
+        self.assert_equal_paths(file_path, self.os.path.realpath("bridge"))
 
     def test_realpath_strict(self):
-        self.filesystem.create_file("!foo!bar")
-        root_dir = self.filesystem.root_dir_name
-        self.filesystem.cwd = f"{root_dir}foo"
-        self.assertEqual(
-            f"{root_dir}foo!baz", self.os.path.realpath("baz", strict=False)
+        file_path = self.make_path("foo", "bar")
+        self.create_file(file_path)
+        self.os.chdir(self.path.split(file_path)[0])
+        self.assert_equal_paths(
+            self.path.join(self.base_path, "foo", "baz"),
+            self.os.path.realpath("baz", strict=False),
         )
         with self.raises_os_error(errno.ENOENT):
             self.os.path.realpath("baz", strict=True)
-        self.assertEqual(
-            f"{root_dir}foo!bar", self.os.path.realpath("bar", strict=True)
+        self.assert_equal_paths(
+            self.path.join(self.base_path, "foo", "bar"),
+            self.os.path.realpath("bar", strict=True),
         )
 
     def test_realpath_from_abs_path(self):
-        self.filesystem.create_file("!foo!bar")
-        root_dir = self.filesystem.root_dir_name
-        self.filesystem.cwd = f"{root_dir}foo"
-        self.assertEqual(f"{root_dir}baz", self.os.path.realpath("!baz", strict=False))
+        file_path = self.make_path("foo", "bar")
+        self.create_file(file_path)
+        self.os.chdir(self.path.split(file_path)[0])
+        self.assert_equal_paths(
+            f"{self.base_path}{self.os.sep}baz",
+            self.os.path.realpath(f"{self.base_path}/baz", strict=False),
+        )
         with self.raises_os_error(errno.ENOENT):
-            self.os.path.realpath("!baz", strict=True)
-        self.assertEqual(
-            f"{root_dir}foo!bar", self.os.path.realpath("!foo!bar", strict=True)
+            self.os.path.realpath(f"{self.base_path}/baz", strict=True)
+        self.assert_equal_paths(
+            f"{self.base_path}{self.os.sep}foo{self.os.sep}bar",
+            self.os.path.realpath(f"{self.base_path}/foo/bar", strict=True),
         )
 
     def test_realpath_from_path_starting_with_sep_in_windows(self):
-        self.filesystem.is_windows_fs = True
-        self.filesystem.cwd = "D:!foo"
-        self.filesystem.create_file("!foo!bar")
-        self.assertEqual("D:!baz", self.os.path.realpath("!baz", strict=False))
+        self.check_windows_only()
+        self.skip_real_fs()
+        self.filesystem.cwd = "D:/foo"
+        self.filesystem.create_file("/foo/bar")
+        self.assertEqual("D:/baz", self.os.path.realpath("/baz", strict=False))
         with self.raises_os_error(errno.ENOENT):
-            self.os.path.realpath("!baz", strict=True)
-        self.assertEqual("D:!foo!bar", self.os.path.realpath("!foo!bar", strict=True))
+            self.os.path.realpath("/baz", strict=True)
+        self.assertEqual("D:/foo/bar", self.os.path.realpath("/foo/bar", strict=True))
 
+    @unittest.skipIf(IS_PYPY, "Not working correctly in PyPy")
     def test_realpath_from_bytes_path_starting_with_sep_in_windows(self):
-        self.filesystem.is_windows_fs = True
-        self.filesystem.cwd = "D:!foo"
-        self.filesystem.create_file("!foo!bar")
-        self.assertEqual(b"D:!baz", self.os.path.realpath(b"!baz", strict=False))
+        self.check_windows_only()
+        # non-existing file
+        root = self.path.abspath("/")
+        self.assert_equal_paths(
+            f"{root}baz".encode(), self.path.realpath(b"/baz", strict=False)
+        )
         with self.raises_os_error(errno.ENOENT):
-            self.os.path.realpath(b"!baz", strict=True)
-        self.assertEqual(b"D:!foo!bar", self.os.path.realpath(b"!foo!bar", strict=True))
+            self.os.path.realpath(b"/baz", strict=True)
+        # existing file
+        file_path = self.make_path("foo", "bar").encode()
+        self.create_file(file_path)
+        self.os.chdir(self.path.split(file_path)[0])
+        self.assert_equal_paths(
+            file_path, self.os.path.realpath(file_path[2:], strict=True)
+        )
+        non_existing = self.make_path("foo", "baz").encode()
+        with self.raises_os_error(errno.ENOENT):
+            self.os.path.realpath(non_existing[2:], strict=True)
 
     def test_realpath_from_path_with_drive(self):
-        self.filesystem.is_windows_fs = True
-        self.filesystem.cwd = "D:!foo"
-        self.filesystem.create_file("C:!foo!bar")
-        self.assertEqual("C:!baz", self.os.path.realpath("C:!baz", strict=False))
+        self.check_windows_only()
+        self.skip_real_fs()
+        self.filesystem.cwd = "D:/foo"
+        self.filesystem.create_file("C:/foo/bar")
+        self.assertEqual("C:/baz", self.os.path.realpath("C:/baz", strict=False))
         with self.raises_os_error(errno.ENOENT):
-            self.os.path.realpath("C:!baz", strict=True)
-        self.assertEqual("C:!foo!bar", self.os.path.realpath("C:!foo!bar", strict=True))
+            self.os.path.realpath("C:/baz", strict=True)
+        self.assertEqual("C:/foo/bar", self.os.path.realpath("C:/foo/bar", strict=True))
 
     @unittest.skipIf(
         not hasattr(os.path, "ALLOW_MISSING"),
         "ALLOW_MISSING has been added in different patch versions",
     )
     def test_realpath_allow_missing(self):
-        f = self.filesystem.create_file("!foo!bar")
-        root_dir = self.filesystem.root_dir_name
-        self.filesystem.cwd = f"{root_dir}foo"
-        self.assertEqual(
-            f"{root_dir}foo!baz",
+        file_path = self.make_path("foo", "bar")
+        self.create_file(file_path)
+        self.os.chdir(self.path.split(file_path)[0])
+        self.assert_equal_paths(
+            f"{self.base_path}{self.os.sep}foo{self.os.sep}baz",
             self.os.path.realpath("baz", strict=os.path.ALLOW_MISSING),  # type: ignore[attr-defined]
         )
-        if not is_root():
-            self.os.chmod(f.path, 0)
+        if not is_root() and not self.is_windows_fs and not self.use_real_fs():
+            self.os.chmod(file_path, 0)
             with self.raises_os_error(errno.EACCES):
-                self.os.path.realpath(f.path, strict=os.path.ALLOW_MISSING)  # type: ignore[attr-defined]
+                self.os.path.realpath(file_path, strict=os.path.ALLOW_MISSING)  # type: ignore[attr-defined]
+
+    @unittest.skipIf(
+        not hasattr(os.path, "ALLOW_MISSING"),
+        "ALLOW_MISSING has been added in different patch versions",
+    )
+    def test_realpath_allow_missing_no_access(self):
+        self.check_posix_only()
+        self.skip_real_fs()
+        self.skip_root()
+        file_path = self.make_path("foo", "bar")
+        self.create_file(file_path, perm=0)
+        self.os.chdir(self.path.split(file_path)[0])
+        with self.raises_os_error(errno.EACCES):
+            self.os.path.realpath(file_path, strict=os.path.ALLOW_MISSING)  # type: ignore[attr-defined]
 
     def test_samefile(self):
-        file_path1 = "!foo!bar!baz"
-        file_path2 = "!foo!bar!boo"
-        self.filesystem.create_file(file_path1)
-        self.filesystem.create_file(file_path2)
+        file_path1 = self.make_path("foo", "bar", "baz")
+        file_path2 = self.make_path("foo", "bar", "boo")
+        self.create_file(file_path1)
+        self.create_file(file_path2)
         self.assertTrue(self.path.samefile(file_path1, file_path1))
         self.assertFalse(self.path.samefile(file_path1, file_path2))
-        self.assertTrue(self.path.samefile(file_path1, "!foo!..!foo!bar!..!bar!baz"))
-        self.assertTrue(self.path.samefile(file_path1, b"!foo!..!foo!bar!..!bar!baz"))
+        self.assertTrue(
+            self.path.samefile(
+                file_path1, self.base_path + "/foo/../foo/bar/../bar/baz"
+            )
+        )
+        self.assertTrue(
+            self.path.samefile(
+                file_path1, self.base_path.encode() + b"/foo/../foo/bar/../bar/baz"
+            )
+        )
 
     def test_sameopenfile(self):
-        def check_sameopenfile(path_module, open_file, file_path1, file_path2):
-            with open_file(file_path1) as first, open_file(file_path1) as second:
-                first_fd, second_fd = first.fileno(), second.fileno()
-                self.assertTrue(path_module.sameopenfile(first_fd, second_fd))
-                self.assertTrue(path_module.sameopenfile(first_fd, first_fd))
-                with open_file(file_path2) as other:
-                    self.assertFalse(path_module.sameopenfile(first_fd, other.fileno()))
+        file_path1 = self.make_path("foo", "bar")
+        file_path2 = self.make_path("foo", "baz")
+        self.create_file(file_path1)
+        self.create_file(file_path2)
+        with self.open(file_path1) as first, self.open(file_path1) as second:
+            first_fd, second_fd = first.fileno(), second.fileno()
+            self.assertTrue(self.path.sameopenfile(first_fd, second_fd))
+            self.assertTrue(self.path.sameopenfile(first_fd, first_fd))
+            with self.open(file_path2) as other:
+                self.assertFalse(self.path.sameopenfile(first_fd, other.fileno()))
 
-            with self.assertRaises(OSError) as error:
-                path_module.sameopenfile(first_fd, second_fd)
-            self.assertEqual(error.exception.errno, errno.EBADF)
-
-        file_path1 = "!foo!bar"
-        file_path2 = "!foo!baz"
-        fake_file_open = fake_open.FakeFileOpen(self.filesystem)
-        for os_type in OSType:
-            with self.subTest(os_type=os_type):
-                self.filesystem.os = os_type
-                self.filesystem.create_file(file_path1)
-                self.filesystem.create_file(file_path2)
-                check_sameopenfile(self.path, fake_file_open, file_path1, file_path2)
-
-        with tempfile.TemporaryDirectory() as real_dir:
-            real_file1 = os.path.join(real_dir, "bar")
-            real_file2 = os.path.join(real_dir, "baz")
-            with open(real_file1, "w"), open(real_file2, "w"):
-                pass
-            check_sameopenfile(os.path, open, real_file1, real_file2)
+        with self.assertRaises(OSError) as error:
+            self.path.sameopenfile(first_fd, second_fd)
+        self.assertEqual(error.exception.errno, errno.EBADF)
 
     def test_exists(self):
-        file_path = "foo!bar!baz"
-        file_path_bytes = b"foo!bar!baz"
-        self.filesystem.create_file(file_path)
+        file_path = self.make_path("foo", "bar", "baz")
+        file_path_bytes = file_path.encode()
+        self.create_file(file_path)
         self.assertTrue(self.path.exists(file_path))
         self.assertTrue(self.path.exists(file_path_bytes))
-        self.assertFalse(self.path.exists("!some!other!bogus!path"))
+        self.assertFalse(self.path.exists("some/other/bogus/path"))
 
     def test_exists_with_drive(self):
-        self.filesystem.os = OSType.WINDOWS
+        self.skip_real_fs()
+        self.check_windows_only()
         self.filesystem.add_mount_point("F:")
         self.assertTrue(self.path.exists("C:"))
         self.assertTrue(self.path.exists("c:\\"))
@@ -1159,89 +1213,99 @@ class FakePathModuleTest(TestCase):
         self.assertFalse(self.path.exists("z:\\"))
 
     def test_lexists(self):
-        file_path = "foo!bar!baz"
-        file_path_bytes = b"foo!bar!baz"
-        self.filesystem.create_dir("foo!bar")
-        self.filesystem.create_symlink(file_path, "bogus")
+        skip_if_symlink_not_supported()
+        file_path = self.make_path("foo", "bar", "baz")
+        file_path_bytes = file_path.encode()
+        self.create_dir(self.path.split(file_path)[0])
+        self.create_symlink(file_path, self.make_path("bogus"))
         self.assertTrue(self.path.lexists(file_path))
         self.assertTrue(self.path.lexists(file_path_bytes))
         self.assertFalse(self.path.exists(file_path))
         self.assertFalse(self.path.exists(file_path_bytes))
-        self.filesystem.create_file("foo!bar!bogus")
-        self.assertTrue(self.path.exists(file_path))
 
     def test_dirname_with_drive(self):
-        self.filesystem.is_windows_fs = True
-        self.assertEqual("c:!foo", self.path.dirname("c:!foo!bar"))
-        self.assertEqual(b"c:!", self.path.dirname(b"c:!foo"))
-        self.assertEqual("!foo", self.path.dirname("!foo!bar"))
-        self.assertEqual(b"!", self.path.dirname(b"!foo"))
-        self.assertEqual("c:foo", self.path.dirname("c:foo!bar"))
+        self.check_windows_only()
+        self.assertEqual("c:/foo", self.path.dirname("c:/foo/bar"))
+        self.assertEqual(b"c:/", self.path.dirname(b"c:/foo"))
+        self.assertEqual("/foo", self.path.dirname("/foo/bar"))
+        self.assertEqual(b"/", self.path.dirname(b"/foo"))
+        self.assertEqual("c:foo", self.path.dirname("c:foo/bar"))
         self.assertEqual(b"c:", self.path.dirname(b"c:foo"))
-        self.assertEqual("foo", self.path.dirname("foo!bar"))
+        self.assertEqual("foo", self.path.dirname("foo/bar"))
 
     def test_dirname(self):
-        dirname = "foo!bar"
-        self.assertEqual(dirname, self.path.dirname(f"{dirname}!baz"))
+        dirname = "foo/bar"
+        self.assertEqual(dirname, self.path.dirname(f"{dirname}/baz"))
 
     def test_join_strings(self):
         components = ["foo", "bar", "baz"]
-        self.assertEqual("foo!bar!baz", self.path.join(*components))
+        self.assertEqual(
+            self.os.sep.join(["foo", "bar", "baz"]), self.path.join(*components)
+        )
 
     def test_join_bytes(self):
         components = [b"foo", b"bar", b"baz"]
-        self.assertEqual(b"foo!bar!baz", self.path.join(*components))
+        self.assertEqual(
+            self.os.sep.encode().join([b"foo", b"bar", b"baz"]),
+            self.path.join(*components),
+        )
 
     @unittest.skipIf(sys.platform != "win32", "Windows specific test")
     @patch.dict(os.environ, {"USERPROFILE": r"C:\Users\John"})
     def test_expand_user_windows(self):
-        self.assertEqual(self.path.expanduser("~"), "C:!Users!John")
+        self.assertEqual(
+            self.os.sep.join(["C:", "Users", "John"]), self.path.expanduser("~")
+        )
 
     @unittest.skipIf(sys.platform != "win32", "Windows specific test")
     @patch.dict(os.environ, {"USERPROFILE": r"C:\Users\John"})
     def test_expand_user_windows_path(self):
         self.assertEqual(
-            self.path.expanduser("~!stuff!test.txt"), "C:!Users!John!stuff!test.txt"
+            self.os.sep.join(["C:", "Users", "John", "stuff", "test.txt"]),
+            self.path.expanduser(r"~\stuff\test.txt"),
         )
 
     @unittest.skipIf(sys.platform != "win32", "Windows specific test")
     @patch.dict(os.environ, {"USERPROFILE": r"C:\Users\John"})
     def test_expand_user_windows_posixfs(self):
+        self.skip_real_fs()
         self.filesystem.is_windows_fs = False
-        self.assertEqual(self.path.expanduser("~"), "!home!John")
+        self.assertEqual(self.path.expanduser("~"), r"/home/John")
 
     @unittest.skipIf(sys.platform != "win32", "Windows specific test")
     @patch.dict(os.environ, {"USERPROFILE": r"C:\Users\John"})
     def test_expand_user_windows_posixfs_path(self):
+        self.skip_real_fs()
         self.filesystem.is_windows_fs = False
         self.assertEqual(
-            self.path.expanduser("~!stuff!test.txt"), "!home!John!stuff!test.txt"
+            "/home/John/stuff/test.txt",
+            self.path.expanduser("~/stuff/test.txt"),
         )
 
     @unittest.skipIf(sys.platform == "win32", "Posix specific test")
     @patch.dict(os.environ, {"HOME": "/home/john"})
     def test_expand_user(self):
-        self.assertEqual(self.path.expanduser("~"), "!home!john")
+        self.assertEqual(self.path.expanduser("~"), "/home/john")
 
     @unittest.skipIf(sys.platform == "win32", "Posix specific test")
     @patch.dict(os.environ, {"HOME": "/home/john"})
     def test_expand_user_path(self):
         self.assertEqual(
-            self.path.expanduser("~!stuff!test.txt"), "!home!john!stuff!test.txt"
+            self.path.expanduser("~/stuff/test.txt"), "/home/john/stuff/test.txt"
         )
 
     @unittest.skipIf(sys.platform == "win32", "Posix specific test")
     @patch.dict(os.environ, {"HOME": "/home/john"})
     def test_expand_user_posix_windowsfs(self):
-        self.filesystem.is_windows_fs = True
-        self.assertEqual(self.path.expanduser("~"), "C:!Users!john")
+        self.check_windows_only()
+        self.assertEqual(self.path.expanduser("~"), "C:/Users/john")
 
     @unittest.skipIf(sys.platform == "win32", "Posix specific test")
     @patch.dict(os.environ, {"HOME": "/home/john"})
     def test_expand_user_posix_windowsfs_path(self):
-        self.filesystem.is_windows_fs = True
+        self.check_windows_only()
         self.assertEqual(
-            self.path.expanduser("~!stuff!test.txt"), "C:!Users!john!stuff!test.txt"
+            self.path.expanduser("~/stuff/test.txt"), "C:/Users/john/stuff/test.txt"
         )
 
     @patch.dict(os.environ, {}, clear=True)
@@ -1256,74 +1320,90 @@ class FakePathModuleTest(TestCase):
         "only tested on unix systems",
     )
     def test_expand_root(self):
+        self.check_posix_only()
         if sys.platform == "darwin":
-            roothome = "!var!root"
+            roothome = "/var/root"
         else:
-            roothome = "!root"
+            roothome = "/root"
         self.assertEqual(self.path.expanduser("~root"), roothome)
 
     def test_getsize_path_nonexistent(self):
-        file_path = "foo!bar!baz"
+        file_path = self.make_path("foo", "bar", "baz")
         with self.assertRaises(os.error):
             self.path.getsize(file_path)
 
     def test_getsize_file_empty(self):
-        file_path = "foo!bar!baz"
-        self.filesystem.create_file(file_path)
+        file_path = self.make_path("foo", "bar", "baz")
+        self.create_file(file_path)
         self.assertEqual(0, self.path.getsize(file_path))
 
     def test_getsize_file_non_zero_size(self):
-        file_path = "foo!bar!baz"
-        file_path_bytes = b"foo!bar!baz"
-        self.filesystem.create_file(file_path, contents="1234567")
+        file_path = self.make_path("foo", "bar", "baz")
+        file_path_bytes = self.make_path(b"foo", b"bar", b"baz")
+        self.create_file(file_path, contents="1234567")
         self.assertEqual(7, self.path.getsize(file_path))
         self.assertEqual(7, self.path.getsize(file_path_bytes))
 
     def test_getsize_dir_empty(self):
         # For directories, only require that the size is non-negative.
-        dir_path = "foo!bar"
-        self.filesystem.create_dir(dir_path)
+        dir_path = self.make_path("foo", "bar")
+        self.os.makedirs(dir_path)
         size = self.path.getsize(dir_path)
         self.assertFalse(int(size) < 0, f"expected non-negative size; actual: {size}")
 
     def test_getsize_dir_non_zero_size(self):
         # For directories, only require that the size is non-negative.
-        dir_path = "foo!bar"
-        self.filesystem.create_file(self.filesystem.joinpaths(dir_path, "baz"))
+        dir_path = self.make_path("foo", "bar")
+        self.os.makedirs(dir_path)
         size = self.path.getsize(dir_path)
         self.assertFalse(int(size) < 0, f"expected non-negative size; actual: {size}")
 
     def test_isdir(self):
-        self.filesystem.create_file("foo!bar")
-        self.assertTrue(self.path.isdir("foo"))
-        self.assertTrue(self.path.isdir(b"foo"))
-        self.assertFalse(self.path.isdir("foo!bar"))
-        self.assertFalse(self.path.isdir("it_dont_exist"))
+        dir_path = self.make_path("foo")
+        file_path = self.path.join(dir_path, "bar")
+        self.create_file(file_path)
+        self.assertTrue(self.path.isdir(self.path.join(self.base_path, "foo")))
+        self.assertTrue(
+            self.path.isdir(self.path.join(self.base_path.encode(), b"foo"))
+        )
+        self.assertFalse(self.path.isdir(self.path.join(self.base_path, "foo", "bar")))
+        self.assertFalse(
+            self.path.isdir(self.path.join(self.base_path, "non_existing"))
+        )
 
     def test_isdir_with_cwd_change(self):
-        self.filesystem.create_file("!foo!bar!baz")
-        self.assertTrue(self.path.isdir("!foo"))
-        self.assertTrue(self.path.isdir("!foo!bar"))
+        dir_path = self.make_path("foo", "bar")
+        file_path = self.path.join(dir_path, "baz")
+        self.create_file(file_path)
+        self.os.chdir(self.base_path)
+        self.assertTrue(self.path.isdir(self.path.join(self.base_path, "foo")))
+        self.assertTrue(self.path.isdir(self.path.join(self.base_path, "foo", "bar")))
         self.assertTrue(self.path.isdir("foo"))
-        self.assertTrue(self.path.isdir("foo!bar"))
-        self.filesystem.cwd = f"{self.filesystem.root_dir_name}foo"
-        self.assertTrue(self.path.isdir("!foo"))
-        self.assertTrue(self.path.isdir("!foo!bar"))
+        self.assertTrue(self.path.isdir("foo/bar"))
+        self.os.chdir(self.path.join(self.base_path, "foo"))
+        self.assertTrue(self.path.isdir(self.path.join(self.base_path, "foo")))
+        self.assertTrue(self.path.isdir(self.path.join(self.base_path, "foo", "bar")))
         self.assertTrue(self.path.isdir("bar"))
 
     def test_isfile(self):
-        self.filesystem.create_file("foo!bar")
-        self.assertFalse(self.path.isfile("foo"))
-        self.assertTrue(self.path.isfile("foo!bar"))
-        self.assertTrue(self.path.isfile(b"foo!bar"))
-        self.assertFalse(self.path.isfile("it_dont_exist"))
+        file_path = self.make_path("foo", "bar")
+        self.create_file(file_path)
+        self.assertFalse(self.path.isfile(self.path.join(self.base_path, "foo")))
+        self.assertTrue(self.path.isfile(self.path.join(self.base_path, "foo", "bar")))
+        self.assertTrue(
+            self.path.isfile(self.path.join(self.base_path.encode(), b"foo", b"bar"))
+        )
+        self.assertFalse(
+            self.path.isfile(self.path.join(self.base_path, "not_existing"))
+        )
 
     def test_get_mtime(self):
-        test_file = self.filesystem.create_file("foo!bar1.txt")
-        self.assertNotEqual(24, self.path.getmtime("foo!bar1.txt"))
+        self.skip_real_fs()
+        test_file = self.filesystem.create_file("foo/bar1.txt")
+        self.assertNotEqual(24, self.path.getmtime("foo/bar1.txt"))
         test_file.st_mtime = 24
-        self.assertEqual(24, self.path.getmtime("foo!bar1.txt"))
-        self.assertEqual(24, self.path.getmtime(b"foo!bar1.txt"))
+        self.assertEqual(24, self.path.getmtime("foo/bar1.txt"))
+        self.assertEqual(24, self.path.getmtime(b"foo/bar1.txt"))
 
     def test_get_mtime_raises_os_error(self):
         self.assertFalse(self.path.exists("does_not_exist"))
@@ -1331,66 +1411,73 @@ class FakePathModuleTest(TestCase):
             self.path.getmtime("does_not_exist")
 
     def test_islink(self):
-        self.filesystem.create_dir("foo")
-        self.filesystem.create_file("foo!regular_file")
-        self.filesystem.create_symlink("foo!link_to_file", "regular_file")
-        self.assertFalse(self.path.islink("foo"))
+        skip_if_symlink_not_supported()
+        dir_path = self.make_path("foo")
+        file_path = self.path.join(dir_path, "regular_file")
+        self.os.chdir(self.base_path)
+        self.create_file(file_path)
+        self.create_symlink(self.path.join(dir_path, "link_to_file"), file_path)
+        self.assertFalse(self.path.islink(dir_path))
 
         # An object can be both a link and a file or file, according to the
         # comments in Python/Lib/posixpath.py.
-        self.assertTrue(self.path.islink("foo!link_to_file"))
-        self.assertTrue(self.path.isfile("foo!link_to_file"))
-        self.assertTrue(self.path.islink(b"foo!link_to_file"))
-        self.assertTrue(self.path.isfile(b"foo!link_to_file"))
+        self.assertTrue(self.path.islink("foo/link_to_file"))
+        self.assertTrue(self.path.isfile("foo/link_to_file"))
+        self.assertTrue(self.path.islink(b"foo/link_to_file"))
+        self.assertTrue(self.path.isfile(b"foo/link_to_file"))
 
-        self.assertTrue(self.path.isfile("foo!regular_file"))
-        self.assertFalse(self.path.islink("foo!regular_file"))
+        self.assertTrue(self.path.isfile("foo/regular_file"))
+        self.assertFalse(self.path.islink("foo/regular_file"))
 
         self.assertFalse(self.path.islink("it_dont_exist"))
 
     def test_is_link_case_sensitive(self):
         # Regression test for #306
+        self.skip_real_fs()
         self.filesystem.is_case_sensitive = False
         self.filesystem.create_dir("foo")
-        self.filesystem.create_symlink("foo!bar", "foo")
-        self.assertTrue(self.path.islink("foo!Bar"))
+        self.filesystem.create_symlink("foo/bar", "foo")
+        self.assertTrue(self.path.islink("foo/Bar"))
 
     def test_ismount(self):
+        self.skip_real_fs()
         self.assertFalse(self.path.ismount(""))
-        self.assertTrue(self.path.ismount("!"))
-        self.assertTrue(self.path.ismount(b"!"))
-        self.assertFalse(self.path.ismount("!mount!"))
-        self.filesystem.add_mount_point("!mount")
-        self.assertTrue(self.path.ismount("!mount"))
-        self.assertTrue(self.path.ismount(b"!mount"))
-        self.assertTrue(self.path.ismount("!mount!"))
+        self.assertTrue(self.path.ismount("/"))
+        self.assertTrue(self.path.ismount(b"/"))
+        self.assertFalse(self.path.ismount("/mount/"))
+        self.filesystem.add_mount_point("/mount")
+        self.assertTrue(self.path.ismount("/mount"))
+        self.assertTrue(self.path.ismount(b"/mount"))
+        self.assertTrue(self.path.ismount("/mount/"))
 
     def test_ismount_with_drive_letters(self):
-        self.filesystem.is_windows_fs = True
-        self.assertTrue(self.path.ismount("!"))
-        self.assertTrue(self.path.ismount("c:!"))
+        self.skip_real_fs()
+        self.check_windows_only()
+        self.assertTrue(self.path.ismount("/"))
+        self.assertTrue(self.path.ismount("c:/"))
         self.assertFalse(self.path.ismount("c:"))
-        self.assertTrue(self.path.ismount("z:!"))
-        self.filesystem.add_mount_point("!mount")
-        self.assertTrue(self.path.ismount("!mount"))
-        self.assertTrue(self.path.ismount("!mount!"))
+        self.assertTrue(self.path.ismount("z:/"))
+        self.filesystem.add_mount_point("/mount")
+        self.assertTrue(self.path.ismount("/mount"))
+        self.assertTrue(self.path.ismount("/mount/"))
 
     def test_ismount_with_unc_paths(self):
-        self.filesystem.is_windows_fs = True
-        self.assertTrue(self.path.ismount("!!a!"))
-        self.assertTrue(self.path.ismount("!!a!b"))
-        self.assertTrue(self.path.ismount("!!a!b!"))
-        self.assertFalse(self.path.ismount("!a!b!"))
-        self.assertFalse(self.path.ismount("!!a!b!c"))
+        self.check_windows_only()
+        self.assertTrue(self.path.ismount("//a/"))
+        self.assertTrue(self.path.ismount("//a/b"))
+        self.assertTrue(self.path.ismount("//a/b/"))
+        self.assertFalse(self.path.ismount("/a/b/"))
+        self.assertFalse(self.path.ismount("//a/b/c"))
 
     def test_ismount_with_alternate_path_separator(self):
-        self.filesystem.alternative_path_separator = "!"
-        self.filesystem.add_mount_point("!mount")
-        self.assertTrue(self.path.ismount("!mount"))
-        self.assertTrue(self.path.ismount("!mount!"))
-        self.assertTrue(self.path.ismount("!mount!!"))
+        self.skip_real_fs()
+        self.filesystem.alternative_path_separator = "/"
+        self.filesystem.add_mount_point("/mount")
+        self.assertTrue(self.path.ismount("/mount"))
+        self.assertTrue(self.path.ismount("/mount/"))
+        self.assertTrue(self.path.ismount("/mount//"))
         self.filesystem.is_windows_fs = True
-        self.assertTrue(self.path.ismount("Z:!"))
+        self.assertTrue(self.path.ismount("Z:/"))
 
     def test_getattr_forward_to_real_os_path(self):
         """Forwards any non-faked calls to os.path."""
@@ -1403,29 +1490,31 @@ class FakePathModuleTest(TestCase):
             )
         self.assertFalse(hasattr(self.path, "nonexistent"))
 
+    @unittest.skipIf(sys.version_info < (3, 12), "Introduced in Python 3.12")
     def test_splitroot_posix(self):
-        self.filesystem.is_windows_fs = False
-        self.assertEqual(("", "", "foo!bar"), self.filesystem.splitroot("foo!bar"))
-        self.assertEqual(("", "!", "foo!bar"), self.filesystem.splitroot("!foo!bar"))
-        self.assertEqual(
-            ("", "!!", "foo!!bar"), self.filesystem.splitroot("!!foo!!bar")
-        )
+        self.check_posix_only()
+        self.assertEqual(("", "", "foo/bar"), self.path.splitroot("foo/bar"))
+        self.assertEqual(("", "/", "foo/bar"), self.path.splitroot("/foo/bar"))
+        self.assertEqual(("", "//", "foo//bar"), self.path.splitroot("//foo//bar"))
 
     @unittest.skipIf(sys.version_info < (3, 13), "Introduced in Python 3.13")
-    @unittest.skipIf(TestCase.is_windows, "Posix specific behavior")
     def test_is_reserved_posix(self):
-        self.assertFalse(self.filesystem.isreserved("!dev"))
-        self.assertFalse(self.filesystem.isreserved("!"))
-        self.assertFalse(self.filesystem.isreserved("COM1"))
-        self.assertFalse(self.filesystem.isreserved("nul.txt"))
+        self.check_posix_only()
+        with self.assertRaises(AttributeError):
+            self.path.isreserved("/dev")
 
     @unittest.skipIf(sys.version_info < (3, 13), "Introduced in Python 3.13")
-    @unittest.skipIf(not TestCase.is_windows, "Windows specific behavior")
     def test_is_reserved_windows(self):
-        self.assertFalse(self.filesystem.isreserved("!dev"))
-        self.assertFalse(self.filesystem.isreserved("!"))
-        self.assertTrue(self.filesystem.isreserved("COM1"))
-        self.assertTrue(self.filesystem.isreserved("nul.txt"))
+        self.check_windows_only()
+        self.assertFalse(self.path.isreserved("/dev"))
+        self.assertFalse(self.path.isreserved("/"))
+        self.assertTrue(self.path.isreserved("COM1"))
+        self.assertTrue(self.path.isreserved("nul.txt"))
+
+
+class RealPathModuleTest(FakePathModuleTest):
+    def use_real_fs(self):
+        return True
 
 
 class PathManipulationTestBase(TestCase):

@@ -825,7 +825,7 @@ class FakeOsModuleTest(FakeOsModuleTestBase):
         # regression test for issue #337
         self.check_windows_only()
         self.skip_real_fs()
-        dir_path = self.os.path.join("C:", "test")
+        dir_path = self.os.path.join("C:/", "test")
         self.filesystem.create_dir(dir_path)
         self.assert_raises_os_error(errno.EACCES, self.os.remove, dir_path)
 

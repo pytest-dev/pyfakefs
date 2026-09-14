@@ -1109,11 +1109,16 @@ class FakeFilesystem:
             normalized_path = sep.join(normalized_components)
             if self.starts_with_sep(path) and not self.starts_with_sep(normalized_path):
                 normalized_path = sep + normalized_path
-            if len(normalized_path) == 2 and self.starts_with_drive_letter(
-                normalized_path
+            if (
+                self.is_windows_fs
+                and len(normalized_path) == 2
+                and normalized_path[1] == matching_string(normalized_path, ":")
             ):
+                # special case for Windows drive - has to end with separator
                 normalized_path += sep
-            return normalized_path
+            if self.isabs(path):
+                return normalized_path
+            return self._handle_relative_drive(normalized_path, resolve=False)
 
         if self.is_case_sensitive or not path:
             return path
@@ -1136,6 +1141,25 @@ class FakeFilesystem:
             current_dir = cast(FakeDirectory, directory)
             normalized_components.append(dir_name)
         return components_to_path()
+
+    def isabs(self, path: AnyStr) -> bool:
+        """Return `True` if path is an absolute pathname."""
+        empty = matching_string(path, "")
+        if self.is_windows_fs:
+            drive, path = self.splitdrive(path)
+        else:
+            drive = empty
+        path = make_string_path(path)
+        if drive and not path:
+            # handling of X: and X:\
+            return self.ends_with_path_separator(path)
+        if not self.starts_with_sep(path):
+            return False
+        if self.is_windows_fs and sys.version_info >= (3, 13):
+            # from Python 3.13 on, a path under Windows starting with a single separator
+            # (e.g. not a drive and not an UNC path) is no more considered absolute
+            return drive != empty
+        return True
 
     def absnormpath(self, path: AnyStr) -> AnyStr:
         """Absolutize and minimalize the given path.
@@ -1565,6 +1589,17 @@ class FakeFilesystem:
             current_dir = cast(FakeDirectory, directory)
         return True
 
+    def _handle_relative_drive(self, path: str, resolve: bool) -> str:
+        if not self.is_windows_fs or not self.starts_with_drive_letter(path):
+            return path
+        if len(path) == 2:
+            return path  # + self.get_path_separator(path)
+        if resolve:
+            cwd = matching_string(path, self.cwd)
+            if cwd[0].lower() == path[0].lower():
+                return cwd + path[2:]
+        return path[:2] + path[3:]
+
     def resolve_path(self, file_path: AnyStr, allow_fd: bool = False) -> AnyStr:
         """Follow a path, resolving symlinks.
 
@@ -1625,23 +1660,25 @@ class FakeFilesystem:
         if path == matching_string(path, self.devnull):
             return path
         path_components = self._path_components(path)
-        resolved_components = self._resolve_components(path_components)
-        path = self._components_to_path(resolved_components)
+        resolved_components = self._resolve_components(path, path_components)
+        path = self._components_to_path(path, resolved_components)
         # after resolving links, we have to check again for Windows root
         return self.replace_windows_root(path)  # pytype: disable=bad-return-type
 
-    def _components_to_path(self, component_folders):
+    def _components_to_path(self, path, component_folders):
         sep = (
             self.get_path_separator(component_folders[0])
             if component_folders
             else self.path_separator
         )
-        path = sep.join(component_folders)
-        if not self.starts_with_root_path(path):
-            path = sep + path
-        return path
+        normalized_path = sep.join(component_folders)
+        if not self.starts_with_root_path(normalized_path):
+            normalized_path = sep + normalized_path
+        if self.isabs(path):
+            return normalized_path
+        return self._handle_relative_drive(normalized_path, resolve=True)
 
-    def _resolve_components(self, components: list[AnyStr]) -> list[str]:
+    def _resolve_components(self, path: AnyStr, components: list[AnyStr]) -> list[str]:
         current_dir = self.root
         link_depth = 0
         path_components = [to_string(comp) for comp in components]
@@ -1667,7 +1704,7 @@ class FakeFilesystem:
                 if link_depth > _MAX_LINK_DEPTH:
                     self.raise_os_error(
                         errno.ELOOP,
-                        self._components_to_path(resolved_components),
+                        self._components_to_path(path, resolved_components),
                     )
                 link_path = self._follow_link(resolved_components, directory)
 
