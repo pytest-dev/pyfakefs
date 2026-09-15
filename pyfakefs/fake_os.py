@@ -19,6 +19,7 @@ fake :py:mod:`os` module replacement.
 from __future__ import annotations
 
 import errno
+import threading
 import functools
 import inspect
 import os
@@ -72,6 +73,19 @@ if TYPE_CHECKING:
 
 NR_STD_STREAMS = 3
 
+# Thread-local storage for use_original flag to ensure thread safety
+_use_original_local = threading.local()
+
+
+def _get_use_original() -> bool:
+    """Get the current thread use_original flag value."""
+    return getattr(_use_original_local, "value", False)
+
+
+def _set_use_original(value: bool) -> None:
+    """Set the current thread use_original flag value."""
+    _use_original_local.value = value
+
 
 class FakeOsModule:
     """Uses FakeFilesystem to provide a fake os module replacement.
@@ -87,7 +101,15 @@ class FakeOsModule:
         my_os_module = fake_os.FakeOsModule(filesystem)
     """
 
-    use_original = False
+    @property
+    def use_original(self) -> bool:
+        """Return the use_original flag for the current thread."""
+        return _get_use_original()
+
+    @use_original.setter
+    def use_original(self, value: bool) -> None:
+        """Set the use_original flag for the current thread."""
+        _set_use_original(value)
 
     @staticmethod
     def dir() -> list[str]:
@@ -1469,7 +1491,7 @@ def handle_original_call(f: Callable) -> Callable:
 
     @functools.wraps(f)
     def wrapped(*args, **kwargs):
-        should_use_original = FakeOsModule.use_original
+        should_use_original = _get_use_original()
 
         if not should_use_original and args:
             self = args[0]
@@ -1504,7 +1526,7 @@ def use_original_os():
     Used to ensure that skipped modules do not use faked calls.
     """
     try:
-        FakeOsModule.use_original = True
+        _set_use_original(True)
         yield
     finally:
-        FakeOsModule.use_original = False
+        _set_use_original(False)
