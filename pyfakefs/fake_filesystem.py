@@ -1936,7 +1936,9 @@ class FakeFilesystem:
                 if not self.is_windows_fs and isinstance(parent_obj, FakeFile):
                     self.raise_os_error(errno.ENOTDIR, path_str)
                 self.raise_os_error(errno.ENOENT, path_str)
-            if not parent_obj.has_permission(helpers.PERM_READ):
+            if not helpers.is_root() and not parent_obj.has_permission(
+                helpers.PERM_READ
+            ):
                 self.raise_os_error(errno.EACCES, parent_directory)
             return (
                 parent_obj.get_entry(to_string(child_name))

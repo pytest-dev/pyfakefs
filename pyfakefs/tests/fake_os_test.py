@@ -5672,6 +5672,22 @@ class FakeOsUnreadableDirTest(FakeOsModuleTestBase):
         reset_ids()
         self.assertEqual(gid, self.os.getgid())
 
+    def test_rename_in_dir_of_other_user_as_root(self):
+        # regression test for #1341
+        self.skip_real_fs()  # won't change user in real fs
+        self.check_posix_only()
+        self.addCleanup(reset_ids)
+        dir_path = self.make_path("other_user_dir")
+        file_path = self.os.path.join(dir_path, "some_file")
+        self.create_file(file_path)
+        self.os.chmod(dir_path, 0o700)
+        self.os.chown(dir_path, get_uid() + 1, get_gid() + 1)
+        new_path = self.os.path.join(dir_path, "new_file")
+        set_uid(0)
+        # root ignores the directory permissions
+        self.os.rename(file_path, new_path)
+        self.assertTrue(self.os.path.exists(new_path))
+
     def test_listdir_unreadable_dir(self):
         if not is_root():
             self.assert_raises_os_error(errno.EACCES, self.os.listdir, self.dir_path)
