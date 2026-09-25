@@ -26,6 +26,7 @@ import sys
 import uuid
 from collections.abc import Callable
 from contextlib import contextmanager
+import threading
 from stat import (
     S_IFREG,
     S_IFSOCK,
@@ -87,7 +88,7 @@ class FakeOsModule:
         my_os_module = fake_os.FakeOsModule(filesystem)
     """
 
-    use_original = False
+    _use_original = threading.local()
 
     @staticmethod
     def dir() -> list[str]:
@@ -1469,7 +1470,7 @@ def handle_original_call(f: Callable) -> Callable:
 
     @functools.wraps(f)
     def wrapped(*args, **kwargs):
-        should_use_original = FakeOsModule.use_original
+        should_use_original = getattr(FakeOsModule._use_original, "value", False)
 
         if not should_use_original and args:
             self = args[0]
@@ -1503,8 +1504,9 @@ def use_original_os():
     """Temporarily use original os functions instead of faked ones.
     Used to ensure that skipped modules do not use faked calls.
     """
+    use_original = getattr(FakeOsModule._use_original, "value", False)
     try:
-        FakeOsModule.use_original = True
+        FakeOsModule._use_original.value = True
         yield
     finally:
-        FakeOsModule.use_original = False
+        FakeOsModule._use_original.value = use_original
