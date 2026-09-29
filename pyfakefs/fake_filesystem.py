@@ -2005,6 +2005,7 @@ class FakeFilesystem:
         old_path = make_string_path(old_file_path)
         new_path = make_string_path(new_file_path)
         ends_with_sep = self.ends_with_path_separator(old_path)
+        new_ends_with_sep = self.ends_with_path_separator(new_path)
         old_path = self.absnormpath(old_path)
         new_path = self.absnormpath(new_path)
         if not self.exists(old_path, check_link=True):
@@ -2013,6 +2014,10 @@ class FakeFilesystem:
             self._handle_broken_link_with_trailing_sep(old_path)
 
         old_object = self.lresolve(old_path)
+        if not self.is_windows_fs and not S_ISDIR(old_object.st_mode):
+            self._handle_posix_non_dir_with_trailing_sep(
+                old_path, new_path, old_object, ends_with_sep, new_ends_with_sep
+            )
         if not self.is_windows_fs:
             self._handle_posix_dir_link_errors(new_path, old_path, ends_with_sep)
 
@@ -2065,6 +2070,27 @@ class FakeFilesystem:
             object_to_rename.name = old_name
             old_dir_object.add_entry(object_to_rename)
             raise
+
+    def _handle_posix_non_dir_with_trailing_sep(
+        self,
+        old_path: AnyStr,
+        new_path: AnyStr,
+        old_object: AnyFile,
+        old_ends_with_sep: bool,
+        new_ends_with_sep: bool,
+    ) -> None:
+        # a trailing separator requires a directory, so renaming a file
+        # (or a symlink) from or to such a path fails
+        if old_ends_with_sep and S_ISREG(old_object.st_mode):
+            self.raise_os_error(errno.ENOTDIR, old_path)
+        if new_ends_with_sep and self.exists(self.splitpath(new_path)[0]):
+            error = errno.ENOTDIR
+            if self.is_macos:
+                if not self.exists(new_path):
+                    error = errno.ENOENT
+                elif self.isdir(new_path):
+                    error = errno.EISDIR
+            self.raise_os_error(error, new_path)
 
     def _handle_broken_link_with_trailing_sep(self, path: AnyStr) -> None:
         # note that the check for trailing sep has to be done earlier
