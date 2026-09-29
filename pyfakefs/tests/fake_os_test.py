@@ -2979,6 +2979,33 @@ class FakeOsModuleTest(FakeOsModuleTestBase):
         with self.open(file_path, encoding="utf8") as f:
             self.assertEqual("0123456789", f.read())
 
+    def test_truncate_read_only_file(self):
+        self.skip_root()
+        file_path = self.make_path("some_file")
+        self.create_file(file_path, contents="0123456789")
+        self.os.chmod(file_path, 0o444)
+        self.assert_raises_os_error(errno.EACCES, self.os.truncate, file_path, 0)
+        self.assertEqual(10, self.os.stat(file_path).st_size)
+        self.os.chmod(file_path, 0o666)
+
+    def test_truncate_negative_length(self):
+        file_path = self.make_path("some_file")
+        self.create_file(file_path, contents="0123456789")
+        self.assert_raises_os_error(errno.EINVAL, self.os.truncate, file_path, -1)
+        fd = self.os.open(file_path, os.O_RDWR)
+        self.assert_raises_os_error(errno.EINVAL, self.os.ftruncate, fd, -1)
+        self.os.close(fd)
+        self.assertEqual(10, self.os.stat(file_path).st_size)
+
+    def test_ftruncate_read_only_fd(self):
+        self.check_posix_only()
+        file_path = self.make_path("some_file")
+        self.create_file(file_path, contents="0123456789")
+        fd = self.os.open(file_path, os.O_RDONLY)
+        self.assert_raises_os_error(errno.EINVAL, self.os.ftruncate, fd, 0)
+        self.os.close(fd)
+        self.assertEqual(10, self.os.stat(file_path).st_size)
+
     def test_capabilities(self):
         """Make sure that the fake capabilities are the same as the real ones."""
         self.assertEqual(
