@@ -2608,6 +2608,41 @@ class FakeOsModuleTest(FakeOsModuleTestBase):
                 errno.ENOTDIR, self.os.rename, file_path + self.os.sep, file_path
             )
 
+    def check_rename_file_to_path_ending_with_sep(self, errors):
+        file_path = self.make_path("foo")
+        self.create_file(file_path)
+        self.create_dir(self.make_path("dir"))
+        for name, error in zip(("bar", "foo", "dir"), errors):
+            new_path = self.make_path(name) + self.os.sep
+            self.assert_raises_os_error(error, self.os.rename, file_path, new_path)
+            self.assert_raises_os_error(error, self.os.replace, file_path, new_path)
+        self.assertTrue(self.os.path.isfile(file_path))
+        self.assertFalse(self.os.path.exists(self.make_path("bar")))
+
+    def test_rename_file_to_path_ending_with_sep_linux(self):
+        self.check_linux_only()
+        self.check_rename_file_to_path_ending_with_sep(
+            (errno.ENOTDIR, errno.ENOTDIR, errno.ENOTDIR)
+        )
+
+    def test_rename_file_to_path_ending_with_sep_macos(self):
+        self.check_macos_only()
+        self.check_rename_file_to_path_ending_with_sep(
+            (errno.ENOENT, errno.ENOTDIR, errno.EISDIR)
+        )
+
+    def test_rename_file_with_trailing_sep_posix(self):
+        self.check_posix_only()
+        file_path = self.make_path("foo")
+        self.create_file(file_path)
+        self.assert_raises_os_error(
+            errno.ENOTDIR,
+            self.os.rename,
+            file_path + self.os.sep,
+            self.make_path("bar"),
+        )
+        self.assertTrue(self.os.path.isfile(file_path))
+
     def test_rmdir_link_with_trailing_sep_linux(self):
         self.check_linux_only()
         dir_path = self.make_path("foo")

@@ -23,6 +23,8 @@ The released versions correspond to PyPI releases.
 * fixed `os.rename` failing for the root user in a directory owned by
   another user
   (see [#1341](https://github.com/pytest-dev/pyfakefs/issues/1341))
+* fixed `os.rename` and `os.replace` succeeding under Posix when renaming
+  a file to a path with a trailing separator, or from `file/`
 
 ## [Version 6.2.0](https://pypi.python.org/pypi/pyfakefs/6.2.0) (2026-04-12)
 
