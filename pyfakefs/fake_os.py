@@ -53,6 +53,7 @@ from pyfakefs.helpers import (
     IS_PYPY,
     PERM_DEF,
     PERM_EXE,
+    PERM_WRITE,
     AnyString,
     FakeStatResult,
     get_gid,
@@ -1001,10 +1002,21 @@ class FakeOsModule:
             length: (int) Length of the file after truncating it.
 
         Raises:
-            OSError: if the file does not exist or the file descriptor is
-                invalid.
+            OSError: if the file does not exist, the file descriptor is
+                invalid, the length is negative or the file is not writable.
         """
-        file_object = self.filesystem.resolve(path, allow_fd=True)
+        if isinstance(path, int):
+            self.ftruncate(path, length)
+            return
+        if length < 0:
+            self.filesystem.raise_os_error(errno.EINVAL, path)
+        file_object = self.filesystem.resolve(path)
+        if (
+            not isinstance(file_object, FakeDirectory)
+            and not is_root()
+            and not file_object.has_permission(PERM_WRITE)
+        ):
+            self.filesystem.raise_os_error(errno.EACCES, path)
         file_object.size = length
 
     def ftruncate(self, fd: int, length: int) -> None:
@@ -1017,11 +1029,16 @@ class FakeOsModule:
             length: (int) Maximum length of the file after truncating it.
 
         Raises:
-            OSError: if the file descriptor is invalid
+            OSError: if the file descriptor is invalid, the length is
+                negative or the file was not opened for writing
         """
         file_handle = self.filesystem.get_open_file(fd)
         if not isinstance(file_handle, FakeFileWrapper):
             self.filesystem.raise_os_error(errno.EBADF)
+        if length < 0:
+            self.filesystem.raise_os_error(errno.EINVAL)
+        if not self.filesystem.is_windows_fs and not file_handle.open_modes.can_write:
+            self.filesystem.raise_os_error(errno.EINVAL)
         file_handle.get_object().size = length
 
     def access(
