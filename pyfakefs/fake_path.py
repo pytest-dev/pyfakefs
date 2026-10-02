@@ -19,7 +19,9 @@ from __future__ import annotations
 import errno
 import functools
 import inspect
+import ntpath
 import os
+import posixpath
 import sys
 from collections.abc import Callable
 from stat import (
@@ -79,6 +81,8 @@ class FakePathModule:
         """
         dir_list = [
             "abspath",
+            "basename",
+            "commonpath",
             "dirname",
             "exists",
             "expanduser",
@@ -99,6 +103,7 @@ class FakePathModule:
             "relpath",
             "split",
             "splitdrive",
+            "splitext",
             "samefile",
         ]
         if sys.version_info >= (3, 12):
@@ -315,6 +320,22 @@ class FakePathModule:
         """Split the path into the drive part and the rest of the path, if
         supported."""
         return self.filesystem.splitdrive(path)
+
+    def _path_module(self) -> Any:
+        """Return the path module matching the simulated file system."""
+        return ntpath if self.filesystem.is_windows_fs else posixpath
+
+    def basename(self, path: AnyStr) -> AnyStr:
+        """Returns the final component of a pathname."""
+        return self._path_module().basename(path)
+
+    def splitext(self, path: AnyStr) -> tuple[AnyStr, AnyStr]:
+        """Split the path into the file name and the file extension."""
+        return self._path_module().splitext(path)
+
+    def commonpath(self, paths: list[AnyStr]) -> AnyStr:
+        """Returns the longest common sub-path of the given paths."""
+        return self._path_module().commonpath(paths)
 
     def normpath(self, path: AnyStr) -> AnyStr:
         """Normalize path, eliminating double slashes, etc."""
