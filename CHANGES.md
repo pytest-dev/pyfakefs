@@ -26,6 +26,9 @@ The released versions correspond to PyPI releases.
 * fixed cross-device hard links incorrectly succeeding (see [#1337](https://github.com/pytest-dev/pyfakefs/issues/1337))
 * fixed `os.rename` failing for the root user in a directory owned by
   another user (see [#1341](https://github.com/pytest-dev/pyfakefs/issues/1341))
+* fixed `os.path.basename`, `os.path.splitext` and `os.path.commonpath`
+  not using the path semantics of the simulated file system
+  (see [#1348](https://github.com/pytest-dev/pyfakefs/issues/1348))
 
 ## [Version 6.2.0](https://pypi.python.org/pypi/pyfakefs/6.2.0) (2026-04-12)
 
