@@ -1035,17 +1035,17 @@ class FakePathlibModule:
                 self._str_normcase_cached = str(self)
 
         if sys.version_info >= (3, 14):
-            # a similar check is used in the implementations of glob, match and full_match, to check for
-            # case sensitivity if not given, so we provide it under Posix as True
+            # Pathlib's parser check cannot distinguish simulated Linux and macOS.
             def glob(self, pattern, *, case_sensitive=None, recurse_symlinks=False):
                 if case_sensitive is None:
-                    case_sensitive = True
+                    case_sensitive = self.filesystem.is_case_sensitive
                 return super().glob(  # pytype: disable=wrong-keyword-args
                     pattern,
                     case_sensitive=case_sensitive,
                     recurse_symlinks=recurse_symlinks,
                 )
 
+            # Match methods follow the POSIX flavour rather than filesystem lookups.
             def match(self, path_pattern, *, case_sensitive=None):
                 if case_sensitive is None:
                     case_sensitive = True
