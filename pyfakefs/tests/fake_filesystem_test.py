@@ -1159,7 +1159,7 @@ class FakePathModuleTest(TestCase):
         self.filesystem.is_windows_fs = True
         self.assertEqual("t.x", self.path.basename(r"C:\a/foo\t.x"))
         self.assertEqual("t.x", self.path.basename(r"C:\a\foo\t.x"))
-        self.assertEqual(b"t.x", self.path.basename(br"C:\a\foo\t.x"))
+        self.assertEqual(b"t.x", self.path.basename(rb"C:\a\foo\t.x"))
 
     def test_basename_posix(self):
         self.filesystem.is_windows_fs = False
@@ -1171,7 +1171,7 @@ class FakePathModuleTest(TestCase):
         self.filesystem.is_windows_fs = True
         self.assertEqual((r"C:\a.b\foo", ""), self.path.splitext(r"C:\a.b\foo"))
         self.assertEqual((r"C:\a\foo", ".txt"), self.path.splitext(r"C:\a\foo.txt"))
-        self.assertEqual((br"C:\a.b\foo", b""), self.path.splitext(br"C:\a.b\foo"))
+        self.assertEqual((rb"C:\a.b\foo", b""), self.path.splitext(rb"C:\a.b\foo"))
 
     def test_splitext_posix(self):
         self.filesystem.is_windows_fs = False
@@ -1182,7 +1182,7 @@ class FakePathModuleTest(TestCase):
         self.filesystem.is_windows_fs = True
         self.assertEqual(r"C:\a", self.path.commonpath([r"C:\a\b", r"C:/a\c"]))
         self.assertEqual(r"C:\a", self.path.commonpath([r"C:\a\b", r"C:\a\c"]))
-        self.assertEqual(br"C:\a", self.path.commonpath([br"C:\a\b", br"C:\a\c"]))
+        self.assertEqual(rb"C:\a", self.path.commonpath([rb"C:\a\b", rb"C:\a\c"]))
 
     def test_commonpath_posix(self):
         self.filesystem.is_windows_fs = False
