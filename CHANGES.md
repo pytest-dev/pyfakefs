@@ -15,6 +15,9 @@ The released versions correspond to PyPI releases.
 
 ### Fixes
 
+* fixed `Path.glob()` not finding literal pattern parts with a different case
+  in a case-insensitive filesystem (e.g. macOS) under Python 3.14
+  (see [#1347](https://github.com/pytest-dev/pyfakefs/issues/1347))
 * fixed resolving Windows drive-relative paths (see [#1324](https://github.com/pytest-dev/pyfakefs/issues/1324))
 * fixed `os.path.sameopenfile` using real file descriptors instead of fake ones
   (see [#1346](https://github.com/pytest-dev/pyfakefs/issues/1346))

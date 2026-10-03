@@ -1038,13 +1038,39 @@ class FakePathlibModule:
             # a similar check is used in the implementations of glob, match and full_match, to check for
             # case sensitivity if not given, so we provide it under Posix as True
             def glob(self, pattern, *, case_sensitive=None, recurse_symlinks=False):
-                if case_sensitive is None:
-                    case_sensitive = True
-                return super().glob(  # pytype: disable=wrong-keyword-args
-                    pattern,
-                    case_sensitive=case_sensitive,
-                    recurse_symlinks=recurse_symlinks,
+                if case_sensitive is not None:
+                    return super().glob(  # pytype: disable=wrong-keyword-args
+                        pattern,
+                        case_sensitive=case_sensitive,
+                        recurse_symlinks=recurse_symlinks,
+                    )
+                # Passing `case_sensitive=True` would also make CPython match
+                # literal (non-wildcard) pattern parts via scandir. Without an
+                # explicit argument, it instead checks literal parts by looking
+                # them up in the filesystem, so they are found in a
+                # case-insensitive filesystem (e.g. under macOS).
+                # This mirrors `pathlib.Path.glob` with `case_pedantic=False`.
+                from glob import (  # pytype: disable=import-error
+                    _no_recurse_symlinks,
+                    _StringGlobber,
                 )
+
+                # pytype: disable=attribute-error
+                sys.audit("pathlib.Path.glob", self, pattern)
+                parts = self._parse_pattern(pattern)
+                recursive = True if recurse_symlinks else _no_recurse_symlinks
+                globber = _StringGlobber(self.parser.sep, True, False, recursive)
+                select = globber.selector(parts[::-1])
+                root = str(self)
+                paths = select(self.parser.join(root, ""))
+                if root == ".":
+                    paths = map(self._remove_leading_dot, paths)
+                if parts[-1] == "":
+                    paths = map(self._remove_trailing_slash, paths)
+                elif parts[-1] == "**":
+                    paths = self._filter_trailing_slash(paths)
+                return map(self._from_parsed_string, paths)
+                # pytype: enable=attribute-error
 
             def match(self, path_pattern, *, case_sensitive=None):
                 if case_sensitive is None:
