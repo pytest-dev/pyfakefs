@@ -38,6 +38,7 @@ to `:py:class`pyfakefs.fake_filesystem_unittest.TestCase`.
 
 import _io  # type:ignore[import]
 import doctest
+import fnmatch
 import functools
 import genericpath
 import glob
@@ -1121,6 +1122,10 @@ class Patcher:
         for name, modules in self.FS_MODULES.items():
             for module, attr in modules:
                 try:
+                    # fnmatch.filter skips normcase when os.path is posixpath.
+                    # The fake path module can use Windows case rules instead.
+                    if module is fnmatch and name == "posixpath":
+                        continue
                     if not skip_prefixes or not module.__name__.startswith(
                         skip_prefixes
                     ):

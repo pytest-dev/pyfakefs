@@ -13,6 +13,9 @@ The released versions correspond to PyPI releases.
 
 ### Fixes
 
+* fixed `fnmatch.filter` and `glob.glob` missing uppercase names
+  when simulating Windows on a POSIX host
+  (see [#1345](https://github.com/pytest-dev/pyfakefs/issues/1345))
 * fixed a crash if the stack limit was set to a low value
   (see [#1313](https://github.com/pytest-dev/pyfakefs/issues/1313))
 * fixed `os.ftruncate` to inspect the `FakeFileWrapper` returned by
