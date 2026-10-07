@@ -15,12 +15,14 @@
 """Test for glob using fake_filesystem."""
 
 import contextlib
+import fnmatch
 import glob
 import os
 import sys
 import unittest
 
 from pyfakefs import fake_filesystem_unittest
+from pyfakefs.fake_filesystem import OSType
 
 
 class FakeGlobUnitTest(fake_filesystem_unittest.TestCase):
@@ -85,6 +87,28 @@ class FakeGlobUnitTest(fake_filesystem_unittest.TestCase):
     def test_has_magic(self):
         self.assertTrue(glob.has_magic("["))
         self.assertFalse(glob.has_magic("a"))
+
+    def test_fnmatch_filter_windows(self):
+        self.fs.os = OSType.WINDOWS
+        for pattern in ("*.txt", "*.TXT"):
+            with self.subTest(pattern=pattern):
+                self.assertEqual(
+                    ["B.TXT"], fnmatch.filter(["B.TXT", "other.log"], pattern)
+                )
+                self.assertEqual(
+                    [b"B.TXT"],
+                    fnmatch.filter([b"B.TXT", b"other.log"], pattern.encode()),
+                )
+
+    def test_glob_windows_case_insensitive(self):
+        self.fs.os = OSType.WINDOWS
+        self.fs.create_file(r"C:\d\B.TXT")
+        self.assertEqual([r"C:\d\B.TXT"], glob.glob(r"C:\d\*.txt"))
+
+    def test_fnmatch_filter_linux_case_sensitive(self):
+        self.fs.os = OSType.LINUX
+        self.assertEqual([], fnmatch.filter(["B.TXT"], "*.txt"))
+        self.assertEqual(["B.TXT"], fnmatch.filter(["B.TXT"], "*.TXT"))
 
 
 if __name__ == "__main__":
