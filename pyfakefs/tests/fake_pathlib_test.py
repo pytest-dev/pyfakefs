@@ -657,6 +657,31 @@ class FakePathlibFileObjectPropertyTest(RealPathlibTestCase):
             self.path(self.os.path.realpath(self.make_path("antoine", "setup.py"))),
         )
 
+    def test_resolve_drive_relative_path(self):
+        # Regression test for #1324: a drive prefix does not imply a root path.
+        self.check_windows_only()
+        cwd = self.make_path("test")
+        self.create_dir(cwd)
+        self.create_file(self.os.path.join(cwd, "test_data", "dummy1.xml"))
+        self.os.chdir(cwd)
+        expected = self.os.path.join(cwd, "test", "test_data", "dummy1.xml")
+        drive = self.path.cwd().drive
+        for prefix in (drive.lower(), drive.upper()):
+            path = self.path(f"{prefix}test\\test_data/dummy1.xml")
+            self.assert_equal_paths(path.resolve(strict=False), expected)
+
+    def test_resolve_drive_relative_existing_file(self):
+        self.check_windows_only()
+        cwd = self.make_path("test")
+        self.create_dir(cwd)
+        expected = self.os.path.join(cwd, "test_data", "dummy1.xml")
+        self.create_file(expected)
+        self.os.chdir(cwd)
+        drive = self.path.cwd().drive
+        for prefix in (drive.lower(), drive.upper()):
+            path = self.path(f"{prefix}test_data/dummy1.xml")
+            self.assert_equal_paths(path.resolve(strict=False), expected)
+
     def test_stat_file_in_unreadable_dir(self):
         self.check_posix_only()
         dir_path = self.make_path("some_dir")
