@@ -413,13 +413,22 @@ class FakePathModule:
         if self.filesystem.starts_with_root_path(rest):
             if self.filesystem.is_windows_fs:
                 drive, rest = self.filesystem.splitdrive(rest)
-                if not drive:
+                if drive and not self.filesystem.starts_with_sep(rest):
                     cwd = matching_string(path, self.filesystem.cwd)
-                    drive, _ = self.filesystem.splitdrive(cwd)
-                path = drive + sep
+                    cwd_drive, _ = self.filesystem.splitdrive(cwd)
+                    if drive.lower() == cwd_drive.lower():
+                        path = cwd
+                    else:
+                        path = drive + sep
+                else:
+                    if not drive:
+                        cwd = matching_string(path, self.filesystem.cwd)
+                        drive, _ = self.filesystem.splitdrive(cwd)
+                    path = drive + sep
+                    rest = rest[1:]
             else:
                 path = sep
-            rest = rest[1:]
+                rest = rest[1:]
 
         while rest:
             name, _, rest = rest.partition(sep)
