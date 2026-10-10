@@ -28,7 +28,7 @@ from pyfakefs.fake_filesystem import (
     set_gid,
     set_uid,
 )
-from pyfakefs.helpers import IN_DOCKER, IS_PYPY, IS_WIN, get_gid, get_uid, reset_ids
+from pyfakefs.helpers import IN_DOCKER, IS_PYPY, get_gid, get_uid, reset_ids
 from pyfakefs.tests.test_utils import (
     RealFsTestCase,
     TestCase,
@@ -2772,7 +2772,10 @@ class FakeOsModuleTest(FakeOsModuleTestBase):
         self.os.unlink(file1_path)
         self.assertEqual(self.os.stat(file2_path).st_nlink, 1)
 
-    @unittest.skipIf(IS_PYPY, "follow_symlinks not supported in PyPi")
+    @unittest.skipIf(
+        IS_PYPY and sys.version_info < (3, 11),
+        "follow_symlinks not supported in PyPy before Python 3.11",
+    )
     def test_link_no_follow_symlink(self):
         skip_if_symlink_not_supported()
         target_path = self.make_path("target_path")
@@ -2783,8 +2786,10 @@ class FakeOsModuleTest(FakeOsModuleTestBase):
         self.os.link(symlink_path, link_path, follow_symlinks=False)
         self.assertTrue(self.os.path.islink(link_path))
 
-    @unittest.skipIf(not IS_PYPY, "follow_symlinks only not supported in PyPi")
-    @unittest.skipIf(IS_WIN, "supported in PyPy 3.11 under Windows")
+    @unittest.skipIf(
+        not IS_PYPY or sys.version_info >= (3, 11),
+        "follow_symlinks only unsupported in PyPy before Python 3.11",
+    )
     def test_link_follow_symlink_not_supported_inPypy(self):
         skip_if_symlink_not_supported()
         target_path = self.make_path("target_path")
