@@ -100,6 +100,7 @@ class FakePathModule:
             "split",
             "splitdrive",
             "samefile",
+            "sameopenfile",
         ]
         if sys.version_info >= (3, 12):
             dir_list += ["isjunction", "splitroot"]
@@ -388,6 +389,18 @@ class FakePathModule:
         stat1 = self.filesystem.stat(path1)
         stat2 = self.filesystem.stat(path2)
         return stat1.st_ino == stat2.st_ino and stat1.st_dev == stat2.st_dev
+
+    def sameopenfile(self, fd1: int, fd2: int) -> bool:
+        """Return whether two file descriptors refer to the same file.
+
+        Args:
+            fd1: First open file descriptor.
+            fd2: Second open file descriptor.
+
+        Raises:
+            OSError: If either file descriptor is invalid.
+        """
+        return self._os_path.samestat(self.os.fstat(fd1), self.os.fstat(fd2))
 
     @overload
     def _join_real_path(

@@ -18,6 +18,7 @@
 Test the :py:class`pyfakefs.fake_filesystem_unittest.TestCase` base class.
 """
 
+import errno
 import glob
 import importlib.util
 import io
@@ -64,6 +65,26 @@ class TestPatcher(TestCase):
             with open("/foo/bar", encoding="utf8") as f:
                 contents = f.read()
             self.assertEqual("test", contents)
+
+    def test_sameopenfile(self):
+        for os_type in OSType:
+            with self.subTest(os_type=os_type), Patcher() as patcher:
+                patcher.fs.os = os_type
+                patcher.fs.create_file("/foo/bar")
+                patcher.fs.create_file("/foo/baz")
+                with open("/foo/bar") as first, open("/foo/bar") as second:
+                    first_fd, second_fd = first.fileno(), second.fileno()
+                    self.assertTrue(os.path.sameopenfile(first_fd, second_fd))
+                    self.assertTrue(
+                        os.path.sameopenfile(first.fileno(), first.fileno())
+                    )
+                    with open("/foo/baz") as other:
+                        self.assertFalse(
+                            os.path.sameopenfile(first.fileno(), other.fileno())
+                        )
+                with self.assertRaises(OSError) as error:
+                    os.path.sameopenfile(first_fd, second_fd)
+                self.assertEqual(error.exception.errno, errno.EBADF)
 
     @patchfs
     def test_context_decorator(self, fake_fs):
