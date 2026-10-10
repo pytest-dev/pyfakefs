@@ -1,5 +1,5 @@
 default_language_version:
-  python: "3.10"
+  python: "python3"
 
 repos:
   - repo: "https://github.com/asottile/pyupgrade"
