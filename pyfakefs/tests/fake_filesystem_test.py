@@ -1110,6 +1110,36 @@ class FakePathModuleTest(TestCase):
         self.assertTrue(self.path.samefile(file_path1, "!foo!..!foo!bar!..!bar!baz"))
         self.assertTrue(self.path.samefile(file_path1, b"!foo!..!foo!bar!..!bar!baz"))
 
+    def test_sameopenfile(self):
+        def check_sameopenfile(path_module, open_file, file_path1, file_path2):
+            with open_file(file_path1) as first, open_file(file_path1) as second:
+                first_fd, second_fd = first.fileno(), second.fileno()
+                self.assertTrue(path_module.sameopenfile(first_fd, second_fd))
+                self.assertTrue(path_module.sameopenfile(first_fd, first_fd))
+                with open_file(file_path2) as other:
+                    self.assertFalse(path_module.sameopenfile(first_fd, other.fileno()))
+
+            with self.assertRaises(OSError) as error:
+                path_module.sameopenfile(first_fd, second_fd)
+            self.assertEqual(error.exception.errno, errno.EBADF)
+
+        file_path1 = "!foo!bar"
+        file_path2 = "!foo!baz"
+        fake_file_open = fake_open.FakeFileOpen(self.filesystem)
+        for os_type in OSType:
+            with self.subTest(os_type=os_type):
+                self.filesystem.os = os_type
+                self.filesystem.create_file(file_path1)
+                self.filesystem.create_file(file_path2)
+                check_sameopenfile(self.path, fake_file_open, file_path1, file_path2)
+
+        with tempfile.TemporaryDirectory() as real_dir:
+            real_file1 = os.path.join(real_dir, "bar")
+            real_file2 = os.path.join(real_dir, "baz")
+            with open(real_file1, "w"), open(real_file2, "w"):
+                pass
+            check_sameopenfile(os.path, open, real_file1, real_file2)
+
     def test_exists(self):
         file_path = "foo!bar!baz"
         file_path_bytes = b"foo!bar!baz"
