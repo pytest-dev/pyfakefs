@@ -2787,8 +2787,8 @@ class FakeOsModuleTest(FakeOsModuleTestBase):
         self.assertTrue(self.os.path.islink(link_path))
 
     @unittest.skipIf(
-        not IS_PYPY or sys.version_info >= (3, 11),
-        "follow_symlinks only unsupported in PyPy before Python 3.11",
+        not IS_PYPY or IS_WIN or sys.version_info >= (3, 11),
+        "follow_symlinks only unsupported in PyPy before Python 3.11 on POSIX",
     )
     def test_link_follow_symlink_not_supported_inPypy(self):
         skip_if_symlink_not_supported()
