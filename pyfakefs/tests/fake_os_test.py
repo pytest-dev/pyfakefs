@@ -28,7 +28,7 @@ from pyfakefs.fake_filesystem import (
     set_gid,
     set_uid,
 )
-from pyfakefs.helpers import IN_DOCKER, IS_PYPY, get_gid, get_uid, reset_ids
+from pyfakefs.helpers import IN_DOCKER, IS_PYPY, IS_WIN, get_gid, get_uid, reset_ids
 from pyfakefs.tests.test_utils import (
     RealFsTestCase,
     TestCase,
