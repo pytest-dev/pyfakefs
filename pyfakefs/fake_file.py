@@ -60,7 +60,7 @@ if TYPE_CHECKING:
 
 
 # Work around pyupgrade auto-rewriting `io.open()` to `open()`.
-io_open = io.open
+io_open = open
 
 AnyFileWrapper = Union[
     "FakeFileWrapper",

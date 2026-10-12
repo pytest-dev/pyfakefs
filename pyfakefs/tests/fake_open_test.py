@@ -35,7 +35,7 @@ class FakeFileOpenTestBase(RealFsTestCase):
     def setUp(self):
         super().setUp()
         if self.use_real_fs():
-            self.open = io.open
+            self.open = open
         else:
             self.fake_io_module = FakeIoModule(self.filesystem)
             self.open = self.fake_io_module.open

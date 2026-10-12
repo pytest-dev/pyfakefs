@@ -912,7 +912,7 @@ class OsPathInjectionRegressionTest(TestCase):
             ("/x/po", [], ["control", "experiment"]),
         ]
         # as the result is unsorted, we have to check against sorted results
-        result = sorted([step for step in self.os.walk("/")], key=lambda v: v[0])
+        result = sorted([*self.os.walk("/")], key=lambda v: v[0])
         self.assertEqual(len(expected), len(result))
         for entry, expected_entry in zip(result, expected):
             self.assertEqual(expected_entry[0], entry[0])

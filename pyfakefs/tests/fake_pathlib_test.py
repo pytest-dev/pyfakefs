@@ -1075,7 +1075,7 @@ class FakePathlibPathFileOperationTest(RealPathlibTestCase):
         self.create_file(self.make_path("foo", "bar", "file2"))
         self.create_file(self.make_path("foo", "bar", "file3"))
         path = self.path(self.make_path("foo", "bar"))
-        contents = [entry for entry in path.iterdir()]
+        contents = [*path.iterdir()]
         self.assertEqual(3, len(contents))
         self.assertIn(self.path(self.make_path("foo", "bar", "file2")), contents)
 
@@ -1386,7 +1386,7 @@ class FakePathlibUsageInOsFunctionsTest(RealPathlibTestCase):
         directory = self.make_path("xyzzy", "plugh")
         self.create_dir(directory)
         self.create_file(self.os.path.join(directory, "test.txt"))
-        dir_entries = [entry for entry in self.os.scandir(self.path(directory))]
+        dir_entries = [*self.os.scandir(self.path(directory))]
         self.assertEqual(1, len(dir_entries))
 
     def test_symlink(self):
@@ -1587,7 +1587,7 @@ class FakePathlibUsageInOsFunctionsTest(RealPathlibTestCase):
         self.create_dir(base_path)
         self.create_file(base_path / "1.txt")
         self.create_file(base_path / "bar" / "2.txt")
-        result = [step for step in self.os.walk(base_path)]
+        result = [*self.os.walk(base_path)]
         assert len(result) == 2
         assert result[0] == (base_dir, ["bar"], ["1.txt"])
         assert result[1] == (self.os.path.join(base_dir, "bar"), [], ["2.txt"])
