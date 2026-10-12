@@ -4688,9 +4688,7 @@ class FakeOsModuleWalkTest(FakeOsModuleTestBase):
     def assertWalkResults(self, expected, top, topdown=True, followlinks=False):
         # as the result of walk is unsorted, we have to check against
         # sorted results
-        result = [
-            step for step in self.os.walk(top, topdown=topdown, followlinks=followlinks)
-        ]
+        result = [*self.os.walk(top, topdown=topdown, followlinks=followlinks)]
         result = sorted(result, key=lambda lst: lst[0])
         expected = sorted(expected, key=lambda lst: lst[0])
         self.assertEqual(len(expected), len(result))

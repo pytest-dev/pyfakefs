@@ -17,7 +17,6 @@
 from __future__ import annotations
 
 import errno
-import io
 import os
 import sys
 from collections.abc import Callable
@@ -57,7 +56,7 @@ if TYPE_CHECKING:
 
 
 # Work around pyupgrade auto-rewriting `io.open()` to `open()`.
-io_open = io.open
+io_open = open
 
 _OPEN_MODE_MAP = {
     # mode name:(file must exist, can read, can write,

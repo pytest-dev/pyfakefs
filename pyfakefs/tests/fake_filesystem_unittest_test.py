@@ -20,7 +20,6 @@ Test the :py:class`pyfakefs.fake_filesystem_unittest.TestCase` base class.
 
 import glob
 import importlib.util
-import io
 import multiprocessing
 import os
 import pathlib
@@ -54,7 +53,7 @@ if sys.version_info < (3, 12):
 
 
 # Work around pyupgrade auto-rewriting `io.open()` to `open()`.
-io_open = io.open
+io_open = open
 
 
 class TestPatcher(TestCase):
