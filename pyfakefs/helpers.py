@@ -147,6 +147,10 @@ def make_string_path(dir_name: os.PathLike) -> str: ...
 
 
 def make_string_path(dir_name: AnyPath) -> AnyStr:  # type: ignore[type-var]
+    from pyfakefs.fake_pathlib import FakePath
+
+    if isinstance(dir_name, FakePath):
+        return cast(AnyStr, str(dir_name))  # pytype: disable=invalid-annotation
     return cast(AnyStr, os.fspath(dir_name))  # pytype: disable=invalid-annotation
 
 

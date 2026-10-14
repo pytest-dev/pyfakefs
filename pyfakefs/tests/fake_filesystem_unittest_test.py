@@ -894,8 +894,6 @@ class TestOtherFS(fake_filesystem_unittest.TestCase):
     def test_real_file_with_home(self):
         """Regression test for #558"""
         self.fs.is_windows_fs = os.name != "nt"
-        if self.fs.is_windows_fs:
-            self.fs.is_macos = False
         self.fs.add_real_file(__file__)
         with open(__file__, encoding="utf8") as f:
             self.assertTrue(f.read())

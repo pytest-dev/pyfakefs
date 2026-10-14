@@ -472,7 +472,7 @@ class FakeFileFromRealFile(FakeFile):
             OSError: if the file already exists in the fake file system.
         """
         super().__init__(
-            name=os.path.basename(file_path),
+            name=filesystem.splitpath(file_path)[1],
             filesystem=filesystem,
             side_effect=side_effect,
         )
