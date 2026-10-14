@@ -367,12 +367,14 @@ class RealFsTestMixin:
         """Create the path used as base path in `make_path`."""
         if self.filesystem is not None:
             old_base_path = self.base_path
-            self.base_path = self.filesystem.path_separator + "basepath"
-            if self.filesystem.is_windows_fs:
-                self.base_path = "C:" + self.base_path
-            if old_base_path != self.base_path:
+            if not old_base_path or (
+                self.filesystem.is_windows_fs != old_base_path.startswith("C:")
+            ):
                 if old_base_path is not None:
                     self.filesystem.reset()
+                self.base_path = self.filesystem.path_separator + "basepath"
+                if self.filesystem.is_windows_fs:
+                    self.base_path = "C:" + self.base_path
                 if not self.filesystem.exists(self.base_path):
                     self.filesystem.create_dir(self.base_path)
                 if old_base_path is not None:
