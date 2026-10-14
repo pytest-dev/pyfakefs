@@ -1239,36 +1239,36 @@ class FakePathModuleTest(RealFsTestCase):
 
     def test_basename_windows(self):
         # regression test for #1348: backslashes are path separators
-        self.filesystem.is_windows_fs = True
+        self.check_windows_only()
         self.assertEqual("t.x", self.path.basename(r"C:\a/foo\t.x"))
         self.assertEqual("t.x", self.path.basename(r"C:\a\foo\t.x"))
         self.assertEqual(b"t.x", self.path.basename(rb"C:\a\foo\t.x"))
 
     def test_basename_posix(self):
-        self.filesystem.is_windows_fs = False
+        self.check_posix_only()
         self.assertEqual(r"foo\t.x", self.path.basename(r"C:\a/foo\t.x"))
         self.assertEqual(r"C:\a\foo\t.x", self.path.basename(r"C:\a\foo\t.x"))
 
     def test_splitext_windows(self):
         # regression test for #1348: a dot after a separator is not an extension
-        self.filesystem.is_windows_fs = True
+        self.check_windows_only()
         self.assertEqual((r"C:\a.b\foo", ""), self.path.splitext(r"C:\a.b\foo"))
         self.assertEqual((r"C:\a\foo", ".txt"), self.path.splitext(r"C:\a\foo.txt"))
         self.assertEqual((rb"C:\a.b\foo", b""), self.path.splitext(rb"C:\a.b\foo"))
 
     def test_splitext_posix(self):
-        self.filesystem.is_windows_fs = False
+        self.check_posix_only()
         self.assertEqual((r"C:\a", r".b\foo"), self.path.splitext(r"C:\a.b\foo"))
 
     def test_commonpath_windows(self):
         # regression test for #1348: mixed separators in the same drive
-        self.filesystem.is_windows_fs = True
+        self.check_windows_only()
         self.assertEqual(r"C:\a", self.path.commonpath([r"C:\a\b", r"C:/a\c"]))
         self.assertEqual(r"C:\a", self.path.commonpath([r"C:\a\b", r"C:\a\c"]))
         self.assertEqual(rb"C:\a", self.path.commonpath([rb"C:\a\b", rb"C:\a\c"]))
 
     def test_commonpath_posix(self):
-        self.filesystem.is_windows_fs = False
+        self.check_posix_only()
         self.assertEqual("", self.path.commonpath([r"C:\a\b", r"C:/a\c"]))
 
     def test_join_strings(self):
