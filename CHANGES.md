@@ -15,6 +15,9 @@ The released versions correspond to PyPI releases.
 
 ### Fixes
 
+* fixed direct `Path` imports using a different replacement than `pathlib.Path`,
+  allowing runtime type inspection and Typer path conversion
+  (see [#1334](https://github.com/pytest-dev/pyfakefs/issues/1334))
 * fixed resolving Windows drive-relative paths (see [#1324](https://github.com/pytest-dev/pyfakefs/issues/1324))
 * fixed `os.path.sameopenfile` using real file descriptors instead of fake ones
   (see [#1346](https://github.com/pytest-dev/pyfakefs/issues/1346))
