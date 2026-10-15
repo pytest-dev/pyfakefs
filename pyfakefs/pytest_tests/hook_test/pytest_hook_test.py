@@ -19,6 +19,12 @@ def report_path():
     yield Path(__file__).parent / "report.txt"
 
 
+def test_conftest_hook_lookup(fs, request, logreport_hook):
+    # Path type checks during hook lookup must accept already collected paths.
+    hooks = request.node.ihook.pytest_runtest_logreport.get_hookimpls()
+    assert logreport_hook in [hook.function for hook in hooks]
+
+
 def test_1(fs):
     pass
 
