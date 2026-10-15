@@ -1161,6 +1161,8 @@ class FakePathlibPathFileOperationTest(RealPathlibTestCase):
     def test_glob_literal_case_insensitive_fs(self):
         # regression test for #1347
         self.check_posix_only()
+        if sys.platform == "win32" and sys.version_info < (3, 14):
+            self.skipTest(reason="Ignoring inconsistent path delimiters")
         self.check_case_insensitive_fs()
         self.create_file(self.make_path("foo", "B.TXT"))
         self.create_file(self.make_path("foo", "Sub", "x.py"))

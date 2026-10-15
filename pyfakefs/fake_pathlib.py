@@ -1055,6 +1055,7 @@ class FakePathlibModule:
                     _StringGlobber,
                 )
 
+                # pytype: disable=attribute-error
                 sys.audit("pathlib.Path.glob", self, pattern)
                 parts = self._parse_pattern(pattern)
                 recursive = True if recurse_symlinks else _no_recurse_symlinks
@@ -1069,6 +1070,7 @@ class FakePathlibModule:
                 elif parts[-1] == "**":
                     paths = self._filter_trailing_slash(paths)
                 return map(self._from_parsed_string, paths)
+                # pytype: enable=attribute-error
 
             def match(self, path_pattern, *, case_sensitive=None):
                 if case_sensitive is None:
