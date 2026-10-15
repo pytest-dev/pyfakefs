@@ -38,6 +38,7 @@ from typing import (
 )
 
 from pyfakefs.helpers import (
+    REALPATH_RESOLVES_DRIVE_RELATIVE,
     is_called_from_skipped_module,
     make_string_path,
     matching_string,
@@ -385,7 +386,14 @@ class FakePathModule:
 
         filename = make_string_path(filename)
         path, _ = self._join_real_path(filename[:0], filename, {})
-        return self.abspath(path)
+        path = self.abspath(path)
+        if REALPATH_RESOLVES_DRIVE_RELATIVE and self.filesystem.is_windows_fs:
+            drive, rest = self.splitdrive(path)
+            if len(drive) == 2 and not self.filesystem.starts_with_sep(rest):
+                # the path is relative to another drive (see CPython gh-102475)
+                sep = self.filesystem.get_path_separator(path)
+                path = drive.upper() + sep + rest
+        return path
 
     def samefile(self, path1: AnyStr, path2: AnyStr) -> bool:
         """Return whether path1 and path2 point to the same file.

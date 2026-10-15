@@ -33,7 +33,7 @@ from unittest.mock import patch
 from pyfakefs import fake_filesystem, fake_filesystem_unittest, fake_os, fake_pathlib
 from pyfakefs.fake_filesystem import FakeFilesystem, OSType
 from pyfakefs.fake_pathlib import FakePathlibModule
-from pyfakefs.helpers import IS_PYPY, is_root
+from pyfakefs.helpers import IS_PYPY, REALPATH_RESOLVES_DRIVE_RELATIVE, is_root
 from pyfakefs.tests.skipped_pathlib import (
     check_exists_pathlib,
     read_bytes_pathlib,
@@ -680,7 +680,10 @@ class FakePathlibFileObjectPropertyTest(RealPathlibTestCase):
         path = self.path(r"x:test\test_data\dummy1.xml")
         self.assertFalse(path.is_absolute())
         resolved = path.resolve(strict=False)
-        self.assertEqual(r"x:test\test_data\dummy1.xml", str(resolved))
+        if REALPATH_RESOLVES_DRIVE_RELATIVE:
+            self.assertEqual(r"X:\test\test_data\dummy1.xml", str(resolved))
+        else:
+            self.assertEqual(r"x:test\test_data\dummy1.xml", str(resolved))
 
     def test_stat_file_in_unreadable_dir(self):
         self.check_posix_only()
