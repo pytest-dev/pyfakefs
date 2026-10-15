@@ -13,8 +13,8 @@ The released versions correspond to PyPI releases.
 
 ### Fixes
 
-* fixed `Path.glob()` using case-sensitive matching under macOS simulation
-  on Python 3.14, while preserving explicit `case_sensitive` arguments
+* fixed `Path.glob()` not finding literal pattern parts with a different case
+  in a case-insensitive filesystem (e.g. macOS) under Python 3.14
   (see [#1347](https://github.com/pytest-dev/pyfakefs/issues/1347))
 * fixed a crash if the stack limit was set to a low value
   (see [#1313](https://github.com/pytest-dev/pyfakefs/issues/1313))

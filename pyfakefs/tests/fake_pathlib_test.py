@@ -1118,7 +1118,6 @@ class FakePathlibPathFileOperationTest(RealPathlibTestCase):
 
     def test_glob_case_posix(self):
         self.check_posix_only()
-        self.check_case_sensitive_fs()
         if sys.platform == "win32" and sys.version_info < (3, 12):
             self.skipTest(reason="Ignoring inconsistent path delimiters")
         self.create_file(self.make_path("foo", "setup.py"))
@@ -1131,45 +1130,52 @@ class FakePathlibPathFileOperationTest(RealPathlibTestCase):
             [self.path(self.make_path("foo", "setup.py"))],
         )
 
+    @unittest.skipIf(
+        sys.version_info < (3, 13), "literal glob parts are looked up since Python 3.13"
+    )
+    def test_glob_literal_case_insensitive_fs(self):
+        # regression test for #1347
+        self.check_posix_only()
+        self.check_case_insensitive_fs()
+        self.create_file(self.make_path("foo", "B.TXT"))
+        self.create_file(self.make_path("foo", "Sub", "x.py"))
+        path = self.path(self.make_path("foo"))
+        # literal pattern parts are looked up in the filesystem
+        self.assertEqual(
+            [self.path(self.make_path("foo", "b.txt"))], list(path.glob("b.txt"))
+        )
+        self.assertEqual(
+            [self.path(self.make_path("foo", "sub", "x.py"))],
+            list(path.glob("sub/*.py")),
+        )
+        # wildcard parts are still matched case-sensitively under Posix
+        self.assertEqual([], list(path.glob("*.txt")))
+        # explicit arguments take precedence
+        self.assertEqual([], list(path.glob("b.txt", case_sensitive=True)))
+        self.assertEqual(
+            [self.path(self.make_path("foo", "B.TXT"))],
+            list(path.glob("*.txt", case_sensitive=False)),
+        )
+
+    @unittest.skipIf(
+        sys.version_info < (3, 13), "literal glob parts are looked up since Python 3.13"
+    )
+    def test_glob_literal_case_sensitive_fs(self):
+        self.check_posix_only()
+        self.check_case_sensitive_fs()
+        self.create_file(self.make_path("foo", "B.TXT"))
+        path = self.path(self.make_path("foo"))
+        self.assertEqual([], list(path.glob("b.txt")))
+        self.assertEqual([], list(path.glob("*.txt")))
+        self.assertEqual(
+            [self.path(self.make_path("foo", "B.TXT"))],
+            list(path.glob("b.txt", case_sensitive=False)),
+        )
+
 
 class RealPathlibPathFileOperationTest(FakePathlibPathFileOperationTest):
     def use_real_fs(self):
         return True
-
-
-@unittest.skipIf(sys.version_info < (3, 14), "Python 3.14 glob implementation")
-class FakePathlibGlobCaseTest(fake_filesystem_unittest.TestCase):
-    def setUp(self):
-        self.setUpPyfakefs()
-
-    def test_default_case_sensitivity(self):
-        for os_type in (OSType.MACOS, OSType.LINUX):
-            with self.subTest(os_type=os_type):
-                self.fs.os = os_type
-                self.fs.create_file("/d/B.TXT")
-                for pattern in ("b.txt", "*.txt"):
-                    with self.subTest(pattern=pattern):
-                        paths = list(pathlib.Path("/d").glob(pattern))
-                        self.assertEqual(os_type == OSType.MACOS, bool(paths))
-                self.fs.remove_object("/d/B.TXT")
-
-    def test_explicit_case_sensitivity(self):
-        for os_type in (OSType.MACOS, OSType.LINUX):
-            with self.subTest(os_type=os_type):
-                self.fs.os = os_type
-                self.fs.create_file("/d/B.TXT")
-                for case_sensitive in (True, False):
-                    for pattern in ("b.txt", "*.txt"):
-                        with self.subTest(
-                            case_sensitive=case_sensitive, pattern=pattern
-                        ):
-                            paths = list(
-                                pathlib.Path("/d").glob(
-                                    pattern, case_sensitive=case_sensitive
-                                )
-                            )
-                            self.assertEqual(not case_sensitive, bool(paths))
-                self.fs.remove_object("/d/B.TXT")
 
 
 class FakePathlibUsageInOsFunctionsTest(RealPathlibTestCase):
