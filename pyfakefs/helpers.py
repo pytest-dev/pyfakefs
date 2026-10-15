@@ -37,6 +37,13 @@ AnyPath = Union[AnyStr, os.PathLike]  # noqa: UP007
 IS_PYPY = platform.python_implementation() == "PyPy"
 IS_WIN = sys.platform == "win32"
 IN_DOCKER = os.path.exists("/.dockerenv")
+# under Windows, `os.path.realpath` resolves a path relative to another drive
+# against the root of that drive (changed in Python 3.13.16, 3.14.8 and 3.15.1)
+REALPATH_RESOLVES_DRIVE_RELATIVE = (
+    sys.version_info >= (3, 15, 1)
+    or (3, 14, 8) <= sys.version_info < (3, 15)
+    or (3, 13, 16) <= sys.version_info < (3, 14)
+)
 
 PERM_READ = 0o400  # Read permission bit.
 PERM_WRITE = 0o200  # Write permission bit.
