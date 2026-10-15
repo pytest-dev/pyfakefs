@@ -19,7 +19,9 @@ from __future__ import annotations
 import errno
 import functools
 import inspect
+import ntpath
 import os
+import posixpath
 import sys
 from collections.abc import Callable
 from stat import (
@@ -79,6 +81,8 @@ class FakePathModule:
         """
         dir_list = [
             "abspath",
+            "basename",
+            "commonpath",
             "dirname",
             "exists",
             "expanduser",
@@ -99,7 +103,9 @@ class FakePathModule:
             "relpath",
             "split",
             "splitdrive",
+            "splitext",
             "samefile",
+            "sameopenfile",
         ]
         if sys.version_info >= (3, 12):
             dir_list += ["isjunction", "splitroot"]
@@ -165,19 +171,7 @@ class FakePathModule:
 
     def isabs(self, path: AnyStr) -> bool:
         """Return `True` if path is an absolute pathname."""
-        empty = matching_string(path, "")
-        if self.filesystem.is_windows_fs:
-            drive, path = self.splitdrive(path)
-        else:
-            drive = empty
-        path = make_string_path(path)
-        if not self.filesystem.starts_with_sep(path):
-            return False
-        if self.filesystem.is_windows_fs and sys.version_info >= (3, 13):
-            # from Python 3.13 on, a path under Windows starting with a single separator
-            # (e.g. not a drive and not an UNC path) is no more considered absolute
-            return drive != empty
-        return True
+        return self.filesystem.isabs(path)
 
     def isdir(self, path: AnyStr) -> bool:
         """Determine if path identifies a directory."""
@@ -316,6 +310,22 @@ class FakePathModule:
         supported."""
         return self.filesystem.splitdrive(path)
 
+    def _path_module(self) -> Any:
+        """Return the path module matching the simulated file system."""
+        return ntpath if self.filesystem.is_windows_fs else posixpath
+
+    def basename(self, path: AnyStr) -> AnyStr:
+        """Returns the final component of a pathname."""
+        return self._path_module().basename(path)
+
+    def splitext(self, path: AnyStr) -> tuple[AnyStr, AnyStr]:
+        """Split the path into the file name and the file extension."""
+        return self._path_module().splitext(path)
+
+    def commonpath(self, paths: list[AnyStr]) -> AnyStr:
+        """Returns the longest common sub-path of the given paths."""
+        return self._path_module().commonpath(paths)
+
     def normpath(self, path: AnyStr) -> AnyStr:
         """Normalize path, eliminating double slashes, etc."""
         return self.filesystem.normpath(path)
@@ -331,6 +341,8 @@ class FakePathModule:
     def relpath(self, path: AnyStr, start: AnyStr | None = None) -> AnyStr:
         """We mostly rely on the native implementation and adapt the
         path separator."""
+        if self.filesystem.is_windows_fs or sys.version_info >= (3, 13):
+            path = self.os.fspath(path)
         if not path:
             raise ValueError("no path specified")
         path = make_string_path(path)
@@ -355,6 +367,7 @@ class FakePathModule:
         """Return the canonical path of the specified filename, eliminating any
         symbolic links encountered in the path.
         """
+        filename = self.os.fspath(filename)
         has_allow_missing = hasattr(os.path, "ALLOW_MISSING")
         if has_allow_missing and strict == os.path.ALLOW_MISSING:  # type: ignore[attr-defined]
             # ignores non-existing file, but not other errors
@@ -389,6 +402,18 @@ class FakePathModule:
         stat2 = self.filesystem.stat(path2)
         return stat1.st_ino == stat2.st_ino and stat1.st_dev == stat2.st_dev
 
+    def sameopenfile(self, fd1: int, fd2: int) -> bool:
+        """Return whether two file descriptors refer to the same file.
+
+        Args:
+            fd1: First open file descriptor.
+            fd2: Second open file descriptor.
+
+        Raises:
+            OSError: If either file descriptor is invalid.
+        """
+        return self._os_path.samestat(self.os.fstat(fd1), self.os.fstat(fd2))
+
     @overload
     def _join_real_path(
         self, path: str, rest: str, seen: dict[str, str | None]
@@ -413,13 +438,32 @@ class FakePathModule:
         if self.filesystem.starts_with_root_path(rest):
             if self.filesystem.is_windows_fs:
                 drive, rest = self.filesystem.splitdrive(rest)
-                if not drive:
+                is_abs_path = self.filesystem.starts_with_sep(rest)
+                if drive and is_abs_path:
+                    # absolute path starting with drive letter
+                    path = drive + sep
+                else:
                     cwd = matching_string(path, self.filesystem.cwd)
-                    drive, _ = self.filesystem.splitdrive(cwd)
-                path = drive + sep
+                    cwd_drive, cwd_path = self.filesystem.splitdrive(cwd)
+                    if not drive:
+                        if is_abs_path:
+                            # absolute path without drive letter - relative to current drive
+                            path = cwd_drive + sep
+                        else:
+                            # relative path without drive letter
+                            path = cwd_drive + cwd_path + sep
+                    elif drive.lower() == cwd_drive.lower():
+                        # relative path with drive letter matching the current drive
+                        path = cwd_drive + cwd_path + sep
+                    else:
+                        # invalid relative path - do not change
+                        path = drive + rest
+                        rest = rest[:0]
+                if is_abs_path:
+                    rest = rest[1:]
             else:
                 path = sep
-            rest = rest[1:]
+                rest = rest[1:]
 
         while rest:
             name, _, rest = rest.partition(sep)

@@ -20,7 +20,6 @@ Test the :py:class`pyfakefs.fake_filesystem_unittest.TestCase` base class.
 
 import glob
 import importlib.util
-import io
 import multiprocessing
 import os
 import pathlib
@@ -54,7 +53,7 @@ if sys.version_info < (3, 12):
 
 
 # Work around pyupgrade auto-rewriting `io.open()` to `open()`.
-io_open = io.open
+io_open = open
 
 
 class TestPatcher(TestCase):
@@ -894,8 +893,6 @@ class TestOtherFS(fake_filesystem_unittest.TestCase):
     def test_real_file_with_home(self):
         """Regression test for #558"""
         self.fs.is_windows_fs = os.name != "nt"
-        if self.fs.is_windows_fs:
-            self.fs.is_macos = False
         self.fs.add_real_file(__file__)
         with open(__file__, encoding="utf8") as f:
             self.assertTrue(f.read())

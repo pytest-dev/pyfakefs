@@ -205,14 +205,16 @@ class FakeFilesystem:
 
     def __init__(
         self,
-        path_separator: str = os.path.sep,
+        path_separator: str | None = None,
         total_size: int | None = None,
         patcher: Patcher | None = None,
         create_temp_dir: bool = False,
     ) -> None:
         """
         Args:
-            path_separator:  optional substitute for os.path.sep
+            path_separator:  optional substitute for ``os.path.sep``;
+                if set, it will not change if changing the simulated OS,
+                otherwise, the path separator of the simulated OS is used
             total_size: if not `None`, the total size in bytes of the
                 root filesystem.
             patcher: the Patcher instance if created from the Patcher
@@ -253,7 +255,10 @@ class FakeFilesystem:
             POSIX_PROPERTIES,
             WINDOWS_PROPERTIES,
         ]
-        self.path_separator = path_separator
+        self._path_separator = path_separator
+        self._alternative_path_separator: str | None = (
+            None if path_separator is not None else ""
+        )
 
         self.root: FakeDirectory
         self._cwd = ""
@@ -338,23 +343,33 @@ class FakeFilesystem:
 
     @property
     def path_separator(self) -> str:
-        """Returns the path separator, corresponds to `os.path.sep`."""
-        return self.fs_properties[self.fs_type.value].sep
+        """Returns the path separator, corresponds to `os.path.sep`.
+        If not set explicitly via this attribute or via ``__init__``,
+        returns the separator of the currently set filesystem.
+        """
+        if self._path_separator is None:
+            return self.fs_properties[self.fs_type.value].sep
+        return self._path_separator
 
     @path_separator.setter
     def path_separator(self, value: str) -> None:
-        self.fs_properties[0].sep = value
+        self._path_separator = value
         if value != os.sep:
-            self.alternative_path_separator = None
+            self._alternative_path_separator = None
 
     @property
     def alternative_path_separator(self) -> str | None:
-        """Returns the alternative path separator, corresponds to `os.path.altsep`."""
-        return self.fs_properties[self.fs_type.value].altsep
+        """Returns the alternative path separator, corresponds to `os.path.altsep`.
+        If not set explicitly, returns the separator of the currently set filesystem.
+        """
+        # we use an empty separator as sentintel here, as None is a valid value
+        if self._alternative_path_separator == "":
+            return self.fs_properties[self.fs_type.value].altsep
+        return self._alternative_path_separator
 
     @alternative_path_separator.setter
     def alternative_path_separator(self, value: str | None) -> None:
-        self.fs_properties[0].altsep = value
+        self._alternative_path_separator = value
 
     @property
     def devnull(self) -> str:
@@ -429,6 +444,14 @@ class FakeFilesystem:
 
     def reset(self, total_size: int | None = None, init_pathlib: bool = True):
         """Remove all file system contents and reset the root."""
+        base_properties = (
+            WINDOWS_PROPERTIES if self._is_windows_fs else POSIX_PROPERTIES
+        )
+        self.fs_properties = [
+            dataclasses.replace(base_properties),
+            POSIX_PROPERTIES,
+            WINDOWS_PROPERTIES,
+        ]
         self.root = FakeDirectory(self.path_separator, filesystem=self)
 
         self.dev_null = FakeNullFile(self)
@@ -527,14 +550,14 @@ class FakeFilesystem:
         """Return the path separator as the same type as path"""
         return matching_string(path, self.path_separator)
 
-    def _alternative_path_separator(self, path: AnyStr) -> AnyStr | None:
+    def get_alternative_path_separator(self, path: AnyStr) -> AnyStr | None:
         """Return the alternative path separator as the same type as path"""
         return matching_string(path, self.alternative_path_separator)
 
     def starts_with_sep(self, path: AnyStr) -> bool:
         """Return `True` if path starts with a path separator."""
         sep = self.get_path_separator(path)
-        altsep = self._alternative_path_separator(path)
+        altsep = self.get_alternative_path_separator(path)
         return path.startswith(sep) or altsep is not None and path.startswith(altsep)
 
     def add_mount_point(
@@ -1014,7 +1037,7 @@ class FakeFilesystem:
         ]
 
     def _normalize_path_sep(self, path: AnyStr) -> AnyStr:
-        alt_sep = self._alternative_path_separator(path)
+        alt_sep = self.get_alternative_path_separator(path)
         if alt_sep is not None:
             return path.replace(alt_sep, self.get_path_separator(path))
         return path
@@ -1109,11 +1132,16 @@ class FakeFilesystem:
             normalized_path = sep.join(normalized_components)
             if self.starts_with_sep(path) and not self.starts_with_sep(normalized_path):
                 normalized_path = sep + normalized_path
-            if len(normalized_path) == 2 and self.starts_with_drive_letter(
-                normalized_path
+            if (
+                self.is_windows_fs
+                and len(normalized_path) == 2
+                and normalized_path[1] == matching_string(normalized_path, ":")
             ):
+                # special case for Windows drive - has to end with separator
                 normalized_path += sep
-            return normalized_path
+            if self.isabs(path):
+                return normalized_path
+            return self._handle_relative_drive(normalized_path, resolve=False)
 
         if self.is_case_sensitive or not path:
             return path
@@ -1136,6 +1164,25 @@ class FakeFilesystem:
             current_dir = cast(FakeDirectory, directory)
             normalized_components.append(dir_name)
         return components_to_path()
+
+    def isabs(self, path: AnyStr) -> bool:
+        """Return `True` if path is an absolute pathname."""
+        empty = matching_string(path, "")
+        if self.is_windows_fs:
+            drive, path = self.splitdrive(path)
+        else:
+            drive = empty
+        path = make_string_path(path)
+        if drive and not path:
+            # handling of X: and X:\
+            return self.ends_with_path_separator(path)
+        if not self.starts_with_sep(path):
+            return False
+        if self.is_windows_fs and sys.version_info >= (3, 13):
+            # from Python 3.13 on, a path under Windows starting with a single separator
+            # (e.g. not a drive and not an UNC path) is no more considered absolute
+            return drive != empty
+        return True
 
     def absnormpath(self, path: AnyStr) -> AnyStr:
         """Absolutize and minimalize the given path.
@@ -1182,7 +1229,7 @@ class FakeFilesystem:
         """
         path = make_string_path(path)
         sep = self.get_path_separator(path)
-        alt_sep = self._alternative_path_separator(path)
+        alt_sep = self.get_alternative_path_separator(path)
         seps = sep if alt_sep is None else sep + alt_sep
         drive, path = self.splitdrive(path)
         i = len(path)
@@ -1291,7 +1338,7 @@ class FakeFilesystem:
         base_path = all_paths[0]
         paths_to_add = all_paths[1:]
         sep = self.get_path_separator(base_path)
-        seps = [sep, self._alternative_path_separator(base_path)]
+        seps = [sep, self.get_alternative_path_separator(base_path)]
         result_drive, result_path = self.splitdrive(base_path)
         for path in paths_to_add:
             drive_part, path_part = self.splitdrive(path)
@@ -1497,7 +1544,7 @@ class FakeFilesystem:
         if not file_path:
             return False
         sep = self.get_path_separator(file_path)
-        altsep = self._alternative_path_separator(file_path)
+        altsep = self.get_alternative_path_separator(file_path)
         return file_path not in (sep, altsep) and (
             file_path.endswith(sep) or altsep is not None and file_path.endswith(altsep)
         )
@@ -1565,6 +1612,17 @@ class FakeFilesystem:
             current_dir = cast(FakeDirectory, directory)
         return True
 
+    def _handle_relative_drive(self, path: str, resolve: bool) -> str:
+        if not self.is_windows_fs or not self.starts_with_drive_letter(path):
+            return path
+        if len(path) == 2:
+            return path  # + self.get_path_separator(path)
+        if resolve:
+            cwd = matching_string(path, self.cwd)
+            if cwd[0].lower() == path[0].lower():
+                return cwd + path[2:]
+        return path[:2] + path[3:]
+
     def resolve_path(self, file_path: AnyStr, allow_fd: bool = False) -> AnyStr:
         """Follow a path, resolving symlinks.
 
@@ -1625,23 +1683,25 @@ class FakeFilesystem:
         if path == matching_string(path, self.devnull):
             return path
         path_components = self._path_components(path)
-        resolved_components = self._resolve_components(path_components)
-        path = self._components_to_path(resolved_components)
+        resolved_components = self._resolve_components(path, path_components)
+        path = self._components_to_path(path, resolved_components)
         # after resolving links, we have to check again for Windows root
         return self.replace_windows_root(path)  # pytype: disable=bad-return-type
 
-    def _components_to_path(self, component_folders):
+    def _components_to_path(self, path, component_folders):
         sep = (
             self.get_path_separator(component_folders[0])
             if component_folders
             else self.path_separator
         )
-        path = sep.join(component_folders)
-        if not self.starts_with_root_path(path):
-            path = sep + path
-        return path
+        normalized_path = sep.join(component_folders)
+        if not self.starts_with_root_path(normalized_path):
+            normalized_path = sep + normalized_path
+        if self.isabs(path):
+            return normalized_path
+        return self._handle_relative_drive(normalized_path, resolve=True)
 
-    def _resolve_components(self, components: list[AnyStr]) -> list[str]:
+    def _resolve_components(self, path: AnyStr, components: list[AnyStr]) -> list[str]:
         current_dir = self.root
         link_depth = 0
         path_components = [to_string(comp) for comp in components]
@@ -1667,7 +1727,7 @@ class FakeFilesystem:
                 if link_depth > _MAX_LINK_DEPTH:
                     self.raise_os_error(
                         errno.ELOOP,
-                        self._components_to_path(resolved_components),
+                        self._components_to_path(path, resolved_components),
                     )
                 link_path = self._follow_link(resolved_components, directory)
 

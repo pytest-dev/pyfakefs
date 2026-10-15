@@ -27,7 +27,7 @@ from contextlib import contextmanager
 from unittest import mock
 
 from pyfakefs import fake_filesystem, fake_open, fake_os
-from pyfakefs.helpers import is_byte_string, is_root, to_string
+from pyfakefs.helpers import is_byte_string, is_root, matching_string, to_string
 
 
 class DummyTime:
@@ -134,6 +134,7 @@ class RealFsTestMixin:
             self.filesystem._is_windows_fs = value
             if value:
                 self.filesystem._is_macos = False
+                self.filesystem.is_case_sensitive = False
             self.create_basepath()
 
     @property
@@ -366,21 +367,27 @@ class RealFsTestMixin:
         """Create the path used as base path in `make_path`."""
         if self.filesystem is not None:
             old_base_path = self.base_path
-            self.base_path = self.filesystem.path_separator + "basepath"
-            if self.filesystem.is_windows_fs:
-                self.base_path = "C:" + self.base_path
-            if old_base_path != self.base_path:
+            if not old_base_path or (
+                self.filesystem.is_windows_fs != old_base_path.startswith("C:")
+            ):
                 if old_base_path is not None:
                     self.filesystem.reset()
+                self.base_path = self.filesystem.path_separator + "basepath"
+                if self.filesystem.is_windows_fs:
+                    self.base_path = "C:" + self.base_path
                 if not self.filesystem.exists(self.base_path):
                     self.filesystem.create_dir(self.base_path)
                 if old_base_path is not None:
                     self.setUpFileSystem()
 
     def assert_equal_paths(self, actual, expected):
+        actual = os.fspath(actual)
+        expected = os.fspath(expected)
         if self.is_windows:
-            actual = str(actual).replace("\\\\?\\", "")
-            expected = str(expected).replace("\\\\?\\", "")
+            unc_prefix = matching_string(actual, "\\\\?\\")
+            empty = matching_string(actual, "")
+            actual = actual.replace(unc_prefix, empty)
+            expected = expected.replace(unc_prefix, empty)
             if os.name == "nt" and self.use_real_fs():
                 # work around a problem that the user name, but not the full
                 # path is shown as the short name
@@ -391,19 +398,22 @@ class RealFsTestMixin:
             else:
                 self.assertEqual(actual, expected)
         elif self.is_macos:
+            priv_var_path = matching_string(actual, "/private/var/")
+            var_path = matching_string(actual, "/var/")
             self.assertEqual(
-                str(actual).replace("/private/var/", "/var/"),
-                str(expected).replace("/private/var/", "/var/"),
+                actual.replace(priv_var_path, var_path),
+                expected.replace(priv_var_path, var_path),
             )
         else:
             self.assertEqual(actual, expected)
 
     @staticmethod
     def path_with_short_username(path):
-        components = path.split(os.sep)
+        sep = matching_string(path, os.sep)
+        components = path.split(sep)
         if len(components) >= 3:
-            components[2] = components[2][:6].upper() + "~1"
-        return os.sep.join(components)
+            components[2] = components[2][:6].upper() + matching_string(path, "~1")
+        return sep.join(components)
 
     def mock_time(self, start=200, step=20):
         if not self.use_real_fs():

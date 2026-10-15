@@ -657,6 +657,31 @@ class FakePathlibFileObjectPropertyTest(RealPathlibTestCase):
             self.path(self.os.path.realpath(self.make_path("antoine", "setup.py"))),
         )
 
+    def test_resolve_relative_windows_path_with_valid_drive(self):
+        self.check_windows_only()
+        root = self.make_path("root")
+        root_path = self.path(root)
+        self.create_file(root_path / "test_data" / "dummy1.xml")
+        self.os.chdir(root)
+
+        drive = self.path.cwd().drive
+        path = self.path(rf"{drive.lower()}test\test_data\dummy1.xml")
+        self.assertFalse(path.is_absolute())
+        resolved = path.resolve(strict=False)
+        self.assert_equal_paths(rf"{root}\test\test_data\dummy1.xml", str(resolved))
+
+    def test_resolve_relative_windows_path_with_invalid_drive(self):
+        self.check_windows_only()
+        root = self.make_path("root")
+        root_path = self.path(root)
+        self.create_file(root_path / "test_data" / "dummy1.xml")
+        self.os.chdir(root)
+
+        path = self.path(r"x:test\test_data\dummy1.xml")
+        self.assertFalse(path.is_absolute())
+        resolved = path.resolve(strict=False)
+        self.assertEqual(r"x:test\test_data\dummy1.xml", str(resolved))
+
     def test_stat_file_in_unreadable_dir(self):
         self.check_posix_only()
         dir_path = self.make_path("some_dir")
@@ -762,20 +787,20 @@ class FakePathlibFileObjectPropertyTest(RealPathlibTestCase):
     @patch.dict(os.environ, {"USERPROFILE": r"C:\Users\John"})
     def test_expanduser_windows_posixfs(self):
         self.skip_real_fs()
-        self.set_windows_fs(False)
+        self.filesystem.os = OSType.LINUX
         self.assertEqual(
+            self.path("/home/John"),
             self.path("~").expanduser(),
-            self.path("\\home\\John"),
         )
 
     @unittest.skipIf(sys.platform != "win32", "Windows specific test")
     @patch.dict(os.environ, {"USERPROFILE": r"C:\Users\John"})
     def test_expanduser_windows_posixfs_path(self):
         self.skip_real_fs()
-        self.set_windows_fs(False)
+        self.filesystem.os = OSType.LINUX
         self.assertEqual(
+            self.path("/home/John/stuff/test.txt"),
             self.path("~/stuff/test.txt").expanduser(),
-            self.path("\\home\\John\\stuff\\test.txt"),
         )
 
     @unittest.skipIf(sys.platform == "win32", "Posix specific test")
@@ -795,14 +820,14 @@ class FakePathlibFileObjectPropertyTest(RealPathlibTestCase):
     @patch.dict(os.environ, {"HOME": "/home/john"})
     def test_expanduser_posix_windowsfs(self):
         self.skip_real_fs()
-        self.set_windows_fs(True)
+        self.filesystem.os = OSType.WINDOWS
         self.assertEqual(self.path("~").expanduser(), self.path("C:/Users/john"))
 
     @unittest.skipIf(sys.platform == "win32", "Posix specific test")
     @patch.dict(os.environ, {"HOME": "/home/john"})
     def test_expanduser_posix_windowsfs_path(self):
         self.skip_real_fs()
-        self.set_windows_fs(True)
+        self.filesystem.os = OSType.WINDOWS
         self.assertEqual(
             self.path("~/stuff/test.txt").expanduser(),
             self.path("C:/Users/john/stuff/test.txt"),
@@ -820,10 +845,10 @@ class FakePathlibFileObjectPropertyTest(RealPathlibTestCase):
     @patch.dict(os.environ, {"USERPROFILE": r"C:\Users\John"})
     def test_home_windows_posixfs(self):
         self.skip_real_fs()
-        self.set_windows_fs(False)
+        self.filesystem.os = OSType.LINUX
         self.assertEqual(
-            self.path(self.path("\\home\\John")),
             self.path.home(),
+            self.path(self.path("/home/John")),
         )
 
     @unittest.skipIf(sys.platform == "win32", "Posix specific test")
@@ -835,7 +860,7 @@ class FakePathlibFileObjectPropertyTest(RealPathlibTestCase):
     @patch.dict(os.environ, {"HOME": "/home/john"})
     def test_home_posix_windowsfs(self):
         self.skip_real_fs()
-        self.set_windows_fs(True)
+        self.filesystem.os = OSType.WINDOWS
         self.assertEqual(self.path("C:/Users//john"), self.path.home())
 
 
@@ -1075,7 +1100,7 @@ class FakePathlibPathFileOperationTest(RealPathlibTestCase):
         self.create_file(self.make_path("foo", "bar", "file2"))
         self.create_file(self.make_path("foo", "bar", "file3"))
         path = self.path(self.make_path("foo", "bar"))
-        contents = [entry for entry in path.iterdir()]
+        contents = [*path.iterdir()]
         self.assertEqual(3, len(contents))
         self.assertIn(self.path(self.make_path("foo", "bar", "file2")), contents)
 
@@ -1428,7 +1453,7 @@ class FakePathlibUsageInOsFunctionsTest(RealPathlibTestCase):
         directory = self.make_path("xyzzy", "plugh")
         self.create_dir(directory)
         self.create_file(self.os.path.join(directory, "test.txt"))
-        dir_entries = [entry for entry in self.os.scandir(self.path(directory))]
+        dir_entries = [*self.os.scandir(self.path(directory))]
         self.assertEqual(1, len(dir_entries))
 
     def test_symlink(self):
@@ -1629,7 +1654,7 @@ class FakePathlibUsageInOsFunctionsTest(RealPathlibTestCase):
         self.create_dir(base_path)
         self.create_file(base_path / "1.txt")
         self.create_file(base_path / "bar" / "2.txt")
-        result = [step for step in self.os.walk(base_path)]
+        result = [*self.os.walk(base_path)]
         assert len(result) == 2
         assert result[0] == (base_dir, ["bar"], ["1.txt"])
         assert result[1] == (self.os.path.join(base_dir, "bar"), [], ["2.txt"])

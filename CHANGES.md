@@ -8,24 +8,30 @@ The released versions correspond to PyPI releases.
 ### Changes
 
 * some minor macOS-specific behavior changes to match the behavior
-  of the current macOS version used in CI
-  (see [#1327](https://github.com/pytest-dev/pyfakefs/issues/1327))
+  of the current macOS version used in CI (see [#1327](https://github.com/pytest-dev/pyfakefs/issues/1327))
+* changed handling of path separators for cross-platform tests to
+  be more consistent with the simulated OS; this may break some
+  existing tests that assume the old behavior
 
 ### Fixes
 
 * fixed `Path.glob()` not finding literal pattern parts with a different case
   in a case-insensitive filesystem (e.g. macOS) under Python 3.14
   (see [#1347](https://github.com/pytest-dev/pyfakefs/issues/1347))
+* fixed resolving Windows drive-relative paths (see [#1324](https://github.com/pytest-dev/pyfakefs/issues/1324))
+* fixed `os.path.sameopenfile` using real file descriptors instead of fake ones
+  (see [#1346](https://github.com/pytest-dev/pyfakefs/issues/1346))
 * fixed a crash if the stack limit was set to a low value
   (see [#1313](https://github.com/pytest-dev/pyfakefs/issues/1313))
 * fixed `os.ftruncate` to inspect the `FakeFileWrapper` returned by
   `get_open_file(fd)`
   (see [#1331](https://github.com/pytest-dev/pyfakefs/issues/1331))
-* fixed cross-device hard links incorrectly succeeding
-  (see [#1337](https://github.com/pytest-dev/pyfakefs/issues/1337))
+* fixed cross-device hard links incorrectly succeeding (see [#1337](https://github.com/pytest-dev/pyfakefs/issues/1337))
 * fixed `os.rename` failing for the root user in a directory owned by
-  another user
-  (see [#1341](https://github.com/pytest-dev/pyfakefs/issues/1341))
+  another user (see [#1341](https://github.com/pytest-dev/pyfakefs/issues/1341))
+* fixed `os.path.basename`, `os.path.splitext` and `os.path.commonpath`
+  not using the path semantics of the simulated file system
+  (see [#1348](https://github.com/pytest-dev/pyfakefs/issues/1348))
 
 ## [Version 6.2.0](https://pypi.python.org/pypi/pyfakefs/6.2.0) (2026-04-12)
 
@@ -34,8 +40,7 @@ Changes the MRO for file wrappers.
 ### Changes
 
 * fake file wrappers now derive from `io.TextIOBase` or `io.BufferedIOBase`,
-  so that `isinstance`-checks for these classes succeed
-  (see [#1307](https://github.com/pytest-dev/pyfakefs/issues/1307)
+  so that `isinstance`-checks for these classes succeed (see [#1307](https://github.com/pytest-dev/pyfakefs/issues/1307)
   and [#484](https://github.com/pytest-dev/pyfakefs/issues/484))
 
 ### Fixes
@@ -59,8 +64,8 @@ Follow-up bugfix release for 6.1.5.
 
 ### Fixes
 
-* `os.path.realpath` did not correctly handle some absolute paths under Windows
-  (previous fix was incomplete, see [#1296](https://github.com/pytest-dev/pyfakefs/issues/1296))
+* `os.path.realpath` did not correctly handle some absolute paths under Windows (previous fix was incomplete,
+  see [#1296](https://github.com/pytest-dev/pyfakefs/issues/1296))
 
 ## [Version 6.1.5](https://pypi.python.org/pypi/pyfakefs/6.1.5) (2026-03-15)
 
@@ -79,8 +84,7 @@ Fixes incompatibility with VCCode unittest runner.
 
 * `expanduser` now correctly handles paths besides home and different separators
   (see [#1289](https://github.com/pytest-dev/pyfakefs/issues/1289))
-* avoid faking filesystem in VSCode unittest runner
-  (see [#1285](https://github.com/pytest-dev/pyfakefs/issues/1285))
+* avoid faking filesystem in VSCode unittest runner (see [#1285](https://github.com/pytest-dev/pyfakefs/issues/1285))
 
 ## [Version 6.1.3](https://pypi.python.org/pypi/pyfakefs/6.1.3) (2026-03-01)
 
@@ -199,8 +203,8 @@ Adds official support for Python 3.14. Last minor version before the 6.0 release
 
 ### Fixes
 
-* fixes patching of Debian-specific `tempfile` in Python 3.13 (
-  see [#1214](https://github.com/pytest-dev/pyfakefs/issues/1214))
+* fixes patching of Debian-specific `tempfile` in Python 3.13
+  (see [#1214](https://github.com/pytest-dev/pyfakefs/issues/1214))
 
 ## [Version 5.9.3](https://pypi.python.org/pypi/pyfakefs/5.9.3) (2025-08-28)
 
@@ -208,8 +212,8 @@ Fixes a utility method.
 
 ### Changes
 
-* a warning is now issued if trying to create a nested fake filesystem with custom arguments
-  (custom arguments are ignored in this case, as the existing fake filesystem is used)
+* a warning is now issued if trying to create a nested fake filesystem with custom arguments (custom arguments are
+  ignored in this case, as the existing fake filesystem is used)
 
 ### Fixes
 
@@ -226,8 +230,8 @@ Fixes interaction with pytest.
 
 ### Fixes
 
-* fixed an interaction problem of `fs` with other pytest fixtures (
-  see [#1200](https://github.com/pytest-dev/pyfakefs/issues/1200))
+* fixed an interaction problem of `fs` with other pytest fixtures
+  (see [#1200](https://github.com/pytest-dev/pyfakefs/issues/1200))
 
 ### Infrastructure
 
@@ -248,8 +252,8 @@ Adds support for an API change in latest Python patch releases.
 
 ### Changes
 
-* the message from an `OSError` raised in the fake filesystem has no longer the postfix
-  _"in the fake filesystem"_ (see [#1159](https://github.com/pytest-dev/pyfakefs/discussions/1159))
+* the message from an `OSError` raised in the fake filesystem has no longer the postfix _"in the fake filesystem"_
+  (see [#1159](https://github.com/pytest-dev/pyfakefs/discussions/1159))
 * changed implementation of `FakeShutilModule` to prepare it for usage without the patcher
   (see [#1171](https://github.com/pytest-dev/pyfakefs/issues/1171))
 
@@ -275,8 +279,7 @@ Adds support for an API change in latest Python patch releases.
 
 * adapt test for increased default buffer size in Python 3.14a6
 * replace session-scoped with module-scoped fixture in test,
-  run pytest over all tests in docker containers
-  (see [#1151](https://github.com/pytest-dev/pyfakefs/issues/1151))
+  run pytest over all tests in docker containers (see [#1151](https://github.com/pytest-dev/pyfakefs/issues/1151))
 * remove `setup.py` and `setup.cfg` in favor of `pyproject.toml`
 
 ## [Version 5.8.0](https://pypi.python.org/pypi/pyfakefs/5.8.0) (2025-03-11)
@@ -322,8 +325,8 @@ Fixes a regression in version 5.7.3.
 
 ### Fixes
 
-* fixed a regression in version 5.7.2 that `tempfile` was not patched after pause/resume
-  (POSIX only, see [#1098](https://github.com/pytest-dev/pyfakefs/issues/1098))
+* fixed a regression in version 5.7.2 that `tempfile` was not patched after pause/resume (POSIX only,
+  see [#1098](https://github.com/pytest-dev/pyfakefs/issues/1098))
 * added workaround for a recursion occurring if using pytest under Windows and Python >= 3.12
   (see [#1096](https://github.com/pytest-dev/pyfakefs/issues/1096))
 
@@ -358,8 +361,8 @@ Fixes a regression in version 5.7.0 that broke patching fcntl.
 
 ### Fixes
 
-* fixes a regression that caused unfaked `fcntl` calls to fail (
-  see [#1074](https://github.com/pytest-dev/pyfakefs/issues/1074))
+* fixes a regression that caused unfaked `fcntl` calls to fail
+  (see [#1074](https://github.com/pytest-dev/pyfakefs/issues/1074))
 
 ## [Version 5.7.0](https://pypi.python.org/pypi/pyfakefs/5.7.0) (2024-08-10)
 
@@ -371,8 +374,8 @@ Adds official Python 3.13 support, improves OS emulation behavior.
 
 ### Enhancements
 
-* the `additional_skip_names` parameter now works with more modules (
-  see [#1023](https://github.com/pytest-dev/pyfakefs/issues/1023))
+* the `additional_skip_names` parameter now works with more modules
+  (see [#1023](https://github.com/pytest-dev/pyfakefs/issues/1023))
 * added support for `os.fchmod`, allow file descriptor argument for `os.chmod` only for POSIX
   for Python < 3.13
 
@@ -382,8 +385,8 @@ Adds official Python 3.13 support, improves OS emulation behavior.
 
 ### Fixes
 
-* removing files while iterating over `scandir` results is now possible (
-  see [#1051](https://github.com/pytest-dev/pyfakefs/issues/1051))
+* removing files while iterating over `scandir` results is now possible
+  (see [#1051](https://github.com/pytest-dev/pyfakefs/issues/1051))
 * fake `pathlib.PosixPath` and `pathlib.WindowsPath` now behave more like in the real filesystem
   (see [#1053](https://github.com/pytest-dev/pyfakefs/issues/1053))
 * `PurePosixPath` reported Windows reserved names as reserved in Python >= 3.12
@@ -397,15 +400,15 @@ Adds preliminary Python 3.13 support.
 
 ### Enhancements
 
-* added preliminary support for Python 3.13 (tested with beta2) (
-  see [#1017](https://github.com/pytest-dev/pyfakefs/issues/1017))
-* added `apply_umask` argument to `FakeFilesystem.create_dir` to allow ignoring the umask (
-  see [#1038](https://github.com/pytest-dev/pyfakefs/issues/1038))
+* added preliminary support for Python 3.13 (tested with beta2)
+  (see [#1017](https://github.com/pytest-dev/pyfakefs/issues/1017))
+* added `apply_umask` argument to `FakeFilesystem.create_dir` to allow ignoring the umask
+  (see [#1038](https://github.com/pytest-dev/pyfakefs/issues/1038))
 
 ### Fixes
 
-* use real open calls for remaining `pathlib` functions so that it works nice with skippedmodules (
-  see [#1012](https://github.com/pytest-dev/pyfakefs/issues/1012))
+* use real open calls for remaining `pathlib` functions so that it works nice with skippedmodules
+  (see [#1012](https://github.com/pytest-dev/pyfakefs/issues/1012))
 
 ### Infrastructure
 
@@ -426,10 +429,10 @@ Deprecates the usage of `pathlib2` and `scandir`.
 
 ### Fixes
 
-* fixed handling of Windows `pathlib` paths under POSIX and vice verse (
-  see [#1006](https://github.com/pytest-dev/pyfakefs/issues/1006))
-* correctly use real open calls in pathlib for skipped modules (
-  see [#1012](https://github.com/pytest-dev/pyfakefs/issues/1012))
+* fixed handling of Windows `pathlib` paths under POSIX and vice verse
+  (see [#1006](https://github.com/pytest-dev/pyfakefs/issues/1006))
+* correctly use real open calls in pathlib for skipped modules
+  (see [#1012](https://github.com/pytest-dev/pyfakefs/issues/1012))
 
 ## [Version 5.4.1](https://pypi.python.org/pypi/pyfakefs/5.4.0) (2024-04-11)
 
@@ -456,13 +459,13 @@ Improves permission handling.
 * added support for `O_NOFOLLOW` and `O_DIRECTORY` flags in `os.open`
   (see [#972](https://github.com/pytest-dev/pyfakefs/issues/972)
   and [#974](https://github.com/pytest-dev/pyfakefs/issues/974))
-* added support for fake `os.dup`, `os.dup2` and `os.lseek` (
-  see [#970](https://github.com/pytest-dev/pyfakefs/issues/970))
+* added support for fake `os.dup`, `os.dup2` and `os.lseek`
+  (see [#970](https://github.com/pytest-dev/pyfakefs/issues/970))
 
 ### Fixes
 
-* fixed a specific problem on reloading a pandas-related module (
-  see [#947](https://github.com/pytest-dev/pyfakefs/issues/947)),
+* fixed a specific problem on reloading a pandas-related module
+  (see [#947](https://github.com/pytest-dev/pyfakefs/issues/947)),
   added possibility for unload hooks for specific modules
 * use this also to reload django views (see [#932](https://github.com/pytest-dev/pyfakefs/issues/932))
 * fixed `EncodingWarning` for Python >= 3.11 (see [#957](https://github.com/pytest-dev/pyfakefs/issues/957))
@@ -477,8 +480,8 @@ Improves permission handling.
 * fixed handling of missing attribute in `os.getxattr` (see [#971](https://github.com/pytest-dev/pyfakefs/issues/971))
 * fixed permission problem with `shutil.rmtree` if emulating Windows under POSIX
   (see [#979](https://github.com/pytest-dev/pyfakefs/issues/979))
-* fixed handling of errors on opening files via file descriptor (
-  see [#967](https://github.com/pytest-dev/pyfakefs/issues/967))
+* fixed handling of errors on opening files via file descriptor
+  (see [#967](https://github.com/pytest-dev/pyfakefs/issues/967))
 * fixed handling of `umask` - it is now applied by default
 * fixed behavior of `os.makedirs` (see [#987](https://github.com/pytest-dev/pyfakefs/issues/987))
 
@@ -493,15 +496,15 @@ Fixes a regression.
 
 ### Fixes
 
-* Fixed a regression due to the changed behavior of the dynamic patcher cleanup (
-  see [#939](https://github.com/pytest-dev/pyfakefs/issues/939)).
+* Fixed a regression due to the changed behavior of the dynamic patcher cleanup
+  (see [#939](https://github.com/pytest-dev/pyfakefs/issues/939)).
   The change is now by default only made if the `django` module is loaded, and the behavior can
   be changed using the new argument `module_cleanup_mode`.
 
 ### Packaging
 
-* included `tox.ini` and a few more files into the source distribution (
-  see [#937](https://github.com/pytest-dev/pyfakefs/issues/937))
+* included `tox.ini` and a few more files into the source distribution
+  (see [#937](https://github.com/pytest-dev/pyfakefs/issues/937))
 
 ## [Version 5.3.4](https://pypi.python.org/pypi/pyfakefs/5.3.4) (2024-01-19)
 
@@ -509,8 +512,8 @@ Bugfix release.
 
 ### Fixes
 
-* fixed handling of unhashable modules which cannot be cached (
-  see [#923](https://github.com/pytest-dev/pyfakefs/issues/923))
+* fixed handling of unhashable modules which cannot be cached
+  (see [#923](https://github.com/pytest-dev/pyfakefs/issues/923))
 * reload modules loaded by the dynamic patcher instead of removing them - sometimes they may
   not be reloaded automatically (see [#932](https://github.com/pytest-dev/pyfakefs/issues/932))
 * added back argument `use_dynamic_patch` as a fallback for similar problems
@@ -697,8 +700,7 @@ New version after the transfer to `pytest-dev`.
 
 ### New Features
 
-* added some support for `st_blocks` in stat result
-  (see [#722](https://github.com/pytest-dev/pyfakefs/issues/722))
+* added some support for `st_blocks` in stat result (see [#722](https://github.com/pytest-dev/pyfakefs/issues/722))
 
 ### Fixes
 
@@ -798,8 +800,7 @@ path behavior under Windows.
 
 * added some support for the upcoming Python version 3.11
   (see [#677](https://github.com/pytest-dev/pyfakefs/issues/677))
-* added convenience fixtures for module- and session based `fs` fixtures
-  (`fs_module` and `fs_session`)
+* added convenience fixtures for module- and session based `fs` fixtures (`fs_module` and `fs_session`)
 
 ### Fixes
 
@@ -834,12 +835,10 @@ Bugfix release, needed for compatibility with pytest 7.0.
 
 * correctly handle file system space for files opened in write mode
   (see [#660](https://github.com/pytest-dev/pyfakefs/issues/660))
-* correctly handle reading/writing pipes via file
-  (see [#661](https://github.com/pytest-dev/pyfakefs/issues/661))
+* correctly handle reading/writing pipes via file (see [#661](https://github.com/pytest-dev/pyfakefs/issues/661))
 * disallow `encoding` argument on binary `open()`
   (see [#664](https://github.com/pytest-dev/pyfakefs/issues/664))
-* fixed compatibility issue with pytest 7.0.0
-  (see [#666](https://github.com/pytest-dev/pyfakefs/issues/666))
+* fixed compatibility issue with pytest 7.0.0 (see [#666](https://github.com/pytest-dev/pyfakefs/issues/666))
 
 ## [Version 4.5.4](https://pypi.python.org/pypi/pyfakefs/4.5.4) (2022-01-12)
 
@@ -890,8 +889,7 @@ This is a bugfix release.
 
 * added handling of path-like where missing
 * improved handling of `str`/`bytes` paths
-* suppress all warnings while inspecting loaded modules
-  (see [#614](https://github.com/pytest-dev/pyfakefs/issues/614))
+* suppress all warnings while inspecting loaded modules (see [#614](https://github.com/pytest-dev/pyfakefs/issues/614))
 * do not import pandas and related modules if it is not patched
   (see [#627](https://github.com/pytest-dev/pyfakefs/issues/627))
 * handle `pathlib.Path.owner()` and `pathlib.Path.group` by returning
@@ -903,8 +901,7 @@ This is a bugfix release.
 ### Infrastructure
 
 * added test dependency check (see [#608](https://github.com/pytest-dev/pyfakefs/issues/608))
-* skip tests failing with ASCII locale
-  (see [#623](https://github.com/pytest-dev/pyfakefs/issues/623))
+* skip tests failing with ASCII locale (see [#623](https://github.com/pytest-dev/pyfakefs/issues/623))
 
 ## Version 4.5.0 (2021-06-04)
 
@@ -935,8 +932,7 @@ installation under Python 3.5.
 
 * correctly handle byte paths in `os.path.exists`
   (see [#595](https://github.com/pytest-dev/pyfakefs/issues/595))
-* Update `fake_pathlib` to support changes coming in Python 3.10
-  ([see](https://github.com/python/cpython/pull/19342)
+* Update `fake_pathlib` to support changes coming in Python 3.10 ([see](https://github.com/python/cpython/pull/19342)
 * correctly handle UNC paths in `os.path.split` and in directory path
   evaluation (see [#606](https://github.com/pytest-dev/pyfakefs/issues/606))
 
@@ -963,8 +959,7 @@ Adds better support for Python 3.8 / 3.9.
   (see [#581](https://github.com/pytest-dev/pyfakefs/issues/581))
 * added non-functional argument `effective_ids` to `os.access`
   (see [#585](https://github.com/pytest-dev/pyfakefs/issues/585))
-* correctly handle `os.file` for unreadable files
-  (see [#588](https://github.com/pytest-dev/pyfakefs/issues/588))
+* correctly handle `os.file` for unreadable files (see [#588](https://github.com/pytest-dev/pyfakefs/issues/588))
 
 ### Infrastructure
 
@@ -1057,41 +1052,34 @@ This is a bugfix release that fixes a regression issue.
 * fix check for link in `os.walk` (see [#559](https://github.com/pytest-dev/pyfakefs/issues/559))
 * fix handling of real files in combination with `home` if simulating
   Posix under Windows (see [#558](https://github.com/pytest-dev/pyfakefs/issues/558))
-* do not call fake `open` if called from skipped module
-  (see [#552](https://github.com/pytest-dev/pyfakefs/issues/552))
+* do not call fake `open` if called from skipped module (see [#552](https://github.com/pytest-dev/pyfakefs/issues/552))
 * do not call fake `pathlib.Path` if called from skipped module
   (see [#553](https://github.com/pytest-dev/pyfakefs/issues/553))
 * fixed handling of `additional_skip_names` with several module components
-* allow to open existing pipe file descriptor
-  (see [#493](https://github.com/pytest-dev/pyfakefs/issues/493))
-* do not truncate file on failed flush
-  (see [#548](https://github.com/pytest-dev/pyfakefs/issues/548))
-* suppress deprecation warnings while collecting modules
-  (see [#542](https://github.com/pytest-dev/pyfakefs/issues/542))
+* allow to open existing pipe file descriptor (see [#493](https://github.com/pytest-dev/pyfakefs/issues/493))
+* do not truncate file on failed flush (see [#548](https://github.com/pytest-dev/pyfakefs/issues/548))
+* suppress deprecation warnings while collecting modules (see [#542](https://github.com/pytest-dev/pyfakefs/issues/542))
 * add support for `os.truncate` and `os.ftruncate`
   (see [#545](https://github.com/pytest-dev/pyfakefs/issues/545))
 
 ### Infrastructure
 
 * fixed another problem with CI test scripts not always propagating errors
-* make sure pytest will work without pyfakefs installed
-  (see [#550](https://github.com/pytest-dev/pyfakefs/issues/550))
+* make sure pytest will work without pyfakefs installed (see [#550](https://github.com/pytest-dev/pyfakefs/issues/550))
 
 ## [Version 4.1.0](https://pypi.python.org/pypi/pyfakefs/4.1.0) (2020-07-12)
 
 ### New Features
 
 * Added some support for pandas (`read_csv`, `read_excel` and more), and
-  for django file locks to work with the fake filesystem
-  (see [#531](https://github.com/pytest-dev/pyfakefs/issues/531))
+  for django file locks to work with the fake filesystem (see [#531](https://github.com/pytest-dev/pyfakefs/issues/531))
 
 ### Fixes
 
 * `os.expanduser` now works with a bytes path
 * Do not override global warnings setting in `Deprecator`
   (see [#526](https://github.com/pytest-dev/pyfakefs/issues/526))
-* Make sure filesystem modules in `pathlib` are patched
-  (see [#527](https://github.com/pytest-dev/pyfakefs/issues/527))
+* Make sure filesystem modules in `pathlib` are patched (see [#527](https://github.com/pytest-dev/pyfakefs/issues/527))
 * Make sure that alternative path separators are correctly handled under Windows
   (see [#530](https://github.com/pytest-dev/pyfakefs/issues/530))
 
@@ -1146,14 +1134,11 @@ installation under Python 2. This has been fixed in version 4.0.2.
 * Added missing `st_ino` in `makedir` (see [#515](https://github.com/pytest-dev/pyfakefs/issues/515))
 * Fixed handling of relative paths in `lresolve` / `os.lstat`
   (see [#516](https://github.com/pytest-dev/pyfakefs/issues/516))
-* Fixed handling of byte string paths
-  (see [#517](https://github.com/pytest-dev/pyfakefs/issues/517))
-* Fixed `os.walk` if path ends with path separator
-  (see [#512](https://github.com/pytest-dev/pyfakefs/issues/512))
+* Fixed handling of byte string paths (see [#517](https://github.com/pytest-dev/pyfakefs/issues/517))
+* Fixed `os.walk` if path ends with path separator (see [#512](https://github.com/pytest-dev/pyfakefs/issues/512))
 * Fixed handling of empty path in `os.makedirs`
   (see [#510](https://github.com/pytest-dev/pyfakefs/issues/510))
-* Fixed handling of `os.TMPFILE` flag under Linux
-  (see [#509](https://github.com/pytest-dev/pyfakefs/issues/509)
+* Fixed handling of `os.TMPFILE` flag under Linux (see [#509](https://github.com/pytest-dev/pyfakefs/issues/509)
   and [#511](https://github.com/pytest-dev/pyfakefs/issues/511))
 * Adapted fake `pathlib` to changes in Python 3.7.6/3.8.1
   (see [#508](https://github.com/pytest-dev/pyfakefs/issues/508))
@@ -1168,12 +1153,10 @@ This version backports some fixes from main.
 
 * Fixed handling of relative paths in `lresolve` / `os.lstat`
   (see [#516](https://github.com/pytest-dev/pyfakefs/issues/516))
-* Fixed `os.walk` if path ends with path separator
-  (see [#512](https://github.com/pytest-dev/pyfakefs/issues/512))
+* Fixed `os.walk` if path ends with path separator (see [#512](https://github.com/pytest-dev/pyfakefs/issues/512))
 * Fixed handling of empty path in `os.makedirs`
   (see [#510](https://github.com/pytest-dev/pyfakefs/issues/510))
-* Fixed handling of `os.TMPFILE` flag under Linux
-  (see [#509](https://github.com/pytest-dev/pyfakefs/issues/509)
+* Fixed handling of `os.TMPFILE` flag under Linux (see [#509](https://github.com/pytest-dev/pyfakefs/issues/509)
   and [#511](https://github.com/pytest-dev/pyfakefs/issues/511))
 * Fixed behavior of `os.makedirs` in write-protected directory
   (see [#507](https://github.com/pytest-dev/pyfakefs/issues/507))
@@ -1204,8 +1187,7 @@ and Python 3.4 (possible bug fix releases notwithstanding).
 
 ### Fixes
 
-* support `devnull` in Windows under Python 3.8
-  (see [#504](https://github.com/pytest-dev/pyfakefs/issues/504))
+* support `devnull` in Windows under Python 3.8 (see [#504](https://github.com/pytest-dev/pyfakefs/issues/504))
 * fixed side effect of calling `DirEntry.stat()` under Windows (changed
   st_nlink) (see [#502](https://github.com/pytest-dev/pyfakefs/issues/502))
 * fixed problem of fake modules still referenced after a test in modules
@@ -1213,13 +1195,11 @@ and Python 3.4 (possible bug fix releases notwithstanding).
   and [#427](https://github.com/pytest-dev/pyfakefs/issues/427))
 * correctly handle missing read permission for parent directory
   (see [#496](https://github.com/pytest-dev/pyfakefs/issues/496))
-* raise for `os.scandir` with non-existing directory
-  (see [#498](https://github.com/pytest-dev/pyfakefs/issues/498))
+* raise for `os.scandir` with non-existing directory (see [#498](https://github.com/pytest-dev/pyfakefs/issues/498))
 
 ### Infrastructure
 
-* fixed CI tests scripts to always propagate errors
-  (see [#500](https://github.com/pytest-dev/pyfakefs/issues/500))
+* fixed CI tests scripts to always propagate errors (see [#500](https://github.com/pytest-dev/pyfakefs/issues/500))
 
 ## [Version 3.6.1](https://pypi.python.org/pypi/pyfakefs/3.6.1) (2019-10-07)
 
@@ -1227,8 +1207,7 @@ and Python 3.4 (possible bug fix releases notwithstanding).
 
 * avoid rare side effect during module iteration in test setup
   (see [#338](https://github.com/pytest-dev/pyfakefs/issues/338))
-* make sure real OS tests are not executed by default
-  (see [#495](https://github.com/pytest-dev/pyfakefs/issues/495))
+* make sure real OS tests are not executed by default (see [#495](https://github.com/pytest-dev/pyfakefs/issues/495))
 
 ## [Version 3.6](https://pypi.python.org/pypi/pyfakefs/3.6) (2019-06-30)
 
@@ -1316,8 +1295,7 @@ This is mostly a bug-fix release.
 
 ### New Features
 
-* added context manager class `Pause` for pause/resume
-  (see [#448](https://github.com/pytest-dev/pyfakefs/issues/448))
+* added context manager class `Pause` for pause/resume (see [#448](https://github.com/pytest-dev/pyfakefs/issues/448))
 
 ### Fixes
 
@@ -1357,8 +1335,7 @@ This is mostly a bug-fix release.
 ### Fixes
 
 * fixed using `modules_to_patch` (regression, see [#450](https://github.com/pytest-dev/pyfakefs/issues/450))
-* fixed recursion error on unpickling the fake file system
-  ([#445](https://github.com/pytest-dev/pyfakefs/issues/445))
+* fixed recursion error on unpickling the fake file system ([#445](https://github.com/pytest-dev/pyfakefs/issues/445))
 * allow trailing path in `add_real_directory` ([#446](https://github.com/pytest-dev/pyfakefs/issues/446))
 
 ## [Version 3.5](https://pypi.python.org/pypi/pyfakefs/3.5) (2018-10-22)
@@ -1381,8 +1358,7 @@ This is mostly a bug-fix release.
     * automatically patch methods of a patched file system module imported like
       `from os.path import exists` ([#443](https://github.com/pytest-dev/pyfakefs/pull/443))
     * a module imported as another name (`import os as _os`) is now correctly
-      patched without the need of additional parameters
-      ([#434](https://github.com/pytest-dev/pyfakefs/pull/434))
+      patched without the need of additional parameters ([#434](https://github.com/pytest-dev/pyfakefs/pull/434))
     * automatically patch `Path` if imported like `from pathlib import Path`
       ([#440](https://github.com/pytest-dev/pyfakefs/issues/440))
     * parameter `patch_path` has been removed from `UnitTest` and `Patcher`,
@@ -1397,15 +1373,15 @@ This is mostly a bug-fix release.
 * handle `contents=None` in `create_file()` as empty contents if size not
   set ([#424](https://github.com/pytest-dev/pyfakefs/issues/424))
 * added `pathlib2`
-  support ([#408](https://github.com/pytest-dev/pyfakefs/issues/408)) ([#422](https://github.com/pytest-dev/pyfakefs/issues/422))
+  support ([#408](https://github.com/pytest-dev/pyfakefs/issues/408))
+  ([#422](https://github.com/pytest-dev/pyfakefs/issues/422))
 * added support for null device ([#418](https://github.com/pytest-dev/pyfakefs/issues/418))
 * improved error message for "Bad file descriptor in fake filesystem"
   ([#419](https://github.com/pytest-dev/pyfakefs/issues/419))
 
 ### Fixes
 
-* fixed pytest when both pyfakefs and future are installed
-  ([#441](https://github.com/pytest-dev/pyfakefs/issues/441))
+* fixed pytest when both pyfakefs and future are installed ([#441](https://github.com/pytest-dev/pyfakefs/issues/441))
 * file timestamps are now updated more according to the real behavior
   ([#435](https://github.com/pytest-dev/pyfakefs/issues/435))
 * fixed a problem related to patching `shutil` functions using `zipfile`
@@ -1429,14 +1405,12 @@ This is mostly a bug fix release, mainly for bugs found by
 
 ### Fixes
 
-* `tell` after `seek` gave incorrect result in append mode
-  ([#363](https://github.com/pytest-dev/pyfakefs/issues/363))
+* `tell` after `seek` gave incorrect result in append mode ([#363](https://github.com/pytest-dev/pyfakefs/issues/363))
 * a failing pytest did not display the test function correctly
   ([#381](https://github.com/pytest-dev/pyfakefs/issues/381))
 * flushing file contents after truncate was incorrect under some conditions
   ([#412](https://github.com/pytest-dev/pyfakefs/issues/412))
-* `readline()` did not work correctly in binary mode
-  ([#411](https://github.com/pytest-dev/pyfakefs/issues/411))
+* `readline()` did not work correctly in binary mode ([#411](https://github.com/pytest-dev/pyfakefs/issues/411))
 * `pathlib.Path.resolve()` behaved incorrectly if the path does not exist
   ([#401](https://github.com/pytest-dev/pyfakefs/issues/401))
 * `closed` attribute was not implemented in fake file ([#380](https://github.com/pytest-dev/pyfakefs/issues/380))
@@ -1445,23 +1419,28 @@ This is mostly a bug fix release, mainly for bugs found by
   path separator (found by @agroce using [tstl](https://github.com/agroce/tstl)):
     * `os.rename` ([#400](https://github.com/pytest-dev/pyfakefs/issues/400))
     *
-  `os.link` ([#399](https://github.com/pytest-dev/pyfakefs/issues/399), [#407](https://github.com/pytest-dev/pyfakefs/issues/407))
+  `os.link`
+  ([#399](https://github.com/pytest-dev/pyfakefs/issues/399), [#407](https://github.com/pytest-dev/pyfakefs/issues/407))
     * `os.rmdir` ([#398](https://github.com/pytest-dev/pyfakefs/issues/398))
     * `os.mkdir`, `os.makedirs` ([#396](https://github.com/pytest-dev/pyfakefs/issues/396))
     *
-  `os.rename` ([#391](https://github.com/pytest-dev/pyfakefs/issues/391), [#395](https://github.com/pytest-dev/pyfakefs/issues/395),
+  `os.rename`
+  ([#391](https://github.com/pytest-dev/pyfakefs/issues/391), [#395](https://github.com/pytest-dev/pyfakefs/issues/395),
   [#396](https://github.com/pytest-dev/pyfakefs/issues/396), [#389](https://github.com/pytest-dev/pyfakefs/issues/389),
   [#406](https://github.com/pytest-dev/pyfakefs/issues/406))
     *
-  `os.symlink` ([#371](https://github.com/pytest-dev/pyfakefs/issues/371), [#390](https://github.com/pytest-dev/pyfakefs/issues/390))
+  `os.symlink`
+  ([#371](https://github.com/pytest-dev/pyfakefs/issues/371), [#390](https://github.com/pytest-dev/pyfakefs/issues/390))
     * `os.path.isdir` ([#387](https://github.com/pytest-dev/pyfakefs/issues/387))
     *
-  `open` ([#362](https://github.com/pytest-dev/pyfakefs/issues/362), [#369](https://github.com/pytest-dev/pyfakefs/issues/369),
+  `open`
+  ([#362](https://github.com/pytest-dev/pyfakefs/issues/362), [#369](https://github.com/pytest-dev/pyfakefs/issues/369),
   [#397](https://github.com/pytest-dev/pyfakefs/issues/397))
     * `os.path.lexists`, `os.path.islink` ([#365](https://github.com/pytest-dev/pyfakefs/issues/365),
       [#373](https://github.com/pytest-dev/pyfakefs/issues/373), [#396](https://github.com/pytest-dev/pyfakefs/issues/396))
     *
-  `os.remove` ([#360](https://github.com/pytest-dev/pyfakefs/issues/360), [#377](https://github.com/pytest-dev/pyfakefs/issues/377),
+  `os.remove`
+  ([#360](https://github.com/pytest-dev/pyfakefs/issues/360), [#377](https://github.com/pytest-dev/pyfakefs/issues/377),
   [#396](https://github.com/pytest-dev/pyfakefs/issues/396))
     * `os.stat` ([#376](https://github.com/pytest-dev/pyfakefs/issues/376))
     * `os.path.isfile` ([#374](https://github.com/pytest-dev/pyfakefs/issues/374))
@@ -1469,7 +1448,8 @@ This is mostly a bug fix release, mainly for bugs found by
     * `os.lstat` ([#366](https://github.com/pytest-dev/pyfakefs/issues/366))
     * `os.path.exists` ([#364](https://github.com/pytest-dev/pyfakefs/issues/364))
     *
-  `os.readlink` ([#359](https://github.com/pytest-dev/pyfakefs/issues/359), [#372](https://github.com/pytest-dev/pyfakefs/issues/372),
+  `os.readlink`
+  ([#359](https://github.com/pytest-dev/pyfakefs/issues/359), [#372](https://github.com/pytest-dev/pyfakefs/issues/372),
   [#392](https://github.com/pytest-dev/pyfakefs/issues/392))
 
 ## [Version 3.4.1](https://pypi.python.org/pypi/pyfakefs/3.4.1) (2018-03-18)
@@ -1501,8 +1481,8 @@ must use pyfakefs 3.3 or earlier.
   (Python >= 3.7, Posix only) (see [#346](https://github.com/pytest-dev/pyfakefs/issues/346))
 * Added support to fake out backported `scandir` module ([#332](https://github.com/pytest-dev/pyfakefs/issues/332))
 * `IOError`/`OSError` exception messages in the fake file system now always
-  start with the message issued in the real file system in Unix systems (
-  see [#202](https://github.com/pytest-dev/pyfakefs/issues/202))
+  start with the message issued in the real file system in Unix systems
+  (see [#202](https://github.com/pytest-dev/pyfakefs/issues/202))
 
 ### Infrastructure
 
@@ -1524,12 +1504,13 @@ must use pyfakefs 3.3 or earlier.
 * Creating a file with a path ending with path separator did not
   raise ([#320](https://github.com/pytest-dev/pyfakefs/issues/320))
 * Fixed more problems related to
-  `flush` ([#302](https://github.com/pytest-dev/pyfakefs/issues/302), [#300](https://github.com/pytest-dev/pyfakefs/issues/300))
+  `flush`
+  ([#302](https://github.com/pytest-dev/pyfakefs/issues/302), [#300](https://github.com/pytest-dev/pyfakefs/issues/300))
 * Correctly handle opening files more than once ([#343](https://github.com/pytest-dev/pyfakefs/issues/343))
 * Fake `os.lstat()` crashed with several trailing path
   separators ([#342](https://github.com/pytest-dev/pyfakefs/issues/342))
 * Fixed handling of path components starting with a drive
-  letter([#337](https://github.com/pytest-dev/pyfakefs/issues/337))
+  letter ([#337](https://github.com/pytest-dev/pyfakefs/issues/337))
 * Symlinks to absolute paths were incorrectly resolved under
   Windows ([#341](https://github.com/pytest-dev/pyfakefs/issues/341))
 * Unittest mock didn't work after setUpPyfakefs ([#334](https://github.com/pytest-dev/pyfakefs/issues/334))
@@ -1570,7 +1551,8 @@ This is the last release that supports Python 2.6.
   patched `os` module instead ([#194](https://github.com/pytest-dev/pyfakefs/issues/194))
 * Removed `fake_tempfile` and `fake_filesystem_glob`, relying on the patched
   `os` module
-  instead ([#189](https://github.com/pytest-dev/pyfakefs/issues/189), [#191](https://github.com/pytest-dev/pyfakefs/issues/191))
+  instead
+  ([#189](https://github.com/pytest-dev/pyfakefs/issues/189), [#191](https://github.com/pytest-dev/pyfakefs/issues/191))
 
 ### Fixes
 
@@ -1729,7 +1711,8 @@ This is the last release that supports Python 2.6.
 * `FakeFileOpen` keyword args do not match the `__builtin__`
   equivalents ([#5](https://github.com/pytest-dev/pyfakefs/issues/5))
 * Relative paths not
-  supported ([#16](https://github.com/pytest-dev/pyfakefs/issues/16), [#17](https://github.com/pytest-dev/pyfakefs/issues/17)))
+  supported
+  ([#16](https://github.com/pytest-dev/pyfakefs/issues/16), [#17](https://github.com/pytest-dev/pyfakefs/issues/17)))
 
 ## Older Versions
 

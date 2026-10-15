@@ -17,7 +17,6 @@
 from __future__ import annotations
 
 import errno
-import io
 import os
 import sys
 from collections.abc import Callable
@@ -49,6 +48,7 @@ from pyfakefs.helpers import (
     is_called_from_skipped_module,
     is_root,
     is_unfaked_path,
+    matching_string,
 )
 
 if TYPE_CHECKING:
@@ -56,7 +56,7 @@ if TYPE_CHECKING:
 
 
 # Work around pyupgrade auto-rewriting `io.open()` to `open()`.
-io_open = io.open
+io_open = open
 
 _OPEN_MODE_MAP = {
     # mode name:(file must exist, can read, can write,
@@ -397,7 +397,7 @@ class FakeFileOpen:
 
         # open a file by path
         file_path = cast(AnyStr, file_)  # pytype: disable=invalid-annotation
-        if file_path == self.filesystem.dev_null.name:
+        if file_path == matching_string(file_path, self.filesystem.dev_null.name):
             file_object = self.filesystem.dev_null
             real_path = file_path
         else:

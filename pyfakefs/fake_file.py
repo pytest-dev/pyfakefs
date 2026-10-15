@@ -60,7 +60,7 @@ if TYPE_CHECKING:
 
 
 # Work around pyupgrade auto-rewriting `io.open()` to `open()`.
-io_open = io.open
+io_open = open
 
 AnyFileWrapper = Union[
     "FakeFileWrapper",
@@ -472,7 +472,7 @@ class FakeFileFromRealFile(FakeFile):
             OSError: if the file already exists in the fake file system.
         """
         super().__init__(
-            name=os.path.basename(file_path),
+            name=filesystem.splitpath(file_path)[1],
             filesystem=filesystem,
             side_effect=side_effect,
         )

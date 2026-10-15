@@ -825,7 +825,7 @@ class FakeOsModuleTest(FakeOsModuleTestBase):
         # regression test for issue #337
         self.check_windows_only()
         self.skip_real_fs()
-        dir_path = self.os.path.join("C:", "test")
+        dir_path = self.os.path.join("C:/", "test")
         self.filesystem.create_dir(dir_path)
         self.assert_raises_os_error(errno.EACCES, self.os.remove, dir_path)
 
@@ -2772,7 +2772,10 @@ class FakeOsModuleTest(FakeOsModuleTestBase):
         self.os.unlink(file1_path)
         self.assertEqual(self.os.stat(file2_path).st_nlink, 1)
 
-    @unittest.skipIf(IS_PYPY, "follow_symlinks not supported in PyPi")
+    @unittest.skipIf(
+        IS_PYPY and sys.version_info < (3, 11),
+        "follow_symlinks not supported in PyPy before Python 3.11",
+    )
     def test_link_no_follow_symlink(self):
         skip_if_symlink_not_supported()
         target_path = self.make_path("target_path")
@@ -2783,8 +2786,10 @@ class FakeOsModuleTest(FakeOsModuleTestBase):
         self.os.link(symlink_path, link_path, follow_symlinks=False)
         self.assertTrue(self.os.path.islink(link_path))
 
-    @unittest.skipIf(not IS_PYPY, "follow_symlinks only not supported in PyPi")
-    @unittest.skipIf(IS_WIN, "supported in PyPy 3.11 under Windows")
+    @unittest.skipIf(
+        not IS_PYPY or IS_WIN or sys.version_info >= (3, 11),
+        "follow_symlinks only unsupported in PyPy before Python 3.11 on POSIX",
+    )
     def test_link_follow_symlink_not_supported_inPypy(self):
         skip_if_symlink_not_supported()
         target_path = self.make_path("target_path")
@@ -4683,9 +4688,7 @@ class FakeOsModuleWalkTest(FakeOsModuleTestBase):
     def assertWalkResults(self, expected, top, topdown=True, followlinks=False):
         # as the result of walk is unsorted, we have to check against
         # sorted results
-        result = [
-            step for step in self.os.walk(top, topdown=topdown, followlinks=followlinks)
-        ]
+        result = [*self.os.walk(top, topdown=topdown, followlinks=followlinks)]
         result = sorted(result, key=lambda lst: lst[0])
         expected = sorted(expected, key=lambda lst: lst[0])
         self.assertEqual(len(expected), len(result))

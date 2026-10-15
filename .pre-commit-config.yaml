@@ -1,9 +1,9 @@
 default_language_version:
-  python: "3.10"
+  python: "python3"
 
 repos:
   - repo: "https://github.com/asottile/pyupgrade"
-    rev: "v3.21.2"
+    rev: "v3.22.0"
     hooks:
       - id: "pyupgrade"
         name: "Enforce Python 3.10+ idioms"
@@ -11,7 +11,7 @@ repos:
           - "--py310-plus"
 
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: "v0.16.7"
+    rev: "v0.17.0"
     hooks:
       - id: ruff
         args: ["--fix"]
@@ -44,7 +44,7 @@ repos:
         language: python
         files: \.py$
   - repo: https://github.com/pre-commit/mirrors-mypy
-    rev: v2.3.1
+    rev: v2.4.0
     hooks:
       - id: mypy
         exclude: (docs|pyfakefs/tests)

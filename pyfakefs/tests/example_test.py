@@ -26,7 +26,6 @@ functions, these functions can make the test code shorter and more readable.
 directories and allows you to specify the contents or the size of the file.
 """
 
-import io
 import os
 import sys
 import unittest
@@ -35,7 +34,7 @@ from pyfakefs import fake_filesystem_unittest
 from pyfakefs.tests import example  # The module under test
 
 # Work around pyupgrade auto-rewriting `io.open()` to `open()`.
-io_open = io.open
+io_open = open
 
 
 def load_tests(loader, tests, ignore):

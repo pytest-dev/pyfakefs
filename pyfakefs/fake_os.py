@@ -1296,11 +1296,7 @@ class FakeOsModule:
             OSError:  if something already exists at new_path.
             OSError:  if the parent directory doesn't exist.
         """
-        if (
-            IS_PYPY
-            and not (self.filesystem.is_windows_fs and sys.version_info >= (3, 11))
-            and follow_symlinks is not None
-        ):
+        if IS_PYPY and sys.version_info < (3, 11) and follow_symlinks is not None:
             raise OSError(errno.EINVAL, "Invalid argument: follow_symlinks")
         if follow_symlinks is None:
             follow_symlinks = True
