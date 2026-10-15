@@ -33,7 +33,7 @@ from unittest.mock import patch
 from pyfakefs import fake_filesystem, fake_filesystem_unittest, fake_os, fake_pathlib
 from pyfakefs.fake_filesystem import FakeFilesystem, OSType
 from pyfakefs.fake_pathlib import FakePathlibModule
-from pyfakefs.helpers import IS_PYPY, is_root
+from pyfakefs.helpers import IS_PYPY, REALPATH_RESOLVES_DRIVE_RELATIVE, is_root
 from pyfakefs.tests.skipped_pathlib import (
     check_exists_pathlib,
     read_bytes_pathlib,
@@ -680,7 +680,10 @@ class FakePathlibFileObjectPropertyTest(RealPathlibTestCase):
         path = self.path(r"x:test\test_data\dummy1.xml")
         self.assertFalse(path.is_absolute())
         resolved = path.resolve(strict=False)
-        self.assertEqual(r"x:test\test_data\dummy1.xml", str(resolved))
+        if REALPATH_RESOLVES_DRIVE_RELATIVE:
+            self.assertEqual(r"X:\test\test_data\dummy1.xml", str(resolved))
+        else:
+            self.assertEqual(r"x:test\test_data\dummy1.xml", str(resolved))
 
     def test_stat_file_in_unreadable_dir(self):
         self.check_posix_only()
@@ -1153,6 +1156,50 @@ class FakePathlibPathFileOperationTest(RealPathlibTestCase):
         self.assertEqual(
             sorted(path.glob("*.py")),
             [self.path(self.make_path("foo", "setup.py"))],
+        )
+
+    @unittest.skipIf(
+        sys.version_info < (3, 13), "literal glob parts are looked up since Python 3.13"
+    )
+    def test_glob_literal_case_insensitive_fs(self):
+        # regression test for #1347
+        self.check_posix_only()
+        if sys.platform == "win32" and sys.version_info < (3, 14):
+            self.skipTest(reason="Ignoring inconsistent path delimiters")
+        self.check_case_insensitive_fs()
+        self.create_file(self.make_path("foo", "B.TXT"))
+        self.create_file(self.make_path("foo", "Sub", "x.py"))
+        path = self.path(self.make_path("foo"))
+        # literal pattern parts are looked up in the filesystem
+        self.assertEqual(
+            [self.path(self.make_path("foo", "b.txt"))], list(path.glob("b.txt"))
+        )
+        self.assertEqual(
+            [self.path(self.make_path("foo", "sub", "x.py"))],
+            list(path.glob("sub/*.py")),
+        )
+        # wildcard parts are still matched case-sensitively under Posix
+        self.assertEqual([], list(path.glob("*.txt")))
+        # explicit arguments take precedence
+        self.assertEqual([], list(path.glob("b.txt", case_sensitive=True)))
+        self.assertEqual(
+            [self.path(self.make_path("foo", "B.TXT"))],
+            list(path.glob("*.txt", case_sensitive=False)),
+        )
+
+    @unittest.skipIf(
+        sys.version_info < (3, 13), "literal glob parts are looked up since Python 3.13"
+    )
+    def test_glob_literal_case_sensitive_fs(self):
+        self.check_posix_only()
+        self.check_case_sensitive_fs()
+        self.create_file(self.make_path("foo", "B.TXT"))
+        path = self.path(self.make_path("foo"))
+        self.assertEqual([], list(path.glob("b.txt")))
+        self.assertEqual([], list(path.glob("*.txt")))
+        self.assertEqual(
+            [self.path(self.make_path("foo", "B.TXT"))],
+            list(path.glob("b.txt", case_sensitive=False)),
         )
 
 
