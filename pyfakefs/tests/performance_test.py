@@ -9,9 +9,11 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-"""Report setup/cleanup CPU time with ``TEST_PERFORMANCE=1``.
+"""Check setup/cleanup CPU time with ``TEST_PERFORMANCE=1``.
 
-The measurements are observations, not machine-independent pass/fail limits.
+The coarse CPython regression limits are based on CI observations. Runner
+variance and slower local machines can still cause failures. PyPy measurements
+are reported without applying the CPython limits.
 Run with ``python -m pyfakefs.tests.performance_test`` as before.
 """
 
@@ -20,6 +22,7 @@ import time
 import unittest
 
 from pyfakefs.fake_filesystem_unittest import Patcher
+from pyfakefs.helpers import IS_PYPY
 
 
 def _measure_setup_cpu_time(use_cache: bool, iterations: int = 100) -> float:
@@ -44,17 +47,21 @@ def _measure_setup_cpu_time(use_cache: bool, iterations: int = 100) -> float:
 if os.environ.get("TEST_PERFORMANCE"):
 
     class SetupPerformanceTest(unittest.TestCase):
-        """Report cached and uncached setup costs without host-specific limits."""
+        """Check cached and uncached setup costs against coarse CI limits."""
 
         def test_cached_setup(self):
             cpu_time = _measure_setup_cpu_time(use_cache=True)
             print(f"CPU time per cached setup/cleanup cycle: {cpu_time * 1000:.3f} ms")
+            if not IS_PYPY:
+                self.assertLess(cpu_time, 0.002)
 
         def test_uncached_setup(self):
             cpu_time = _measure_setup_cpu_time(use_cache=False)
             print(
                 f"CPU time per uncached setup/cleanup cycle: {cpu_time * 1000:.3f} ms"
             )
+            if not IS_PYPY:
+                self.assertLess(cpu_time, 0.05)
 
     if __name__ == "__main__":
         unittest.main()

@@ -36,7 +36,8 @@ The released versions correspond to PyPI releases.
 ### Infrastructure
 
 * report CPU time for warmed-up cached and uncached setup/cleanup cycles in the
-  opt-in performance tests, instead of asserting machine-specific wall-time limits
+  opt-in performance tests, with coarse CPython regression limits based on CI
+  measurements instead of wall-time limits
 
 ## [Version 6.2.0](https://pypi.python.org/pypi/pyfakefs/6.2.0) (2026-04-12)
 

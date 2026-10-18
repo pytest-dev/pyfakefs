@@ -13,6 +13,7 @@
 """Deterministic controls for the opt-in setup benchmark."""
 
 import builtins
+import importlib.util
 import unittest
 from contextlib import contextmanager
 from unittest import mock
@@ -22,6 +23,52 @@ from pyfakefs.tests import performance_test
 
 
 class SetupMeasurementTest(unittest.TestCase):
+    @staticmethod
+    def _load_opt_in_benchmark():
+        spec = importlib.util.spec_from_file_location(
+            "setup_benchmark_controls", performance_test.__file__
+        )
+        benchmark = importlib.util.module_from_spec(spec)
+        with mock.patch.dict(performance_test.os.environ, TEST_PERFORMANCE="1"):
+            spec.loader.exec_module(benchmark)
+        return benchmark
+
+    def test_cached_regression_limit(self):
+        self._check_regression_limit("test_cached_setup", use_cache=True, limit=0.002)
+
+    def test_uncached_regression_limit(self):
+        self._check_regression_limit("test_uncached_setup", use_cache=False, limit=0.05)
+
+    def _check_regression_limit(self, method, *, use_cache, limit):
+        benchmark = self._load_opt_in_benchmark()
+        for cpu_time in (limit / 2, limit, limit * 2):
+            with (
+                self.subTest(cpu_time=cpu_time),
+                mock.patch.object(benchmark, "IS_PYPY", False, create=True),
+                mock.patch.object(
+                    benchmark, "_measure_setup_cpu_time", return_value=cpu_time
+                ) as measure,
+                mock.patch("builtins.print"),
+            ):
+                case = benchmark.SetupPerformanceTest(method)
+                if cpu_time < limit:
+                    getattr(case, method)()
+                else:
+                    with self.assertRaises(AssertionError):
+                        getattr(case, method)()
+                measure.assert_called_once_with(use_cache=use_cache)
+
+    def test_pypy_still_reports_without_cpython_limits(self):
+        benchmark = self._load_opt_in_benchmark()
+        with (
+            mock.patch.object(benchmark, "IS_PYPY", True, create=True),
+            mock.patch.object(benchmark, "_measure_setup_cpu_time", return_value=1),
+            mock.patch("builtins.print") as report,
+        ):
+            benchmark.SetupPerformanceTest("test_cached_setup").test_cached_setup()
+            benchmark.SetupPerformanceTest("test_uncached_setup").test_uncached_setup()
+        self.assertEqual(report.call_count, 2)
+
     def test_uses_cpu_time_per_iteration(self):
         with (
             mock.patch.object(performance_test, "Patcher"),
