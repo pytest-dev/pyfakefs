@@ -2819,6 +2819,10 @@ class FakeFilesystem:
         old_path_str = make_string_path(old_path)
         new_path_str = make_string_path(new_path)
         new_path_normalized = self.absnormpath(new_path_str)
+        if not self.is_windows_fs:
+            # under Posix, the source is looked up before the destination,
+            # so a missing source is reported even if the destination exists
+            old_file = self._resolve_link_source(old_path_str, follow_symlinks)
         if self.exists(new_path_normalized, check_link=True):
             self.raise_os_error(errno.EEXIST, new_path_str)
 
@@ -2832,16 +2836,9 @@ class FakeFilesystem:
             else:
                 self.raise_os_error(errno.ENOENT, new_parent_directory)
 
-        if self.ends_with_path_separator(old_path_str):
-            self.raise_os_error(errno.ENOTDIR, old_path_str)
-
-        if not self.is_windows_fs and self.ends_with_path_separator(new_path):
-            self.raise_os_error(errno.ENOENT, old_path_str)
-
-        # Retrieve the target file
-        try:
-            old_file = self.resolve(old_path_str, follow_symlinks=follow_symlinks)
-        except OSError:
+        if self.is_windows_fs:
+            old_file = self._resolve_link_source(old_path_str, follow_symlinks)
+        elif self.ends_with_path_separator(new_path):
             self.raise_os_error(errno.ENOENT, old_path_str)
 
         # Guaranteed to resolve because we either created it or errored earlier
@@ -2891,6 +2888,17 @@ class FakeFilesystem:
         return self.create_link(
             old_path, new_path, follow_symlinks, create_missing_dirs=False
         )
+
+    def _resolve_link_source(
+        self, old_path_str: AnyStr, follow_symlinks: bool
+    ) -> FakeFile:
+        """Return the file object a new hard link shall point to."""
+        if self.ends_with_path_separator(old_path_str):
+            self.raise_os_error(errno.ENOTDIR, old_path_str)
+        try:
+            return self.resolve(old_path_str, follow_symlinks=follow_symlinks)
+        except OSError:
+            self.raise_os_error(errno.ENOENT, old_path_str)
 
     def _is_circular_link(self, link_obj: FakeFile) -> bool:
         try:
