@@ -33,6 +33,12 @@ The released versions correspond to PyPI releases.
   not using the path semantics of the simulated file system
   (see [#1348](https://github.com/pytest-dev/pyfakefs/issues/1348))
 
+### Infrastructure
+
+* report CPU time for warmed-up cached and uncached setup/cleanup cycles in the
+  opt-in performance tests, with coarse CPython regression limits based on CI
+  measurements instead of wall-time limits
+
 ## [Version 6.2.0](https://pypi.python.org/pypi/pyfakefs/6.2.0) (2026-04-12)
 
 Changes the MRO for file wrappers.

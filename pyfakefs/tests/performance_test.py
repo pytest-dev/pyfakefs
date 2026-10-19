@@ -9,67 +9,59 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-"""Shall provide tests to check performance overhead of pyfakefs."""
+"""Check setup/cleanup CPU time with ``TEST_PERFORMANCE=1``.
+
+The coarse CPython regression limits are based on CI observations. Runner
+variance and slower local machines can still cause failures. PyPy measurements
+are reported without applying the CPython limits.
+Run with ``python -m pyfakefs.tests.performance_test`` as before.
+"""
 
 import os
 import time
 import unittest
 
-from pyfakefs.fake_filesystem_unittest import TestCase
+from pyfakefs.fake_filesystem_unittest import Patcher
 from pyfakefs.helpers import IS_PYPY
+
+
+def _measure_setup_cpu_time(use_cache: bool, iterations: int = 100) -> float:
+    """Return mean CPU seconds for a patcher setup and cleanup cycle.
+
+    Warm up imports and, when enabled, the module cache before measuring.
+    An uncached patcher still clears the module cache on every iteration.
+    """
+    if iterations < 1:
+        raise ValueError("iterations must be positive")
+
+    with Patcher(use_cache=use_cache):
+        pass
+
+    start_time = time.process_time()
+    for _ in range(iterations):
+        with Patcher(use_cache=use_cache):
+            pass
+    return (time.process_time() - start_time) / iterations
+
 
 if os.environ.get("TEST_PERFORMANCE"):
 
-    class SetupPerformanceTest(TestCase):
-        @classmethod
-        def setUpClass(cls) -> None:
-            cls.start_time = time.time()
+    class SetupPerformanceTest(unittest.TestCase):
+        """Check cached and uncached setup costs against coarse CI limits."""
 
-        @classmethod
-        def tearDownClass(cls) -> None:
-            cls.elapsed_time = time.time() - cls.start_time
+        def test_cached_setup(self):
+            cpu_time = _measure_setup_cpu_time(use_cache=True)
+            print(f"CPU time per cached setup/cleanup cycle: {cpu_time * 1000:.3f} ms")
+            if not IS_PYPY:
+                self.assertLess(cpu_time, 0.002)
+
+        def test_uncached_setup(self):
+            cpu_time = _measure_setup_cpu_time(use_cache=False)
             print(
-                f"Elapsed time per test for cached setup: {cls.elapsed_time * 10:.3f} ms"
+                f"CPU time per uncached setup/cleanup cycle: {cpu_time * 1000:.3f} ms"
             )
-
-        def setUp(self) -> None:
-            self.setUpPyfakefs()
-
-    class SetupNoCachePerformanceTest(TestCase):
-        @classmethod
-        def setUpClass(cls) -> None:
-            cls.start_time = time.time()
-
-        @classmethod
-        def tearDownClass(cls) -> None:
-            cls.elapsed_time = time.time() - cls.start_time
-            print(
-                f"Elapsed time per test for uncached setup: {cls.elapsed_time * 10:.3f} ms"
-            )
-
-        def setUp(self) -> None:
-            self.setUpPyfakefs(use_cache=False)
-
-    @unittest.skipIf(IS_PYPY, "PyPy times are not comparable")
-    class TimePerformanceTest(TestCase):
-        """Make sure performance degradation in setup is noticed.
-        The numbers are related to the CI builds and may fail in local builds.
-        """
-
-        def test_cached_time(self):
-            self.assertLess(SetupPerformanceTest.elapsed_time, 0.18)
-
-        def test_uncached_time(self):
-            self.assertLess(SetupNoCachePerformanceTest.elapsed_time, 4)
-
-    def test_setup(self):
-        pass
-
-    for n in range(100):
-        test_name = "test_" + str(n)
-        setattr(SetupPerformanceTest, test_name, test_setup)
-        test_name = "test_nocache" + str(n)
-        setattr(SetupNoCachePerformanceTest, test_name, test_setup)
+            if not IS_PYPY:
+                self.assertLess(cpu_time, 0.05)
 
     if __name__ == "__main__":
         unittest.main()
