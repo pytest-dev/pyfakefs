@@ -12,7 +12,7 @@ def my_fakefs_test(fs):
 import contextlib
 
 import pytest
-from _pytest import capture
+from _pytest import capture, main
 
 from pyfakefs.fake_filesystem_unittest import Patcher, Pause
 
@@ -39,6 +39,9 @@ except ImportError:
 
 Patcher.SKIPMODULES.add(pytest)
 Patcher.SKIPMODULES.add(capture)
+# Hook lookup uses real paths collected before the filesystem was patched.
+# Keep them real so that pytest can still find the matching conftest hooks.
+Patcher.SKIPMODULES.add(main)
 
 
 @pytest.fixture

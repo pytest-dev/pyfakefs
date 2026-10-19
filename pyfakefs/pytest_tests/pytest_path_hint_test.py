@@ -1,4 +1,5 @@
 from pathlib import Path
+from typing import get_type_hints
 
 import pytest
 
@@ -29,3 +30,11 @@ def test_wrapped1(wrapper1):
 
 def test_wrapped2(wrapper2):
     assert wrapper2(Path("test_folder")) == Path("test_folder")
+
+
+def test_union_annotations_contain_path_class(wrapper1, wrapper2):
+    for wrapped in (wrapper1, wrapper2):
+        hints = get_type_hints(wrapped)
+        assert hints["path"] == Path | str
+        assert hints["return"] == Path | str
+        assert isinstance(Path("test_folder"), hints["path"])
