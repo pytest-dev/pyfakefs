@@ -15,6 +15,10 @@ The released versions correspond to PyPI releases.
 
 ### Fixes
 
+* fixed real POSIX `Path` objects losing case-sensitive equality, hashing,
+  and relative path handling across patching sessions under Python 3.13 and later
+  (see [#1359](https://github.com/pytest-dev/pyfakefs/issues/1359))
+
 * fixed `Path.glob()` not finding literal pattern parts with a different case
   in a case-insensitive filesystem (e.g. macOS) under Python 3.14
   (see [#1347](https://github.com/pytest-dev/pyfakefs/issues/1347))
