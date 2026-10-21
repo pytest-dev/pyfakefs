@@ -988,6 +988,12 @@ class Patcher:
                 name: mod
                 for name, mod in module_items
                 if self._is_fs_module(mod, name, module_names)
+                # pathlib uses posixpath as an identity marker for the parser
+                # of real Path objects, including objects created before patching.
+                and not (
+                    name == "posixpath"
+                    and module.__name__ in ("pathlib", "pathlib._local")
+                )
             }
 
             if skipped:
