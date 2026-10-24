@@ -1,6 +1,5 @@
 # pyfakefs [![PyPI version](https://badge.fury.io/py/pyfakefs.svg)](https://badge.fury.io/py/pyfakefs) [![Python version](https://img.shields.io/pypi/pyversions/pyfakefs.svg)](https://img.shields.io/pypi/pyversions/pyfakefs.svg) ![Testsuite](https://github.com/pytest-dev/pyfakefs/workflows/Testsuite/badge.svg) [![Documentation Status](https://readthedocs.org/projects/pytest-pyfakefs/badge/?version=latest)](https://pytest-pyfakefs.readthedocs.io/en/latest/?badge=latest) [![pre-commit.ci status](https://results.pre-commit.ci/badge/github/pytest-dev/pyfakefs/main.svg)](https://results.pre-commit.ci/latest/github/pytest-dev/pyfakefs/main) ![PyPI - Downloads](https://img.shields.io/pypi/dw/pyfakefs)
 
-
 `pyfakefs` implements a fake file system that mocks the Python file system modules.
 Using `pyfakefs`, your tests operate on a fake file system in memory without
 touching the real disk. The software under test requires no modification to
@@ -15,6 +14,7 @@ directory, except for an entire file system.
 ## Usage
 
 There are several ways to invoke `pyfakefs`:
+
 * using the `fs` fixture with `pytest`
 * deriving from `fake_filesystem_unittest.TestCase` for `unittest`
 * using `fake_filesystem_unittest.Patcher` as context manager
@@ -32,8 +32,10 @@ Refer to the [usage documentation](https://pytest-pyfakefs.readthedocs.io/en/lat
 * [Contributing Guide](https://github.com/pytest-dev/pyfakefs/blob/main/CONTRIBUTING.md) - contributions are welcome!
 
 ## Features
+
 Apart from automatically mocking most file-system functions, pyfakefs
 provides some additional features:
+
 - mapping files and directories from the real file system into the fake filesystem
 - configuration and tracking of the file system size
 - pause and resume of patching to be able to use the real file system inside a
@@ -43,15 +45,28 @@ provides some additional features:
   under root
 
 ## Limitations
+
 pyfakefs will not work with Python libraries that use C libraries to access the
 file system. This is because pyfakefs cannot patch the underlying C libraries'
 file access functions--the C libraries will always access the real file
 system. Refer to the [documentation](https://pytest-pyfakefs.readthedocs.io/en/latest/intro.html#limitations)
 for more information about the limitations of pyfakefs.
 
+## Contributions
+
+We are always grateful for meaningful contributions - refer to the
+[contributing guide](https://pytest-pyfakefs.readthedocs.io/en/latest/contributing.html)
+for more information. However, we value human contributions, not purly
+AI-generated code. The usage of AI tools is helpful and completely fine,
+provided that the authors use them as tools and understand what they are doing.
+Our policy regarding AI contributions is in line with the respective
+[pytest policy](https://github.com/pytest-dev/pytest/blob/main/CONTRIBUTING.rst#aillm-assisted-contributions-policy).
+Please refer to that policy for details and background.
+
 ## History
+
 pyfakefs.py was initially developed at Google by Mike Bland as a modest fake
-implementation of core Python modules.  It was introduced to all of Google
+implementation of core Python modules. It was introduced to all of Google
 in September 2006. At last count, pyfakefs was used in over 20,000
 Python tests at Google.
 
