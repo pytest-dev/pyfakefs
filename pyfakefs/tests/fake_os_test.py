@@ -2412,7 +2412,10 @@ class FakeOsModuleTest(FakeOsModuleTestBase):
         path = self.make_path("foo")
         self.os.symlink(self.base_path, path)
         self.assert_raises_os_error(
-            errno.ENOTDIR, self.os.rename, path + self.os.sep, self.base_path
+            (errno.ENOTDIR, errno.ENOTEMPTY),
+            self.os.rename,
+            path + self.os.sep,
+            self.base_path,
         )
 
     def test_rename_symlink_with_trailing_sep_macos(self):
