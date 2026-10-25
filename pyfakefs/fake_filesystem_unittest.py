@@ -979,9 +979,14 @@ class Patcher:
                         # unhashable module - don't cache it
                         pass
                 continue
-            skipped = module in self.SKIPMODULES or any(
-                sn.startswith(module.__name__) for sn in self.skip_names
-            )
+            try:
+                skipped = module in self.SKIPMODULES or any(
+                    sn.startswith(module.__name__) for sn in self.skip_names
+                )
+            except TypeError:
+                # handle unhashable type
+                skipped = False
+
             module_items = module.__dict__.copy().items()
 
             modules = {
