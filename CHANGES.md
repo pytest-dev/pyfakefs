@@ -32,6 +32,7 @@ The released versions correspond to PyPI releases.
 * fixed `os.path.basename`, `os.path.splitext` and `os.path.commonpath`
   not using the path semantics of the simulated file system
   (see [#1348](https://github.com/pytest-dev/pyfakefs/issues/1348))
+* fixed handling of unhashable types
 
 ### Infrastructure
 
