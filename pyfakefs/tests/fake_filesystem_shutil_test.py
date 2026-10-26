@@ -91,6 +91,18 @@ class FakeShutilModuleTest(RealFsTestCase):
         self.assertFalse(os.path.exists(dir_path))
         self.assertFalse(os.path.exists(file_path))
 
+    def test_rmtree_with_symlink_to_dir(self):
+        skip_if_symlink_not_supported()
+        directory = self.make_path("xyzzy")
+        target_dir = self.make_path("target_dir")
+        target_file = self.os.path.join(target_dir, "file")
+        self.create_file(target_file)
+        link_path = self.os.path.join(directory, "link_to_dir")
+        self.create_symlink(link_path, target_dir)
+        shutil.rmtree(directory)
+        self.assertFalse(self.os.path.exists(directory))
+        self.assertTrue(self.os.path.exists(target_file))
+
     def test_rmtree_with_trailing_slash(self):
         directory = self.make_path("xyzzy")
         dir_path = os.path.join(directory, "subdir")
