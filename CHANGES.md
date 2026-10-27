@@ -33,6 +33,9 @@ The released versions correspond to PyPI releases.
   not using the path semantics of the simulated file system
   (see [#1348](https://github.com/pytest-dev/pyfakefs/issues/1348))
 * fixed handling of unhashable types
+* fixed `shutil.rmtree()` failing on directories containing symlinks to
+  directories with Python >= 3.12.4 by supporting `os._walk_symlinks_as_files`
+  in `os.walk()` (see [#1363](https://github.com/pytest-dev/pyfakefs/issues/1363))
 
 ### Infrastructure
 

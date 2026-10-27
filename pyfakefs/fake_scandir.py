@@ -202,12 +202,20 @@ def scandir(filesystem, path=""):
     return ScanDirIter(filesystem, path)
 
 
-def _classify_directory_contents(filesystem, root):
+# Private sentinel passed as `followlinks` by `shutil.rmtree()` since
+# Python 3.12.4 to make `os.walk()` treat symlinks to directories as files.
+# For older Python versions, use a unique object that is never matched.
+_walk_symlinks_as_files = getattr(os, "_walk_symlinks_as_files", object())
+
+
+def _classify_directory_contents(filesystem, root, walk_symlinks_as_files=False):
     """Classify contents of a directory as files/directories.
 
     Args:
         filesystem: The fake filesystem used for implementation
         root: (str) Directory to examine.
+        walk_symlinks_as_files: (bool) If `True`, symlinks to directories are
+            classified as files instead of directories.
 
     Returns:
         (tuple) A tuple consisting of three values: the directory examined,
@@ -222,7 +230,12 @@ def _classify_directory_contents(filesystem, root):
     dirs = []
     files = []
     for entry in filesystem.listdir(root):
-        if filesystem.isdir(filesystem.joinpaths(root, entry)):
+        # Junctions are not considered here, as they are never faked
+        # (see FakeFilesystem.isjunction).
+        if filesystem.isdir(
+            filesystem.joinpaths(root, entry),
+            follow_symlinks=not walk_symlinks_as_files,
+        ):
             dirs.append(entry)
         else:
             files.append(entry)
@@ -247,12 +260,17 @@ def walk(filesystem, top, topdown=True, onerror=None, followlinks=False):
         subdirectories.  See the documentation for the builtin os module
         for further details.
     """
+    walk_symlinks_as_files = followlinks is _walk_symlinks_as_files
+    if walk_symlinks_as_files:
+        followlinks = False
 
     def do_walk(top_dir, top_most=False):
         if not top_most and not followlinks and filesystem.islink(top_dir):
             return
         try:
-            top_contents = _classify_directory_contents(filesystem, top_dir)
+            top_contents = _classify_directory_contents(
+                filesystem, top_dir, walk_symlinks_as_files
+            )
         except OSError as exc:
             top_contents = None
             if onerror is not None:

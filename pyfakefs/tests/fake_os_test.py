@@ -4858,6 +4858,29 @@ class FakeOsModuleWalkTest(FakeOsModuleTestBase):
             followlinks=True,
         )
 
+    @unittest.skipIf(
+        not hasattr(os, "_walk_symlinks_as_files"),
+        "os._walk_symlinks_as_files not available",
+    )
+    def test_walk_symlinks_as_files(self):
+        # os._walk_symlinks_as_files is used by shutil.rmtree()
+        self.check_posix_only()
+        base_dir = self.make_path("foo")
+        link_dir = self.make_path("linked")
+        self.create_file(self.os.path.join(link_dir, "subfile"))
+        self.create_file(self.os.path.join(base_dir, "bar", "baz"))
+        self.create_symlink(self.os.path.join(base_dir, "created_link"), link_dir)
+
+        expected = [
+            (base_dir, ["bar"], ["created_link"]),
+            (self.os.path.join(base_dir, "bar"), [], ["baz"]),
+        ]
+        followlinks = os._walk_symlinks_as_files  # type: ignore[attr-defined]
+        self.assertWalkResults(expected, base_dir, followlinks=followlinks)
+        self.assertWalkResults(
+            expected, base_dir, topdown=False, followlinks=followlinks
+        )
+
     def test_walk_linked_file_in_subdir(self):
         # regression test for #559 (tested for link on incomplete path)
         self.check_posix_only()
