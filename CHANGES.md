@@ -15,6 +15,8 @@ The released versions correspond to PyPI releases.
 
 ### Fixes
 
+* fixed `os.link` raising `EEXIST` instead of `ENOENT` under Posix if the source
+  does not exist and the destination does (see [#1357](https://github.com/pytest-dev/pyfakefs/pull/1357))
 * fixed `Path.glob()` not finding literal pattern parts with a different case
   in a case-insensitive filesystem (e.g. macOS) under Python 3.14
   (see [#1347](https://github.com/pytest-dev/pyfakefs/issues/1347))
