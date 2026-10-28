@@ -12,6 +12,7 @@ The released versions correspond to PyPI releases.
 * changed handling of path separators for cross-platform tests to
   be more consistent with the simulated OS; this may break some
   existing tests that assume the old behavior
+* added official support for Python 3.15
 
 ### Fixes
 
