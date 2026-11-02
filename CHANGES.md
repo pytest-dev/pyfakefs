@@ -3,6 +3,16 @@
 The released versions correspond to PyPI releases.
 `pyfakefs` versions follow [Semantic Versioning](https://semver.org/).
 
+## [Version 6.3.1](https://pypi.python.org/pypi/pyfakefs/6.3.1) (2026-11-02)
+
+Fixes a regression in the latest release causing an exception if django was available.
+
+### Fixes
+
+* regression: removed cleanup of django view modules, which has not been working
+  for some time and now caused an exception (which was caught in the previous versions),
+  see [#1367](https://github.com/pytest-dev/pyfakefs/issues/1367)
+
 ## [Version 6.3.0](https://pypi.python.org/pypi/pyfakefs/6.3.0) (2026-11-01)
 
 Adds official Python 3.15 support.
