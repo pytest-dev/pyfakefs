@@ -85,9 +85,6 @@ def get_cleanup_handlers():
         handlers["pandas.core.arrays.arrow.extension_types"] = (
             handle_extension_type_cleanup
         )
-    if django is not None:
-        for module_name in django_view_modules():
-            handlers[module_name] = lambda name=module_name: reload_handler(name)
     return handlers
 
 
@@ -224,12 +221,3 @@ if django is not None:
                     view = pattern.callback
                 modules.add(view.__module__)
         return modules
-
-    def django_view_modules():
-        try:
-            all_urlpatterns = __import__(
-                django.conf.settings.ROOT_URLCONF
-            ).urls.urlpatterns
-            return get_all_view_modules(all_urlpatterns)
-        except ImportError:
-            return set()
