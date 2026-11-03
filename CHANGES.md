@@ -3,7 +3,9 @@
 The released versions correspond to PyPI releases.
 `pyfakefs` versions follow [Semantic Versioning](https://semver.org/).
 
-## Unreleased
+## [Version 6.3.2](https://pypi.python.org/pypi/pyfakefs/6.3.2) (2026-11-03)
+
+Fixes a regression in the latest release causing an exception if django was available.
 
 ### Fixes
 
