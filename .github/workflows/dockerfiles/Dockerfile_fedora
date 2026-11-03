@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-FROM fedora:latest
+FROM fedora:44
 
 ENV LANG=en_US.UTF-8
 ENV LANGUAGE=en_US:en
