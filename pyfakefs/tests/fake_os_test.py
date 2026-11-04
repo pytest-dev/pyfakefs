@@ -2695,6 +2695,15 @@ class FakeOsModuleTest(FakeOsModuleTestBase):
         with self.open(file2_path, encoding="utf8") as f:
             self.assertEqual(f.read(), contents1)
 
+    def test_link_bogus_to_existing_file_posix(self):
+        # the source is looked up before the destination
+        self.check_posix_only()
+        file_path = self.make_path("foo")
+        self.create_file(file_path)
+        self.assert_raises_os_error(
+            errno.ENOENT, self.os.link, self.make_path("bogus"), file_path
+        )
+
     def test_link_update(self):
         skip_if_symlink_not_supported()
 
