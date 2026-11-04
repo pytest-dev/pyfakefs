@@ -28,6 +28,9 @@ Adds official Python 3.15 support.
 
 ### Fixes
 
+* fixed direct `Path` imports using a different replacement than `pathlib.Path`,
+  allowing runtime type inspection and Typer path conversion
+  (see [#1334](https://github.com/pytest-dev/pyfakefs/issues/1334))
 * fixed `Path.glob()` not finding literal pattern parts with a different case
   in a case-insensitive filesystem (e.g. macOS) under Python 3.14
   (see [#1347](https://github.com/pytest-dev/pyfakefs/issues/1347))

@@ -20,6 +20,7 @@ Test the :py:class`pyfakefs.fake_filesystem_unittest.TestCase` base class.
 
 import glob
 import importlib.util
+import inspect
 import multiprocessing
 import os
 import pathlib
@@ -57,6 +58,35 @@ io_open = open
 
 
 class TestPatcher(TestCase):
+    def test_path_class_restored_on_pause_and_teardown(self):
+        original_path = Path
+        for contents in ("first filesystem", "second filesystem"):
+            with Patcher() as patcher:
+                self.assertIs(Path, pathlib.Path)
+                self.assertFalse(patcher.fs.exists("/path-import-test.txt"))
+                patcher.fs.create_file("/path-import-test.txt", contents=contents)
+                self.assertEqual(
+                    Path("/path-import-test.txt").read_text(encoding="utf8"), contents
+                )
+                with Pause(patcher):
+                    self.assertIs(Path, original_path)
+                    self.assertIs(pathlib.Path, original_path)
+                self.assertIs(Path, pathlib.Path)
+                self.assertIsNot(Path, original_path)
+                self.assertEqual(
+                    Path("/path-import-test.txt").read_text(encoding="utf8"), contents
+                )
+            self.assertIs(Path, original_path)
+            self.assertIs(pathlib.Path, original_path)
+
+    def test_skipped_path_accepts_existing_real_instances(self):
+        from pyfakefs.tests import skipped_pathlib
+
+        real_path = Path(__file__)
+        with Patcher(additional_skip_names=[skipped_pathlib]):
+            self.assertIsInstance(real_path, skipped_pathlib.Path)
+            self.assertTrue(skipped_pathlib.Path(__file__).exists())
+
     def test_context_manager(self):
         with Patcher() as patcher:
             patcher.fs.create_file("/foo/bar", contents="test")
@@ -196,6 +226,31 @@ class TestPyfakefsUnittest(TestPyfakefsUnittestBase):  # pylint: disable=R0904
 
 
 class TestPatchingImports(TestPyfakefsUnittestBase):
+    def test_path_imports_use_same_class(self):
+        # Regression test for #1334: direct imports must not become proxy objects.
+        from pathlib import Path as imported_path
+
+        from pyfakefs.fake_pathlib import FakePath
+
+        self.assertIs(Path, FakePath)
+        self.assertIs(Path, pathlib.Path)
+        self.assertIs(Path, imported_path)
+        self.assertTrue(inspect.isclass(Path))
+        self.assertTrue(issubclass(type(Path("/foo")), Path))
+        self.assertIsInstance(Path("/foo"), Path)
+
+    def test_imported_path_tracks_filesystem_type(self):
+        for os_type in OSType:
+            with self.subTest(os_type=os_type):
+                self.fs.os = os_type
+                path = Path("/foo")
+                expected_type = (
+                    pathlib.WindowsPath
+                    if os_type == OSType.WINDOWS
+                    else pathlib.PosixPath
+                )
+                self.assertIs(type(path), expected_type)
+
     def test_import_as_other_name(self):
         file_path = "/foo/bar/baz"
         self.fs.create_file(file_path)
