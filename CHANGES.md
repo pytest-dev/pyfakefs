@@ -3,6 +3,14 @@
 The released versions correspond to PyPI releases.
 `pyfakefs` versions follow [Semantic Versioning](https://semver.org/).
 
+## Unreleased
+
+### Fixes
+
+* fixed `os.truncate` and `os.ftruncate` succeeding on a read-only file or
+  file descriptor, and raising `ENOSPC` instead of `EINVAL` for a negative length
+  (see [#1343](https://github.com/pytest-dev/pyfakefs/pull/1343))
+
 ## [Version 6.3.2](https://pypi.python.org/pypi/pyfakefs/6.3.2) (2026-11-03)
 
 Fixes a regression in the latest release causing an exception if django was available.
