@@ -2999,7 +2999,11 @@ class FakeOsModuleTest(FakeOsModuleTestBase):
     def test_truncate_negative_length(self):
         file_path = self.make_path("some_file")
         self.create_file(file_path, contents="0123456789")
-        self.assert_raises_os_error(errno.EINVAL, self.os.truncate, file_path, -1)
+        if self.is_windows_fs:
+            # CPython ignores the error from _chsize_s in os.truncate
+            self.os.truncate(file_path, -1)
+        else:
+            self.assert_raises_os_error(errno.EINVAL, self.os.truncate, file_path, -1)
         fd = self.os.open(file_path, os.O_RDWR)
         self.assert_raises_os_error(errno.EINVAL, self.os.ftruncate, fd, -1)
         self.os.close(fd)

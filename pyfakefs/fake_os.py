@@ -1008,7 +1008,7 @@ class FakeOsModule:
         if isinstance(path, int):
             self.ftruncate(path, length)
             return
-        if length < 0:
+        if length < 0 and not self.filesystem.is_windows_fs:
             self.filesystem.raise_os_error(errno.EINVAL, path)
         file_object = self.filesystem.resolve(path)
         if (
@@ -1017,6 +1017,10 @@ class FakeOsModule:
             and not file_object.has_permission(PERM_WRITE)
         ):
             self.filesystem.raise_os_error(errno.EACCES, path)
+        if length < 0:
+            # under Windows, CPython ignores the error returned by _chsize_s,
+            # so a negative length leaves the file unchanged
+            return
         file_object.size = length
 
     def ftruncate(self, fd: int, length: int) -> None:
