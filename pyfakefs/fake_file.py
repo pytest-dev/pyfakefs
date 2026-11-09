@@ -1195,6 +1195,15 @@ class FakeFileWrapper:
             """Wrap truncate call to call flush after truncate."""
             if self.open_modes.append:
                 self._io.seek(self._read_seek, self._read_whence)
+            if (
+                not self.is_stream
+                and args
+                and isinstance(args[0], int)
+                and args[0] < 0
+            ):
+                # the real OS rejects a negative size for file truncate with
+                # ``EINVAL``; only in-memory streams raise ``ValueError``
+                raise OSError(errno.EINVAL, os.strerror(errno.EINVAL))
             size = io_attr(*args, **kwargs)
             self.flush()
             if not self.is_stream:
