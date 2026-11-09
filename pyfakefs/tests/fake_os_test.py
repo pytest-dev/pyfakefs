@@ -1762,6 +1762,44 @@ class FakeOsModuleTest(FakeOsModuleTestBase):
         self.assertTrue(self.os.path.exists(file_path))
         self.assert_raises_os_error(error_type, self.os.makedirs, directory)
 
+    def test_makedirs_with_curdir_tail(self):
+        """makedirs of a fresh path ending in `.` creates the directory.
+
+        Matches the real `os`, which treats `xxx/newdir/.` as
+        `xxx/newdir` after the recursion created it (issue #1370).
+        """
+        parent = self.make_path("xyzzy")
+        directory = self.os.path.join(parent, "foo")
+        path_with_curdir = self.os.path.join(directory, ".")
+        self.os.makedirs(path_with_curdir)
+        self.assertTrue(self.os.path.exists(directory))
+
+    def test_makedirs_with_curdir_tail_existing(self):
+        """makedirs of an existing path ending in `.` raises EEXIST like the real os."""
+        directory = self.make_path("xyzzy", "foo")
+        self.create_dir(directory)
+        path_with_curdir = self.os.path.join(directory, ".")
+        self.assert_raises_os_error(errno.EEXIST, self.os.makedirs, path_with_curdir)
+        self.os.makedirs(path_with_curdir, exist_ok=True)
+        self.assertTrue(self.os.path.exists(directory))
+
+    def test_makedirs_relative_with_curdir_tail(self):
+        """makedirs of a relative path ending in `.` creates the directory."""
+        cwd = self.os.getcwd()
+        try:
+            self.os.chdir(self.base_path)
+            self.os.makedirs(self.os.path.join("xyzzy", "."))
+            self.assertTrue(self.os.path.exists(self.os.path.join("xyzzy")))
+        finally:
+            self.os.chdir(cwd)
+
+    def test_makedirs_curdir_tail_bytes(self):
+        """makedirs of a bytes path ending in `.` creates the directory."""
+        directory = self.make_path("xyzzy", "foo")
+        path_with_curdir = self.os.path.join(os.fsencode(directory), b".")
+        self.os.makedirs(path_with_curdir)
+        self.assertTrue(self.os.path.exists(directory))
+
     def test_makedirs_raises_if_parent_is_file_posix(self):
         self.check_posix_only()
         self.check_makedirs_raises_if_parent_is_file(errno.ENOTDIR)

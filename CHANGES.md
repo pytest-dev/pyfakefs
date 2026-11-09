@@ -7,6 +7,12 @@ The released versions correspond to PyPI releases.
 
 ### Fixes
 
+* fixed `os.makedirs` failing with `FileExistsError` when creating a fresh
+  directory with a path ending in `/.` (e.g. `os.makedirs("foo/bar/.")`),
+  because the curdir special case compared the tail against the current
+  working directory instead of `"."`
+  (see [issue #1370](https://github.com/pytest-dev/pyfakefs/issues/1370))
+
 * fixed `os.rename` and `os.replace` succeeding under Posix when renaming
   a file to a path with a trailing separator, or from `file/`
   (see [#1344](https://github.com/pytest-dev/pyfakefs/pull/1344))
