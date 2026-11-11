@@ -7,6 +7,14 @@ The released versions correspond to PyPI releases.
 
 ### Fixes
 
+* fixed `os.makedirs` failing with `FileExistsError` when creating a fresh
+  directory with a path ending in `/.` (e.g. `os.makedirs("foo/bar/.")`)
+  (see [issue #1370](https://github.com/pytest-dev/pyfakefs/issues/1370))
+
+* fixed `os.rename` and `os.replace` succeeding under Posix when renaming
+  a file to a path with a trailing separator, or from `file/`
+  (see [#1344](https://github.com/pytest-dev/pyfakefs/pull/1344))
+
 * fixed `os.truncate` and `os.ftruncate` succeeding on a read-only file or
   file descriptor, and raising `ENOSPC` instead of `EINVAL` for a negative length
   (see [#1343](https://github.com/pytest-dev/pyfakefs/pull/1343))

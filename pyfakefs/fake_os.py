@@ -951,7 +951,7 @@ class FakeOsModule:
                 self.makedirs(head, exist_ok=exist_ok)
             except FileExistsError:
                 pass
-            cdir = self.filesystem.cwd
+            cdir = "."  # curdir, matching the real implementation in os.py
             if isinstance(tail, bytes):
                 if tail == bytes(cdir, "ASCII"):
                     return
