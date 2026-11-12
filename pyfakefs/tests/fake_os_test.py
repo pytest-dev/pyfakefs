@@ -3079,11 +3079,8 @@ class FakeOsModuleTest(FakeOsModuleTestBase):
             self.assert_raises_os_error(errno.EINVAL, self.os.truncate, file_path, -1)
         fd = self.os.open(file_path, os.O_RDWR)
         if self.is_windows_fs and self.is_pypy:
-            # PyPy under Windows does not reject a negative length in
-            # os.ftruncate; the real call is not safe to make, so only the
-            # fake is checked here
-            if not self.use_real_fs():
-                self.os.ftruncate(fd, -1)
+            # PyPy under Windows ignores a negative length in os.ftruncate
+            self.os.ftruncate(fd, -1)
         else:
             self.assert_raises_os_error(errno.EINVAL, self.os.ftruncate, fd, -1)
         self.os.close(fd)
