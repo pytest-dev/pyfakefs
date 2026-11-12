@@ -1040,6 +1040,9 @@ class FakeOsModule:
         if not isinstance(file_handle, FakeFileWrapper):
             self.filesystem.raise_os_error(errno.EBADF)
         if length < 0:
+            if self.filesystem.is_windows_fs and IS_PYPY:
+                # PyPy under Windows ignores a negative length
+                return
             self.filesystem.raise_os_error(errno.EINVAL)
         if not self.filesystem.is_windows_fs and not file_handle.open_modes.can_write:
             self.filesystem.raise_os_error(errno.EINVAL)
