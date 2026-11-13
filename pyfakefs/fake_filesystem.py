@@ -2026,9 +2026,12 @@ class FakeFilesystem:
             OSError: if file_path does not correspond to a
                 directory.
         """
-        obj_name = make_string_path(file_object.name)
-        if matching_string(obj_name, "\x00") in obj_name:
-            # the real OS refuses NUL bytes inside path components
+        obj_name: str | bytes = make_string_path(file_object.name)
+        # the real OS refuses NUL bytes inside path components
+        if isinstance(obj_name, bytes):
+            if b"\x00" in obj_name:
+                raise ValueError(f"embedded null character in path: {obj_name!r}")
+        elif "\x00" in obj_name:
             raise ValueError(f"embedded null character in path: {obj_name!r}")
         if not file_path:
             target_directory = self.root_dir
