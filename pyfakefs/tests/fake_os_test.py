@@ -1623,9 +1623,7 @@ class FakeOsModuleTest(FakeOsModuleTestBase):
 
     def test_mkdir_raises_on_embedded_null_byte(self):
         """mkdir raises ValueError for a path containing a null byte."""
-        self.assertRaises(
-            ValueError, self.os.mkdir, self.make_path("di\x00r")
-        )
+        self.assertRaises(ValueError, self.os.mkdir, self.make_path("di\x00r"))
         self.assertFalse(self.os.path.exists(self.make_path("di\x00r")))
 
     def test_raises_on_embedded_null_byte(self):
@@ -1642,9 +1640,7 @@ class FakeOsModuleTest(FakeOsModuleTestBase):
 
     def test_open_raises_on_embedded_null_byte(self):
         path = self.make_path("file_na\x00me")
-        self.assertRaises(
-            ValueError, self.os.open, path, os.O_CREAT | os.O_WRONLY
-        )
+        self.assertRaises(ValueError, self.os.open, path, os.O_CREAT | os.O_WRONLY)
         self.assertFalse(self.os.path.exists(path))
 
     def test_rename_raises_on_embedded_null_byte(self):
@@ -1654,9 +1650,7 @@ class FakeOsModuleTest(FakeOsModuleTestBase):
             ValueError, self.os.rename, source, self.make_path("ta\x00rget")
         )
         self.assertTrue(self.os.path.exists(source))
-        self.assertEqual(
-            self.os.listdir(self.os.path.dirname(source)), ["source"]
-        )
+        self.assertEqual(self.os.listdir(self.os.path.dirname(source)), ["source"])
 
     def test_link_raises_on_embedded_null_byte(self):
         source = self.make_path("source")
@@ -1665,9 +1659,7 @@ class FakeOsModuleTest(FakeOsModuleTestBase):
             ValueError, self.os.link, source, self.make_path("ta\x00rget")
         )
         self.assertTrue(self.os.path.exists(source))
-        self.assertEqual(
-            self.os.listdir(self.os.path.dirname(source)), ["source"]
-        )
+        self.assertEqual(self.os.listdir(self.os.path.dirname(source)), ["source"])
 
     def test_symlink_raises_on_embedded_null_byte(self):
         source = self.make_path("source")
@@ -1676,9 +1668,7 @@ class FakeOsModuleTest(FakeOsModuleTestBase):
             ValueError, self.os.symlink, source, self.make_path("ta\x00rget")
         )
         self.assertTrue(self.os.path.exists(source))
-        self.assertEqual(
-            self.os.listdir(self.os.path.dirname(source)), ["source"]
-        )
+        self.assertEqual(self.os.listdir(self.os.path.dirname(source)), ["source"])
 
     def test_mkdir_raises_on_symlink_in_posix(self):
         self.check_posix_only()
