@@ -245,6 +245,10 @@ class FakeFilesystem:
         # file systems on non-case-sensitive systems and vice verse
         self.is_case_sensitive: bool = not (self._is_windows_fs or self._is_macos)
 
+        # maximum length of a single path component (NAME_MAX), used to
+        # raise ENAMETOOLONG for too long components under Posix
+        self.name_max: int = 255
+
         # by default, we use the configured filesystem
         self.fs_type = FSType.DEFAULT
         base_properties = (
@@ -1214,6 +1218,37 @@ class FakeFilesystem:
             path = self.replace_windows_root(path)
         return self.normpath(path)
 
+    def _check_component_length(self, path: AnyStr) -> None:
+        """Raise OSError(ENAMETOOLONG) if a component of `path` is longer
+        than the maximum length allowed for a path component on the
+        emulated operating system.
+
+        The overlong component is only reported if all preceding components
+        could be resolved, mirroring the behavior of the real OS, which
+        reports the error for the first missing ancestor instead.
+        The check is skipped for Windows, where the limits are more
+        complicated and are not emulated.
+
+        Args:
+            path: The (absolute or relative) path to check.
+
+        Raises:
+            OSError: if the path contains a component that is too long.
+        """
+        if self.is_windows_fs:
+            return
+        path = self.absnormpath(path)
+        components = self._path_components(path)
+        for index, component in enumerate(components):
+            if len(component) > self.name_max:
+                parent_exists = index == 0 or (
+                    self.exists(self._components_to_path(path, components[:index]))
+                    and self.isdir(self._components_to_path(path, components[:index]))
+                )
+                if parent_exists:
+                    self.raise_os_error(errno.ENAMETOOLONG, path)
+                return
+
     def splitpath(self, path: AnyStr) -> tuple[AnyStr, AnyStr]:
         """Mimic os.path.split using the specified path_separator.
 
@@ -1683,6 +1718,7 @@ class FakeFilesystem:
         if path == matching_string(path, self.devnull):
             return path
         path_components = self._path_components(path)
+        self._check_component_length(path)
         resolved_components = self._resolve_components(path, path_components)
         path = self._components_to_path(path, resolved_components)
         # after resolving links, we have to check again for Windows root
@@ -1985,6 +2021,7 @@ class FakeFilesystem:
         if path_str == matching_string(path_str, "."):
             path_str = matching_string(path_str, self.cwd)
         path_str = self._original_path(path_str)
+        self._check_component_length(path_str)
 
         parent_directory, child_name = self.splitpath(path_str)
         if not parent_directory:
@@ -2068,8 +2105,10 @@ class FakeFilesystem:
         new_ends_with_sep = self.ends_with_path_separator(new_path)
         old_path = self.absnormpath(old_path)
         new_path = self.absnormpath(new_path)
+        self._check_component_length(old_path)
         if not self.exists(old_path, check_link=True):
             self.raise_os_error(errno.ENOENT, old_path, 2)
+        self._check_component_length(new_path)
         if ends_with_sep:
             self._handle_broken_link_with_trailing_sep(old_path)
 
@@ -2870,6 +2909,8 @@ class FakeFilesystem:
         except OSError:
             self.raise_os_error(errno.ENOENT, old_path_str)
 
+        self._check_component_length(new_path_normalized)
+
         # Guaranteed to resolve because we either created it or errored earlier
         new_dir_object = self.resolve(
             new_parent_directory, follow_symlinks=follow_symlinks, check_read_perm=False
@@ -2998,6 +3039,7 @@ class FakeFilesystem:
                 self.raise_os_error(errno.ENOENT, base_dir)
 
         dir_name = self.absnormpath(dir_name)
+        self._check_component_length(dir_name)
         if self.exists(dir_name, check_link=True):
             if self.is_windows_fs and dir_name == self.root_dir_name:
                 error_nr = errno.EACCES
@@ -3217,6 +3259,7 @@ class FakeFilesystem:
         """
         norm_path = make_string_path(path)
         norm_path = self.absnormpath(norm_path)
+        self._check_component_length(norm_path)
         if self.ends_with_path_separator(path):
             self._handle_broken_link_with_trailing_sep(norm_path)
         if self.exists(norm_path):
