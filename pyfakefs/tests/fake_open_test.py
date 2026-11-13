@@ -826,6 +826,16 @@ class FakeFileOpenTest(FakeFileOpenTestBase):
             f.truncate()
             self.assertEqual(2, self.os.stat(file_path).st_size)
 
+    def test_truncate_negative_size_raises_einval(self):
+        # Regression test for #1372: the real OS rejects a negative
+        # truncate size with OSError(EINVAL), not with ValueError
+        file_path = self.make_path("foo")
+        self.create_file(file_path, contents="hello")
+        with self.open(file_path, "r+", encoding="utf8") as f:
+            with self.assertRaises(OSError) as cm:
+                f.truncate(-1)
+            self.assertEqual(errno.EINVAL, cm.exception.errno)
+
     def test_that_read_over_end_does_not_reset_position(self):
         # Regression test for #286
         file_path = self.make_path("baz")
