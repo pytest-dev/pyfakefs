@@ -808,7 +808,9 @@ class Patcher:
             return fake_pathlib.FakePathlibModule(fs, from_patcher=True)
 
         def fake_path_module(fs: FakeFilesystem):
-            return fake_pathlib.FakePathlibPathModule(fs, from_patcher=True)
+            # Direct imports need the same class as pathlib.Path, including
+            # for runtime inspection of type annotations.
+            return fake_pathlib_module(fs).Path
 
         self._fake_module_classes = {
             "os": fake_os.FakeOsModule,
