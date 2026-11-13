@@ -178,9 +178,7 @@ class FakeOsModuleTest(FakeOsModuleTestBase):
         directory = self.make_path("foo")
         self.create_dir(directory)
         long_path = self.os.path.join(directory, "a" * 256)
-        self.assert_raises_os_error(
-            errno.ENAMETOOLONG, self.os.listdir, long_path
-        )
+        self.assert_raises_os_error(errno.ENAMETOOLONG, self.os.listdir, long_path)
 
     def test_exists_current_dir(self):
         self.assertTrue(self.os.path.exists("."))
