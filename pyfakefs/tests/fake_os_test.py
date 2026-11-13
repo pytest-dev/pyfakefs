@@ -1621,6 +1621,65 @@ class FakeOsModuleTest(FakeOsModuleTestBase):
         self.assertFalse(self.os.path.exists(parent))
         self.assert_raises_os_error(errno.ENOENT, self.os.mkdir, directory)
 
+    def test_mkdir_raises_on_embedded_null_byte(self):
+        """mkdir raises ValueError for a path containing a null byte."""
+        self.assertRaises(
+            ValueError, self.os.mkdir, self.make_path("di\x00r")
+        )
+        self.assertFalse(self.os.path.exists(self.make_path("di\x00r")))
+
+    def test_raises_on_embedded_null_byte(self):
+        """OS operations reject paths with an embedded null byte,
+        like the real OS."""
+        path = self.make_path("file_na\x00me")
+        self.assertRaises(ValueError, self.os.stat, path)
+        self.assertRaises(ValueError, self.os.listdir, path)
+        self.assertRaises(ValueError, self.os.chmod, path, 0o755)
+        self.assertRaises(ValueError, self.os.makedirs, path)
+        self.assertFalse(self.os.path.exists(path))
+        self.assertFalse(self.os.path.isdir(path))
+        self.assertFalse(self.os.path.islink(path))
+
+    def test_open_raises_on_embedded_null_byte(self):
+        path = self.make_path("file_na\x00me")
+        self.assertRaises(
+            ValueError, self.os.open, path, os.O_CREAT | os.O_WRONLY
+        )
+        self.assertFalse(self.os.path.exists(path))
+
+    def test_rename_raises_on_embedded_null_byte(self):
+        source = self.make_path("source")
+        self.createTestFile(source)
+        self.assertRaises(
+            ValueError, self.os.rename, source, self.make_path("ta\x00rget")
+        )
+        self.assertTrue(self.os.path.exists(source))
+        self.assertEqual(
+            self.os.listdir(self.os.path.dirname(source)), ["source"]
+        )
+
+    def test_link_raises_on_embedded_null_byte(self):
+        source = self.make_path("source")
+        self.createTestFile(source)
+        self.assertRaises(
+            ValueError, self.os.link, source, self.make_path("ta\x00rget")
+        )
+        self.assertTrue(self.os.path.exists(source))
+        self.assertEqual(
+            self.os.listdir(self.os.path.dirname(source)), ["source"]
+        )
+
+    def test_symlink_raises_on_embedded_null_byte(self):
+        source = self.make_path("source")
+        self.createTestFile(source)
+        self.assertRaises(
+            ValueError, self.os.symlink, source, self.make_path("ta\x00rget")
+        )
+        self.assertTrue(self.os.path.exists(source))
+        self.assertEqual(
+            self.os.listdir(self.os.path.dirname(source)), ["source"]
+        )
+
     def test_mkdir_raises_on_symlink_in_posix(self):
         self.check_posix_only()
         base_path = self.make_path("foo", "bar")
