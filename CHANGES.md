@@ -7,10 +7,8 @@ The released versions correspond to PyPI releases.
 
 ### Fixes
 
-* fixed path operations with a too long path component (over 255 characters
-  under Posix) silently succeeding instead of raising `ENAMETOOLONG`
-  in the fake filesystem, for example in `os.mkdir`, `os.stat`, `os.listdir`,
-  `os.remove`, `os.truncate`, `os.rename`, `os.link` and file open
+* path operations on paths with too long path components now correctly raise
+  `ENAMETOOLONG` under Posix
   (see [issue #1374](https://github.com/pytest-dev/pyfakefs/issues/1374))
 
 * fixed `os.makedirs` failing with `FileExistsError` when creating a fresh
