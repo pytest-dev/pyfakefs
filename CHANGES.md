@@ -7,6 +7,10 @@ The released versions correspond to PyPI releases.
 
 ### Fixes
 
+* path operations on paths with too long path components now correctly raise
+  `ENAMETOOLONG` under Posix
+  (see [issue #1374](https://github.com/pytest-dev/pyfakefs/issues/1374))
+
 * fixed `os.makedirs` failing with `FileExistsError` when creating a fresh
   directory with a path ending in `/.` (e.g. `os.makedirs("foo/bar/.")`)
   (see [issue #1370](https://github.com/pytest-dev/pyfakefs/issues/1370))

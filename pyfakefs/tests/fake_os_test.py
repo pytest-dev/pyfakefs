@@ -172,6 +172,14 @@ class FakeOsModuleTest(FakeOsModuleTestBase):
         self.create_file(file_path)
         self.assert_raises_os_error(errno.ENOTDIR, self.os.listdir, file_path)
 
+    def test_listdir_raises_if_component_too_long_posix(self):
+        """listdir raises ENAMETOOLONG if a path component is too long."""
+        self.check_posix_only()
+        directory = self.make_path("foo")
+        self.create_dir(directory)
+        long_path = self.os.path.join(directory, "a" * 256)
+        self.assert_raises_os_error(errno.ENAMETOOLONG, self.os.listdir, long_path)
+
     def test_exists_current_dir(self):
         self.assertTrue(self.os.path.exists("."))
 
@@ -291,6 +299,14 @@ class FakeOsModuleTest(FakeOsModuleTestBase):
         self.assertTrue(stat.S_IFREG & self.os.stat(file_path)[stat.ST_MODE])
         self.assertTrue(stat.S_IFREG & self.os.stat(file_path).st_mode)
         self.assertEqual(5, self.os.stat(file_path)[stat.ST_SIZE])
+
+    def test_stat_raises_if_component_too_long_posix(self):
+        """stat raises ENAMETOOLONG if a path component is too long."""
+        self.check_posix_only()
+        directory = self.make_path("foo")
+        self.create_dir(directory)
+        long_path = self.os.path.join(directory, "a" * 256)
+        self.assert_raises_os_error(errno.ENAMETOOLONG, self.os.stat, long_path)
 
     def test_st_blocks(self):
         self.check_posix_only()
@@ -837,6 +853,12 @@ class FakeOsModuleTest(FakeOsModuleTestBase):
         self.os.remove(file_path)
         self.assertFalse(self.os.path.exists(file_path))
 
+    def test_remove_raises_if_component_too_long_posix(self):
+        """remove raises ENAMETOOLONG if a path component is too long."""
+        self.check_posix_only()
+        long_file_path = self.make_path("a" * 256)
+        self.assert_raises_os_error(errno.ENAMETOOLONG, self.os.remove, long_file_path)
+
     def test_remove_file_no_directory(self):
         directory = self.make_path("zzy")
         file_name = "plugh"
@@ -967,6 +989,28 @@ class FakeOsModuleTest(FakeOsModuleTestBase):
         self.assertFalse(self.os.path.exists(old_file_path))
         self.assertTrue(self.os.path.exists(new_file_path))
         self.check_contents(new_file_path, "test contents")
+
+    def test_rename_raises_if_new_component_too_long_posix(self):
+        """rename raises ENAMETOOLONG if a new path component is too long."""
+        self.check_posix_only()
+        directory = self.make_path("xyzzy")
+        old_file_path = self.os.path.join(directory, "plugh_old")
+        new_file_path = self.os.path.join(directory, "a" * 256)
+        self.create_file(old_file_path)
+        self.assert_raises_os_error(
+            errno.ENAMETOOLONG, self.os.rename, old_file_path, new_file_path
+        )
+
+    def test_rename_raises_if_old_component_too_long_posix(self):
+        """rename raises ENAMETOOLONG if an old path component is too long."""
+        self.check_posix_only()
+        directory = self.make_path("xyzzy")
+        self.create_dir(directory)
+        old_file_path = self.os.path.join(directory, "a" * 256)
+        new_file_path = self.os.path.join(directory, "plugh_new")
+        self.assert_raises_os_error(
+            errno.ENAMETOOLONG, self.os.rename, old_file_path, new_file_path
+        )
 
     def test_rename_dir_to_symlink_posix(self):
         self.check_posix_only()
@@ -1648,6 +1692,14 @@ class FakeOsModuleTest(FakeOsModuleTestBase):
         self.create_dir(directory)
         self.assertTrue(self.os.path.exists(directory))
         self.assert_raises_os_error(errno.EEXIST, self.os.mkdir, directory)
+
+    def test_mkdir_raises_if_component_too_long_posix(self):
+        """mkdir raises ENAMETOOLONG if a path component is too long."""
+        self.check_posix_only()
+        directory = self.make_path("xyzzy")
+        self.create_dir(directory)
+        long_directory = self.os.path.join(directory, "a" * 256)
+        self.assert_raises_os_error(errno.ENAMETOOLONG, self.os.mkdir, long_directory)
 
     def test_mkdir_raises_if_file_exists(self):
         """mkdir raises exception if name already exists as a file."""
@@ -2624,6 +2676,18 @@ class FakeOsModuleTest(FakeOsModuleTestBase):
                 errno.ENOTDIR, self.os.link, file_path + self.os.sep, link_path
             )
 
+    def test_link_raises_if_component_too_long_posix(self):
+        """link raises ENAMETOOLONG if a destination component is too long."""
+        self.check_posix_only()
+        skip_if_symlink_not_supported()
+        file_path = self.make_path("foo")
+        with self.open(file_path, "w", encoding="utf8"):
+            pass
+        long_link_path = self.make_path("a" * 256)
+        self.assert_raises_os_error(
+            errno.ENAMETOOLONG, self.os.link, file_path, long_link_path
+        )
+
     def test_link_to_path_ending_with_sep_posix(self):
         # regression test for #407
         self.check_posix_only()
@@ -3023,6 +3087,14 @@ class FakeOsModuleTest(FakeOsModuleTestBase):
 
     def test_truncate_non_existing(self):
         self.assert_raises_os_error(errno.ENOENT, self.os.truncate, "foo", 10)
+
+    def test_truncate_raises_if_component_too_long_posix(self):
+        """truncate raises ENAMETOOLONG if a path component is too long."""
+        self.check_posix_only()
+        long_file_path = self.make_path("a" * 256)
+        self.assert_raises_os_error(
+            errno.ENAMETOOLONG, self.os.truncate, long_file_path, 10
+        )
 
     def test_truncate_to_larger(self):
         file_path = self.make_path("foo", "bar")
