@@ -122,6 +122,7 @@ from pyfakefs.helpers import (
     AnyPath,
     AnyString,
     FSType,
+    check_for_null_bytes,
     is_int_type,
     make_string_path,
     matching_string,
@@ -1667,9 +1668,7 @@ class FakeFilesystem:
         if path is None:
             # file.open(None) raises TypeError, so mimic that.
             raise TypeError("Expected file system path string, received None")
-        if matching_string(path, "\x00") in path:
-            # the real OS refuses NUL bytes inside path components
-            raise ValueError(f"embedded null character in path: {path!r}")
+        check_for_null_bytes(path)
         if sys.platform == "win32" and self.os != OSType.WINDOWS:
             path = path.replace(
                 matching_string(path, os.sep),
@@ -1977,9 +1976,7 @@ class FakeFilesystem:
             OSError: if the object is not found.
         """
         path_str = make_string_path(path)
-        if matching_string(path_str, "\x00") in path_str:
-            # the real OS refuses NUL bytes inside path components
-            raise ValueError(f"embedded null character in path: {path_str!r}")
+        check_for_null_bytes(path_str)
         if not path_str:
             self.raise_os_error(errno.ENOENT, path_str)
         if path_str == matching_string(path_str, self.root.name):
@@ -2027,12 +2024,7 @@ class FakeFilesystem:
                 directory.
         """
         obj_name: str | bytes = make_string_path(file_object.name)
-        # the real OS refuses NUL bytes inside path components
-        if isinstance(obj_name, bytes):
-            if b"\x00" in obj_name:
-                raise ValueError(f"embedded null character in path: {obj_name!r}")
-        elif "\x00" in obj_name:
-            raise ValueError(f"embedded null character in path: {obj_name!r}")
+        check_for_null_bytes(obj_name)
         if not file_path:
             target_directory = self.root_dir
         else:
@@ -2077,9 +2069,8 @@ class FakeFilesystem:
         """
         old_path = make_string_path(old_file_path)
         new_path = make_string_path(new_file_path)
-        for path in (old_path, new_path):
-            if matching_string(path, "\x00") in path:
-                raise ValueError(f"embedded null character in path: {path!r}")
+        check_for_null_bytes(old_path)
+        check_for_null_bytes(new_path)
         ends_with_sep = self.ends_with_path_separator(old_path)
         new_ends_with_sep = self.ends_with_path_separator(new_path)
         old_path = self.absnormpath(old_path)
@@ -2795,9 +2786,7 @@ class FakeFilesystem:
         """
         link_path = self.make_string_path(file_path)
         link_target_path = self.make_string_path(link_target)
-        if matching_string(link_path, "\x00") in link_path:
-            # the real OS refuses NUL bytes inside path components
-            raise ValueError(f"embedded null character in path: {link_path!r}")
+        check_for_null_bytes(link_path)
         link_path = self.normcase(link_path)
         # the link path cannot end with a path separator
         if self.ends_with_path_separator(link_path):
@@ -2863,9 +2852,7 @@ class FakeFilesystem:
         """
         old_path_str = make_string_path(old_path)
         new_path_str = make_string_path(new_path)
-        if matching_string(new_path_str, "\x00") in new_path_str:
-            # the real OS refuses NUL bytes inside path components
-            raise ValueError(f"embedded null character in path: {new_path_str!r}")
+        check_for_null_bytes(new_path_str)
         new_path_normalized = self.absnormpath(new_path_str)
         if self.exists(new_path_normalized, check_link=True):
             self.raise_os_error(errno.EEXIST, new_path_str)
