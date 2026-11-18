@@ -1632,7 +1632,11 @@ class FakeOsModuleTest(FakeOsModuleTestBase):
         path = self.make_path("file_na\x00me")
         self.assertRaises(ValueError, self.os.stat, path)
         self.assertRaises(ValueError, self.os.listdir, path)
-        self.assertRaises(ValueError, self.os.chmod, path, 0o755)
+        if IS_PYPY:
+            # the real `os.chmod` in PyPy raises `TypeError` instead of `ValueError`
+            self.assertRaises((TypeError, ValueError), self.os.chmod, path, 0o755)
+        else:
+            self.assertRaises(ValueError, self.os.chmod, path, 0o755)
         self.assertRaises(ValueError, self.os.makedirs, path)
         self.assertFalse(self.os.path.exists(path))
         self.assertFalse(self.os.path.isdir(path))
