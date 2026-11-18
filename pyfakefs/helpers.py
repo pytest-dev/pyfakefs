@@ -218,6 +218,18 @@ def matching_string(  # type: ignore[misc]
     return string  # pytype: disable=bad-return-type
 
 
+def check_for_null_bytes(path: AnyString) -> None:
+    """Raise a `ValueError` if the path contains an embedded null byte,
+    as the real OS refuses null bytes inside path components.
+    """
+    if isinstance(path, bytes):
+        has_null_byte = b"\x00" in path
+    else:
+        has_null_byte = "\x00" in path
+    if has_null_byte:
+        raise ValueError(f"embedded null character in path: {path!r}")
+
+
 def is_unfaked_path(val: Any) -> bool:
     """Return ``True`` if `val` is a path that should not be faked.
     Currently only ``True`` for some pseudo-devices under Posix,

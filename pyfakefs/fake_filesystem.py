@@ -122,6 +122,7 @@ from pyfakefs.helpers import (
     AnyPath,
     AnyString,
     FSType,
+    check_for_null_bytes,
     is_int_type,
     make_string_path,
     matching_string,
@@ -1598,7 +1599,7 @@ class FakeFilesystem:
             if self.is_filepath_ending_with_separator(path):
                 return False
             path = self.resolve_path(path)
-        except OSError:
+        except (OSError, ValueError):
             return False
         if self._is_root_path(path):
             return True
@@ -1667,6 +1668,7 @@ class FakeFilesystem:
         if path is None:
             # file.open(None) raises TypeError, so mimic that.
             raise TypeError("Expected file system path string, received None")
+        check_for_null_bytes(path)
         if sys.platform == "win32" and self.os != OSType.WINDOWS:
             path = path.replace(
                 matching_string(path, os.sep),
@@ -1974,6 +1976,7 @@ class FakeFilesystem:
             OSError: if the object is not found.
         """
         path_str = make_string_path(path)
+        check_for_null_bytes(path_str)
         if not path_str:
             self.raise_os_error(errno.ENOENT, path_str)
         if path_str == matching_string(path_str, self.root.name):
@@ -2020,6 +2023,8 @@ class FakeFilesystem:
             OSError: if file_path does not correspond to a
                 directory.
         """
+        obj_name: str | bytes = make_string_path(file_object.name)
+        check_for_null_bytes(obj_name)
         if not file_path:
             target_directory = self.root_dir
         else:
@@ -2064,6 +2069,8 @@ class FakeFilesystem:
         """
         old_path = make_string_path(old_file_path)
         new_path = make_string_path(new_file_path)
+        check_for_null_bytes(old_path)
+        check_for_null_bytes(new_path)
         ends_with_sep = self.ends_with_path_separator(old_path)
         new_ends_with_sep = self.ends_with_path_separator(new_path)
         old_path = self.absnormpath(old_path)
@@ -2779,6 +2786,7 @@ class FakeFilesystem:
         """
         link_path = self.make_string_path(file_path)
         link_target_path = self.make_string_path(link_target)
+        check_for_null_bytes(link_path)
         link_path = self.normcase(link_path)
         # the link path cannot end with a path separator
         if self.ends_with_path_separator(link_path):
@@ -2844,6 +2852,7 @@ class FakeFilesystem:
         """
         old_path_str = make_string_path(old_path)
         new_path_str = make_string_path(new_path)
+        check_for_null_bytes(new_path_str)
         new_path_normalized = self.absnormpath(new_path_str)
         if self.exists(new_path_normalized, check_link=True):
             self.raise_os_error(errno.EEXIST, new_path_str)
@@ -3109,7 +3118,7 @@ class FakeFilesystem:
                     file_path, obj, macos_handling=not follow_symlinks
                 )
                 return S_IFMT(obj.st_mode) == st_flag
-        except OSError:
+        except (OSError, ValueError):
             return False
         return False
 
