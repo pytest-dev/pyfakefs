@@ -23,6 +23,7 @@ import importlib.util
 import multiprocessing
 import os
 import pathlib
+import posixpath
 import runpy
 import shutil
 import sys
@@ -814,6 +815,78 @@ class PathlibTest(TestCase):
         dot_abs = pathlib.Path(".").absolute()
         self.assertEqual(root_dir, str(dot_abs))
         self.assertTrue(dot_abs.exists())
+
+
+@unittest.skipIf(sys.platform == "win32", "Requires a native POSIX path parser")
+class RealPathCacheTest(TestCase):
+    """Regression tests for real path cache contamination in #1359."""
+
+    def assert_path_identity(self, root, real_type):
+        equivalent = real_type(str(root))
+        different_case = real_type(str(root).lower())
+        self.assertEqual(root, equivalent)
+        self.assertNotEqual(root, different_case)
+        self.assertEqual(hash(root), hash(equivalent))
+        self.assertEqual({root: "value"}[equivalent], "value")
+        self.assertEqual(str((equivalent / "src").relative_to(root)), "src")
+        self.assertIn(root, (equivalent / "src").parents)
+
+    def test_real_path_identity_before_during_and_after_patching(self):
+        for use_cache in (False, True):
+            for prime_cache in (False, True):
+                for fake_os in (OSType.LINUX, OSType.MACOS, OSType.WINDOWS):
+                    with self.subTest(
+                        use_cache=use_cache, prime_cache=prime_cache, fake_os=fake_os
+                    ):
+                        root = pathlib.Path("/Home/Project")
+                        real_type = type(root)
+                        if prime_cache:
+                            self.assert_path_identity(root, real_type)
+                        with Patcher(use_cache=use_cache) as patcher:
+                            patcher.fs.os = fake_os
+                            self.assert_path_identity(root, real_type)
+                        self.assert_path_identity(root, real_type)
+
+    def test_preexisting_path_iteration_uses_fake_filesystem(self):
+        root = pathlib.Path("/Home/Project")
+        real_type = type(root)
+        self.assert_path_identity(root, real_type)
+        with Patcher() as patcher:
+            patcher.fs.create_dir("/Home/Project/src")
+            child = next(root.iterdir())
+            self.assertIs(type(child), real_type)
+            self.assertEqual(str(child.relative_to(root)), "src")
+            self.assertEqual(child.parent, root)
+        self.assert_path_identity(root, real_type)
+
+    def test_real_path_identity_survives_pause_resume_and_second_session(self):
+        root = pathlib.Path("/Home/Project")
+        real_type = type(root)
+        for _ in range(2):
+            with Patcher() as patcher:
+                self.assert_path_identity(root, real_type)
+                with Pause(patcher):
+                    self.assert_path_identity(root, real_type)
+                self.assert_path_identity(root, real_type)
+            self.assert_path_identity(root, real_type)
+
+    def test_real_pure_windows_paths_stay_case_insensitive(self):
+        upper = pathlib.PureWindowsPath("C:/Home/Project")
+        real_type = type(upper)
+        expected_hash = hash(upper)
+        with Patcher():
+            lower = real_type("c:/home/project")
+            self.assertEqual(upper, lower)
+            self.assertEqual(expected_hash, hash(lower))
+            self.assertEqual(str((lower / "src").relative_to(upper)), "src")
+        self.assertEqual(upper, real_type("c:/home/project"))
+
+    def test_regular_posixpath_module_is_still_patched(self):
+        real_exists = posixpath.exists
+        with Patcher() as patcher:
+            patcher.fs.create_file("/synthetic-marker")
+            self.assertTrue(posixpath.exists("/synthetic-marker"))
+        self.assertIs(posixpath.exists, real_exists)
 
 
 class TestDeprecationSuppression(fake_filesystem_unittest.TestCase):
