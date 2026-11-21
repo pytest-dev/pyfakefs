@@ -22,3 +22,8 @@ def pytest_runtest_logreport(report):
         report_path = Path(__file__).parent / "report.txt"
         with open(report_path, "w") as f:
             f.write("Test")
+
+
+@pytest.fixture
+def logreport_hook():
+    return pytest_runtest_logreport
