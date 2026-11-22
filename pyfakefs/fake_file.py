@@ -828,13 +828,17 @@ class FakeFileWrapper:
         self.name = file_object.opened_as
         self.filedes: int | None = None
 
-    def __getattribute__(self, name):  # type: ignore[override]
-        # Attributes of FakeFileWrapper and of the instance take precedence
-        # over those of the io base class a subclass derives from;
-        # everything else is delegated to the wrapped stream via __getattr__.
-        if hasattr(FakeFileWrapper, name) or name in self.__dict__:
-            return object.__getattribute__(self, name)
-        return self.__getattr__(name)
+    if not TYPE_CHECKING:
+
+        def __getattribute__(self, name):
+            # Attributes of FakeFileWrapper and of the instance take precedence
+            # over those of the io base class a subclass derives from;
+            # everything else is delegated to the wrapped stream via __getattr__.
+            # Hidden from type checkers, which would otherwise treat all
+            # attributes of the class as dynamic.
+            if hasattr(FakeFileWrapper, name) or name in self.__dict__:
+                return object.__getattribute__(self, name)
+            return self.__getattr__(name)
 
     @property
     def filesystem(self) -> FakeFilesystem:
