@@ -331,16 +331,8 @@ class FakeFileOpen:
         check_file_permission: bool,
     ) -> FakeFile:
         if file_object:
-            if (
-                check_file_permission
-                and not is_root()
-                and (
-                    (open_modes.can_read and not file_object.has_permission(PERM_READ))
-                    or (
-                        open_modes.can_write
-                        and not file_object.has_permission(PERM_WRITE)
-                    )
-                )
+            if check_file_permission and self._is_access_denied(
+                file_object, open_modes
             ):
                 self.filesystem.raise_os_error(errno.EACCES, file_path)
             if open_modes.can_write and open_modes.truncate:
@@ -369,6 +361,16 @@ class FakeFileOpen:
                 real_path, create_missing_dirs=False, apply_umask=True
             )
         return file_object
+
+    @staticmethod
+    def _is_access_denied(file_object: FakeFile, open_modes: _OpenModes) -> bool:
+        """Return `True` if the current user lacks the permissions needed
+        to open `file_object` with the given modes."""
+        if is_root():
+            return False
+        if open_modes.can_read and not file_object.has_permission(PERM_READ):
+            return True
+        return open_modes.can_write and not file_object.has_permission(PERM_WRITE)
 
     def _handle_file_arg(
         self, file_: AnyStr | int
