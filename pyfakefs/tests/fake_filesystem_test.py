@@ -2913,5 +2913,88 @@ class FileSideEffectTests(TestCase):
         self.assertEqual(self.side_effect_file_object_content, "foo")
 
 
+class OpenFileTableTest(TestCase):
+    class Wrapper:
+        def __init__(self, file_object=None):
+            self.file_object = file_object
+            self.closed = False
+
+        def get_object(self):
+            return self.file_object
+
+        def close(self):
+            self.closed = True
+
+    def setUp(self):
+        self.table = fake_filesystem.OpenFileTable()
+
+    def test_add_returns_consecutive_descriptors(self):
+        self.assertEqual(0, self.table.add(self.Wrapper()))
+        self.assertEqual(1, self.table.add(self.Wrapper()))
+        self.assertEqual(2, self.table.add(self.Wrapper()))
+
+    def test_closed_descriptor_is_reused(self):
+        for _ in range(3):
+            self.table.add(self.Wrapper())
+        self.table.close(1)
+        self.assertIsNone(self.table.open_files[1])
+        self.assertEqual(1, self.table.add(self.Wrapper()))
+        self.assertEqual(3, self.table.add(self.Wrapper()))
+
+    def test_add_with_new_fd_beyond_end_frees_gap(self):
+        self.assertEqual(3, self.table.add(self.Wrapper(), new_fd=3))
+        self.assertEqual(0, self.table.add(self.Wrapper()))
+        self.assertEqual(1, self.table.add(self.Wrapper()))
+
+    def test_add_with_existing_fd_closes_previous_file(self):
+        old_wrapper = self.Wrapper()
+        new_wrapper = self.Wrapper()
+        fd = self.table.add(old_wrapper)
+        self.assertEqual(fd, self.table.add(new_wrapper, new_fd=fd))
+        self.assertTrue(old_wrapper.closed)
+        self.assertIs(new_wrapper, self.table.get(fd))
+
+    def test_get_returns_first_file(self):
+        wrapper = self.Wrapper()
+        fd = self.table.add(wrapper)
+        self.assertIs(wrapper, self.table.get(fd))
+        self.assertEqual([wrapper], self.table.get_all(fd))
+
+    def test_get_invalid_descriptor_raises(self):
+        with self.assertRaises(OSError) as cm:
+            self.table.get(5)
+        self.assertEqual(errno.EBADF, cm.exception.errno)
+        fd = self.table.add(self.Wrapper())
+        self.table.close(fd)
+        with self.assertRaises(OSError) as cm:
+            self.table.get(fd)
+        self.assertEqual(errno.EBADF, cm.exception.errno)
+        self.assertRaises(TypeError, self.table.get, "0")
+
+    def test_has_file(self):
+        file_object = object()
+        self.assertFalse(self.table.has_file(file_object))
+        fd = self.table.add(self.Wrapper(file_object))
+        self.assertTrue(self.table.has_file(file_object))
+        self.table.close(fd)
+        self.assertFalse(self.table.has_file(file_object))
+
+    def test_clear(self):
+        self.table.add(self.Wrapper())
+        self.table.close(self.table.add(self.Wrapper()))
+        self.table.clear()
+        self.assertEqual([], self.table.open_files)
+        self.assertEqual(0, self.table.add(self.Wrapper()))
+
+    def test_filesystem_uses_table(self):
+        filesystem = fake_filesystem.FakeFilesystem()
+        self.assertIs(filesystem.open_files, filesystem.open_file_table.open_files)
+        file_obj = filesystem.create_file("/foo")
+        fd = filesystem.add_open_file(self.Wrapper(file_obj))
+        self.assertTrue(filesystem.open_file_table.has_file(file_obj))
+        filesystem.close_open_file(fd)
+        self.assertFalse(filesystem.has_open_file(file_obj))
+
+
 if __name__ == "__main__":
     unittest.main()
