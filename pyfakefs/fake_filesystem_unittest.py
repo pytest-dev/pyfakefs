@@ -667,7 +667,7 @@ class Patcher:
             if self.DOC_REF_COUNT > 0:
                 return
         elif self.REF_COUNT > 0:
-            if (
+            has_custom_arguments = bool(
                 additional_skip_names
                 or modules_to_reload
                 or modules_to_patch
@@ -677,7 +677,8 @@ class Patcher:
                 or patch_default_args
                 or not use_cache
                 or not use_dynamic_patch
-            ):
+            )
+            if has_custom_arguments:
                 warnings.warn(
                     "Nested fake filesystem invocation using custom arguments - "
                     "using the existing fake filesystem, discarding custom arguments!"
