@@ -723,8 +723,8 @@ class Patcher:
         self.fake_modules: dict[str, Any] = {}
         self.unfaked_modules: dict[str, Any] = {}
 
-        # _isStale is set by tearDown(), reset by _refresh()
-        self._isStale = True
+        # _is_stale is set by tearDown(), reset by _refresh()
+        self._is_stale = True
         self._dyn_patcher: DynamicPatcher | None = None
         self._patching = False
         self._paused = False
@@ -1023,7 +1023,7 @@ class Patcher:
                 self.__class__.CACHED_MODULES.add(module)
 
     def _refresh(self) -> None:
-        """Renew the fake file system and set the _isStale flag to `False`."""
+        """Renew the fake file system and set the _is_stale flag to `False`."""
         if self._stubs is not None:
             self._stubs.smart_unset_all()
         self._stubs = mox3_stubout.StubOutForTesting()
@@ -1043,7 +1043,7 @@ class Patcher:
         for name in self._unfaked_module_classes:
             self.unfaked_modules[name] = self._unfaked_module_classes[name]()
 
-        self._isStale = False
+        self._is_stale = False
 
     def setUp(self, doctester: Any = None) -> None:
         """Bind the file-related modules to the :py:mod:`pyfakefs` fake
@@ -1160,7 +1160,7 @@ class Patcher:
 
     def replace_globs(self, globs_: dict[str, Any]) -> dict[str, Any]:
         globs = globs_.copy()
-        if self._isStale:
+        if self._is_stale:
             self._refresh()
         for name in self._fake_module_classes:
             if name in globs:
@@ -1187,7 +1187,7 @@ class Patcher:
 
     def stop_patching(self, temporary=False) -> None:
         if self._patching:
-            self._isStale = True
+            self._is_stale = True
             self._patching = False
             self._paused = temporary
             if self._stubs:
