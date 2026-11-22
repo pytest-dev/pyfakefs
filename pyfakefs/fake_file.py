@@ -872,7 +872,7 @@ class FakeFileWrapper:
         """Close the file for the given file descriptor."""
 
         # ignore closing a closed file
-        if not self._is_open():
+        if not self.filesystem.open_file_table.is_open(self):
             return
 
         # for raw io, all writes are flushed immediately
@@ -894,9 +894,7 @@ class FakeFileWrapper:
         if self._closefd:
             self.filesystem.close_open_file(fd)
         else:
-            open_files = self.filesystem.open_files[fd]
-            assert open_files is not None
-            open_files.remove(self)
+            self.filesystem.open_file_table.remove(fd, self)
         if self.delete_on_close:
             self.filesystem.remove_object(
                 self.get_object().path  # type: ignore[arg-type]
@@ -905,7 +903,7 @@ class FakeFileWrapper:
     @property
     def closed(self) -> bool:
         """Simulate the `closed` attribute on file."""
-        return not self._is_open()
+        return not self.filesystem.open_file_table.is_open(self)
 
     @property
     def mode(self) -> str:
@@ -1277,15 +1275,8 @@ class FakeFileWrapper:
 
         return write_error
 
-    def _is_open(self) -> bool:
-        if self.filedes is not None and self.filedes < len(self.filesystem.open_files):
-            open_files = self.filesystem.open_files[self.filedes]
-            if open_files is not None and self in open_files:
-                return True
-        return False
-
     def _check_open_file(self) -> None:
-        if not self.is_stream and not self._is_open():
+        if not self.is_stream and not self.filesystem.open_file_table.is_open(self):
             raise ValueError("I/O operation on closed file")
 
     def __iter__(self) -> Iterator[str] | Iterator[bytes]:
@@ -1495,9 +1486,7 @@ class FakePipeWrapper:
         """Close the pipe descriptor with the given file descriptor."""
         fs = self._filesystem()
         assert fs is not None and fd is not None
-        open_files = fs.open_files[fd]
-        assert open_files is not None
-        open_files.remove(self)
+        fs.open_file_table.remove(fd, self)
         if self.real_file:
             self.real_file.close()
         else:

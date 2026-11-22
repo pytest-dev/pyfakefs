@@ -2918,6 +2918,7 @@ class OpenFileTableTest(TestCase):
         def __init__(self, file_object=None):
             self.file_object = file_object
             self.closed = False
+            self.filedes = None
 
         def get_object(self):
             return self.file_object
@@ -2978,6 +2979,25 @@ class OpenFileTableTest(TestCase):
         self.assertTrue(self.table.has_file(file_object))
         self.table.close(fd)
         self.assertFalse(self.table.has_file(file_object))
+
+    def test_is_open(self):
+        wrapper = self.Wrapper()
+        self.assertFalse(self.table.is_open(wrapper))
+        wrapper.filedes = self.table.add(wrapper)
+        self.assertTrue(self.table.is_open(wrapper))
+        self.table.close(wrapper.filedes)
+        self.assertFalse(self.table.is_open(wrapper))
+
+    def test_remove_keeps_descriptor_open_for_other_files(self):
+        wrapper1 = self.Wrapper()
+        wrapper2 = self.Wrapper()
+        fd = self.table.add(wrapper1)
+        self.table.get_all(fd).append(wrapper2)
+        wrapper1.filedes = wrapper2.filedes = fd
+        self.table.remove(fd, wrapper1)
+        self.assertFalse(self.table.is_open(wrapper1))
+        self.assertTrue(self.table.is_open(wrapper2))
+        self.assertIs(wrapper2, self.table.get(fd))
 
     def test_clear(self):
         self.table.add(self.Wrapper())

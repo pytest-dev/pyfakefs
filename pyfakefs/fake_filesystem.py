@@ -279,6 +279,22 @@ class OpenFileTable:
             wrappers[0].get_object() for wrappers in self.open_files if wrappers
         ]
 
+    def is_open(self, file_obj: AnyFileWrapper) -> bool:
+        """Return `True` if `file_obj` is open under its file descriptor."""
+        fd = file_obj.filedes
+        if fd is not None and fd < len(self.open_files):
+            open_files = self.open_files[fd]
+            if open_files is not None and file_obj in open_files:
+                return True
+        return False
+
+    def remove(self, file_des: int, file_obj: AnyFileWrapper) -> None:
+        """Remove `file_obj` from the files open under `file_des`, without
+        closing the descriptor for other files sharing it."""
+        open_files = self.open_files[file_des]
+        assert open_files is not None
+        open_files.remove(file_obj)
+
     @staticmethod
     def _raise_bad_file_descriptor(file_des: int) -> NoReturn:
         raise OSError(errno.EBADF, os.strerror(errno.EBADF), str(file_des))
