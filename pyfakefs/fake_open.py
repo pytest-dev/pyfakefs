@@ -212,26 +212,8 @@ class FakeFileOpen:
             file_
         )
         if file_object is None and file_path is None:
-            # file must be a fake pipe wrapper, find it...
-            if (
-                filedes is None
-                or len(self.filesystem.open_files) <= filedes
-                or not self.filesystem.open_files[filedes]
-            ):
-                raise OSError(errno.EBADF, "invalid pipe file descriptor")
-            wrappers = self.filesystem.open_files[filedes]
-            assert wrappers is not None
-            existing_wrapper = wrappers[0]
-            assert isinstance(existing_wrapper, FakePipeWrapper)
-            wrapper = FakePipeWrapper(
-                self.filesystem,
-                existing_wrapper.fd,
-                existing_wrapper.can_write,
-                mode,
-            )
-            file_des = self.filesystem.add_open_file(wrapper)
-            wrapper.filedes = file_des
-            return wrapper
+            # file must be a fake pipe wrapper
+            return self._open_pipe_wrapper(filedes, mode)
 
         assert file_path is not None
         if not filedes:
@@ -298,6 +280,27 @@ class FakeFileOpen:
         else:
             fakefile.filedes = self.filesystem.add_open_file(fakefile)
         return fakefile
+
+    def _open_pipe_wrapper(self, filedes: int | None, mode: str) -> FakePipeWrapper:
+        """Return a new wrapper for the fake pipe open under `filedes`."""
+        if (
+            filedes is None
+            or len(self.filesystem.open_files) <= filedes
+            or not self.filesystem.open_files[filedes]
+        ):
+            raise OSError(errno.EBADF, "invalid pipe file descriptor")
+        wrappers = self.filesystem.open_files[filedes]
+        assert wrappers is not None
+        existing_wrapper = wrappers[0]
+        assert isinstance(existing_wrapper, FakePipeWrapper)
+        wrapper = FakePipeWrapper(
+            self.filesystem,
+            existing_wrapper.fd,
+            existing_wrapper.can_write,
+            mode,
+        )
+        wrapper.filedes = self.filesystem.add_open_file(wrapper)
+        return wrapper
 
     @staticmethod
     def _open_flags_from_open_modes(open_modes: _OpenModes) -> int:
