@@ -828,6 +828,14 @@ class FakeFileWrapper:
         self.name = file_object.opened_as
         self.filedes: int | None = None
 
+    if not TYPE_CHECKING:  # avoid type checker warnings
+
+        def __getattribute__(self, name):
+            """Delegate unhandled attributes to the wrapped stream."""
+            if hasattr(FakeFileWrapper, name) or name in self.__dict__:
+                return object.__getattribute__(self, name)
+            return self.__getattr__(name)
+
     @property
     def filesystem(self) -> FakeFilesystem:
         fs = self._filesystem()
@@ -1306,11 +1314,6 @@ class FakeTextFileWrapper(FakeFileWrapper, io.TextIOBase):  # type: ignore[misc]
     to `FakeFileWrapper`.
     """
 
-    def __getattribute__(self, name):  # type: ignore[override]
-        if hasattr(FakeFileWrapper, name) or name in self.__dict__:
-            return FakeFileWrapper.__getattribute__(self, name)
-        return self.__getattr__(name)
-
 
 class FakeBinaryFileWrapper(FakeFileWrapper, io.BufferedIOBase):  # type: ignore[misc]
     """Represents a buffered binary file wrapper.
@@ -1318,11 +1321,6 @@ class FakeBinaryFileWrapper(FakeFileWrapper, io.BufferedIOBase):  # type: ignore
     if the type is checked by a library user, while it delegates all calls
     to `FakeFileWrapper`.
     """
-
-    def __getattribute__(self, name):  # type: ignore[override]
-        if hasattr(FakeFileWrapper, name) or name in self.__dict__:
-            return FakeFileWrapper.__getattribute__(self, name)
-        return self.__getattr__(name)
 
 
 class StandardStreamWrapper:
