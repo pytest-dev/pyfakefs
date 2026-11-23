@@ -1055,10 +1055,6 @@ class FakeFilesystem:
         file descriptor number."""
         return self.open_file_table.open_files
 
-    @open_files.setter
-    def open_files(self, value: list[list[AnyFileWrapper] | None]) -> None:
-        self.open_file_table.open_files = value
-
     def add_open_file(self, file_obj: AnyFileWrapper, new_fd: int = -1) -> int:
         """Add file_obj to the list of open files on the filesystem.
         Used internally to manage open files.

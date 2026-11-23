@@ -722,7 +722,7 @@ class FakeFilesystemUnitTest(TestCase):
         """Regression test for #445"""
         import pickle
 
-        self.filesystem.open_files = []
+        self.filesystem.open_file_table.clear()
         p = pickle.dumps(self.filesystem)
         fs = pickle.loads(p)
         self.assertEqual(str(fs.root), str(self.filesystem.root))
