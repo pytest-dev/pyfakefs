@@ -255,22 +255,12 @@ class OpenFileTable:
             OSError: an invalid file descriptor.
             TypeError: filedes is not an integer.
         """
-        try:
-            return self.get_all(file_des)[0]
-        except IndexError:
-            self._raise_bad_file_descriptor(file_des)
-
-    def get_all(self, file_des: int) -> list[AnyFileWrapper]:
-        """Return the list of open files for the given file descriptor.
-
-        Raises:
-            OSError: an invalid file descriptor.
-            TypeError: filedes is not an integer.
-        """
         if not is_int_type(file_des):
             raise TypeError("an integer is required")
         if file_des < len(self.open_files):
-            return self.open_files[file_des] or []
+            open_files = self.open_files[file_des]
+            if open_files:
+                return open_files[0]
         self._raise_bad_file_descriptor(file_des)
 
     def has_file(self, file_object: FakeFile) -> bool:
@@ -1096,21 +1086,6 @@ class FakeFilesystem:
             Open file object.
         """
         return self.open_file_table.get(file_des)
-
-    def get_open_files(self, file_des: int) -> list[AnyFileWrapper]:
-        """Return the list of open files for a file descriptor.
-
-        Args:
-            file_des: File descriptor of the open files.
-
-        Raises:
-            OSError: an invalid file descriptor.
-            TypeError: filedes is not an integer.
-
-        Returns:
-            List of open file objects.
-        """
-        return self.open_file_table.get_all(file_des)
 
     def has_open_file(self, file_object: FakeFile) -> bool:
         """Return `True` if the given file object is in the list of open files.

@@ -2959,7 +2959,6 @@ class OpenFileTableTest(TestCase):
         wrapper = self.Wrapper()
         fd = self.table.add(wrapper)
         self.assertIs(wrapper, self.table.get(fd))
-        self.assertEqual([wrapper], self.table.get_all(fd))
 
     def test_get_invalid_descriptor_raises(self):
         with self.assertRaises(OSError) as cm:
@@ -2992,7 +2991,9 @@ class OpenFileTableTest(TestCase):
         wrapper1 = self.Wrapper()
         wrapper2 = self.Wrapper()
         fd = self.table.add(wrapper1)
-        self.table.get_all(fd).append(wrapper2)
+        open_files = self.table.open_files[fd]
+        assert open_files is not None
+        open_files.append(wrapper2)
         wrapper1.filedes = wrapper2.filedes = fd
         self.table.remove(fd, wrapper1)
         self.assertFalse(self.table.is_open(wrapper1))
