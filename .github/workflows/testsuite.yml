@@ -1,7 +1,7 @@
 name: Testsuite
 
 on:
-  [push, pull_request]
+  [ push, pull_request ]
 
 defaults:
   run:
@@ -11,17 +11,17 @@ jobs:
   pytype:
     runs-on: ubuntu-latest
     steps:
-    - name: Check out repository
-      uses: actions/checkout@v7
-    - name: Set up Python
-      uses: actions/setup-python@v7
-      with:
-        python-version: "3.10"
-    - name: install pytype
-      run: pip install setuptools pytype pytest pandas xlrd django pyarrow
-    - name: Run pytype
-      run: |
-        pytype pyfakefs --keep-going --exclude pyfakefs/tests/* --exclude pyfakefs/pytest_tests/*
+      - name: Check out repository
+        uses: actions/checkout@v7
+      - name: Set up Python
+        uses: actions/setup-python@v7
+        with:
+          python-version: "3.10"
+      - name: install pytype
+        run: pip install setuptools pytype pytest pandas xlrd django pyarrow
+      - name: Run pytype
+        run: |
+          pytype pyfakefs --keep-going --exclude pyfakefs/tests/* --exclude pyfakefs/pytest_tests/*
 
   tests:
     runs-on: ${{ matrix.os }}
@@ -31,68 +31,68 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, macOS-latest, windows-latest]
-        python-version: ["3.10", "3.11", "3.12", "3.13", "3.14", "3.15", "pypy-3.10", "pypy-3.11"]
+        os: [ ubuntu-latest, macOS-latest, windows-latest ]
+        python-version: [ "3.10", "3.11", "3.12", "3.13", "3.14", "3.15", "pypy-3.10", "pypy-3.11" ]
 
     steps:
-    - uses: actions/checkout@v7
-    - name: Set up Python ${{ matrix.python-version }}
-      uses: actions/setup-python@v7
-      with:
-        python-version: ${{ matrix.python-version }}
-        allow-prereleases: true
+      - uses: actions/checkout@v7
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v7
+        with:
+          python-version: ${{ matrix.python-version }}
+          allow-prereleases: true
 
-    - name: Get pip cache dir
-      id: pip-cache
-      shell: bash
-      run: |
-        python -m pip install --upgrade pip
-        echo "dir=$(pip cache dir)" >> $GITHUB_OUTPUT
+      - name: Get pip cache dir
+        id: pip-cache
+        shell: bash
+        run: |
+          python -m pip install --upgrade pip
+          echo "dir=$(pip cache dir)" >> $GITHUB_OUTPUT
 
-    - name: Cache dependencies
-      id: cache-dep
-      uses: actions/cache@v6
-      with:
-        path: ${{ steps.pip-cache.outputs.dir }}
-        key: ${{ matrix.os }}-${{ matrix.python-version }}-pip-${{ hashFiles('**/pyproject.toml') }}
-        restore-keys: |
-          ${{ matrix.os }}-${{ matrix.python-version }}-pip-
+      - name: Cache dependencies
+        id: cache-dep
+        uses: actions/cache@v6
+        with:
+          path: ${{ steps.pip-cache.outputs.dir }}
+          key: ${{ matrix.os }}-${{ matrix.python-version }}-pip-${{ hashFiles('**/pyproject.toml') }}
+          restore-keys: |
+            ${{ matrix.os }}-${{ matrix.python-version }}-pip-
 
-    - name: Install dependencies
-      run: |
-        pip install setuptools wheel
-        pip install --group dev
-    - name: Run unit tests without extra packages as non-root user
-      run: |
-        export TEST_REAL_FS=1
-        python -bb -m pyfakefs.tests.all_tests
-      shell: bash
-    - name: Run unit tests without extra packages as root
-      run: |
-        if [[ '${{ matrix.os }}' != 'windows-latest' ]]; then
-          # provide the same path as non-root to get the correct virtualenv
-          sudo env "PATH=$PATH" python -m pyfakefs.tests.all_tests
-        fi
-      shell: bash
-    - name: Install extra dependencies
-      if: matrix.os != 'windows-latest' || matrix.python-version != 'pypy-3.11'
-      run: |
-        pip install --group extra
-        pip install zstandard cffi  # needed to test #910
-      shell: bash
-    - name: Run unit tests with extra packages as non-root user
-      if: matrix.os != 'windows-latest' || matrix.python-version != 'pypy-3.11'
-      run: |
-        export PYTHON_ZSTANDARD_IMPORT_POLICY=cffi  # needed to test #910
-        python -m pyfakefs.tests.all_tests
-      shell: bash
-    - name: Run performance tests
-      run: |
-        if [[ '${{ matrix.os }}' != 'macOS-latest' ]]; then
-          export TEST_PERFORMANCE=1
-          python -m pyfakefs.tests.performance_test
-        fi
-      shell: bash
+      - name: Install dependencies
+        run: |
+          pip install setuptools wheel
+          pip install --group dev
+      - name: Run unit tests without extra packages as non-root user
+        run: |
+          export TEST_REAL_FS=1
+          python -bb -m pyfakefs.tests.all_tests
+        shell: bash
+      - name: Run unit tests without extra packages as root
+        run: |
+          if [[ '${{ matrix.os }}' != 'windows-latest' ]]; then
+            # provide the same path as non-root to get the correct virtualenv
+            sudo env "PATH=$PATH" python -m pyfakefs.tests.all_tests
+          fi
+        shell: bash
+      - name: Install extra dependencies
+        if: matrix.os != 'windows-latest' || !startsWith(matrix.python-version, 'pypy')
+        run: |
+          pip install --group extra
+          pip install zstandard cffi  # needed to test #910
+        shell: bash
+      - name: Run unit tests with extra packages as non-root user
+        if: matrix.os != 'windows-latest' || !startsWith(matrix.python-version, 'pypy')
+        run: |
+          export PYTHON_ZSTANDARD_IMPORT_POLICY=cffi  # needed to test #910
+          python -m pyfakefs.tests.all_tests
+        shell: bash
+      - name: Run performance tests
+        run: |
+          if [[ '${{ matrix.os }}' != 'macOS-latest' ]]; then
+            export TEST_PERFORMANCE=1
+            python -m pyfakefs.tests.performance_test
+          fi
+        shell: bash
 
   pytest-test:
     runs-on: ${{ matrix.os }}
@@ -101,9 +101,9 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, macOS-latest, windows-latest]
-        python-version: ["3.10", "3.11", "3.12", "3.13"]
-        pytest-version: [6.2.5, 7.0.1, 7.4.4, 8.0.2, 8.4.2, 9.0.3]
+        os: [ ubuntu-latest, macOS-latest, windows-latest ]
+        python-version: [ "3.10", "3.11", "3.12", "3.13" ]
+        pytest-version: [ 6.2.5, 7.0.1, 7.4.4, 8.0.2, 8.4.2, 9.0.3 ]
         include:
           - python-version: "3.14"
             pytest-version: 9.0.3
@@ -140,8 +140,8 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        os: [ubuntu-latest, windows-latest]
-        python-version:  ["3.13"]
+        os: [ ubuntu-latest, windows-latest ]
+        python-version: [ "3.13" ]
     steps:
       - uses: actions/checkout@v7
       - name: Set up Python ${{ matrix.python-version }}

@@ -183,6 +183,114 @@ PERM_DEF_FILE = helpers.PERM_DEF_FILE
 PERM_ALL = helpers.PERM_ALL
 
 
+class OpenFileTable:
+    """Manages the open file descriptors of a fake filesystem.
+
+    The position of an entry in `open_files` is its file descriptor number.
+    Each entry holds the file wrappers opened under that descriptor, or
+    `None` if the descriptor has been closed and can be reused.
+    """
+
+    def __init__(self) -> None:
+        self.open_files: list[list[AnyFileWrapper] | None] = []
+        # A heap containing all free positions in self.open_files list
+        self._free_fd_heap: list[int] = []
+
+    def clear(self) -> None:
+        """Remove all open file descriptors."""
+        self.open_files.clear()
+        self._free_fd_heap.clear()
+
+    def add(self, file_obj: AnyFileWrapper, new_fd: int = -1) -> int:
+        """Add file_obj to the open files and return its file descriptor.
+
+        Args:
+            file_obj: File object to be added to open files list.
+            new_fd: The optional new file descriptor.
+
+        Returns:
+            File descriptor number for the file object.
+        """
+        if new_fd >= 0:
+            size = len(self.open_files)
+            if new_fd < size:
+                open_files = self.open_files[new_fd]
+                if open_files:
+                    for f in open_files:
+                        try:
+                            f.close()
+                        except OSError:
+                            pass
+                if new_fd in self._free_fd_heap:
+                    self._free_fd_heap.remove(new_fd)
+                self.open_files[new_fd] = [file_obj]
+            else:
+                for fd in range(size, new_fd):
+                    self.open_files.append([])
+                    heapq.heappush(self._free_fd_heap, fd)
+                self.open_files.append([file_obj])
+            return new_fd
+
+        if self._free_fd_heap:
+            open_fd = heapq.heappop(self._free_fd_heap)
+            self.open_files[open_fd] = [file_obj]
+            return open_fd
+
+        self.open_files.append([file_obj])
+        return len(self.open_files) - 1
+
+    def close(self, file_des: int) -> None:
+        """Mark the given file descriptor as closed and free for reuse.
+
+        Args:
+            file_des: Descriptor of file object to be removed from
+            open files list.
+        """
+        self.open_files[file_des] = None
+        heapq.heappush(self._free_fd_heap, file_des)
+
+    def get(self, file_des: int) -> AnyFileWrapper:
+        """Return the first open file for the given file descriptor.
+
+        Raises:
+            OSError: an invalid file descriptor.
+            TypeError: filedes is not an integer.
+        """
+        if not is_int_type(file_des):
+            raise TypeError("an integer is required")
+        if file_des < len(self.open_files):
+            open_files = self.open_files[file_des]
+            if open_files:
+                return open_files[0]
+        self._raise_bad_file_descriptor(file_des)
+
+    def has_file(self, file_object: FakeFile) -> bool:
+        """Return `True` if the given file object is open."""
+        return file_object in [
+            wrappers[0].get_object() for wrappers in self.open_files if wrappers
+        ]
+
+    def is_open(self, file_obj: AnyFileWrapper) -> bool:
+        """Return `True` if `file_obj` is open under its file descriptor."""
+        fd = file_obj.filedes
+        if fd is not None and fd < len(self.open_files):
+            open_files = self.open_files[fd]
+            if open_files is not None and file_obj in open_files:
+                return True
+        return False
+
+    def remove(self, file_des: int, file_obj: AnyFileWrapper) -> None:
+        """Remove `file_obj` from the files open under `file_des`, without
+        closing the descriptor for other files sharing it."""
+        open_files = self.open_files[file_des]
+        assert open_files is not None
+        open_files.remove(file_obj)
+
+    @staticmethod
+    def _raise_bad_file_descriptor(file_des: int) -> NoReturn:
+        raise OSError(errno.EBADF, os.strerror(errno.EBADF), str(file_des))
+
+
 class FakeFilesystem:
     """Provides the appearance of a real directory tree for unit testing.
 
@@ -246,6 +354,10 @@ class FakeFilesystem:
         # file systems on non-case-sensitive systems and vice verse
         self.is_case_sensitive: bool = not (self._is_windows_fs or self._is_macos)
 
+        # maximum length of a single path component (NAME_MAX), used to
+        # raise ENAMETOOLONG for too long components under Posix
+        self.name_max: int = 255
+
         # by default, we use the configured filesystem
         self.fs_type = FSType.DEFAULT
         base_properties = (
@@ -268,11 +380,8 @@ class FakeFilesystem:
         self.umask: int = os.umask(0o22)
         os.umask(self.umask)
 
-        # A list of open file objects. Their position in the list is their
-        # file descriptor number
-        self.open_files: list[list[AnyFileWrapper] | None] = []
-        # A heap containing all free positions in self.open_files list
-        self._free_fd_heap: list[int] = []
+        # The open file descriptors and the file objects opened under them
+        self.open_file_table = OpenFileTable()
         # last used numbers for inodes (st_ino) and devices (st_dev)
         self.last_ino: int = 0
         self.last_dev: int = 0
@@ -456,8 +565,7 @@ class FakeFilesystem:
         self.root = FakeDirectory(self.path_separator, filesystem=self)
 
         self.dev_null = FakeNullFile(self)
-        self.open_files.clear()
-        self._free_fd_heap.clear()
+        self.open_file_table.clear()
         self.last_ino = 0
         self.last_dev = 0
         self.mount_points.clear()
@@ -932,6 +1040,12 @@ class FakeFilesystem:
         if ns is not None and len(ns) != 2:
             raise TypeError("utime: 'ns' must be a tuple of two ints")
 
+    @property
+    def open_files(self) -> list[list[AnyFileWrapper] | None]:
+        """The open file objects; their position in the list is their
+        file descriptor number."""
+        return self.open_file_table.open_files
+
     def add_open_file(self, file_obj: AnyFileWrapper, new_fd: int = -1) -> int:
         """Add file_obj to the list of open files on the filesystem.
         Used internally to manage open files.
@@ -945,33 +1059,7 @@ class FakeFilesystem:
         Returns:
             File descriptor number for the file object.
         """
-        if new_fd >= 0:
-            size = len(self.open_files)
-            if new_fd < size:
-                open_files = self.open_files[new_fd]
-                if open_files:
-                    for f in open_files:
-                        try:
-                            f.close()
-                        except OSError:
-                            pass
-                if new_fd in self._free_fd_heap:
-                    self._free_fd_heap.remove(new_fd)
-                self.open_files[new_fd] = [file_obj]
-            else:
-                for fd in range(size, new_fd):
-                    self.open_files.append([])
-                    heapq.heappush(self._free_fd_heap, fd)
-                self.open_files.append([file_obj])
-            return new_fd
-
-        if self._free_fd_heap:
-            open_fd = heapq.heappop(self._free_fd_heap)
-            self.open_files[open_fd] = [file_obj]
-            return open_fd
-
-        self.open_files.append([file_obj])
-        return len(self.open_files) - 1
+        return self.open_file_table.add(file_obj, new_fd)
 
     def close_open_file(self, file_des: int) -> None:
         """Remove file object with given descriptor from the list
@@ -983,8 +1071,7 @@ class FakeFilesystem:
             file_des: Descriptor of file object to be removed from
             open files list.
         """
-        self.open_files[file_des] = None
-        heapq.heappush(self._free_fd_heap, file_des)
+        self.open_file_table.close(file_des)
 
     def get_open_file(self, file_des: int) -> AnyFileWrapper:
         """Return an open file.
@@ -999,30 +1086,7 @@ class FakeFilesystem:
         Returns:
             Open file object.
         """
-        try:
-            return self.get_open_files(file_des)[0]
-        except IndexError:
-            self.raise_os_error(errno.EBADF, str(file_des))
-
-    def get_open_files(self, file_des: int) -> list[AnyFileWrapper]:
-        """Return the list of open files for a file descriptor.
-
-        Args:
-            file_des: File descriptor of the open files.
-
-        Raises:
-            OSError: an invalid file descriptor.
-            TypeError: filedes is not an integer.
-
-        Returns:
-            List of open file objects.
-        """
-        if not is_int_type(file_des):
-            raise TypeError("an integer is required")
-        valid = file_des < len(self.open_files)
-        if valid:
-            return self.open_files[file_des] or []
-        self.raise_os_error(errno.EBADF, str(file_des))
+        return self.open_file_table.get(file_des)
 
     def has_open_file(self, file_object: FakeFile) -> bool:
         """Return `True` if the given file object is in the list of open files.
@@ -1033,9 +1097,7 @@ class FakeFilesystem:
         Returns:
             `True` if the file is open.
         """
-        return file_object in [
-            wrappers[0].get_object() for wrappers in self.open_files if wrappers
-        ]
+        return self.open_file_table.has_file(file_object)
 
     def _normalize_path_sep(self, path: AnyStr) -> AnyStr:
         alt_sep = self.get_alternative_path_separator(path)
@@ -1214,6 +1276,37 @@ class FakeFilesystem:
         else:
             path = self.replace_windows_root(path)
         return self.normpath(path)
+
+    def _check_component_length(self, path: AnyStr) -> None:
+        """Raise OSError(ENAMETOOLONG) if a component of `path` is longer
+        than the maximum length allowed for a path component on the
+        emulated operating system.
+
+        The overlong component is only reported if all preceding components
+        could be resolved, mirroring the behavior of the real OS, which
+        reports the error for the first missing ancestor instead.
+        The check is skipped for Windows, where the limits are more
+        complicated and are not emulated.
+
+        Args:
+            path: The (absolute or relative) path to check.
+
+        Raises:
+            OSError: if the path contains a component that is too long.
+        """
+        if self.is_windows_fs:
+            return
+        path = self.absnormpath(path)
+        components = self._path_components(path)
+        for index, component in enumerate(components):
+            if len(component) > self.name_max:
+                parent_exists = index == 0 or (
+                    self.exists(self._components_to_path(path, components[:index]))
+                    and self.isdir(self._components_to_path(path, components[:index]))
+                )
+                if parent_exists:
+                    self.raise_os_error(errno.ENAMETOOLONG, path)
+                return
 
     def splitpath(self, path: AnyStr) -> tuple[AnyStr, AnyStr]:
         """Mimic os.path.split using the specified path_separator.
@@ -1685,6 +1778,7 @@ class FakeFilesystem:
         if path == matching_string(path, self.devnull):
             return path
         path_components = self._path_components(path)
+        self._check_component_length(path)
         resolved_components = self._resolve_components(path, path_components)
         path = self._components_to_path(path, resolved_components)
         # after resolving links, we have to check again for Windows root
@@ -1988,6 +2082,7 @@ class FakeFilesystem:
         if path_str == matching_string(path_str, "."):
             path_str = matching_string(path_str, self.cwd)
         path_str = self._original_path(path_str)
+        self._check_component_length(path_str)
 
         parent_directory, child_name = self.splitpath(path_str)
         if not parent_directory:
@@ -2075,8 +2170,10 @@ class FakeFilesystem:
         new_ends_with_sep = self.ends_with_path_separator(new_path)
         old_path = self.absnormpath(old_path)
         new_path = self.absnormpath(new_path)
+        self._check_component_length(old_path)
         if not self.exists(old_path, check_link=True):
             self.raise_os_error(errno.ENOENT, old_path, 2)
+        self._check_component_length(new_path)
         if ends_with_sep:
             self._handle_broken_link_with_trailing_sep(old_path)
 
@@ -2879,6 +2976,8 @@ class FakeFilesystem:
         except OSError:
             self.raise_os_error(errno.ENOENT, old_path_str)
 
+        self._check_component_length(new_path_normalized)
+
         # Guaranteed to resolve because we either created it or errored earlier
         new_dir_object = self.resolve(
             new_parent_directory, follow_symlinks=follow_symlinks, check_read_perm=False
@@ -3007,6 +3106,7 @@ class FakeFilesystem:
                 self.raise_os_error(errno.ENOENT, base_dir)
 
         dir_name = self.absnormpath(dir_name)
+        self._check_component_length(dir_name)
         if self.exists(dir_name, check_link=True):
             if self.is_windows_fs and dir_name == self.root_dir_name:
                 error_nr = errno.EACCES
@@ -3226,6 +3326,7 @@ class FakeFilesystem:
         """
         norm_path = make_string_path(path)
         norm_path = self.absnormpath(norm_path)
+        self._check_component_length(norm_path)
         if self.ends_with_path_separator(path):
             self._handle_broken_link_with_trailing_sep(norm_path)
         if self.exists(norm_path):

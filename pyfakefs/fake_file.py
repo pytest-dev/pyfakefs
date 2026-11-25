@@ -828,6 +828,14 @@ class FakeFileWrapper:
         self.name = file_object.opened_as
         self.filedes: int | None = None
 
+    if not TYPE_CHECKING:  # avoid type checker warnings
+
+        def __getattribute__(self, name):
+            """Delegate unhandled attributes to the wrapped stream."""
+            if hasattr(FakeFileWrapper, name) or name in self.__dict__:
+                return object.__getattribute__(self, name)
+            return self.__getattr__(name)
+
     @property
     def filesystem(self) -> FakeFilesystem:
         fs = self._filesystem()
@@ -872,7 +880,7 @@ class FakeFileWrapper:
         """Close the file for the given file descriptor."""
 
         # ignore closing a closed file
-        if not self._is_open():
+        if not self.filesystem.open_file_table.is_open(self):
             return
 
         # for raw io, all writes are flushed immediately
@@ -894,9 +902,7 @@ class FakeFileWrapper:
         if self._closefd:
             self.filesystem.close_open_file(fd)
         else:
-            open_files = self.filesystem.open_files[fd]
-            assert open_files is not None
-            open_files.remove(self)
+            self.filesystem.open_file_table.remove(fd, self)
         if self.delete_on_close:
             self.filesystem.remove_object(
                 self.get_object().path  # type: ignore[arg-type]
@@ -905,7 +911,7 @@ class FakeFileWrapper:
     @property
     def closed(self) -> bool:
         """Simulate the `closed` attribute on file."""
-        return not self._is_open()
+        return not self.filesystem.open_file_table.is_open(self)
 
     @property
     def mode(self) -> str:
@@ -1195,6 +1201,10 @@ class FakeFileWrapper:
             """Wrap truncate call to call flush after truncate."""
             if self.open_modes.append:
                 self._io.seek(self._read_seek, self._read_whence)
+            if not self.is_stream and args and isinstance(args[0], int) and args[0] < 0:
+                # the real OS rejects a negative size for file truncate with
+                # ``EINVAL``; only in-memory streams raise ``ValueError``
+                raise OSError(errno.EINVAL, os.strerror(errno.EINVAL))
             size = io_attr(*args, **kwargs)
             self.flush()
             if not self.is_stream:
@@ -1273,15 +1283,8 @@ class FakeFileWrapper:
 
         return write_error
 
-    def _is_open(self) -> bool:
-        if self.filedes is not None and self.filedes < len(self.filesystem.open_files):
-            open_files = self.filesystem.open_files[self.filedes]
-            if open_files is not None and self in open_files:
-                return True
-        return False
-
     def _check_open_file(self) -> None:
-        if not self.is_stream and not self._is_open():
+        if not self.is_stream and not self.filesystem.open_file_table.is_open(self):
             raise ValueError("I/O operation on closed file")
 
     def __iter__(self) -> Iterator[str] | Iterator[bytes]:
@@ -1302,11 +1305,6 @@ class FakeTextFileWrapper(FakeFileWrapper, io.TextIOBase):  # type: ignore[misc]
     to `FakeFileWrapper`.
     """
 
-    def __getattribute__(self, name):  # type: ignore[override]
-        if hasattr(FakeFileWrapper, name) or name in self.__dict__:
-            return FakeFileWrapper.__getattribute__(self, name)
-        return self.__getattr__(name)
-
 
 class FakeBinaryFileWrapper(FakeFileWrapper, io.BufferedIOBase):  # type: ignore[misc]
     """Represents a buffered binary file wrapper.
@@ -1314,11 +1312,6 @@ class FakeBinaryFileWrapper(FakeFileWrapper, io.BufferedIOBase):  # type: ignore
     if the type is checked by a library user, while it delegates all calls
     to `FakeFileWrapper`.
     """
-
-    def __getattribute__(self, name):  # type: ignore[override]
-        if hasattr(FakeFileWrapper, name) or name in self.__dict__:
-            return FakeFileWrapper.__getattribute__(self, name)
-        return self.__getattr__(name)
 
 
 class StandardStreamWrapper:
@@ -1491,9 +1484,7 @@ class FakePipeWrapper:
         """Close the pipe descriptor with the given file descriptor."""
         fs = self._filesystem()
         assert fs is not None and fd is not None
-        open_files = fs.open_files[fd]
-        assert open_files is not None
-        open_files.remove(self)
+        fs.open_file_table.remove(fd, self)
         if self.real_file:
             self.real_file.close()
         else:
