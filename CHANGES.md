@@ -11,6 +11,10 @@ The released versions correspond to PyPI releases.
   `ENAMETOOLONG` under Posix
   (see [issue #1374](https://github.com/pytest-dev/pyfakefs/issues/1374))
 
+* path operations on paths containing an embedded null byte now raise
+  `ValueError` as in the real filesystem
+  (see [#1376](https://github.com/pytest-dev/pyfakefs/pull/1376))
+
 * fixed `os.makedirs` failing with `FileExistsError` when creating a fresh
   directory with a path ending in `/.` (e.g. `os.makedirs("foo/bar/.")`)
   (see [issue #1370](https://github.com/pytest-dev/pyfakefs/issues/1370))
