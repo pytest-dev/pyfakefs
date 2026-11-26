@@ -186,6 +186,12 @@ an example from a related issue):
   def hello(foo):
       pass
 
+The same applies to eagerly evaluated type annotations, for example a Typer
+command annotated with ``pathlib.Path`` before patching starts. Such annotations
+retain the original class. Reload the command's module as described below, or
+use postponed annotations (``from __future__ import annotations``) so that the
+patched class is looked up when the command is invoked.
+
 To get these cases to work as expected under test, the respective modules
 containing the code shall be added to the ``modules_to_reload`` argument (a
 module list).

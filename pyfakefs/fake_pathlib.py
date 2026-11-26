@@ -37,7 +37,7 @@ import sys
 import warnings
 from collections.abc import Callable
 from pathlib import PurePath
-from typing import Any, ClassVar, Union
+from typing import ClassVar
 from unittest import mock
 from urllib.parse import quote_from_bytes as urlquote_from_bytes
 
@@ -1091,42 +1091,6 @@ class FakePathlibModule:
     def __getattr__(self, name):
         """Forwards any unfaked calls to the standard pathlib module."""
         return getattr(self.pathlib_module, name)
-
-
-class FakePathlibPathModule:
-    """Patches `pathlib.Path` by passing all calls to FakePathlibModule."""
-
-    fake_pathlib = None
-
-    def __init__(self, filesystem=None, from_patcher=False):
-        if self.fake_pathlib is None:
-            self.__class__.fake_pathlib = FakePathlibModule(filesystem, from_patcher)
-
-    def __or__(self, other: Any) -> Any:
-        # workaround for #1242 - pytest chokes on Path | ... type hint in wrapped function
-        return Union[self, other]  # noqa: UP007
-
-    __ror__ = __or__
-
-    @property
-    def skip_names(self):
-        return []  # not used, here to allow a setter
-
-    @skip_names.setter
-    def skip_names(self, value):
-        # this is set from the patcher and passed to the fake Path class
-        self.fake_pathlib.Path.skip_names = value
-
-    def __call__(self, *args, **kwargs):
-        return self.fake_pathlib.Path(*args, **kwargs)
-
-    def __getattr__(self, name):
-        return getattr(self.fake_pathlib.Path, name)
-
-    @classmethod
-    def __instancecheck__(cls, instance):
-        # fake the inheritance to pass isinstance checks - see #666
-        return isinstance(instance, PurePath)
 
 
 class RealPath(pathlib.Path):
